@@ -1,0 +1,71 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://tank.gd" id="1"]
+
+[sub_resource type="BoxShape3D" id="s1"]
+size = Vector3(2.4, 1.2, 3.4)
+
+[sub_resource type="StandardMaterial3D" id="m1"]
+albedo_color = Color(0.25, 0.45, 0.75, 1)
+
+[sub_resource type="BoxMesh" id="b1"]
+material = SubResource("m1")
+size = Vector3(2.4, 1.2, 3.4)
+
+[sub_resource type="StandardMaterial3D" id="m2"]
+albedo_color = Color(0.16, 0.30, 0.55, 1)
+
+[sub_resource type="BoxMesh" id="b2"]
+material = SubResource("m2")
+size = Vector3(1.4, 0.9, 1.6)
+
+[sub_resource type="CylinderMesh" id="c1"]
+material = SubResource("m2")
+top_radius = 0.16
+bottom_radius = 0.16
+height = 2.2
+
+[sub_resource type="SceneReplicationConfig" id="r1"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath(".:rotation")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+properties/2/path = NodePath("Turret:rotation")
+properties/2/spawn = true
+properties/2/replication_mode = 1
+properties/3/path = NodePath("Turret/Gun:rotation")
+properties/3/spawn = true
+properties/3/replication_mode = 1
+
+[node name="Tank" type="CharacterBody3D"]
+script = ExtResource("1")
+max_hp = 60
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("s1")
+
+[node name="Hull" type="MeshInstance3D" parent="."]
+mesh = SubResource("b1")
+
+[node name="Turret" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+
+[node name="Dome" type="MeshInstance3D" parent="Turret"]
+mesh = SubResource("b2")
+
+[node name="Gun" type="Node3D" parent="Turret"]
+
+[node name="Barrel" type="MeshInstance3D" parent="Turret/Gun"]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0, -1.5)
+mesh = SubResource("c1")
+
+[node name="Muzzle" type="Marker3D" parent="Turret/Gun"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2.7)
+
+[node name="Camera3D" type="Camera3D" parent="Turret"]
+transform = Transform3D(1, 0, 0, 0, 0.9063, 0.4226, 0, -0.4226, 0.9063, 0, 4.5, 9.5)
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("r1")
