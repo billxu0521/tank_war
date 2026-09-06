@@ -2,7 +2,7 @@
 
 非對稱連線對戰原型。**多台坦克 vs 一隻大恐龍**，Godot 4.7 + 3D，區網直連。
 
-灰盒原型，模型全部是內建幾何體。
+灰盒原型，模型全部是內建幾何體。恐龍是 18 根骨頭的 Skeleton3D，每根掛一個方塊。
 
 ## 玩法
 
@@ -65,6 +65,7 @@ godot --headless --script test_battle.gd # 自我檢查（壞掉會 exit 1）
 | `main.gd/tscn` | 大廳、連線、場地、勝負、HUD、準心 |
 | `fighter.gd` | 坦克恐龍共用：血量、死亡、連線權限、中彈閃紅 |
 | `tank.*` `dino.*` `shell.*` | 三個角色 |
+| `trex.gd` | 暴龍的灰盒骨架模型（Skeleton3D + 方塊 + 程式動畫） |
 | `fx.gd` | 一次性視覺效果（放大淡出後自刪） |
 | `test_battle.gd` | 自我檢查 |
 

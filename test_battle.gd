@@ -24,6 +24,7 @@ func _process(_delta: float) -> bool:
 		_case_gun_pitch()
 		_case_back_to_lobby()
 		_case_cover()
+		_case_trex_rig()
 		_start_shell_case()
 		return false
 	# 剩下的要跨好幾個 frame 才驗得到
@@ -56,7 +57,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、勝負、咬擊方向、離線模式、砲管俯仰、回大廳重開、建築擋視線、砲彈命中、恐龍跳躍都正常")
+		print("OK：生怪、傷害、勝負、咬擊方向、離線模式、砲管俯仰、回大廳重開、建築擋視線、暴龍骨架、砲彈命中、恐龍跳躍都正常")
 	return true
 
 # --- 共用 ---
@@ -203,6 +204,30 @@ func _case_cover() -> void:
 	var before: int = t.hp
 	d._hit_nearby(100.0, d.BITE_DAMAGE, 0.3)
 	_ck(t.hp == before, "躲在建築後面就不該被打到")
+	_end(m)
+
+## 暴龍骨架：骨頭要建得起來，跑起來兩隻腳要反相擺動
+func _case_trex_rig() -> void:
+	var m := _new_offline_game()
+	var t: Node = m.players.get_node(^"2").get_node(^"Trex")
+	_ck(t.skel.get_bone_count() == 18, "骨架應該有 18 根骨頭（現在 %d）" % t.skel.get_bone_count())
+	_ck(t.skel.find_bone("jaw") >= 0 and t.skel.find_bone("tail4") >= 0, "下巴和尾巴末端要在")
+
+	for i in 6:  # 假裝以 18 m/s 在跑
+		t._last_pos = t.global_position + Vector3(0, 0, 0.3)
+		t._process(1.0 / 60.0)
+	var l: float = t.skel.get_bone_pose_rotation(t._idx["thigh_l"]).get_euler().x
+	var r: float = t.skel.get_bone_pose_rotation(t._idx["thigh_r"]).get_euler().x
+	_ck(absf(l) > 0.1 and l * r < 0.0, "跑步時兩隻大腿要反相擺動（左 %.2f 右 %.2f）" % [l, r])
+
+	var closed: float = t.skel.get_bone_pose_rotation(t._idx["jaw"]).get_euler().x
+	t.bite()
+	var opened := closed
+	for i in 20:
+		t._process(1.0 / 60.0)
+		opened = minf(opened, t.skel.get_bone_pose_rotation(t._idx["jaw"]).get_euler().x)
+	_ck(rad_to_deg(absf(opened - closed)) > 25.0,
+		"咬的時候嘴要張開超過 25 度（現在 %.0f）" % rad_to_deg(absf(opened - closed)))
 	_end(m)
 
 ## 砲彈要真的飛過去打中人（跨好幾個 frame）

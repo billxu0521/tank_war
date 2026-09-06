@@ -99,10 +99,7 @@ func _play_fx(jump: bool) -> void:
 			Color(0.7, 0.65, 0.55, 0.7), global_position + Vector3(0, -2.4, 0),
 			Vector3(0.4, 1.0, 0.4), Vector3.ONE * 1.6, 0.35)
 	else:
-		# 頭往前撞一下 + 咬擊點爆一團
-		var head: Node3D = $Head
-		var t := create_tween()
-		t.tween_property(head, "position:z", -4.4, 0.07)
-		t.tween_property(head, "position:z", -2.8, 0.13)
+		# 張嘴咬下去 + 咬擊點爆一團
+		$Trex.bite()
 		Fx.burst(self, SphereMesh.new(), Color(1, 0.35, 0.35, 0.8),
-			Vector3(0, 1.5, -6.4), Vector3.ONE * 0.6, Vector3.ONE * 3.2, 0.2)
+			Vector3(0, 1.1, -4.6), Vector3.ONE * 0.6, Vector3.ONE * 3.0, 0.2)
