@@ -9,7 +9,7 @@ const MOUSE_SENS := 0.004
 const PITCH_MIN := -0.14  # 俯角 8 度
 const PITCH_MAX := 0.35   # 仰角 20 度
 const CAM_BASE := -0.4363  # 相機基礎俯角 25 度
-const AIM_RANGE := 55.0    # 準心以這個距離做彈道歸零
+const AIM_RANGE := 70.0    # 準心以這個距離做彈道歸零（場地大了，歸零拉遠）
 const SHELL := preload("res://shell.tscn")
 
 var turret_yaw := 0.0

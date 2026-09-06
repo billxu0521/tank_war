@@ -2,10 +2,10 @@ extends CharacterBody3D
 ## 坦克和恐龍共用的部分：血量、死亡、多人連線權限。
 ##
 ## 數值是照 3 台坦克抓的：
-##   恐龍咬死一台坦克 = 3 口 = 2.2 秒的貼身時間
+##   恐龍咬死一台坦克 = 4 口 = 3.3 秒的貼身時間
 ##   3 台坦克貼臉打死恐龍 = 1000 / (3 × 40/1.5) = 12.5 秒
-## 所以恐龍要在挨 12.5 秒的砲火內收掉 3 台，追人和換目標的時間就是勝負關鍵。
-## 坦克落單必死，這是刻意的——要活就得抱團。
+## 恐龍要在挨 12.5 秒的砲火內收掉 3 台，追人和換目標的時間就是勝負關鍵。
+## 場上有建築擋視線，坦克可以繞柱子拉開距離，恐龍得選好進攻角度。
 ## ponytail: 數值寫死不隨人數變。2 人或 5 人會偏掉，真的要再說。
 
 signal died
@@ -61,7 +61,8 @@ func mouse_look(e: InputEvent) -> Vector2:
 	return e.relative
 
 func _apply_gravity(delta: float) -> void:
-	if is_on_floor():
+	# 只在往下掉的時候貼地，不然會把跳躍的向上速度也清掉
+	if is_on_floor() and velocity.y <= 0.0:
 		velocity.y = 0.0
 	else:
 		velocity.y -= GRAVITY * delta

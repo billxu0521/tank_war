@@ -2,6 +2,8 @@ extends Node3D
 ## 坦克大戰恐龍 — 區網原型。開房的人當恐龍，加入的人當坦克。
 
 const PORT := 24680
+const ARENA := 200.0        # 場地邊長
+const SPAWN_CLEARANCE := 8.0  # 出生點離建築至少這麼遠
 const TANK := preload("res://tank.tscn")
 const DINO := preload("res://dino.tscn")
 
@@ -14,6 +16,7 @@ const DINO := preload("res://dino.tscn")
 @onready var menu: Control = $UI/Root/Menu
 @onready var players: Node3D = $Players
 
+var _blocked: Array[Rect2] = []  # 建築物在 XZ 平面佔的範圍
 var _tanks := 0
 var _over := false
 
@@ -128,7 +131,7 @@ func _add_player(scene: PackedScene, id: int) -> Node3D:
 	var p: Node3D = scene.instantiate()
 	p.name = str(id)
 	players.add_child(p, true)
-	p.global_position = Vector3(randf_range(-50.0, 50.0), 5.0, randf_range(-50.0, 50.0))
+	p.global_position = _spawn_point()
 	p.died.connect(_on_died.bind(p))
 	if not p.is_in_group(&"dino"):
 		_tanks += 1
@@ -190,12 +193,37 @@ func _update_crosshair(me: Node) -> void:
 # --- 場地 ---
 
 func _build_arena() -> void:
-	_add_box(Vector3(0, -0.5, 0), Vector3(120, 1, 120), Color(0.30, 0.40, 0.25))
-	for p: Vector3 in [Vector3(24, 1.5, 16), Vector3(-28, 1.5, -12), Vector3(10, 1.5, -36),
-			Vector3(-16, 1.5, 32), Vector3(40, 1.5, -40), Vector3(-44, 1.5, 40),
-			Vector3(0, 1.5, 44), Vector3(44, 1.5, 30), Vector3(-38, 1.5, -34),
-			Vector3(2, 1.5, -6)]:
-		_add_box(p, Vector3(8, 3, 8), Color(0.45, 0.40, 0.35))
+	_add_box(Vector3(0, -0.5, 0), Vector3(ARENA, 1, ARENA), Color(0.30, 0.40, 0.25))
+	# ponytail: 固定 seed 的亂數，每台機器蓋出來的建築才會完全一樣（場地沒有走網路同步）
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 20260906
+	for gx in 5:
+		for gz in 5:
+			if rng.randf() < 0.2:
+				continue  # 留一些空地，不然變迷宮
+			var size := Vector3(rng.randf_range(10, 18), rng.randf_range(7, 13),
+				rng.randf_range(10, 18))
+			var pos := Vector3((gx - 2) * 38.0 + rng.randf_range(-9, 9), size.y * 0.5,
+				(gz - 2) * 38.0 + rng.randf_range(-9, 9))
+			_add_box(pos, size, Color(0.45, 0.40, 0.35))
+			# 出生點要避開，不然會卡在牆裡
+			_blocked.append(Rect2(pos.x - size.x * 0.5 - SPAWN_CLEARANCE,
+				pos.z - size.z * 0.5 - SPAWN_CLEARANCE,
+				size.x + SPAWN_CLEARANCE * 2, size.z + SPAWN_CLEARANCE * 2))
+
+## 找一個不在建築物裡面的出生點
+func _spawn_point() -> Vector3:
+	for i in 40:
+		var p := Vector2(randf_range(-ARENA * 0.45, ARENA * 0.45),
+			randf_range(-ARENA * 0.45, ARENA * 0.45))
+		var clear := true
+		for r: Rect2 in _blocked:
+			if r.has_point(p):
+				clear = false
+				break
+		if clear:
+			return Vector3(p.x, 5.0, p.y)
+	return Vector3(0, 5, 0)
 
 func _add_box(pos: Vector3, size: Vector3, col: Color) -> void:
 	var body := StaticBody3D.new()

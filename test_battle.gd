@@ -4,6 +4,9 @@ extends SceneTree
 
 var _fails := 0
 var _shell_target: Node
+var _dino: Node
+var _jump_from := 0.0
+var _phase := 0
 var _frames := 0
 
 func _ck(ok: bool, msg: String) -> void:
@@ -20,14 +23,32 @@ func _process(_delta: float) -> bool:
 		_case_offline()
 		_case_gun_pitch()
 		_case_back_to_lobby()
+		_case_cover()
 		_start_shell_case()
 		return false
-	# 砲彈要飛好幾個 frame 才會打到人
-	if _shell_target.hp < _shell_target.max_hp:
-		return _done()
-	if _frames > 120:
-		_ck(false, "砲彈沒打中坦克")
-		return _done()
+	# 剩下的要跨好幾個 frame 才驗得到
+	match _phase:
+		0:  # 等砲彈飛過去打中坦克
+			if _shell_target.hp < _shell_target.max_hp:
+				_phase = 1
+			elif _frames > 200:
+				_ck(false, "砲彈沒打中坦克")
+				_phase = 1
+		1:  # 等恐龍落地才跳得起來
+			if _dino.is_on_floor():
+				_jump_from = _dino.global_position.y
+				_ck(_dino.try_jump(), "站在地上、體力滿應該跳得起來")
+				_phase = 2
+			elif _frames > 600:
+				_ck(false, "恐龍一直沒落地")
+				return _done()
+		2:  # 確認真的離地
+			if _dino.global_position.y - _jump_from > 3.0:
+				return _done()
+			if _frames > 900:
+				_ck(false, "跳躍沒離地（只上升 %.1f 公尺）"
+					% (_dino.global_position.y - _jump_from))
+				return _done()
 	return false
 
 func _done() -> bool:
@@ -35,7 +56,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、勝負、咬/橫掃範圍、離線模式、砲管俯仰、回大廳重開、砲彈命中都正常")
+		print("OK：生怪、傷害、勝負、咬擊方向、離線模式、砲管俯仰、回大廳重開、建築擋視線、砲彈命中、恐龍跳躍都正常")
 	return true
 
 # --- 共用 ---
@@ -71,7 +92,7 @@ func _case_dino_wins() -> void:
 	var d: Node = m.players.get_node(^"1")
 	var t2: Node = m.players.get_node(^"2")
 	var bites := ceili(float(t2.max_hp) / d.BITE_DAMAGE)
-	_ck(bites == 3, "平衡目標：咬三口才死一台坦克（現在是 %d 口）" % bites)
+	_ck(bites == 4, "平衡目標：咬四口才死一台坦克（現在是 %d 口）" % bites)
 
 	for i in bites - 1:
 		t2.take_damage(d.BITE_DAMAGE)
@@ -96,24 +117,27 @@ func _case_tanks_win() -> void:
 	_ck(m._over and m.status.text.begins_with("坦克獲勝"), "恐龍死 -> 坦克贏")
 	_end(m)
 
-## 咬只打前方，橫掃四面八方都打到
+## 咬只打前方，背後咬不到
 func _case_attacks() -> void:
 	var m := _new_game()
 	var d: Node = m.players.get_node(^"1")
 	var front: Node = m.players.get_node(^"2")
 	var back: Node = m.players.get_node(^"3")
-	d.global_position = Vector3.ZERO       # 面向 -Z
-	front.global_position = Vector3(0, 1, -4)
-	back.global_position = Vector3(0, 1, 4)
+	var spot: Vector3 = m._spawn_point()  # 找一個沒有建築的空地，不然會被視線判定擋掉
+	spot.y = 2.0
+	d.global_position = spot      # 面向 -Z
+	front.global_position = spot + Vector3(0, 0, -4)
+	back.global_position = spot + Vector3(0, 0, 4)
 
 	var full: int = front.max_hp
 	d._hit_nearby(d.BITE_REACH, d.BITE_DAMAGE, 0.3)
 	_ck(front.hp == full - d.BITE_DAMAGE, "咬應該打到前面的坦克")
 	_ck(back.hp == full, "咬不該打到後面的坦克")
 
-	d._hit_nearby(d.SWEEP_REACH, d.SWEEP_DAMAGE, -1.0)
-	_ck(front.hp == full - d.BITE_DAMAGE - d.SWEEP_DAMAGE and back.hp == full - d.SWEEP_DAMAGE,
-		"橫掃應該前後都打到")
+	# 轉身面向後面那台，就換它挨咬
+	d.look_at(back.global_position)
+	d._hit_nearby(d.BITE_REACH, d.BITE_DAMAGE, 0.3)
+	_ck(back.hp == full - d.BITE_DAMAGE, "轉身後應該咬得到原本在背後的坦克")
 	_end(m)
 
 ## 離線 debug 模式：不連線也要能打、能判勝負
@@ -156,11 +180,40 @@ func _case_back_to_lobby() -> void:
 	_ck(m.players.get_child_count() == 2 and m._tanks == 1, "要能馬上重開一局")
 	_end(m)
 
+## 中間隔著建築物，恐龍就咬不到——坦克躲掩蔽的依據
+func _case_cover() -> void:
+	var m := _new_game()
+	var d: Node = m.players.get_node(^"1")
+	var t: Node = m.players.get_node(^"2")
+	m.players.get_node(^"3").global_position = Vector3(0, 500, 0)  # 閃遠一點別干擾
+
+	var b: Rect2 = m._blocked[0]        # 第一棟建築（含 8 公尺出生淨空）在 XZ 的範圍
+	var c := b.get_center()
+	var d_side := b.size.y * 0.5 + 2.0  # Rect2 的 size.y 是 Z 方向
+	d.global_position = Vector3(c.x, 2.0, c.y + d_side)
+	d.look_at(Vector3(c.x, 2.0, c.y - d_side))  # 面向建築
+
+	# 對照組：同一側，中間沒東西擋（射程放大到 100，只想單獨測視線）
+	t.global_position = d.global_position + Vector3(0, 0, -3)
+	d._hit_nearby(100.0, d.BITE_DAMAGE, 0.3)
+	_ck(t.hp == t.max_hp - d.BITE_DAMAGE, "沒遮蔽時應該打得到")
+
+	# 實驗組：躲到建築後面
+	t.global_position = Vector3(c.x, 2.0, c.y - d_side)
+	var before: int = t.hp
+	d._hit_nearby(100.0, d.BITE_DAMAGE, 0.3)
+	_ck(t.hp == before, "躲在建築後面就不該被打到")
+	_end(m)
+
 ## 砲彈要真的飛過去打中人（跨好幾個 frame）
 func _start_shell_case() -> void:
 	var m := _new_game()
-	m.players.get_node(^"1").global_position = Vector3(25, 3, 25)   # 恐龍閃遠一點
+	var spot: Vector3 = m._spawn_point()  # 挑淨空點，不然彈道會先撞到建築
+	spot.y = 1.0
+	_dino = m.players.get_node(^"1")
+	_dino.global_position = m._spawn_point()  # 另外一點，等它落地測跳躍
 	_shell_target = m.players.get_node(^"2")
-	_shell_target.global_position = Vector3(0, 1, 0)
-	m.players.get_node(^"3").global_position = Vector3(-25, 3, -25)
-	m.players.get_node(^"3")._fire(Vector3(0, 1, 10), Vector3(0, 0, -1))
+	_shell_target.global_position = spot
+	var shooter: Node = m.players.get_node(^"3")
+	shooter.global_position = spot + Vector3(200, 0, 0)  # 射手閃開，別擋在彈道上
+	shooter._fire(spot + Vector3(0, 0.5, 6), Vector3(0, 0, -1))
