@@ -23,7 +23,7 @@ func _process(_delta: float) -> bool:
 		_start_shell_case()
 		return false
 	# 砲彈要飛好幾個 frame 才會打到人
-	if _shell_target.hp < 60:
+	if _shell_target.hp < _shell_target.max_hp:
 		return _done()
 	if _frames > 120:
 		_ck(false, "砲彈沒打中坦克")
@@ -47,8 +47,8 @@ func _new_game() -> Node:
 	m._spawn(2)
 	m._spawn(3)
 	_ck(m._tanks == 2, "應該有兩台坦克")
-	_ck(m.players.get_node(^"1").hp == 400, "恐龍 400 血")
-	_ck(m.players.get_node(^"2").hp == 60, "坦克 60 血")
+	_ck(m.players.get_node(^"1").hp == m.players.get_node(^"1").max_hp, "恐龍滿血出生")
+	_ck(m.players.get_node(^"2").hp == m.players.get_node(^"2").max_hp, "坦克滿血出生")
 	return m
 
 func _new_offline_game() -> Node:
@@ -68,20 +68,31 @@ func _end(m: Node) -> void:
 
 func _case_dino_wins() -> void:
 	var m := _new_game()
+	var d: Node = m.players.get_node(^"1")
 	var t2: Node = m.players.get_node(^"2")
-	t2.take_damage(35)
-	_ck(t2.hp == 25 and m._tanks == 2, "咬一口還沒死")
-	t2.take_damage(35)
+	var bites := ceili(float(t2.max_hp) / d.BITE_DAMAGE)
+	_ck(bites == 3, "平衡目標：咬三口才死一台坦克（現在是 %d 口）" % bites)
+
+	for i in bites - 1:
+		t2.take_damage(d.BITE_DAMAGE)
+	_ck(t2.hp > 0 and m._tanks == 2, "還差一口不該死")
+	t2.take_damage(d.BITE_DAMAGE)
 	_ck(m._tanks == 1 and not m._over, "死一台，還有一台")
-	m.players.get_node(^"3").take_damage(60)
+
+	m.players.get_node(^"3").take_damage(9999)
 	_ck(m._over and m.status.text.begins_with("恐龍獲勝"), "坦克全滅 -> 恐龍贏")
 	_end(m)
 
 func _case_tanks_win() -> void:
 	var m := _new_game()
 	var dino: Node = m.players.get_node(^"1")
-	for i in 40:
-		dino.take_damage(10)
+	var shells := ceili(float(dino.max_hp) / Shell.DAMAGE)
+	_ck(shells >= 20 and shells <= 30, "平衡目標：全隊打 20~30 發打死恐龍（現在 %d 發）" % shells)
+
+	for i in shells - 1:
+		dino.take_damage(Shell.DAMAGE)
+	_ck(not m._over, "還差一發不該結束")
+	dino.take_damage(Shell.DAMAGE)
 	_ck(m._over and m.status.text.begins_with("坦克獲勝"), "恐龍死 -> 坦克贏")
 	_end(m)
 
@@ -95,12 +106,14 @@ func _case_attacks() -> void:
 	front.global_position = Vector3(0, 1, -4)
 	back.global_position = Vector3(0, 1, 4)
 
+	var full: int = front.max_hp
 	d._hit_nearby(d.BITE_REACH, d.BITE_DAMAGE, 0.3)
-	_ck(front.hp == 25, "咬應該打到前面的坦克")
-	_ck(back.hp == 60, "咬不該打到後面的坦克")
+	_ck(front.hp == full - d.BITE_DAMAGE, "咬應該打到前面的坦克")
+	_ck(back.hp == full, "咬不該打到後面的坦克")
 
 	d._hit_nearby(d.SWEEP_REACH, d.SWEEP_DAMAGE, -1.0)
-	_ck(front.hp == 3 and back.hp == 38, "橫掃應該前後都打到")
+	_ck(front.hp == full - d.BITE_DAMAGE - d.SWEEP_DAMAGE and back.hp == full - d.SWEEP_DAMAGE,
+		"橫掃應該前後都打到")
 	_end(m)
 
 ## 離線 debug 模式：不連線也要能打、能判勝負
@@ -110,7 +123,7 @@ func _case_offline() -> void:
 	_ck(m.players.get_child_count() == 2, "離線應該有一台坦克 + 一隻靶")
 	_ck(tank.is_multiplayer_authority(), "離線時自己那台坦克要操控得動")
 	_ck(m.players.get_node(^"2").global_position.z == -8.0, "靶要放在固定位置")
-	m.players.get_node(^"2").take_damage(400)
+	m.players.get_node(^"2").take_damage(9999)
 	_ck(m._over and m.status.text.begins_with("坦克獲勝"), "打爆靶子 -> 坦克贏")
 	_end(m)
 

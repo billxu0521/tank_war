@@ -41,7 +41,7 @@ properties/3/replication_mode = 1
 
 [node name="Tank" type="CharacterBody3D"]
 script = ExtResource("1")
-max_hp = 60
+max_hp = 100
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("s1")

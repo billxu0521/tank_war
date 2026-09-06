@@ -9,11 +9,11 @@ const STAMINA_DRAIN := 32.0  # 每秒消耗，全滿約衝 3 秒
 const STAMINA_REGEN := 16.0  # 每秒回復，回滿約 6 秒
 const MOUSE_SENS := 0.004
 const BITE_REACH := 6.5
-const BITE_DAMAGE := 35
-const BITE_COOLDOWN := 0.9
+const BITE_DAMAGE := 34   # 剛好三口咬死一台 100 血的坦克
+const BITE_COOLDOWN := 1.1
 # 尾巴橫掃：360 度、範圍大、傷害低，但要吃體力
 const SWEEP_REACH := 10.0
-const SWEEP_DAMAGE := 22
+const SWEEP_DAMAGE := 30
 const SWEEP_COOLDOWN := 2.0
 const SWEEP_COST := 40.0
 

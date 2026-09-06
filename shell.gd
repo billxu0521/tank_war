@@ -4,7 +4,7 @@ extends Area3D
 ## 只有主機那顆會真的造成傷害。
 
 const SPEED := 60.0
-const DAMAGE := 10
+const DAMAGE := 40
 const GRAVITY := 9.8  # 有掉落，遠距離要抬砲口
 
 var vel := Vector3.ZERO

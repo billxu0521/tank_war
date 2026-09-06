@@ -3,7 +3,7 @@ extends "res://fighter.gd"
 
 const SPEED := 9.0
 const TURN := 1.8
-const RELOAD := 1.0
+const RELOAD := 1.5
 const MOUSE_SENS := 0.004
 # 仿坦克世界：砲管上下有角度限制，車體擋住的部分打不到
 const PITCH_MIN := -0.14  # 俯角 8 度
