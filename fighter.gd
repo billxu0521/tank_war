@@ -4,10 +4,14 @@ extends CharacterBody3D
 signal died
 
 const GRAVITY := 25.0
+const LOOK_SETTLE_MS := 1500  # 滑鼠鎖定後先忽略這麼久的位移
 
 @export var max_hp := 100
 
 var hp := 0
+var _was_captured := false
+var _settle_until := 0
+
 
 func _enter_tree() -> void:
 	# 節點名字就是玩家的連線編號，誰的節點誰操控
@@ -32,6 +36,22 @@ func _sync_hp(v: int) -> void:
 		died.emit()
 		if multiplayer.is_server():
 			queue_free()  # MultiplayerSpawner 會同步移除其他人畫面上的它
+
+## 取滑鼠這一幀轉了多少。
+## 滑鼠一被鎖定，macOS 會噴出一串「游標歸位」的殘留位移（實測從鎖定後 780ms 開始、
+## 衰減到 1200ms 才停），不擋掉的話砲塔一進遊戲就自己甩到隨機角度。
+## ponytail: 直接用固定時間窗擋掉，夠簡單也夠用。如果哪天在別的機器上還是會甩，
+## 就把 LOOK_SETTLE_MS 調大，或改成「等到位移出現一段空檔才開始吃輸入」。
+func mouse_look(e: InputEvent) -> Vector2:
+	var captured := Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
+	if captured != _was_captured:
+		_was_captured = captured
+		_settle_until = Time.get_ticks_msec() + LOOK_SETTLE_MS
+	if not captured or not is_multiplayer_authority() or not (e is InputEventMouseMotion):
+		return Vector2.ZERO
+	if Time.get_ticks_msec() < _settle_until:
+		return Vector2.ZERO
+	return e.relative
 
 func _apply_gravity(delta: float) -> void:
 	if is_on_floor():

@@ -26,9 +26,7 @@ func _ready() -> void:
 	$Camera3D.current = is_multiplayer_authority()
 
 func _unhandled_input(e: InputEvent) -> void:
-	if is_multiplayer_authority() and e is InputEventMouseMotion \
-			and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		rotate_y(-e.relative.x * MOUSE_SENS)
+	rotate_y(-mouse_look(e).x * MOUSE_SENS)
 
 func _physics_process(delta: float) -> void:
 	if not is_multiplayer_authority():

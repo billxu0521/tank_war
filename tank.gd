@@ -26,9 +26,7 @@ func _ready() -> void:
 	cam.current = is_multiplayer_authority()
 
 func _unhandled_input(e: InputEvent) -> void:
-	if is_multiplayer_authority() and e is InputEventMouseMotion \
-			and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		aim(e.relative)
+	aim(mouse_look(e))
 
 ## 滑鼠移動量 -> 砲塔左右轉 + 砲管上下抬（上下有角度上限）
 func aim(rel: Vector2) -> void:
