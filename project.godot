@@ -25,6 +25,9 @@ window/stretch/aspect="expand"
 [physics]
 
 3d/physics_engine="Jolt Physics"
+; 畫面通常跑 120fps 以上，物理留在預設的 60Hz 會讓每個位置被畫兩次，
+; 動起來像有殘影。拉到 120 對齊，這裡物件很少，多跑一倍幾乎沒成本。
+common/physics_ticks_per_second=120
 
 [rendering]
 
