@@ -19,6 +19,7 @@ func _process(_delta: float) -> bool:
 		_case_attacks()
 		_case_offline()
 		_case_gun_pitch()
+		_case_back_to_lobby()
 		_start_shell_case()
 		return false
 	# 砲彈要飛好幾個 frame 才會打到人
@@ -34,7 +35,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、勝負、咬/橫掃範圍、離線模式、砲管俯仰、砲彈命中都正常")
+		print("OK：生怪、傷害、勝負、咬/橫掃範圍、離線模式、砲管俯仰、回大廳重開、砲彈命中都正常")
 	return true
 
 # --- 共用 ---
@@ -57,8 +58,9 @@ func _new_offline_game() -> Node:
 	return m
 
 func _end(m: Node) -> void:
-	m.multiplayer.multiplayer_peer.close()
-	m.multiplayer.multiplayer_peer = null
+	if m.multiplayer.multiplayer_peer != null:
+		m.multiplayer.multiplayer_peer.close()
+		m.multiplayer.multiplayer_peer = null
 	root.remove_child(m)
 	m.free()
 
@@ -125,6 +127,20 @@ func _case_gun_pitch() -> void:
 	t.gun_pitch = 0.2
 	t._physics_process(0.016)
 	_ck(is_equal_approx(t.gun.rotation.x, 0.2), "砲管模型要跟著轉")
+	_end(m)
+
+## 回大廳要清乾淨，而且要能馬上重開一局
+func _case_back_to_lobby() -> void:
+	var m := _new_game()
+	m._to_lobby("")
+	_ck(m.players.get_child_count() == 0, "回大廳要把玩家清掉")
+	_ck(m.multiplayer.multiplayer_peer == null, "回大廳要斷線")
+	_ck(m.lobby.visible and not m.menu.visible, "回大廳要看得到大廳、選單要關掉")
+	_ck(m._tanks == 0 and not m._over, "計數和勝負狀態要歸零")
+
+	m._on_host_pressed()  # 連接埠要放掉了，才開得起第二局
+	m._spawn(2)
+	_ck(m.players.get_child_count() == 2 and m._tanks == 1, "要能馬上重開一局")
 	_end(m)
 
 ## 砲彈要真的飛過去打中人（跨好幾個 frame）

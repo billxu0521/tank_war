@@ -11,6 +11,7 @@ const DINO := preload("res://dino.tscn")
 @onready var hud: Label = $UI/Root/Hud
 @onready var stamina_bar: ProgressBar = $UI/Root/Stamina
 @onready var crosshair: Label = $UI/Root/Crosshair
+@onready var menu: Control = $UI/Root/Menu
 @onready var players: Node3D = $Players
 
 var _tanks := 0
@@ -22,8 +23,10 @@ func _ready() -> void:
 	multiplayer.peer_connected.connect(_spawn)
 	multiplayer.peer_disconnected.connect(_despawn)
 	multiplayer.connected_to_server.connect(func() -> void: status.text = "已連線，你是坦克。WASD 移動，滑鼠瞄準砲塔，左鍵開砲")
-	multiplayer.connection_failed.connect(func() -> void: status.text = "連線失敗，檢查 IP 和防火牆")
-	multiplayer.server_disconnected.connect(func() -> void: status.text = "主機斷線了")
+	multiplayer.connection_failed.connect(
+		func() -> void: _to_lobby.call_deferred("連線失敗，檢查 IP 和防火牆"))
+	multiplayer.server_disconnected.connect(
+		func() -> void: _to_lobby.call_deferred("主機斷線了"))
 	_autostart.call_deferred()
 
 ## 啟動參數，方便在同一台機器開兩個視窗對打：
@@ -43,10 +46,44 @@ func _autostart() -> void:
 			_on_join_pressed()
 
 func _unhandled_input(e: InputEvent) -> void:
+	if lobby.visible:
+		return
 	if e is InputEventKey and e.pressed and e.keycode == KEY_ESCAPE:
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-	elif e is InputEventMouseButton and e.pressed and not lobby.visible:
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		_set_menu(not menu.visible)
+	elif e is InputEventMouseButton and e.pressed and not menu.visible:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED  # 點畫面重新鎖回滑鼠
+
+# --- 暫停選單 ---
+
+func _set_menu(open: bool) -> void:
+	menu.visible = open
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if open else Input.MOUSE_MODE_CAPTURED
+
+func _on_resume_pressed() -> void:
+	_set_menu(false)
+
+func _on_leave_pressed() -> void:
+	_to_lobby("")
+
+func _on_quit_pressed() -> void:
+	get_tree().quit()
+
+## 斷線 + 清乾淨，回到可以重新開房／加入的狀態
+func _to_lobby(msg: String) -> void:
+	if multiplayer.multiplayer_peer != null:
+		multiplayer.multiplayer_peer.close()
+		multiplayer.multiplayer_peer = null
+	for p in players.get_children():
+		p.free()  # 用 free 不用 queue_free，不然馬上重開會撞到同名節點
+	_tanks = 0
+	_over = false
+	menu.hide()
+	crosshair.hide()
+	stamina_bar.hide()
+	lobby.show()
+	hud.text = ""
+	status.text = msg
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 # --- 連線 ---
 
@@ -76,6 +113,7 @@ func _on_offline_pressed() -> void:
 
 func _enter_game(msg: String) -> void:
 	lobby.hide()
+	menu.hide()
 	status.text = msg
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
