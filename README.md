@@ -106,6 +106,9 @@ godot --headless --script test_battle.gd # 自我檢查（壞掉會 exit 1）
 | `fx.gd` | 一次性視覺效果（放大淡出後自刪） |
 | `test_battle.gd` | 自我檢查 |
 
+設計討論（勝負條件、體質定位、參考作品）整理在
+[docs/設計討論.md](docs/設計討論.md)，來源是 Discord 論壇 `#夢想之地`。
+
 ## 為什麼物理跑 120Hz
 
 畫面通常跑 120fps 以上，物理留在預設的 60Hz 會讓每個位置被連續畫兩次，
