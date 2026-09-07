@@ -31,6 +31,7 @@ func _process(_delta: float) -> bool:
 		_case_cover()
 		_case_trex_rig()
 		_case_stamina()
+		_case_arena_walls()
 		_start_shell_case()
 		return false
 	# 剩下的要跨好幾個 frame 才驗得到
@@ -73,7 +74,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、勝負、咬擊方向、離線兩種模式、砲管俯仰、回大廳重開、建築擋視線、暴龍骨架與尾巴慣性、砲彈命中、恐龍跳躍、移動靶、體力規則都正常")
+		print("OK：生怪、傷害、勝負、咬擊方向、離線兩種模式、砲管俯仰、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、砲彈命中、恐龍跳躍、移動靶、體力規則都正常")
 	return true
 
 # --- 共用 ---
@@ -318,6 +319,24 @@ func _case_stamina() -> void:
 	var moving_gain: float = a.stamina - 50.0
 	_ck(still_gain > moving_gain * 1.5,
 		"站著回得該比走著快很多（站 %.1f vs 走 %.1f）" % [still_gain, moving_gain])
+	_end(m)
+
+## 場地四周要有牆，而且要高過恐龍「跳 + 爬」能到的高度
+func _case_arena_walls() -> void:
+	var m := _new_game()
+	var d: Node = m.players.get_node(^"1")
+	var jump_h: float = d.JUMP_SPEED * d.JUMP_SPEED / (2.0 * d.GRAVITY)
+	var climb_h: float = (d.STAMINA_MAX - d.JUMP_COST) / d.CLIMB_DRAIN * d.CLIMB_SPEED
+	_ck(m.WALL_H > jump_h + climb_h,
+		"圍牆 %.0f 公尺要高過跳 %.1f + 爬 %.1f = %.1f 公尺"
+		% [m.WALL_H, jump_h, climb_h, jump_h + climb_h])
+
+	var walls := 0
+	for c in m.get_node(^"Arena").get_children():
+		for mi in c.get_children():
+			if mi is MeshInstance3D and mi.get_aabb().size.y > m.WALL_H - 0.1:
+				walls += 1
+	_ck(walls == 4, "四面都要有圍牆（現在 %d 面）" % walls)
 	_end(m)
 
 ## 開一局「我當恐龍」，等下面的 _phase 3 看坦克靶會不會自己跑

@@ -6,6 +6,9 @@ const ARENA := 200.0        # 場地邊長
 const SPAWN_CLEARANCE := 7.0  # 出生點離建築至少這麼遠
 const GRID := 7               # 建築排成 GRID x GRID
 const CELL := 26.0            # 格子間距，越小越密
+# 圍牆高度要壓過「跳 6.5 公尺 + 剩餘體力再爬約 17 公尺」的組合，恐龍才翻不出去
+const WALL_H := 30.0
+const WALL_T := 4.0
 const TANK := preload("res://tank.tscn")
 const DINO := preload("res://dino.tscn")
 
@@ -209,6 +212,16 @@ func _update_crosshair(me: Node) -> void:
 
 func _build_arena() -> void:
 	_add_box(Vector3(0, -0.5, 0), Vector3(ARENA, 1, ARENA), Color(0.30, 0.40, 0.25))
+
+	# 四周圍牆，東西才不會掉出場外。內側牆面剛好貼齊地板邊緣，不留縫。
+	var e := (ARENA + WALL_T) * 0.5
+	var long := ARENA + WALL_T * 2.0
+	var col := Color(0.32, 0.31, 0.29)
+	_add_box(Vector3(0, WALL_H * 0.5, e), Vector3(long, WALL_H, WALL_T), col)
+	_add_box(Vector3(0, WALL_H * 0.5, -e), Vector3(long, WALL_H, WALL_T), col)
+	_add_box(Vector3(e, WALL_H * 0.5, 0), Vector3(WALL_T, WALL_H, long), col)
+	_add_box(Vector3(-e, WALL_H * 0.5, 0), Vector3(WALL_T, WALL_H, long), col)
+
 	# ponytail: 固定 seed 的亂數，每台機器蓋出來的建築才會完全一樣（場地沒有走網路同步）
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 20260906
