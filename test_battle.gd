@@ -22,7 +22,7 @@ func _process(_delta: float) -> bool:
 	_frames += 1
 	if _frames == 1:
 		_case_dino_wins()
-		_case_tanks_win()
+		_case_dino_death()
 		_case_attacks()
 		_case_offline()
 		_case_offline_dino()
@@ -77,7 +77,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、勝負、咬擊方向、離線兩種模式、砲管俯仰、油門手感、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、砲彈命中、恐龍跳躍、移動靶、體力規則、蛋與撤離、火球都正常")
+		print("OK：生怪、傷害、個人勝負、咬擊方向、離線兩種模式、砲管俯仰、油門手感、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、砲彈命中、恐龍跳躍、移動靶、體力規則、蛋與撤離、火球都正常")
 	return true
 
 # --- 共用 ---
@@ -125,17 +125,18 @@ func _case_dino_wins() -> void:
 	_ck(m._over and m.status.text.begins_with("恐龍獲勝"), "坦克全滅 -> 恐龍贏")
 	_end(m)
 
-func _case_tanks_win() -> void:
+func _case_dino_death() -> void:
 	var m := _new_game()
 	var dino: Node = m.players.get_node(^"1")
 	var shells := ceili(float(dino.max_hp) / Shell.DAMAGE)
 	_ck(shells >= 12 and shells <= 22, "平衡目標：全隊打 12~22 發打死恐龍（現在 %d 發）" % shells)
 
-	for i in shells - 1:
+	for i in shells:
 		dino.take_damage(Shell.DAMAGE)
-	_ck(not m._over, "還差一發不該結束")
-	dino.take_damage(Shell.DAMAGE)
-	_ck(m._over and m.status.text.begins_with("坦克獲勝"), "恐龍死 -> 坦克贏")
+	# 坦克互為對手，所以打死恐龍不是勝利條件，回合要繼續
+	_ck(not m._over, "恐龍陣亡不該直接結束回合")
+	_ck(m.status.text.contains("恐龍陣亡"), "應該廣播恐龍陣亡（現在是「%s」）" % m.status.text)
+	_ck(m._tanks == 2, "坦克數不受影響")
 	_end(m)
 
 ## 咬只打前方，背後咬不到
@@ -170,7 +171,8 @@ func _case_offline() -> void:
 	_ck(tank.is_multiplayer_authority(), "離線時自己那台坦克要操控得動")
 	_ck(target.dummy and not tank.dummy, "恐龍是會自己跑的靶，坦克不是")
 	target.take_damage(9999)
-	_ck(m._over and m.status.text.begins_with("坦克獲勝"), "打爆靶子 -> 坦克贏")
+	_ck(not m._over, "打爆靶子不會直接贏，要帶蛋撤離才算")
+	_ck(m.status.text.contains("恐龍陣亡"), "應該廣播恐龍陣亡")
 	_end(m)
 
 ## 離線當恐龍：自己控恐龍，三台坦克靶會自己跑
@@ -399,7 +401,9 @@ func _case_egg() -> void:
 	m.egg.global_position = t3.global_position
 	m.egg.carrier = 3
 	m._egg_step()
-	_ck(m._over and m.status.text.contains("撤離"), "帶著蛋進撤離區 -> 坦克獲勝")
+	_ck(m._over and m.status.text.contains("撤離"), "帶著蛋進撤離區 -> 結束回合")
+	_ck(m.status.text.contains("3") or m.status.text.contains("你"),
+		"獲勝訊息要指名是哪一台坦克（現在是「%s」）" % m.status.text)
 	_end(m)
 
 ## 恐龍的火球：吃體力、有冷卻、真的會生出一顆

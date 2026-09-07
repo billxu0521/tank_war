@@ -25,8 +25,8 @@ const JUMP_SPEED := 18.0  # 大約跳得起 6.5 公尺
 const JUMP_COST := 30.0
 const HEAD_HEIGHT := 2.4  # 視線和火球都從這個高度射出
 # 火球：飛得慢、弧度大，逼坦克換位用的，不是主力輸出
-const FIRE_COOLDOWN := 1.5
-const FIRE_COST := 25.0
+const FIRE_COOLDOWN := 0.7   # 連射用的，體力是真正的限制
+const FIRE_COST := 15.0      # 滿體力連噴 6 顆就見底，之後被回復速度綁住
 const FIREBALL := preload("res://fireball.tscn")
 const AIM_RANGE := 35.0    # 準心以這個距離做彈道歸零
 const MUZZLE_FWD := 5.0    # 火球從嘴巴前方這麼遠生出來

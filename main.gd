@@ -176,17 +176,29 @@ func _despawn(id: int) -> void:
 		if id != 1:
 			_tanks -= 1
 
+## 三台坦克是彼此的對手，所以「打死恐龍」不是勝利條件——不然理性玩法會變成
+## 先聯手弄死恐龍，跟互相競爭矛盾。蛋才是唯一的勝利條件。
 func _on_died(who: Node) -> void:
 	if _over:
 		return
 	if who.is_in_group(&"dino"):
-		_over = true
-		_finish.rpc("坦克獲勝！")
+		_announce.rpc("恐龍陣亡！接下來坦克互搶，先把蛋帶進撤離區的人贏")
 	else:
 		_tanks -= 1
 		if _tanks <= 0:
 			_over = true
 			_finish.rpc("恐龍獲勝！")
+
+## 只換掉狀態列文字，不結束遊戲
+@rpc("authority", "call_local", "reliable")
+func _announce(msg: String) -> void:
+	status.text = msg
+
+## 撤離是個人獲勝，所以每台機器顯示的字不一樣
+@rpc("authority", "call_local", "reliable")
+func _finish_egg(winner: int) -> void:
+	_finish("你帶著蛋撤離，獲勝！" if winner == multiplayer.get_unique_id()
+		else "坦克 %d 帶著蛋撤離，你輸了" % winner)
 
 @rpc("authority", "call_local", "reliable")
 func _finish(msg: String) -> void:
@@ -217,7 +229,7 @@ func _egg_step() -> void:
 	for e: Vector3 in _exits:
 		if Vector2(egg.global_position.x - e.x, egg.global_position.z - e.z).length() < EXIT_RADIUS:
 			_over = true
-			_finish.rpc("坦克帶著蛋撤離，坦克獲勝！")
+			_finish_egg.rpc(egg.carrier)
 			return
 
 func _process(_delta: float) -> void:
