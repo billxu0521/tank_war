@@ -27,6 +27,7 @@ func _process(_delta: float) -> bool:
 		_case_offline()
 		_case_offline_dino()
 		_case_gun_pitch()
+		_case_throttle()
 		_case_back_to_lobby()
 		_case_cover()
 		_case_trex_rig()
@@ -74,7 +75,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、勝負、咬擊方向、離線兩種模式、砲管俯仰、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、砲彈命中、恐龍跳躍、移動靶、體力規則都正常")
+		print("OK：生怪、傷害、勝負、咬擊方向、離線兩種模式、砲管俯仰與轉速上限、油門手感、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、砲彈命中、恐龍跳躍、移動靶、體力規則都正常")
 	return true
 
 # --- 共用 ---
@@ -189,19 +190,63 @@ func _case_offline_dino() -> void:
 	_ck(m._over and m.status.text.begins_with("恐龍獲勝"), "打爆三台靶 -> 恐龍贏")
 	_end(m)
 
-## 砲管上下角度要夾在俯 8 度 ~ 仰 20 度之間
+## 砲管上下角度要夾在俯 8 度 ~ 仰 20 度之間，而且不能瞬間跟上滑鼠
 func _case_gun_pitch() -> void:
 	var m := _new_offline_game()
 	var t: Node = m.players.get_node(^"1")
+	var dt := 1.0 / 120.0
 
 	t.aim(Vector2(0, -9999))  # 滑鼠一路往上
-	_ck(is_equal_approx(t.gun_pitch, t.PITCH_MAX), "抬到底要停在仰角上限")
+	_ck(is_equal_approx(t.aim_pitch, t.PITCH_MAX), "抬到底要停在仰角上限")
 	t.aim(Vector2(0, 9999))   # 一路往下
-	_ck(is_equal_approx(t.gun_pitch, t.PITCH_MIN), "壓到底要停在俯角下限")
+	_ck(is_equal_approx(t.aim_pitch, t.PITCH_MIN), "壓到底要停在俯角下限")
 
-	t.gun_pitch = 0.2
-	t._physics_process(0.016)
-	_ck(is_equal_approx(t.gun.rotation.x, 0.2), "砲管模型要跟著轉")
+	# 砲管不能瞬間貼上去：一幀最多轉 ELEVATE * delta
+	t.aim_pitch = t.PITCH_MAX
+	t.gun_pitch = 0.0
+	t._physics_process(dt)
+	_ck(t.gun_pitch <= t.ELEVATE * dt + 0.0001 and t.gun_pitch > 0.0,
+		"砲管一幀最多抬 %.4f 弧度（實際 %.4f）" % [t.ELEVATE * dt, t.gun_pitch])
+
+	# 給它足夠時間就要追到
+	for i in 200:
+		t._physics_process(dt)
+	_ck(is_equal_approx(t.gun_pitch, t.PITCH_MAX), "轉夠久要追上目標角度")
+	_ck(is_equal_approx(t.gun.rotation.x, t.gun_pitch), "砲管模型要跟著轉")
+
+	# 砲塔左右也一樣有轉速上限
+	t.aim_yaw = 3.0
+	t.turret_yaw = 0.0
+	t._physics_process(dt)
+	_ck(t.turret_yaw <= t.TRAVERSE * dt + 0.0001 and t.turret_yaw > 0.0,
+		"砲塔一幀最多轉 %.4f 弧度（實際 %.4f）" % [t.TRAVERSE * dt, t.turret_yaw])
+	_end(m)
+
+## 移動要有加速度：不會瞬間全速，也不會瞬間停住；倒車比前進慢
+func _case_throttle() -> void:
+	var m := _new_offline_game()
+	var t: Node = m.players.get_node(^"1")
+	var dt := 1.0 / 120.0
+	var full := Vector3(0, 0, -t.SPEED)
+
+	t.velocity = Vector3.ZERO
+	t._accelerate(full, t.ACCEL, t.BRAKE, dt)
+	_ck(absf(t.velocity.z) < t.SPEED * 0.5, "踩下去不能瞬間全速（現在 %.2f / %.1f）"
+		% [absf(t.velocity.z), t.SPEED])
+
+	var secs := 0.0
+	while absf(t.velocity.z) < t.SPEED - 0.01 and secs < 10.0:
+		t._accelerate(full, t.ACCEL, t.BRAKE, dt)
+		secs += dt
+	_ck(secs > 0.3 and secs < 3.0, "加速到全速該花 1 秒上下（實際 %.2f 秒）" % secs)
+
+	# 放開按鍵要煞得比加速快
+	var stop := 0.0
+	while absf(t.velocity.z) > 0.01 and stop < 10.0:
+		t._accelerate(Vector3.ZERO, t.ACCEL, t.BRAKE, dt)
+		stop += dt
+	_ck(stop < secs, "煞車要比加速快（煞 %.2f 秒 vs 加速 %.2f 秒）" % [stop, secs])
+	_ck(t.REVERSE < 1.0, "倒車要比前進慢")
 	_end(m)
 
 ## 回大廳要清乾淨，而且要能馬上重開一局

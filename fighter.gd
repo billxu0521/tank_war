@@ -62,6 +62,13 @@ func mouse_look(e: InputEvent) -> Vector2:
 		return Vector2.ZERO
 	return e.relative
 
+## 水平速度用加速度逼近目標，不要瞬間到頂也不要瞬間停住。
+## 煞車通常比加速快，放開按鍵才不會像在冰上滑。
+func _accelerate(want: Vector3, accel: float, brake: float, delta: float) -> void:
+	var rate := accel if want.length_squared() > 0.01 else brake
+	velocity.x = move_toward(velocity.x, want.x, rate * delta)
+	velocity.z = move_toward(velocity.z, want.z, rate * delta)
+
 func _apply_gravity(delta: float) -> void:
 	# 只在往下掉的時候貼地，不然會把跳躍的向上速度也清掉
 	if is_on_floor() and velocity.y <= 0.0:

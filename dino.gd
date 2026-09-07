@@ -6,6 +6,9 @@ extends "res://fighter.gd"
 
 const SPEED := 16.0
 const SPRINT_MULT := 1.9
+const ACCEL := 22.0        # 這麼大一隻不該瞬間到全速
+const BRAKE := 32.0
+const TURN_RATE := 5.0     # 每秒最多轉這麼多弧度，甩滑鼠不會瞬間轉頭
 const STAMINA_MAX := 100.0
 const SPRINT_DRAIN := 32.0     # 每秒；全滿約衝 3 秒
 const CLIMB_DRAIN := 25.0      # 每秒；全滿約爬 4 秒 = 24 公尺，剛好爬得完最高的建築
@@ -25,6 +28,7 @@ const CAM_BASE := -0.40   # 相機支點的基礎俯角
 const PITCH_MIN := -0.75  # 往下看到底（約 43 度）
 const PITCH_MAX := 0.45   # 往上看到底（約 26 度）
 
+var aim_yaw := 0.0      # 滑鼠想轉到的方向，身體用 TURN_RATE 追過去
 var look_pitch := 0.0   # 上下視角，有同步出去，遠端才看得到頭抬起來
 var stamina := STAMINA_MAX
 var exhausted := false
@@ -36,7 +40,7 @@ func _ready() -> void:
 
 func _unhandled_input(e: InputEvent) -> void:
 	var look := mouse_look(e)
-	rotate_y(-look.x * MOUSE_SENS)
+	aim_yaw -= look.x * MOUSE_SENS
 	look_pitch = clampf(look_pitch - look.y * MOUSE_SENS, PITCH_MIN, PITCH_MAX)
 
 ## 相機和抬頭都要在遠端也看得到，所以放 _process（_physics_process 只有本人在跑）
@@ -47,7 +51,7 @@ func _process(_delta: float) -> void:
 func _physics_process(delta: float) -> void:
 	if dummy:
 		# 離線練習用的移動靶：繞圈跑，讓坦克練習算提前量
-		rotate_y(0.55 * delta)
+		aim_yaw += 0.55 * delta
 		move_step(delta, Vector3(0, 0, -1), false, false, false)
 		return
 	if not is_multiplayer_authority():
@@ -81,10 +85,11 @@ func move_step(delta: float, input: Vector3, want_sprint: bool,
 		spend = SPRINT_DRAIN
 	_update_stamina(delta, spend, moving)
 
+	# 身體用轉速上限追滑鼠，不是瞬間貼上去
+	rotation.y = rotate_toward(rotation.y, aim_yaw, TURN_RATE * delta)
+
 	var speed := SPEED * (SPRINT_MULT if sprinting else 1.0)
-	var move := (global_transform.basis * input).normalized() * speed
-	velocity.x = move.x
-	velocity.z = move.z
+	_accelerate((global_transform.basis * input).normalized() * speed, ACCEL, BRAKE, delta)
 	_apply_gravity(delta)
 	if climbing:
 		# 往上爬的同時保留往前的推力，爬過屋簷才會自己翻上去
@@ -101,6 +106,12 @@ func _on_climbable_wall() -> bool:
 		if absf(c.get_normal().y) < 0.5 and not c.get_collider().is_in_group(&"arena_wall"):
 			return true   # 接近垂直的面，而且不是場地圍牆
 	return false
+
+## 直接轉到某個角度（出生、測試用）。要連目標角度一起對齊，
+## 不然下一幀身體會自己轉回原本的目標。
+func face(yaw: float) -> void:
+	rotation.y = yaw
+	aim_yaw = yaw
 
 ## 力竭中不能衝刺也不能爬。
 ## 沒有這個門檻的話，體力會在 0 附近抽動：回一點就衝、衝掉又停。
