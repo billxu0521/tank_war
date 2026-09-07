@@ -57,7 +57,7 @@ mouse_filter = 2
 offset_left = 24.0
 offset_top = 24.0
 offset_right = 340.0
-offset_bottom = 280.0
+offset_bottom = 320.0
 theme_override_constants/separation = 8
 
 [node name="Title" type="Label" parent="UI/Root/Lobby"]
@@ -78,7 +78,10 @@ text = "開房（我當恐龍）"
 text = "加入（我當坦克）"
 
 [node name="OfflineBtn" type="Button" parent="UI/Root/Lobby"]
-text = "離線測試（一台坦克 + 靶子）"
+text = "離線測試：我當坦克（打會跑的恐龍）"
+
+[node name="OfflineDinoBtn" type="Button" parent="UI/Root/Lobby"]
+text = "離線測試：我當恐龍（追三台會跑的坦克）"
 
 [node name="Menu" type="Control" parent="UI/Root"]
 visible = false
@@ -156,6 +159,7 @@ theme_override_styles/fill = SubResource("bar_fill")
 [connection signal="pressed" from="UI/Root/Lobby/HostBtn" to="." method="_on_host_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/JoinBtn" to="." method="_on_join_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/OfflineBtn" to="." method="_on_offline_pressed"]
+[connection signal="pressed" from="UI/Root/Lobby/OfflineDinoBtn" to="." method="_on_offline_dino_pressed"]
 [connection signal="pressed" from="UI/Root/Menu/Box/ResumeBtn" to="." method="_on_resume_pressed"]
 [connection signal="pressed" from="UI/Root/Menu/Box/LeaveBtn" to="." method="_on_leave_pressed"]
 [connection signal="pressed" from="UI/Root/Menu/Box/QuitBtn" to="." method="_on_quit_pressed"]

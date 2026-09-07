@@ -15,6 +15,7 @@ const SHELL := preload("res://shell.tscn")
 var turret_yaw := 0.0
 var gun_pitch := 0.0
 var _cooldown := 0.0
+var _patrol_t := 0.0
 
 @onready var turret: Node3D = $Turret
 @onready var gun: Node3D = $Turret/Gun
@@ -34,6 +35,9 @@ func aim(rel: Vector2) -> void:
 	gun_pitch = clampf(gun_pitch - rel.y * MOUSE_SENS, PITCH_MIN, PITCH_MAX)
 
 func _physics_process(delta: float) -> void:
+	if dummy:
+		_patrol(delta)
+		return
 	if not is_multiplayer_authority():
 		return  # 別人的坦克交給 MultiplayerSynchronizer 更新
 
@@ -53,6 +57,19 @@ func _physics_process(delta: float) -> void:
 	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and _cooldown <= 0.0:
 		_cooldown = RELOAD
 		_fire.rpc(muzzle.global_position, -muzzle.global_transform.basis.z)
+
+## 離線練習用的移動靶：一邊繞圈一邊亂轉砲塔。撞到建築會自己滑開，
+## 路線就不會太規律。編號單雙決定左轉還右轉，幾台才不會疊在一起。
+func _patrol(delta: float) -> void:
+	_patrol_t += delta
+	rotate_y(TURN * 0.5 * delta * (1.0 if name.to_int() % 2 == 0 else -1.0))
+	var move := -global_transform.basis.z * SPEED * 0.75
+	velocity.x = move.x
+	velocity.z = move.z
+	_apply_gravity(delta)
+	move_and_slide()
+	turret_yaw = sin(_patrol_t * 0.7) * 2.0
+	turret.rotation.y = turret_yaw
 
 @rpc("any_peer", "call_local", "reliable")
 func _fire(pos: Vector3, dir: Vector3) -> void:

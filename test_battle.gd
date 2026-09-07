@@ -7,6 +7,10 @@ var _shell_target: Node
 var _dino: Node
 var _jump_from := 0.0
 var _phase := 0
+var _dummy_game: Node
+var _dummy_tank: Node3D
+var _dummy_from := Vector2.ZERO
+var _dummy_frames := 0
 var _frames := 0
 
 func _ck(ok: bool, msg: String) -> void:
@@ -21,6 +25,7 @@ func _process(_delta: float) -> bool:
 		_case_tanks_win()
 		_case_attacks()
 		_case_offline()
+		_case_offline_dino()
 		_case_gun_pitch()
 		_case_back_to_lobby()
 		_case_cover()
@@ -46,10 +51,20 @@ func _process(_delta: float) -> bool:
 				return _done()
 		2:  # 確認真的離地
 			if _dino.global_position.y - _jump_from > 3.0:
-				return _done()
-			if _frames > 900:
+				_start_dummy_case()
+			elif _frames > 900:
 				_ck(false, "跳躍沒離地（只上升 %.1f 公尺）"
 					% (_dino.global_position.y - _jump_from))
+				_start_dummy_case()
+		3:  # 移動靶要真的跑起來（move_and_slide 只在物理幀有效，所以得跨幀等）
+			_dummy_frames += 1
+			var now := _dummy_tank.global_position
+			if _dummy_from.distance_to(Vector2(now.x, now.z)) > 3.0:
+				_end(_dummy_game)
+				return _done()
+			if _dummy_frames > 500:
+				_ck(false, "坦克靶沒有自己跑起來")
+				_end(_dummy_game)
 				return _done()
 	return false
 
@@ -58,7 +73,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、勝負、咬擊方向、離線模式、砲管俯仰、回大廳重開、建築擋視線、暴龍骨架與尾巴慣性、砲彈命中、恐龍跳躍、體力規則都正常")
+		print("OK：生怪、傷害、勝負、咬擊方向、離線兩種模式、砲管俯仰、回大廳重開、建築擋視線、暴龍骨架與尾巴慣性、砲彈命中、恐龍跳躍、移動靶、體力規則都正常")
 	return true
 
 # --- 共用 ---
@@ -146,11 +161,31 @@ func _case_attacks() -> void:
 func _case_offline() -> void:
 	var m := _new_offline_game()
 	var tank: Node = m.players.get_node(^"1")
+	var target: Node = m.players.get_node(^"2")
 	_ck(m.players.get_child_count() == 2, "離線應該有一台坦克 + 一隻靶")
 	_ck(tank.is_multiplayer_authority(), "離線時自己那台坦克要操控得動")
-	_ck(m.players.get_node(^"2").global_position.z == -8.0, "靶要放在固定位置")
-	m.players.get_node(^"2").take_damage(9999)
+	_ck(target.dummy and not tank.dummy, "恐龍是會自己跑的靶，坦克不是")
+	target.take_damage(9999)
 	_ck(m._over and m.status.text.begins_with("坦克獲勝"), "打爆靶子 -> 坦克贏")
+	_end(m)
+
+## 離線當恐龍：自己控恐龍，三台坦克靶會自己跑
+func _case_offline_dino() -> void:
+	var m: Node = load("res://main.tscn").instantiate()
+	root.add_child(m)
+	m._on_offline_dino_pressed()
+	var me: Node = m.players.get_node(^"1")
+	_ck(m.players.get_child_count() == 4, "應該是一隻恐龍 + 三台坦克靶")
+	_ck(me.is_in_group(&"dino") and me.is_multiplayer_authority(), "自己是恐龍而且操控得動")
+	_ck(not me.dummy, "自己那隻不能是靶")
+	_ck(m._tanks == 3, "三台坦克都要算進勝負")
+	for i in 3:
+		_ck(m.players.get_node(str(2 + i)).dummy, "第 %d 台坦克要是會自己跑的靶" % (i + 1))
+	# 「靶真的會自己跑」要跨物理幀才驗得到，見最後的 _phase 3
+
+	for i in 3:
+		m.players.get_node(str(2 + i)).take_damage(9999)
+	_ck(m._over and m.status.text.begins_with("恐龍獲勝"), "打爆三台靶 -> 恐龍贏")
 	_end(m)
 
 ## 砲管上下角度要夾在俯 8 度 ~ 仰 20 度之間
@@ -284,6 +319,15 @@ func _case_stamina() -> void:
 	_ck(still_gain > moving_gain * 1.5,
 		"站著回得該比走著快很多（站 %.1f vs 走 %.1f）" % [still_gain, moving_gain])
 	_end(m)
+
+## 開一局「我當恐龍」，等下面的 _phase 3 看坦克靶會不會自己跑
+func _start_dummy_case() -> void:
+	_phase = 3
+	_dummy_game = load("res://main.tscn").instantiate()
+	root.add_child(_dummy_game)
+	_dummy_game._on_offline_dino_pressed()
+	_dummy_tank = _dummy_game.players.get_node(^"2")
+	_dummy_from = Vector2(_dummy_tank.global_position.x, _dummy_tank.global_position.z)
 
 ## 砲彈要真的飛過去打中人（跨好幾個 frame）
 func _start_shell_case() -> void:

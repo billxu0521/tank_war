@@ -109,12 +109,24 @@ func _on_join_pressed() -> void:
 	multiplayer.multiplayer_peer = peer
 	_enter_game("連線中…")
 
-## 離線 debug：不連線，自己開一台坦克，配一隻不會動的恐龍當靶
+## 離線 debug：不連線，自己開一台坦克，配一隻會繞圈跑的恐龍當靶
 func _on_offline_pressed() -> void:
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
-	_enter_game("離線測試模式：你是坦克，恐龍是不會動的靶子")
+	_enter_game("離線測試模式：你是坦克，恐龍靶會自己跑")
 	_add_player(TANK, 1).global_position = Vector3(-20, 1.0, 15)  # 編號 1 才操控得動
-	_add_player(DINO, 2).global_position = Vector3(-20, 2.7, -8)  # 沒權限不會掉，直接放地上
+	var target := _add_player(DINO, 2)
+	target.set(&"dummy", true)
+	target.global_position = Vector3(-20, 5.0, -20)
+
+## 離線 debug：自己當恐龍，配三台會繞圈跑的坦克靶
+func _on_offline_dino_pressed() -> void:
+	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	_enter_game("離線測試模式：你是恐龍，三台坦克靶會自己跑（不會還擊）")
+	_add_player(DINO, 1).global_position = _spawn_point()  # 編號 1 才操控得動
+	for i in 3:
+		var t := _add_player(TANK, 2 + i)
+		t.set(&"dummy", true)
+		t.global_position = _spawn_point()
 
 func _enter_game(msg: String) -> void:
 	lobby.hide()

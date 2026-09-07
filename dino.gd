@@ -33,6 +33,11 @@ func _unhandled_input(e: InputEvent) -> void:
 	rotate_y(-mouse_look(e).x * MOUSE_SENS)
 
 func _physics_process(delta: float) -> void:
+	if dummy:
+		# 離線練習用的移動靶：繞圈跑，讓坦克練習算提前量
+		rotate_y(0.55 * delta)
+		move_step(delta, Vector3(0, 0, -1), false, false, false)
+		return
 	if not is_multiplayer_authority():
 		return
 	var input := Vector3(
