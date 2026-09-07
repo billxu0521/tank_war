@@ -75,7 +75,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、勝負、咬擊方向、離線兩種模式、砲管俯仰與轉速上限、油門手感、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、砲彈命中、恐龍跳躍、移動靶、體力規則都正常")
+		print("OK：生怪、傷害、勝負、咬擊方向、離線兩種模式、砲管俯仰、油門手感、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、砲彈命中、恐龍跳躍、移動靶、體力規則都正常")
 	return true
 
 # --- 共用 ---
@@ -214,12 +214,10 @@ func _case_gun_pitch() -> void:
 	_ck(is_equal_approx(t.gun_pitch, t.PITCH_MAX), "轉夠久要追上目標角度")
 	_ck(is_equal_approx(t.gun.rotation.x, t.gun_pitch), "砲管模型要跟著轉")
 
-	# 砲塔左右也一樣有轉速上限
-	t.aim_yaw = 3.0
+	# 砲塔左右是直接跟著滑鼠，沒有轉速上限
 	t.turret_yaw = 0.0
-	t._physics_process(dt)
-	_ck(t.turret_yaw <= t.TRAVERSE * dt + 0.0001 and t.turret_yaw > 0.0,
-		"砲塔一幀最多轉 %.4f 弧度（實際 %.4f）" % [t.TRAVERSE * dt, t.turret_yaw])
+	t.aim(Vector2(-500, 0))
+	_ck(absf(t.turret_yaw) > 1.0, "砲塔左右要立刻跟上滑鼠（轉了 %.2f 弧度）" % t.turret_yaw)
 	_end(m)
 
 ## 移動要有加速度：不會瞬間全速，也不會瞬間停住；倒車比前進慢

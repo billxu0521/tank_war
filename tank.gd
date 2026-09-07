@@ -7,7 +7,6 @@ const ACCEL := 7.0         # 每秒加速，約 1.3 秒到全速
 const BRAKE := 13.0        # 煞車比加速快，放開按鍵不會滑很遠
 const TURN := 1.8
 const TURN_ACCEL := 5.0    # 車身轉向也要拉起來，不是瞬間到最大轉速
-const TRAVERSE := 1.5      # 砲塔每秒最多轉這麼多弧度（滑鼠甩太快砲塔跟不上）
 const ELEVATE := 1.1       # 砲管每秒最多抬這麼多
 const RELOAD := 1.5
 const MOUSE_SENS := 0.004
@@ -19,9 +18,8 @@ const AIM_RANGE := 70.0    # 準心以這個距離做彈道歸零（場地大了
 const BARREL_Z := -1.5     # 砲管原本的位置，後座從這裡往後推
 const SHELL := preload("res://shell.tscn")
 
-var aim_yaw := 0.0      # 滑鼠指到哪
 var aim_pitch := 0.0
-var turret_yaw := 0.0   # 砲塔實際轉到哪，受 TRAVERSE 限制
+var turret_yaw := 0.0   # 砲塔左右，直接跟著滑鼠
 var gun_pitch := 0.0
 var _turn_rate := 0.0
 var _recoil := 0.0
@@ -41,9 +39,9 @@ func _ready() -> void:
 func _unhandled_input(e: InputEvent) -> void:
 	aim(mouse_look(e))
 
-## 滑鼠只決定「想瞄哪」，砲塔實際轉過去要受轉速限制
+## 砲塔左右直接跟著滑鼠；砲管上下有角度上限，抬升速度也有上限
 func aim(rel: Vector2) -> void:
-	aim_yaw -= rel.x * MOUSE_SENS
+	turret_yaw -= rel.x * MOUSE_SENS
 	aim_pitch = clampf(aim_pitch - rel.y * MOUSE_SENS, PITCH_MIN, PITCH_MAX)
 
 func _physics_process(delta: float) -> void:
@@ -53,9 +51,7 @@ func _physics_process(delta: float) -> void:
 	if not is_multiplayer_authority():
 		return  # 別人的坦克交給 MultiplayerSynchronizer 更新
 
-	# 砲塔和砲管都有轉速上限，滑鼠甩太快就跟不上
-	turret_yaw = move_toward(turret_yaw, aim_yaw, TRAVERSE * delta)
-	gun_pitch = move_toward(gun_pitch, aim_pitch, ELEVATE * delta)
+	gun_pitch = move_toward(gun_pitch, aim_pitch, ELEVATE * delta)  # 砲管抬升有速度上限
 	turret.rotation.y = turret_yaw
 	gun.rotation.x = gun_pitch
 
