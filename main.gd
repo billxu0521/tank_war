@@ -2,12 +2,14 @@ extends Node3D
 ## 坦克大戰恐龍 — 區網原型。開房的人當恐龍，加入的人當坦克。
 
 const PORT := 24680
-const ARENA := 200.0        # 場地邊長
+const ARENA := 320.0        # 場地邊長
 const SPAWN_CLEARANCE := 7.0  # 出生點離建築至少這麼遠
-const GRID := 7               # 建築排成 GRID x GRID
-const CELL := 26.0            # 格子間距，越小越密
-# 圍牆高度要壓過「跳 6.5 公尺 + 剩餘體力再爬約 17 公尺」的組合，恐龍才翻不出去
-const WALL_H := 30.0
+const GRID := 10              # 建築排成 GRID x GRID
+const CELL := 30.0            # 格子間距，越小越密
+const BUILDING_MAX_H := 28.0
+# 圍牆不給爬（見 dino.gd 的 _on_climbable_wall），所以恐龍能到的最高點就是
+# 「站上最高的屋頂再跳一下」。圍牆要比那個高，才翻不出去。
+const WALL_H := 40.0
 const WALL_T := 4.0
 const TANK := preload("res://tank.tscn")
 const DINO := preload("res://dino.tscn")
@@ -217,10 +219,11 @@ func _build_arena() -> void:
 	var e := (ARENA + WALL_T) * 0.5
 	var long := ARENA + WALL_T * 2.0
 	var col := Color(0.32, 0.31, 0.29)
-	_add_box(Vector3(0, WALL_H * 0.5, e), Vector3(long, WALL_H, WALL_T), col)
-	_add_box(Vector3(0, WALL_H * 0.5, -e), Vector3(long, WALL_H, WALL_T), col)
-	_add_box(Vector3(e, WALL_H * 0.5, 0), Vector3(WALL_T, WALL_H, long), col)
-	_add_box(Vector3(-e, WALL_H * 0.5, 0), Vector3(WALL_T, WALL_H, long), col)
+	for w: Array in [[Vector3(0, WALL_H * 0.5, e), Vector3(long, WALL_H, WALL_T)],
+			[Vector3(0, WALL_H * 0.5, -e), Vector3(long, WALL_H, WALL_T)],
+			[Vector3(e, WALL_H * 0.5, 0), Vector3(WALL_T, WALL_H, long)],
+			[Vector3(-e, WALL_H * 0.5, 0), Vector3(WALL_T, WALL_H, long)]]:
+		_add_box(w[0], w[1], col).add_to_group(&"arena_wall")
 
 	# ponytail: 固定 seed 的亂數，每台機器蓋出來的建築才會完全一樣（場地沒有走網路同步）
 	var rng := RandomNumberGenerator.new()
@@ -230,7 +233,7 @@ func _build_arena() -> void:
 			if rng.randf() < 0.12:
 				continue  # 留一點空地，不然完全沒有開闊處
 			# 高度差距拉開：矮的當掩體、高的要爬才上得去
-			var size := Vector3(rng.randf_range(8, 20), rng.randf_range(4, 24),
+			var size := Vector3(rng.randf_range(8, 20), rng.randf_range(6, BUILDING_MAX_H),
 				rng.randf_range(8, 20))
 			var half := (GRID - 1) * 0.5
 			var pos := Vector3((gx - half) * CELL + rng.randf_range(-6, 6), size.y * 0.5,
@@ -259,7 +262,7 @@ func _is_clear(p: Vector2) -> bool:
 			return false
 	return true
 
-func _add_box(pos: Vector3, size: Vector3, col: Color) -> void:
+func _add_box(pos: Vector3, size: Vector3, col: Color) -> StaticBody3D:
 	var body := StaticBody3D.new()
 	var mesh := BoxMesh.new()
 	mesh.size = size
@@ -276,6 +279,7 @@ func _add_box(pos: Vector3, size: Vector3, col: Color) -> void:
 	body.add_child(cs)
 	body.position = pos
 	$Arena.add_child(body)
+	return body
 
 # --- 雜項 ---
 

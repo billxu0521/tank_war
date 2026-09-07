@@ -65,7 +65,7 @@ text = "坦克大戰恐龍"
 
 [node name="Hint" type="Label" parent="UI/Root/Lobby"]
 text = "開房的人當恐龍，加入的人當坦克。
-WASD 移動，滑鼠瞄準，左鍵攻擊，Esc 開選單。\n坦克：滑鼠左右轉砲塔、上下抬砲管，砲彈會掉，遠距離要抬高。\n恐龍：左鍵咬前方，Space 跳躍，Shift 衝刺，貼牆按 W 往上爬（都吃體力，歸零會力竭）。"
+WASD 移動，滑鼠瞄準，左鍵攻擊，Esc 開選單。\n坦克：滑鼠左右轉砲塔、上下抬砲管，砲彈會掉，遠距離要抬高。\n恐龍：滑鼠上下看，左鍵咬前方，Space 跳躍，Shift 衝刺，貼建築按 W 往上爬。"
 
 [node name="IP" type="LineEdit" parent="UI/Root/Lobby"]
 text = "127.0.0.1"

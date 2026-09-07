@@ -24,6 +24,7 @@ const SPINE_DAMP := 8.0
 var skel: Skeleton3D
 var _idx := {}          # 骨頭名字 -> index
 var _phase := 0.0
+var look_pitch := 0.0   # 由 dino.gd 餵進來，讓頭跟著視角抬
 var _bite := 0.0        # 1 -> 0，咬擊動作的進度
 var _last_pos := Vector3.ZERO
 var _yaw_prev := 0.0
@@ -137,8 +138,9 @@ func _process(delta: float) -> void:
 		SPINE_STIFF, SPINE_DAMP, delta)
 	_pose_py("spine1", 0.06 + sin(_phase * 0.4) * 0.02, _spine_yaw[0])
 	_pose_py("spine2", 0.0, _spine_yaw[1])
-	_pose_py("neck", -0.20 + sin(_phase) * 0.05 * stride + chomp * 0.35, _spine_yaw[2])
-	_pose_py("head", 0.18 - chomp * 0.25, _spine_yaw[3])
+	_pose_py("neck", -0.20 + sin(_phase) * 0.05 * stride + chomp * 0.35 + look_pitch * 0.45,
+		_spine_yaw[2])
+	_pose_py("head", 0.18 - chomp * 0.25 + look_pitch * 0.35, _spine_yaw[3])
 	_pose("jaw", Vector3.RIGHT, -0.12 - chomp * 0.65)
 
 	# 小手貼著身體晃一下

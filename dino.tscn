@@ -4,8 +4,8 @@
 [ext_resource type="Script" path="res://trex.gd" id="2"]
 
 [sub_resource type="CapsuleShape3D" id="s1"]
-radius = 1.6
-height = 5.4
+radius = 2.4
+height = 8.1
 
 [sub_resource type="SceneReplicationConfig" id="r1"]
 properties/0/path = NodePath(".:position")
@@ -14,6 +14,9 @@ properties/0/replication_mode = 1
 properties/1/path = NodePath(".:rotation")
 properties/1/spawn = true
 properties/1/replication_mode = 1
+properties/2/path = NodePath(".:look_pitch")
+properties/2/spawn = true
+properties/2/replication_mode = 1
 
 [node name="Dino" type="CharacterBody3D" groups=["dino"]]
 script = ExtResource("1")
@@ -23,11 +26,14 @@ max_hp = 1000
 shape = SubResource("s1")
 
 [node name="Trex" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -2.7, 0)
+transform = Transform3D(1.5, 0, 0, 0, 1.5, 0, 0, 0, 1.5, 0, -4.05, 0)
 script = ExtResource("2")
 
-[node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.8829, 0.4695, 0, -0.4695, 0.8829, 0, 6, 11)
+[node name="CamPivot" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.9211, 0.3894, 0, -0.3894, 0.9211, 0, 2.0, 0)
+
+[node name="Camera3D" type="Camera3D" parent="CamPivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 17)
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
 replication_config = SubResource("r1")

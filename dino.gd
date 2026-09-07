@@ -1,6 +1,7 @@
 extends "res://fighter.gd"
 ## 恐龍：跑很快、血很多，沒有遠程。
-## 左鍵咬前方，Space 跳躍，Shift 衝刺，貼著牆按 W 往上爬。
+## 左鍵咬前方，Space 跳躍，Shift 衝刺，貼著建築按 W 往上爬（場地圍牆不給爬）。
+## 滑鼠左右轉身、上下看（頭會跟著抬，相機繞著身體轉）。
 ## 衝刺、跳躍、攀爬都吃體力；體力見底會力竭，要回到 EXHAUSTED_UNTIL 才能再出力。
 
 const SPEED := 16.0
@@ -13,24 +14,35 @@ const REGEN_MOVING := 7.0      # 邊走邊回慢很多
 const EXHAUSTED_UNTIL := 30.0  # 力竭後要回到這個值才能再衝刺／攀爬
 const CLIMB_SPEED := 6.0
 const MOUSE_SENS := 0.009  # 恐龍要靈活，轉頭比坦克快很多
-const BITE_REACH := 6.5
+const BITE_REACH := 9.0   # 體型放大 1.5 倍，嘴巴搆得更遠
 const BITE_DAMAGE := 35   # 剛好四口咬死一台 140 血的坦克
 const BITE_COOLDOWN := 1.1
 # 跳躍：拉開距離、跨過障礙、撲向坦克
 const JUMP_SPEED := 18.0  # 大約跳得起 6.5 公尺
 const JUMP_COST := 30.0
-const HEAD_HEIGHT := 1.6  # 視線從這個高度射出
+const HEAD_HEIGHT := 2.4  # 視線從這個高度射出
+const CAM_BASE := -0.40   # 相機支點的基礎俯角
+const PITCH_MIN := -0.75  # 往下看到底（約 43 度）
+const PITCH_MAX := 0.45   # 往上看到底（約 26 度）
 
+var look_pitch := 0.0   # 上下視角，有同步出去，遠端才看得到頭抬起來
 var stamina := STAMINA_MAX
 var exhausted := false
 var _bite_cd := 0.0
 
 func _ready() -> void:
 	super()
-	$Camera3D.current = is_multiplayer_authority()
+	$CamPivot/Camera3D.current = is_multiplayer_authority()
 
 func _unhandled_input(e: InputEvent) -> void:
-	rotate_y(-mouse_look(e).x * MOUSE_SENS)
+	var look := mouse_look(e)
+	rotate_y(-look.x * MOUSE_SENS)
+	look_pitch = clampf(look_pitch - look.y * MOUSE_SENS, PITCH_MIN, PITCH_MAX)
+
+## 相機和抬頭都要在遠端也看得到，所以放 _process（_physics_process 只有本人在跑）
+func _process(_delta: float) -> void:
+	$CamPivot.rotation.x = CAM_BASE + look_pitch
+	$Trex.look_pitch = look_pitch
 
 func _physics_process(delta: float) -> void:
 	if dummy:
@@ -59,7 +71,7 @@ func move_step(delta: float, input: Vector3, want_sprint: bool,
 		want_climb: bool, want_jump: bool) -> void:
 	var moving := input != Vector3.ZERO
 	# 貼著牆按 W 就往上爬。力竭就爬不動，會直接滑下來。
-	var climbing := want_climb and is_on_wall() and can_exert()
+	var climbing := want_climb and _on_climbable_wall() and can_exert()
 	var sprinting := want_sprint and moving and can_exert() and not climbing
 
 	var spend := 0.0
@@ -80,6 +92,15 @@ func move_step(delta: float, input: Vector3, want_sprint: bool,
 	if want_jump:
 		try_jump()
 	move_and_slide()
+
+## 貼到的是不是「爬得上去」的牆。場地四周的圍牆不算——不然從高樓跳過去
+## 再往上爬就翻出場外了。
+func _on_climbable_wall() -> bool:
+	for i in get_slide_collision_count():
+		var c := get_slide_collision(i)
+		if absf(c.get_normal().y) < 0.5 and not c.get_collider().is_in_group(&"arena_wall"):
+			return true   # 接近垂直的面，而且不是場地圍牆
+	return false
 
 ## 力竭中不能衝刺也不能爬。
 ## 沒有這個門檻的話，體力會在 0 附近抽動：回一點就衝、衝掉又停。
@@ -135,13 +156,13 @@ func _play_fx(jump: bool) -> void:
 	if jump:
 		# 起跳踢起一圈灰
 		var ring := TorusMesh.new()
-		ring.inner_radius = 2.2
-		ring.outer_radius = 3.0
+		ring.inner_radius = 3.3
+		ring.outer_radius = 4.5
 		Fx.burst(get_tree().get_first_node_in_group(&"arena"), ring,
-			Color(0.7, 0.65, 0.55, 0.7), global_position + Vector3(0, -2.4, 0),
+			Color(0.7, 0.65, 0.55, 0.7), global_position + Vector3(0, -4.0, 0),
 			Vector3(0.4, 1.0, 0.4), Vector3.ONE * 1.6, 0.35)
 	else:
 		# 張嘴咬下去 + 咬擊點爆一團
 		$Trex.bite()
 		Fx.burst(self, SphereMesh.new(), Color(1, 0.35, 0.35, 0.8),
-			Vector3(0, 1.1, -4.6), Vector3.ONE * 0.6, Vector3.ONE * 3.0, 0.2)
+			Vector3(0, 1.6, -7.0), Vector3.ONE * 0.9, Vector3.ONE * 4.5, 0.2)

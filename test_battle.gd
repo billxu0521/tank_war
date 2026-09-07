@@ -325,18 +325,26 @@ func _case_stamina() -> void:
 func _case_arena_walls() -> void:
 	var m := _new_game()
 	var d: Node = m.players.get_node(^"1")
+	# 圍牆不給爬，所以恐龍能到的最高點 = 站上最高的屋頂再跳一下
 	var jump_h: float = d.JUMP_SPEED * d.JUMP_SPEED / (2.0 * d.GRAVITY)
-	var climb_h: float = (d.STAMINA_MAX - d.JUMP_COST) / d.CLIMB_DRAIN * d.CLIMB_SPEED
-	_ck(m.WALL_H > jump_h + climb_h,
-		"圍牆 %.0f 公尺要高過跳 %.1f + 爬 %.1f = %.1f 公尺"
-		% [m.WALL_H, jump_h, climb_h, jump_h + climb_h])
+	var reach: float = m.BUILDING_MAX_H + jump_h
+	_ck(m.WALL_H > reach,
+		"圍牆 %.0f 公尺要高過「最高屋頂 %.0f + 跳 %.1f」= %.1f 公尺"
+		% [m.WALL_H, m.BUILDING_MAX_H, jump_h, reach])
 
-	var walls := 0
+	# 建築不能蓋超過上限，不然上面那條就白算了
+	var tallest := 0.0
 	for c in m.get_node(^"Arena").get_children():
+		if c.is_in_group(&"arena_wall"):
+			continue
 		for mi in c.get_children():
-			if mi is MeshInstance3D and mi.get_aabb().size.y > m.WALL_H - 0.1:
-				walls += 1
-	_ck(walls == 4, "四面都要有圍牆（現在 %d 面）" % walls)
+			if mi is MeshInstance3D:
+				tallest = maxf(tallest, mi.get_aabb().size.y)
+	_ck(tallest <= m.BUILDING_MAX_H + 0.01,
+		"最高的建築 %.1f 不能超過上限 %.0f" % [tallest, m.BUILDING_MAX_H])
+
+	var walls := m.get_tree().get_nodes_in_group(&"arena_wall")
+	_ck(walls.size() == 4, "四面都要有圍牆（現在 %d 面）" % walls.size())
 	_end(m)
 
 ## 開一局「我當恐龍」，等下面的 _phase 3 看坦克靶會不會自己跑
