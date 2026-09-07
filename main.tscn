@@ -1,6 +1,7 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://main.gd" id="1"]
+[ext_resource type="Script" path="res://egg.gd" id="2"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_m"]
 
@@ -27,6 +28,24 @@ corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
+[sub_resource type="StandardMaterial3D" id="egg_mat"]
+albedo_color = Color(0.97, 0.94, 0.84, 1)
+emission_enabled = true
+emission = Color(0.5, 0.45, 0.3, 1)
+
+[sub_resource type="SphereMesh" id="egg_mesh"]
+material = SubResource("egg_mat")
+radius = 1.1
+height = 2.2
+
+[sub_resource type="SceneReplicationConfig" id="egg_repl"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath(".:carrier")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+
 [node name="Main" type="Node3D"]
 script = ExtResource("1")
 
@@ -38,6 +57,16 @@ environment = SubResource("env")
 [node name="Sun" type="DirectionalLight3D" parent="Arena"]
 transform = Transform3D(0.866, -0.433, 0.25, 0, 0.5, 0.866, -0.5, -0.75, 0.433, 0, 20, 0)
 shadow_enabled = true
+
+[node name="Egg" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1.35, 0, 0, 0, 1, 0, 3, 0)
+script = ExtResource("2")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Egg"]
+mesh = SubResource("egg_mesh")
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="Egg"]
+replication_config = SubResource("egg_repl")
 
 [node name="Players" type="Node3D" parent="."]
 
@@ -65,7 +94,7 @@ text = "坦克大戰恐龍"
 
 [node name="Hint" type="Label" parent="UI/Root/Lobby"]
 text = "開房的人當恐龍，加入的人當坦克。
-WASD 移動，滑鼠瞄準，左鍵攻擊，Esc 開選單。\n坦克：滑鼠左右轉砲塔、上下抬砲管，砲彈會掉，遠距離要抬高。\n恐龍：滑鼠上下看，左鍵咬前方，Space 跳躍，Shift 衝刺，貼建築按 W 往上爬。"
+WASD 移動，滑鼠瞄準，左鍵攻擊，Esc 開選單。\n坦克：滑鼠左右轉砲塔、上下抬砲管，砲彈會掉，遠距離要抬高。\n恐龍：左鍵吐火球，F 咬，Space 跳躍，Shift 衝刺，貼建築按 W 爬。\n坦克：撿蛋開到藍色撤離區就贏。"
 
 [node name="IP" type="LineEdit" parent="UI/Root/Lobby"]
 text = "127.0.0.1"

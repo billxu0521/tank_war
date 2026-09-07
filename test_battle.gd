@@ -32,6 +32,8 @@ func _process(_delta: float) -> bool:
 		_case_cover()
 		_case_trex_rig()
 		_case_stamina()
+		_case_egg()
+		_case_fireball()
 		_case_arena_walls()
 		_start_shell_case()
 		return false
@@ -75,7 +77,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、勝負、咬擊方向、離線兩種模式、砲管俯仰、油門手感、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、砲彈命中、恐龍跳躍、移動靶、體力規則都正常")
+		print("OK：生怪、傷害、勝負、咬擊方向、離線兩種模式、砲管俯仰、油門手感、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、砲彈命中、恐龍跳躍、移動靶、體力規則、蛋與撤離、火球都正常")
 	return true
 
 # --- 共用 ---
@@ -111,7 +113,7 @@ func _case_dino_wins() -> void:
 	var d: Node = m.players.get_node(^"1")
 	var t2: Node = m.players.get_node(^"2")
 	var bites := ceili(float(t2.max_hp) / d.BITE_DAMAGE)
-	_ck(bites == 4, "平衡目標：咬四口才死一台坦克（現在是 %d 口）" % bites)
+	_ck(bites == 6, "平衡目標：咬六口才死一台坦克（現在是 %d 口）" % bites)
 
 	for i in bites - 1:
 		t2.take_damage(d.BITE_DAMAGE)
@@ -127,7 +129,7 @@ func _case_tanks_win() -> void:
 	var m := _new_game()
 	var dino: Node = m.players.get_node(^"1")
 	var shells := ceili(float(dino.max_hp) / Shell.DAMAGE)
-	_ck(shells >= 20 and shells <= 30, "平衡目標：全隊打 20~30 發打死恐龍（現在 %d 發）" % shells)
+	_ck(shells >= 12 and shells <= 22, "平衡目標：全隊打 12~22 發打死恐龍（現在 %d 發）" % shells)
 
 	for i in shells - 1:
 		dino.take_damage(Shell.DAMAGE)
@@ -362,6 +364,58 @@ func _case_stamina() -> void:
 	var moving_gain: float = a.stamina - 50.0
 	_ck(still_gain > moving_gain * 1.5,
 		"站著回得該比走著快很多（站 %.1f vs 走 %.1f）" % [still_gain, moving_gain])
+	_end(m)
+
+## 蛋：坦克靠近撿走、跟著車跑、持有者死了掉在原地、帶進撤離區就贏
+func _case_egg() -> void:
+	var m := _new_game()
+	var t2: Node3D = m.players.get_node(^"2")
+	var t3: Node3D = m.players.get_node(^"3")
+	m.players.get_node(^"1").global_position = Vector3(0, 500, 0)  # 恐龍閃遠一點
+	t3.global_position = Vector3(0, 500, 40)
+
+	# 撿起來
+	t2.global_position = Vector3(0, 1, 0)
+	m.egg.global_position = Vector3(3, 1, 0)
+	m.egg.carrier = 0
+	m._egg_step()
+	_ck(m.egg.carrier == 2, "坦克靠近應該把蛋撿走（carrier=%d）" % m.egg.carrier)
+
+	# 跟著車跑
+	t2.global_position = Vector3(20, 1, 20)
+	m._egg_step()
+	_ck(m.egg.global_position.distance_to(t2.global_position) < 5.0, "蛋要跟著持有者移動")
+
+	# 持有者陣亡 -> 蛋掉在原地，不會跟著消失
+	var dropped: Vector3 = m.egg.global_position
+	t2.free()
+	m._egg_step()
+	_ck(m.egg.carrier == 0, "持有者陣亡後蛋要變成無人持有")
+	_ck(m.egg.global_position.is_equal_approx(dropped), "蛋要留在原地，不會回到出生點")
+
+	# 帶進撤離區 -> 坦克獲勝
+	_ck(m._exits.size() == 4, "應該有四個撤離區（現在 %d 個）" % m._exits.size())
+	t3.global_position = m._exits[0] + Vector3(0, 1, 0)
+	m.egg.global_position = t3.global_position
+	m.egg.carrier = 3
+	m._egg_step()
+	_ck(m._over and m.status.text.contains("撤離"), "帶著蛋進撤離區 -> 坦克獲勝")
+	_end(m)
+
+## 恐龍的火球：吃體力、有冷卻、真的會生出一顆
+func _case_fireball() -> void:
+	var m := _new_game()
+	var d: Node = m.players.get_node(^"1")
+	var before: float = d.stamina
+	d._spit()
+	var balls := 0
+	for c in m.get_node(^"Arena").get_children():
+		if c is Fireball:
+			balls += 1
+	_ck(balls == 1, "吐一次應該生出一顆火球（現在 %d 顆）" % balls)
+	_ck(Fireball.SPEED < Shell.SPEED, "火球要比砲彈慢，才躲得掉")
+	_ck(d.FIRE_COST > 0.0 and d.FIRE_COOLDOWN > 0.0, "火球要吃體力也要有冷卻，不然可以無限噴")
+	d.stamina = before
 	_end(m)
 
 ## 場地四周要有牆，而且要高過恐龍「跳 + 爬」能到的高度

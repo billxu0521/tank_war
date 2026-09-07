@@ -7,7 +7,7 @@ extends Node3D
 ## 用區域偵測會直接穿過坦克。
 
 const SPEED := 100.0
-const DAMAGE := 40
+const DAMAGE := 60
 const GRAVITY := 9.8  # 有掉落，遠距離要抬砲口
 
 var vel := Vector3.ZERO

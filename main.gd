@@ -11,6 +11,9 @@ const BUILDING_MAX_H := 28.0
 # 「站上最高的屋頂再跳一下」。圍牆要比那個高，才翻不出去。
 const WALL_H := 40.0
 const WALL_T := 4.0
+const EXIT_RADIUS := 14.0     # 撤離區半徑
+const PICKUP_RANGE := 6.0     # 坦克靠這麼近就撿得到蛋
+const EGG_HOLD_HEIGHT := 2.2  # 蛋掛在坦克上方多高
 const TANK := preload("res://tank.tscn")
 const DINO := preload("res://dino.tscn")
 
@@ -22,14 +25,17 @@ const DINO := preload("res://dino.tscn")
 @onready var crosshair: Label = $UI/Root/Crosshair
 @onready var menu: Control = $UI/Root/Menu
 @onready var players: Node3D = $Players
+@onready var egg: Egg = $Egg
 
 var _blocked: Array[Rect2] = []  # 建築物在 XZ 平面佔的範圍
+var _exits: Array[Vector3] = []  # 四個撤離區的中心
 var _tanks := 0
 var _over := false
 
 func _ready() -> void:
 	_use_cjk_font()
 	_build_arena()
+	_build_exits()
 	multiplayer.peer_connected.connect(_spawn)
 	multiplayer.peer_disconnected.connect(_despawn)
 	multiplayer.connected_to_server.connect(func() -> void: status.text = "已連線，你是坦克。WASD 移動，滑鼠瞄準砲塔，左鍵開砲")
@@ -87,6 +93,7 @@ func _to_lobby(msg: String) -> void:
 		p.free()  # 用 free 不用 queue_free，不然馬上重開會撞到同名節點
 	_tanks = 0
 	_over = false
+	egg.carrier = 0
 	menu.hide()
 	crosshair.hide()
 	stamina_bar.hide()
@@ -134,6 +141,10 @@ func _on_offline_dino_pressed() -> void:
 		t.global_position = _spawn_point()
 
 func _enter_game(msg: String) -> void:
+	if multiplayer.is_server():
+		egg.carrier = 0
+		egg.global_position = _spawn_point(ARENA * 0.22)  # 放中央附近，不要一開始就在出口旁邊
+		egg.global_position.y = 1.2
 	lobby.hide()
 	menu.hide()
 	status.text = msg
@@ -182,6 +193,33 @@ func _finish(msg: String) -> void:
 	status.text = msg + "  （按 Esc 放開滑鼠）"
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
+func _physics_process(_delta: float) -> void:
+	if lobby.visible or _over or not multiplayer.is_server():
+		return
+	_egg_step()
+
+## 蛋的規則：坦克靠近就撿走，持有者死掉就留在原地，帶進撤離區就贏。
+func _egg_step() -> void:
+	if egg.carrier == 0:
+		for p in players.get_children():
+			if p.is_in_group(&"dino"):
+				continue
+			if egg.global_position.distance_to(p.global_position) < PICKUP_RANGE:
+				egg.carrier = p.name.to_int()
+				return
+		return
+
+	var holder := players.get_node_or_null(NodePath(str(egg.carrier)))
+	if holder == null:
+		egg.carrier = 0   # 持有者陣亡，蛋就掉在他最後的位置
+		return
+	egg.global_position = holder.global_position + Vector3.UP * EGG_HOLD_HEIGHT
+	for e: Vector3 in _exits:
+		if Vector2(egg.global_position.x - e.x, egg.global_position.z - e.z).length() < EXIT_RADIUS:
+			_over = true
+			_finish.rpc("坦克帶著蛋撤離，坦克獲勝！")
+			return
+
 func _process(_delta: float) -> void:
 	# 連線還沒建立好就問 id 會噴錯
 	if lobby.visible or multiplayer.multiplayer_peer == null \
@@ -194,10 +232,16 @@ func _process(_delta: float) -> void:
 	if stamina_bar.visible:
 		stamina_bar.value = me.stamina
 		stamina_bar.modulate = Color(1, 0.35, 0.3) if me.exhausted else Color.WHITE
-	hud.text = "我的血量：%s    恐龍血量：%s    存活坦克：%d" % [
+	var egg_state := "無人持有"
+	if egg.carrier == multiplayer.get_unique_id():
+		egg_state = "在你身上！開去藍色撤離區"
+	elif egg.carrier != 0:
+		egg_state = "被坦克 %d 拿走了" % egg.carrier
+	hud.text = "我的血量：%s    恐龍血量：%s    存活坦克：%d    蛋：%s" % [
 		me.hp if me else "陣亡",
 		dino.hp if dino else 0,
-		players.get_child_count() - (1 if dino else 0)]
+		players.get_child_count() - (1 if dino else 0),
+		egg_state]
 
 ## 準心畫在「砲彈會落到哪」，不是螢幕正中央——抬砲時看得出彈道往上跑。
 ## 恐龍是近戰，沒有 aim_point，就不顯示。
@@ -244,11 +288,27 @@ func _build_arena() -> void:
 				pos.z - size.z * 0.5 - SPAWN_CLEARANCE,
 				size.x + SPAWN_CLEARANCE * 2, size.z + SPAWN_CLEARANCE * 2))
 
+## 四個撤離區，四邊各一個。只有一個出口的話恐龍蹲在那裡就好，
+## 等於把「守著不動」的問題從蛋搬到出口。
+func _build_exits() -> void:
+	var d := ARENA * 0.5 - 22.0
+	for c: Vector3 in [Vector3(0, 0, d), Vector3(0, 0, -d), Vector3(d, 0, 0), Vector3(-d, 0, 0)]:
+		_exits.append(c)
+		var mesh := BoxMesh.new()
+		mesh.size = Vector3(EXIT_RADIUS * 2.0, 0.3, EXIT_RADIUS * 2.0)
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = Color(0.25, 0.75, 0.95, 0.55)
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mesh.material = mat
+		var mi := MeshInstance3D.new()
+		mi.mesh = mesh
+		mi.position = c + Vector3(0, 0.15, 0)
+		$Arena.add_child(mi)
+
 ## 找一個不在建築物裡面的出生點
-func _spawn_point() -> Vector3:
+func _spawn_point(span := ARENA * 0.45) -> Vector3:
 	for i in 80:
-		var p := Vector2(randf_range(-ARENA * 0.45, ARENA * 0.45),
-			randf_range(-ARENA * 0.45, ARENA * 0.45))
+		var p := Vector2(randf_range(-span, span), randf_range(-span, span))
 		if _is_clear(p):
 			return Vector3(p.x, 5.0, p.y)
 	# 建築只蓋在中間，外圍一定是空的

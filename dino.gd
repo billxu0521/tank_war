@@ -1,6 +1,7 @@
 extends "res://fighter.gd"
 ## 恐龍：跑很快、血很多，沒有遠程。
-## 左鍵咬前方，Space 跳躍，Shift 衝刺，貼著建築按 W 往上爬（場地圍牆不給爬）。
+## 左鍵吐火球（遠程、吃體力），F 咬前方，Space 跳躍，Shift 衝刺，
+## 貼著建築按 W 往上爬（場地圍牆不給爬）。
 ## 滑鼠左右轉身、上下看（頭會跟著抬，相機繞著身體轉）。
 ## 衝刺、跳躍、攀爬都吃體力；體力見底會力竭，要回到 EXHAUSTED_UNTIL 才能再出力。
 
@@ -17,12 +18,18 @@ const EXHAUSTED_UNTIL := 30.0  # 力竭後要回到這個值才能再衝刺／�
 const CLIMB_SPEED := 6.0
 const MOUSE_SENS := 0.009  # 恐龍要靈活，轉頭比坦克快很多
 const BITE_REACH := 9.0   # 體型放大 1.5 倍，嘴巴搆得更遠
-const BITE_DAMAGE := 35   # 剛好四口咬死一台 140 血的坦克
+const BITE_DAMAGE := 35   # 六口才咬死一台 200 血的坦克
 const BITE_COOLDOWN := 1.1
 # 跳躍：拉開距離、跨過障礙、撲向坦克
 const JUMP_SPEED := 18.0  # 大約跳得起 6.5 公尺
 const JUMP_COST := 30.0
-const HEAD_HEIGHT := 2.4  # 視線從這個高度射出
+const HEAD_HEIGHT := 2.4  # 視線和火球都從這個高度射出
+# 火球：飛得慢、弧度大，逼坦克換位用的，不是主力輸出
+const FIRE_COOLDOWN := 1.5
+const FIRE_COST := 25.0
+const FIREBALL := preload("res://fireball.tscn")
+const AIM_RANGE := 35.0    # 準心以這個距離做彈道歸零
+const MUZZLE_FWD := 5.0    # 火球從嘴巴前方這麼遠生出來
 const CAM_BASE := -0.40   # 相機支點的基礎俯角
 const PITCH_MIN := -0.75  # 往下看到底（約 43 度）
 const PITCH_MAX := 0.45   # 往上看到底（約 26 度）
@@ -31,6 +38,7 @@ var look_pitch := 0.0   # 上下視角，有同步出去，遠端才看得到頭
 var stamina := STAMINA_MAX
 var exhausted := false
 var _bite_cd := 0.0
+var _fire_cd := 0.0
 
 func _ready() -> void:
 	super()
@@ -62,10 +70,16 @@ func _physics_process(delta: float) -> void:
 		Input.is_key_pressed(KEY_W), Input.is_key_pressed(KEY_SPACE))
 
 	_bite_cd -= delta
-	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and _bite_cd <= 0.0:
+	_fire_cd -= delta
+	if Input.is_key_pressed(KEY_F) and _bite_cd <= 0.0:
 		_bite_cd = BITE_COOLDOWN
 		_hit_nearby(BITE_REACH, BITE_DAMAGE, 0.3)  # 只咬前方
 		_play_fx.rpc(false)
+	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and _fire_cd <= 0.0 \
+			and stamina >= FIRE_COST and can_exert():
+		_fire_cd = FIRE_COOLDOWN
+		stamina -= FIRE_COST
+		_spit.rpc()
 
 ## 一幀的移動。輸入是傳進來的，鍵盤只在 _physics_process 讀一次，
 ## 這樣測試才驅動得了（Input 的按鍵狀態沒辦法從程式偽造）。
@@ -117,6 +131,33 @@ func _update_stamina(delta: float, spend: float, moving: bool) -> void:
 		exhausted = true
 	elif stamina >= EXHAUSTED_UNTIL:
 		exhausted = false
+
+## 火球在 AIM_RANGE 距離會落在哪。恐龍嘴巴離地 6.5 公尺、坦克才 0.6 公尺高，
+## 平射一定從頭上飛過——沒有準心的話玩家根本瞄不到。
+func aim_point() -> Vector3:
+	var t := AIM_RANGE / Fireball.SPEED
+	return _spit_muzzle() + _spit_dir() * AIM_RANGE \
+		+ Vector3.DOWN * (0.5 * Fireball.GRAVITY * t * t)
+
+func _spit_dir() -> Vector3:
+	return (global_transform.basis * Vector3(0, sin(look_pitch), -cos(look_pitch))).normalized()
+
+## 準心和實際發射共用這個起點，不然兩邊會差一個 MUZZLE_FWD 的下墜量
+func _spit_muzzle() -> Vector3:
+	return global_position + Vector3.UP * HEAD_HEIGHT + _spit_dir() * MUZZLE_FWD
+
+## 吐火球。從嘴巴前方射出，方向跟著上下視角走。
+@rpc("any_peer", "call_local", "reliable")
+func _spit() -> void:
+	var dir := _spit_dir()
+	var muzzle := _spit_muzzle()
+	var f := FIREBALL.instantiate()
+	f.vel = dir * Fireball.SPEED
+	get_tree().get_first_node_in_group(&"arena").add_child(f)
+	f.global_position = muzzle
+	$Trex.bite()   # 順便張嘴
+	Fx.burst(get_tree().get_first_node_in_group(&"arena"), SphereMesh.new(),
+		Color(1, 0.55, 0.15, 0.9), muzzle, Vector3.ONE * 0.5, Vector3.ONE * 3.0, 0.18)
 
 ## 跳躍。踩在地上而且體力夠才跳得起來。
 func try_jump() -> bool:
