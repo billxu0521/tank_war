@@ -3,7 +3,9 @@ extends Node3D
 
 const PORT := 24680
 const ARENA := 200.0        # 場地邊長
-const SPAWN_CLEARANCE := 8.0  # 出生點離建築至少這麼遠
+const SPAWN_CLEARANCE := 7.0  # 出生點離建築至少這麼遠
+const GRID := 7               # 建築排成 GRID x GRID
+const CELL := 26.0            # 格子間距，越小越密
 const TANK := preload("res://tank.tscn")
 const DINO := preload("res://dino.tscn")
 
@@ -174,6 +176,7 @@ func _process(_delta: float) -> void:
 	stamina_bar.visible = me != null and me == dino
 	if stamina_bar.visible:
 		stamina_bar.value = me.stamina
+		stamina_bar.modulate = Color(1, 0.35, 0.3) if me.exhausted else Color.WHITE
 	hud.text = "我的血量：%s    恐龍血量：%s    存活坦克：%d" % [
 		me.hp if me else "陣亡",
 		dino.hp if dino else 0,
@@ -197,14 +200,16 @@ func _build_arena() -> void:
 	# ponytail: 固定 seed 的亂數，每台機器蓋出來的建築才會完全一樣（場地沒有走網路同步）
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 20260906
-	for gx in 5:
-		for gz in 5:
-			if rng.randf() < 0.2:
-				continue  # 留一些空地，不然變迷宮
-			var size := Vector3(rng.randf_range(10, 18), rng.randf_range(7, 13),
-				rng.randf_range(10, 18))
-			var pos := Vector3((gx - 2) * 38.0 + rng.randf_range(-9, 9), size.y * 0.5,
-				(gz - 2) * 38.0 + rng.randf_range(-9, 9))
+	for gx in GRID:
+		for gz in GRID:
+			if rng.randf() < 0.12:
+				continue  # 留一點空地，不然完全沒有開闊處
+			# 高度差距拉開：矮的當掩體、高的要爬才上得去
+			var size := Vector3(rng.randf_range(8, 20), rng.randf_range(4, 24),
+				rng.randf_range(8, 20))
+			var half := (GRID - 1) * 0.5
+			var pos := Vector3((gx - half) * CELL + rng.randf_range(-6, 6), size.y * 0.5,
+				(gz - half) * CELL + rng.randf_range(-6, 6))
 			_add_box(pos, size, Color(0.45, 0.40, 0.35))
 			# 出生點要避開，不然會卡在牆裡
 			_blocked.append(Rect2(pos.x - size.x * 0.5 - SPAWN_CLEARANCE,
@@ -213,17 +218,21 @@ func _build_arena() -> void:
 
 ## 找一個不在建築物裡面的出生點
 func _spawn_point() -> Vector3:
-	for i in 40:
+	for i in 80:
 		var p := Vector2(randf_range(-ARENA * 0.45, ARENA * 0.45),
 			randf_range(-ARENA * 0.45, ARENA * 0.45))
-		var clear := true
-		for r: Rect2 in _blocked:
-			if r.has_point(p):
-				clear = false
-				break
-		if clear:
+		if _is_clear(p):
 			return Vector3(p.x, 5.0, p.y)
-	return Vector3(0, 5, 0)
+	# 建築只蓋在中間，外圍一定是空的
+	var edge := ARENA * 0.46
+	var corner := Vector2(edge, edge).rotated(randf() * TAU)
+	return Vector3(corner.x, 5.0, corner.y)
+
+func _is_clear(p: Vector2) -> bool:
+	for r: Rect2 in _blocked:
+		if r.has_point(p):
+			return false
+	return true
 
 func _add_box(pos: Vector3, size: Vector3, col: Color) -> void:
 	var body := StaticBody3D.new()

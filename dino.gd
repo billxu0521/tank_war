@@ -1,12 +1,17 @@
 extends "res://fighter.gd"
 ## 恐龍：跑很快、血很多，沒有遠程。
-## 左鍵咬前方，Space 跳躍（吃體力），Shift 衝刺（吃體力）。
+## 左鍵咬前方，Space 跳躍，Shift 衝刺，貼著牆按 W 往上爬。
+## 衝刺、跳躍、攀爬都吃體力；體力見底會力竭，要回到 EXHAUSTED_UNTIL 才能再出力。
 
 const SPEED := 16.0
 const SPRINT_MULT := 1.9
 const STAMINA_MAX := 100.0
-const STAMINA_DRAIN := 32.0  # 每秒消耗，全滿約衝 3 秒
-const STAMINA_REGEN := 16.0  # 每秒回復，回滿約 6 秒
+const SPRINT_DRAIN := 32.0     # 每秒；全滿約衝 3 秒
+const CLIMB_DRAIN := 25.0      # 每秒；全滿約爬 4 秒 = 24 公尺，剛好爬得完最高的建築
+const REGEN_STILL := 16.0      # 站著不動每秒回
+const REGEN_MOVING := 7.0      # 邊走邊回慢很多
+const EXHAUSTED_UNTIL := 30.0  # 力竭後要回到這個值才能再衝刺／攀爬
+const CLIMB_SPEED := 6.0
 const MOUSE_SENS := 0.009  # 恐龍要靈活，轉頭比坦克快很多
 const BITE_REACH := 6.5
 const BITE_DAMAGE := 35   # 剛好四口咬死一台 140 血的坦克
@@ -17,6 +22,7 @@ const JUMP_COST := 30.0
 const HEAD_HEIGHT := 1.6  # 視線從這個高度射出
 
 var stamina := STAMINA_MAX
+var exhausted := false
 var _bite_cd := 0.0
 
 func _ready() -> void:
@@ -29,31 +35,62 @@ func _unhandled_input(e: InputEvent) -> void:
 func _physics_process(delta: float) -> void:
 	if not is_multiplayer_authority():
 		return
-
 	var input := Vector3(
 		float(Input.is_key_pressed(KEY_D)) - float(Input.is_key_pressed(KEY_A)),
 		0.0,
 		float(Input.is_key_pressed(KEY_S)) - float(Input.is_key_pressed(KEY_W)))
-	var sprinting := Input.is_key_pressed(KEY_SHIFT) and stamina > 0.0 and input != Vector3.ZERO
-	if sprinting:
-		stamina = maxf(stamina - STAMINA_DRAIN * delta, 0.0)
-	else:
-		stamina = minf(stamina + STAMINA_REGEN * delta, STAMINA_MAX)
-
-	var speed := SPEED * (SPRINT_MULT if sprinting else 1.0)
-	var move := (global_transform.basis * input).normalized() * speed
-	velocity.x = move.x
-	velocity.z = move.z
-	_apply_gravity(delta)
-	if Input.is_key_pressed(KEY_SPACE):
-		try_jump()
-	move_and_slide()
+	move_step(delta, input, Input.is_key_pressed(KEY_SHIFT),
+		Input.is_key_pressed(KEY_W), Input.is_key_pressed(KEY_SPACE))
 
 	_bite_cd -= delta
 	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and _bite_cd <= 0.0:
 		_bite_cd = BITE_COOLDOWN
 		_hit_nearby(BITE_REACH, BITE_DAMAGE, 0.3)  # 只咬前方
 		_play_fx.rpc(false)
+
+## 一幀的移動。輸入是傳進來的，鍵盤只在 _physics_process 讀一次，
+## 這樣測試才驅動得了（Input 的按鍵狀態沒辦法從程式偽造）。
+func move_step(delta: float, input: Vector3, want_sprint: bool,
+		want_climb: bool, want_jump: bool) -> void:
+	var moving := input != Vector3.ZERO
+	# 貼著牆按 W 就往上爬。力竭就爬不動，會直接滑下來。
+	var climbing := want_climb and is_on_wall() and can_exert()
+	var sprinting := want_sprint and moving and can_exert() and not climbing
+
+	var spend := 0.0
+	if climbing:
+		spend = CLIMB_DRAIN
+	elif sprinting:
+		spend = SPRINT_DRAIN
+	_update_stamina(delta, spend, moving)
+
+	var speed := SPEED * (SPRINT_MULT if sprinting else 1.0)
+	var move := (global_transform.basis * input).normalized() * speed
+	velocity.x = move.x
+	velocity.z = move.z
+	_apply_gravity(delta)
+	if climbing:
+		# 往上爬的同時保留往前的推力，爬過屋簷才會自己翻上去
+		velocity.y = CLIMB_SPEED
+	if want_jump:
+		try_jump()
+	move_and_slide()
+
+## 力竭中不能衝刺也不能爬。
+## 沒有這個門檻的話，體力會在 0 附近抽動：回一點就衝、衝掉又停。
+func can_exert() -> bool:
+	return not exhausted
+
+## spend > 0 表示這一幀在出力（衝刺或攀爬），否則回復。站著回得比走著快。
+func _update_stamina(delta: float, spend: float, moving: bool) -> void:
+	if spend > 0.0:
+		stamina = maxf(stamina - spend * delta, 0.0)
+	else:
+		stamina = minf(stamina + (REGEN_MOVING if moving else REGEN_STILL) * delta, STAMINA_MAX)
+	if stamina <= 0.0:
+		exhausted = true
+	elif stamina >= EXHAUSTED_UNTIL:
+		exhausted = false
 
 ## 跳躍。踩在地上而且體力夠才跳得起來。
 func try_jump() -> bool:

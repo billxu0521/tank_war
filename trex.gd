@@ -101,7 +101,8 @@ func bite() -> void:
 func _process(delta: float) -> void:
 	var moved := (global_position - _last_pos) / maxf(delta, 0.0001)
 	_last_pos = global_position
-	var speed := Vector2(moved.x, moved.z).length()
+	# 往上爬時腳也要動一下。只算往上的部分，不然下墜會變成空中亂踢
+	var speed := Vector2(moved.x, moved.z).length() + maxf(moved.y, 0.0) * 0.5
 	var stride := clampf(speed / 16.0, 0.0, 1.5)  # 站著不動就只剩呼吸
 	_phase += delta * (2.0 + speed * 0.55)
 	_bite = maxf(_bite - delta * 3.5, 0.0)

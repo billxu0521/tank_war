@@ -25,6 +25,7 @@ func _process(_delta: float) -> bool:
 		_case_back_to_lobby()
 		_case_cover()
 		_case_trex_rig()
+		_case_stamina()
 		_start_shell_case()
 		return false
 	# 剩下的要跨好幾個 frame 才驗得到
@@ -57,7 +58,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、勝負、咬擊方向、離線模式、砲管俯仰、回大廳重開、建築擋視線、暴龍骨架與尾巴慣性、砲彈命中、恐龍跳躍都正常")
+		print("OK：生怪、傷害、勝負、咬擊方向、離線模式、砲管俯仰、回大廳重開、建築擋視線、暴龍骨架與尾巴慣性、砲彈命中、恐龍跳躍、體力規則都正常")
 	return true
 
 # --- 共用 ---
@@ -243,6 +244,45 @@ func _case_trex_rig() -> void:
 		overshoot = maxf(overshoot, -sign_at_turn * t._tail_yaw[3])
 	_ck(overshoot > 0.05, "停止轉身後尾尖要反向甩過頭（過衝 %.3f）" % overshoot)
 	_ck(absf(t._tail_yaw[3]) < 0.05, "最後要收斂回中間，不能一直晃（現在 %.3f）" % t._tail_yaw[3])
+	_end(m)
+
+## 體力：耗光會力竭，要回到門檻以上才能再衝刺／攀爬
+func _case_stamina() -> void:
+	var m := _new_game()
+	var d: Node = m.players.get_node(^"1")
+	_ck(d.stamina == d.STAMINA_MAX and d.can_exert(), "一開始滿體力，衝得動")
+
+	# 一直衝，看幾秒耗光
+	var secs := 0.0
+	while d.stamina > 0.0 and secs < 20.0:
+		d._update_stamina(1.0 / 120.0, d.SPRINT_DRAIN, true)
+		secs += 1.0 / 120.0
+	_ck(secs > 2.0 and secs < 4.5, "全滿應該衝得了 3 秒左右（實際 %.1f 秒）" % secs)
+	_ck(not d.can_exert(), "體力歸零 -> 力竭，不能再衝刺")
+
+	# 回一點點還是不行，這是防止在 0 附近抽動
+	for i in 120:
+		d._update_stamina(1.0 / 120.0, 0.0, true)
+	_ck(d.stamina > 0.0 and d.stamina < d.EXHAUSTED_UNTIL, "回復中但還沒到門檻")
+	_ck(not d.can_exert(), "沒回到門檻之前不能衝刺")
+
+	# 回到門檻以上才解除
+	while d.stamina < d.EXHAUSTED_UNTIL:
+		d._update_stamina(1.0 / 120.0, 0.0, false)
+	_ck(d.can_exert(), "回到門檻以上才能再出力")
+
+	# 站著回得比走著快
+	var a: Node = m.players.get_node(^"1")
+	a.stamina = 50.0
+	for i in 120:
+		a._update_stamina(1.0 / 120.0, 0.0, false)
+	var still_gain: float = a.stamina - 50.0
+	a.stamina = 50.0
+	for i in 120:
+		a._update_stamina(1.0 / 120.0, 0.0, true)
+	var moving_gain: float = a.stamina - 50.0
+	_ck(still_gain > moving_gain * 1.5,
+		"站著回得該比走著快很多（站 %.1f vs 走 %.1f）" % [still_gain, moving_gain])
 	_end(m)
 
 ## 砲彈要真的飛過去打中人（跨好幾個 frame）
