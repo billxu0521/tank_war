@@ -57,7 +57,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、勝負、咬擊方向、離線模式、砲管俯仰、回大廳重開、建築擋視線、暴龍骨架、砲彈命中、恐龍跳躍都正常")
+		print("OK：生怪、傷害、勝負、咬擊方向、離線模式、砲管俯仰、回大廳重開、建築擋視線、暴龍骨架與尾巴慣性、砲彈命中、恐龍跳躍都正常")
 	return true
 
 # --- 共用 ---
@@ -228,6 +228,21 @@ func _case_trex_rig() -> void:
 		opened = minf(opened, t.skel.get_bone_pose_rotation(t._idx["jaw"]).get_euler().x)
 	_ck(rad_to_deg(absf(opened - closed)) > 25.0,
 		"咬的時候嘴要張開超過 25 度（現在 %.0f）" % rad_to_deg(absf(opened - closed)))
+
+	# 旋轉延遲傳遞：轉身時尾巴根先動、尖跟不上，停下後會反向甩再收斂
+	var d: Node3D = m.players.get_node(^"2")
+	for i in 30:
+		d.rotate_y(0.09)
+		t._process(1.0 / 120.0)
+	_ck(absf(t._tail_yaw[0]) > absf(t._tail_yaw[3]) * 3.0,
+		"轉身當下尾巴尖要明顯落後根部（根 %.3f 尖 %.3f）" % [t._tail_yaw[0], t._tail_yaw[3]])
+	var sign_at_turn: float = signf(t._tail_yaw[0])
+	var overshoot := 0.0
+	for i in 800:  # 停止轉身；四節的鏈子要晃約 6 秒才完全停下來
+		t._process(1.0 / 120.0)
+		overshoot = maxf(overshoot, -sign_at_turn * t._tail_yaw[3])
+	_ck(overshoot > 0.05, "停止轉身後尾尖要反向甩過頭（過衝 %.3f）" % overshoot)
+	_ck(absf(t._tail_yaw[3]) < 0.05, "最後要收斂回中間，不能一直晃（現在 %.3f）" % t._tail_yaw[3])
 	_end(m)
 
 ## 砲彈要真的飛過去打中人（跨好幾個 frame）

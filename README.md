@@ -65,7 +65,7 @@ godot --headless --script test_battle.gd # 自我檢查（壞掉會 exit 1）
 | `main.gd/tscn` | 大廳、連線、場地、勝負、HUD、準心 |
 | `fighter.gd` | 坦克恐龍共用：血量、死亡、連線權限、中彈閃紅 |
 | `tank.*` `dino.*` `shell.*` | 三個角色 |
-| `trex.gd` | 暴龍的灰盒骨架模型（Skeleton3D + 方塊 + 程式動畫） |
+| `trex.gd` | 暴龍的灰盒骨架模型（Skeleton3D + 方塊 + 程式動畫，見 [程序化動畫筆記](docs/程序化動畫.md)） |
 | `fx.gd` | 一次性視覺效果（放大淡出後自刪） |
 | `test_battle.gd` | 自我檢查 |
 
