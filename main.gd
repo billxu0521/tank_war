@@ -14,6 +14,8 @@ const WALL_T := 4.0
 const EXIT_RADIUS := 14.0     # 撤離區半徑
 const PICKUP_RANGE := 6.0     # 坦克靠這麼近就撿得到蛋
 const EGG_HOLD_HEIGHT := 2.2  # 蛋掛在坦克上方多高
+const MATCH_SECONDS := 240.0  # 一局四分鐘
+const RESPAWN_DELAY := 5.0    # 死亡的代價是節奏，不是失去參賽資格
 const TANK := preload("res://tank.tscn")
 const DINO := preload("res://dino.tscn")
 
@@ -30,6 +32,10 @@ const DINO := preload("res://dino.tscn")
 var _blocked: Array[Rect2] = []  # 建築物在 XZ 平面佔的範圍
 var _exits: Array[Vector3] = []  # 四個撤離區的中心
 var _tanks := 0
+var _offline := false
+var _time_left := 0.0
+var _clock := 0                     # 主機廣播的剩餘秒數
+var _respawn_queue: Array[Dictionary] = []
 var _over := false
 
 func _ready() -> void:
@@ -93,6 +99,9 @@ func _to_lobby(msg: String) -> void:
 		p.free()  # 用 free 不用 queue_free，不然馬上重開會撞到同名節點
 	_tanks = 0
 	_over = false
+	_offline = false
+	_time_left = 0.0
+	_respawn_queue.clear()
 	egg.carrier = 0
 	menu.hide()
 	crosshair.hide()
@@ -124,6 +133,7 @@ func _on_join_pressed() -> void:
 ## 離線 debug：不連線，自己開一台坦克，配一隻會繞圈跑的恐龍當靶
 func _on_offline_pressed() -> void:
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	_offline = true
 	_enter_game("離線測試模式：你是坦克，恐龍靶會自己跑")
 	_add_player(TANK, 1).global_position = Vector3(-20, 1.0, 15)  # 編號 1 才操控得動
 	var target := _add_player(DINO, 2)
@@ -133,6 +143,7 @@ func _on_offline_pressed() -> void:
 ## 離線 debug：自己當恐龍，配三台會繞圈跑的坦克靶
 func _on_offline_dino_pressed() -> void:
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	_offline = true
 	_enter_game("離線測試模式：你是恐龍，三台坦克靶會自己跑（不會還擊）")
 	_add_player(DINO, 1).global_position = _spawn_point()  # 編號 1 才操控得動
 	for i in 3:
@@ -142,6 +153,9 @@ func _on_offline_dino_pressed() -> void:
 
 func _enter_game(msg: String) -> void:
 	if multiplayer.is_server():
+		_time_left = MATCH_SECONDS
+		_clock = int(MATCH_SECONDS)
+		_respawn_queue.clear()
 		egg.carrier = 0
 		egg.global_position = _spawn_point(ARENA * 0.22)  # 放中央附近，不要一開始就在出口旁邊
 		egg.global_position.y = 1.2
@@ -176,23 +190,36 @@ func _despawn(id: int) -> void:
 		if id != 1:
 			_tanks -= 1
 
-## 三台坦克是彼此的對手，所以「打死恐龍」不是勝利條件——不然理性玩法會變成
-## 先聯手弄死恐龍，跟互相競爭矛盾。蛋才是唯一的勝利條件。
+## 無限重生，不設命數。死亡的代價是節奏——等重生，而且蛋會掉在原地被別人撿走。
+## 勝負只有兩種：有人帶蛋撤離（那個人贏），或時間到（恐龍贏）。
+## 「打死恐龍」不算贏，不然三台坦克會理性地先聯手弄死恐龍，跟互相競爭矛盾。
 func _on_died(who: Node) -> void:
 	if _over:
 		return
-	if who.is_in_group(&"dino"):
-		_announce.rpc("恐龍陣亡！接下來坦克互搶，先把蛋帶進撤離區的人贏")
-	else:
+	var as_dino := who.is_in_group(&"dino")
+	if not as_dino:
 		_tanks -= 1
-		if _tanks <= 0:
-			_over = true
-			_finish.rpc("恐龍獲勝！")
+	_respawn_queue.append({
+		"id": who.name.to_int(),
+		"dino": as_dino,
+		"dummy": bool(who.get(&"dummy")),
+		"at": Time.get_ticks_msec() + int(RESPAWN_DELAY * 1000.0),
+	})
 
-## 只換掉狀態列文字，不結束遊戲
-@rpc("authority", "call_local", "reliable")
-func _announce(msg: String) -> void:
-	status.text = msg
+## 用佇列不用 await：回大廳時整個 Main 會被 free，await 醒來會踩到已釋放的物件。
+func _respawn_step() -> void:
+	var now := Time.get_ticks_msec()
+	for i in range(_respawn_queue.size() - 1, -1, -1):
+		var r: Dictionary = _respawn_queue[i]
+		if now < int(r["at"]):
+			continue
+		_respawn_queue.remove_at(i)
+		var id: int = r["id"]
+		if id != 1 and not _offline and not multiplayer.get_peers().has(id):
+			continue  # 人已經離線就別生了
+		var p := _add_player(DINO if r["dino"] else TANK, id)
+		p.set(&"dummy", r["dummy"])
+
 
 ## 撤離是個人獲勝，所以每台機器顯示的字不一樣
 @rpc("authority", "call_local", "reliable")
@@ -205,10 +232,23 @@ func _finish(msg: String) -> void:
 	status.text = msg + "  （按 Esc 放開滑鼠）"
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if lobby.visible or _over or not multiplayer.is_server():
 		return
 	_egg_step()
+	_respawn_step()
+
+	_time_left -= delta
+	if int(_time_left) != _clock:
+		_clock = int(_time_left)
+		_set_clock.rpc(_clock)
+	if _time_left <= 0.0:
+		_over = true
+		_finish.rpc("時間到，沒有人把蛋帶走——恐龍獲勝！")
+
+@rpc("authority", "call_local", "reliable")
+func _set_clock(secs: int) -> void:
+	_clock = secs
 
 ## 蛋的規則：坦克靠近就撿走，持有者死掉就留在原地，帶進撤離區就贏。
 func _egg_step() -> void:
@@ -249,11 +289,24 @@ func _process(_delta: float) -> void:
 		egg_state = "在你身上！開去藍色撤離區"
 	elif egg.carrier != 0:
 		egg_state = "被坦克 %d 拿走了" % egg.carrier
-	hud.text = "我的血量：%s    恐龍血量：%s    存活坦克：%d    蛋：%s" % [
-		me.hp if me else "陣亡",
+	var mine := "陣亡"
+	if me != null:
+		mine = str(me.hp)
+	elif _respawn_seconds_for(multiplayer.get_unique_id()) > 0:
+		mine = "重生中 %d 秒" % _respawn_seconds_for(multiplayer.get_unique_id())
+	hud.text = "⏱ %d:%02d    我的血量：%s    恐龍血量：%s    存活坦克：%d    蛋：%s" % [
+		maxi(_clock, 0) / 60, maxi(_clock, 0) % 60,
+		mine,
 		dino.hp if dino else 0,
 		players.get_child_count() - (1 if dino else 0),
 		egg_state]
+
+## 還要幾秒才重生（只有主機知道，客戶端看到的是 0）
+func _respawn_seconds_for(id: int) -> int:
+	for r: Dictionary in _respawn_queue:
+		if int(r["id"]) == id:
+			return maxi(0, int((int(r["at"]) - Time.get_ticks_msec()) / 1000) + 1)
+	return 0
 
 ## 準心畫在「砲彈會落到哪」，不是螢幕正中央——抬砲時看得出彈道往上跑。
 ## 恐龍是近戰，沒有 aim_point，就不顯示。

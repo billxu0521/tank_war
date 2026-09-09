@@ -21,7 +21,7 @@ func _ck(ok: bool, msg: String) -> void:
 func _process(_delta: float) -> bool:
 	_frames += 1
 	if _frames == 1:
-		_case_dino_wins()
+		_case_timeout()
 		_case_dino_death()
 		_case_attacks()
 		_case_offline()
@@ -33,6 +33,8 @@ func _process(_delta: float) -> bool:
 		_case_trex_rig()
 		_case_stamina()
 		_case_egg()
+		_case_dino_cannot_take_egg()
+		_case_respawn()
 		_case_fireball()
 		_case_arena_walls()
 		_start_shell_case()
@@ -77,7 +79,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、個人勝負、咬擊方向、離線兩種模式、砲管俯仰、油門手感、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、砲彈命中、恐龍跳躍、移動靶、體力規則、蛋與撤離、火球都正常")
+		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、砲管俯仰、油門手感、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、砲彈命中、恐龍跳躍、移動靶、體力規則、蛋與撤離、恐龍撿不到蛋、火球都正常")
 	return true
 
 # --- 共用 ---
@@ -108,21 +110,24 @@ func _end(m: Node) -> void:
 
 # --- 案例 ---
 
-func _case_dino_wins() -> void:
+func _case_timeout() -> void:
 	var m := _new_game()
 	var d: Node = m.players.get_node(^"1")
 	var t2: Node = m.players.get_node(^"2")
 	var bites := ceili(float(t2.max_hp) / d.BITE_DAMAGE)
 	_ck(bites == 6, "平衡目標：咬六口才死一台坦克（現在是 %d 口）" % bites)
 
-	for i in bites - 1:
-		t2.take_damage(d.BITE_DAMAGE)
-	_ck(t2.hp > 0 and m._tanks == 2, "還差一口不該死")
-	t2.take_damage(d.BITE_DAMAGE)
-	_ck(m._tanks == 1 and not m._over, "死一台，還有一台")
-
+	# 無限重生，所以殺光坦克不會結束回合
+	m.players.get_node(^"2").take_damage(9999)
 	m.players.get_node(^"3").take_damage(9999)
-	_ck(m._over and m.status.text.begins_with("恐龍獲勝"), "坦克全滅 -> 恐龍贏")
+	_ck(not m._over, "坦克全滅不該結束回合，他們會重生")
+	_ck(m._respawn_queue.size() == 2, "兩台都要排進重生佇列（現在 %d 筆）" % m._respawn_queue.size())
+
+	# 時間到才是恐龍的勝利條件
+	m._time_left = 0.05
+	m._physics_process(0.1)
+	_ck(m._over and m.status.text.contains("時間到"),
+		"時間到 -> 恐龍獲勝（現在是「%s」）" % m.status.text)
 	_end(m)
 
 func _case_dino_death() -> void:
@@ -133,9 +138,10 @@ func _case_dino_death() -> void:
 
 	for i in shells:
 		dino.take_damage(Shell.DAMAGE)
-	# 坦克互為對手，所以打死恐龍不是勝利條件，回合要繼續
+	# 坦克互為對手，所以打死恐龍不是勝利條件，回合要繼續，恐龍會重生
 	_ck(not m._over, "恐龍陣亡不該直接結束回合")
-	_ck(m.status.text.contains("恐龍陣亡"), "應該廣播恐龍陣亡（現在是「%s」）" % m.status.text)
+	_ck(m._respawn_queue.size() == 1 and bool(m._respawn_queue[0]["dino"]),
+		"恐龍要排進重生佇列——牠不重生的話後半場變成無人阻擋的賽跑")
 	_ck(m._tanks == 2, "坦克數不受影響")
 	_end(m)
 
@@ -172,7 +178,6 @@ func _case_offline() -> void:
 	_ck(target.dummy and not tank.dummy, "恐龍是會自己跑的靶，坦克不是")
 	target.take_damage(9999)
 	_ck(not m._over, "打爆靶子不會直接贏，要帶蛋撤離才算")
-	_ck(m.status.text.contains("恐龍陣亡"), "應該廣播恐龍陣亡")
 	_end(m)
 
 ## 離線當恐龍：自己控恐龍，三台坦克靶會自己跑
@@ -191,7 +196,8 @@ func _case_offline_dino() -> void:
 
 	for i in 3:
 		m.players.get_node(str(2 + i)).take_damage(9999)
-	_ck(m._over and m.status.text.begins_with("恐龍獲勝"), "打爆三台靶 -> 恐龍贏")
+	_ck(not m._over, "打爆三台靶也不會結束，他們會重生")
+	_ck(m._respawn_queue.size() == 3, "三台都要排進重生佇列")
 	_end(m)
 
 ## 砲管上下角度要夾在俯 8 度 ~ 仰 20 度之間，而且不能瞬間跟上滑鼠
@@ -404,6 +410,44 @@ func _case_egg() -> void:
 	_ck(m._over and m.status.text.contains("撤離"), "帶著蛋進撤離區 -> 結束回合")
 	_ck(m.status.text.contains("3") or m.status.text.contains("你"),
 		"獲勝訊息要指名是哪一台坦克（現在是「%s」）" % m.status.text)
+	_end(m)
+
+## 重生：排隊、時間到才回場、靶的身分要保留
+func _case_respawn() -> void:
+	var m := _new_offline_game()
+	var target: Node = m.players.get_node(^"2")
+	_ck(target.dummy, "靶一開始就是 dummy")
+
+	target.take_damage(9999)
+	_ck(m._respawn_queue.size() == 1, "死掉要排進重生佇列")
+	var r: Dictionary = m._respawn_queue[0]
+	_ck(int(r["id"]) == 2 and bool(r["dummy"]), "佇列要記住編號和靶的身分")
+
+	m._respawn_step()
+	_ck(m._respawn_queue.size() == 1, "還沒到時間不該重生")
+
+	target.free()   # 模擬五秒後，屍體已經清掉
+	m._respawn_queue[0]["at"] = Time.get_ticks_msec() - 1
+	m._respawn_step()
+	var back: Node = m.players.get_node_or_null(^"2")
+	_ck(back != null, "時間到要生回來")
+	if back != null:
+		_ck(back.hp == back.max_hp, "重生要滿血")
+		_ck(back.dummy, "重生後靶還是靶，不會變成真人操控的")
+	_end(m)
+
+## 恐龍不能撿蛋
+func _case_dino_cannot_take_egg() -> void:
+	var m := _new_game()
+	var d: Node3D = m.players.get_node(^"1")
+	m.players.get_node(^"2").global_position = Vector3(0, 800, 0)
+	m.players.get_node(^"3").global_position = Vector3(0, 800, 40)
+	d.global_position = Vector3(0, 1, 0)
+	m.egg.global_position = Vector3(1, 1, 0)   # 直接貼在恐龍身上
+	m.egg.carrier = 0
+	for i in 10:
+		m._egg_step()
+	_ck(m.egg.carrier == 0, "恐龍站在蛋上面也不能撿（carrier=%d）" % m.egg.carrier)
 	_end(m)
 
 ## 恐龍的火球：吃體力、有冷卻、真的會生出一顆
