@@ -137,7 +137,7 @@ func _on_offline_pressed() -> void:
 	_enter_game("離線測試模式：你是坦克，恐龍靶會自己跑")
 	_add_player(TANK, 1).global_position = Vector3(-20, 1.0, 15)  # 編號 1 才操控得動
 	var target := _add_player(DINO, 2)
-	target.set(&"dummy", true)
+	target.set(&"bot", true)
 	target.global_position = Vector3(-20, 5.0, -20)
 
 ## 離線 debug：自己當恐龍，配三台會繞圈跑的坦克靶
@@ -148,7 +148,7 @@ func _on_offline_dino_pressed() -> void:
 	_add_player(DINO, 1).global_position = _spawn_point()  # 編號 1 才操控得動
 	for i in 3:
 		var t := _add_player(TANK, 2 + i)
-		t.set(&"dummy", true)
+		t.set(&"bot", true)
 		t.global_position = _spawn_point()
 
 func _enter_game(msg: String) -> void:
@@ -202,7 +202,7 @@ func _on_died(who: Node) -> void:
 	_respawn_queue.append({
 		"id": who.name.to_int(),
 		"dino": as_dino,
-		"dummy": bool(who.get(&"dummy")),
+		"bot": bool(who.get(&"bot")),
 		"at": Time.get_ticks_msec() + int(RESPAWN_DELAY * 1000.0),
 	})
 
@@ -218,7 +218,7 @@ func _respawn_step() -> void:
 		if id != 1 and not _offline and not multiplayer.get_peers().has(id):
 			continue  # 人已經離線就別生了
 		var p := _add_player(DINO if r["dino"] else TANK, id)
-		p.set(&"dummy", r["dummy"])
+		p.set(&"bot", r["bot"])
 
 
 ## 撤離是個人獲勝，所以每台機器顯示的字不一樣

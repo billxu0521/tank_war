@@ -46,7 +46,7 @@ properties/1/path = NodePath(".:carrier")
 properties/1/spawn = true
 properties/1/replication_mode = 1
 
-[node name="Main" type="Node3D"]
+[node name="Main" type="Node3D" groups=["match"]]
 script = ExtResource("1")
 
 [node name="Arena" type="Node3D" parent="." groups=["arena"]]

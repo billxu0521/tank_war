@@ -16,8 +16,9 @@ const GRAVITY := 25.0
 const LOOK_SETTLE_MS := 1500  # 滑鼠鎖定後先忽略這麼久的位移
 
 @export var max_hp := 100
-## 離線練習模式的靶：不讀鍵盤，自己繞圈跑
-@export var dummy := false
+## true = 電腦操控。不讀鍵盤，自己照優先序決策。
+## 練習模式和 sim.gd 的自動對戰都用這個。
+@export var bot := false
 
 var hp := 0
 var _was_captured := false

@@ -16,6 +16,7 @@ const PITCH_MAX := 0.35   # 仰角 20 度
 const CAM_BASE := -0.4363  # 相機基礎俯角 25 度
 const AIM_RANGE := 70.0    # 準心以這個距離做彈道歸零（場地大了，歸零拉遠）
 const BARREL_Z := -1.5     # 砲管原本的位置，後座從這裡往後推
+const BOT_RANGE := 95.0    # bot 進這個距離就開火
 const SHELL := preload("res://shell.tscn")
 
 var aim_pitch := 0.0
@@ -24,7 +25,7 @@ var gun_pitch := 0.0
 var _turn_rate := 0.0
 var _recoil := 0.0
 var _cooldown := 0.0
-var _patrol_t := 0.0
+
 
 @onready var turret: Node3D = $Turret
 @onready var gun: Node3D = $Turret/Gun
@@ -45,8 +46,8 @@ func aim(rel: Vector2) -> void:
 	aim_pitch = clampf(aim_pitch - rel.y * MOUSE_SENS, PITCH_MIN, PITCH_MAX)
 
 func _physics_process(delta: float) -> void:
-	if dummy:
-		_patrol(delta)
+	if bot:
+		_bot_step(delta)
 		return
 	if not is_multiplayer_authority():
 		return  # 別人的坦克交給 MultiplayerSynchronizer 更新
@@ -74,16 +75,77 @@ func _physics_process(delta: float) -> void:
 		_cooldown = RELOAD
 		_fire.rpc(muzzle.global_position, -muzzle.global_transform.basis.z)
 
-## 離線練習用的移動靶：一邊繞圈一邊亂轉砲塔。撞到建築會自己滑開，
-## 路線就不會太規律。編號單雙決定左轉還右轉，幾台才不會疊在一起。
-func _patrol(delta: float) -> void:
-	_patrol_t += delta
-	rotate_y(TURN * 0.5 * delta * (1.0 if name.to_int() % 2 == 0 else -1.0))
-	_accelerate(-global_transform.basis.z * SPEED * 0.75, ACCEL, BRAKE, delta)
+## 電腦操控的坦克。優先序由上而下，沒有行為樹——分支就這幾條，
+## 框架會比行為本身還長。而且要拿來量平衡，行為固定可預測才好歸因。
+##   1. 拿著蛋 -> 開去最近的撤離區
+##   2. 蛋沒人拿 -> 開去撿
+##   3. 別人拿著 -> 去追那個人（打死他蛋就掉下來）
+## 砲塔獨立運作：永遠瞄最近的威脅，進射程就開火。
+func _bot_step(delta: float) -> void:
+	var g := get_tree().get_first_node_in_group(&"match")
+	_bot_drive(delta, _bot_goal(g))
+	_bot_shoot(delta, _bot_threat(g))
+
+func _bot_goal(g: Node) -> Vector3:
+	if g == null:
+		return global_position
+	var my_id := name.to_int()
+	if g.egg.carrier == my_id:
+		var best: Vector3 = g._exits[0]
+		for e: Vector3 in g._exits:
+			if global_position.distance_to(e) < global_position.distance_to(best):
+				best = e
+		return best
+	if g.egg.carrier == 0:
+		return g.egg.global_position
+	var holder: Node3D = g.players.get_node_or_null(NodePath(str(g.egg.carrier)))
+	return holder.global_position if holder != null else g.egg.global_position
+
+## 瞄誰：有人拿著蛋就瞄他，否則瞄最近的敵人（恐龍或別台坦克）
+func _bot_threat(g: Node) -> Node3D:
+	if g == null:
+		return null
+	var my_id := name.to_int()
+	if g.egg.carrier != 0 and g.egg.carrier != my_id:
+		var holder: Node3D = g.players.get_node_or_null(NodePath(str(g.egg.carrier)))
+		if holder != null:
+			return holder
+	var best: Node3D = null
+	for p in g.players.get_children():
+		if p == self:
+			continue
+		if best == null or global_position.distance_to(p.global_position) \
+				< global_position.distance_to(best.global_position):
+			best = p
+	return best
+
+func _bot_drive(delta: float, goal: Vector3) -> void:
+	var to := goal - global_position
+	var diff := wrapf(atan2(-to.x, -to.z) - rotation.y, -PI, PI)
+	# 卡牆就偏一個角度滑開，編號單雙決定往哪偏，幾台才不會擠在同一個角落
+	if is_on_wall():
+		diff += 0.9 if name.to_int() % 2 == 0 else -0.9
+	_turn_rate = move_toward(_turn_rate, clampf(diff * 3.0, -TURN, TURN), TURN_ACCEL * delta)
+	rotate_y(_turn_rate * delta)
+	var throttle := 1.0 if absf(diff) < 1.2 else 0.35   # 角度差太大就先轉再衝
+	_accelerate(-global_transform.basis.z * SPEED * throttle, ACCEL, BRAKE, delta)
 	_apply_gravity(delta)
 	move_and_slide()
-	turret_yaw = sin(_patrol_t * 0.7) * 2.0
+
+func _bot_shoot(delta: float, threat: Node3D) -> void:
+	_cooldown -= delta
+	if threat == null:
+		return
+	var rel := threat.global_position - muzzle.global_position
+	var flat := Vector2(rel.x, rel.z).length()
+	turret_yaw = wrapf(atan2(-rel.x, -rel.z) - rotation.y, -PI, PI)
+	var t := flat / Shell.SPEED
+	gun_pitch = clampf(atan2(rel.y + 0.5 * Shell.GRAVITY * t * t, flat), PITCH_MIN, PITCH_MAX)
 	turret.rotation.y = turret_yaw
+	gun.rotation.x = gun_pitch
+	if _cooldown <= 0.0 and flat < BOT_RANGE:
+		_cooldown = RELOAD
+		_fire.rpc(muzzle.global_position, -muzzle.global_transform.basis.z)
 
 @rpc("any_peer", "call_local", "reliable")
 func _fire(pos: Vector3, dir: Vector3) -> void:

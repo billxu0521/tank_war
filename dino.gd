@@ -29,6 +29,7 @@ const FIRE_COOLDOWN := 0.7   # 連射用的，體力是真正的限制
 const FIRE_COST := 15.0      # 滿體力連噴 6 顆就見底，之後被回復速度綁住
 const FIREBALL := preload("res://fireball.tscn")
 const AIM_RANGE := 35.0    # 準心以這個距離做彈道歸零
+const BOT_FIRE_RANGE := 70.0  # bot 在這個距離內會吐火球
 const MUZZLE_FWD := 5.0    # 火球從嘴巴前方這麼遠生出來
 const CAM_BASE := -0.40   # 相機支點的基礎俯角
 const PITCH_MIN := -0.75  # 往下看到底（約 43 度）
@@ -55,10 +56,8 @@ func _process(_delta: float) -> void:
 	$Trex.look_pitch = look_pitch
 
 func _physics_process(delta: float) -> void:
-	if dummy:
-		# 離線練習用的移動靶：繞圈跑，讓坦克練習算提前量
-		rotate_y(0.55 * delta)
-		move_step(delta, Vector3(0, 0, -1), false, false, false)
+	if bot:
+		_bot_step(delta)
 		return
 	if not is_multiplayer_authority():
 		return
@@ -145,6 +144,60 @@ func _spit_dir() -> Vector3:
 ## 準心和實際發射共用這個起點，不然兩邊會差一個 MUZZLE_FWD 的下墜量
 func _spit_muzzle() -> Vector3:
 	return global_position + Vector3.UP * HEAD_HEIGHT + _spit_dir() * MUZZLE_FWD
+
+## 電腦操控的恐龍。優先序：追持蛋的人（沒人拿就追最近的坦克），
+## 近了咬、中距離吐火球、遠了衝刺追上去。
+func _bot_step(delta: float) -> void:
+	var g := get_tree().get_first_node_in_group(&"match")
+	var target := _bot_target(g)
+	if target == null:
+		move_step(delta, Vector3.ZERO, false, false, false)
+		return
+
+	var to := target.global_position - global_position
+	var flat := Vector2(to.x, to.z).length()
+	var want := atan2(-to.x, -to.z)
+	if is_on_wall():
+		want += 0.9   # 卡牆就偏一點滑開
+	rotation.y = rotate_toward(rotation.y, want, 4.0 * delta)
+
+	var facing := absf(wrapf(want - rotation.y, -PI, PI)) < 0.5
+	var close := flat < BITE_REACH * 0.8
+	move_step(delta, Vector3.ZERO if close else Vector3(0, 0, -1),
+		flat > 25.0, false, false)   # 離得遠就衝刺
+
+	_bite_cd -= delta
+	_fire_cd -= delta
+	if close and facing and _bite_cd <= 0.0:
+		_bite_cd = BITE_COOLDOWN
+		_hit_nearby(BITE_REACH, BITE_DAMAGE, 0.3)
+		_play_fx.rpc(false)
+	elif flat < BOT_FIRE_RANGE and facing and _fire_cd <= 0.0 \
+			and stamina >= FIRE_COST and can_exert():
+		var t := flat / Fireball.SPEED
+		look_pitch = clampf(
+			atan2(to.y + 0.5 * Fireball.GRAVITY * t * t - HEAD_HEIGHT, flat),
+			PITCH_MIN, PITCH_MAX)
+		_fire_cd = FIRE_COOLDOWN
+		stamina -= FIRE_COST
+		_spit.rpc()
+
+## 追誰：有人拿著蛋就追他，否則追最近的坦克
+func _bot_target(g: Node) -> Node3D:
+	if g == null:
+		return null
+	if g.egg.carrier != 0:
+		var holder: Node3D = g.players.get_node_or_null(NodePath(str(g.egg.carrier)))
+		if holder != null:
+			return holder
+	var best: Node3D = null
+	for p in g.players.get_children():
+		if p == self or p.is_in_group(&"dino"):
+			continue
+		if best == null or global_position.distance_to(p.global_position) \
+				< global_position.distance_to(best.global_position):
+			best = p
+	return best
 
 ## 吐火球。從嘴巴前方射出，方向跟著上下視角走。
 @rpc("any_peer", "call_local", "reliable")
