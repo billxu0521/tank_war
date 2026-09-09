@@ -20,6 +20,11 @@ var _tank_deaths := 0
 var _dino_deaths := 0
 var _rows: Array[Dictionary] = []
 var _boot := 0
+var _events: Array[String] = []      # 這場的事件時間軸
+var _all_log := ""                   # 全部場次，最後寫檔
+var _by_dino := 0                    # 坦克死在恐龍手上幾次
+var _by_tank := 0                    # 坦克死在彼此手上幾次
+var _egg_kills := 0                  # 有幾次是持蛋的人被打死
 
 func _process(_dt: float) -> bool:
 	_boot += 1
@@ -51,6 +56,8 @@ func _start_match() -> void:
 	_m.multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 	_m._offline = true
 	_m._enter_game("sim")
+	_events.clear()
+	_m.logged.connect(_on_event)
 	for i in 4:
 		var p: Node3D = _m._add_player(_m.DINO if i == 0 else _m.TANK, i + 1)
 		p.set(&"bot", true)
@@ -61,6 +68,19 @@ func _start_match() -> void:
 	_seen.clear()
 	_tank_deaths = 0
 	_dino_deaths = 0
+
+## 事件進來就記下來，順便分類「坦克是死在恐龍還是死在彼此手上」
+func _on_event(text: String) -> void:
+	_events.append(text)
+	# 要看「死的是誰」，不能只看「兇手是誰」——恐龍被坦克打死也符合「被 坦克」
+	var parts := text.split(" 被 ")
+	if parts.size() == 2 and parts[1].contains("打死") and parts[0].contains("坦克"):
+		if parts[1].begins_with("恐龍"):
+			_by_dino += 1
+		elif parts[1].begins_with("坦克"):
+			_by_tank += 1
+	if text.contains("（身上有蛋）"):
+		_egg_kills += 1
 
 func _watch() -> void:
 	# 每筆重生佇列 = 一次死亡。用 id+時間戳當 key，才不會重複計。
@@ -94,9 +114,16 @@ func _finish_match() -> void:
 		"tank_deaths": _tank_deaths,
 		"dino_deaths": _dino_deaths,
 	})
-	print("第 %d 場：%s，%.0f 秒，撿蛋 %d 次，坦克死 %d 次，恐龍死 %d 次" % [
+	var head := "第 %d 場：%s，%.0f 秒，撿蛋 %d 次，坦克死 %d 次，恐龍死 %d 次" % [
 		_rows.size(), "恐龍贏（時間到）" if timeout else "坦克贏（撤離成功）",
-		_m.MATCH_SECONDS - left, _pickups, _tank_deaths, _dino_deaths])
+		_m.MATCH_SECONDS - left, _pickups, _tank_deaths, _dino_deaths]
+	print(head)
+	_all_log += "\n===== %s =====\n" % head
+	for e: String in _events:
+		_all_log += e + "\n"
+	if _rows.size() <= 2:   # 前兩場印時間軸出來看，其餘只寫檔
+		for e: String in _events:
+			print("    " + e)
 	_m.multiplayer.multiplayer_peer = null
 	root.remove_child(_m)
 	_m.free()
@@ -128,5 +155,29 @@ func _report() -> void:
 		td += int(r["tank_deaths"])
 		dd += int(r["dino_deaths"])
 	print("平均死亡　　坦克 %.1f 次／場，恐龍 %.1f 次／場" % [float(td) / n, float(dd) / n])
+	if td > 0:
+		print("坦克死因　　恐龍 %d 次（%d%%），彼此互殺 %d 次（%d%%）" % [
+			_by_dino, 100 * _by_dino / td, _by_tank, 100 * _by_tank / td])
+	print("持蛋被殺　　%d 次（佔撿蛋 %d 次的 %d%%）" % [
+		_egg_kills, pickups, 100 * _egg_kills / maxi(pickups, 1)])
 	if reached > 0:
 		print("蛋平均最接近出口 %.0f 公尺（有撿起來的 %d 場）" % [closest / reached, reached])
+	_write_files()
+
+func _write_files() -> void:
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://sim_out"))
+	var log_file := FileAccess.open("res://sim_out/sim_log.txt", FileAccess.WRITE)
+	log_file.store_string(_all_log)
+	log_file.close()
+
+	var csv := FileAccess.open("res://sim_out/sim_results.csv", FileAccess.WRITE)
+	csv.store_line("match,winner,seconds,pickups,tank_deaths,dino_deaths,closest_to_exit")
+	for i in _rows.size():
+		var r: Dictionary = _rows[i]
+		csv.store_line("%d,%s,%.0f,%d,%d,%d,%.0f" % [
+			i + 1, "dino" if bool(r["dino_win"]) else "tank",
+			float(r["secs"]), int(r["pickups"]),
+			int(r["tank_deaths"]), int(r["dino_deaths"]),
+			float(r["closest"]) if float(r["closest"]) < 9999.0 else -1.0])
+	csv.close()
+	print("\n時間軸 -> sim_out/sim_log.txt，每場一行 -> sim_out/sim_results.csv")

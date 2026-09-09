@@ -1,6 +1,9 @@
 extends Node3D
 ## 坦克大戰恐龍 — 區網原型。開房的人當恐龍，加入的人當坦克。
 
+## 主機在關鍵時刻發出的事件，sim.gd 用它做時間軸。之後要做擊殺播報也接得上。
+signal logged(text: String)
+
 const PORT := 24680
 const ARENA := 320.0        # 場地邊長
 const SPAWN_CLEARANCE := 7.0  # 出生點離建築至少這麼遠
@@ -193,10 +196,12 @@ func _despawn(id: int) -> void:
 ## 無限重生，不設命數。死亡的代價是節奏——等重生，而且蛋會掉在原地被別人撿走。
 ## 勝負只有兩種：有人帶蛋撤離（那個人贏），或時間到（恐龍贏）。
 ## 「打死恐龍」不算贏，不然三台坦克會理性地先聯手弄死恐龍，跟互相競爭矛盾。
-func _on_died(who: Node) -> void:
+func _on_died(killer: Node, who: Node) -> void:
 	if _over:
 		return
 	var as_dino := who.is_in_group(&"dino")
+	_log("%s 被 %s 打死%s" % [_who(who), _who(killer),
+		"（身上有蛋）" if egg.carrier == who.name.to_int() else ""])
 	if not as_dino:
 		_tanks -= 1
 	_respawn_queue.append({
@@ -244,6 +249,7 @@ func _physics_process(delta: float) -> void:
 		_set_clock.rpc(_clock)
 	if _time_left <= 0.0:
 		_over = true
+		_log("時間到，沒有人把蛋帶走")
 		_finish.rpc("時間到，沒有人把蛋帶走——恐龍獲勝！")
 
 @rpc("authority", "call_local", "reliable")
@@ -258,17 +264,21 @@ func _egg_step() -> void:
 				continue
 			if egg.global_position.distance_to(p.global_position) < PICKUP_RANGE:
 				egg.carrier = p.name.to_int()
+				_log("%s 撿到蛋" % _who(p))
 				return
 		return
 
 	var holder := players.get_node_or_null(NodePath(str(egg.carrier)))
 	if holder == null:
+		_log("蛋掉在 (%.0f, %.0f)，離最近的出口還有 %.0f 公尺" % [
+			egg.global_position.x, egg.global_position.z, _dist_to_exit(egg.global_position)])
 		egg.carrier = 0   # 持有者陣亡，蛋就掉在他最後的位置
 		return
 	egg.global_position = holder.global_position + Vector3.UP * EGG_HOLD_HEIGHT
 	for e: Vector3 in _exits:
 		if Vector2(egg.global_position.x - e.x, egg.global_position.z - e.z).length() < EXIT_RADIUS:
 			_over = true
+			_log("坦克%d 帶著蛋撤離成功" % egg.carrier)
 			_finish_egg.rpc(egg.carrier)
 			return
 
@@ -300,6 +310,20 @@ func _process(_delta: float) -> void:
 		dino.hp if dino else 0,
 		players.get_child_count() - (1 if dino else 0),
 		egg_state]
+
+func _log(text: String) -> void:
+	logged.emit("%6.1fs  %s" % [MATCH_SECONDS - maxf(_time_left, 0.0), text])
+
+func _who(n: Node) -> String:
+	if n == null:
+		return "不明"
+	return "恐龍" if n.is_in_group(&"dino") else "坦克%s" % n.name
+
+func _dist_to_exit(p: Vector3) -> float:
+	var best := 9999.0
+	for e: Vector3 in _exits:
+		best = minf(best, Vector2(p.x - e.x, p.z - e.z).length())
+	return best
 
 ## 還要幾秒才重生（只有主機知道，客戶端看到的是 0）
 func _respawn_seconds_for(id: int) -> int:

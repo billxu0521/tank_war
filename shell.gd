@@ -11,6 +11,7 @@ const DAMAGE := 60
 const GRAVITY := 9.8  # 有掉落，遠距離要抬砲口
 
 var vel := Vector3.ZERO
+var shooter: Node = null
 
 func _ready() -> void:
 	get_tree().create_timer(4.0).timeout.connect(queue_free)
@@ -30,5 +31,5 @@ func _impact(pos: Vector3, body: Node) -> void:
 	Fx.burst(get_tree().get_first_node_in_group(&"arena"), SphereMesh.new(),
 		Color(1, 0.6, 0.2, 0.85), pos, Vector3.ONE * 0.5, Vector3.ONE * 2.4, 0.25)
 	if multiplayer.is_server() and body.has_method("take_damage"):
-		body.take_damage(DAMAGE)
+		body.take_damage(DAMAGE, shooter if is_instance_valid(shooter) else null)
 	queue_free()

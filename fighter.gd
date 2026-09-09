@@ -10,7 +10,7 @@ extends CharacterBody3D
 ## 場上有建築擋視線，坦克可以繞柱子拉開距離，恐龍得選好進攻角度。
 ## ponytail: 數值寫死不隨人數變。2 人或 5 人會偏掉，真的要再說。
 
-signal died
+signal died(killer: Node)
 
 const GRAVITY := 25.0
 const LOOK_SETTLE_MS := 1500  # 滑鼠鎖定後先忽略這麼久的位移
@@ -21,6 +21,7 @@ const LOOK_SETTLE_MS := 1500  # 滑鼠鎖定後先忽略這麼久的位移
 @export var bot := false
 
 var hp := 0
+var _last_hit_by: Node = null  # 只有主機需要，用來記誰殺了誰
 var _was_captured := false
 var _settle_until := 0
 
@@ -32,10 +33,11 @@ func _enter_tree() -> void:
 func _ready() -> void:
 	hp = max_hp
 
-## 只有主機會呼叫這個
-func take_damage(amount: int) -> void:
+## 只有主機會呼叫這個。source 是誰打的，用來記錄擊殺者。
+func take_damage(amount: int, source: Node = null) -> void:
 	if hp <= 0:
 		return
+	_last_hit_by = source
 	_sync_hp.rpc(hp - amount)
 
 # ponytail: 主機算完傷害直接廣播結果，不驗證來源。原型不防作弊，要防再改成主機權威輸入。
@@ -45,7 +47,7 @@ func _sync_hp(v: int) -> void:
 		_flash_red()
 	hp = v
 	if hp <= 0:
-		died.emit()
+		died.emit(_last_hit_by)
 		if multiplayer.is_server():
 			queue_free()  # MultiplayerSpawner 會同步移除其他人畫面上的它
 

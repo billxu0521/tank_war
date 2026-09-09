@@ -154,6 +154,7 @@ func _fire(pos: Vector3, dir: Vector3) -> void:
 		Vector3.ZERO, Vector3.ONE * 0.3, Vector3.ONE * 1.2, 0.12)
 	var s := SHELL.instantiate()
 	s.vel = dir * s.SPEED
+	s.shooter = self
 	get_tree().get_first_node_in_group(&"arena").add_child(s)
 	s.global_position = pos
 

@@ -206,6 +206,7 @@ func _spit() -> void:
 	var muzzle := _spit_muzzle()
 	var f := FIREBALL.instantiate()
 	f.vel = dir * Fireball.SPEED
+	f.shooter = self
 	get_tree().get_first_node_in_group(&"arena").add_child(f)
 	f.global_position = muzzle
 	$Trex.bite()   # 順便張嘴
@@ -234,7 +235,7 @@ func _hit_nearby(reach: float, damage: int, min_dot: float) -> void:
 			continue
 		if _blocked_by_wall(p):
 			continue
-		p.take_damage(damage)
+		p.take_damage(damage, self)
 
 ## 從恐龍頭部往目標拉一條線，被東西擋住就算打不到
 func _blocked_by_wall(target: Node3D) -> bool:
