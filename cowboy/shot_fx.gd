@@ -1,0 +1,159 @@
+extends Node3D
+class_name ShotFX
+## 開槍的視覺回饋：槍口火光、曳光、命中火花。全部用內建節點，沒有任何素材。
+## 這個節點自己的位置就是槍口——曳光從相機原點出去會看起來像從眼睛射出來。
+
+@export_group("Muzzle")
+@export var flash_time := 0.05
+
+@export_group("Holes")
+## 打在牆上的彈孔。可破壞物（會動、會消失）不留孔。
+@export var hole_material: StandardMaterial3D
+@export var hole_size := 0.07
+@export var hole_lifetime := 10.0
+@export var max_holes := 100
+@export var impact_stream: AudioStream
+
+@export_group("Tracer")
+@export var tracer_time := 0.04
+@export var tracer_width := 0.02
+@export var tracer_material: StandardMaterial3D
+
+@export_group("Impact")
+@export var spark_count := 12
+@export var spark_lifetime := 0.35
+@export var spark_speed := 4.0
+@export var spark_size := 0.03
+
+@onready var _light: OmniLight3D = $Light
+@onready var _flash: MeshInstance3D = get_node_or_null("Flash")
+
+var _flash_left := 0.0
+## 曳光和火花要留在世界上，掛在自己底下會跟著相機轉。
+## 掛在 arena 不掛 owner.get_parent()：牛仔的上一層是 Players，那裡的每個子節點
+## 都會被當成玩家（bot 選目標、恐龍咬人、存活人數都是掃 Players 的子節點）。
+var _world: Node
+var _holes: Array[MeshInstance3D] = []
+
+
+func _ready() -> void:
+	_world = get_tree().get_first_node_in_group(&"arena")
+	if _world == null:
+		_world = get_tree().current_scene
+	_light.visible = false
+	if _flash:
+		_flash.visible = false
+
+
+func _process(delta: float) -> void:
+	if _flash_left <= 0.0:
+		return
+	_flash_left -= delta
+	if _flash_left <= 0.0:
+		_light.visible = false
+		if _flash:
+			_flash.visible = false
+
+
+## to = 命中點（沒打中就是射線終點）；hit = 有沒有真的打到東西；
+## solid = 打到的是不會動的世界（要留彈孔）。霰彈每顆彈丸各呼叫一次，火光重覆觸發無妨。
+func fire(to: Vector3, hit_normal: Vector3, hit: bool, solid := false) -> void:
+	_light.visible = true
+	if _flash:
+		_flash.visible = true
+		# 每發轉一個隨機角度，連射看起來才不像同一張貼圖閃爍
+		_flash.rotation.z = randf() * TAU
+	_flash_left = flash_time
+	_spawn_tracer(to)
+	if hit:
+		_spawn_sparks(to, hit_normal)
+	if solid:
+		_spawn_hole(to, hit_normal)
+
+
+## 彈孔貼片：貼著命中面、存活一段時間、總數有上限（最舊的先回收）。
+func _spawn_hole(at: Vector3, normal: Vector3) -> void:
+	var mesh := QuadMesh.new()
+	mesh.size = Vector2.ONE * hole_size
+	var m := MeshInstance3D.new()
+	m.mesh = mesh
+	m.material_override = hole_material
+	m.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_world.add_child(m)
+	# 沿法線抬 1mm，不然跟牆面共面會閃爍（z-fighting）
+	m.global_position = at + normal * 0.001
+	if normal != Vector3.ZERO:
+		m.look_at(at + normal, Vector3.RIGHT if absf(normal.y) > 0.99 else Vector3.UP)
+	_holes.append(m)
+	# 到期的孔被 _free_after 收掉後參考還留在陣列裡，先濾掉失效的，
+	# 不然 pop 出來的可能是已釋放實例（賦值給型別變數會報錯）
+	_holes = _holes.filter(is_instance_valid)
+	while _holes.size() > max_holes:
+		_holes.pop_front().queue_free()
+	_free_after(m, hole_lifetime)
+
+
+## 命中點的著彈聲，一次扣扳機播一聲（不是每顆彈丸一聲）。
+func impact_sound(at: Vector3) -> void:
+	if not impact_stream:
+		return
+	var snd := AudioStreamPlayer3D.new()
+	snd.stream = impact_stream
+	snd.max_distance = 60.0
+	_world.add_child(snd)
+	snd.global_position = at
+	snd.play()
+	snd.finished.connect(snd.queue_free)
+
+
+func _spawn_tracer(to: Vector3) -> void:
+	var from := global_position
+	var length := from.distance_to(to)
+	if length < 0.01:
+		return
+
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(tracer_width, tracer_width, length)
+	mesh.material = tracer_material
+
+	var node := MeshInstance3D.new()
+	node.mesh = mesh
+	node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_world.add_child(node)
+	node.global_position = (from + to) * 0.5
+	# 方塊沿著自己的 Z 軸長，look_at 讓 -Z 指向終點，剛好對上
+	if not from.direction_to(to).is_equal_approx(Vector3.UP):
+		node.look_at(to)
+	_free_after(node, tracer_time)
+
+
+func _spawn_sparks(at: Vector3, normal: Vector3) -> void:
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3.ONE * spark_size
+	mesh.material = tracer_material
+
+	var sparks := CPUParticles3D.new()
+	# 粒子是世界座標的，一進場景就會噴。先關掉，擺好位置再開，
+	# 不然整把火花會生在父節點原點而不是命中點。
+	sparks.emitting = false
+	sparks.mesh = mesh
+	sparks.amount = spark_count
+	sparks.lifetime = spark_lifetime
+	sparks.one_shot = true
+	# 全部同一瞬間噴出來，不要拖成一條連續的煙。
+	# CPUParticles3D 叫 explosiveness，GPUParticles3D 才是 explosiveness_ratio
+	sparks.explosiveness = 1.0
+	# direction 是節點的本地座標，這裡不轉節點所以本地就等於世界
+	sparks.direction = normal
+	sparks.spread = 45.0
+	sparks.initial_velocity_min = spark_speed * 0.4
+	sparks.initial_velocity_max = spark_speed
+	_world.add_child(sparks)
+	sparks.global_position = at
+	sparks.emitting = true
+	_free_after(sparks, spark_lifetime)
+
+
+## 用訊號不用 await：節點被別人先砍掉（重開一局清場）時，連線會自己斷，不會噴錯。
+func _free_after(node: Node, seconds: float) -> void:
+	get_tree().create_timer(seconds).timeout.connect(node.queue_free)

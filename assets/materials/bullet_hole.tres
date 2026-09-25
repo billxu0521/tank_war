@@ -1,0 +1,14 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3]
+
+; 彈孔貼片。無光照，貼著命中面擺。
+
+[ext_resource type="Texture2D" path="res://assets/textures/bullet_hole.png" id="1_tex"]
+
+[resource]
+resource_name = "bullet_hole"
+transparency = 1
+shading_mode = 0
+; 關閉背面剔除：look_at 會讓 QuadMesh 的可見面(+Z)朝牆內，
+; 不關的話彈孔生是生了、玩家看到的卻是被剔除的背面 = 隱形
+cull_mode = 2
+albedo_texture = ExtResource("1_tex")

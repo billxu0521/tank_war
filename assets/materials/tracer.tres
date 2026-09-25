@@ -1,0 +1,12 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+; 曳光與命中火花共用。無光照，不然這麼細的東西在暗處會整個看不見。
+; ponytail: 兩者同色。要讓火花偏橘再拆一份 spark.tres，材質換掉就好。
+
+[resource]
+resource_name = "tracer"
+shading_mode = 0
+albedo_color = Color(1, 0.94, 0.65, 1)
+emission_enabled = true
+emission = Color(1, 0.9, 0.55, 1)
+emission_energy_multiplier = 3.0

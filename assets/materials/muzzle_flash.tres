@@ -1,0 +1,13 @@
+[gd_resource type="StandardMaterial3D" load_steps=2 format=3]
+
+; 槍口火光的貼圖面片。加法混合，疊在亮處也看得到。
+
+[ext_resource type="Texture2D" path="res://assets/textures/muzzle_flash.png" id="1_tex"]
+
+[resource]
+resource_name = "muzzle_flash"
+transparency = 1
+blend_mode = 1
+shading_mode = 0
+albedo_texture = ExtResource("1_tex")
+billboard_mode = 1

@@ -1,0 +1,181 @@
+[gd_scene load_steps=21 format=3]
+
+[ext_resource type="Script" path="res://cowboy/cowboy.gd" id="1_player"]
+[ext_resource type="Script" path="res://cowboy/viewmodel.gd" id="2_viewmodel"]
+[ext_resource type="Script" path="res://cowboy/shot_fx.gd" id="4_shotfx"]
+[ext_resource type="Material" path="res://assets/materials/tracer.tres" id="5_tracer"]
+[ext_resource type="PackedScene" path="res://cowboy/weapons/pistol.tscn" id="6_pistol"]
+[ext_resource type="PackedScene" path="res://cowboy/weapons/sawnoff.tscn" id="7_sawnoff"]
+[ext_resource type="PackedScene" path="res://cowboy/weapons/shotgun.tscn" id="8_shotgun"]
+[ext_resource type="Material" path="res://assets/materials/muzzle_flash.tres" id="9_flash"]
+[ext_resource type="Material" path="res://assets/materials/bullet_hole.tres" id="10_hole"]
+[ext_resource type="AudioStream" path="res://assets/audio/weapons/bullet_hole.mp3" id="11_impact"]
+[ext_resource type="AudioStream" path="res://assets/audio/footsteps/footstep0.mp3" id="12_step0"]
+[ext_resource type="AudioStream" path="res://assets/audio/footsteps/footstep1.mp3" id="13_step1"]
+[ext_resource type="AudioStream" path="res://assets/audio/footsteps/footstep2.mp3" id="14_step2"]
+[ext_resource type="AudioStream" path="res://assets/audio/footsteps/footstep3.mp3" id="15_step3"]
+[ext_resource type="AudioStream" path="res://assets/audio/jump_start.mp3" id="16_jump"]
+[ext_resource type="AudioStream" path="res://assets/audio/jump_end.mp3" id="17_land"]
+[ext_resource type="Material" path="res://assets/materials/player_body.tres" id="19_body"]
+
+[sub_resource type="CapsuleShape3D" id="Capsule_body"]
+resource_local_to_scene = true
+radius = 0.4
+height = 1.8
+
+; 四種腳步聲隨機輪播，加一點音高變化，同一顆檔案聽起來也不重複
+[sub_resource type="AudioStreamRandomizer" id="Steps_random"]
+random_pitch = 1.15
+streams_count = 4
+stream_0/stream = ExtResource("12_step0")
+stream_1/stream = ExtResource("13_step1")
+stream_2/stream = ExtResource("14_step2")
+stream_3/stream = ExtResource("15_step3")
+
+[sub_resource type="CapsuleMesh" id="Body_torso"]
+resource_local_to_scene = true
+radius = 0.4
+height = 1.8
+
+[sub_resource type="BoxMesh" id="Body_face"]
+size = Vector3(0.3, 0.3, 0.3)
+
+; 只複製別人真的看得到的東西。體力、彈藥、傾身、後座力、散布都是自己
+; 畫面上的狀態，同步它們只是浪費頻寬。
+[sub_resource type="SceneReplicationConfig" id="Sync_player"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath(".:rotation")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+properties/2/path = NodePath("Head:rotation:x")
+properties/2/spawn = true
+properties/2/replication_mode = 1
+properties/3/path = NodePath(".:sync_crouching")
+properties/3/spawn = true
+properties/3/replication_mode = 1
+
+[sub_resource type="QuadMesh" id="Mesh_flash"]
+size = Vector2(0.28, 0.28)
+
+[node name="Cowboy" type="CharacterBody3D"]
+script = ExtResource("1_player")
+max_hp = 150
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("Capsule_body")
+
+[node name="Head" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+
+[node name="Face" type="MeshInstance3D" parent="Head"]
+mesh = SubResource("Body_face")
+material_override = ExtResource("19_body")
+
+[node name="Camera3D" type="Camera3D" parent="Head"]
+near = 0.02
+fov = 90.0
+
+; near 拉到 0.02 是為了讓手不會被近裁面切掉。
+; 武器場景在 _ready 時全部生出來掛在這底下，切換只切 visible。
+[node name="Viewmodel" type="Node3D" parent="Head/Camera3D"]
+script = ExtResource("2_viewmodel")
+weapon_scenes = Array[PackedScene]([ExtResource("6_pistol"), ExtResource("7_sawnoff"), ExtResource("8_shotgun")])
+ammo_label_path = NodePath("../../../HUD/AmmoLabel")
+crosshair_path = NodePath("../../../HUD/Crosshair")
+
+; 這個節點的位置就是槍口，曳光和火光從這裡出去。位置是目測調的，不對就調 transform。
+[node name="ShotFX" type="Node3D" parent="Head/Camera3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.13, -0.08, -0.5)
+script = ExtResource("4_shotfx")
+tracer_material = ExtResource("5_tracer")
+hole_material = ExtResource("10_hole")
+impact_stream = ExtResource("11_impact")
+
+[node name="Light" type="OmniLight3D" parent="Head/Camera3D/ShotFX"]
+visible = false
+light_color = Color(1, 0.85, 0.55, 1)
+light_energy = 2.5
+shadow_enabled = false
+omni_range = 3.0
+
+[node name="Flash" type="MeshInstance3D" parent="Head/Camera3D/ShotFX"]
+visible = false
+mesh = SubResource("Mesh_flash")
+material_override = ExtResource("9_flash")
+cast_shadow = 0
+
+; 遠端玩家的身體。自己身上是隱藏的，第一人稱不該看到自己的軀幹。
+[node name="Body" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+mesh = SubResource("Body_torso")
+material_override = ExtResource("19_body")
+
+[node name="Sync" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("Sync_player")
+
+[node name="StepSound" type="AudioStreamPlayer" parent="."]
+stream = SubResource("Steps_random")
+volume_db = -10.0
+
+[node name="JumpSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("16_jump")
+volume_db = -8.0
+
+[node name="LandSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("17_land")
+volume_db = -8.0
+
+; 準心、體力、彈藥跟著牛仔走，不放在 main.tscn 的 UI，省掉跨場景接線
+[node name="HUD" type="CanvasLayer" parent="."]
+
+[node name="Crosshair" type="Label" parent="HUD"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 28
+text = "+"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+; 體力條放準心正下方。
+[node name="StaminaBar" type="ColorRect" parent="HUD"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -80.0
+offset_top = 28.0
+offset_right = 80.0
+offset_bottom = 36.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.35)
+
+[node name="Fill" type="ColorRect" parent="HUD/StaminaBar"]
+anchors_preset = 0
+offset_right = 160.0
+offset_bottom = 8.0
+color = Color(0.85, 0.85, 0.8, 1)
+
+[node name="AmmoLabel" type="Label" parent="HUD"]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -260.0
+offset_top = -60.0
+offset_right = -24.0
+offset_bottom = -20.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 2
+vertical_alignment = 1
+

@@ -35,8 +35,8 @@ emission = Color(0.5, 0.45, 0.3, 1)
 
 [sub_resource type="SphereMesh" id="egg_mesh"]
 material = SubResource("egg_mat")
-radius = 1.1
-height = 2.2
+radius = 0.35
+height = 0.7
 
 [sub_resource type="SceneReplicationConfig" id="egg_repl"]
 properties/0/path = NodePath(".:position")
@@ -77,7 +77,7 @@ replication_config = SubResource("egg_repl")
 [node name="Players" type="Node3D" parent="."]
 
 [node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="."]
-_spawnable_scenes = PackedStringArray("res://tank.tscn", "res://dino.tscn")
+_spawnable_scenes = PackedStringArray("res://cowboy/cowboy.tscn", "res://dino.tscn")
 spawn_path = NodePath("../Players")
 
 [node name="UI" type="CanvasLayer" parent="."]
@@ -96,11 +96,11 @@ offset_bottom = 320.0
 theme_override_constants/separation = 8
 
 [node name="Title" type="Label" parent="UI/Root/Lobby"]
-text = "坦克大戰恐龍"
+text = "西部牛仔打恐龍"
 
 [node name="Hint" type="Label" parent="UI/Root/Lobby"]
-text = "開房的人當恐龍，加入的人當坦克。
-WASD 移動，滑鼠瞄準，左鍵攻擊，Esc 開選單。\n坦克：滑鼠左右轉砲塔、上下抬砲管，砲彈會掉，遠距離要抬高。\n恐龍：左鍵吐火球，F 咬，Space 跳躍，Shift 衝刺，貼建築按 W 爬。\n一局四分鐘。三台坦克互為對手，先把蛋帶進藍色撤離區的人贏。\n死了五秒後滿血重生，不設命數；時間到沒人撤離就是恐龍贏。"
+text = "開房的人當恐龍，加入的人當牛仔。
+WASD 移動，滑鼠瞄準，左鍵攻擊，Esc 開選單。\n牛仔：右鍵舉槍，R 換彈，1/2/3 換槍，Shift 跑，Ctrl 蹲，Q/E 探頭，頂著矮牆按 Space 翻越。\n恐龍：左鍵吐火球，F 咬，Space 跳躍，Shift 衝刺，貼建築按 W 爬。\n一局四分鐘。牛仔互為對手，先把蛋帶進藍色撤離區的人贏。\n死了五秒後滿血重生，不設命數；時間到沒人撤離就是恐龍贏。"
 
 [node name="IP" type="LineEdit" parent="UI/Root/Lobby"]
 text = "127.0.0.1"
@@ -110,13 +110,13 @@ placeholder_text = "主機 IP"
 text = "開房（我當恐龍）"
 
 [node name="JoinBtn" type="Button" parent="UI/Root/Lobby"]
-text = "加入（我當坦克）"
+text = "加入（我當牛仔）"
 
 [node name="OfflineBtn" type="Button" parent="UI/Root/Lobby"]
-text = "離線測試：我當坦克（打會跑的恐龍）"
+text = "離線測試：我當牛仔（打會追人的恐龍）"
 
 [node name="OfflineDinoBtn" type="Button" parent="UI/Root/Lobby"]
-text = "離線測試：我當恐龍（追三台會跑的坦克）"
+text = "離線測試：我當恐龍（對三個牛仔 bot）"
 
 [node name="ViewerBtn" type="Button" parent="UI/Root/Lobby"]
 text = "檢視模型（看戰車和恐龍長怎樣）"

@@ -1,0 +1,20 @@
+手槍音效授權記錄（2026-08-12 下載）
+
+pistol_shoot.mp3
+  標題：Small pistol gunshot indoors（9mm PAK pistol shot in a small room）
+  作者：acidsnowflake
+  來源：https://freesound.org/people/acidsnowflake/sounds/402789/
+  授權：CC0 1.0（公眾領域，可商用，不需標示）
+        https://creativecommons.org/publicdomain/zero/1.0/
+  備註：取自 freesound 的 HQ mp3 預覽檔（CC0 允許任何形式使用）。
+
+pistol_reload.mp3
+  標題：Gun Reload
+  作者：SecureSubset
+  來源：https://freesound.org/people/SecureSubset/sounds/787669/
+  授權：CC0 1.0（公眾領域，可商用，不需標示）
+        https://creativecommons.org/publicdomain/zero/1.0/
+  備註：取自 freesound 的 HQ mp3 預覽檔。
+
+本資料夾其餘音檔（shotgun_*、no_ammo、bullet_hole）來自 fps-character-asset
+素材包，記錄見 CREDITS.md。

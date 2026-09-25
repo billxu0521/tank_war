@@ -1,0 +1,11 @@
+[gd_resource type="StandardMaterial3D" format=3]
+
+; 遠端玩家的身體。挑跟敵人（灰綠 mutant）和場景（土黃、木色）都拉得開的藍，
+; 黃昏光下一眼分得出「那是人不是怪」。
+;
+; ponytail: 佔位用的純色膠囊，等連線本身驗證完再換人形模型。
+
+[resource]
+resource_name = "player_body"
+albedo_color = Color(0.25, 0.45, 0.8, 1)
+roughness = 0.7

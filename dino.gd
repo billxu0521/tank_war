@@ -1,11 +1,11 @@
 extends "res://fighter.gd"
-## 恐龍：跑很快、血很多，沒有遠程。
+## 恐龍：跑很快、血很多，咬一口很痛。
 ## 左鍵吐火球（遠程、吃體力），F 咬前方，Space 跳躍，Shift 衝刺，
 ## 貼著建築按 W 往上爬（場地圍牆不給爬）。
 ## 滑鼠左右轉身、上下看（頭會跟著抬，相機繞著身體轉）。
 ## 衝刺、跳躍、攀爬都吃體力；體力見底會力竭，要回到 EXHAUSTED_UNTIL 才能再出力。
 
-const SPEED := 10.8       # 坦克的 1.2 倍（坦克 9.0）。比例有測試釘住
+const SPEED := 9.0        # 只比牛仔跑步（8.5）快一點，牛仔拉得開一段、追得回來。比例有測試釘住
 const SPRINT_MULT := 1.3   # 技能制：按下去 3 秒內 1.3 倍速，不吃體力
 const SPRINT_TIME := 8.0
 const SPRINT_CD := 20.0
@@ -18,23 +18,23 @@ const REGEN_STILL := 16.0      # 站著不動每秒回
 const REGEN_MOVING := 16.0     # 跟站著一樣，移動不再懲罰回復
 const EXHAUSTED_UNTIL := 30.0  # 力竭後要回到這個值才能再衝刺／攀爬
 const CLIMB_SPEED := 6.0
-const MOUSE_SENS := 0.009  # 恐龍要靈活，轉頭比坦克快很多
+const MOUSE_SENS := 0.009  # 恐龍要靈活，轉頭要快
 const BITE_REACH := 9.0   # 體型放大 1.5 倍，嘴巴搆得更遠
-const BITE_DAMAGE := 35   # 六口才咬死一台 200 血的坦克
+const BITE_DAMAGE := 100  # 兩口咬死 150 血的牛仔，被咬到一口就該跑
 const BITE_COOLDOWN := 1.1
-# 跳躍：拉開距離、跨過障礙、撲向坦克
+# 跳躍：拉開距離、跨過障礙、撲向牛仔
 const JUMP_SPEED := 18.0  # 大約跳得起 6.5 公尺
 const JUMP_COST := 30.0
 const HEAD_HEIGHT := 2.4  # 視線和火球都從這個高度射出
-# 火球：飛得慢、弧度大，逼坦克換位用的，不是主力輸出
+# 火球：飛得慢、弧度大，逼牛仔換位用的，不是主力輸出
 const FIRE_COOLDOWN := 0.7   # 連射用的，體力是真正的限制
 const FIRE_COST := 15.0      # 滿體力連噴 6 顆就見底，之後被回復速度綁住
 const FIREBALL := preload("res://fireball.tscn")
 const AIM_RANGE := 35.0    # 準心以這個距離做彈道歸零
 const BOT_FIRE_RANGE := 70.0  # bot 在這個距離內會吐火球
 const MUZZLE_FWD := 5.0    # 火球從嘴巴前方這麼遠生出來
-# 中彈踉蹌：坦克打中就能把恐龍拖慢一下，下一發才跟得上。
-# 這是坦克唯一的正回饋——不然遠距離是純猜，打中也看不出差別。
+# 中彈踉蹌：牛仔打中就能把恐龍拖慢一下，逃跑的人才拉得開。
+# 這是牛仔少數的正回饋——不然遠距離是純猜，打中也看不出差別。
 const STAGGER_TIME := 0.45
 const STAGGER_MULT := 0.45
 const CAM_BASE := -0.40   # 相機支點的基礎俯角
@@ -146,7 +146,7 @@ func _update_stamina(delta: float, spend: float, moving: bool) -> void:
 	elif stamina >= EXHAUSTED_UNTIL:
 		exhausted = false
 
-## 火球在 AIM_RANGE 距離會落在哪。恐龍嘴巴離地 6.5 公尺、坦克才 0.6 公尺高，
+## 火球在 AIM_RANGE 距離會落在哪。恐龍嘴巴離地 6.5 公尺、牛仔才 1.8 公尺高，
 ## 平射一定從頭上飛過——沒有準心的話玩家根本瞄不到。
 func aim_point() -> Vector3:
 	var t := AIM_RANGE / Fireball.SPEED
@@ -160,7 +160,7 @@ func _spit_dir() -> Vector3:
 func _spit_muzzle() -> Vector3:
 	return global_position + Vector3.UP * HEAD_HEIGHT + _spit_dir() * MUZZLE_FWD
 
-## 電腦操控的恐龍。優先序：追持蛋的人（沒人拿就追最近的坦克），
+## 電腦操控的恐龍。優先序：追持蛋的人（沒人拿就追最近的牛仔），
 ## 近了咬、中距離吐火球、遠了衝刺追上去。
 func _bot_step(delta: float) -> void:
 	var g := get_tree().get_first_node_in_group(&"match")
@@ -179,7 +179,7 @@ func _bot_step(delta: float) -> void:
 	var facing := absf(wrapf(want - rotation.y, -PI, PI)) < 0.5
 	var close := flat < BITE_REACH * 0.8
 	move_step(delta, Vector3.ZERO if close else Vector3(0, 0, -1),
-		flat > 25.0, false, false)   # 離得遠就衝刺
+		flat > 25.0, is_on_wall(), false)   # 離得遠就衝刺；撞到建築就爬過去
 
 	_bite_cd -= delta
 	_fire_cd -= delta
@@ -198,7 +198,7 @@ func _bot_step(delta: float) -> void:
 		stamina -= FIRE_COST
 		_spit.rpc()
 
-## 追誰：有人拿著蛋就追他，否則追最近的坦克
+## 追誰：有人拿著蛋就追他，否則追最近的牛仔
 func _bot_target(g: Node) -> Node3D:
 	if g == null:
 		return null
@@ -246,8 +246,8 @@ func try_jump() -> bool:
 
 # ponytail: 恐龍一定是主機（編號 1），所以直接算傷害，不用 RPC 繞一圈。
 # 之後若要讓客戶端也能當恐龍，改成 rpc_id(1) 送請求。
-## 打範圍內的坦克。min_dot 是方向限制：0.3 = 只打前方錐形，-1 = 不管方向。
-## 中間隔著建築物就打不到——這是坦克躲掩蔽的依據。
+## 打範圍內的牛仔。min_dot 是方向限制：0.3 = 只打前方錐形，-1 = 不管方向。
+## 中間隔著建築物就打不到——這是牛仔躲掩蔽的依據。
 func _hit_nearby(reach: float, damage: int, min_dot: float) -> void:
 	for p in get_parent().get_children():
 		if p == self or not p.has_method("take_damage"):
@@ -259,10 +259,11 @@ func _hit_nearby(reach: float, damage: int, min_dot: float) -> void:
 			continue
 		p.take_damage(damage, self)
 
-## 從恐龍頭部往目標拉一條線，被東西擋住就算打不到
+## 從恐龍頭部往目標拉一條線，被東西擋住就算打不到。
+## 瞄目標腰部不瞄原點：牛仔的原點在腳底，線的終點剛好貼著地板，會被地板擋掉。
 func _blocked_by_wall(target: Node3D) -> bool:
 	var q := PhysicsRayQueryParameters3D.create(
-		global_position + Vector3.UP * HEAD_HEIGHT, target.global_position)
+		global_position + Vector3.UP * HEAD_HEIGHT, target.global_position + Vector3.UP)
 	q.exclude = [get_rid(), target.get_rid()]
 	return not get_world_3d().direct_space_state.intersect_ray(q).is_empty()
 

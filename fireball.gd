@@ -3,11 +3,9 @@ extends Node3D
 ## 恐龍的火球。跟砲彈一樣用射線掃過每幀位移，但飛得慢、弧度大，
 ## 打得到遠處但躲得掉——恐龍的定位是近戰，火球是逼位不是主力輸出。
 ##
-## ponytail: 沒有跟 shell.gd 共用一份程式碼。坦克的準心歸零算式吃 Shell 的常數，
-## 抽成可設定的參數反而更繞。兩邊各二十幾行，之後手感真的分岔了也好改。
 
 const SPEED := 45.0
-const DAMAGE := 45
+const DAMAGE := 50  # 三顆打死一個牛仔
 const GRAVITY := 12.0
 
 var vel := Vector3.ZERO

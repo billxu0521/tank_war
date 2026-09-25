@@ -1,0 +1,41 @@
+[gd_scene load_steps=6 format=3]
+
+; 泵動霰彈槍。
+; 槍模是從 shotgun.glb 抽出的單一 mesh（原始 GLB 的蒙皮綁定在 Godot 匯入後爆掉，
+; 槍身變成五公里長）。mesh 座標是 ×10000 的槍身空間，用 0.0001 縮回來、
+; 再把中心平移回原點附近。不帶手臂與骨架動畫，回饋靠音效＋火光＋後座力。
+
+[ext_resource type="Script" path="res://cowboy/weapon.gd" id="1_weapon"]
+[ext_resource type="AudioStream" path="res://assets/audio/weapons/shotgun_shoot.mp3" id="3_shoot"]
+[ext_resource type="AudioStream" path="res://assets/audio/weapons/shotgun_reload.mp3" id="4_reload"]
+[ext_resource type="AudioStream" path="res://assets/audio/weapons/no_ammo.mp3" id="5_empty"]
+[ext_resource type="Mesh" path="res://assets/models/weapons/parts/shotgun_body.res" id="6_body"]
+
+[node name="Shotgun" type="Node3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.16, -0.22, -0.2)
+script = ExtResource("1_weapon")
+display_name = "霰彈槍"
+mag_size = 6
+damage = 8.0
+pellets = 8
+pellet_spread = 3.5
+fire_interval = 0.8
+reload_time = 0.6
+recoil_scale = 1.6
+ads_position = Vector3(0.0, -0.18, -0.2)
+
+; mesh 中心在 (0, 11, -3905)，平移 ×0.0001 抵銷回原點附近
+[node name="Model" type="Node3D" parent="."]
+transform = Transform3D(-0.0001, 0, 0, 0, -0.0001, 0, 0, 0, 0.0001, 0, 0.0011, 0.3905)
+
+[node name="Body" type="MeshInstance3D" parent="Model"]
+mesh = ExtResource("6_body")
+
+[node name="ShootSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("3_shoot")
+
+[node name="ReloadSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("4_reload")
+
+[node name="EmptySound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("5_empty")
