@@ -16,6 +16,8 @@ const WALL_H := 40.0
 const WALL_T := 4.0
 const EXIT_RADIUS := 14.0     # 撤離區半徑
 const PICKUP_RANGE := 6.0     # 坦克靠這麼近就撿得到蛋
+const PICKUP_SECONDS := 2.0   # 撿蛋要連續待滿這麼久，不是碰到就拿
+const EXTRACT_SECONDS := 5.0  # 要在撤離區內連續待滿這麼久
 const EGG_HOLD_HEIGHT := 2.2  # 蛋掛在坦克上方多高
 const MATCH_SECONDS := 240.0  # 一局四分鐘
 const RESPAWN_DELAY := 5.0    # 死亡的代價是節奏，不是失去參賽資格
@@ -39,6 +41,7 @@ var _offline := false
 var _time_left := 0.0
 var _clock := 0                     # 主機廣播的剩餘秒數
 var _respawn_queue: Array[Dictionary] = []
+var _claimer := 0   # 正在撿蛋的坦克編號
 var _over := false
 
 func _ready() -> void:
@@ -58,12 +61,15 @@ func _ready() -> void:
 ##   TankWar.exe -- --host
 ##   TankWar.exe -- --join 192.168.1.5
 ##   TankWar.exe -- --offline
+##   TankWar.exe -- --viewer
 func _autostart() -> void:
 	var args := OS.get_cmdline_user_args()
 	if args.has("--host"):
 		_on_host_pressed()
 	elif args.has("--offline"):
 		_on_offline_pressed()
+	elif args.has("--viewer"):
+		_on_viewer_pressed()
 	else:
 		var i := args.find("--join")
 		if i >= 0 and i + 1 < args.size():
@@ -154,11 +160,27 @@ func _on_offline_dino_pressed() -> void:
 		t.set(&"bot", true)
 		t.global_position = _spawn_point()
 
+## 模型檢視：把整個遊戲畫面收起來，換成一個只有模型的場景。
+## 不清多人連線狀態，因為根本沒建立。
+func _on_viewer_pressed() -> void:
+	var v := ModelViewer.new()
+	v.use_theme($UI/Root.theme)
+	v.closed.connect(func() -> void:
+		v.queue_free()
+		visible = true
+		$UI.visible = true
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE)
+	get_tree().root.add_child(v)
+	visible = false
+	$UI.visible = false
+
 func _enter_game(msg: String) -> void:
 	if multiplayer.is_server():
 		_time_left = MATCH_SECONDS
 		_clock = int(MATCH_SECONDS)
 		_respawn_queue.clear()
+		_claimer = 0
+		egg.pickup = 0.0
 		egg.carrier = 0
 		egg.global_position = _spawn_point(ARENA * 0.22)  # 放中央附近，不要一開始就在出口旁邊
 		egg.global_position.y = 1.2
@@ -240,7 +262,7 @@ func _finish(msg: String) -> void:
 func _physics_process(delta: float) -> void:
 	if lobby.visible or _over or not multiplayer.is_server():
 		return
-	_egg_step()
+	_egg_step(delta)
 	_respawn_step()
 
 	_time_left -= delta
@@ -257,30 +279,35 @@ func _set_clock(secs: int) -> void:
 	_clock = secs
 
 ## 蛋的規則：坦克靠近就撿走，持有者死掉就留在原地，帶進撤離區就贏。
-func _egg_step() -> void:
+func _egg_step(delta: float) -> void:
 	if egg.carrier == 0:
-		for p in players.get_children():
-			if p.is_in_group(&"dino"):
-				continue
-			if egg.global_position.distance_to(p.global_position) < PICKUP_RANGE:
-				egg.carrier = p.name.to_int()
-				_log("%s 撿到蛋" % _who(p))
-				return
+		egg.extract = 0.0
+		_claim_step(delta)
 		return
 
 	var holder := players.get_node_or_null(NodePath(str(egg.carrier)))
 	if holder == null:
-		_log("蛋掉在 (%.0f, %.0f)，離最近的出口還有 %.0f 公尺" % [
-			egg.global_position.x, egg.global_position.z, _dist_to_exit(egg.global_position)])
+		_log("蛋掉在 (%.0f, %.0f)，離最近的出口還有 %.0f 公尺%s" % [
+			egg.global_position.x, egg.global_position.z, _dist_to_exit(egg.global_position),
+			"（撤離進度 %.1f 秒作廢）" % egg.extract if egg.extract > 0.0 else ""])
 		egg.carrier = 0   # 持有者陣亡，蛋就掉在他最後的位置
+		egg.extract = 0.0
 		return
 	egg.global_position = holder.global_position + Vector3.UP * EGG_HOLD_HEIGHT
-	for e: Vector3 in _exits:
-		if Vector2(egg.global_position.x - e.x, egg.global_position.z - e.z).length() < EXIT_RADIUS:
+
+	# 要在圈內連續待滿才算數。離開就歸零；敵人站在圈裡不會中斷。
+	if _dist_to_exit(egg.global_position) < EXIT_RADIUS:
+		if egg.extract == 0.0:
+			_log("坦克%d 進入撤離區，開始倒數 %.0f 秒" % [egg.carrier, EXTRACT_SECONDS])
+		egg.extract += delta
+		if egg.extract >= EXTRACT_SECONDS:
 			_over = true
-			_log("坦克%d 帶著蛋撤離成功" % egg.carrier)
+			_log("坦克%d 撤離完成" % egg.carrier)
 			_finish_egg.rpc(egg.carrier)
 			return
+	elif egg.extract > 0.0:
+		_log("坦克%d 離開撤離區，進度 %.1f 秒歸零" % [egg.carrier, egg.extract])
+		egg.extract = 0.0
 
 func _process(_delta: float) -> void:
 	# 連線還沒建立好就問 id 會噴錯
@@ -299,6 +326,10 @@ func _process(_delta: float) -> void:
 		egg_state = "在你身上！開去藍色撤離區"
 	elif egg.carrier != 0:
 		egg_state = "被坦克 %d 拿走了" % egg.carrier
+	if egg.pickup > 0.0:
+		egg_state += "　撿取中 %.1f/%.0f 秒" % [egg.pickup, PICKUP_SECONDS]
+	if egg.extract > 0.0:
+		egg_state += "　撤離中 %.1f/%.0f 秒" % [egg.extract, EXTRACT_SECONDS]
 	var mine := "陣亡"
 	if me != null:
 		mine = str(me.hp)
@@ -339,6 +370,8 @@ func _update_crosshair(me: Node) -> void:
 	if me == null or cam == null or not me.has_method("aim_point"):
 		crosshair.hide()
 		return
+	# 打中人準心閃紅。遠距離看不出血條掉，這是唯一的命中確認
+	crosshair.modulate = Color(1, 0.3, 0.25) if me.hit_until > Time.get_ticks_msec() else Color.WHITE
 	var p: Vector3 = me.aim_point()
 	crosshair.visible = not cam.is_position_behind(p)
 	crosshair.position = cam.unproject_position(p) - crosshair.size * 0.5
@@ -377,11 +410,37 @@ func _build_arena() -> void:
 				pos.z - size.z * 0.5 - SPAWN_CLEARANCE,
 				size.x + SPAWN_CLEARANCE * 2, size.z + SPAWN_CLEARANCE * 2))
 
-## 四個撤離區，四邊各一個。只有一個出口的話恐龍蹲在那裡就好，
-## 等於把「守著不動」的問題從蛋搬到出口。
+## 撿蛋不是碰到就拿，要在旁邊連續待滿 PICKUP_SECONDS。
+## 換人或走開就歸零——跟撤離同一個道理，讓拿蛋變成要承諾的動作。
+func _claim_step(delta: float) -> void:
+	var near: Node3D = null
+	for p in players.get_children():
+		if p.is_in_group(&"dino"):
+			continue
+		var d := egg.global_position.distance_to(p.global_position)
+		if d < PICKUP_RANGE and (near == null
+				or d < egg.global_position.distance_to(near.global_position)):
+			near = p
+	if near == null:
+		_claimer = 0
+		egg.pickup = 0.0
+		return
+	var id := near.name.to_int()
+	if id != _claimer:
+		_claimer = id
+		egg.pickup = 0.0
+	egg.pickup += delta
+	if egg.pickup >= PICKUP_SECONDS:
+		egg.carrier = id
+		egg.pickup = 0.0
+		_claimer = 0
+		_log("%s 撿到蛋" % _who(near))
+
+## 兩個撤離區，對邊各一個。只有一個出口的話恐龍蹲在那裡就好；
+## 兩個保留了選擇，但競爭比四個集中，撤離區更容易變成三方交會的爭奪點。
 func _build_exits() -> void:
 	var d := ARENA * 0.5 - 22.0
-	for c: Vector3 in [Vector3(0, 0, d), Vector3(0, 0, -d), Vector3(d, 0, 0), Vector3(-d, 0, 0)]:
+	for c: Vector3 in [Vector3(0, 0, d), Vector3(0, 0, -d)]:
 		_exits.append(c)
 		var mesh := BoxMesh.new()
 		mesh.size = Vector3(EXIT_RADIUS * 2.0, 0.3, EXIT_RADIUS * 2.0)

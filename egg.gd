@@ -4,3 +4,7 @@ extends Node3D
 
 ## 0 = 沒人拿，其他 = 拿著它的坦克編號
 @export var carrier := 0
+## 撿取進度（秒）。換人或走開就歸零。
+@export var pickup := 0.0
+## 撤離進度（秒）。離開圈子或陣亡就歸零；敵人站在圈內不會中斷。
+@export var extract := 0.0

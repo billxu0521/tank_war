@@ -12,6 +12,7 @@ var _bot_tank: Node3D
 var _bot_from := Vector2.ZERO
 var _bot_frames := 0
 var _frames := 0
+const DT := 1.0 / 120.0
 
 func _ck(ok: bool, msg: String) -> void:
 	if not ok:
@@ -31,11 +32,14 @@ func _process(_delta: float) -> bool:
 		_case_back_to_lobby()
 		_case_cover()
 		_case_trex_rig()
+		_case_trex_lean()
 		_case_stamina()
+		_case_sprint_skill()
 		_case_egg()
 		_case_dino_cannot_take_egg()
 		_case_respawn()
 		_case_fireball()
+		_case_stagger()
 		_case_arena_walls()
 		_start_shell_case()
 		return false
@@ -79,7 +83,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、砲管俯仰、油門手感、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、砲彈命中、恐龍跳躍、移動靶、體力規則、蛋與撤離、恐龍撿不到蛋、火球都正常")
+		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、砲管俯仰、油門手感、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、砲彈命中、恐龍跳躍、移動靶、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
 	return true
 
 # --- 共用 ---
@@ -116,6 +120,10 @@ func _case_timeout() -> void:
 	var t2: Node = m.players.get_node(^"2")
 	var bites := ceili(float(t2.max_hp) / d.BITE_DAMAGE)
 	_ck(bites == 6, "平衡目標：咬六口才死一台坦克（現在是 %d 口）" % bites)
+
+	# 恐龍的基礎速度釘在坦克的 1.2 倍，兩邊各自改都會被擋下來
+	var ratio: float = d.SPEED / t2.SPEED
+	_ck(is_equal_approx(ratio, 1.2), "恐龍基礎速度要是坦克的 1.2 倍（現在 %.2f 倍）" % ratio)
 
 	# 無限重生，所以殺光坦克不會結束回合
 	m.players.get_node(^"2").take_damage(9999)
@@ -335,18 +343,43 @@ func _case_trex_rig() -> void:
 	_ck(absf(t._tail_yaw[3]) < 0.05, "最後要收斂回中間，不能一直晃（現在 %.3f）" % t._tail_yaw[3])
 	_end(m)
 
+## 側傾與位移延遲：往旁邊移動時身體要往內倒、慢半拍才跟上，頭要保持水平
+func _case_trex_lean() -> void:
+	var m := _new_offline_game()
+	var t: Node = m.players.get_node(^"2").get_node(^"Trex")
+	var d: Node3D = m.players.get_node(^"2")
+
+	var drag := 0.0
+	for i in 40:  # 假裝以 10 m/s 往右（本地 +X）平移
+		t._last_pos = t.global_position - d.global_basis.x * (10.0 / 60.0)
+		t._process(1.0 / 60.0)
+		drag = maxf(drag, absf(t.skel.position.x))   # 只有加速那幾幀才拖得到
+	var roll: float = t.skel.get_bone_pose_rotation(t._idx["spine1"]).get_euler().z
+	_ck(roll < -0.03, "往右移動時軀幹要往右倒（現在 %.3f，應為負）" % roll)
+
+	var head: float = t.skel.get_bone_pose_rotation(t._idx["head"]).get_euler().z
+	_ck(head * roll < 0.0, "頭要反向轉回來保持水平（軀幹 %.3f 頭 %.3f）" % [roll, head])
+	_ck(drag > 0.05, "起步那下身體要被拖著走，不是瞬間跟上（最大位移 %.3f）" % drag)
+
+	for i in 600:  # 停下來，側傾要收斂回去
+		t._last_pos = t.global_position
+		t._process(1.0 / 60.0)
+	_ck(absf(t.skel.get_bone_pose_rotation(t._idx["spine1"]).get_euler().z) < 0.03,
+		"停下來要站回直的")
+	_end(m)
+
 ## 體力：耗光會力竭，要回到門檻以上才能再衝刺／攀爬
 func _case_stamina() -> void:
 	var m := _new_game()
 	var d: Node = m.players.get_node(^"1")
 	_ck(d.stamina == d.STAMINA_MAX and d.can_exert(), "一開始滿體力，衝得動")
 
-	# 一直衝，看幾秒耗光
+	# 一直爬，看幾秒耗光（衝刺已經改成技能制、不吃體力了）
 	var secs := 0.0
-	while d.stamina > 0.0 and secs < 20.0:
-		d._update_stamina(1.0 / 120.0, d.SPRINT_DRAIN, true)
+	while d.stamina > 0.0 and secs < 30.0:
+		d._update_stamina(1.0 / 120.0, d.CLIMB_DRAIN, true)
 		secs += 1.0 / 120.0
-	_ck(secs > 2.0 and secs < 4.5, "全滿應該衝得了 3 秒左右（實際 %.1f 秒）" % secs)
+	_ck(secs > 3.0 and secs < 8.0, "全滿應該爬得了 4 秒左右（實際 %.1f 秒）" % secs)
 	_ck(not d.can_exert(), "體力歸零 -> 力竭，不能再衝刺")
 
 	# 回一點點還是不行，這是防止在 0 附近抽動
@@ -360,7 +393,7 @@ func _case_stamina() -> void:
 		d._update_stamina(1.0 / 120.0, 0.0, false)
 	_ck(d.can_exert(), "回到門檻以上才能再出力")
 
-	# 站著回得比走著快
+	# 回復速度已經統一，站著和移動一樣快
 	var a: Node = m.players.get_node(^"1")
 	a.stamina = 50.0
 	for i in 120:
@@ -370,8 +403,26 @@ func _case_stamina() -> void:
 	for i in 120:
 		a._update_stamina(1.0 / 120.0, 0.0, true)
 	var moving_gain: float = a.stamina - 50.0
-	_ck(still_gain > moving_gain * 1.5,
-		"站著回得該比走著快很多（站 %.1f vs 走 %.1f）" % [still_gain, moving_gain])
+	_ck(is_equal_approx(still_gain, moving_gain),
+		"回復速度站著和移動要一樣（站 %.1f vs 走 %.1f）" % [still_gain, moving_gain])
+	_end(m)
+
+## 中彈踉蹌：恐龍被打中會短暫跑不快，時間過了要自己回復
+func _case_stagger() -> void:
+	var m := _new_game()
+	var d: Node3D = m.players.get_node(^"1")
+	var fwd := Vector3(0, 0, -1)
+
+	d.take_damage(1)
+	for i in int(0.3 / DT):
+		d.move_step(DT, fwd, false, false, false)
+	var slow := Vector2(d.velocity.x, d.velocity.z).length()
+	_ck(slow < d.SPEED * 0.6, "中彈後應該跑不快（實際 %.1f，全速 %.1f）" % [slow, d.SPEED])
+
+	for i in int(1.0 / DT):
+		d.move_step(DT, fwd, false, false, false)
+	var full := Vector2(d.velocity.x, d.velocity.z).length()
+	_ck(full > d.SPEED * 0.9, "踉蹌過了要回到全速（實際 %.1f）" % full)
 	_end(m)
 
 ## 蛋：坦克靠近撿走、跟著車跑、持有者死了掉在原地、帶進撤離區就贏
@@ -382,32 +433,57 @@ func _case_egg() -> void:
 	m.players.get_node(^"1").global_position = Vector3(0, 500, 0)  # 恐龍閃遠一點
 	t3.global_position = Vector3(0, 500, 40)
 
-	# 撿起來
+	# 撿蛋不是碰到就拿，要待滿 PICKUP_SECONDS
 	t2.global_position = Vector3(0, 1, 0)
 	m.egg.global_position = Vector3(3, 1, 0)
 	m.egg.carrier = 0
-	m._egg_step()
-	_ck(m.egg.carrier == 2, "坦克靠近應該把蛋撿走（carrier=%d）" % m.egg.carrier)
+	m._egg_step(DT)
+	_ck(m.egg.carrier == 0 and m.egg.pickup > 0.0, "剛靠近只是開始撿，還沒拿到")
+
+	# 中途走開會歸零
+	t2.global_position = Vector3(60, 1, 0)
+	m._egg_step(DT)
+	_ck(is_zero_approx(m.egg.pickup), "離開就重來")
+
+	# 回來待滿才真的拿到
+	t2.global_position = Vector3(0, 1, 0)
+	for i in int(m.PICKUP_SECONDS / DT) + 2:
+		m._egg_step(DT)
+	_ck(m.egg.carrier == 2, "待滿 %.0f 秒才撿得到（carrier=%d）" % [m.PICKUP_SECONDS, m.egg.carrier])
 
 	# 跟著車跑
 	t2.global_position = Vector3(20, 1, 20)
-	m._egg_step()
+	m._egg_step(DT)
 	_ck(m.egg.global_position.distance_to(t2.global_position) < 5.0, "蛋要跟著持有者移動")
 
 	# 持有者陣亡 -> 蛋掉在原地，不會跟著消失
 	var dropped: Vector3 = m.egg.global_position
 	t2.free()
-	m._egg_step()
+	m._egg_step(DT)
 	_ck(m.egg.carrier == 0, "持有者陣亡後蛋要變成無人持有")
 	_ck(m.egg.global_position.is_equal_approx(dropped), "蛋要留在原地，不會回到出生點")
 
 	# 帶進撤離區 -> 坦克獲勝
-	_ck(m._exits.size() == 4, "應該有四個撤離區（現在 %d 個）" % m._exits.size())
+	_ck(m._exits.size() == 2, "應該有兩個撤離區（現在 %d 個）" % m._exits.size())
 	t3.global_position = m._exits[0] + Vector3(0, 1, 0)
 	m.egg.global_position = t3.global_position
 	m.egg.carrier = 3
-	m._egg_step()
-	_ck(m._over and m.status.text.contains("撤離"), "帶著蛋進撤離區 -> 結束回合")
+
+	# 進圈子還不算數，要待滿 EXTRACT_SECONDS
+	m._egg_step(DT)
+	_ck(not m._over and m.egg.extract > 0.0, "剛進撤離區只是開始倒數，還不能贏")
+
+	# 中途離開會歸零
+	t3.global_position = m._exits[0] + Vector3(0, 1, m.EXIT_RADIUS + 20.0)
+	m._egg_step(DT)
+	_ck(is_zero_approx(m.egg.extract), "離開撤離區進度要歸零")
+
+	# 回來待滿才贏
+	t3.global_position = m._exits[0] + Vector3(0, 1, 0)
+	var steps := int(m.EXTRACT_SECONDS / DT) + 2
+	for i in steps:
+		m._egg_step(DT)
+	_ck(m._over and m.status.text.contains("撤離"), "待滿 %.0f 秒才算撤離成功" % m.EXTRACT_SECONDS)
 	_ck(m.status.text.contains("3") or m.status.text.contains("你"),
 		"獲勝訊息要指名是哪一台坦克（現在是「%s」）" % m.status.text)
 	_end(m)
@@ -446,7 +522,7 @@ func _case_dino_cannot_take_egg() -> void:
 	m.egg.global_position = Vector3(1, 1, 0)   # 直接貼在恐龍身上
 	m.egg.carrier = 0
 	for i in 10:
-		m._egg_step()
+		m._egg_step(DT)
 	_ck(m.egg.carrier == 0, "恐龍站在蛋上面也不能撿（carrier=%d）" % m.egg.carrier)
 	_end(m)
 
@@ -464,6 +540,39 @@ func _case_fireball() -> void:
 	_ck(Fireball.SPEED < Shell.SPEED, "火球要比砲彈慢，才躲得掉")
 	_ck(d.FIRE_COST > 0.0 and d.FIRE_COOLDOWN > 0.0, "火球要吃體力也要有冷卻，不然可以無限噴")
 	d.stamina = before
+	_end(m)
+
+## 衝刺改成技能：按一下衝固定秒數，然後進 CD，全程不吃體力
+func _case_sprint_skill() -> void:
+	var m := _new_game()   # 主機 = 恐龍，編號 1
+	var d: Node = m.players.get_node(^"1")
+	var dt := 1.0 / 120.0
+	var full: float = d.STAMINA_MAX
+
+	d.stamina = full
+	d.move_step(dt, Vector3(0, 0, -1), true, false, false)   # 按下衝刺
+	_ck(d._sprint_left > 0.0, "按下去要開始衝")
+	_ck(is_equal_approx(d.stamina, full), "衝刺不該扣體力（現在 %.1f）" % d.stamina)
+
+	# 衝完會停，而且進 CD
+	var t := 0.0
+	while d._sprint_left > 0.0 and t < 10.0:
+		d.move_step(dt, Vector3(0, 0, -1), true, false, false)
+		t += dt
+	_ck(absf(t - d.SPRINT_TIME) < 0.2, "衝刺該持續 %.0f 秒（實際 %.1f）" % [d.SPRINT_TIME, t])
+	_ck(d._sprint_cd > 0.0, "衝完要進冷卻")
+
+	# CD 沒好之前再按也不會衝
+	d.move_step(dt, Vector3(0, 0, -1), true, false, false)
+	_ck(d._sprint_left <= 0.0, "冷卻中不該衝得起來")
+
+	# 咬要吃體力，而且一管咬不死一台坦克
+	var t2: Node = m.players.get_node(^"2")
+	var bites := ceili(float(t2.max_hp) / d.BITE_DAMAGE)
+	_ck(d.BITE_COST > 0.0, "咬要吃體力")
+	_ck(bites * d.BITE_COST > full,
+		"咬死一台坦克要 %d 口 × %.0f = %.0f 體力，上限只有 %.0f——中間一定要等回復"
+		% [bites, d.BITE_COST, bites * d.BITE_COST, full])
 	_end(m)
 
 ## 場地四周要有牆，而且要高過恐龍「跳 + 爬」能到的高度

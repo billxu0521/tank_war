@@ -5,15 +5,17 @@ extends "res://fighter.gd"
 ## 滑鼠左右轉身、上下看（頭會跟著抬，相機繞著身體轉）。
 ## 衝刺、跳躍、攀爬都吃體力；體力見底會力竭，要回到 EXHAUSTED_UNTIL 才能再出力。
 
-const SPEED := 16.0
-const SPRINT_MULT := 1.9
+const SPEED := 10.8       # 坦克的 1.2 倍（坦克 9.0）。比例有測試釘住
+const SPRINT_MULT := 1.3   # 技能制：按下去 3 秒內 1.3 倍速，不吃體力
+const SPRINT_TIME := 8.0
+const SPRINT_CD := 20.0
 const ACCEL := 22.0        # 這麼大一隻不該瞬間到全速
 const BRAKE := 32.0
 const STAMINA_MAX := 100.0
-const SPRINT_DRAIN := 32.0     # 每秒；全滿約衝 3 秒
+const BITE_COST := 35.0        # 咬一口的體力，改成攻擊資源不是移動資源
 const CLIMB_DRAIN := 25.0      # 每秒；全滿約爬 4 秒 = 24 公尺，剛好爬得完最高的建築
 const REGEN_STILL := 16.0      # 站著不動每秒回
-const REGEN_MOVING := 7.0      # 邊走邊回慢很多
+const REGEN_MOVING := 16.0     # 跟站著一樣，移動不再懲罰回復
 const EXHAUSTED_UNTIL := 30.0  # 力竭後要回到這個值才能再衝刺／攀爬
 const CLIMB_SPEED := 6.0
 const MOUSE_SENS := 0.009  # 恐龍要靈活，轉頭比坦克快很多
@@ -31,6 +33,10 @@ const FIREBALL := preload("res://fireball.tscn")
 const AIM_RANGE := 35.0    # 準心以這個距離做彈道歸零
 const BOT_FIRE_RANGE := 70.0  # bot 在這個距離內會吐火球
 const MUZZLE_FWD := 5.0    # 火球從嘴巴前方這麼遠生出來
+# 中彈踉蹌：坦克打中就能把恐龍拖慢一下，下一發才跟得上。
+# 這是坦克唯一的正回饋——不然遠距離是純猜，打中也看不出差別。
+const STAGGER_TIME := 0.45
+const STAGGER_MULT := 0.45
 const CAM_BASE := -0.40   # 相機支點的基礎俯角
 const PITCH_MIN := -0.75  # 往下看到底（約 43 度）
 const PITCH_MAX := 0.45   # 往上看到底（約 26 度）
@@ -40,6 +46,9 @@ var stamina := STAMINA_MAX
 var exhausted := false
 var _bite_cd := 0.0
 var _fire_cd := 0.0
+var _sprint_left := 0.0
+var _sprint_cd := 0.0
+var _stagger := 0.0
 
 func _ready() -> void:
 	super()
@@ -52,7 +61,8 @@ func _unhandled_input(e: InputEvent) -> void:
 
 ## 相機和抬頭都要在遠端也看得到，所以放 _process（_physics_process 只有本人在跑）
 func _process(_delta: float) -> void:
-	$CamPivot.rotation.x = CAM_BASE + look_pitch
+	# 踉蹌時相機抖一下，被打中自己也要有感覺
+	$CamPivot.rotation.x = CAM_BASE + look_pitch + randf_range(-1.0, 1.0) * _stagger * 0.08
 	$Trex.look_pitch = look_pitch
 
 func _physics_process(delta: float) -> void:
@@ -70,8 +80,9 @@ func _physics_process(delta: float) -> void:
 
 	_bite_cd -= delta
 	_fire_cd -= delta
-	if Input.is_key_pressed(KEY_F) and _bite_cd <= 0.0:
+	if Input.is_key_pressed(KEY_F) and _bite_cd <= 0.0 and stamina >= BITE_COST and can_exert():
 		_bite_cd = BITE_COOLDOWN
+		stamina -= BITE_COST
 		_hit_nearby(BITE_REACH, BITE_DAMAGE, 0.3)  # 只咬前方
 		_play_fx.rpc(false)
 	if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT) and _fire_cd <= 0.0 \
@@ -84,19 +95,23 @@ func _physics_process(delta: float) -> void:
 ## 這樣測試才驅動得了（Input 的按鍵狀態沒辦法從程式偽造）。
 func move_step(delta: float, input: Vector3, want_sprint: bool,
 		want_climb: bool, want_jump: bool) -> void:
+	_stagger = maxf(_stagger - delta, 0.0)
 	var moving := input != Vector3.ZERO
 	# 貼著牆按 W 就往上爬。力竭就爬不動，會直接滑下來。
 	var climbing := want_climb and _on_climbable_wall() and can_exert()
-	var sprinting := want_sprint and moving and can_exert() and not climbing
 
-	var spend := 0.0
-	if climbing:
-		spend = CLIMB_DRAIN
-	elif sprinting:
-		spend = SPRINT_DRAIN
-	_update_stamina(delta, spend, moving)
+	# 衝刺改成技能：按一下就衝 SPRINT_TIME 秒，然後進 CD。不吃體力。
+	_sprint_left = maxf(_sprint_left - delta, 0.0)
+	_sprint_cd = maxf(_sprint_cd - delta, 0.0)
+	if want_sprint and moving and _sprint_cd <= 0.0 and _sprint_left <= 0.0:
+		_sprint_left = SPRINT_TIME
+		_sprint_cd = SPRINT_CD
+	var sprinting := _sprint_left > 0.0 and not climbing
 
-	var speed := SPEED * (SPRINT_MULT if sprinting else 1.0)
+	_update_stamina(delta, CLIMB_DRAIN if climbing else 0.0, moving)
+
+	var speed := SPEED * (SPRINT_MULT if sprinting else 1.0) \
+		* (STAGGER_MULT if _stagger > 0.0 else 1.0)
 	_accelerate((global_transform.basis * input).normalized() * speed, ACCEL, BRAKE, delta)
 	_apply_gravity(delta)
 	if climbing:
@@ -168,8 +183,9 @@ func _bot_step(delta: float) -> void:
 
 	_bite_cd -= delta
 	_fire_cd -= delta
-	if close and facing and _bite_cd <= 0.0:
+	if close and facing and _bite_cd <= 0.0 and stamina >= BITE_COST and can_exert():
 		_bite_cd = BITE_COOLDOWN
+		stamina -= BITE_COST
 		_hit_nearby(BITE_REACH, BITE_DAMAGE, 0.3)
 		_play_fx.rpc(false)
 	elif flat < BOT_FIRE_RANGE and facing and _fire_cd <= 0.0 \
@@ -198,6 +214,12 @@ func _bot_target(g: Node) -> Node3D:
 				< global_position.distance_to(best.global_position):
 			best = p
 	return best
+
+## 中彈就踉蹌。ponytail: 恐龍一定是主機，take_damage 就在牠自己那台跑，
+## 直接設變數不用 RPC——跟 _hit_nearby 同一個假設。
+func take_damage(amount: int, source: Node = null) -> void:
+	_stagger = STAGGER_TIME
+	super(amount, source)
 
 ## 吐火球。從嘴巴前方射出，方向跟著上下視角走。
 @rpc("any_peer", "call_local", "reliable")

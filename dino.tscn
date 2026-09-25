@@ -20,7 +20,7 @@ properties/2/replication_mode = 1
 
 [node name="Dino" type="CharacterBody3D" groups=["dino"]]
 script = ExtResource("1")
-max_hp = 1000
+max_hp = 700
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("s1")

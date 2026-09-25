@@ -3,7 +3,7 @@ extends CharacterBody3D
 ##
 ## 數值是照 3 台坦克抓的：
 ##   恐龍咬死一台坦克 = 6 口 = 5.5 秒的貼身時間
-##   3 台坦克貼臉打死恐龍 = 1000 / (3 × 60/1.5) = 8.3 秒
+##   3 台坦克打死恐龍 = 700 / (3 × 40/0.9) = 5.3 秒
 ## 坦克變硬變痛是為了配合搶蛋：坦克需要的是「活得夠久把蛋搬走」，
 ## 不是「追得到恐龍」。
 ## 恐龍要在挨 12.5 秒的砲火內收掉 3 台，追人和換目標的時間就是勝負關鍵。
@@ -21,6 +21,7 @@ const LOOK_SETTLE_MS := 1500  # 滑鼠鎖定後先忽略這麼久的位移
 @export var bot := false
 
 var hp := 0
+var hit_until := 0  # 自己的彈打中人，準心閃紅到這個時刻（毫秒）
 var _last_hit_by: Node = null  # 只有主機需要，用來記誰殺了誰
 var _was_captured := false
 var _settle_until := 0
@@ -32,6 +33,10 @@ func _enter_tree() -> void:
 
 func _ready() -> void:
 	hp = max_hp
+
+## 自己射出去的彈打中有血的東西時呼叫。純本機回饋，不走網路。
+func on_hit() -> void:
+	hit_until = Time.get_ticks_msec() + 350
 
 ## 只有主機會呼叫這個。source 是誰打的，用來記錄擊殺者。
 func take_damage(amount: int, source: Node = null) -> void:

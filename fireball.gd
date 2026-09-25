@@ -27,6 +27,9 @@ func _physics_process(delta: float) -> void:
 		return
 	Fx.burst(get_tree().get_first_node_in_group(&"arena"), SphereMesh.new(),
 		Color(1, 0.45, 0.1, 0.9), hit.position, Vector3.ONE * 0.8, Vector3.ONE * 5.0, 0.3)
-	if multiplayer.is_server() and hit.collider.has_method("take_damage"):
-		hit.collider.take_damage(DAMAGE, shooter if is_instance_valid(shooter) else null)
+	if hit.collider.has_method("take_damage"):
+		if is_instance_valid(shooter):
+			shooter.on_hit()
+		if multiplayer.is_server():
+			hit.collider.take_damage(DAMAGE, shooter if is_instance_valid(shooter) else null)
 	queue_free()

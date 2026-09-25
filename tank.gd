@@ -8,7 +8,7 @@ const BRAKE := 13.0        # 煞車比加速快，放開按鍵不會滑很遠
 const TURN := 1.8
 const TURN_ACCEL := 5.0    # 車身轉向也要拉起來，不是瞬間到最大轉速
 const ELEVATE := 1.1       # 砲管每秒最多抬這麼多
-const RELOAD := 1.5
+const RELOAD := 0.9  # 打歪不用再等一秒半，交火密度是體驗的本體
 const MOUSE_SENS := 0.004
 # 仿坦克世界：砲管上下有角度限制，車體擋住的部分打不到
 const PITCH_MIN := -0.14  # 俯角 8 度
@@ -18,6 +18,7 @@ const AIM_RANGE := 70.0    # 準心以這個距離做彈道歸零（場地大了
 const BARREL_Z := -1.5     # 砲管原本的位置，後座從這裡往後推
 const BOT_RANGE := 95.0    # bot 進這個距離就開火
 const SHELL := preload("res://shell.tscn")
+const MODEL := preload("res://models/tank.glb")  # Blender 建的車體，節點名字對得上就換得掉
 
 var aim_pitch := 0.0
 var turret_yaw := 0.0   # 砲塔左右，直接跟著滑鼠
@@ -35,7 +36,18 @@ var _cooldown := 0.0
 
 func _ready() -> void:
 	super()
+	_skin()
 	cam.current = is_multiplayer_authority()
+
+## 把 Blender 模型的網格換到原本的灰盒節點上。
+## 只換 mesh，節點路徑、transform、連線同步設定都不動。
+func _skin() -> void:
+	var src := MODEL.instantiate()
+	for pair in [["Hull", $Hull], ["Turret", $Turret/Dome], ["Barrel", $Turret/Gun/Barrel]]:
+		var from := src.get_node_or_null(NodePath(pair[0])) as MeshInstance3D
+		if from:
+			(pair[1] as MeshInstance3D).mesh = from.mesh
+	src.free()
 
 func _unhandled_input(e: InputEvent) -> void:
 	aim(mouse_look(e))
@@ -83,8 +95,24 @@ func _physics_process(delta: float) -> void:
 ## 砲塔獨立運作：永遠瞄最近的威脅，進射程就開火。
 func _bot_step(delta: float) -> void:
 	var g := get_tree().get_first_node_in_group(&"match")
-	_bot_drive(delta, _bot_goal(g))
+	if _bot_should_hold(g):
+		# 正在撿蛋或撤離，原地煞停等進度跑完——開過頭進度會歸零
+		_accelerate(Vector3.ZERO, ACCEL, BRAKE, delta)
+		_apply_gravity(delta)
+		move_and_slide()
+	else:
+		_bot_drive(delta, _bot_goal(g))
 	_bot_shoot(delta, _bot_threat(g))
+
+## 撿蛋和撤離都要在原地待滿時間，跑掉就歸零
+func _bot_should_hold(g: Node) -> bool:
+	if g == null:
+		return false
+	if g.egg.carrier == name.to_int():
+		return g._dist_to_exit(global_position) < g.EXIT_RADIUS
+	if g.egg.carrier == 0:
+		return global_position.distance_to(g.egg.global_position) < g.PICKUP_RANGE
+	return false
 
 func _bot_goal(g: Node) -> Vector3:
 	if g == null:

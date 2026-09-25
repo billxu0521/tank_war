@@ -6,8 +6,8 @@ extends Node3D
 ## 用射線掃過這一幀的位移，不是靠碰撞區域——砲彈一幀跑 1.7 公尺，
 ## 用區域偵測會直接穿過坦克。
 
-const SPEED := 100.0
-const DAMAGE := 60
+const SPEED := 150.0  # 70 公尺只要 0.47 秒。原本 100 太慢，恐龍在飛行時間內就跑掉了
+const DAMAGE := 40
 const GRAVITY := 9.8  # 有掉落，遠距離要抬砲口
 
 var vel := Vector3.ZERO
@@ -28,8 +28,14 @@ func _physics_process(delta: float) -> void:
 	_impact(hit.position, hit.collider)
 
 func _impact(pos: Vector3, body: Node) -> void:
+	var on_flesh := body.has_method("take_damage")
+	# 打到人爆得比打到地板大，而且偏紅——不用看血條就知道有沒有中
 	Fx.burst(get_tree().get_first_node_in_group(&"arena"), SphereMesh.new(),
-		Color(1, 0.6, 0.2, 0.85), pos, Vector3.ONE * 0.5, Vector3.ONE * 2.4, 0.25)
-	if multiplayer.is_server() and body.has_method("take_damage"):
-		body.take_damage(DAMAGE, shooter if is_instance_valid(shooter) else null)
+		Color(1, 0.35, 0.2, 0.9) if on_flesh else Color(1, 0.6, 0.2, 0.85), pos,
+		Vector3.ONE * 0.5, Vector3.ONE * (4.5 if on_flesh else 2.4), 0.25)
+	if on_flesh:
+		if is_instance_valid(shooter):
+			shooter.on_hit()   # 每台機器自己的那顆都會叫，開砲的人本機就看得到命中
+		if multiplayer.is_server():
+			body.take_damage(DAMAGE, shooter if is_instance_valid(shooter) else null)
 	queue_free()
