@@ -1,16 +1,7 @@
 # 第三方素材
 
-## Low poly FPS Pistol Animated maj 07/06/2022
+槍的模型是自己用 Blender 程式建的（`blender/weapons.py`），不需要標示。
 
-`assets/models/pistol/`
-
-This work is based on ["Low poly FPS Pistol Animated maj 07/06/2022"](https://sketchfab.com/3d-models/low-poly-fps-pistol-animated-maj-07062022-baa81cafeeef4a099c698c4a6c380057)
-by [ImageParSeconde](https://sketchfab.com/ImageParSeconde) licensed under
-[CC-BY-4.0](http://creativecommons.org/licenses/by/4.0/).
-
-CC-BY-4.0 允許商用，但**必須保留作者標示**。遊戲若要發布，這段文字要出現在
-玩家看得到的地方（片尾、about 畫面或說明文件）。原始授權檔在
-`assets/models/pistol/license.txt`。
 
 ## FPS Character Asset（Joblab Studio）
 
@@ -20,12 +11,6 @@ CC-BY-4.0 允許商用，但**必須保留作者標示**。遊戲若要發布，
 來自使用者提供的 fps-character-asset 素材包（`resouce/fps-character-asset/`，
 Media 內標示 Joblab Studio Games）。**包內沒有授權檔，正式發布前要確認出處與授權條款。**
 
-## 武器模型（sawnoff / shotgun 等 *_animated.glb）
-
-`assets/models/weapons/`
-
-使用者提供的 Sketchfab 匯出檔（GLB 內含 Sketchfab_model 節點）。**沒有附授權資訊，
-正式發布前要回 Sketchfab 找到原頁面確認授權與作者標示。**
 
 ## 手槍音效（freesound.org，CC0）
 

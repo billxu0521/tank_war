@@ -1,0 +1,37 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://cowboy/weapon.gd" id="1_weapon"]
+[ext_resource type="PackedScene" path="res://models/rifle.glb" id="2_model"]
+[ext_resource type="AudioStream" path="res://assets/audio/weapons/pistol_shoot.mp3" id="3_shoot"]
+[ext_resource type="AudioStream" path="res://assets/audio/weapons/shotgun_reload.mp3" id="4_reload"]
+[ext_resource type="AudioStream" path="res://assets/audio/weapons/no_ammo.mp3" id="5_empty"]
+
+; 槓桿步槍：每發要拉一次桿（fire_interval），從側面裝填口一發一發壓。遠距離主力，
+; 舉槍晃動要閉氣（Shift）才打得準。沒有專屬槍聲，先借手槍聲壓低音高。
+[node name="Rifle" type="Node3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.13, -0.15, -0.22)
+script = ExtResource("1_weapon")
+display_name = "槓桿步槍"
+mag_size = 10
+damage = 60.0
+fire_interval = 0.8
+reload_time = 0.55
+recoil_scale = 1.6
+reserve = 20
+hit_range = 250.0
+ads_position = Vector3(0, -0.058, -0.12)
+hammer_path = NodePath("Model/RifleHammer")
+lever_path = NodePath("Model/RifleLever")
+
+[node name="Model" parent="." instance=ExtResource("2_model")]
+
+[node name="ShootSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("3_shoot")
+pitch_scale = 0.72
+
+[node name="ReloadSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("4_reload")
+pitch_scale = 1.3
+
+[node name="EmptySound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("5_empty")

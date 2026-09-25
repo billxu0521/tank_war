@@ -4,9 +4,9 @@
 [ext_resource type="Script" path="res://cowboy/viewmodel.gd" id="2_viewmodel"]
 [ext_resource type="Script" path="res://cowboy/shot_fx.gd" id="4_shotfx"]
 [ext_resource type="Material" path="res://assets/materials/tracer.tres" id="5_tracer"]
-[ext_resource type="PackedScene" path="res://cowboy/weapons/pistol.tscn" id="6_pistol"]
-[ext_resource type="PackedScene" path="res://cowboy/weapons/sawnoff.tscn" id="7_sawnoff"]
-[ext_resource type="PackedScene" path="res://cowboy/weapons/shotgun.tscn" id="8_shotgun"]
+[ext_resource type="PackedScene" path="res://cowboy/weapons/revolver.tscn" id="6_pistol"]
+[ext_resource type="PackedScene" path="res://cowboy/weapons/shotgun.tscn" id="7_sawnoff"]
+[ext_resource type="PackedScene" path="res://cowboy/weapons/rifle.tscn" id="8_shotgun"]
 [ext_resource type="Material" path="res://assets/materials/muzzle_flash.tres" id="9_flash"]
 [ext_resource type="Material" path="res://assets/materials/bullet_hole.tres" id="10_hole"]
 [ext_resource type="AudioStream" path="res://assets/audio/weapons/bullet_hole.mp3" id="11_impact"]
@@ -162,6 +162,23 @@ anchors_preset = 0
 offset_right = 160.0
 offset_bottom = 8.0
 color = Color(0.85, 0.85, 0.8, 1)
+
+; Hunt 的血條在左下角。紅條＝剩多少血
+[node name="HealthBar" type="ColorRect" parent="HUD"]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -120.0
+offset_right = 284.0
+offset_bottom = -108.0
+grow_vertical = 0
+color = Color(0, 0, 0, 0.45)
+
+[node name="Fill" type="ColorRect" parent="HUD/HealthBar"]
+offset_right = 260.0
+offset_bottom = 12.0
+color = Color(0.75, 0.12, 0.1, 1)
 
 [node name="AmmoLabel" type="Label" parent="HUD"]
 anchors_preset = 3

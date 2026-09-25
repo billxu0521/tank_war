@@ -7,9 +7,29 @@ signal logged(text: String)
 const PORT := 24680
 const ARENA := 320.0        # 場地邊長
 const SPAWN_CLEARANCE := 7.0  # 出生點離建築至少這麼遠
-const GRID := 10              # 建築排成 GRID x GRID
-const CELL := 30.0            # 格子間距，越小越密
-const BUILDING_MAX_H := 28.0
+const FARM_GRID := 5          # 鄉村：5x5 塊地，每塊隨機是農莊／果園／麥田／牧場
+const FARM_CELL := 60.0
+const FENCE_H := 1.0          # 柵欄高度，要在牛仔的翻越範圍（0.4~1.5）內
+const BUILDING_MAX_H := 28.0  # 最高的東西（筒倉＋圓頂、穀倉屋脊）不能超過這個
+# 沙盒的靶場：從 (0, 110) 往 -Z 打，這一條不蓋東西。起點要在撤離區（z=138）外面
+const SANDBOX_RANGE := Rect2(-25, -5, 50, 125)
+const SANDBOX_START := Vector3(0, 0.1, 110)
+const SANDBOX_TARGETS := [10, 25, 50, 100]   # 牛仔靶的距離（公尺）：左輪、散彈、步槍各自的有效距離
+const GRASS := Color(0.40, 0.44, 0.24)
+const DIRT := Color(0.45, 0.36, 0.24)
+const WHEAT := Color(0.78, 0.66, 0.34)
+const HAY := Color(0.80, 0.68, 0.36)
+const BARN_RED := Color(0.52, 0.16, 0.12)
+const HOUSE_WHITE := Color(0.82, 0.79, 0.72)
+const ROOF_GRAY := Color(0.30, 0.30, 0.32)
+const WOOD := Color(0.48, 0.36, 0.24)
+const WOOD_DARK := Color(0.28, 0.20, 0.14)
+const TRIM := Color(0.86, 0.84, 0.78)
+const BRICK := Color(0.50, 0.25, 0.18)
+const GLASS := Color(0.12, 0.14, 0.16)
+const SILO_GRAY := Color(0.62, 0.62, 0.60)
+const BARK := Color(0.30, 0.22, 0.16)
+const LEAF := Color(0.22, 0.34, 0.14)
 # 圍牆不給爬（見 dino.gd 的 _on_climbable_wall），所以恐龍能到的最高點就是
 # 「站上最高的屋頂再跳一下」。圍牆要比那個高，才翻不出去。
 const WALL_H := 40.0
@@ -43,6 +63,8 @@ var _clock := 0                     # 主機廣播的剩餘秒數
 var _respawn_queue: Array[Dictionary] = []
 var _claimer := 0   # 正在撿蛋的牛仔編號
 var _over := false
+## 沙盒：沒有時間限制、沒有蛋，靶打死會在原地重生，子彈無限
+var _sandbox := false
 
 func _ready() -> void:
 	_use_cjk_font()
@@ -61,6 +83,7 @@ func _ready() -> void:
 ##   TankWar.exe -- --host
 ##   TankWar.exe -- --join 192.168.1.5
 ##   TankWar.exe -- --offline
+##   TankWar.exe -- --sandbox
 ##   TankWar.exe -- --viewer
 func _autostart() -> void:
 	var args := OS.get_cmdline_user_args()
@@ -68,6 +91,8 @@ func _autostart() -> void:
 		_on_host_pressed()
 	elif args.has("--offline"):
 		_on_offline_pressed()
+	elif args.has("--sandbox"):
+		_on_sandbox_pressed()
 	elif args.has("--viewer"):
 		_on_viewer_pressed()
 	else:
@@ -109,6 +134,10 @@ func _to_lobby(msg: String) -> void:
 	_cowboys = 0
 	_over = false
 	_offline = false
+	_sandbox = false
+	egg.visible = true
+	for n in get_tree().get_nodes_in_group(&"sandbox_prop"):
+		n.free()
 	_time_left = 0.0
 	_respawn_queue.clear()
 	egg.carrier = 0
@@ -159,6 +188,48 @@ func _on_offline_dino_pressed() -> void:
 		var t := _add_player(COWBOY, 2 + i)
 		t.set(&"bot", true)
 		t.global_position = _spawn_point()
+
+## 沙盒：一個人在靶場練槍。前方 10／25／50／100 公尺各站一個牛仔靶，
+## 旁邊一隻不會動的恐龍。靶不是 bot、也不是本機操控，所以站著不動、不會還擊。
+func _on_sandbox_pressed() -> void:
+	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	_offline = true
+	_sandbox = true
+	egg.visible = false
+	_enter_game("沙盒模式：沒有時間限制、子彈無限。靶打死會在原地重生。Esc 回大廳")
+	var me := _add_player(COWBOY, 1)   # 編號 1 才操控得動
+	me.global_position = SANDBOX_START
+	for w in me.viewmodel._weapons:
+		w.reserve = -1
+	me.viewmodel._refresh_ammo()
+	var id := 3
+	for dist in SANDBOX_TARGETS:
+		var t := _add_player(COWBOY, id)
+		t.global_position = SANDBOX_START + Vector3(-4 if id % 2 else 4, 0, -dist)
+		t.rotation.y = PI   # 面對玩家，打頭才對得到臉
+		_sign(t.global_position + Vector3(0, 2.6, 0), "%d m" % dist)
+		id += 1
+	var dino := _add_player(DINO, 2)
+	dino.global_position = SANDBOX_START + Vector3(12, 4.1, -45)
+	dino.rotation.y = 0.4
+	_sign(dino.global_position + Vector3(0, 6.5, 0), "恐龍 45 m")
+	# 翻越練習：一段柵欄、兩個乾草捲，就在出生點旁邊
+	for prop in [_fence(SANDBOX_START + Vector3(-10, -0.1, -4), 6.0, true),
+			_hay_bale(SANDBOX_START + Vector3(9, -0.1, -6), 0.0),
+			_hay_bale(SANDBOX_START + Vector3(9, -0.1, -9), 0.0)]:
+		prop.add_to_group(&"sandbox_prop")
+
+## 靶上的距離牌。只在沙盒用，跟著場地一起清。
+func _sign(pos: Vector3, text: String) -> void:
+	var l := Label3D.new()
+	l.text = text
+	l.font_size = 64
+	l.pixel_size = 0.01
+	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	l.font = $UI/Root.theme.default_font   # 預設字型沒有中文
+	l.add_to_group(&"sandbox_prop")
+	$Arena.add_child(l)
+	l.global_position = pos
 
 ## 模型檢視：把整個遊戲畫面收起來，換成一個只有模型的場景。
 ## 不清多人連線狀態，因為根本沒建立。
@@ -230,6 +301,9 @@ func _on_died(killer: Node, who: Node) -> void:
 		"id": who.name.to_int(),
 		"dino": as_dino,
 		"bot": bool(who.get(&"bot")),
+		# 沙盒的靶要生回原地，不然打死一次靶就散到地圖各處
+		"pos": who.global_position if _sandbox else Vector3.INF,
+		"yaw": who.rotation.y,
 		# 用比賽剩餘秒數計時，不用真實時間：sim.gd 把遊戲加速 20 倍時，
 		# 真實 5 秒 = 遊戲裡 100 秒，死一次就缺席半場，量出來的數字全是假的
 		"at": _time_left - RESPAWN_DELAY,
@@ -247,6 +321,12 @@ func _respawn_step() -> void:
 			continue  # 人已經離線就別生了
 		var p := _add_player(DINO if r["dino"] else COWBOY, id)
 		p.set(&"bot", r["bot"])
+		if r["pos"] != Vector3.INF:
+			p.global_position = r["pos"] if id != 1 else SANDBOX_START
+			p.rotation.y = r["yaw"]
+		if _sandbox and id == 1:
+			for w in p.viewmodel._weapons:
+				w.reserve = -1
 
 
 ## 撤離是個人獲勝，所以每台機器顯示的字不一樣
@@ -263,8 +343,12 @@ func _finish(msg: String) -> void:
 func _physics_process(delta: float) -> void:
 	if lobby.visible or _over or not multiplayer.is_server():
 		return
-	_egg_step(delta)
 	_respawn_step()
+	if _sandbox:
+		# 沒有時間限制，但重生是用剩餘秒數排的，時間還是要走（不會歸零結束）
+		_time_left -= delta
+		return
+	_egg_step(delta)
 
 	_time_left -= delta
 	if int(_time_left) != _clock:
@@ -336,6 +420,9 @@ func _process(_delta: float) -> void:
 		mine = str(me.hp)
 	elif _respawn_seconds_for(multiplayer.get_unique_id()) > 0:
 		mine = "重生中 %d 秒" % _respawn_seconds_for(multiplayer.get_unique_id())
+	if _sandbox:
+		hud.text = "沙盒    我的血量：%s    恐龍靶血量：%s" % [mine, dino.hp if dino else "重生中"]
+		return
 	hud.text = "⏱ %d:%02d    我的血量：%s    恐龍血量：%s    存活牛仔：%d    蛋：%s" % [
 		maxi(_clock, 0) / 60, maxi(_clock, 0) % 60,
 		mine,
@@ -380,36 +467,207 @@ func _update_crosshair(me: Node) -> void:
 # --- 場地 ---
 
 func _build_arena() -> void:
-	_add_box(Vector3(0, -0.5, 0), Vector3(ARENA, 1, ARENA), Color(0.30, 0.40, 0.25))
+	_add_box(Vector3(0, -0.5, 0), Vector3(ARENA, 1, ARENA), GRASS)
 
 	# 四周圍牆，東西才不會掉出場外。內側牆面剛好貼齊地板邊緣，不留縫。
+	# 顏色做成遠山的土色，配上沿牆種的一圈樹，看起來像被林子圍住的山谷
 	var e := (ARENA + WALL_T) * 0.5
 	var long := ARENA + WALL_T * 2.0
-	var col := Color(0.32, 0.31, 0.29)
+	var col := Color(0.30, 0.27, 0.22)
 	for w: Array in [[Vector3(0, WALL_H * 0.5, e), Vector3(long, WALL_H, WALL_T)],
 			[Vector3(0, WALL_H * 0.5, -e), Vector3(long, WALL_H, WALL_T)],
 			[Vector3(e, WALL_H * 0.5, 0), Vector3(WALL_T, WALL_H, long)],
 			[Vector3(-e, WALL_H * 0.5, 0), Vector3(WALL_T, WALL_H, long)]]:
 		_add_box(w[0], w[1], col).add_to_group(&"arena_wall")
 
-	# ponytail: 固定 seed 的亂數，每台機器蓋出來的建築才會完全一樣（場地沒有走網路同步）
+	# 十字泥土路。薄到踩上去不會卡腳（2 公分），只是讓人認得方向
+	_add_box(Vector3(0, 0.01, 0), Vector3(8, 0.02, ARENA), DIRT)
+	_add_box(Vector3(0, 0.01, 0), Vector3(ARENA, 0.02, 8), DIRT)
+
+	# ponytail: 固定 seed 的亂數，每台機器蓋出來的場景才會完全一樣（場地沒有走網路同步）
 	var rng := RandomNumberGenerator.new()
-	rng.seed = 20260906
-	for gx in GRID:
-		for gz in GRID:
-			if rng.randf() < 0.12:
-				continue  # 留一點空地，不然完全沒有開闊處
-			# 高度差距拉開：矮的當掩體、高的要爬才上得去
-			var size := Vector3(rng.randf_range(8, 20), rng.randf_range(6, BUILDING_MAX_H),
-				rng.randf_range(8, 20))
-			var half := (GRID - 1) * 0.5
-			var pos := Vector3((gx - half) * CELL + rng.randf_range(-6, 6), size.y * 0.5,
-				(gz - half) * CELL + rng.randf_range(-6, 6))
-			_add_box(pos, size, Color(0.45, 0.40, 0.35))
-			# 出生點要避開，不然會卡在牆裡
-			_blocked.append(Rect2(pos.x - size.x * 0.5 - SPAWN_CLEARANCE,
-				pos.z - size.z * 0.5 - SPAWN_CLEARANCE,
-				size.x + SPAWN_CLEARANCE * 2, size.z + SPAWN_CLEARANCE * 2))
+	rng.seed = 20260926
+	var half := (FARM_GRID - 1) * 0.5
+	var first := true
+	for gx in FARM_GRID:
+		for gz in FARM_GRID:
+			var c := Vector3((gx - half) * FARM_CELL, 0, (gz - half) * FARM_CELL)
+			c += Vector3(rng.randf_range(-6, 6), 0, rng.randf_range(-6, 6))
+			var kind := rng.randi() % 4
+			if first:
+				kind = 0   # 第一格一定是農莊：_blocked[0] 要是一棟擋得住視線的穀倉（測試靠它）
+				first = false
+			match kind:
+				0: _farmstead(c, rng)
+				1: _orchard(c, rng)
+				2: _hayfield(c, rng)
+				3: _pasture(c, rng)
+
+	# 沿著圍牆種一圈樹，把牆藏在林子後面
+	var edge := ARENA * 0.5 - 6.0
+	for i in 64:
+		var t := float(i) / 64.0 * 4.0
+		var side := int(t)
+		var u := (t - side) * ARENA - ARENA * 0.5
+		var p: Vector3 = [Vector3(u, 0, -edge), Vector3(edge, 0, u),
+			Vector3(-u, 0, edge), Vector3(-edge, 0, -u)][side]
+		p += Vector3(rng.randf_range(-3, 3), 0, rng.randf_range(-3, 3))
+		_tree(p, rng)
+
+## 這塊地能不能蓋東西：沙盒的靶場、撤離區要空著。
+func _free(pos: Vector3, radius: float) -> bool:
+	for r: Rect2 in _reserved():
+		if r.grow(radius).has_point(Vector2(pos.x, pos.z)):
+			return false
+	return true
+
+func _reserved() -> Array[Rect2]:
+	var d := ARENA * 0.5 - 22.0
+	return [SANDBOX_RANGE,
+		Rect2(-EXIT_RADIUS - 4, d - EXIT_RADIUS - 4, EXIT_RADIUS * 2 + 8, EXIT_RADIUS * 2 + 8),
+		Rect2(-EXIT_RADIUS - 4, -d - EXIT_RADIUS - 4, EXIT_RADIUS * 2 + 8, EXIT_RADIUS * 2 + 8)]
+
+## 農莊：穀倉＋農舍＋筒倉，外面一圈柵欄。穀倉是恐龍爬上去看全場的制高點
+func _farmstead(c: Vector3, rng: RandomNumberGenerator) -> void:
+	var barn := c + Vector3(-8, 0, -4)
+	if _free(barn, 14):
+		_barn(barn, Vector3(rng.randf_range(12, 16), rng.randf_range(7, 9), rng.randf_range(18, 24)))
+	var house := c + Vector3(12, 0, 8)
+	if _free(house, 8):
+		_house(house)
+	var silo := c + Vector3(4, 0, -16)
+	if _free(silo, 4):
+		_silo(silo, rng.randf_range(13, 18))
+	# 柵欄圍一圈，留兩個缺口當出入口
+	var r := 24.0
+	for side in 4:
+		for k in 8:
+			if k == 3 or k == 4:
+				if side % 2 == 0:
+					continue   # 南北兩邊中間留門
+			var u := -r + (k + 0.5) * (r * 2.0 / 8.0)
+			var p: Vector3 = [Vector3(u, 0, -r), Vector3(r, 0, u), Vector3(u, 0, r), Vector3(-r, 0, u)][side]
+			if _free(c + p, 2):
+				_fence(c + p, r * 2.0 / 8.0, side % 2 == 1)
+
+## 果園：整齊的樹，樹幹擋子彈、樹冠擋視線不擋子彈
+func _orchard(c: Vector3, rng: RandomNumberGenerator) -> void:
+	for i in 5:
+		for j in 5:
+			var p := c + Vector3((i - 2) * 8.0, 0, (j - 2) * 8.0)
+			if _free(p, 2) and rng.randf() > 0.15:
+				_tree(p, rng)
+
+## 麥田：黃色一片，散落乾草捲。開闊地，交火距離最遠的地方
+func _hayfield(c: Vector3, rng: RandomNumberGenerator) -> void:
+	if _free(c, 20):
+		_add_box(c + Vector3(0, 0.02, 0), Vector3(40, 0.04, 40), WHEAT)
+	for i in 7:
+		var p := c + Vector3(rng.randf_range(-18, 18), 0, rng.randf_range(-18, 18))
+		if _free(p, 2):
+			_hay_bale(p, rng.randf() * PI)
+
+## 牧場：柵欄隔成欄位＋一間小棚。翻越練習場
+func _pasture(c: Vector3, rng: RandomNumberGenerator) -> void:
+	for k in 5:
+		var z := c.z + (k - 2) * 9.0
+		for seg in 4:
+			var p := Vector3(c.x - 15 + seg * 10.0, 0, z)
+			if _free(p, 2) and rng.randf() > 0.2:
+				_fence(p, 10.0, false)
+	var shed := c + Vector3(rng.randf_range(-10, 10), 0, 22)
+	if _free(shed, 6):
+		_add_box(shed + Vector3(0, 2.0, 0), Vector3(8, 4, 6), WOOD)
+		_roof(shed, Vector3(8, 4, 6), 0.45, WOOD_DARK)
+		_block(shed, Vector2(8, 6), 3.0)
+
+func _barn(p: Vector3, size: Vector3) -> void:
+	_add_box(p + Vector3(0, size.y * 0.5, 0), size, BARN_RED)
+	_roof(p, size, 0.55, WOOD_DARK)
+	# 大門：兩片深色門板＋白色 X 形橫檔（穀倉一眼認得出來的地方）
+	var front := p + Vector3(0, 0, size.z * 0.5 + 0.08)
+	_deco(front + Vector3(0, 2.4, 0), Vector3(5.0, 4.8, 0.16), WOOD_DARK)
+	_deco(front + Vector3(0, 2.4, 0.05), Vector3(5.2, 0.3, 0.1), TRIM)
+	_deco(front + Vector3(0, 5.0, 0.05), Vector3(5.4, 0.3, 0.1), TRIM)
+	_deco(front + Vector3(0, size.y - 1.5, 0), Vector3(2.0, 1.8, 0.16), WOOD_DARK)   # 草料閣樓門
+	_block(p, Vector2(size.x, size.z), SPAWN_CLEARANCE)
+
+func _house(p: Vector3) -> void:
+	var size := Vector3(10, 5, 8)
+	_add_box(p + Vector3(0, size.y * 0.5, 0), size, HOUSE_WHITE)
+	_roof(p, size, 0.5, ROOF_GRAY)
+	_add_box(p + Vector3(3, size.y + 2.5, 0), Vector3(0.9, 3.0, 0.9), BRICK)   # 煙囪
+	for x in [-3.0, 3.0]:
+		_deco(p + Vector3(x, 3.0, size.z * 0.5 + 0.06), Vector3(1.2, 1.4, 0.12), GLASS)  # 窗
+	_deco(p + Vector3(0, 1.1, size.z * 0.5 + 0.06), Vector3(1.1, 2.2, 0.12), WOOD_DARK)  # 門
+	_block(p, Vector2(size.x, size.z), SPAWN_CLEARANCE)
+
+func _silo(p: Vector3, h: float) -> void:
+	_add_cyl(p + Vector3(0, h * 0.5, 0), 3.0, h, SILO_GRAY)
+	var dome := MeshInstance3D.new()
+	var sm := SphereMesh.new()
+	sm.radius = 3.1
+	sm.height = 3.2
+	sm.material = _mat(ROOF_GRAY)
+	dome.mesh = sm
+	dome.position = p + Vector3(0, h, 0)
+	$Arena.add_child(dome)
+	_block(p, Vector2(6, 6), 3.0)
+
+## 柵欄：兩根橫木＋木樁，碰撞是一整片 1 公尺高的板子——剛好在翻越範圍內
+func _fence(p: Vector3, length: float, along_z: bool) -> StaticBody3D:
+	var body := StaticBody3D.new()
+	body.position = p
+	if along_z:
+		body.rotation.y = PI * 0.5
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(length, FENCE_H, 0.2)
+	var cs := CollisionShape3D.new()
+	cs.shape = shape
+	cs.position.y = FENCE_H * 0.5
+	body.add_child(cs)
+	for y in [0.45, 0.9]:
+		body.add_child(_mesh_at(Vector3(length, 0.12, 0.08), Vector3(0, y, 0), WOOD))
+	var posts := maxi(int(length / 2.5), 1)
+	for i in posts + 1:
+		var x := -length * 0.5 + i * length / posts
+		body.add_child(_mesh_at(Vector3(0.14, FENCE_H + 0.1, 0.14), Vector3(x, (FENCE_H + 0.1) * 0.5, 0), WOOD_DARK))
+	$Arena.add_child(body)
+	return body
+
+func _hay_bale(p: Vector3, yaw: float) -> StaticBody3D:
+	# 圓捆躺著放：直徑 1.4 公尺，翻得過去也蹲得進後面
+	var body := _add_cyl(p + Vector3(0, 0.7, 0), 0.7, 1.3, HAY)
+	body.rotation = Vector3(0, yaw, PI * 0.5)
+	return body
+
+func _tree(p: Vector3, rng: RandomNumberGenerator) -> void:
+	var h := rng.randf_range(4.0, 6.0)
+	_add_cyl(p + Vector3(0, h * 0.5, 0), 0.35, h, BARK)
+	# 樹冠只有畫面沒有碰撞：擋視線不擋子彈，躲在樹下只是比較難被看到
+	var crown := MeshInstance3D.new()
+	var sm := SphereMesh.new()
+	sm.radius = rng.randf_range(2.4, 3.4)
+	sm.height = sm.radius * 1.6
+	sm.material = _mat(LEAF.lerp(Color(0.35, 0.40, 0.15), rng.randf()))
+	crown.mesh = sm
+	crown.position = p + Vector3(0, h + sm.height * 0.3, 0)
+	$Arena.add_child(crown)
+	_block(p, Vector2(1, 1), 1.5)
+
+## 人字屋頂：兩片斜板。斜度在 45 度以內，恐龍爬上來站得住
+func _roof(p: Vector3, size: Vector3, pitch: float, col: Color) -> void:
+	var run := size.x * 0.5
+	var rise := run * tan(pitch)
+	var w := run / cos(pitch) + 0.5   # 多出來的是屋簷
+	for sx in [-1.0, 1.0]:
+		var b := _add_box(p + Vector3(sx * run * 0.5, size.y + rise * 0.5, 0), Vector3(w, 0.3, size.z + 1.0), col)
+		b.rotation.z = -sx * pitch
+
+## 出生點避開這塊地
+func _block(p: Vector3, size: Vector2, clearance: float) -> void:
+	_blocked.append(Rect2(p.x - size.x * 0.5 - clearance, p.z - size.y * 0.5 - clearance,
+		size.x + clearance * 2, size.y + clearance * 2))
 
 ## 撿蛋不是碰到就拿，要在旁邊連續待滿 PICKUP_SECONDS。
 ## 換人或走開就歸零——跟撤離同一個道理，讓拿蛋變成要承諾的動作。
@@ -472,23 +730,59 @@ func _is_clear(p: Vector2) -> bool:
 	return true
 
 func _add_box(pos: Vector3, size: Vector3, col: Color) -> StaticBody3D:
-	var body := StaticBody3D.new()
-	var mesh := BoxMesh.new()
-	mesh.size = size
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = col
-	mesh.material = mat
-	var mi := MeshInstance3D.new()
-	mi.mesh = mesh
 	var shape := BoxShape3D.new()
 	shape.size = size
+	var body := _body(pos, shape)
+	body.add_child(_mesh_at(size, Vector3.ZERO, col))
+	return body
+
+func _add_cyl(pos: Vector3, r: float, h: float, col: Color) -> StaticBody3D:
+	var shape := CylinderShape3D.new()
+	shape.radius = r
+	shape.height = h
+	var body := _body(pos, shape)
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = r
+	mesh.bottom_radius = r
+	mesh.height = h
+	mesh.material = _mat(col)
+	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	body.add_child(mi)
+	return body
+
+func _body(pos: Vector3, shape: Shape3D) -> StaticBody3D:
+	var body := StaticBody3D.new()
 	var cs := CollisionShape3D.new()
 	cs.shape = shape
-	body.add_child(mi)
 	body.add_child(cs)
 	body.position = pos
 	$Arena.add_child(body)
 	return body
+
+## 只有畫面、沒有碰撞的裝飾（門板、窗戶）
+func _deco(pos: Vector3, size: Vector3, col: Color) -> void:
+	var mi := _mesh_at(size, pos, col)
+	$Arena.add_child(mi)
+
+func _mesh_at(size: Vector3, pos: Vector3, col: Color) -> MeshInstance3D:
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	mesh.material = _mat(col)
+	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	mi.position = pos
+	return mi
+
+## 同色共用一份材質：鄉村場景上千個零件，一個一個開材質很浪費
+var _mats := {}
+func _mat(col: Color) -> StandardMaterial3D:
+	if not _mats.has(col):
+		var m := StandardMaterial3D.new()
+		m.albedo_color = col
+		m.roughness = 0.9
+		_mats[col] = m
+	return _mats[col]
 
 # --- 雜項 ---
 

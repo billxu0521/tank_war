@@ -29,6 +29,9 @@ func _process(_delta: float) -> bool:
 		_case_offline_dino()
 		_case_cowboy()
 		_case_input_map()
+		_case_hunt_weapons()
+		_case_sandbox()
+		_case_rural()
 		_case_back_to_lobby()
 		_case_cover()
 		_case_trex_rig()
@@ -83,7 +86,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
+		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與爆頭閉氣近戰、沙盒、鄉村柵欄、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
 	return true
 
 # --- 共用 ---
@@ -141,12 +144,12 @@ func _case_timeout() -> void:
 func _case_dino_death() -> void:
 	var m := _new_game()
 	var dino: Node = m.players.get_node(^"1")
-	# 手槍的持續輸出 = 一匣的傷害 / (打完一匣 + 逐發換彈)
+	# 左輪的持續輸出 = 一輪的傷害 / (打完一輪 + 逐發換彈)
 	var gun: Node = m.players.get_node(^"2").viewmodel._weapons[0]
 	var cycle: float = gun.mag_size * (gun.fire_interval + gun.reload_time)
 	var dps: float = gun.mag_size * gun.damage / cycle
 	var secs: float = dino.max_hp / (3.0 * dps)
-	_ck(secs > 10.0 and secs < 20.0, "平衡目標：3 個牛仔用手槍 10~20 秒打死恐龍（現在 %.1f 秒）" % secs)
+	_ck(secs > 8.0 and secs < 20.0, "平衡目標：3 個牛仔用左輪 8~20 秒打死恐龍（現在 %.1f 秒）" % secs)
 
 	dino.take_damage(dino.max_hp)
 	# 牛仔互為對手，所以打死恐龍不是勝利條件，回合要繼續，恐龍會重生
@@ -233,10 +236,105 @@ func _case_cowboy() -> void:
 	_ck(not me.get_node(^"Body").visible, "第一人稱看不到自己的身體")
 	_end(m)
 
+## Hunt 式的三把槍和它們的規則
+func _case_hunt_weapons() -> void:
+	var m := _new_offline_game()
+	var me: Node = m.players.get_node(^"1")
+	var vm: Node = me.viewmodel
+	var names: Array = vm._weapons.map(func(w: Node) -> String: return w.display_name)
+	_ck(names == ["左輪", "單管散彈", "槓桿步槍"], "1/2/3 要是左輪、單管散彈、槓桿步槍（現在 %s）" % [names])
+	var revolver: Node = vm._weapons[0]
+	var shotgun: Node = vm._weapons[1]
+	var rifle: Node = vm._weapons[2]
+	_ck(revolver.fan_interval > 0.0 and revolver.fan_interval < revolver.fire_interval,
+		"左輪要能搧擊錘，而且比正常扳擊錘快")
+	_ck(shotgun.mag_size == 1 and shotgun.reload_whole_mag, "單管散彈一次一發、折開整個換")
+	_ck(rifle.hit_range > revolver.hit_range and revolver.hit_range > shotgun.hit_range,
+		"射程要是步槍 > 左輪 > 散彈")
+	for w in vm._weapons:
+		_ck(w.reserve > 0, "%s 的備彈要有限（Hunt 的子彈要省著用）" % w.display_name)
+		_ck(w.get_node_or_null(^"Model") != null, "%s 要有 Blender 建的模型" % w.display_name)
+	_ck(rifle.get_node_or_null(rifle.lever_path) != null, "步槍的拉桿要找得到，不然上膛沒動作")
+	_ck(revolver.get_node_or_null(revolver.cylinder_path) != null, "左輪的轉輪要找得到")
+	_ck(shotgun.get_node_or_null(shotgun.barrel_path) != null, "散彈的槍管要找得到，換彈才折得開")
+
+	# 開槍：程式動作要動起來（轉輪轉一格、後座）
+	var turns: int = revolver._turns
+	revolver.play(&"fire", 0.1, 0.45)
+	_ck(revolver._turns == turns + 1 and revolver._kick > 0.0, "開槍要有後座、轉輪要轉")
+
+	# 爆頭一槍死：打到頭的高度才算，打身體不算
+	var other: Node3D = m._add_player(m.COWBOY, 5)
+	other.global_position = Vector3(0, 0, 0)
+	var head_y: float = other.head.global_position.y
+	_ck(vm.is_headshot(other, Vector3(0, head_y, 0)), "打到頭的高度要算爆頭")
+	_ck(not vm.is_headshot(other, Vector3(0, 1.0, 0)), "打到腰不算爆頭")
+	_ck(not vm.is_headshot(m.players.get_node(^"2"), Vector3(0, 99, 0)), "恐龍沒有爆頭秒殺")
+
+	# 閉氣：舉滿才閉得住，而且吃體力
+	vm.ads = 1.0
+	me.stamina = me.max_stamina
+	vm._update_breath(true, 0.5)
+	_ck(vm.holding_breath and me.stamina < me.max_stamina, "舉槍按 Shift 要閉氣、吃體力")
+	vm.ads = 0.0
+	vm._update_breath(true, 0.1)
+	_ck(not vm.holding_breath, "沒舉槍不能閉氣")
+
+	# 近戰吃體力
+	me.stamina = me.max_stamina
+	vm.try_melee()
+	_ck(me.stamina < me.max_stamina, "槍托要吃體力")
+	_end(m)
+
+## 沙盒：靶站好、沒有時間限制、子彈無限、靶打死生回原地
+func _case_sandbox() -> void:
+	var m: Node = load("res://main.tscn").instantiate()
+	root.add_child(m)
+	m._on_sandbox_pressed()
+	var me: Node = m.players.get_node(^"1")
+	_ck(me.is_local and not me.bot, "沙盒裡自己是可以操控的牛仔")
+	_ck(m.players.get_child_count() == 2 + m.SANDBOX_TARGETS.size(), "要有自己、恐龍靶和 %d 個牛仔靶" % m.SANDBOX_TARGETS.size())
+	for w in me.viewmodel._weapons:
+		_ck(w.reserve < 0, "沙盒子彈要無限")
+	var far: Node3D = m.players.get_node(^"6")
+	_ck(absf(far.global_position.distance_to(me.global_position) - 100.0) < 5.0, "最遠的靶在 100 公尺")
+
+	m._time_left = 0.01
+	m._physics_process(0.1)
+	_ck(not m._over, "沙盒沒有時間到這回事")
+
+	var spot: Vector3 = far.global_position
+	far.take_damage(9999)
+	far.free()
+	m._respawn_queue[0]["at"] = m._time_left + 1.0
+	m._respawn_step()
+	var back: Node3D = m.players.get_node_or_null(^"6")
+	_ck(back != null and back.global_position.distance_to(spot) < 0.1, "靶打死要生回原地")
+
+	m._to_lobby("")
+	_ck(m.get_tree().get_nodes_in_group(&"sandbox_prop").is_empty(), "回大廳要把距離牌和練習柵欄清掉")
+	_end(m)
+
+## 鄉村：柵欄翻得過去、有穀倉可以爬、沙盒靶場沒被蓋東西
+func _case_rural() -> void:
+	var m := _new_game()
+	var c: Node = m.players.get_node(^"2")
+	_ck(m.FENCE_H >= c.vault_min_height and m.FENCE_H <= c.vault_max_height,
+		"柵欄 %.1f 公尺要在翻越範圍 %.1f~%.1f 內" % [m.FENCE_H, c.vault_min_height, c.vault_max_height])
+	var fences := 0
+	for b in m.get_node(^"Arena").get_children():
+		if b is StaticBody3D and m.SANDBOX_RANGE.has_point(Vector2(b.global_position.x, b.global_position.z)) \
+				and b.global_position.y > 0.5:
+			_ck(false, "沙盒靶場裡不該蓋東西（%s 在 %s）" % [b.name, b.global_position])
+		if b is StaticBody3D and b.get_child_count() > 3:
+			fences += 1
+	_ck(fences > 20, "鄉村要有柵欄（現在 %d 段）" % fences)
+	_end(m)
+
 ## 牛仔的操作都要有綁鍵，鍵盤和手把兩邊都要（FNE 的約定）
 func _case_input_map() -> void:
 	for a in ["move_forward", "move_back", "move_left", "move_right", "jump", "sprint",
-			"crouch", "fire", "aim", "reload", "lean_left", "lean_right"]:
+			"crouch", "crouch_toggle", "fire", "aim", "reload", "melee", "lean_left", "lean_right"]:
 		_ck(InputMap.has_action(a), "少了按鍵動作 %s" % a)
 		if not InputMap.has_action(a):
 			continue

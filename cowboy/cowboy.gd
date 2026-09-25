@@ -1,6 +1,6 @@
 extends "res://fighter.gd"
 class_name Cowboy
-## 牛仔：第一人稱，手感照 Hunt: Showdown。從 FNE_project 的 player.gd 搬來，
+## 牛仔：第一人稱，操作照 Hunt: Showdown。從 FNE_project 的 player.gd 搬來，
 ## 血量、死亡、連線權限改吃 fighter.gd，跟恐龍同一套。
 ## 移動／蹲／傾身／翻越／體力是原本的；FNE 的互動系統（門、燈）這裡沒有，拿掉了。
 
@@ -71,6 +71,7 @@ class_name Cowboy
 @onready var _camera: Camera3D = $Head/Camera3D
 @onready var _stamina_fill: ColorRect = $HUD/StaminaBar/Fill
 @onready var _crosshair: Control = $HUD/Crosshair
+@onready var _hp_fill: ColorRect = $HUD/HealthBar/Fill
 @onready var _body: MeshInstance3D = $Body
 @onready var _torso: CapsuleMesh = _body.mesh
 @onready var _face: MeshInstance3D = $Head/Face
@@ -101,6 +102,8 @@ var _look_delta := Vector2.ZERO
 var _lean := 0.0
 var _step_timer := 0.0
 var _was_on_floor := true
+## C 切換的蹲下（Ctrl 是按住蹲）。Hunt 兩種都有，切換的比較不累手
+var crouch_toggled := false
 ## bot 繞牆：頂著牆走不動時沿牆面走一段
 var _detour := Vector3.ZERO
 var _detour_left := 0.0
@@ -146,6 +149,7 @@ func _process(delta: float) -> void:
 		return
 	# 打中人準心閃紅，遠距離看不出血條掉，這是唯一的命中確認
 	_crosshair.modulate = Color(1, 0.3, 0.25) if hit_until > Time.get_ticks_msec() else Color.WHITE
+	_hp_fill.size.x = (_hp_fill.get_parent() as Control).size.x * clampf(float(hp) / max_hp, 0.0, 1.0)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -172,14 +176,20 @@ func _physics_process(delta: float) -> void:
 	if vaulting:
 		return
 
-	var crouching := Input.is_action_pressed("crouch") or _blocked_above()
-	sync_crouching = crouching
-	_apply_crouch(crouching, delta)
-
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var dir := (transform.basis * Vector3(input.x, 0.0, input.y)).normalized()
 
-	var wants_sprint := Input.is_action_pressed("sprint") and not crouching and input != Vector2.ZERO
+	# 舉槍時 Shift 是閉氣（viewmodel 在處理），不是跑步
+	var wants_sprint := Input.is_action_pressed("sprint") and not Input.is_action_pressed("aim") \
+		and input != Vector2.ZERO
+	if Input.is_action_just_pressed("crouch_toggle"):
+		crouch_toggled = not crouch_toggled
+	if wants_sprint:
+		crouch_toggled = false   # 跑起來就站起來，跟 Hunt 一樣
+	var crouching := (Input.is_action_pressed("crouch") or crouch_toggled) and not wants_sprint
+	crouching = crouching or _blocked_above()
+	sync_crouching = crouching
+	_apply_crouch(crouching, delta)
 	_sprinting = update_stamina(wants_sprint, delta)
 
 	if not is_on_floor():

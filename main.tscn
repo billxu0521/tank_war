@@ -4,6 +4,10 @@
 [ext_resource type="Script" path="res://egg.gd" id="2"]
 
 [sub_resource type="ProceduralSkyMaterial" id="sky_m"]
+sky_top_color = Color(0.33, 0.45, 0.62, 1)
+sky_horizon_color = Color(0.86, 0.70, 0.52, 1)
+ground_horizon_color = Color(0.62, 0.55, 0.44, 1)
+sun_angle_max = 20.0
 
 [sub_resource type="Sky" id="sky"]
 sky_material = SubResource("sky_m")
@@ -13,6 +17,10 @@ background_mode = 2
 sky = SubResource("sky")
 ambient_light_source = 3
 tonemap_mode = 2
+fog_enabled = true
+fog_light_color = Color(0.74, 0.68, 0.56, 1)
+fog_density = 0.005
+fog_sky_affect = 0.3
 
 [sub_resource type="StyleBoxFlat" id="bar_bg"]
 bg_color = Color(0, 0, 0, 0.45)
@@ -60,8 +68,11 @@ script = ExtResource("1")
 [node name="WorldEnvironment" type="WorldEnvironment" parent="Arena"]
 environment = SubResource("env")
 
+; 黃昏的斜陽：仰角約 25 度、偏暖。影子拉長，比較有 Hunt 那種傍晚的氣氛
 [node name="Sun" type="DirectionalLight3D" parent="Arena"]
-transform = Transform3D(0.866, -0.433, 0.25, 0, 0.5, 0.866, -0.5, -0.75, 0.433, 0, 20, 0)
+transform = Transform3D(0.866, -0.2113, 0.4532, 0, 0.9063, 0.4226, -0.5, -0.366, 0.785, 0, 20, 0)
+light_color = Color(1, 0.84, 0.64, 1)
+light_energy = 1.3
 shadow_enabled = true
 
 [node name="Egg" type="Node3D" parent="."]
@@ -100,7 +111,7 @@ text = "西部牛仔打恐龍"
 
 [node name="Hint" type="Label" parent="UI/Root/Lobby"]
 text = "開房的人當恐龍，加入的人當牛仔。
-WASD 移動，滑鼠瞄準，左鍵攻擊，Esc 開選單。\n牛仔：右鍵舉槍，R 換彈，1/2/3 換槍，Shift 跑，Ctrl 蹲，Q/E 探頭，頂著矮牆按 Space 翻越。\n恐龍：左鍵吐火球，F 咬，Space 跳躍，Shift 衝刺，貼建築按 W 爬。\n一局四分鐘。牛仔互為對手，先把蛋帶進藍色撤離區的人贏。\n死了五秒後滿血重生，不設命數；時間到沒人撤離就是恐龍贏。"
+WASD 移動，滑鼠瞄準，左鍵攻擊，Esc 開選單。\n牛仔：1 左輪 2 單管散彈 3 槓桿步槍。右鍵舉槍，舉槍時 Shift 閉氣，R 換彈，F 槍托，\n　　　Shift 跑，C 切換蹲／Ctrl 按住蹲，Q/E 探頭，頂著矮牆按 Space 翻越。左輪腰射按住左鍵＝搧擊錘。打頭一槍死。\n恐龍：左鍵吐火球，F 咬，Space 跳躍，Shift 衝刺，貼建築按 W 爬。\n一局四分鐘。牛仔互為對手，先把蛋帶進藍色撤離區的人贏。\n死了五秒後滿血重生，不設命數；時間到沒人撤離就是恐龍贏。"
 
 [node name="IP" type="LineEdit" parent="UI/Root/Lobby"]
 text = "127.0.0.1"
@@ -117,6 +128,9 @@ text = "離線測試：我當牛仔（打會追人的恐龍）"
 
 [node name="OfflineDinoBtn" type="Button" parent="UI/Root/Lobby"]
 text = "離線測試：我當恐龍（對三個牛仔 bot）"
+
+[node name="SandboxBtn" type="Button" parent="UI/Root/Lobby"]
+text = "沙盒模式（牛仔練習場，打靶、練翻越）"
 
 [node name="ViewerBtn" type="Button" parent="UI/Root/Lobby"]
 text = "檢視模型（看戰車和恐龍長怎樣）"
@@ -198,6 +212,7 @@ theme_override_styles/fill = SubResource("bar_fill")
 [connection signal="pressed" from="UI/Root/Lobby/JoinBtn" to="." method="_on_join_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/OfflineBtn" to="." method="_on_offline_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/OfflineDinoBtn" to="." method="_on_offline_dino_pressed"]
+[connection signal="pressed" from="UI/Root/Lobby/SandboxBtn" to="." method="_on_sandbox_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/ViewerBtn" to="." method="_on_viewer_pressed"]
 [connection signal="pressed" from="UI/Root/Menu/Box/ResumeBtn" to="." method="_on_resume_pressed"]
 [connection signal="pressed" from="UI/Root/Menu/Box/LeaveBtn" to="." method="_on_leave_pressed"]

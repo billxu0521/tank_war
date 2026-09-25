@@ -1,8 +1,11 @@
 extends Node3D
 class_name Viewmodel
 ## 第一人稱武器 host：輸入、ADS、散布、後座力、射線、HUD、特效、武器切換。
-## 武器本體（模型、數值、彈藥、動畫、音效）在 Weapon 場景裡（scenes/weapons/*.tscn），
+## 武器本體（模型、數值、彈藥、動畫、音效）在 Weapon 場景裡（cowboy/weapons/*.tscn），
 ## 用 1/2/3 或滾輪切換。武器實例全程活著只切 visible，彈藥狀態不會因切換而消失。
+##
+## Hunt 式的操作都在這裡：舉槍會晃、Shift 閉氣穩住（吃體力）、左輪腰射按住搧擊錘、
+## F 槍托近戰、打頭一槍死。
 
 @export var weapon_scenes: Array[PackedScene] = []
 
@@ -35,8 +38,20 @@ class_name Viewmodel
 @export var move_sway := 0.03
 @export var sway_return_speed := 6.0
 
+@export_group("Breath")
+## 舉槍時準心會慢慢飄（度）。Hunt 的遠距離要閉氣才打得準，就是這個
+@export var ads_sway := 0.35
+## 閉氣每秒吃多少體力。體力見底放掉，而且晃得更兇
+@export var breath_drain := 20.0
+@export var winded_sway_mult := 2.5
+
+@export_group("Melee")
+@export var melee_damage := 25
+@export var melee_range := 2.2
+@export var melee_stamina := 15.0
+@export var melee_cooldown := 0.8
+
 @export_group("Weapon")
-@export var hit_range := 100.0
 ## 子彈打得到的層。這個專案沒分層，牆、恐龍、別的牛仔都在第 1 層
 @export_flags_3d_physics var hit_mask := 1
 ## 切換動作的交叉淡入秒數。
@@ -72,6 +87,12 @@ var _reloading := false
 ## 大於 0 的時候不讓移動動作蓋掉開槍／落地／換武器動作
 var _anim_lock := 0.0
 var _fire_cooldown := 0.0
+var _melee_cooldown := 0.0
+## 舉槍晃動：已經套到視角上的偏移（弧度），下一幀只補差值
+var _sway_applied := Vector2.ZERO
+var _sway_t := 0.0
+## 這一幀是不是在閉氣，給 HUD 和測試看
+var holding_breath := false
 ## 還沒回復掉的後座力（x = 上抬，y = 水平），單位弧度
 var _recoil_left := Vector2.ZERO
 var _recoil_time_left := 0.0
@@ -94,6 +115,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_fire_cooldown = maxf(_fire_cooldown - delta, 0.0)
+	_melee_cooldown = maxf(_melee_cooldown - delta, 0.0)
 	_update_spread(delta)
 	_update_recoil(delta)
 	# 別人的角色不讀輸入。bot 也是「別人」，它直接呼叫 try_fire()，
@@ -104,6 +126,10 @@ func _process(delta: float) -> void:
 	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		if Input.is_action_just_pressed("fire"):
 			try_fire()
+		elif weapon.fan_interval > 0.0 and ads < 0.5 and Input.is_action_pressed("fire"):
+			try_fire(true)   # 左輪腰射按住＝搧擊錘，快但散
+		elif Input.is_action_just_pressed("melee"):
+			try_melee()
 		elif Input.is_action_just_pressed("reload"):
 			try_reload()
 		elif Input.is_action_just_pressed("weapon_next"):
@@ -115,6 +141,7 @@ func _process(delta: float) -> void:
 				if Input.is_action_just_pressed("weapon_%d" % (i + 1)):
 					switch_weapon(i)
 	_update_ads(Input.is_action_pressed("aim"), delta)
+	_update_breath(Input.is_action_pressed("sprint"), delta)
 	_update_sway(delta)
 	_update_anim(delta)
 
@@ -176,7 +203,51 @@ func _update_sway(delta: float) -> void:
 	position = position.lerp(target_pos, sway_return_speed * delta)
 
 
-func try_fire() -> void:
+## 舉槍時準心沿一個慢慢的 8 字飄。直接轉視角，所以真的影響落點——
+## 跟後座力同一個做法。閉氣（舉槍時按 Shift）時停住，但吃體力。
+func _update_breath(want_hold: bool, delta: float) -> void:
+	holding_breath = want_hold and ads >= 1.0 and _player.stamina > 0.0
+	if holding_breath:
+		_player.spend_stamina(breath_drain * delta)
+	var amp := 0.0
+	if ads > 0.0 and not holding_breath:
+		amp = deg_to_rad(ads_sway) * ads
+		if _player.stamina < _player.sprint_min_stamina:
+			amp *= winded_sway_mult   # 跑完喘，手會抖
+		_sway_t += delta
+	var want := Vector2(sin(_sway_t * 0.9), sin(_sway_t * 1.8) * 0.5) * amp
+	# 放掉閉氣不要一下彈回去：往目標慢慢靠
+	var step := want - _sway_applied
+	if holding_breath:
+		step = -_sway_applied * minf(delta * 8.0, 1.0)
+	_player.rotate_view(step)
+	_sway_applied += step
+
+
+## 槍托敲人。Hunt 的近戰是「沒子彈或換彈來不及」時的保命手段，所以傷害不高、吃體力。
+func try_melee() -> void:
+	if _melee_cooldown > 0.0 or _player.stamina < melee_stamina:
+		return
+	cancel_reload()
+	_melee_cooldown = melee_cooldown
+	_player.spend_stamina(melee_stamina)
+	_anim_lock = weapon.play(&"melee", blend)
+	var from := _camera.global_position
+	var to := from - _camera.global_transform.basis.z * melee_range
+	var q := PhysicsRayQueryParameters3D.create(from, to, hit_mask, [_player.get_rid()])
+	var hit := get_world_3d().direct_space_state.intersect_ray(q)
+	var target: Object = hit.get("collider")
+	if target and target.has_method(&"take_damage"):
+		_player.deal_damage(target, melee_damage)
+
+
+## 打到的是不是牛仔的頭。Hunt 的規則：打頭一槍死，不管什麼槍。
+## 恐龍沒有這條——1500 血的東西被一槍爆頭就沒得玩了。
+static func is_headshot(target: Object, at: Vector3) -> bool:
+	return target is Cowboy and at.y > (target as Cowboy).head.global_position.y - 0.18
+
+
+func try_fire(fanning := false) -> void:
 	if _fire_cooldown > 0.0:
 		return
 	if _reloading:
@@ -193,13 +264,13 @@ func try_fire() -> void:
 
 	weapon.mag -= 1
 	_refresh_ammo()
-	_fire_cooldown = weapon.fire_interval
+	_fire_cooldown = weapon.fan_interval if fanning else weapon.fire_interval
 	weapon.play_sound(&"Shoot")
 	# 最後一發用 _EMPTY 版本（手槍滑套後定）
 	var action := &"fire"
 	if weapon.mag == 0 and weapon.has_action(&"fire_EMPTY"):
 		action = &"fire_EMPTY"
-	_anim_lock = weapon.play(action, blend, weapon.fire_interval)
+	_anim_lock = weapon.play(action, blend, _fire_cooldown)
 
 	# 每顆彈丸各射一條線。霰彈的體感就是這裡來的：近距離全中、遠距離散光
 	var first_hit := Vector3.INF
@@ -207,11 +278,14 @@ func try_fire() -> void:
 	# 同一個目標的彈丸先加總，一槍只送一次傷害——霰彈八顆不用發八個 RPC
 	var damage := {}
 	for i in weapon.pellets:
-		var hit := _raycast(weapon.pellet_spread)
+		var hit := _raycast(weapon.pellet_spread + (weapon.fan_spread if fanning else 0.0))
 		var target: Object = hit.get("collider")
 		# 認方法不認型別：恐龍、別的牛仔都吃同一發子彈
 		if target and target.has_method(&"take_damage"):
-			damage[target] = damage.get(target, 0.0) + weapon.damage
+			var dmg: float = weapon.damage
+			if is_headshot(target, hit["position"]):
+				dmg = target.max_hp   # 一槍死
+			damage[target] = damage.get(target, 0.0) + dmg
 		if _fx:
 			var solid: bool = target != null and not target.has_method(&"take_damage")
 			_fx.fire(hit["end"], hit.get("normal", Vector3.ZERO), hit.has("collider"), solid)
@@ -299,7 +373,7 @@ func cancel_reload() -> void:
 func _raycast(extra_spread := 0.0) -> Dictionary:
 	# 用自己的相機不用 viewport 的：bot 和遠端角色的 viewport 相機是本機玩家那台
 	var from := _camera.global_position
-	var to := from + _spread_direction(_camera, extra_spread) * hit_range
+	var to := from + _spread_direction(_camera, extra_spread) * weapon.hit_range
 	var query := PhysicsRayQueryParameters3D.create(from, to, hit_mask, [_player.get_rid()])
 	var result := get_world_3d().direct_space_state.intersect_ray(query)
 	result["end"] = result.get("position", to)
@@ -369,7 +443,7 @@ func _play_move(base: StringName) -> float:
 
 func _refresh_ammo() -> void:
 	if ammo_label:
-		ammo_label.text = "%s  %d / %s" % [
+		ammo_label.text = "%s  %d | %s" % [
 			weapon.display_name, weapon.mag,
 			"∞" if weapon.reserve < 0 else str(weapon.reserve),
 		]

@@ -16,7 +16,8 @@ def mat(name, rgb, rough=0.6, metal=0.0):
     if m: return m
     m = bpy.data.materials.new(name)
     m.use_nodes = True
-    p = m.node_tree.nodes['Principled BSDF']
+    # 用類型找不用名字：Blender 介面是中文時節點名字也會被翻譯
+    p = next(n for n in m.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
     p.inputs['Base Color'].default_value = (*rgb, 1)
     p.inputs['Roughness'].default_value = rough
     p.inputs['Metallic'].default_value = metal
