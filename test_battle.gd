@@ -88,7 +88,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與爆頭閉氣輕重近戰兩條體力、沙盒、鄉村柵欄、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
+		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與爆頭閉氣蹲穩輕重近戰兩條體力、沙盒、鄉村柵欄、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
 	return true
 
 # --- 共用 ---
@@ -281,6 +281,22 @@ func _case_hunt_weapons() -> void:
 	vm.ads = 0.0
 	vm._update_breath(true, 0.1)
 	_ck(not vm.holding_breath, "沒舉槍不能閉氣")
+
+	# 蹲下晃得少：同一個時間點比較站著和蹲著的飄移量
+	vm.ads = 1.0
+	me.stamina = me.max_stamina
+	vm._sway_t = 0.7
+	vm._sway_applied = Vector2.ZERO
+	me.sync_crouching = false
+	vm._update_breath(false, 0.0)
+	var stand_sway: float = vm._sway_applied.length()
+	vm._sway_applied = Vector2.ZERO
+	me.sync_crouching = true
+	vm._update_breath(false, 0.0)
+	_ck(stand_sway > 0.0 and vm._sway_applied.length() < stand_sway * 0.75,
+		"蹲下要晃得比站著少（站 %.5f 蹲 %.5f）" % [stand_sway, vm._sway_applied.length()])
+	me.sync_crouching = false
+	vm.ads = 0.0
 
 	# 近戰：輕擊便宜、重擊痛但貴；體力不夠重擊就退成輕擊
 	_ck(vm.heavy_damage > vm.melee_damage and vm.heavy_stamina > vm.melee_stamina,

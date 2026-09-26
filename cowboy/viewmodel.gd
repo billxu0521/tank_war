@@ -44,6 +44,8 @@ class_name Viewmodel
 ## 閉氣每秒吃多少體力。體力見底放掉，而且晃得更兇
 @export var breath_drain := 20.0
 @export var winded_sway_mult := 2.5
+## 蹲下時晃動乘這個。Hunt：蹲下會減少所有槍的晃動——要打遠就蹲
+@export var crouch_sway_mult := 0.5
 
 @export_group("Melee")
 ## 輕擊：便宜、快、痛不太到。Hunt 的近戰是沒子彈或換彈來不及時的保命手段
@@ -221,6 +223,8 @@ func _update_breath(want_hold: bool, delta: float) -> void:
 		amp = deg_to_rad(ads_sway) * ads
 		if _player.stamina < _player.sprint_min_stamina:
 			amp *= winded_sway_mult   # 跑完喘，手會抖
+		if _player.sync_crouching:
+			amp *= crouch_sway_mult
 		_sway_t += delta
 	var want := Vector2(sin(_sway_t * 0.9), sin(_sway_t * 1.8) * 0.5) * amp
 	# 放掉閉氣不要一下彈回去：往目標慢慢靠
