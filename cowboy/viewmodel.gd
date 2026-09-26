@@ -5,7 +5,7 @@ class_name Viewmodel
 ## 用 1/2/3 或滾輪切換。武器實例全程活著只切 visible，彈藥狀態不會因切換而消失。
 ##
 ## Hunt 式的操作都在這裡：舉槍會晃、Shift 閉氣穩住（吃體力）、左輪腰射按住搧擊錘、
-## F 槍托近戰、打頭一槍死。
+## V 槍托近戰（點＝輕擊、按住蓄力放開＝重擊）、打頭一槍死。
 
 @export var weapon_scenes: Array[PackedScene] = []
 
@@ -46,10 +46,16 @@ class_name Viewmodel
 @export var winded_sway_mult := 2.5
 
 @export_group("Melee")
+## 輕擊：便宜、快、痛不太到。Hunt 的近戰是沒子彈或換彈來不及時的保命手段
 @export var melee_damage := 25
-@export var melee_range := 2.2
 @export var melee_stamina := 15.0
-@export var melee_cooldown := 0.8
+@export var melee_cooldown := 0.6
+## 重擊：按住蓄滿這麼久再放開。兩下半打死一個牛仔，但蓄力時站著挨打
+@export var heavy_charge_time := 0.6
+@export var heavy_damage := 60
+@export var heavy_stamina := 30.0
+@export var heavy_cooldown := 1.0
+@export var melee_range := 2.2
 
 @export_group("Weapon")
 ## 子彈打得到的層。這個專案沒分層，牆、恐龍、別的牛仔都在第 1 層
@@ -88,6 +94,8 @@ var _reloading := false
 var _anim_lock := 0.0
 var _fire_cooldown := 0.0
 var _melee_cooldown := 0.0
+## 近戰鍵按住多久了；負數＝沒按
+var _melee_held := -1.0
 ## 舉槍晃動：已經套到視角上的偏移（弧度），下一幀只補差值
 var _sway_applied := Vector2.ZERO
 var _sway_t := 0.0
@@ -128,8 +136,6 @@ func _process(delta: float) -> void:
 			try_fire()
 		elif weapon.fan_interval > 0.0 and ads < 0.5 and Input.is_action_pressed("fire"):
 			try_fire(true)   # 左輪腰射按住＝搧擊錘，快但散
-		elif Input.is_action_just_pressed("melee"):
-			try_melee()
 		elif Input.is_action_just_pressed("reload"):
 			try_reload()
 		elif Input.is_action_just_pressed("weapon_next"):
@@ -140,6 +146,7 @@ func _process(delta: float) -> void:
 			for i in _weapons.size():
 				if Input.is_action_just_pressed("weapon_%d" % (i + 1)):
 					switch_weapon(i)
+		_update_melee_input(delta)
 	_update_ads(Input.is_action_pressed("aim"), delta)
 	_update_breath(Input.is_action_pressed("sprint"), delta)
 	_update_sway(delta)
@@ -224,13 +231,30 @@ func _update_breath(want_hold: bool, delta: float) -> void:
 	_sway_applied += step
 
 
-## 槍托敲人。Hunt 的近戰是「沒子彈或換彈來不及」時的保命手段，所以傷害不高、吃體力。
-func try_melee() -> void:
-	if _melee_cooldown > 0.0 or _player.stamina < melee_stamina:
+## 點一下＝輕擊，按住蓄力、放開＝重擊（跟 Hunt 一樣是「放開」才揮出去）。
+## 蓄力中槍會往後拉，讓自己和旁人看得出要來一記重的。
+func _update_melee_input(delta: float) -> void:
+	if Input.is_action_just_pressed("melee"):
+		_melee_held = 0.0
+	elif _melee_held >= 0.0:
+		if Input.is_action_pressed("melee"):
+			_melee_held += delta
+		else:
+			try_melee(_melee_held >= heavy_charge_time)
+			_melee_held = -1.0
+	weapon.windup = clampf(_melee_held / heavy_charge_time, 0.0, 1.0) if _melee_held >= 0.0 else 0.0
+
+
+## 槍托敲人。重擊體力不夠就退成輕擊（Hunt：體力見底不能重擊）。
+func try_melee(heavy := false) -> void:
+	if heavy and _player.stamina < heavy_stamina:
+		heavy = false
+	var cost := heavy_stamina if heavy else melee_stamina
+	if _melee_cooldown > 0.0 or _player.stamina < cost:
 		return
 	cancel_reload()
-	_melee_cooldown = melee_cooldown
-	_player.spend_stamina(melee_stamina)
+	_melee_cooldown = heavy_cooldown if heavy else melee_cooldown
+	_player.spend_stamina(cost)
 	_anim_lock = weapon.play(&"melee", blend)
 	var from := _camera.global_position
 	var to := from - _camera.global_transform.basis.z * melee_range
@@ -238,7 +262,7 @@ func try_melee() -> void:
 	var hit := get_world_3d().direct_space_state.intersect_ray(q)
 	var target: Object = hit.get("collider")
 	if target and target.has_method(&"take_damage"):
-		_player.deal_damage(target, melee_damage)
+		_player.deal_damage(target, heavy_damage if heavy else melee_damage)
 
 
 ## 打到的是不是牛仔的頭。Hunt 的規則：打頭一槍死，不管什麼槍。

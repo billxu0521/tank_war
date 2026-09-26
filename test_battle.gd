@@ -4,6 +4,7 @@ extends SceneTree
 
 var _fails := 0
 var _shooter: Node
+var _brawler: Node
 var _dino: Node
 var _jump_from := 0.0
 var _phase := 0
@@ -50,6 +51,7 @@ func _process(_delta: float) -> bool:
 	match _phase:
 		0:  # 牛仔開槍打恐龍。等一個物理幀讓位置進到物理世界，射線才打得到
 			if _frames == 3:
+				_check_melee_hits()
 				_shooter._bot_shoot(_dino)
 			elif _frames > 3:
 				_ck(_dino.hp < _dino.max_hp, "牛仔開槍要打得到恐龍（恐龍血量 %d）" % _dino.hp)
@@ -86,7 +88,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與爆頭閉氣近戰、沙盒、鄉村柵欄、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
+		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與爆頭閉氣輕重近戰、沙盒、鄉村柵欄、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
 	return true
 
 # --- 共用 ---
@@ -280,10 +282,10 @@ func _case_hunt_weapons() -> void:
 	vm._update_breath(true, 0.1)
 	_ck(not vm.holding_breath, "沒舉槍不能閉氣")
 
-	# 近戰吃體力
-	me.stamina = me.max_stamina
-	vm.try_melee()
-	_ck(me.stamina < me.max_stamina, "槍托要吃體力")
+	# 近戰：輕擊便宜、重擊痛但貴；體力不夠重擊就退成輕擊
+	_ck(vm.heavy_damage > vm.melee_damage and vm.heavy_stamina > vm.melee_stamina,
+		"重擊要比輕擊痛、也比較貴")
+	# 真的敲到人要跨物理幀，見 _phase 0
 	_end(m)
 
 ## 沙盒：靶站好、沒有時間限制、子彈無限、靶打死生回原地
@@ -693,4 +695,22 @@ func _start_gun_case() -> void:
 	_dino.global_position = Vector3(spot.x, 4.1, spot.z - 15.0)   # 原點在身體中心，腳剛好著地
 	_shooter = m.players.get_node(^"3")
 	_shooter.global_position = Vector3(spot.x, 0.0, spot.z)
-	m.players.get_node(^"2").global_position = Vector3(0, 500, 0)  # 閃開別擋在彈道上
+	# 牛仔 2 貼在恐龍另一側練槍托（恐龍半徑 2.4，站 3.4 公尺外剛好在 2.2 的近戰距離內）
+	_brawler = m.players.get_node(^"2")
+	_brawler.global_position = Vector3(spot.x, 0.0, spot.z - 15.0 - 3.4)
+	_brawler.rotation.y = PI   # 面向 +Z，對著恐龍
+
+## 重擊比輕擊痛；體力不夠重擊就退成輕擊
+func _check_melee_hits() -> void:
+	var vm: Node = _brawler.viewmodel
+	_brawler.stamina = _brawler.max_stamina
+	var hp0: int = _dino.hp
+	vm.try_melee(true)
+	_ck(hp0 - _dino.hp == vm.heavy_damage, "重擊要打出 %d 傷（打出 %d）" % [vm.heavy_damage, hp0 - _dino.hp])
+	_ck(is_equal_approx(_brawler.stamina, _brawler.max_stamina - vm.heavy_stamina),
+		"重擊要扣 %.0f 體力" % vm.heavy_stamina)
+	_brawler.stamina = vm.heavy_stamina - 1.0
+	vm._melee_cooldown = 0.0
+	hp0 = _dino.hp
+	vm.try_melee(true)
+	_ck(hp0 - _dino.hp == vm.melee_damage, "體力不夠重擊，要退成輕擊（打出 %d）" % (hp0 - _dino.hp))
