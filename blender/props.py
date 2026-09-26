@@ -1,4 +1,4 @@
-# 鄉村場景物件：穀倉、農舍、筒倉、柵欄、乾草捲、兩種樹。
+# 鄉村場景物件：穀倉、農舍、筒倉、柵欄、乾草捲、兩種樹、山崖、麥子、草叢、蛋、篷車。
 #
 # 座標用 Blender 的：X 右、Y 前（= Godot -Z）、Z 上。單位公尺。
 # 每個物件都以「自己的原點」為準建在世界原點（匯出後 main.gd 直接拿 mesh 擺）：
@@ -289,6 +289,100 @@ for k in range(4):
     cone(r, 0.05, 2.8, (0, 0, 3.2 + k * 1.5), (0, 0, k * 0.4), 10, m=PINE)
 pine = finish('TreePine', bevel=0.0, seg=1)
 
+# ================= 山崖（圍牆的外觀） =================
+# 一段 40 公尺寬。內側面在 y=0、岩塊都往 +Y（牆外）長，才不會凸進場地——
+# 碰撞是 main.gd 的平面牆，凸進來的石頭會變成看得到、摸不到的東西
+import random
+random.seed(20260927)
+ROCK1 = mat('p_rock1', (0.40, 0.36, 0.31), 0.95)
+ROCK2 = mat('p_rock2', (0.33, 0.30, 0.27), 0.95)
+MOSS  = mat('p_moss',  (0.30, 0.36, 0.20), 1.0)
+CW = 40.0
+for i in range(22):                                   # 大岩塊：底下寬、往上收，頂端參差
+    x = -CW / 2 + random.uniform(0, CW)
+    h = random.uniform(26, 46)
+    w = random.uniform(7, 13)
+    d = random.uniform(6, 12)
+    box((w, d, h), (x, d / 2 - 0.2, h / 2), (random.uniform(-0.08, 0.08), random.uniform(-0.12, 0.12),
+        random.uniform(-0.3, 0.3)), m=random.choice((ROCK1, ROCK2)))
+for i in range(26):                                   # 牆腳的碎石堆（貼著內側面）
+    x = -CW / 2 + random.uniform(0, CW)
+    r = random.uniform(1.0, 2.6)
+    box((r * 1.6, r * 1.2, r), (x, r * 0.5, r * 0.45), (0, 0, random.uniform(0, 1.5)), m=ROCK2)
+for i in range(12):                                   # 頂上的草皮
+    x = -CW / 2 + random.uniform(0, CW)
+    box((random.uniform(4, 9), 6, 0.8), (x, 4, random.uniform(38, 45)), m=MOSS)
+cliff = finish('Cliff', bevel=0.3, seg=1)
+
+# ================= 麥子、草叢（沒有碰撞，遊戲裡用 MultiMesh 撒幾千叢） =================
+# 三片交叉的葉片＋穗，三十幾個三角形。一叢一叢的輪廓比一塊平板像田
+WHEAT = mat('p_wheat', (0.82, 0.70, 0.36), 1.0)
+GRASS = mat('p_grass', (0.33, 0.42, 0.20), 1.0)
+for k in range(7):                                    # 七根麥稈，各自往外歪一點，頂端一顆麥穗
+    a = k * math.tau / 7 + 0.3
+    r = 0.06 + 0.05 * (k % 3)
+    tilt = 0.10 + 0.05 * (k % 2)
+    h = 0.72 + 0.06 * ((k * 3) % 4)
+    x, y = r * math.cos(a), r * math.sin(a)
+    box((0.018, 0.018, h), (x, y, h / 2), (-tilt * math.sin(a), tilt * math.cos(a), 0), m=WHEAT)
+    box((0.045, 0.045, 0.14), (x + tilt * h * math.cos(a), y + tilt * h * math.sin(a), h + 0.05),
+        (-tilt * math.sin(a), tilt * math.cos(a), a), m=WHEAT)
+wheat = finish('WheatTuft', bevel=0.0, seg=1)
+for k in range(6):                                    # 六片細長的草葉往外散開
+    a = k * math.tau / 6
+    tilt = 0.35 + 0.1 * (k % 2)
+    box((0.05, 0.012, 0.38), (0.06 * math.cos(a), 0.06 * math.sin(a), 0.17),
+        (-tilt * math.sin(a), tilt * math.cos(a), a), m=GRASS)
+grass = finish('GrassClump', bevel=0.0, seg=1)
+
+# ================= 恐龍蛋 =================
+# 下胖上尖的蛋形＋深色斑點。原點在中心
+EGG   = mat('p_egg',   (0.93, 0.89, 0.78), 0.5)
+SPOT  = mat('p_spot',  (0.45, 0.38, 0.28), 0.6)
+sphere(0.35, (0, 0, 0), 24, 16, m=EGG)
+for v in _parts[-1].data.vertices:                    # 拉長、上半收尖
+    z = v.co.z * 1.35
+    k = 1.0 - 0.18 * max(z, 0) / 0.47
+    v.co.x *= k
+    v.co.y *= k
+    v.co.z = z
+for i in range(14):                                   # 斑點：貼在蛋殼上的扁球
+    th = random.uniform(0, math.tau)
+    zz = random.uniform(-0.35, 0.35)
+    rr = 0.35 * math.sqrt(max(0.0, 1 - (zz / 0.47) ** 2)) * (1.0 - 0.18 * max(zz, 0) / 0.47)
+    sphere(random.uniform(0.03, 0.06), (rr * math.cos(th), rr * math.sin(th), zz), 8, 6, m=SPOT)
+    for v in _parts[-1].data.vertices:
+        v.co.x *= 0.5 if abs(math.cos(th)) > 0.7 else 1.0
+        v.co.y *= 0.5 if abs(math.sin(th)) > 0.7 else 1.0
+egg = finish('Egg', bevel=0.0, seg=1, smooth_mats=('p_egg', 'p_spot'))
+
+# ================= 篷車（撤離點的地標） =================
+# 功能零件：車斗、四個有輻條的木輪＋車軸、帆布篷（一道道木拱撐著）、車轅
+CANVAS = mat('p_canvas', (0.86, 0.82, 0.70), 0.95)
+box((1.6, 3.6, 0.5), (0, 0, 1.05), m=WOOD)                     # 車斗
+box((1.7, 3.7, 0.08), (0, 0, 0.80), m=WOOD_D)                  # 車斗底板
+for sy, r in ((-1, 0.62), (1, 0.52)):                          # 前輪小、後輪大
+    y = sy * 1.3
+    cyl(0.05, 1.9, (0, y, r), (0, math.pi / 2, 0), 8, m=WOOD_D)                 # 車軸
+    for sx in (-1, 1):
+        bpy.ops.mesh.primitive_torus_add(major_radius=r - 0.04, minor_radius=0.05, major_segments=20,
+                                         minor_segments=4, location=(sx * 0.92, y, r), rotation=(0, math.pi / 2, 0))
+        _push(bpy.context.object, WOOD_D)
+        for k in range(6):                                                        # 輻條
+            box((0.04, 0.04, (r - 0.05) * 2), (sx * 0.92, y, r), (k * math.pi / 6, 0, 0), m=WOOD)
+        cyl(0.10, 0.14, (sx * 0.92, y, r), (0, math.pi / 2, 0), 10, m=BAND)      # 輪轂
+for k in range(5):                                             # 木拱＋帆布
+    y = -1.6 + k * 0.8
+    bpy.ops.mesh.primitive_torus_add(major_radius=0.82, minor_radius=0.04, major_segments=16,
+                                     minor_segments=4, location=(0, y, 1.3), rotation=(math.pi / 2, 0, 0))
+    _push(bpy.context.object, WOOD_D)
+sphere(0.85, (0, 0, 1.3), 20, 10, m=CANVAS)                    # 帆布：拉長的半球
+for v in _parts[-1].data.vertices:
+    v.co.z = max(v.co.z, 0.0) * 1.0
+    v.co.y *= 2.2
+box((0.10, 2.2, 0.10), (0, -2.9, 0.55), (0.12, 0, 0), m=WOOD_D)  # 車轅
+wagon = finish('Wagon', bevel=0.01, seg=1, smooth_mats=('p_canvas',))
+
 # 每個物件的原點都在世界原點（上面就是照這樣建的），旋轉烘進網格
 for o in bpy.data.objects:
     if o.type == 'MESH':
@@ -302,8 +396,9 @@ bpy.ops.object.select_all(action='DESELECT')
 
 # 看圖用的排版：沿 X 排開（匯出前會歸位）
 LAYOUT = {'Barn': 0, 'BarnRoof': 0, 'House': 22, 'SiloBody': 38, 'SiloDome': 38,
-          'FenceRail': 48, 'FencePost': 48, 'HayBale': 53, 'TreeOak': 60, 'TreePine': 70}
-LIFT = {'BarnRoof': BARN[2], 'SiloDome': SILO_H, 'HayBale': 0.7}
+          'FenceRail': 48, 'FencePost': 48, 'HayBale': 53, 'TreeOak': 60, 'TreePine': 70,
+          'Cliff': 100, 'WheatTuft': 80, 'GrassClump': 82, 'Egg': 85, 'Wagon': 90}
+LIFT = {'BarnRoof': BARN[2], 'SiloDome': SILO_H, 'HayBale': 0.7, 'Egg': 0.5}
 
 
 def show_layout(only=None):

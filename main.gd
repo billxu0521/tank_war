@@ -22,6 +22,7 @@ const BARN_PITCH := 0.55
 const SILO_BASE_H := 15.0
 const FENCE_SEG := 2.5
 const TREE_BASE_TRUNK := 5.0
+const CLIFF_W := 40.0
 # 圍牆不給爬（見 dino.gd 的 _on_climbable_wall），所以恐龍能到的最高點就是
 # 「站上最高的屋頂再跳一下」。圍牆要比那個高，才翻不出去。
 const WALL_H := 40.0
@@ -62,6 +63,7 @@ var _sandbox := false
 func _ready() -> void:
 	_use_cjk_font()
 	_load_props()
+	_skin_egg()
 	_build_arena()
 	_build_exits()
 	multiplayer.peer_connected.connect(_spawn)
@@ -446,15 +448,26 @@ func _build_arena() -> void:
 	_add_box(Vector3(0, -0.5, 0), Vector3(ARENA, 1, ARENA), GRASS)
 
 	# 四周圍牆，東西才不會掉出場外。內側牆面剛好貼齊地板邊緣，不留縫。
-	# 顏色做成遠山的土色，配上沿牆種的一圈樹，看起來像被林子圍住的山谷
+	# 碰撞是平的牆（看不見），外觀是一段段山崖（blender/props.py 的 Cliff），
+	# 岩塊都長在牆面外側，不會凸進場地變成看得到摸不到的東西
 	var e := (ARENA + WALL_T) * 0.5
 	var long := ARENA + WALL_T * 2.0
-	var col := Color(0.30, 0.27, 0.22)
 	for w: Array in [[Vector3(0, WALL_H * 0.5, e), Vector3(long, WALL_H, WALL_T)],
 			[Vector3(0, WALL_H * 0.5, -e), Vector3(long, WALL_H, WALL_T)],
 			[Vector3(e, WALL_H * 0.5, 0), Vector3(WALL_T, WALL_H, long)],
 			[Vector3(-e, WALL_H * 0.5, 0), Vector3(WALL_T, WALL_H, long)]]:
-		_add_box(w[0], w[1], col).add_to_group(&"arena_wall")
+		_solid_box(w[0], w[1]).add_to_group(&"arena_wall")
+	var inner := ARENA * 0.5
+	var segs := 9
+	var seg := long / segs
+	# [這一面的起點, 沿著牆往哪走, 模型要轉多少才讓岩塊長在牆外]
+	for side: Array in [[Vector3(-long * 0.5, 0, -inner), Vector3.RIGHT, 0.0],
+			[Vector3(-long * 0.5, 0, inner), Vector3.RIGHT, PI],
+			[Vector3(inner, 0, -long * 0.5), Vector3.BACK, -PI * 0.5],
+			[Vector3(-inner, 0, -long * 0.5), Vector3.BACK, PI * 0.5]]:
+		for i in segs:
+			var mi := _prop(&"Cliff", side[0] + side[1] * seg * (i + 0.5), Vector3(seg / CLIFF_W, 1, 1))
+			mi.rotation.y = side[2]
 
 	# 十字泥土路。薄到踩上去不會卡腳（2 公分），只是讓人認得方向
 	_add_box(Vector3(0, 0.01, 0), Vector3(8, 0.02, ARENA), DIRT)
@@ -489,6 +502,17 @@ func _build_arena() -> void:
 			Vector3(-u, 0, edge), Vector3(-edge, 0, -u)][side]
 		p += Vector3(rng.randf_range(-3, 3), 0, rng.randf_range(-3, 3))
 		_tree(p, rng, 0.4)
+
+	# 草叢撒滿整片地，路上不長。一樣用自己的亂數
+	var gr := RandomNumberGenerator.new()
+	gr.seed = 7
+	var grass: Array[Transform3D] = []
+	while grass.size() < 3000:
+		var at := Vector3(gr.randf_range(-inner, inner), 0, gr.randf_range(-inner, inner))
+		if absf(at.x) < 5.0 or absf(at.z) < 5.0:
+			continue
+		grass.append(Transform3D(Basis(Vector3.UP, gr.randf() * TAU).scaled(Vector3.ONE * gr.randf_range(0.7, 1.5)), at))
+	_scatter(&"GrassClump", grass)
 
 ## 這塊地能不能蓋東西：沙盒的靶場、撤離區要空著。
 func _free(pos: Vector3, radius: float) -> bool:
@@ -538,6 +562,17 @@ func _orchard(c: Vector3, rng: RandomNumberGenerator) -> void:
 func _hayfield(c: Vector3, rng: RandomNumberGenerator) -> void:
 	if _free(c, 20):
 		_add_box(c + Vector3(0, 0.02, 0), Vector3(40, 0.04, 40), WHEAT)
+		# 一叢一叢的麥子，大約 80 公分高：蹲在裡面會被擋掉一部分。沒有碰撞，子彈照樣穿過去。
+		# 用自己的亂數：麥子只是外觀，不該影響主亂數，不然後面的農莊位置會全部跟著變
+		var wr := RandomNumberGenerator.new()
+		wr.seed = int(c.x * 7919.0 + c.z)
+		var pts: Array[Transform3D] = []
+		for gx in 36:
+			for gz in 36:
+				var at := c + Vector3(-19.5 + gx * 1.1 + wr.randf_range(-0.4, 0.4), 0.04,
+					-19.5 + gz * 1.1 + wr.randf_range(-0.4, 0.4))
+				pts.append(Transform3D(Basis(Vector3.UP, wr.randf() * TAU).scaled(Vector3.ONE * wr.randf_range(0.8, 1.2)), at))
+		_scatter(&"WheatTuft", pts)
 	for i in 7:
 		var p := c + Vector3(rng.randf_range(-18, 18), 0, rng.randf_range(-18, 18))
 		if _free(p, 2):
@@ -627,6 +662,20 @@ func _roof(p: Vector3, size: Vector3, pitch: float) -> void:
 		var b := _solid_box(p + Vector3(sx * run * 0.5, size.y + rise * 0.5, 0), Vector3(w, 0.3, size.z + 1.0))
 		b.rotation.z = -sx * pitch
 
+## 一次撒幾千個一樣的東西（麥子、草叢）：MultiMesh 一次畫完，一叢一個節點會卡。
+## 不投影子：幾千叢的影子很貴，而且貼著地面本來就看不太出來
+func _scatter(name: StringName, pts: Array[Transform3D]) -> void:
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = _props.get(name)
+	mm.instance_count = pts.size()
+	for i in pts.size():
+		mm.set_instance_transform(i, pts[i])
+	var mmi := MultiMeshInstance3D.new()
+	mmi.multimesh = mm
+	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	$Arena.add_child(mmi)
+
 ## 擺一個 Blender 建的場景物件（models/props.glb）。parent 預設是場地
 func _prop(name: StringName, pos: Vector3, scale := Vector3.ONE, parent: Node = null) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
@@ -635,6 +684,16 @@ func _prop(name: StringName, pos: Vector3, scale := Vector3.ONE, parent: Node = 
 	mi.scale = scale
 	(parent if parent else $Arena).add_child(mi)
 	return mi
+
+## 蛋換成 Blender 的模型（下胖上尖、有斑點），再疊一層加亮：場上最重要的東西要遠遠就看得到
+func _skin_egg() -> void:
+	var mi: MeshInstance3D = $Egg/MeshInstance3D
+	mi.mesh = _props.get(&"Egg")
+	var glow := StandardMaterial3D.new()
+	glow.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	glow.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	glow.albedo_color = Color(0.28, 0.24, 0.14)
+	mi.material_overlay = glow
 
 ## 從 props.glb 把每個物件的網格拿出來，場上幾百個物件共用同一份
 func _load_props() -> void:
@@ -690,6 +749,8 @@ func _build_exits() -> void:
 		mi.mesh = mesh
 		mi.position = c + Vector3(0, 0.15, 0)
 		$Arena.add_child(mi)
+		# 撤離點旁邊停一台篷車：遠遠就認得出「從這裡走」
+		_prop(&"Wagon", c + Vector3(EXIT_RADIUS + 3.0, 0, 0)).rotation.y = 0.4
 
 ## 找一個不在建築物裡面的出生點
 func _spawn_point(span := ARENA * 0.45) -> Vector3:

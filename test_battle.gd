@@ -444,7 +444,8 @@ func _case_rural() -> void:
 	_ck(fences > 20, "鄉村要有柵欄（現在 %d 段）" % fences)
 	# 場景物件的模型都要載得到，名字對不上的話會變成看不見的空氣牆
 	for n in [&"Barn", &"BarnRoof", &"House", &"SiloBody", &"SiloDome", &"FenceRail",
-			&"FencePost", &"HayBale", &"TreeOak", &"TreePine"]:
+			&"FencePost", &"HayBale", &"TreeOak", &"TreePine", &"Cliff", &"WheatTuft", &"GrassClump",
+			&"Egg", &"Wagon"]:
 		_ck(m._props.get(n) is Mesh, "props.glb 裡要有 %s" % n)
 	_end(m)
 
