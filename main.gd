@@ -22,6 +22,14 @@ const BARN_PITCH := 0.55
 const SILO_BASE_H := 15.0
 const FENCE_SEG := 2.5
 const TREE_BASE_TRUNK := 5.0
+# 門和梯子的位置（blender/props.py 的同名常數，改一邊要改另一邊）
+const BARN_T := 0.25
+const BARN_DOOR_W := 5.0
+const BARN_DOOR_H := 4.8
+const BARN_BACK_X := 4.0
+const BARN_LOFT := 4.0
+const BARN_LADDER_X := -2.5
+const HOUSE_T := 0.2
 const CLIFF_W := 40.0
 # 圍牆不給爬（見 dino.gd 的 _on_climbable_wall），所以恐龍能到的最高點就是
 # 「站上最高的屋頂再跳一下」。圍牆要比那個高，才翻不出去。
@@ -49,6 +57,7 @@ const DINO := preload("res://dino.tscn")
 
 var _props := {}   # 物件名 -> Mesh，從 props.glb 拿出來共用
 var _terrain: Terrain
+var _doors: Array[Door] = []   # 晚加入的人連進來時，把開著的門補送給他
 var _wheat_fields: Array[Rect2] = []   # 地形上色要知道哪裡是麥田
 var _blocked: Array[Rect2] = []  # 建築物在 XZ 平面佔的範圍
 var _exits: Array[Vector3] = []  # 四個撤離區的中心
@@ -264,6 +273,10 @@ func _spawn(id: int) -> void:
 	if not multiplayer.is_server():
 		return  # 只有主機生，MultiplayerSpawner 會同步給大家
 	_add_player(DINO if id == 1 else COWBOY, id)
+	if id != 1:
+		for d in _doors:   # 門的開關不走同步器，晚來的人要補送一次
+			if d.is_open:
+				d._set_open.rpc_id(id, true)
 
 func _add_player(scene: PackedScene, id: int) -> Node3D:
 	var p: Node3D = scene.instantiate()
@@ -519,7 +532,7 @@ func _build_arena() -> void:
 		p += Vector3(rng.randf_range(-3, 3), 0, rng.randf_range(-3, 3))
 		_tree(p, rng, 0.4)
 
-	# 草叢撒滿整片地，路上不長。一樣用自己的亂數
+	# 草叢撒滿整片地，路上和建築周圍不長。一樣用自己的亂數
 	var gr := RandomNumberGenerator.new()
 	gr.seed = 7
 	var grass: Array[Transform3D] = []
@@ -527,6 +540,8 @@ func _build_arena() -> void:
 		var at := Vector3(gr.randf_range(-inner, inner), 0, gr.randf_range(-inner, inner))
 		if absf(at.x) < 5.0 or absf(at.z) < 5.0:
 			continue
+		if not _is_clear(Vector2(at.x, at.z)):
+			continue   # 建築周圍不長（院子踩禿了），更不能長進屋裡
 		at.y = _terrain.height(at.x, at.z)
 		grass.append(Transform3D(Basis(Vector3.UP, gr.randf() * TAU).scaled(Vector3.ONE * gr.randf_range(0.7, 1.5)), at))
 	_scatter(&"GrassClump", grass)
@@ -621,29 +636,55 @@ func _pasture(c: Vector3, rng: RandomNumberGenerator) -> void:
 	if _free(shed, 6):
 		_barn(shed, Vector3(8, 4, 6), 3.0)   # 小棚子＝縮小的穀倉
 
-## 穀倉：碰撞是一個牆身方塊＋兩片屋頂斜板（看不見），外觀是 Blender 的模型照實際大小縮放。
-## 屋頂模型的寬和高用同一個倍率縮，斜度就跟碰撞一樣。小棚子也用這個，只是小一號。
+## 穀倉：空心的，進得去。牆（含門洞、窗洞）、閣樓、柱子、隔間的碰撞是 Blender 的 BarnCol，
+## 屋頂碰撞是兩片斜板（看不見）。整棟照實際大小縮放，屋頂的寬和高用同一個倍率縮，斜度才跟碰撞一樣。
+## 小棚子也用這個，只是小一號（閣樓 2 公尺、門 2.9 × 2.4，一樣進得去、爬得上去）。
 func _barn(p: Vector3, size: Vector3, clearance := SPAWN_CLEARANCE) -> void:
 	p = _on_ground(p)
-	_solid_box(p + Vector3(0, size.y * 0.5, 0), size)
+	var s := size / BARN_BASE
+	_solid_mesh(p, _props.get(&"BarnCol"), s)
 	_roof(p, size, BARN_PITCH)
-	var sx := size.x / BARN_BASE.x
-	_prop(&"Barn", p, Vector3(sx, size.y / BARN_BASE.y, size.z / BARN_BASE.z))
-	_prop(&"BarnRoof", p + Vector3(0, size.y, 0), Vector3(sx, sx, size.z / BARN_BASE.z))
+	_prop(&"Barn", p, s)
+	_prop(&"BarnRoof", p + Vector3(0, size.y, 0), Vector3(s.x, s.x, s.z))
+	# 正面兩扇滑門：關著剛好蓋住門洞，開的時候各往外滑半個門寬
+	var front := size.z * 0.5 + 0.12
+	for side in [-1.0, 1.0]:
+		var d := _door(&"BarnDoorSlide", p + Vector3(side * BARN_DOOR_W * 0.25 * s.x, 0, front),
+			Vector3(BARN_DOOR_W * 0.5, BARN_DOOR_H, 0.16), Vector3.ZERO, Vector3(s.x, s.y, 1))
+		d.slide = Vector3(side * BARN_DOOR_W * 0.5 * s.x, 0, 0)
+	# 後門：門軸在開口左緣，往裡推開
+	var back := _door(&"BarnBackDoor", p + Vector3((BARN_BACK_X - 0.6) * s.x, 0, -(BARN_BASE.z * 0.5 - BARN_T * 0.5) * s.z),
+		Vector3(1.2, 2.2, 0.08), Vector3(0.6, 0, 0), Vector3(s.x, s.y, 1))
+	back.swing = -PI * 0.5
+	# 閣樓的梯子：靠在閣樓邊緣（z=0），人站在梯子前面（+Z 那側）面向 -Z 爬
+	var loft := BARN_LOFT * s.y
+	var lx := BARN_LADDER_X * s.x
+	_ladder(p + Vector3(lx, 0, 0.15 * s.z), loft + 1.0, p + Vector3(lx, 0, 0.15 * s.z + 0.5), loft,
+		p + Vector3(lx, loft + 0.1, -1.0 * s.z), 0.0)
+	_lamp(p + Vector3(0, loft - 1.0, 3.0 * s.z), 7.0 * s.x)
 	_block(p, Vector2(size.x, size.z), clearance)
 
 func _house(p: Vector3) -> void:
 	var size := Vector3(10, 5, 8)   # 跟 blender/props.py 的 HOUSE 一樣
 	p = _on_ground(p)
-	_solid_box(p + Vector3(0, size.y * 0.5, 0), size)
+	_solid_mesh(p, _props.get(&"HouseCol"), Vector3.ONE)   # 空心：牆、隔間、窗洞、大件家具
 	_roof(p, size, 0.5)
 	_solid_box(p + Vector3(3, size.y + 2.5, 0), Vector3(0.9, 3.0, 0.9))   # 煙囪
 	_prop(&"House", p)
+	# 前門：門軸在門洞左緣，往屋裡推開
+	var d := _door(&"HouseDoor", p + Vector3(-0.55, 0, size.z * 0.5 - HOUSE_T * 0.5),
+		Vector3(1.1, 2.2, 0.08), Vector3(0.55, 0, 0), Vector3.ONE)
+	d.swing = PI * 0.5
+	_lamp(p + Vector3(-1.5, 2.6, 1.8), 5.0)
 	_block(p, Vector2(size.x, size.z), SPAWN_CLEARANCE)
 
 func _silo(p: Vector3, h: float) -> void:
 	p = _on_ground(p)
 	_solid_cyl(p + Vector3(0, h * 0.5, 0), 3.0, h)
+	_solid_cyl(p + Vector3(0, h + 0.8, 0), 1.6, 1.6)   # 圓頂中間站得住的地方（爬梯子上來就站這）
+	# 外側的爬梯（模型本來就有）：F 爬到頂，全場最高的狙擊點，摔下來也必死
+	_ladder(p + Vector3(3.25, 0, 0), h, p + Vector3(3.25 + 0.5, 0, 0), h,
+		p + Vector3(0, h + 1.7, 0), PI * 0.5)
 	_prop(&"SiloBody", p, Vector3(1, h / SILO_BASE_H, 1))
 	_prop(&"SiloDome", p + Vector3(0, h, 0))
 	_block(p, Vector2(6, 6), 3.0)
@@ -700,6 +741,63 @@ func _roof(p: Vector3, size: Vector3, pitch: float) -> void:
 	for sx in [-1.0, 1.0]:
 		var b := _solid_box(p + Vector3(sx * run * 0.5, size.y + rise * 0.5, 0), Vector3(w, 0.3, size.z + 1.0))
 		b.rotation.z = -sx * pitch
+
+## 會動的門：碰撞是一塊板（看不見），外觀是 Blender 的門。
+## pivot 是門軸／底部中央的位置；box 是門板大小（沒縮放前），center 是門板中心相對門軸的位置。
+## 名字依序取 Door0、Door1…：每台機器蓋場景的順序一樣，RPC 才找得到同一扇門
+func _door(mesh: StringName, pivot: Vector3, box: Vector3, center: Vector3, scale: Vector3) -> Door:
+	var d := Door.new()
+	d.name = "Door%d" % _doors.size()
+	d.position = pivot
+	var shape := BoxShape3D.new()
+	shape.size = box * scale
+	var cs := CollisionShape3D.new()
+	cs.shape = shape
+	cs.position = (center + Vector3(0, box.y * 0.5, 0)) * scale
+	d.add_child(cs)
+	_prop(mesh, Vector3.ZERO, scale, d)
+	$Arena.add_child(d)
+	_doors.append(d)
+	return d
+
+## 梯子：thin 的碰撞板讓射線打得到（F 才有反應）。
+## at 梯子底部中央；height 梯子多高；foot 人抓住時站的位置；top_y 腳到這個高度就算爬上去；
+## exit 爬上去之後站的位置；yaw 爬的時候面向哪
+func _ladder(at: Vector3, height: float, foot: Vector3, top_y: float, exit: Vector3, yaw: float) -> void:
+	var l := Ladder.new()
+	l.position = at + Vector3(0, height * 0.5, 0)
+	l.rotation.y = yaw
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(0.6, height, 0.1)
+	var cs := CollisionShape3D.new()
+	cs.shape = shape
+	l.add_child(cs)
+	l.foot = foot
+	l.top_y = top_y
+	l.exit = exit
+	l.yaw = yaw
+	$Arena.add_child(l)
+
+## 室內的暖光：提燈的光。範圍收在屋子裡，不開影子（十幾盞都開影子太貴）
+func _lamp(at: Vector3, reach: float) -> void:
+	var light := OmniLight3D.new()
+	light.light_color = Color(1.0, 0.72, 0.42)
+	light.light_energy = 1.4
+	light.omni_range = reach
+	light.shadow_enabled = false
+	light.position = at
+	$Arena.add_child(light)
+
+## 空心建築的碰撞：直接拿 Blender 的碰撞模型（BarnCol / HouseCol）當形狀，照實際大小縮放。
+## 縮放烘進頂點，不縮碰撞節點——物理引擎對非等比縮放的網格形狀支援不一
+func _solid_mesh(pos: Vector3, mesh: Mesh, scale: Vector3) -> StaticBody3D:
+	var faces := mesh.get_faces()
+	for i in faces.size():
+		faces[i] *= scale
+	var shape := ConcavePolygonShape3D.new()
+	shape.set_faces(faces)
+	shape.backface_collision = true   # 牆只有幾公分厚，兩面都要擋
+	return _body(pos, shape)
 
 ## 一次撒幾千個一樣的東西（麥子、草叢）：MultiMesh 一次畫完，一叢一個節點會卡。
 ## 不投影子：幾千叢的影子很貴，而且貼著地面本來就看不太出來

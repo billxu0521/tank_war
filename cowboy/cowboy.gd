@@ -47,7 +47,7 @@ class_name Cowboy
 ## 翻上去之後往前站多遠（從障礙前緣算）。要大於「障礙厚度 + 膠囊半徑」，
 ## 不然翻過薄牆時人會落在牆邊，膠囊卡進牆裡導致整個翻越被判定為不可行。
 @export var vault_landing_offset := 0.9
-## 翻越的射線打哪些層。
+## 翻越、互動的射線打哪些層。
 @export_flags_3d_physics var world_mask := 1
 
 @export_group("Fall")
@@ -55,6 +55,11 @@ class_name Cowboy
 ## Hunt 大約 15 公尺以上落在硬地必死；落在乾草捲（soft 群組）減半
 @export var fall_safe_height := 4.0
 @export var fall_lethal_height := 15.0
+
+@export_group("Interact")
+## 看著門、梯子多近按 F 有反應
+@export var interact_range := 2.5
+@export var climb_speed := 2.5
 
 @export_group("Crouch")
 @export var stand_height := 1.8
@@ -81,6 +86,7 @@ const MODEL := preload("res://models/cowboy.glb")
 @onready var _crosshair: Control = $HUD/Crosshair
 @onready var _hp_fill: ColorRect = $HUD/HealthBar/Fill
 @onready var _combat_fill: ColorRect = $HUD/CombatBar/Fill
+@onready var _prompt: Label = $HUD/PromptLabel
 @onready var _body: MeshInstance3D = $Body
 @onready var _face: MeshInstance3D = $Head/Face
 @onready var _step_sound: AudioStreamPlayer = get_node_or_null("StepSound")
@@ -112,6 +118,10 @@ var _step_timer := 0.0
 var _was_on_floor := true
 ## C 切換的蹲下（Ctrl 是按住蹲）。Hunt 兩種都有，切換的比較不累手
 var crouch_toggled := false
+## 看著的門或梯子（有 interact() 的東西），沒有就是 null
+var focus: Node = null
+## 正在爬的梯子，沒在爬就是 null
+var _ladder: Node = null
 ## 這次騰空的最高點。-INF＝還沒落地過（剛出生從半空掉下來不算摔）
 var _fall_top := -INF
 ## bot 繞牆：頂著牆走不動時沿牆面走一段
@@ -199,6 +209,16 @@ func _physics_process(delta: float) -> void:
 	# 翻越期間位置由 Tween 接管，只留視角給玩家轉
 	if vaulting:
 		return
+
+	# 爬梯子：W 上、S 下，Space 或 F 放手。這一幀不處理其他移動和互動
+	if _ladder:
+		climb_step(delta, Input.get_axis("move_back", "move_forward"),
+			Input.is_action_just_pressed("jump") or Input.is_action_just_pressed("interact"))
+		return
+
+	update_focus()
+	if focus and Input.is_action_just_pressed("interact"):
+		focus.interact(self)
 
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var dir := (transform.basis * Vector3(input.x, 0.0, input.y)).normalized()
@@ -415,6 +435,51 @@ func _request_damage(target_path: NodePath, amount: int) -> void:
 	var target := get_node_or_null(target_path)
 	if target and target.has_method(&"take_damage"):
 		target.take_damage(amount, self)
+
+
+# --- 互動：門、梯子 ---
+
+## 從畫面中央往前打一條短射線，看著的東西有 interact() 就是可以互動的（門、梯子）。
+## 認方法不認型別，跟子彈認 take_damage 同一個做法
+func update_focus() -> void:
+	var from := _camera.global_position
+	var hit := _ray(from, from - _camera.global_transform.basis.z * interact_range)
+	var c: Object = hit.get("collider")
+	focus = c if c and c.has_method(&"interact") else null
+	_prompt.text = "[F] %s" % focus.prompt if focus else ""
+
+
+func is_climbing() -> bool:
+	return _ladder != null
+
+
+## 抓住梯子：貼到梯子前面、面向它，高度維持在梯子範圍內（從半空跳上來也抓得住）
+func start_climb(ladder: Node) -> void:
+	if _ladder:
+		return
+	_ladder = ladder
+	velocity = Vector3.ZERO
+	global_position = Vector3(ladder.foot.x, clampf(global_position.y, ladder.foot.y, ladder.top_y), ladder.foot.z)
+	rotation.y = ladder.yaw
+	_prompt.text = "[W/S] 上下爬　[Space] 放手"
+
+
+## 爬一幀。直接改位置不走 move_and_slide：梯子頂端要穿過閣樓邊緣，碰撞會卡住。
+## up 是 -1..1；let_go 放手（之後照一般規則掉下來，摔多高照算）
+func climb_step(delta: float, up: float, let_go: bool) -> void:
+	if let_go:
+		_ladder = null
+		return
+	global_position.y += up * climb_speed * delta
+	if global_position.y >= _ladder.top_y:
+		global_position = _ladder.exit   # 到頂，站上閣樓／筒倉頂
+		_fall_top = global_position.y
+		_ladder = null
+	elif up < 0.0 and global_position.y <= _ladder.foot.y:
+		global_position.y = _ladder.foot.y   # 爬到底，腳踩地
+		_ladder = null
+	if not _ladder:
+		_prompt.text = ""
 
 
 # --- 以下是 FNE 原本的移動系統 ---

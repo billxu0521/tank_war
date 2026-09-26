@@ -185,6 +185,22 @@ offset_right = 260.0
 offset_bottom = 5.0
 color = Color(0.92, 0.75, 0.18, 1)
 
+; 看著門、梯子時的提示：[F] 開門
+[node name="PromptLabel" type="Label" parent="HUD"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = 56.0
+offset_right = 200.0
+offset_bottom = 92.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 22
+horizontal_alignment = 1
+
 [node name="AmmoLabel" type="Label" parent="HUD"]
 anchors_preset = 3
 anchor_left = 1.0

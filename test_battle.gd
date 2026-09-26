@@ -35,6 +35,7 @@ func _process(_delta: float) -> bool:
 		_case_sandbox()
 		_case_rural()
 		_case_terrain()
+		_case_interact()
 		_case_back_to_lobby()
 		_case_cover()
 		_case_trex_rig()
@@ -95,7 +96,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰兩條體力、沙盒、鄉村柵欄、地形起伏、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
+		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰兩條體力、沙盒、鄉村柵欄、地形起伏、F 開門爬梯子、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
 	return true
 
 # --- 共用 ---
@@ -493,10 +494,71 @@ func _case_terrain() -> void:
 			"(%d, %d) 的地面碰撞要在 %.2f（打到 %s）" % [p.x, p.y, want, hit.get("position", "沒打到")])
 	_end(m)
 
+## F 互動：看著門會提示、按了會開關；梯子爬得上閣樓、放得開
+func _case_interact() -> void:
+	var m := _new_offline_game()
+	var me: Node3D = m.players.get_node(^"1")
+	# 草不能長進屋裡
+	var inside := 0
+	for n in m.get_node(^"Arena").get_children():
+		if n is MultiMeshInstance3D and n.multimesh.mesh == m._props[&"GrassClump"]:
+			for i in n.multimesh.instance_count:
+				var o: Vector3 = n.multimesh.get_instance_transform(i).origin
+				if not m._is_clear(Vector2(o.x, o.z)):
+					inside += 1
+	_ck(inside == 0, "草叢不能長在建築裡（有 %d 叢）" % inside)
+	_ck(m._doors.size() >= 3, "每棟穀倉至少兩扇滑門＋後門（現在全場 %d 扇門）" % m._doors.size())
+	var d: Door = m._doors[0]   # 第一棟穀倉左邊那扇滑門
+
+	# 站在門前 2 公尺、面向門：F 的目標就是它
+	me.global_position = d.global_position + Vector3(0, 0, 2.0)
+	me.rotation.y = 0.0
+	me.head.rotation.x = 0.0
+	me.update_focus()
+	_ck(me.focus == d, "看著門要能互動（看到的是 %s）" % me.focus)
+	_ck(me.get_node(^"HUD/PromptLabel").text.contains("開門"), "看著門要提示 [F] 開門")
+
+	# 按 F：開、再按：關。滑門開的時候真的滑開半個門寬
+	var closed: Vector3 = d.position
+	me.focus.interact(me)
+	_ck(d.is_open and d.prompt == "關門", "按 F 門要打開")
+	d.set_open(true, true)
+	_ck(d.position.distance_to(closed) > 2.0, "滑門打開要滑開（只動了 %.2f 公尺）" % d.position.distance_to(closed))
+	d.interact(me)
+	_ck(not d.is_open, "再按一次要關上")
+	d.set_open(false, true)
+	_ck(d.position.is_equal_approx(closed), "關上要回到原位")
+
+	# 梯子：抓住往上爬，爬到頂站到閣樓上
+	var lad: Ladder = null
+	for n in m.get_node(^"Arena").get_children():
+		if n is Ladder:
+			lad = n
+			break
+	_ck(lad != null, "穀倉裡要有梯子")
+	if lad:
+		me.start_climb(lad)
+		_ck(me.is_climbing(), "F 要能抓住梯子")
+		_ck(Vector2(me.global_position.x, me.global_position.z).distance_to(Vector2(lad.foot.x, lad.foot.z)) < 0.01,
+			"抓住梯子要貼到梯子前面")
+		var steps := 0
+		while me.is_climbing() and steps < 200:
+			me.climb_step(0.1, 1.0, false)
+			steps += 1
+		_ck(not me.is_climbing() and me.global_position.is_equal_approx(lad.exit),
+			"爬到頂要站上閣樓（在 %s，應該在 %s）" % [me.global_position, lad.exit])
+		_ck(lad.top_y - lad.foot.y > 3.0, "閣樓要有 3 公尺以上高")
+		me.global_position = lad.foot
+		me.start_climb(lad)
+		me.climb_step(0.5, 1.0, false)
+		me.climb_step(0.1, 0.0, true)
+		_ck(not me.is_climbing(), "爬到一半要放得開")
+	_end(m)
+
 ## 牛仔的操作都要有綁鍵，鍵盤和手把兩邊都要（FNE 的約定）
 func _case_input_map() -> void:
 	for a in ["move_forward", "move_back", "move_left", "move_right", "jump", "sprint",
-			"crouch", "crouch_toggle", "fire", "aim", "reload", "melee"]:
+			"crouch", "crouch_toggle", "fire", "aim", "reload", "melee", "interact"]:
 		_ck(InputMap.has_action(a), "少了按鍵動作 %s" % a)
 		if not InputMap.has_action(a):
 			continue

@@ -132,8 +132,8 @@ func _process(delta: float) -> void:
 	# 所以冷卻、散布、後座力回復要在這條線之前照樣跑
 	if not _player.is_local:
 		return
-	# 滑鼠放開（Esc）時不接受開火，不然在選單狀態亂點也會射
-	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+	# 滑鼠放開（Esc）時不接受開火，不然在選單狀態亂點也會射。爬梯子兩手都在梯子上，也不能開槍
+	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not _player.is_climbing():
 		if Input.is_action_just_pressed("fire"):
 			try_fire()
 		elif weapon.fan_interval > 0.0 and ads < 0.5 and Input.is_action_pressed("fire"):

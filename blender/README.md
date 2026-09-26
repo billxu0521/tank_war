@@ -72,3 +72,11 @@ export('<專案>/models')                                   # 三個 .glb
 - 筒倉基準高 15、柵欄一段 2.5 公尺、樹幹基準高 5 ＝ `SILO_BASE_H`、`FENCE_SEG`、`TREE_BASE_TRUNK`
 - 山崖一段寬 40（`CLIFF_W`）；岩塊只能往牆外（Blender +Y）長，凸進場地會變成看得到摸不到
 - 麥子、草叢沒有碰撞，遊戲裡用 MultiMesh 撒幾千叢，模型要保持在幾十個三角形以內
+
+## 空心建築（穀倉、農舍）
+
+蓋牆用 `wall()`（自動在門窗開口處切開）、要擋人的家具用 `solid()`：兩個都會順便記一份碰撞方塊，
+最後 `make_col()` 合成 `BarnCol` / `HouseCol`，遊戲拿來當碰撞形狀（看不見）。
+畫面和碰撞只在這裡定義一次。門是另外的物件（`BarnDoorSlide`、`BarnBackDoor`、`HouseDoor`），
+原點在門軸或底部中央，遊戲裡會動。門和梯子的位置常數（`BARN_DOOR_*`、`BARN_BACK_X`、
+`BARN_LOFT`、`BARN_LADDER_X`）跟 main.gd 共用。
