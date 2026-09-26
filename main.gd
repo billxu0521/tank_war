@@ -15,18 +15,13 @@ const SANDBOX_TARGETS := [10, 25, 50, 100]   # 牛仔靶的距離（公尺）：
 const GRASS := Color(0.40, 0.44, 0.24)
 const DIRT := Color(0.45, 0.36, 0.24)
 const WHEAT := Color(0.78, 0.66, 0.34)
-const HAY := Color(0.80, 0.68, 0.36)
-const BARN_RED := Color(0.52, 0.16, 0.12)
-const HOUSE_WHITE := Color(0.82, 0.79, 0.72)
-const ROOF_GRAY := Color(0.30, 0.30, 0.32)
-const WOOD := Color(0.48, 0.36, 0.24)
-const WOOD_DARK := Color(0.28, 0.20, 0.14)
-const TRIM := Color(0.86, 0.84, 0.78)
-const BRICK := Color(0.50, 0.25, 0.18)
-const GLASS := Color(0.12, 0.14, 0.16)
-const SILO_GRAY := Color(0.62, 0.62, 0.60)
-const BARK := Color(0.30, 0.22, 0.16)
-const LEAF := Color(0.22, 0.34, 0.14)
+# 場景物件的模型（blender/props.py）。這幾個基準尺寸跟那邊共用，改一邊要改另一邊
+const PROPS := preload("res://models/props.glb")
+const BARN_BASE := Vector3(14, 8, 20)   # 穀倉模型的寬、牆高、長
+const BARN_PITCH := 0.55
+const SILO_BASE_H := 15.0
+const FENCE_SEG := 2.5
+const TREE_BASE_TRUNK := 5.0
 # 圍牆不給爬（見 dino.gd 的 _on_climbable_wall），所以恐龍能到的最高點就是
 # 「站上最高的屋頂再跳一下」。圍牆要比那個高，才翻不出去。
 const WALL_H := 40.0
@@ -51,6 +46,7 @@ const DINO := preload("res://dino.tscn")
 @onready var players: Node3D = $Players
 @onready var egg: Egg = $Egg
 
+var _props := {}   # 物件名 -> Mesh，從 props.glb 拿出來共用
 var _blocked: Array[Rect2] = []  # 建築物在 XZ 平面佔的範圍
 var _exits: Array[Vector3] = []  # 四個撤離區的中心
 var _cowboys := 0
@@ -65,6 +61,7 @@ var _sandbox := false
 
 func _ready() -> void:
 	_use_cjk_font()
+	_load_props()
 	_build_arena()
 	_build_exits()
 	multiplayer.peer_connected.connect(_spawn)
@@ -491,7 +488,7 @@ func _build_arena() -> void:
 		var p: Vector3 = [Vector3(u, 0, -edge), Vector3(edge, 0, u),
 			Vector3(-u, 0, edge), Vector3(-edge, 0, -u)][side]
 		p += Vector3(rng.randf_range(-3, 3), 0, rng.randf_range(-3, 3))
-		_tree(p, rng)
+		_tree(p, rng, 0.4)
 
 ## 這塊地能不能蓋東西：沙盒的靶場、撤離區要空著。
 func _free(pos: Vector3, radius: float) -> bool:
@@ -556,44 +553,34 @@ func _pasture(c: Vector3, rng: RandomNumberGenerator) -> void:
 				_fence(p, 10.0, false)
 	var shed := c + Vector3(rng.randf_range(-10, 10), 0, 22)
 	if _free(shed, 6):
-		_add_box(shed + Vector3(0, 2.0, 0), Vector3(8, 4, 6), WOOD)
-		_roof(shed, Vector3(8, 4, 6), 0.45, WOOD_DARK)
-		_block(shed, Vector2(8, 6), 3.0)
+		_barn(shed, Vector3(8, 4, 6), 3.0)   # 小棚子＝縮小的穀倉
 
-func _barn(p: Vector3, size: Vector3) -> void:
-	_add_box(p + Vector3(0, size.y * 0.5, 0), size, BARN_RED)
-	_roof(p, size, 0.55, WOOD_DARK)
-	# 大門：兩片深色門板＋白色 X 形橫檔（穀倉一眼認得出來的地方）
-	var front := p + Vector3(0, 0, size.z * 0.5 + 0.08)
-	_deco(front + Vector3(0, 2.4, 0), Vector3(5.0, 4.8, 0.16), WOOD_DARK)
-	_deco(front + Vector3(0, 2.4, 0.05), Vector3(5.2, 0.3, 0.1), TRIM)
-	_deco(front + Vector3(0, 5.0, 0.05), Vector3(5.4, 0.3, 0.1), TRIM)
-	_deco(front + Vector3(0, size.y - 1.5, 0), Vector3(2.0, 1.8, 0.16), WOOD_DARK)   # 草料閣樓門
-	_block(p, Vector2(size.x, size.z), SPAWN_CLEARANCE)
+## 穀倉：碰撞是一個牆身方塊＋兩片屋頂斜板（看不見），外觀是 Blender 的模型照實際大小縮放。
+## 屋頂模型的寬和高用同一個倍率縮，斜度就跟碰撞一樣。小棚子也用這個，只是小一號。
+func _barn(p: Vector3, size: Vector3, clearance := SPAWN_CLEARANCE) -> void:
+	_solid_box(p + Vector3(0, size.y * 0.5, 0), size)
+	_roof(p, size, BARN_PITCH)
+	var sx := size.x / BARN_BASE.x
+	_prop(&"Barn", p, Vector3(sx, size.y / BARN_BASE.y, size.z / BARN_BASE.z))
+	_prop(&"BarnRoof", p + Vector3(0, size.y, 0), Vector3(sx, sx, size.z / BARN_BASE.z))
+	_block(p, Vector2(size.x, size.z), clearance)
 
 func _house(p: Vector3) -> void:
-	var size := Vector3(10, 5, 8)
-	_add_box(p + Vector3(0, size.y * 0.5, 0), size, HOUSE_WHITE)
-	_roof(p, size, 0.5, ROOF_GRAY)
-	_add_box(p + Vector3(3, size.y + 2.5, 0), Vector3(0.9, 3.0, 0.9), BRICK)   # 煙囪
-	for x in [-3.0, 3.0]:
-		_deco(p + Vector3(x, 3.0, size.z * 0.5 + 0.06), Vector3(1.2, 1.4, 0.12), GLASS)  # 窗
-	_deco(p + Vector3(0, 1.1, size.z * 0.5 + 0.06), Vector3(1.1, 2.2, 0.12), WOOD_DARK)  # 門
+	var size := Vector3(10, 5, 8)   # 跟 blender/props.py 的 HOUSE 一樣
+	_solid_box(p + Vector3(0, size.y * 0.5, 0), size)
+	_roof(p, size, 0.5)
+	_solid_box(p + Vector3(3, size.y + 2.5, 0), Vector3(0.9, 3.0, 0.9))   # 煙囪
+	_prop(&"House", p)
 	_block(p, Vector2(size.x, size.z), SPAWN_CLEARANCE)
 
 func _silo(p: Vector3, h: float) -> void:
-	_add_cyl(p + Vector3(0, h * 0.5, 0), 3.0, h, SILO_GRAY)
-	var dome := MeshInstance3D.new()
-	var sm := SphereMesh.new()
-	sm.radius = 3.1
-	sm.height = 3.2
-	sm.material = _mat(ROOF_GRAY)
-	dome.mesh = sm
-	dome.position = p + Vector3(0, h, 0)
-	$Arena.add_child(dome)
+	_solid_cyl(p + Vector3(0, h * 0.5, 0), 3.0, h)
+	_prop(&"SiloBody", p, Vector3(1, h / SILO_BASE_H, 1))
+	_prop(&"SiloDome", p + Vector3(0, h, 0))
 	_block(p, Vector2(6, 6), 3.0)
 
-## 柵欄：兩根橫木＋木樁，碰撞是一整片 1 公尺高的板子——剛好在翻越範圍內
+## 柵欄：碰撞是一整片 1 公尺高的板子——剛好在翻越範圍內。外觀是一段段 2.5 公尺的
+## 木樁＋橫木排過去（長度不整除就每段稍微拉長），最後補一根收尾的木樁
 func _fence(p: Vector3, length: float, along_z: bool) -> StaticBody3D:
 	var body := StaticBody3D.new()
 	body.position = p
@@ -605,44 +592,57 @@ func _fence(p: Vector3, length: float, along_z: bool) -> StaticBody3D:
 	cs.shape = shape
 	cs.position.y = FENCE_H * 0.5
 	body.add_child(cs)
-	for y in [0.45, 0.9]:
-		body.add_child(_mesh_at(Vector3(length, 0.12, 0.08), Vector3(0, y, 0), WOOD))
-	var posts := maxi(int(length / 2.5), 1)
-	for i in posts + 1:
-		var x := -length * 0.5 + i * length / posts
-		body.add_child(_mesh_at(Vector3(0.14, FENCE_H + 0.1, 0.14), Vector3(x, (FENCE_H + 0.1) * 0.5, 0), WOOD_DARK))
+	var n := maxi(ceili(length / FENCE_SEG), 1)
+	var seg := length / n
+	for i in n:
+		_prop(&"FenceRail", Vector3(-length * 0.5 + (i + 0.5) * seg, 0, 0), Vector3(seg / FENCE_SEG, 1, 1), body)
+	_prop(&"FencePost", Vector3(length * 0.5, 0, 0), Vector3.ONE, body)
 	$Arena.add_child(body)
 	return body
 
 func _hay_bale(p: Vector3, yaw: float) -> StaticBody3D:
-	# 圓捆躺著放：直徑 1.4 公尺，翻得過去也蹲得進後面
-	var body := _add_cyl(p + Vector3(0, 0.7, 0), 0.7, 1.3, HAY)
+	# 圓捆躺著放：直徑 1.4 公尺，翻得過去也蹲得進後面。模型的軸是直的，跟著碰撞圓柱一起放倒
+	var body := _solid_cyl(p + Vector3(0, 0.7, 0), 0.7, 1.3)
 	body.rotation = Vector3(0, yaw, PI * 0.5)
 	body.add_to_group(&"soft")   # 從屋頂跳下來落在乾草上，摔落傷害減半
+	_prop(&"HayBale", Vector3.ZERO, Vector3.ONE, body)
 	return body
 
-func _tree(p: Vector3, rng: RandomNumberGenerator) -> void:
+## 樹：只有樹幹有碰撞，擋子彈；樹冠擋視線不擋子彈，躲在樹下只是比較難被看到。
+## pine_chance：林子邊緣混一點松樹，果園只種闊葉樹
+func _tree(p: Vector3, rng: RandomNumberGenerator, pine_chance := 0.0) -> void:
 	var h := rng.randf_range(4.0, 6.0)
-	_add_cyl(p + Vector3(0, h * 0.5, 0), 0.35, h, BARK)
-	# 樹冠只有畫面沒有碰撞：擋視線不擋子彈，躲在樹下只是比較難被看到
-	var crown := MeshInstance3D.new()
-	var sm := SphereMesh.new()
-	sm.radius = rng.randf_range(2.4, 3.4)
-	sm.height = sm.radius * 1.6
-	sm.material = _mat(LEAF.lerp(Color(0.35, 0.40, 0.15), rng.randf()))
-	crown.mesh = sm
-	crown.position = p + Vector3(0, h + sm.height * 0.3, 0)
-	$Arena.add_child(crown)
+	_solid_cyl(p + Vector3(0, h * 0.5, 0), 0.35, h)
+	var mi := _prop(&"TreePine" if rng.randf() < pine_chance else &"TreeOak", p, Vector3.ONE * (h / TREE_BASE_TRUNK))
+	mi.rotation.y = rng.randf() * TAU   # 每棵轉個角度，一整排才不會長得一模一樣
 	_block(p, Vector2(1, 1), 1.5)
 
-## 人字屋頂：兩片斜板。斜度在 45 度以內，恐龍爬上來站得住
-func _roof(p: Vector3, size: Vector3, pitch: float, col: Color) -> void:
+## 人字屋頂的碰撞：兩片斜板。斜度在 45 度以內，恐龍爬上來站得住。
+## 外觀在 Blender 的模型裡（blender/props.py 的 gable_roof() 照這個擺法建的）
+func _roof(p: Vector3, size: Vector3, pitch: float) -> void:
 	var run := size.x * 0.5
 	var rise := run * tan(pitch)
 	var w := run / cos(pitch) + 0.5   # 多出來的是屋簷
 	for sx in [-1.0, 1.0]:
-		var b := _add_box(p + Vector3(sx * run * 0.5, size.y + rise * 0.5, 0), Vector3(w, 0.3, size.z + 1.0), col)
+		var b := _solid_box(p + Vector3(sx * run * 0.5, size.y + rise * 0.5, 0), Vector3(w, 0.3, size.z + 1.0))
 		b.rotation.z = -sx * pitch
+
+## 擺一個 Blender 建的場景物件（models/props.glb）。parent 預設是場地
+func _prop(name: StringName, pos: Vector3, scale := Vector3.ONE, parent: Node = null) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	mi.mesh = _props.get(name)
+	mi.position = pos
+	mi.scale = scale
+	(parent if parent else $Arena).add_child(mi)
+	return mi
+
+## 從 props.glb 把每個物件的網格拿出來，場上幾百個物件共用同一份
+func _load_props() -> void:
+	var src := PROPS.instantiate()
+	for c in src.get_children():
+		if c is MeshInstance3D:
+			_props[StringName(c.name)] = c.mesh
+	src.free()
 
 ## 出生點避開這塊地
 func _block(p: Vector3, size: Vector2, clearance: float) -> void:
@@ -708,26 +708,23 @@ func _is_clear(p: Vector2) -> bool:
 			return false
 	return true
 
+## 只有碰撞、沒有外觀：外觀由 Blender 的模型負責
+func _solid_box(pos: Vector3, size: Vector3) -> StaticBody3D:
+	var shape := BoxShape3D.new()
+	shape.size = size
+	return _body(pos, shape)
+
+func _solid_cyl(pos: Vector3, r: float, h: float) -> StaticBody3D:
+	var shape := CylinderShape3D.new()
+	shape.radius = r
+	shape.height = h
+	return _body(pos, shape)
+
 func _add_box(pos: Vector3, size: Vector3, col: Color) -> StaticBody3D:
 	var shape := BoxShape3D.new()
 	shape.size = size
 	var body := _body(pos, shape)
 	body.add_child(_mesh_at(size, Vector3.ZERO, col))
-	return body
-
-func _add_cyl(pos: Vector3, r: float, h: float, col: Color) -> StaticBody3D:
-	var shape := CylinderShape3D.new()
-	shape.radius = r
-	shape.height = h
-	var body := _body(pos, shape)
-	var mesh := CylinderMesh.new()
-	mesh.top_radius = r
-	mesh.bottom_radius = r
-	mesh.height = h
-	mesh.material = _mat(col)
-	var mi := MeshInstance3D.new()
-	mi.mesh = mesh
-	body.add_child(mi)
 	return body
 
 func _body(pos: Vector3, shape: Shape3D) -> StaticBody3D:
@@ -738,11 +735,6 @@ func _body(pos: Vector3, shape: Shape3D) -> StaticBody3D:
 	body.position = pos
 	$Arena.add_child(body)
 	return body
-
-## 只有畫面、沒有碰撞的裝飾（門板、窗戶）
-func _deco(pos: Vector3, size: Vector3, col: Color) -> void:
-	var mi := _mesh_at(size, pos, col)
-	$Arena.add_child(mi)
 
 func _mesh_at(size: Vector3, pos: Vector3, col: Color) -> MeshInstance3D:
 	var mesh := BoxMesh.new()

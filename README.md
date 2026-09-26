@@ -3,7 +3,7 @@
 非對稱連線對戰原型。**多個第一人稱牛仔 vs 一隻大恐龍**，Godot 4.7 + 3D，區網直連。
 
 牛仔的操作照 Hunt: Showdown，移動系統從 `~/project/FNE_project` 搬來（移動、蹲、
-翻越、體力）。牛仔、三把槍和恐龍的模型都是用 Blender 程式建的（`blender/`）。
+翻越、體力）。牛仔、三把槍、恐龍和場景物件（穀倉、農舍、筒倉、柵欄、乾草捲、樹）的模型都是用 Blender 程式建的（`blender/`）。
 場景是黃昏的鄉村：穀倉、農舍、筒倉、果園、麥田、牧場柵欄。
 設計決定見 [docs/plans/2026-09-25-cowboy-vs-dino-design.md](docs/plans/2026-09-25-cowboy-vs-dino-design.md)。
 
@@ -110,7 +110,7 @@ godot --headless --quit --editor         # 新增 class_name 後重建型別快�
 | `main.gd/tscn` | 大廳、連線、場地、蛋與撤離、勝負、HUD |
 | `fighter.gd` | 牛仔恐龍共用：血量、死亡、連線權限、中彈閃紅 |
 | `cowboy/` | 牛仔：`cowboy.gd` 移動與 bot、`viewmodel.gd` 開槍與 Hunt 規則、`weapon.gd` 槍的數值與程式動作、`weapons/*.tscn` 三把槍 |
-| `models/*.glb` `blender/*.py` | 模型和產生它的 Blender 腳本（牛仔、槍、恐龍），重建方式見 `blender/README.md` |
+| `models/*.glb` `blender/*.py` | 模型和產生它的 Blender 腳本（牛仔、槍、恐龍、場景物件），重建方式見 `blender/README.md` |
 | `dino.*` `trex.gd` `fireball.*` | 恐龍、骨架程式動畫（見 [程序化動畫筆記](docs/程序化動畫.md)）、火球 |
 | `assets/` | 從 FNE 搬來的音效、材質。授權見 `CREDITS.md` |
 | `test_battle.gd` | 自我檢查 |
