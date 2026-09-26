@@ -618,6 +618,7 @@ func _hay_bale(p: Vector3, yaw: float) -> StaticBody3D:
 	# 圓捆躺著放：直徑 1.4 公尺，翻得過去也蹲得進後面
 	var body := _add_cyl(p + Vector3(0, 0.7, 0), 0.7, 1.3, HAY)
 	body.rotation = Vector3(0, yaw, PI * 0.5)
+	body.add_to_group(&"soft")   # 從屋頂跳下來落在乾草上，摔落傷害減半
 	return body
 
 func _tree(p: Vector3, rng: RandomNumberGenerator) -> void:

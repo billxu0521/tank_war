@@ -50,6 +50,12 @@ class_name Cowboy
 ## 翻越的射線打哪些層。
 @export_flags_3d_physics var world_mask := 1
 
+@export_group("Fall")
+## 摔落：這個高度以下沒事，到 fall_lethal_height 摔死，中間照比例扣。
+## Hunt 大約 15 公尺以上落在硬地必死；落在乾草捲（soft 群組）減半
+@export var fall_safe_height := 4.0
+@export var fall_lethal_height := 15.0
+
 @export_group("Crouch")
 @export var stand_height := 1.8
 @export var crouch_height := 1.0
@@ -105,6 +111,8 @@ var _step_timer := 0.0
 var _was_on_floor := true
 ## C 切換的蹲下（Ctrl 是按住蹲）。Hunt 兩種都有，切換的比較不累手
 var crouch_toggled := false
+## 這次騰空的最高點。-INF＝還沒落地過（剛出生從半空掉下來不算摔）
+var _fall_top := -INF
 ## bot 繞牆：頂著牆走不動時沿牆面走一段
 var _detour := Vector3.ZERO
 var _detour_left := 0.0
@@ -229,6 +237,49 @@ func _move_flat(want: Vector3, delta: float) -> void:
 	velocity.x = flat.x
 	velocity.z = flat.z
 	move_and_slide()
+	_track_fall()
+
+
+## 記騰空最高點，落地時算摔了多高。本人和 bot 共用這條，所以放在移動之後。
+func _track_fall() -> void:
+	if not is_on_floor():
+		if _fall_top > -INF:
+			_fall_top = maxf(_fall_top, global_position.y)
+		return
+	_land()
+
+
+## 站在地上的每一幀都會跑：剛落地就結算這次摔了多高，然後把最高點重設成腳下。
+func _land() -> void:
+	if _fall_top > -INF:
+		var dmg := fall_damage(_fall_top - global_position.y)
+		if dmg > 0 and _landed_on_soft():
+			dmg /= 2
+		if dmg > 0:
+			_hurt_self(dmg)
+	_fall_top = global_position.y
+
+
+## 摔了 h 公尺要扣多少血
+func fall_damage(h: float) -> int:
+	var t := inverse_lerp(fall_safe_height, fall_lethal_height, h)
+	return ceili(max_hp * clampf(t, 0.0, 1.0))
+
+
+func _landed_on_soft() -> bool:
+	for i in get_slide_collision_count():
+		var c := get_slide_collision(i)
+		if c.get_normal().y > 0.7 and (c.get_collider() as Node).is_in_group(&"soft"):
+			return true
+	return false
+
+
+## 自己弄傷自己（摔落）。扣血只有主機能做，客戶端要請主機代扣
+func _hurt_self(amount: int) -> void:
+	if multiplayer.is_server():
+		take_damage(amount, null)
+	else:
+		_request_damage.rpc_id(1, get_path(), amount)
 
 
 # --- bot ---

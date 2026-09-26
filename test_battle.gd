@@ -88,7 +88,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與有效射程爆頭閉氣蹲穩輕重近戰兩條體力、沙盒、鄉村柵欄、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
+		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與有效射程爆頭閉氣蹲穩摔落輕重近戰兩條體力、沙盒、鄉村柵欄、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
 	return true
 
 # --- 共用 ---
@@ -304,6 +304,22 @@ func _case_hunt_weapons() -> void:
 		"蹲下要晃得比站著少（站 %.5f 蹲 %.5f）" % [stand_sway, vm._sway_applied.length()])
 	me.sync_crouching = false
 	vm.ads = 0.0
+
+	# 摔落：4 公尺以下沒事、15 公尺必死、中間照比例
+	_ck(me.fall_damage(3.0) == 0, "摔 3 公尺不該扣血")
+	_ck(me.fall_damage(15.0) >= me.max_hp, "摔 15 公尺要摔死")
+	var mid: int = me.fall_damage(9.5)
+	_ck(mid > 0 and mid < me.max_hp, "摔 9.5 公尺要扣一部分（現在 %d）" % mid)
+	# 剛出生從半空掉下來不算；站穩之後從高處落地才算
+	var hp_before: int = me.hp
+	me._fall_top = -INF
+	me._land()
+	_ck(me.hp == hp_before, "第一次落地（出生）不算摔")
+	me._fall_top = me.global_position.y + 9.5
+	me._land()
+	_ck(me.hp == hp_before - mid, "從 9.5 公尺落地要扣 %d（現在扣 %d）" % [mid, hp_before - me.hp])
+	me._land()
+	_ck(me.hp == hp_before - mid, "站著不動不能一直扣")
 
 	# 近戰：輕擊便宜、重擊痛但貴；體力不夠重擊就退成輕擊
 	_ck(vm.heavy_damage > vm.melee_damage and vm.heavy_stamina > vm.melee_stamina,
