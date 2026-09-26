@@ -15,7 +15,6 @@ class_name ShotFX
 @export var impact_stream: AudioStream
 
 @export_group("Tracer")
-@export var tracer_time := 0.04
 @export var tracer_width := 0.02
 @export var tracer_material: StandardMaterial3D
 
@@ -55,20 +54,23 @@ func _process(delta: float) -> void:
 			_flash.visible = false
 
 
-## to = 命中點（沒打中就是射線終點）；hit = 有沒有真的打到東西；
-## solid = 打到的是不會動的世界（要留彈孔）。霰彈每顆彈丸各呼叫一次，火光重覆觸發無妨。
-func fire(to: Vector3, hit_normal: Vector3, hit: bool, solid := false) -> void:
+## 槍口火光。子彈本身（曳光、飛行）在 Bullet。
+func flash() -> void:
 	_light.visible = true
 	if _flash:
 		_flash.visible = true
 		# 每發轉一個隨機角度，連射看起來才不像同一張貼圖閃爍
 		_flash.rotation.z = randf() * TAU
 	_flash_left = flash_time
-	_spawn_tracer(to)
-	if hit:
-		_spawn_sparks(to, hit_normal)
+
+
+## 子彈打到東西：火花；solid = 打到不會動的世界，留彈孔；sound = 要不要出著彈聲。
+func impact(at: Vector3, normal: Vector3, solid: bool, sound := true) -> void:
+	_spawn_sparks(at, normal)
 	if solid:
-		_spawn_hole(to, hit_normal)
+		_spawn_hole(at, normal)
+	if sound:
+		impact_sound(at)
 
 
 ## 彈孔貼片：貼著命中面、存活一段時間、總數有上限（最舊的先回收）。
@@ -104,27 +106,6 @@ func impact_sound(at: Vector3) -> void:
 	snd.global_position = at
 	snd.play()
 	snd.finished.connect(snd.queue_free)
-
-
-func _spawn_tracer(to: Vector3) -> void:
-	var from := global_position
-	var length := from.distance_to(to)
-	if length < 0.01:
-		return
-
-	var mesh := BoxMesh.new()
-	mesh.size = Vector3(tracer_width, tracer_width, length)
-	mesh.material = tracer_material
-
-	var node := MeshInstance3D.new()
-	node.mesh = mesh
-	node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	_world.add_child(node)
-	node.global_position = (from + to) * 0.5
-	# 方塊沿著自己的 Z 軸長，look_at 讓 -Z 指向終點，剛好對上
-	if not from.direction_to(to).is_equal_approx(Vector3.UP):
-		node.look_at(to)
-	_free_after(node, tracer_time)
 
 
 func _spawn_sparks(at: Vector3, normal: Vector3) -> void:

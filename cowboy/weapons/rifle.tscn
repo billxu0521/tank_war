@@ -19,6 +19,7 @@ reload_time = 0.55
 recoil_scale = 1.6
 reserve = 20
 hit_range = 250.0
+muzzle_velocity = 440.0
 effective_range = 60.0
 ads_position = Vector3(0, -0.058, -0.12)
 hammer_path = NodePath("Model/RifleHammer")

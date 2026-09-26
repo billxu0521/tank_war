@@ -302,52 +302,56 @@ func try_fire(fanning := false) -> void:
 		action = &"fire_EMPTY"
 	_anim_lock = weapon.play(action, blend, _fire_cooldown)
 
-	# 每顆彈丸各射一條線。霰彈的體感就是這裡來的：近距離全中、遠距離散光
-	var first_hit := Vector3.INF
-	var first_end := Vector3.INF
-	# 同一個目標的彈丸先加總，一槍只送一次傷害——霰彈八顆不用發八個 RPC
-	var damage := {}
+	# 每顆彈丸一顆子彈，各自帶散布。霰彈的體感就是這裡來的：近距離全中、遠距離散光
+	var dirs := PackedVector3Array()
 	for i in weapon.pellets:
-		var hit := _raycast(weapon.pellet_spread + (weapon.fan_spread if fanning else 0.0))
-		var target: Object = hit.get("collider")
-		# 認方法不認型別：恐龍、別的牛仔都吃同一發子彈
-		if target and target.has_method(&"take_damage"):
-			var dist: float = _camera.global_position.distance_to(hit["position"])
-			var dmg: float = weapon.damage_at(dist)
-			# 爆頭秒殺只在有效射程內成立，跟 Hunt 一樣
-			if dist <= weapon.effective_range and is_headshot(target, hit["position"]):
-				dmg = target.max_hp
-			damage[target] = damage.get(target, 0.0) + dmg
-		if _fx:
-			var solid: bool = target != null and not target.has_method(&"take_damage")
-			_fx.fire(hit["end"], hit.get("normal", Vector3.ZERO), hit.has("collider"), solid)
-		if first_hit == Vector3.INF and hit.has("position"):
-			first_hit = hit["position"]
-		if first_end == Vector3.INF:
-			first_end = hit["end"]
-	for target: Node in damage:
-		_player.deal_damage(target, roundi(damage[target]))
-	if _fx and first_hit != Vector3.INF:
-		_fx.impact_sound(first_hit)
+		dirs.append(_spread_direction(_camera, weapon.pellet_spread + (weapon.fan_spread if fanning else 0.0)))
+	var from := _camera.global_position
+	_launch(_index, from, dirs, false)
+	if _fx:
+		_fx.flash()
 	# bot 在主機上跑，authority 卻是它自己的編號，不能用 authority 的身分廣播
-	if is_multiplayer_authority() and first_end != Vector3.INF:
-		_remote_shot.rpc(_index, first_end)
+	if is_multiplayer_authority():
+		_remote_shot.rpc(_index, from, dirs)
 
 	_apply_recoil()
 	spread = minf(spread + spread_per_shot, max_spread)
 
 
-## 別人畫面上的這一槍：火光、曳光、槍聲。不做射線也不扣血——扣血只在開槍的人
-## 那邊判定一次，再請主機執行（Cowboy.deal_damage）。
+## 別人畫面上的這一槍：火光、槍聲、同樣起點和方向的子彈（只有外觀）。
+## 扣血只在開槍的人那邊判定一次，再請主機執行（Cowboy.deal_damage）。
 ##
 ## ponytail: ENet 不會把 rpc 從客戶端直送另一個客戶端，三人以上時客戶端 A
 ## 開的槍客戶端 B 看不到。要補就讓主機收到之後再轉發一次。
 @rpc("authority", "call_remote", "unreliable")
-func _remote_shot(index: int, to: Vector3) -> void:
-	if index >= 0 and index < _weapons.size():
-		_weapons[index].play_sound(&"Shoot")
+func _remote_shot(index: int, from: Vector3, dirs: PackedVector3Array) -> void:
+	if index < 0 or index >= _weapons.size():
+		return
+	_weapons[index].play_sound(&"Shoot")
 	if _fx:
-		_fx.fire(to, Vector3.ZERO, false)
+		_fx.flash()
+	_launch(index, from, dirs, true)
+
+
+## 生子彈。從鏡頭中心出發（所以瞄具不用歸零：近距離打哪中哪，遠了往下掉）。
+## ponytail: 霰彈每顆彈丸打中都各送一次傷害，客戶端一槍最多 10 個 RPC。
+## 真的卡再改成同一幀的命中先加總。
+func _launch(index: int, from: Vector3, dirs: PackedVector3Array, visual_only: bool) -> void:
+	var w := _weapons[index]
+	var world := get_tree().get_first_node_in_group(&"arena")
+	if world == null:
+		world = get_tree().current_scene
+	for i in dirs.size():
+		var b := Bullet.new()
+		b.origin = from
+		b.vel = dirs[i] * w.muzzle_velocity
+		b.shooter = _player
+		b.weapon = w
+		b.fx = _fx
+		b.mask = hit_mask
+		b.visual_only = visual_only
+		b.sound = i == 0
+		world.add_child(b)
 
 
 ## 逐發：一次壓一發，隨時可被開火中斷。整匣：播完 reload 一次補滿。
@@ -398,18 +402,6 @@ func try_reload() -> void:
 func cancel_reload() -> void:
 	_reload_id += 1
 	_reloading = false
-
-
-## 從畫面中央射一條線出去（帶散布偏移），牆會擋住。
-## 回傳 intersect_ray 的結果再加一個 end：打中就是命中點，沒打中就是射程盡頭。
-func _raycast(extra_spread := 0.0) -> Dictionary:
-	# 用自己的相機不用 viewport 的：bot 和遠端角色的 viewport 相機是本機玩家那台
-	var from := _camera.global_position
-	var to := from + _spread_direction(_camera, extra_spread) * weapon.hit_range
-	var query := PhysicsRayQueryParameters3D.create(from, to, hit_mask, [_player.get_rid()])
-	var result := get_world_3d().direct_space_state.intersect_ray(query)
-	result["end"] = result.get("position", to)
-	return result
 
 
 ## 在正前方為軸的圓錐內隨機取一個方向。sqrt 是為了讓落點在圓面上均勻，

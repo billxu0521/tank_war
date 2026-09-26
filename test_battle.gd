@@ -5,6 +5,7 @@ extends SceneTree
 var _fails := 0
 var _shooter: Node
 var _brawler: Node
+var _hp_before_shot := 0
 var _dino: Node
 var _jump_from := 0.0
 var _phase := 0
@@ -49,12 +50,17 @@ func _process(_delta: float) -> bool:
 		return false
 	# 剩下的要跨好幾個 frame 才驗得到
 	match _phase:
-		0:  # 牛仔開槍打恐龍。等一個物理幀讓位置進到物理世界，射線才打得到
+		0:  # 牛仔開槍打恐龍。等一個物理幀讓位置進到物理世界，射線才打得到；
+			# 子彈會飛，15 公尺要飛幾幀才到
 			if _frames == 3:
 				_check_melee_hits()
+				_hp_before_shot = _dino.hp
 				_shooter._bot_shoot(_dino)
-			elif _frames > 3:
-				_ck(_dino.hp < _dino.max_hp, "牛仔開槍要打得到恐龍（恐龍血量 %d）" % _dino.hp)
+				_ck(_dino.hp == _hp_before_shot, "子彈會飛，開槍當下不該立刻扣血")
+			elif _frames > 3 and _dino.hp < _hp_before_shot:
+				_phase = 1
+			elif _frames > 120:
+				_ck(false, "牛仔開槍要打得到恐龍（子彈飛了 %d 幀還沒到）" % (_frames - 3))
 				_phase = 1
 		1:  # 等恐龍落地才跳得起來
 			if _dino.is_on_floor():
@@ -88,7 +94,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與有效射程爆頭閉氣蹲穩摔落輕重近戰兩條體力、沙盒、鄉村柵欄、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
+		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰兩條體力、沙盒、鄉村柵欄、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
 	return true
 
 # --- 共用 ---
@@ -264,6 +270,21 @@ func _case_hunt_weapons() -> void:
 	var turns: int = revolver._turns
 	revolver.play(&"fire", 0.1, 0.45)
 	_ck(revolver._turns == turns + 1 and revolver._kick > 0.0, "開槍要有後座、轉輪要轉")
+
+	# 子彈會掉：從高空水平射出，飛 0.5 秒要往下掉約 ½gt²
+	var b := Bullet.new()
+	b.origin = Vector3(0, 400, 0)
+	b.vel = Vector3(0, 0, -rifle.muzzle_velocity)
+	b.weapon = rifle
+	m.get_node(^"Arena").add_child(b)
+	for i in 60:
+		b.advance(1.0 / 120.0)
+	var drop: float = 400.0 - b.global_position.y
+	_ck(absf(drop - 0.5 * Bullet.GRAVITY * 0.25) < 0.1, "飛 0.5 秒要掉 1.2 公尺左右（掉了 %.2f）" % drop)
+	_ck(absf(-b.global_position.z - rifle.muzzle_velocity * 0.5) < 2.0,
+		"子彈要照初速往前飛（飛了 %.0f 公尺）" % -b.global_position.z)
+	b.free()
+	_ck(rifle.muzzle_velocity > revolver.muzzle_velocity, "步槍子彈要比左輪快")
 
 	# 有效射程：射程內全額，超過遞減，射程盡頭剩一半；射程要照步槍 > 左輪 > 散彈排
 	for w in vm._weapons:

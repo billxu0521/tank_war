@@ -34,8 +34,11 @@ const MOVEMENT_FALLBACK: Array[StringName] = [&"walk", &"run", &"jump_start", &"
 @export var fan_interval := 0.0
 ## 搧擊錘時每發額外的散布（度）。快但不準，只適合貼臉。
 @export var fan_spread := 6.0
-## 射程。散彈 30 公尺外彈丸就散光了，步槍打得到場地另一頭。
+## 射程：子彈飛這麼遠就消失。散彈 30 公尺外彈丸就散光了，步槍打得到場地另一頭。
 @export var hit_range := 100.0
+## 子彈初速（m/s）。重力是真實的 9.8，所以越慢掉越多：
+## 左輪 330 打 50 公尺掉 11 公分，步槍 440 打 150 公尺掉 57 公分
+@export var muzzle_velocity := 330.0
 ## 有效射程：這個距離內傷害全額、打頭一槍死；超過就遞減，到 hit_range 剩 falloff_min
 @export var effective_range := 25.0
 @export var falloff_min := 0.5

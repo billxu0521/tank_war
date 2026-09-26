@@ -21,6 +21,7 @@ reload_time = 1.6
 recoil_scale = 2.2
 reserve = 10
 hit_range = 35.0
+muzzle_velocity = 300.0
 effective_range = 8.0
 ads_position = Vector3(0, -0.061, -0.18)
 hammer_path = NodePath("Model/ShotgunHammer")
