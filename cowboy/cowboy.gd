@@ -2,7 +2,8 @@ extends "res://fighter.gd"
 class_name Cowboy
 ## 牛仔：第一人稱，操作照 Hunt: Showdown。從 FNE_project 的 player.gd 搬來，
 ## 血量、死亡、連線權限改吃 fighter.gd，跟恐龍同一套。
-## 移動／蹲／傾身／翻越／體力是原本的；FNE 的互動系統（門、燈）這裡沒有，拿掉了。
+## 移動／蹲／翻越／體力是原本的。FNE 的互動系統（門、燈）這裡沒有；Q/E 探頭也拿掉了——
+## Hunt 刻意不做探頭（見 docs/Hunt操作機制分析.md），怕變成躲在看不到的角落對槍。
 
 @export_group("Movement")
 @export var walk_speed := 5.0
@@ -40,20 +41,13 @@ class_name Cowboy
 ## 翻上去之後往前站多遠（從障礙前緣算）。要大於「障礙厚度 + 膠囊半徑」，
 ## 不然翻過薄牆時人會落在牆邊，膠囊卡進牆裡導致整個翻越被判定為不可行。
 @export var vault_landing_offset := 0.9
-## 翻越、傾身的射線打哪些層。
+## 翻越的射線打哪些層。
 @export_flags_3d_physics var world_mask := 1
 
 @export_group("Crouch")
 @export var stand_height := 1.8
 @export var crouch_height := 1.0
 @export var crouch_lerp := 12.0
-
-@export_group("Lean")
-## Q/E 傾身探頭。只動頭（滾轉＋橫移），身體和膠囊不動。
-## 貼牆時 `_lean_room()` 對橫移方向掃短射線，把傾身量縮到撞牆距離內，頭不會穿牆。
-@export var lean_angle_deg := 15.0
-@export var lean_offset := 0.4
-@export var lean_speed := 8.0
 
 @export_group("Footsteps")
 @export var step_walk_interval := 0.5
@@ -98,8 +92,6 @@ var _stamina_bar_width: float
 var vaulting := false
 ## 這一 frame 累積的滑鼠視角增量（弧度），給 Viewmodel 的武器搖擺用，讀走就清零
 var _look_delta := Vector2.ZERO
-## -1（左）..1（右）的傾身量
-var _lean := 0.0
 var _step_timer := 0.0
 var _was_on_floor := true
 ## C 切換的蹲下（Ctrl 是按住蹲）。Hunt 兩種都有，切換的比較不累手
@@ -216,7 +208,6 @@ func _physics_process(delta: float) -> void:
 		_land_sound.play()
 	_was_on_floor = is_on_floor()
 
-	_update_lean(delta)
 	_update_footsteps(input != Vector2.ZERO, crouching, delta)
 
 
@@ -236,7 +227,7 @@ func _move_flat(want: Vector3, delta: float) -> void:
 ##   2. 蛋沒人拿 -> 去撿
 ##   3. 別人拿著 -> 追那個人（打死他蛋就掉下來）
 ## 走路方向和槍口方向分開：身體朝著威脅開槍，腳往目標走（Hunt 的側移射擊）。
-## ponytail: 不翻越、不蹲、不傾身，沒有尋路。卡牆就沿牆繞一段，場地都是大方塊，夠用；
+## ponytail: 不翻越、不蹲，沒有尋路。卡牆就沿牆繞一段，場地都是大方塊，夠用；
 ## 場地變複雜（巷弄、室內）再換 NavigationAgent3D，FNE 那邊已經有烘 navmesh 的做法。
 func _bot_step(delta: float) -> void:
 	var g := get_tree().get_first_node_in_group(&"match")
@@ -352,30 +343,6 @@ func _request_damage(target_path: NodePath, amount: int) -> void:
 
 
 # --- 以下是 FNE 原本的移動系統 ---
-
-## Q/E 探頭：頭滾轉＋橫移，準心跟著偏，身體留在掩體後。
-## 縮限的是 lerp 的目標值而不是 _lean 本身：射線結果在臨界點跳動時，
-## 既有的 lerp 就是平滑器，頭不會跟著射線抖。
-func _update_lean(delta: float) -> void:
-	var target := Input.get_axis("lean_left", "lean_right")
-	if target != 0.0:
-		target *= _lean_room(signf(target))
-	_lean = lerpf(_lean, target, minf(lean_speed * delta, 1.0))
-	head.rotation.z = -_lean * deg_to_rad(lean_angle_deg)
-	head.position.x = _lean * lean_offset
-
-
-## 傾身方向還剩多少空間（0..1）。從頭部樞紐（置中位置，不跟著現在的傾身跑，
-## 量測基準才穩定）往橫移方向掃 lean_offset＋安全邊距，撞到 world 層就等比縮小。
-func _lean_room(side: float) -> float:
-	# 頭離牆至少留這麼多：相機近裁剪面（0.02）加頭的體積，太小畫面還是會切進牆面
-	const CLEARANCE := 0.2
-	var from := global_position + Vector3.UP * head.position.y
-	var hit := _ray(from, from + global_transform.basis.x * side * (lean_offset + CLEARANCE))
-	if hit.is_empty():
-		return 1.0
-	return clampf((from.distance_to(hit["position"]) - CLEARANCE) / lean_offset, 0.0, 1.0)
-
 
 func _update_footsteps(moving: bool, crouching: bool, delta: float) -> void:
 	if not is_on_floor() or not moving:

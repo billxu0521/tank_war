@@ -334,7 +334,7 @@ func _case_rural() -> void:
 ## 牛仔的操作都要有綁鍵，鍵盤和手把兩邊都要（FNE 的約定）
 func _case_input_map() -> void:
 	for a in ["move_forward", "move_back", "move_left", "move_right", "jump", "sprint",
-			"crouch", "crouch_toggle", "fire", "aim", "reload", "melee", "lean_left", "lean_right"]:
+			"crouch", "crouch_toggle", "fire", "aim", "reload", "melee"]:
 		_ck(InputMap.has_action(a), "少了按鍵動作 %s" % a)
 		if not InputMap.has_action(a):
 			continue
