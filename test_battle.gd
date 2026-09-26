@@ -34,6 +34,7 @@ func _process(_delta: float) -> bool:
 		_case_hunt_weapons()
 		_case_sandbox()
 		_case_rural()
+		_case_terrain()
 		_case_back_to_lobby()
 		_case_cover()
 		_case_trex_rig()
@@ -94,7 +95,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰兩條體力、沙盒、鄉村柵欄、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
+		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰兩條體力、沙盒、鄉村柵欄、地形起伏、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
 	return true
 
 # --- 共用 ---
@@ -173,8 +174,8 @@ func _case_attacks() -> void:
 	var d: Node = m.players.get_node(^"1")
 	var front: Node = m.players.get_node(^"2")
 	var back: Node = m.players.get_node(^"3")
-	var spot: Vector3 = m._spawn_point()  # 找一個沒有建築的空地，不然會被視線判定擋掉
-	spot.y = 2.0
+	# 沙盒靶場那條整平的空地：沒有建築、也沒有小丘擋視線
+	var spot: Vector3 = m._on_ground(Vector3(0, 2.0, 60))
 	d.global_position = spot      # 面向 -Z
 	front.global_position = spot + Vector3(0, 0, -4)
 	back.global_position = spot + Vector3(0, 0, 4)
@@ -449,6 +450,49 @@ func _case_rural() -> void:
 		_ck(m._props.get(n) is Mesh, "props.glb 裡要有 %s" % n)
 	_end(m)
 
+## 地形：有起伏、該平的地方平、碰撞跟畫面對得上
+func _case_terrain() -> void:
+	var m := _new_game()
+	var t: Terrain = m._terrain
+	var lo := 999.0
+	var hi := -999.0
+	for ix in range(-150, 151, 10):
+		for iz in range(-150, 151, 10):
+			var h := t.height(ix, iz)
+			lo = minf(lo, h)
+			hi = maxf(hi, h)
+	_ck(hi - lo > 6.0, "地形要有高低差（現在最高最低只差 %.1f 公尺）" % (hi - lo))
+	_ck(hi <= Terrain.AMP + 0.01 and lo >= -Terrain.AMP - 0.01, "地形不能超出 ±%.0f 公尺" % Terrain.AMP)
+
+	# 最陡的坡要走得上去（CharacterBody3D 預設 45 度以上當牆）
+	var steep := 0.0
+	for ix in range(-150, 151, 4):
+		for iz in range(-150, 151, 4):
+			steep = maxf(steep, t.slope(ix, iz))
+	_ck(steep < 1.0 - cos(deg_to_rad(40.0)), "最陡的坡要在 40 度內（現在 %.0f 度）" % rad_to_deg(acos(1.0 - steep)))
+
+	# 穀倉底下、沙盒靶場要是平的
+	var b: Rect2 = m._blocked[0]
+	var c := b.get_center()
+	var spread := 0.0
+	for dx in [-8.0, 0.0, 8.0]:
+		for dz in [-10.0, 0.0, 10.0]:
+			spread = maxf(spread, absf(t.height(c.x + dx, c.y + dz) - t.height(c.x, c.y)))
+	_ck(spread < 0.05, "穀倉底下要是平地（高低差 %.2f 公尺）" % spread)
+	var r: Rect2 = m.SANDBOX_RANGE
+	_ck(absf(t.height(r.position.x + 2, r.position.y + 2) - t.height(r.end.x - 2, r.end.y - 2)) < 0.05,
+		"沙盒靶場要是平地，靶的距離才準")
+
+	# 碰撞跟畫面同一份高度：往下打射線，打到的高度要等於 height()
+	var space: PhysicsDirectSpaceState3D = m.get_world_3d().direct_space_state
+	for p in [Vector2(37, -81), Vector2(-101, 13), Vector2(66, 66), Vector2(-5, 130)]:
+		var q := PhysicsRayQueryParameters3D.create(Vector3(p.x, 100, p.y), Vector3(p.x, -100, p.y))
+		var hit: Dictionary = space.intersect_ray(q)
+		var want := t.height(p.x, p.y)
+		_ck(not hit.is_empty() and absf(hit["position"].y - want) < 0.3,
+			"(%d, %d) 的地面碰撞要在 %.2f（打到 %s）" % [p.x, p.y, want, hit.get("position", "沒打到")])
+	_end(m)
+
 ## 牛仔的操作都要有綁鍵，鍵盤和手把兩邊都要（FNE 的約定）
 func _case_input_map() -> void:
 	for a in ["move_forward", "move_back", "move_left", "move_right", "jump", "sprint",
@@ -487,8 +531,8 @@ func _case_cover() -> void:
 	var b: Rect2 = m._blocked[0]        # 第一棟建築（含 8 公尺出生淨空）在 XZ 的範圍
 	var c := b.get_center()
 	var d_side := b.size.y * 0.5 + 2.0  # Rect2 的 size.y 是 Z 方向
-	d.global_position = Vector3(c.x, 2.0, c.y + d_side)
-	d.look_at(Vector3(c.x, 2.0, c.y - d_side))  # 面向建築
+	d.global_position = m._on_ground(Vector3(c.x, 2.0, c.y + d_side))   # 穀倉在整平的農莊裡，兩側一樣高
+	d.look_at(m._on_ground(Vector3(c.x, 2.0, c.y - d_side)))  # 面向建築
 
 	# 對照組：同一側，中間沒東西擋（射程放大到 100，只想單獨測視線）
 	t.global_position = d.global_position + Vector3(0, 0, -3)
@@ -496,7 +540,7 @@ func _case_cover() -> void:
 	_ck(t.hp == t.max_hp - d.BITE_DAMAGE, "沒遮蔽時應該打得到")
 
 	# 實驗組：躲到建築後面
-	t.global_position = Vector3(c.x, 2.0, c.y - d_side)
+	t.global_position = m._on_ground(Vector3(c.x, 2.0, c.y - d_side))
 	var before: int = t.hp
 	d._hit_nearby(100.0, d.BITE_DAMAGE, 0.3)
 	_ck(t.hp == before, "躲在建築後面就不該被打到")
@@ -774,10 +818,10 @@ func _case_arena_walls() -> void:
 	var d: Node = m.players.get_node(^"1")
 	# 圍牆不給爬，所以恐龍能到的最高點 = 站上最高的屋頂再跳一下
 	var jump_h: float = d.JUMP_SPEED * d.JUMP_SPEED / (2.0 * d.GRAVITY)
-	var reach: float = m.BUILDING_MAX_H + jump_h
+	var reach: float = Terrain.AMP + m.BUILDING_MAX_H + jump_h
 	_ck(m.WALL_H > reach,
-		"圍牆 %.0f 公尺要高過「最高屋頂 %.0f + 跳 %.1f」= %.1f 公尺"
-		% [m.WALL_H, m.BUILDING_MAX_H, jump_h, reach])
+		"圍牆 %.0f 公尺要高過「最高的地 %.0f + 最高屋頂 %.0f + 跳 %.1f」= %.1f 公尺"
+		% [m.WALL_H, Terrain.AMP, m.BUILDING_MAX_H, jump_h, reach])
 
 	# 建築不能蓋超過上限，不然上面那條就白算了
 	var tallest := 0.0
@@ -806,14 +850,15 @@ func _start_bot_case() -> void:
 ## 牛仔開槍要真的打中恐龍（射線要等位置進物理世界，所以跨幀，見 _phase 0）
 func _start_gun_case() -> void:
 	var m := _new_game()
-	var spot: Vector3 = m._spawn_point()  # 挑淨空點，不然子彈會先打到建築
+	# 沙盒靶場那條整平的空地：子彈不會先打到建築或小丘
+	var spot: Vector3 = m._on_ground(Vector3(0, 0, 60))
 	_dino = m.players.get_node(^"1")
-	_dino.global_position = Vector3(spot.x, 4.1, spot.z - 15.0)   # 原點在身體中心，腳剛好著地
+	_dino.global_position = spot + Vector3(0, 4.1, -15.0)   # 原點在身體中心，腳剛好著地
 	_shooter = m.players.get_node(^"3")
-	_shooter.global_position = Vector3(spot.x, 0.0, spot.z)
+	_shooter.global_position = spot
 	# 牛仔 2 貼在恐龍另一側練槍托（恐龍半徑 2.4，站 3.4 公尺外剛好在 2.2 的近戰距離內）
 	_brawler = m.players.get_node(^"2")
-	_brawler.global_position = Vector3(spot.x, 0.0, spot.z - 15.0 - 3.4)
+	_brawler.global_position = spot + Vector3(0, 0, -15.0 - 3.4)
 	_brawler.rotation.y = PI   # 面向 +Z，對著恐龍
 
 ## 重擊比輕擊痛；體力不夠重擊就退成輕擊
