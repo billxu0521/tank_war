@@ -21,6 +21,7 @@ reserve = 18
 fan_interval = 0.16
 fan_spread = 6.0
 hit_range = 80.0
+effective_range = 25.0
 ads_position = Vector3(0, -0.058, -0.5)
 cylinder_path = NodePath("Model/RevolverCylinder")
 hammer_path = NodePath("Model/RevolverHammer")

@@ -36,6 +36,9 @@ const MOVEMENT_FALLBACK: Array[StringName] = [&"walk", &"run", &"jump_start", &"
 @export var fan_spread := 6.0
 ## 射程。散彈 30 公尺外彈丸就散光了，步槍打得到場地另一頭。
 @export var hit_range := 100.0
+## 有效射程：這個距離內傷害全額、打頭一槍死；超過就遞減，到 hit_range 剩 falloff_min
+@export var effective_range := 25.0
+@export var falloff_min := 0.5
 
 @export_group("Aim")
 ## ADS 時模型移到的位置（相對 Viewmodel）。腰射位置就是場景檔裡的 position。
@@ -110,6 +113,12 @@ func _process(delta: float) -> void:
 		else:
 			_anim.pause()
 			_seg_end = -1.0
+
+
+## 這個距離打中的傷害。有效射程內全額，之後線性遞減到射程盡頭剩 falloff_min。
+func damage_at(dist: float) -> float:
+	var t := inverse_lerp(effective_range, hit_range, dist)
+	return damage * lerpf(1.0, falloff_min, clampf(t, 0.0, 1.0))
 
 
 func has_action(action: StringName) -> bool:

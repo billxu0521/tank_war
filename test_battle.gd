@@ -88,7 +88,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與爆頭閉氣蹲穩輕重近戰兩條體力、沙盒、鄉村柵欄、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
+		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與有效射程爆頭閉氣蹲穩輕重近戰兩條體力、沙盒、鄉村柵欄、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
 	return true
 
 # --- 共用 ---
@@ -264,6 +264,13 @@ func _case_hunt_weapons() -> void:
 	var turns: int = revolver._turns
 	revolver.play(&"fire", 0.1, 0.45)
 	_ck(revolver._turns == turns + 1 and revolver._kick > 0.0, "開槍要有後座、轉輪要轉")
+
+	# 有效射程：射程內全額，超過遞減，射程盡頭剩一半；射程要照步槍 > 左輪 > 散彈排
+	for w in vm._weapons:
+		_ck(is_equal_approx(w.damage_at(w.effective_range * 0.5), w.damage), "%s 有效射程內要全額" % w.display_name)
+		_ck(w.damage_at(w.hit_range) < w.damage * 0.6, "%s 射程盡頭傷害要打折" % w.display_name)
+	_ck(rifle.effective_range > revolver.effective_range and revolver.effective_range > shotgun.effective_range,
+		"有效射程要是步槍 > 左輪 > 散彈")
 
 	# 爆頭一槍死：打到頭的高度才算，打身體不算
 	var other: Node3D = m._add_player(m.COWBOY, 5)

@@ -312,9 +312,11 @@ func try_fire(fanning := false) -> void:
 		var target: Object = hit.get("collider")
 		# 認方法不認型別：恐龍、別的牛仔都吃同一發子彈
 		if target and target.has_method(&"take_damage"):
-			var dmg: float = weapon.damage
-			if is_headshot(target, hit["position"]):
-				dmg = target.max_hp   # 一槍死
+			var dist: float = _camera.global_position.distance_to(hit["position"])
+			var dmg: float = weapon.damage_at(dist)
+			# 爆頭秒殺只在有效射程內成立，跟 Hunt 一樣
+			if dist <= weapon.effective_range and is_headshot(target, hit["position"]):
+				dmg = target.max_hp
 			damage[target] = damage.get(target, 0.0) + dmg
 		if _fx:
 			var solid: bool = target != null and not target.has_method(&"take_damage")
