@@ -88,7 +88,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與爆頭閉氣輕重近戰、沙盒、鄉村柵欄、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
+		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與爆頭閉氣輕重近戰兩條體力、沙盒、鄉村柵欄、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
 	return true
 
 # --- 共用 ---
@@ -286,6 +286,33 @@ func _case_hunt_weapons() -> void:
 	_ck(vm.heavy_damage > vm.melee_damage and vm.heavy_stamina > vm.melee_stamina,
 		"重擊要比輕擊痛、也比較貴")
 	# 真的敲到人要跨物理幀，見 _phase 0
+
+	# 兩條體力：跑步不吃近戰體力、近戰不吃跑步體力；出力時兩條都不回
+	me.stamina = me.max_stamina
+	me.combat_stamina = me.max_combat
+	var t := 0.0
+	while me.update_stamina(true, 0.1) and t < 120.0:
+		t += 0.1
+	_ck(t > 12.0 and t < 30.0, "全力跑要撐 12~30 秒（現在 %.1f 秒）" % t)
+	_ck(is_equal_approx(me.combat_stamina, me.max_combat), "跑步不該吃近戰體力")
+	me.stamina = 50.0
+	vm._melee_cooldown = 0.0
+	vm.try_melee()
+	_ck(is_equal_approx(me.stamina, 50.0) and me.combat_stamina < me.max_combat,
+		"槍托吃近戰體力，不吃跑步體力")
+	var combat_after: float = me.combat_stamina
+	me.update_stamina(false, 0.5)
+	_ck(is_equal_approx(me.stamina, 50.0) and is_equal_approx(me.combat_stamina, combat_after),
+		"剛敲完還在回復延遲內，兩條都不回")
+	for i in 60:
+		me.update_stamina(false, 0.1)
+	_ck(me.stamina > 50.0 and me.combat_stamina > combat_after, "延遲過後兩條都要回")
+	# 近戰體力見底：還能輕擊，但慢一倍
+	me.combat_stamina = 0.0
+	vm._melee_cooldown = 0.0
+	vm.try_melee(true)
+	_ck(is_equal_approx(vm._melee_cooldown, vm.melee_cooldown * 2.0),
+		"黃條見底時重擊退成輕擊，而且慢一倍（冷卻 %.2f）" % vm._melee_cooldown)
 	_end(m)
 
 ## 沙盒：靶站好、沒有時間限制、子彈無限、靶打死生回原地
@@ -703,13 +730,13 @@ func _start_gun_case() -> void:
 ## 重擊比輕擊痛；體力不夠重擊就退成輕擊
 func _check_melee_hits() -> void:
 	var vm: Node = _brawler.viewmodel
-	_brawler.stamina = _brawler.max_stamina
+	_brawler.combat_stamina = _brawler.max_combat
 	var hp0: int = _dino.hp
 	vm.try_melee(true)
 	_ck(hp0 - _dino.hp == vm.heavy_damage, "重擊要打出 %d 傷（打出 %d）" % [vm.heavy_damage, hp0 - _dino.hp])
-	_ck(is_equal_approx(_brawler.stamina, _brawler.max_stamina - vm.heavy_stamina),
-		"重擊要扣 %.0f 體力" % vm.heavy_stamina)
-	_brawler.stamina = vm.heavy_stamina - 1.0
+	_ck(is_equal_approx(_brawler.combat_stamina, _brawler.max_combat - vm.heavy_stamina),
+		"重擊要扣 %.0f 近戰體力" % vm.heavy_stamina)
+	_brawler.combat_stamina = vm.heavy_stamina - 1.0
 	vm._melee_cooldown = 0.0
 	hp0 = _dino.hp
 	vm.try_melee(true)

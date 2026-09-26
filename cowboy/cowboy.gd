@@ -15,11 +15,17 @@ class_name Cowboy
 @export var air_accel := 6.0
 
 @export_group("Stamina")
+## 跟 Hunt 一樣有兩條體力：跑步體力（跑、跳、翻越、閉氣）和近戰體力（槍托，左下黃條）。
+## 任何一條在出力，兩條都不回——邊跑邊敲就是兩條一起見底。
 @export var max_stamina := 100.0
-@export var sprint_drain := 22.0
-@export var stamina_recover := 18.0
-## 停止衝刺後要等這麼久才開始回。沒有這段延遲，「衝一下放開再衝」等於無限衝刺。
-@export var recover_delay := 1.2
+## 全力跑約 18 秒見底。Hunt 基礎約 34 秒，但這張圖只有 320 公尺，跑得太久就沒有「跑步很吵」以外的代價
+@export var sprint_drain := 5.5
+@export var stamina_recover := 15.0
+## 停止出力後要等這麼久才開始回。沒有這段延遲，「衝一下放開再衝」等於無限衝刺。
+## Hunt 約 3 秒，這裡取短一點，交火節奏比較快
+@export var recover_delay := 2.0
+@export var max_combat := 100.0
+@export var combat_recover := 25.0
 ## 體力見底後要回到這個值才准再衝。少了門檻會在零點附近抖動衝刺，一步一頓。
 @export var sprint_min_stamina := 25.0
 @export var jump_stamina := 15.0
@@ -66,6 +72,7 @@ class_name Cowboy
 @onready var _stamina_fill: ColorRect = $HUD/StaminaBar/Fill
 @onready var _crosshair: Control = $HUD/Crosshair
 @onready var _hp_fill: ColorRect = $HUD/HealthBar/Fill
+@onready var _combat_fill: ColorRect = $HUD/CombatBar/Fill
 @onready var _body: MeshInstance3D = $Body
 @onready var _torso: CapsuleMesh = _body.mesh
 @onready var _face: MeshInstance3D = $Head/Face
@@ -81,6 +88,8 @@ var is_local := true
 var sync_crouching := false
 
 var stamina: float
+## 近戰體力。見底還能輕擊，但變慢；不能重擊
+var combat_stamina: float
 ## 大於 0 的時候體力不回復
 var _recover_wait := 0.0
 ## 體力見底過，還沒回到門檻，暫時不准衝刺
@@ -106,6 +115,7 @@ func _ready() -> void:
 	super()
 	is_local = is_multiplayer_authority()
 	stamina = max_stamina
+	combat_stamina = max_combat
 	_stand_head_y = head.position.y
 	_stamina_bar_width = _stamina_fill.size.x
 	_refresh_stamina_bar()
@@ -142,6 +152,7 @@ func _process(delta: float) -> void:
 	# 打中人準心閃紅，遠距離看不出血條掉，這是唯一的命中確認
 	_crosshair.modulate = Color(1, 0.3, 0.25) if hit_until > Time.get_ticks_msec() else Color.WHITE
 	_hp_fill.size.x = (_hp_fill.get_parent() as Control).size.x * clampf(float(hp) / max_hp, 0.0, 1.0)
+	_combat_fill.size.x = (_combat_fill.get_parent() as Control).size.x * combat_stamina / max_combat
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -372,6 +383,7 @@ func update_stamina(wants_sprint: bool, delta: float) -> bool:
 		_recover_wait = maxf(_recover_wait - delta, 0.0)
 		if _recover_wait == 0.0:
 			stamina = minf(stamina + stamina_recover * delta, max_stamina)
+			combat_stamina = minf(combat_stamina + combat_recover * delta, max_combat)
 		if _sprint_locked and stamina >= sprint_min_stamina:
 			_sprint_locked = false
 	_refresh_stamina_bar()
@@ -468,6 +480,12 @@ func spend_stamina(amount: float) -> void:
 	if stamina == 0.0:
 		_sprint_locked = true
 	_refresh_stamina_bar()
+
+
+## 近戰體力的消耗。一樣會壓住兩條的回復。
+func spend_combat(amount: float) -> void:
+	combat_stamina = maxf(combat_stamina - amount, 0.0)
+	_recover_wait = recover_delay
 
 
 ## 見底鎖住時變紅，讓玩家知道現在按衝刺沒用。

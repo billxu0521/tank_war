@@ -245,16 +245,18 @@ func _update_melee_input(delta: float) -> void:
 	weapon.windup = clampf(_melee_held / heavy_charge_time, 0.0, 1.0) if _melee_held >= 0.0 else 0.0
 
 
-## 槍托敲人。重擊體力不夠就退成輕擊（Hunt：體力見底不能重擊）。
+## 槍托敲人，吃近戰體力（左下黃條）。照 Hunt：體力不夠重擊就退成輕擊；
+## 見底了還能輕擊，但慢一倍（傷害不變）。
 func try_melee(heavy := false) -> void:
-	if heavy and _player.stamina < heavy_stamina:
+	if heavy and _player.combat_stamina < heavy_stamina:
 		heavy = false
-	var cost := heavy_stamina if heavy else melee_stamina
-	if _melee_cooldown > 0.0 or _player.stamina < cost:
+	if _melee_cooldown > 0.0:
 		return
+	var cost := heavy_stamina if heavy else melee_stamina
+	var winded: bool = _player.combat_stamina < cost
 	cancel_reload()
-	_melee_cooldown = heavy_cooldown if heavy else melee_cooldown
-	_player.spend_stamina(cost)
+	_melee_cooldown = (heavy_cooldown if heavy else melee_cooldown) * (2.0 if winded else 1.0)
+	_player.spend_combat(cost)
 	_anim_lock = weapon.play(&"melee", blend)
 	var from := _camera.global_position
 	var to := from - _camera.global_transform.basis.z * melee_range

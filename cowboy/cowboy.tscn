@@ -169,9 +169,9 @@ anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 24.0
-offset_top = -120.0
+offset_top = -136.0
 offset_right = 284.0
-offset_bottom = -108.0
+offset_bottom = -124.0
 grow_vertical = 0
 color = Color(0, 0, 0, 0.45)
 
@@ -179,6 +179,23 @@ color = Color(0, 0, 0, 0.45)
 offset_right = 260.0
 offset_bottom = 12.0
 color = Color(0.75, 0.12, 0.1, 1)
+
+; 近戰體力：血條正下方的黃條，跟 Hunt 同一個位置
+[node name="CombatBar" type="ColorRect" parent="HUD"]
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -119.0
+offset_right = 284.0
+offset_bottom = -114.0
+grow_vertical = 0
+color = Color(0, 0, 0, 0.45)
+
+[node name="Fill" type="ColorRect" parent="HUD/CombatBar"]
+offset_right = 260.0
+offset_bottom = 5.0
+color = Color(0.92, 0.75, 0.18, 1)
 
 [node name="AmmoLabel" type="Label" parent="HUD"]
 anchors_preset = 3
