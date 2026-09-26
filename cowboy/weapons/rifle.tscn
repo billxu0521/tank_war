@@ -2,9 +2,9 @@
 
 [ext_resource type="Script" path="res://cowboy/weapon.gd" id="1_weapon"]
 [ext_resource type="PackedScene" path="res://models/rifle.glb" id="2_model"]
-[ext_resource type="AudioStream" path="res://assets/audio/weapons/pistol_shoot.mp3" id="3_shoot"]
-[ext_resource type="AudioStream" path="res://assets/audio/weapons/shotgun_reload.mp3" id="4_reload"]
-[ext_resource type="AudioStream" path="res://assets/audio/weapons/no_ammo.mp3" id="5_empty"]
+[ext_resource type="AudioStream" path="res://assets/audio/weapons/pistol_shoot.wav" id="3_shoot"]
+[ext_resource type="AudioStream" path="res://assets/audio/weapons/shotgun_reload.wav" id="4_reload"]
+[ext_resource type="AudioStream" path="res://assets/audio/weapons/no_ammo.wav" id="5_empty"]
 
 ; 槓桿步槍：每發要拉一次桿（fire_interval），從側面裝填口一發一發壓。遠距離主力，
 ; 舉槍晃動要閉氣（Shift）才打得準。沒有專屬槍聲，先借手槍聲壓低音高。

@@ -2,9 +2,9 @@
 
 [ext_resource type="Script" path="res://cowboy/weapon.gd" id="1_weapon"]
 [ext_resource type="PackedScene" path="res://models/revolver.glb" id="2_model"]
-[ext_resource type="AudioStream" path="res://assets/audio/weapons/pistol_shoot.mp3" id="3_shoot"]
-[ext_resource type="AudioStream" path="res://assets/audio/weapons/pistol_reload.mp3" id="4_reload"]
-[ext_resource type="AudioStream" path="res://assets/audio/weapons/no_ammo.mp3" id="5_empty"]
+[ext_resource type="AudioStream" path="res://assets/audio/weapons/pistol_shoot.wav" id="3_shoot"]
+[ext_resource type="AudioStream" path="res://assets/audio/weapons/pistol_reload.wav" id="4_reload"]
+[ext_resource type="AudioStream" path="res://assets/audio/weapons/no_ammo.wav" id="5_empty"]
 
 ; 單動左輪：每發要扳擊錘（fire_interval），腰射按住可以搧擊錘連發（fan_interval）。
 ; 三發身體打死一個牛仔，打頭一發。ads_position 的 y = -準星高度（blender/weapons.py 的 SIGHT）

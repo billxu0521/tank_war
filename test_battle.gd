@@ -94,7 +94,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰兩條體力、沙盒、鄉村柵欄、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
+		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰兩條體力、沙盒、鄉村柵欄、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
 	return true
 
 # --- 共用 ---
@@ -271,6 +271,12 @@ func _case_hunt_weapons() -> void:
 	revolver.play(&"fire", 0.1, 0.45)
 	_ck(revolver._turns == turns + 1 and revolver._kick > 0.0, "開槍要有後座、轉輪要轉")
 
+	# 音效開頭不能有空白：扣扳機到出聲超過 20 毫秒就會覺得延遲
+	for w in vm._weapons:
+		for snd in ["ShootSound", "ReloadSound", "EmptySound"]:
+			var lead := _sound_lead(w.get_node(snd).stream)
+			_ck(lead <= 0.02, "%s 的 %s 開頭空了 %.3f 秒，會聽起來延遲" % [w.display_name, snd, lead])
+
 	# 子彈會掉：從高空水平射出，飛 0.5 秒要往下掉約 ½gt²
 	var b := Bullet.new()
 	b.origin = Vector3(0, 400, 0)
@@ -374,6 +380,18 @@ func _case_hunt_weapons() -> void:
 	_ck(is_equal_approx(vm._melee_cooldown, vm.melee_cooldown * 2.0),
 		"黃條見底時重擊退成輕擊，而且慢一倍（冷卻 %.2f）" % vm._melee_cooldown)
 	_end(m)
+
+## 音檔開頭到第一個超過 -40dB 的樣本有幾秒。只認 16 位元 WAV（槍聲都轉成這種了）
+func _sound_lead(stream: AudioStream) -> float:
+	var wav := stream as AudioStreamWAV
+	if wav == null or wav.format != AudioStreamWAV.FORMAT_16_BITS:
+		return 99.0
+	var data := wav.data
+	var ch := 2 if wav.stereo else 1
+	for i in range(0, data.size() - 1, 2):
+		if absi(data.decode_s16(i)) > 328:   # 32768 × 0.01 ≈ -40dB
+			return float(i / 2 / ch) / wav.mix_rate
+	return 99.0
 
 ## 沙盒：靶站好、沒有時間限制、子彈無限、靶打死生回原地
 func _case_sandbox() -> void:

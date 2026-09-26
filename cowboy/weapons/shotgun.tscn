@@ -2,9 +2,9 @@
 
 [ext_resource type="Script" path="res://cowboy/weapon.gd" id="1_weapon"]
 [ext_resource type="PackedScene" path="res://models/shotgun.glb" id="2_model"]
-[ext_resource type="AudioStream" path="res://assets/audio/weapons/shotgun_shoot.mp3" id="3_shoot"]
-[ext_resource type="AudioStream" path="res://assets/audio/weapons/shotgun_reload.mp3" id="4_reload"]
-[ext_resource type="AudioStream" path="res://assets/audio/weapons/no_ammo.mp3" id="5_empty"]
+[ext_resource type="AudioStream" path="res://assets/audio/weapons/shotgun_shoot.wav" id="3_shoot"]
+[ext_resource type="AudioStream" path="res://assets/audio/weapons/shotgun_reload.wav" id="4_reload"]
+[ext_resource type="AudioStream" path="res://assets/audio/weapons/no_ammo.wav" id="5_empty"]
 
 ; 單管折開式散彈：一發就要折開換，貼臉全中 10×14 = 140（差一點秒殺），30 公尺外就散光。
 [node name="Shotgun" type="Node3D"]

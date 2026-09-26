@@ -1,5 +1,9 @@
 # 第三方素材
 
+槍聲、換彈、空膛、著彈這幾個音效已經剪掉開頭的空白並轉成 WAV（原本 `pistol_shoot.mp3`
+開頭空了 1.25 秒，開槍要等一秒多才響）。做法：
+`ffmpeg -i x.mp3 -af "silenceremove=start_periods=1:start_threshold=-40dB:start_silence=0.003" -c:a pcm_s16le x.wav`
+
 槍的模型是自己用 Blender 程式建的（`blender/weapons.py`），不需要標示。
 
 
@@ -14,7 +18,7 @@ Media 內標示 Joblab Studio Games）。**包內沒有授權檔，正式發布�
 
 ## 手槍音效（freesound.org，CC0）
 
-`assets/audio/weapons/pistol_shoot.mp3`、`assets/audio/weapons/pistol_reload.mp3`
+`assets/audio/weapons/pistol_shoot.wav`、`assets/audio/weapons/pistol_reload.wav`
 
 - 射擊：["Small pistol gunshot indoors"](https://freesound.org/people/acidsnowflake/sounds/402789/)
   by acidsnowflake
