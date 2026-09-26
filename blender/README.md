@@ -4,7 +4,7 @@
 
 - `common.py` — box / cyl / blob 這些小工具，最後 `finish()` 合併並加倒角
 - `weapons.py` — 牛仔的三把槍（左輪、單管散彈、槓桿步槍），各自匯出一個 `.glb`
-- `tank.py` — 車體、砲塔、砲管三個物件（坦克版留下的，模型檢視器還在用）
+- `cowboy.py` — 牛仔：身體（原點在腳底）和頭（原點在眼睛 1.6 公尺，跟著上下看轉）兩個物件
 - `trex.py` — 18 個部件，**名字和位置直接抄 trex.gd 的 `_rig()`**，所以程式動畫不用改
 
 ## 怎麼重建
@@ -13,7 +13,8 @@ Blender 開著、BlenderMCP 連上之後，在 Blender 裡執行：
 
 ```python
 BASE = '<這個資料夾的絕對路徑>'
-exec(open(BASE + '/tank.py').read())    # 或 trex.py
+exec(open(BASE + '/trex.py').read())    # 或 cowboy.py / weapons.py
+export('<專案>/models/trex.glb')           # 每支腳本最後都有自己的 export()
 ```
 
 匯出前務必做這三件事，不然位置會跑掉：
@@ -46,3 +47,15 @@ export('<專案>/models')                                   # 三個 .glb
 - `SIGHT`（準星高度）＝武器場景 `ads_position` 的 `-y`。改了要去 `cowboy/weapons/*.tscn` 改
 - 擊錘、開膛扳的頂端要**低於** `SIGHT`，不然舉槍時擋在瞄準線上
 - 零件物件名字＝武器場景裡 `cylinder_path` / `hammer_path` / `lever_path` / `barrel_path` 的最後一段
+
+## 看模型
+
+`common.py` 的 `view(eye, target)`：視窗從 eye 看向 target（Blender 座標），SOLID 著色看材質顏色。
+截圖檢查用，比手調視角可靠。
+
+## 硬表面和生物
+
+`finish()` 預設每個面平面著色（槍、金屬邊要利）。生物傳 `smooth=True`（暴龍），
+槍的木頭部分用 `smooth_mats=('wood', 'wood2')` 只讓木頭圓滑。
+圓弧的木頭件（槍托、護木）和外套用 `loft()` / `vloft()`：在幾個位置訂斷面接成一條，
+比方塊疊起來像樣得多。

@@ -133,7 +133,7 @@ text = "離線測試：我當恐龍（對三個牛仔 bot）"
 text = "沙盒模式（牛仔練習場，打靶、練翻越）"
 
 [node name="ViewerBtn" type="Button" parent="UI/Root/Lobby"]
-text = "檢視模型（看戰車和恐龍長怎樣）"
+text = "檢視模型（看牛仔、槍和恐龍長怎樣）"
 
 [node name="Menu" type="Control" parent="UI/Root"]
 visible = false

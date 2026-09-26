@@ -229,6 +229,12 @@ func _case_cowboy() -> void:
 	_ck(not c.is_local, "主機上的牛仔是遠端角色")
 	_ck(not c.get_node(^"HUD").visible and not c.viewmodel.visible, "遠端角色的 HUD 和槍都要藏起來")
 	_ck(c.get_node(^"Body").visible, "遠端角色要看得到身體")
+	var body_mesh: Mesh = c.get_node(^"Body").mesh
+	_ck(body_mesh != null and absf(body_mesh.get_aabb().end.y - 1.5) < 0.2,
+		"身體要換上 Blender 的牛仔（肩膀約 1.5 公尺高）")
+	var hat: Mesh = c.get_node(^"Head/Face").mesh
+	_ck(hat != null and absf(hat.get_aabb().end.y - 0.28) < 0.06,
+		"頭要換上牛仔的頭，帽頂在眼睛上方約 28 公分（現在 %s）" % (hat.get_aabb().end.y if hat else -1.0))
 	_ck(c.max_hp == 150, "牛仔 150 血（Hunt 的數字）")
 
 	# 主機上呼叫 deal_damage 直接扣血，而且記得是誰打的

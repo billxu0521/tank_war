@@ -47,7 +47,7 @@ for name, parent, off, _s, _c in RIG:
     WORLD[name] = (WORLD[parent] if parent else Vector((0, 0, 0))) + B(off)
 
 # ---- 有機外型小工具 ----
-def blob(size, loc, m=None, shape=None, seg=14, ring=10):
+def blob(size, loc, m=None, shape=None, seg=22, ring=14):
     o = sphere(0.5, loc, seg, ring, m)   # 頂點是本地座標，別再減 loc
     for v in o.data.vertices:
         sz = S(size)
@@ -55,10 +55,10 @@ def blob(size, loc, m=None, shape=None, seg=14, ring=10):
         v.co = shape(c) if shape else c
     return o
 
-def seg(size, loc, m=None, front=1.0, back=1.0, v=18, n=3.0):
+def seg(size, loc, m=None, front=1.0, back=1.0, v=28, n=3.0):
     """軀幹用的一節：中段飽滿、兩端收圓，接起來才不會一節一節像毛毛蟲。
     size 是 Godot 的(寬, 高, 長)"""
-    o = sphere(0.5, loc, v, 12, m)
+    o = sphere(0.5, loc, v, 18, m)
     for vt in o.data.vertices:
         x, y, z = vt.co
         u = max(-1.0, min(1.0, y / 0.5))
@@ -101,13 +101,13 @@ def build(name):
         blob((1.05, 0.95, 0.55), P(0, -0.52, 0.05), BELLY)      # 肚子
 
     elif name == "spine1":                   # 胸廓：肋骨包住內臟
-        seg((1.34, 1.24, 1.34), P(0, 0.02, -0.30), BODY, front=0.90, back=1.0)
+        seg((1.36, 1.26, 1.62), P(0, 0.02, -0.30), BODY, front=0.93, back=1.0)
         blob((1.00, 0.62, 0.92), P(0, -0.42, -0.30), BELLY)
         for z in (0.05, -0.25, -0.55):                          # 背脊突起
             cone(0.12, 0.02, 0.22, P(0, 0.62, z), (0, 0, 0), 4, m=DARK)
 
     elif name == "spine2":                   # 肩帶：前肢從這裡長出來
-        seg((1.16, 1.08, 1.20), P(0, 0.05, -0.30), BODY, front=0.84, back=1.0)
+        seg((1.20, 1.12, 1.50), P(0, 0.05, -0.30), BODY, front=0.86, back=1.0)
         blob((0.86, 0.54, 0.80), P(0, -0.36, -0.28), BELLY)
         for sx in (-1, 1):                                      # 肩膀：前肢掛在這裡
             blob((0.34, 0.52, 0.46), P(sx*0.42, -0.18, -0.26), BODY)
@@ -116,7 +116,7 @@ def build(name):
             cone(0.11, 0.02, 0.20, P(0, 0.54, z), (0, 0, 0), 4, m=DARK)
 
     elif name == "neck":                     # 脖子：頸椎 + 撐頭的肌肉
-        seg((0.88, 0.86, 1.16), P(0, 0.04, -0.35), BODY, front=0.86, back=1.04)
+        seg((0.90, 0.88, 1.40), P(0, 0.04, -0.35), BODY, front=0.88, back=1.06)
         blob((0.60, 0.40, 0.90), P(0, -0.26, -0.36), BELLY)     # 喉嚨下垂肉
         for z in (-0.08, -0.34, -0.60):                         # 頸椎骨節
             cone(0.09, 0.02, 0.16, P(0, 0.38, z), (0, 0, 0), 4, m=DARK)
@@ -129,10 +129,11 @@ def build(name):
         blob((0.24, 0.14, 0.60), P(0, 0.18, -0.96), DARK)           # 鼻梁脊
         blob((0.34, 0.16, 0.44), P(0, 0.38, -0.30), DARK)           # 頭頂骨脊
         for sx in (-1, 1):
-            blob((0.17, 0.16, 0.34), P(sx*0.26, 0.29, -0.54), DARK)           # 眉脊（暴龍的招牌）
-            blob((0.14, 0.30, 0.30), P(sx*0.25, 0.19, -0.55), DARK)          # 眼窩
-            sphere(0.115, tuple(W + B((sx*0.30, 0.19, -0.57))), 12, 8, EYE)  # 眼球
-            sphere(0.062, tuple(W + B((sx*0.345, 0.19, -0.61))), 8, 6, PUPIL)
+            # 眉脊（暴龍的招牌）和眼窩要「長在」頭骨裡，只露一點：凸太多會像黏上去的泡泡
+            blob((0.13, 0.11, 0.30), P(sx*0.24, 0.27, -0.55), DARK)           # 眉脊
+            blob((0.10, 0.22, 0.24), P(sx*0.23, 0.19, -0.56), DARK)          # 眼窩
+            sphere(0.085, tuple(W + B((sx*0.265, 0.19, -0.575))), 14, 10, EYE)  # 眼球
+            sphere(0.045, tuple(W + B((sx*0.30, 0.19, -0.605))), 10, 8, PUPIL)
             blob((0.10, 0.09, 0.13), P(sx*0.12, 0.12, -1.14), DARK, seg=8, ring=6)  # 鼻孔
             blob((0.08, 0.14, 0.11), P(sx*0.30, 0.06, -0.20), DARK)          # 耳孔
             for i in range(7):                                               # 上排牙（往下咬）
@@ -168,7 +169,12 @@ def build(name):
         w = (1.02, 0.82, 0.58, 0.34)[i-1]
         h = (1.02, 0.82, 0.58, 0.34)[i-1]
         col = DARK if i == 4 else BODY
-        seg((w, h, 1.24), P(0, 0, 0.35), col, front=1.02, back=0.80)
+        if i == 4:
+            # 尾巴末節拉長收尖：骨架只到這裡，但暴龍的尾巴跟身體一樣長，外型要自己補
+            # front 1.4：起點要跟上一節的尾端（0.58×0.82）一樣粗，才不會突然變細
+            seg((w, h, 2.30), P(0, -0.04, 0.80), col, front=1.40, back=0.18)
+        else:
+            seg((w, h, 1.46), P(0, 0, 0.35), col, front=1.04, back=0.82)
         n = 3 if i < 4 else 2
         for k in range(n):
             z = 0.05 + k*0.30
@@ -200,10 +206,58 @@ def build(name):
         for sx in (-0.16, 0.0, 0.16):                           # 腳掌肉墊
             blob((0.17, 0.09, 0.17), P(sx, -0.15, -0.22), BELLY)
 
+# 暴龍的頭又大又重。骨架（trex.gd）的頭偏小，外型放大一點補回來
+HEAD_SCALE = {"head": 1.12, "jaw": 1.12}
+
+# 背上兩排鱗甲：從脖子一路排到尾巴，越後面越小。沒有貼圖，皮膚的質感就靠這些凸起
+SCUTES = {"neck": 0.36, "spine2": 0.52, "spine1": 0.60, "root": 0.66,
+          "tail1": 0.48, "tail2": 0.38, "tail3": 0.27}
+
+def scutes(name):
+    if name not in SCUTES:
+        return
+    W = WORLD[name]
+    top = SCUTES[name]
+    k = top / 0.66
+    zs = (0.10, 0.40) if name.startswith("tail") else (-0.10, -0.40)
+    if name == "root":
+        zs = (-0.20, 0.20)
+    for z in zs:
+        for sx in (-1, 1):
+            blob((0.16*k, 0.07*k, 0.20*k), tuple(W + B((sx*0.17*k, top - 0.04, z))), DARK, seg=10, ring=6)
+
 for name, _p, _o, _s, _c in RIG:
     build(name)
-    o = finish(name, bevel=0.008, seg=1)
+    scutes(name)
+    o = finish(name, bevel=0.008, seg=1, smooth=True)
     bpy.context.scene.cursor.location = WORLD[name]
     bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
+    if name in HEAD_SCALE:
+        # 以骨頭為中心放大，張嘴的關節位置差不到 3 公分，不用動骨架
+        o.scale = (HEAD_SCALE[name],) * 3
+        bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 bpy.context.scene.cursor.location = (0, 0, 0)
 print('trex ok:', len(bpy.data.objects), 'parts')
+
+
+def export(path):
+    """每個部件的原點在自己的骨頭上、location 歸零——trex.gd 把它掛到同名骨頭上就對位。
+    流程見 blender-game-models skill 的 export.py：先烘旋轉、再搬原點、最後歸零，順序不能換"""
+    for o in list(bpy.data.objects):
+        if o.type != 'MESH':
+            continue
+        for md in o.modifiers:
+            if md.type == 'BEVEL':
+                md.segments = 1
+        bpy.ops.object.select_all(action='DESELECT')
+        o.select_set(True)
+        bpy.context.view_layer.objects.active = o
+        bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+        bpy.context.scene.cursor.location = WORLD[o.name]
+        bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
+        o.location = (0, 0, 0)
+    bpy.context.scene.cursor.location = (0, 0, 0)
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.export_scene.gltf(filepath=path, export_format='GLB', use_selection=True,
+                              export_apply=True, export_yup=True)
+    print('exported ->', path)

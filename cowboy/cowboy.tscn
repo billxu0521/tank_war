@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="Script" path="res://cowboy/cowboy.gd" id="1_player"]
 [ext_resource type="Script" path="res://cowboy/viewmodel.gd" id="2_viewmodel"]
@@ -16,7 +16,6 @@
 [ext_resource type="AudioStream" path="res://assets/audio/footsteps/footstep3.mp3" id="15_step3"]
 [ext_resource type="AudioStream" path="res://assets/audio/jump_start.mp3" id="16_jump"]
 [ext_resource type="AudioStream" path="res://assets/audio/jump_end.mp3" id="17_land"]
-[ext_resource type="Material" path="res://assets/materials/player_body.tres" id="19_body"]
 
 [sub_resource type="CapsuleShape3D" id="Capsule_body"]
 resource_local_to_scene = true
@@ -31,14 +30,6 @@ stream_0/stream = ExtResource("12_step0")
 stream_1/stream = ExtResource("13_step1")
 stream_2/stream = ExtResource("14_step2")
 stream_3/stream = ExtResource("15_step3")
-
-[sub_resource type="CapsuleMesh" id="Body_torso"]
-resource_local_to_scene = true
-radius = 0.4
-height = 1.8
-
-[sub_resource type="BoxMesh" id="Body_face"]
-size = Vector3(0.3, 0.3, 0.3)
 
 ; 只複製別人真的看得到的東西。體力、彈藥、傾身、後座力、散布都是自己
 ; 畫面上的狀態，同步它們只是浪費頻寬。
@@ -70,9 +61,8 @@ shape = SubResource("Capsule_body")
 [node name="Head" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
 
+; 頭和帽子。網格在 cowboy.gd 的 _skin() 從 models/cowboy.glb 換上來（blender/cowboy.py 建的）
 [node name="Face" type="MeshInstance3D" parent="Head"]
-mesh = SubResource("Body_face")
-material_override = ExtResource("19_body")
 
 [node name="Camera3D" type="Camera3D" parent="Head"]
 near = 0.02
@@ -108,10 +98,8 @@ material_override = ExtResource("9_flash")
 cast_shadow = 0
 
 ; 遠端玩家的身體。自己身上是隱藏的，第一人稱不該看到自己的軀幹。
+; 原點在腳底，網格一樣由 _skin() 換上來
 [node name="Body" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
-mesh = SubResource("Body_torso")
-material_override = ExtResource("19_body")
 
 [node name="Sync" type="MultiplayerSynchronizer" parent="."]
 replication_config = SubResource("Sync_player")

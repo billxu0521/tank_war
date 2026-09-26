@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://0w3bt2yg8can"
-path="res://.godot/imported/tank.glb-3907167ee0d98c32d67c9e3b5542cdd3.scn"
+uid="uid://dpbda7i5ttou2"
+path="res://.godot/imported/cowboy.glb-30145f2c816081b2257c6aca9834bd0b.scn"
 
 [deps]
 
-source_file="res://models/tank.glb"
-dest_files=["res://.godot/imported/tank.glb-3907167ee0d98c32d67c9e3b5542cdd3.scn"]
+source_file="res://models/cowboy.glb"
+dest_files=["res://.godot/imported/cowboy.glb-30145f2c816081b2257c6aca9834bd0b.scn"]
 
 [params]
 

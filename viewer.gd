@@ -1,6 +1,6 @@
 class_name ModelViewer
 extends Node3D
-## 模型檢視模式：把戰車和暴龍單獨擺出來繞著看。
+## 模型檢視模式：把牛仔（連三把槍）和暴龍單獨擺出來繞著看。
 ##
 ## 存在的理由是「改完模型要有地方看」。Blender 裡看不到 Godot 的材質、
 ## 也看不到程式動畫，所以這裡要能讓暴龍真的走起來——它的步態是從實際位移
@@ -8,15 +8,18 @@ extends Node3D
 ##
 ## ponytail: 整個場景用程式建，不開 .tscn。就一個檔案，刪掉也不影響遊戲。
 
-const TANK_GLB := preload("res://models/tank.glb")
+const COWBOY_GLB := preload("res://models/cowboy.glb")
+## 三把槍擺在牛仔旁邊腰的高度，真實比例，看得出跟人比起來多大
+const GUNS := [preload("res://models/revolver.glb"), preload("res://models/shotgun.glb"),
+	preload("res://models/rifle.glb")]
 
 const KEYS := {
-	KEY_1: "tank", KEY_2: "trex", KEY_3: "both",
+	KEY_1: "cowboy", KEY_2: "trex", KEY_3: "both",
 }
 
 var _trex: Trex
-var _tank: Node3D
-var _turret: Node3D
+var _cowboy: Node3D
+var _head: Node3D
 var _cam: Camera3D
 var _label: Label
 var _ui: CanvasLayer
@@ -48,8 +51,8 @@ func _ready() -> void:
 	_trex = Trex.new()
 	add_child(_trex)
 
-	_tank = _build_tank()
-	add_child(_tank)
+	_cowboy = _build_cowboy()
+	add_child(_cowboy)
 
 	_cam = Camera3D.new()
 	_cam.fov = 50
@@ -106,18 +109,22 @@ func _ground() -> Node3D:
 			n.add_child(bar)
 	return n
 
-## 用 tank.tscn 一樣的節點位置把車組起來（那邊是 CharacterBody3D，搬進來會拖一堆遊戲邏輯）
-func _build_tank() -> Node3D:
+## 用 cowboy.tscn 一樣的節點位置把牛仔組起來（那邊是 CharacterBody3D，搬進來會拖一堆遊戲邏輯）。
+## 頭掛在 1.6 公尺的樞紐上，會慢慢上下看——遊戲裡別人就是這樣看出你在看哪。
+func _build_cowboy() -> Node3D:
 	var root := Node3D.new()
-	var src := TANK_GLB.instantiate()
-	root.add_child(_mesh_of(src, "Hull", Vector3.ZERO))
-	_turret = Node3D.new()
-	_turret.position.y = 0.9
-	_turret.add_child(_mesh_of(src, "Turret", Vector3.ZERO))
-	_turret.add_child(_mesh_of(src, "Barrel", Vector3(0, 0, -1.5)))
-	root.add_child(_turret)
+	var src := COWBOY_GLB.instantiate()
+	root.add_child(_mesh_of(src, "CowboyBody", Vector3.ZERO))
+	_head = Node3D.new()
+	_head.position.y = 1.6
+	_head.add_child(_mesh_of(src, "CowboyHead", Vector3.ZERO))
+	root.add_child(_head)
 	src.free()
-	root.position.y = 0.66     # 履帶底部貼到地面
+	for i in GUNS.size():
+		var gun: Node3D = GUNS[i].instantiate()   # 整個 glb 放進來，會動的零件在自己的轉軸上
+		gun.position = Vector3(0.55, 0.9 + i * 0.22, 0.2)
+		gun.rotation.y = -PI * 0.5                # 槍口朝右（遠離牛仔），從正面看得到側面
+		root.add_child(gun)
 	return root
 
 ## 8 字路徑。單純繞圓只會一直往同一邊傾，看不出換邊
@@ -134,10 +141,10 @@ func _mesh_of(src: Node, part: String, pos: Vector3) -> MeshInstance3D:
 
 func _select(which: String) -> void:
 	_subject = which
-	_trex.visible = which != "tank"
-	_tank.visible = which != "trex"
+	_trex.visible = which != "cowboy"
+	_cowboy.visible = which != "trex"
 	match which:
-		"tank": _focus = Vector3(0, 1.3, 0); _dist = 9.0
+		"cowboy": _focus = Vector3(0.2, 1.1, 0); _dist = 4.5
 		"trex": _focus = Vector3(0, 2.0, 0); _dist = 12.0
 		_:      _focus = Vector3(0, 1.7, 0); _dist = 15.0
 
@@ -184,18 +191,18 @@ func _process(delta: float) -> void:
 		_trex.global_position = tc + p0
 		var head := (p1 - p0)
 		_trex.rotation.y = atan2(-head.x, -head.z) + sin(a * 2.0) * 0.45
-		var b := -a * 0.7
-		_tank.global_position.x = kc.x + sin(b) * r
-		_tank.global_position.z = kc.z + cos(b) * r
-		_tank.rotation.y = b + PI * 0.5
-		_turret.rotation.y = sin(_t * 0.8) * 1.2      # 砲塔慢慢掃，看得出它會轉
+		# 牛仔原地慢慢轉身、上下看，繞一圈看得到前後
+		_cowboy.global_position = kc
+		_cowboy.rotation.y = _t * 0.5
+		_head.rotation.x = sin(_t * 1.1) * 0.35
 	else:
 		# 停下來時擺回原位，方便正面看細節
 		var both := _subject == "both"
 		_trex.global_position = Vector3(-3.6 if both else 0.0, 0, 0)
 		_trex.rotation.y = PI
-		_tank.global_position = Vector3(3.6 if both else 0.0, 0.66, 0)
-		_tank.rotation.y = PI
+		_cowboy.global_position = Vector3(3.6 if both else 0.0, 0, 0)
+		_cowboy.rotation.y = 0.0
+		_head.rotation.x = 0.0
 
 	_cam.position = _focus + Vector3(
 		_dist * cos(_pitch) * sin(_yaw),
@@ -203,8 +210,8 @@ func _process(delta: float) -> void:
 		_dist * cos(_pitch) * cos(_yaw))
 	_cam.look_at(_focus, Vector3.UP)
 
-	_label.text = "模型檢視　[%s]\n1 坦克　2 恐龍　3 兩個\n空白鍵 %s　F 咬一口　Tab %s\n左鍵拖曳轉視角　滾輪縮放　Esc 回大廳" % [
-		{"tank": "坦克", "trex": "恐龍", "both": "兩個"}[_subject],
+	_label.text = "模型檢視　[%s]\n1 牛仔和槍　2 恐龍　3 兩個\n空白鍵 %s　F 咬一口　Tab %s\n左鍵拖曳轉視角　滾輪縮放　Esc 回大廳" % [
+		{"cowboy": "牛仔和槍", "trex": "恐龍", "both": "兩個"}[_subject],
 		"停下" if _moving else "動起來",
 		"關線框" if _wire else "開線框",
 	]

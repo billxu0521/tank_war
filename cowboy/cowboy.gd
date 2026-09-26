@@ -70,6 +70,8 @@ class_name Cowboy
 ## bot 進這個距離才開槍。手槍腰射散布 4 度，再遠打人形靶就是浪費子彈。
 @export var bot_fire_range := 40.0
 
+const MODEL := preload("res://models/cowboy.glb")
+
 @onready var head: Node3D = $Head
 @onready var viewmodel: Viewmodel = $Head/Camera3D/Viewmodel
 @onready var _collision: CollisionShape3D = $CollisionShape3D
@@ -80,7 +82,6 @@ class_name Cowboy
 @onready var _hp_fill: ColorRect = $HUD/HealthBar/Fill
 @onready var _combat_fill: ColorRect = $HUD/CombatBar/Fill
 @onready var _body: MeshInstance3D = $Body
-@onready var _torso: CapsuleMesh = _body.mesh
 @onready var _face: MeshInstance3D = $Head/Face
 @onready var _step_sound: AudioStreamPlayer = get_node_or_null("StepSound")
 @onready var _jump_sound: AudioStreamPlayer = get_node_or_null("JumpSound")
@@ -129,6 +130,7 @@ func _ready() -> void:
 	_refresh_stamina_bar()
 
 	# 第一人稱不該看到自己的軀幹和臉
+	_skin()
 	_body.visible = not is_local
 	_face.visible = not is_local
 	if not is_local:
@@ -137,6 +139,17 @@ func _ready() -> void:
 	# 場景裡會有好幾台相機（每個玩家一台），不能靠 Godot 自動挑第一台——
 	# 那台可能是別人的。自己的一定要明講。
 	_camera.current = true
+
+
+## 把 Blender 建的牛仔（blender/cowboy.py）換到身體和頭上。
+## 頭掛在 Head 底下，跟著上下看的角度轉，別人看得出你在看哪裡。
+func _skin() -> void:
+	var src := MODEL.instantiate()
+	for pair in [["CowboyBody", _body], ["CowboyHead", _face]]:
+		var from := src.get_node_or_null(NodePath(pair[0])) as MeshInstance3D
+		if from:
+			(pair[1] as MeshInstance3D).mesh = from.mesh
+	src.free()
 
 
 ## 別人的角色：把所有「這是我的畫面」的東西關掉。少關一項的症狀都很難查
@@ -566,6 +579,5 @@ func _apply_crouch(crouching: bool, delta: float) -> void:
 	_capsule.height = h
 	_collision.position.y = h * 0.5
 	head.position.y = _stand_head_y - (stand_height - h)
-	# 身體 mesh 跟著縮，別人才看得出你蹲下了
-	_torso.height = h
-	_body.position.y = h * 0.5
+	# 身體跟著往下壓，別人才看得出你蹲下了。原點在腳底，所以只要縮 Y
+	_body.scale.y = h / stand_height

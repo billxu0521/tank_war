@@ -21,6 +21,7 @@ def mat(name, rgb, rough=0.6, metal=0.0):
     p.inputs['Base Color'].default_value = (*rgb, 1)
     p.inputs['Roughness'].default_value = rough
     p.inputs['Metallic'].default_value = metal
+    m.diffuse_color = (*rgb, 1)   # 視窗的 SOLID 模式看這個，不設的話截圖全是灰的
     return m
 
 _parts = []
@@ -73,8 +74,11 @@ def scale_verts(o, fn):
         v.co = fn(v.co)
     return o
 
-def finish(name, bevel=0.012, seg=2):
-    """把 _parts 裡的東西合成一個物件，加倒角"""
+def finish(name, bevel=0.012, seg=2, smooth=False, smooth_mats=()):
+    """把 _parts 裡的東西合成一個物件，加倒角。
+    smooth=False 是硬表面（槍、坦克）：每個面平面著色，邊角才利。
+    smooth=True 是生物：整顆平滑著色，不然球面一格一格像多面體。
+    smooth_mats：硬表面物件裡要平滑的材質名（槍的木頭部分：金屬邊要利、木頭要圓）"""
     global _parts
     parts = [p for p in _parts if p.name in bpy.data.objects]
     _parts = []
@@ -86,8 +90,30 @@ def finish(name, bevel=0.012, seg=2):
     o.name = name
     o.data.name = name
     bpy.ops.object.shade_smooth()
-    for p in o.data.polygons: p.use_smooth = False
+    if not smooth:
+        names = [s.material.name if s.material else '' for s in o.material_slots]
+        for p in o.data.polygons:
+            p.use_smooth = bool(names) and names[p.material_index] in smooth_mats
     b = o.modifiers.new('bevel', 'BEVEL')
     b.width = bevel; b.segments = seg; b.limit_method = 'ANGLE'; b.angle_limit = math.radians(35)
     b.harden_normals = False
     return o
+
+def view(eye, target, persp=True):
+    """視窗從 eye 看向 target（Blender 座標）。截圖檢查用，比手調四元數可靠"""
+    eye, target = Vector(eye), Vector(target)
+    d = target - eye
+    for area in bpy.context.screen.areas:
+        if area.type == 'VIEW_3D':
+            sp = area.spaces[0]
+            sp.shading.type = 'SOLID'
+            sp.shading.color_type = 'MATERIAL'
+            sp.overlay.show_floor = False
+            sp.overlay.show_axis_x = False
+            sp.overlay.show_axis_y = False
+            r3 = sp.region_3d
+            r3.view_perspective = 'PERSP' if persp else 'ORTHO'
+            r3.view_rotation = d.to_track_quat('-Z', 'Y')
+            r3.view_location = target
+            r3.view_distance = d.length
+    bpy.ops.object.select_all(action='DESELECT')
