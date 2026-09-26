@@ -1,9 +1,6 @@
 extends Node3D
 ## 西部牛仔打恐龍 — 區網原型。開房的人當恐龍，加入的人當牛仔（第一人稱）。
 
-## 主機在關鍵時刻發出的事件，sim.gd 用它做時間軸。之後要做擊殺播報也接得上。
-signal logged(text: String)
-
 const PORT := 24680
 const ARENA := 320.0        # 場地邊長
 const SPAWN_CLEARANCE := 7.0  # 出生點離建築至少這麼遠
@@ -293,8 +290,6 @@ func _on_died(killer: Node, who: Node) -> void:
 	if _over:
 		return
 	var as_dino := who.is_in_group(&"dino")
-	_log("%s 被 %s 打死%s" % [_who(who), _who(killer),
-		"（身上有蛋）" if egg.carrier == who.name.to_int() else ""])
 	if not as_dino:
 		_cowboys -= 1
 	_respawn_queue.append({
@@ -304,8 +299,8 @@ func _on_died(killer: Node, who: Node) -> void:
 		# 沙盒的靶要生回原地，不然打死一次靶就散到地圖各處
 		"pos": who.global_position if _sandbox else Vector3.INF,
 		"yaw": who.rotation.y,
-		# 用比賽剩餘秒數計時，不用真實時間：sim.gd 把遊戲加速 20 倍時，
-		# 真實 5 秒 = 遊戲裡 100 秒，死一次就缺席半場，量出來的數字全是假的
+		# 用比賽剩餘秒數計時，不用真實時間：遊戲時間跟真實時間不同步時（加速、卡頓）
+		# 重生才不會跟著跑掉
 		"at": _time_left - RESPAWN_DELAY,
 	})
 
@@ -356,7 +351,6 @@ func _physics_process(delta: float) -> void:
 		_set_clock.rpc(_clock)
 	if _time_left <= 0.0:
 		_over = true
-		_log("時間到，沒有人把蛋帶走")
 		_finish.rpc("時間到，沒有人把蛋帶走——恐龍獲勝！")
 
 @rpc("authority", "call_local", "reliable")
@@ -372,9 +366,6 @@ func _egg_step(delta: float) -> void:
 
 	var holder := players.get_node_or_null(NodePath(str(egg.carrier)))
 	if holder == null:
-		_log("蛋掉在 (%.0f, %.0f)，離最近的出口還有 %.0f 公尺%s" % [
-			egg.global_position.x, egg.global_position.z, _dist_to_exit(egg.global_position),
-			"（撤離進度 %.1f 秒作廢）" % egg.extract if egg.extract > 0.0 else ""])
 		egg.carrier = 0   # 持有者陣亡，蛋就掉在他最後的位置
 		egg.extract = 0.0
 		return
@@ -382,16 +373,12 @@ func _egg_step(delta: float) -> void:
 
 	# 要在圈內連續待滿才算數。離開就歸零；敵人站在圈裡不會中斷。
 	if _dist_to_exit(egg.global_position) < EXIT_RADIUS:
-		if egg.extract == 0.0:
-			_log("牛仔%d 進入撤離區，開始倒數 %.0f 秒" % [egg.carrier, EXTRACT_SECONDS])
 		egg.extract += delta
 		if egg.extract >= EXTRACT_SECONDS:
 			_over = true
-			_log("牛仔%d 撤離完成" % egg.carrier)
 			_finish_egg.rpc(egg.carrier)
 			return
-	elif egg.extract > 0.0:
-		_log("牛仔%d 離開撤離區，進度 %.1f 秒歸零" % [egg.carrier, egg.extract])
+	else:
 		egg.extract = 0.0
 
 func _process(_delta: float) -> void:
@@ -429,14 +416,6 @@ func _process(_delta: float) -> void:
 		dino.hp if dino else 0,
 		players.get_child_count() - (1 if dino else 0),
 		egg_state]
-
-func _log(text: String) -> void:
-	logged.emit("%6.1fs  %s" % [MATCH_SECONDS - maxf(_time_left, 0.0), text])
-
-func _who(n: Node) -> String:
-	if n == null:
-		return "不明"
-	return "恐龍" if n.is_in_group(&"dino") else "牛仔%s" % n.name
 
 func _dist_to_exit(p: Vector3) -> float:
 	var best := 9999.0
@@ -693,7 +672,6 @@ func _claim_step(delta: float) -> void:
 		egg.carrier = id
 		egg.pickup = 0.0
 		_claimer = 0
-		_log("%s 撿到蛋" % _who(near))
 
 ## 兩個撤離區，對邊各一個。只有一個出口的話恐龍蹲在那裡就好；
 ## 兩個保留了選擇，但競爭比四個集中，撤離區更容易變成三方交會的爭奪點。

@@ -94,7 +94,6 @@ TankWar.exe -- --sandbox    # 沙盒：靶場練槍
 ```sh
 godot                                    # 開專案
 godot --headless --script test_battle.gd # 自我檢查（壞掉會 exit 1）
-godot --headless --script sim.gd -- 20   # 全 bot 自動對戰 20 場，印勝率和局長
 ./build.sh                               # 打包 Windows + macOS 到 build/
 godot --headless --quit --editor         # 新增 class_name 後重建型別快取
 ```
@@ -108,7 +107,6 @@ godot --headless --quit --editor         # 新增 class_name 後重建型別快�
 | `dino.*` `trex.gd` `fireball.*` | 恐龍、骨架程式動畫（見 [程序化動畫筆記](docs/程序化動畫.md)）、火球 |
 | `assets/` | 從 FNE 搬來的音效、材質。授權見 `CREDITS.md` |
 | `test_battle.gd` | 自我檢查 |
-| `sim.gd` | 全 bot 自動對戰，把平衡問題變成可量測的 |
 
 坦克版的程式在 git 歷史裡（`d59b432` 之前），`models/tank.glb` 還留給模型檢視器用。
 
@@ -119,18 +117,6 @@ godot --headless --quit --editor         # 新增 class_name 後重建型別快�
 畫面通常跑 120fps 以上，物理留在預設的 60Hz 會讓每個位置被連續畫兩次，
 動起來像有殘影。拉到 120 對齊後就沒了。
 
-## 平衡現況（6 場全 bot 對戰，鄉村地圖、三把新槍，佔位數值）
-
-| | |
-|---|---|
-| 牛仔勝率 | **100%**（6 場都撤離成功） |
-| 平均局長 | 98 秒（上限 240） |
-| 平均死亡 | 牛仔 8.0 次／場，恐龍 1.5 次／場 |
-| 牛仔死因 | 恐龍 62%，彼此互殺 37% |
-| 持蛋被殺 | 佔撿蛋的 72% |
-
-牛仔一面倒。蛋很常易手，但最後總有人跑進撤離區——恐龍一次只能追一個人。
-這是 bot 的數字（沒有尋路、不翻越、只用左輪、不搧擊錘），當起點不是結論；勝負條件定了再調。
 
 ## 已知限制
 

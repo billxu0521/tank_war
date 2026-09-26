@@ -16,7 +16,7 @@ const LOOK_SETTLE_MS := 1500  # 滑鼠鎖定後先忽略這麼久的位移
 
 @export var max_hp := 100
 ## true = 電腦操控。不讀鍵盤，自己照優先序決策。
-## 練習模式和 sim.gd 的自動對戰都用這個。
+## 離線練習模式用這個。
 @export var bot := false
 
 var hp := 0
