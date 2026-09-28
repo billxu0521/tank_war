@@ -44,8 +44,12 @@ const MOVEMENT_FALLBACK: Array[StringName] = [&"walk", &"run", &"jump_start", &"
 @export var falloff_min := 0.5
 
 @export_group("Aim")
+## 槍口在模型裡的位置（Godot 軸向）。火光和煙從這裡出去；零＝用 ShotFX 原本的位置
+@export var muzzle := Vector3.ZERO
 ## ADS 時模型移到的位置（相對 Viewmodel）。腰射位置就是場景檔裡的 position。
 @export var ads_position := Vector3.ZERO
+## 腰射時槍多轉這麼多（弧度），舉槍時轉回正。Pax 腰射是往內斜、槍口朝準心
+@export var hip_rotation := Vector3.ZERO
 
 @export_group("Anim")
 ## 動作名 -> String（clip 名）或 Vector2(start, end)（分段）。
@@ -60,6 +64,8 @@ const MOVEMENT_FALLBACK: Array[StringName] = [&"walk", &"run", &"jump_start", &"
 ## 掛在會動的零件底下就會跟著動：步槍的右手掛拉桿、散彈的左手掛槍管（換彈折開時手跟著下去）
 @export var grip_parent: NodePath = ^"Model"
 @export var grip_hand := Transform3D()
+## 右手前臂繞手腕多轉多少（弧度）。手轉去包住握把時，手臂要轉回來往畫面外伸
+@export var grip_arm_rotation := Vector3.ZERO
 ## 空的＝單手拿（左輪）
 @export var support_parent: NodePath
 @export var support_hand := Transform3D()
@@ -74,6 +80,20 @@ const MOVEMENT_FALLBACK: Array[StringName] = [&"walk", &"run", &"jump_start", &"
 @export var lever_path: NodePath
 ## 折開式的槍管：換彈時往下折
 @export var barrel_path: NodePath
+
+@export_group("Revolver")
+## 單動左輪的整套動作（照 Hunt 的 Pax）：開槍槍口大翻、拇指扳擊錘；
+## 換彈舉起來開裝填門，左手推退殼桿、捏子彈一顆一顆塞。gate_path 空的就不做
+@export var gate_path: NodePath
+@export var ejector_path: NodePath
+@export var round_path: NodePath
+## 扳擊錘時拇指轉多少（弧度）：從貼在槍把左邊轉上去勾住扳手
+@export var thumb_cock := Vector3.ZERO
+## 換彈姿勢：槍舉起來、往左轉、右側（裝填門）朝鏡頭
+@export var reload_offset := Vector3(-0.03, 0.07, 0.03)
+@export var reload_rotation := Vector3(0.6, 1.2, 0.1)
+## 塞彈的左手在鏡頭座標裡的朝向：從左下方伸過來、指尖朝右上（不跟著槍轉，不然手臂會直直立起來）
+@export var load_hand_rotation := Vector3(0.6, -0.5, -0.3)
 
 var mag: int
 var current_action := &""
@@ -92,6 +112,17 @@ var _melee := 0.0        # 近戰槍托往前推，1 → 0
 var windup := 0.0
 ## 把槍放低 0..1（翻越、爬梯子時手要去撐東西），Viewmodel 每幀設
 var lower := 0.0
+## 舉槍程度 0..1，Viewmodel 每幀設。hip_rotation 乘 (1 - aim)
+var aim := 0.0
+var _since_fire := 9.0    # 開槍後幾秒，槍口上翻的曲線用
+var _round_t := 1.0       # 這一發塞彈進行到哪 0..1，1 = 沒在塞
+var _round_dur := 0.55
+var _thumb: Node3D
+var _load_hand: Node3D
+var _round: Node3D
+var _gate: Node3D
+var _ejector: Node3D
+var _ejector_rest := Vector3.ZERO
 
 @onready var _anim: AnimationPlayer = find_child("AnimationPlayer", true, false)
 
@@ -111,6 +142,13 @@ func _ready() -> void:
 	if _model:
 		_rest_pos = _model.position
 		_rest_rot = _model.rotation
+	_gate = get_node_or_null(gate_path)
+	_ejector = get_node_or_null(ejector_path)
+	if _ejector:
+		_ejector_rest = _ejector.position
+	_round = get_node_or_null(round_path)
+	if _round:
+		_round.visible = false
 	# GLTF 匯進來每個 clip 都不循環，把 looping 名單（含 _EMPTY 變體）改掉
 	for action in looping:
 		for n in [anim_map.get(action), anim_map.get(action + "_EMPTY")]:
@@ -151,10 +189,35 @@ func _add_hands() -> void:
 			mi.transform = h[2]
 			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF   # 視角模型貼著鏡頭，影子會怪
 			parent.add_child(mi)
+			if h[0] == &"HandGrip":
+				_thumb = _copy_mesh(src, &"HandGripThumb", mi)
+				var arm := _copy_mesh(src, &"HandGripArm", mi)
+				if arm:
+					arm.rotation = grip_arm_rotation
+	if not gate_path.is_empty():
+		_load_hand = _copy_mesh(src, &"HandLoad", get_node(model_path))
+		_load_hand.visible = false
 	src.free()
 
 
+## 從 cowboy.glb 拿一個網格掛到 parent 底下，位置用它在 glb 裡的節點位置
+## （拇指的節點位置就是拇指根部在手裡的位置）
+func _copy_mesh(src: Node, mesh_name: StringName, parent: Node) -> MeshInstance3D:
+	var from := src.get_node_or_null(String(mesh_name)) as MeshInstance3D
+	if from == null:
+		return null
+	var mi := MeshInstance3D.new()
+	mi.name = String(mesh_name)
+	mi.mesh = from.mesh
+	mi.transform = from.transform
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(mi)
+	return mi
+
+
 func has_action(action: StringName) -> bool:
+	if not _anim and _gate and action in [&"reload_start", &"reload_end"]:
+		return true
 	return anim_map.has(String(action))
 
 
@@ -194,6 +257,19 @@ func play(action: StringName, blend := 0.15, fitted := -1.0) -> float:
 	return length / speed2
 
 
+## 槍口的世界座標；沒設 muzzle 回傳 null
+func muzzle_global() -> Variant:
+	if muzzle == Vector3.ZERO or not _model:
+		return null
+	return _model.to_global(muzzle)
+
+
+## 換彈被中斷（開槍、換槍、近戰）：姿勢馬上開始收回，手上那顆不塞了
+func stop_reload() -> void:
+	_reload_left = 0.0
+	_round_t = 1.0
+
+
 ## 名稱對應場景裡的 AudioStreamPlayer 子節點（ShootSound / ReloadSound / EmptySound）。
 ## 沒放就不出聲，不會爆。
 func play_sound(name: StringName) -> void:
@@ -210,15 +286,27 @@ func _play_procedural(action: StringName, fitted: float) -> float:
 	match action:
 		&"fire", &"fire_EMPTY":
 			_kick = 1.0
+			_since_fire = 0.0
 			_cycle = 0.0
 			_cycle_time = maxf(fitted, 0.05)
-			_turns += 1
+			_reload_left = 0.0     # 換到一半開槍：槍直接回來
+			_round_t = 1.0
+			if not _gate:
+				_turns += 1        # 左輪的轉輪是扳擊錘時才轉（_procedural 裡）
 			return _cycle_time
+		&"reload_start":
+			_reload_left = 0.5
+			return 0.3
 		&"reload", &"reload_round":
 			var t := fitted if fitted > 0.0 else 0.5
 			# 多撐一點：逐發裝填每發之間姿勢不要彈回去又拉下來
 			_reload_left = t + 0.15
+			_round_t = 0.0
+			_round_dur = t
 			return t
+		&"reload_end":
+			_reload_left = 0.0
+			return 0.3
 		&"melee":
 			_melee = 1.0
 			return 0.35
@@ -227,23 +315,45 @@ func _play_procedural(action: StringName, fitted: float) -> float:
 
 func _procedural(delta: float) -> void:
 	_kick = move_toward(_kick, 0.0, delta * 7.0)
+	var was := _cycle
 	_cycle = minf(_cycle + delta / _cycle_time, 1.0)
+	_since_fire += delta
 	_melee = move_toward(_melee, 0.0, delta * 3.0)
 	_reload_left = maxf(_reload_left - delta, 0.0)
-	_reload_pose = move_toward(_reload_pose, 1.0 if _reload_left > 0.0 else 0.0, delta * 6.0)
+	_reload_pose = move_toward(_reload_pose, 1.0 if _reload_left > 0.0 else 0.0, delta * 5.0)
+	var cock := 0.0   # 拇指扳擊錘 0..1（只有左輪）
 
-	if _model:
+	if _gate:
+		# 開槍 0.03 秒內槍口翻到頂，再慢慢回來。Pax 的後座是一大翻，不是往後頓一下
+		var flip := _since_fire / 0.03 if _since_fire < 0.03 else exp(-(_since_fire - 0.03) * 9.0)
+		# 扳擊錘：上膛時間的後半段。拇指伸上去勾住扳手（0.35–0.55）、連擊錘一起往下拉（0.55–0.85）、放回去
+		cock = smoothstep(0.35, 0.55, _cycle) - 0.4 * smoothstep(0.55, 0.85, _cycle) - 0.6 * smoothstep(0.85, 1.0, _cycle)
+		if was < 0.75 and _cycle >= 0.75:
+			_turns += 1    # 擊錘扳到一半轉輪就轉到下一格
+		var rp := smoothstep(0.0, 1.0, _reload_pose)
+		var hip := 1.0 - aim
+		if _model:
+			var thrust := sin(PI * _melee)
+			_model.position = _rest_pos + reload_offset * rp + Vector3(0.12 * lower, 0.025 * flip - 0.22 * lower,
+				0.05 * flip - 0.18 * thrust + 0.12 * windup + 0.05 * lower)
+			_model.rotation = _rest_rot + hip_rotation * hip * (1.0 - rp) + reload_rotation * rp \
+				+ Vector3(0.55 * flip - 0.3 * thrust - 0.8 * lower, 0.0, 0.1 * flip - 0.12 * cock + 0.4 * windup + 0.5 * lower)
+		_revolver_reload(delta, rp)
+	elif _model:
 		var thrust := sin(PI * _melee)   # 推出去再收回來
 		# 後座：往後退、槍口上揚。換彈：往下沉、往內側翻，看得到裝填口。近戰：往前捅
 		_model.position = _rest_pos + Vector3(0.12 * lower, -0.05 * _reload_pose - 0.22 * lower,
 			0.06 * _kick - 0.18 * thrust + 0.12 * windup + 0.05 * lower)
-		_model.rotation = _rest_rot + Vector3(0.22 * _kick - 0.35 * _reload_pose - 0.3 * thrust - 0.8 * lower,
+		_model.rotation = _rest_rot + hip_rotation * (1.0 - aim) + Vector3(0.22 * _kick - 0.35 * _reload_pose - 0.3 * thrust - 0.8 * lower,
 			0.0, 0.5 * _reload_pose + 0.4 * windup + 0.5 * lower)
 
 	# 擊錘：模型建的是扳起來的樣子。開槍瞬間往前打下去，上膛後半段扳回來
 	var hammer := get_node_or_null(hammer_path) as Node3D
 	if hammer:
-		hammer.rotation.x = -0.55 * (1.0 - smoothstep(0.35, 1.0, _cycle))
+		var back := smoothstep(0.55, 0.85, _cycle) if _gate else smoothstep(0.35, 1.0, _cycle)
+		hammer.rotation.x = -0.55 * (1.0 - back)
+	if _thumb and _gate:
+		_thumb.rotation = thumb_cock * cock
 	var cyl := get_node_or_null(cylinder_path) as Node3D
 	if cyl:
 		cyl.rotation.z = rotate_toward(cyl.rotation.z, wrapf(_turns * TAU / 6.0, -PI, PI), delta * 12.0)
@@ -254,3 +364,64 @@ func _procedural(delta: float) -> void:
 	var barrel := get_node_or_null(barrel_path) as Node3D
 	if barrel:
 		barrel.rotation.x = -0.6 * _reload_pose
+
+
+# 塞彈的關鍵位置（槍模型座標，Godot 軸向）。捏的那一點＝彈底
+const LOAD_AWAY := Vector3(-0.10, -0.20, 0.20)       # 手在畫面外左下
+const LOAD_FETCH := Vector3(-0.04, -0.08, 0.09)      # 伸去拿子彈
+const LOAD_KNOB := Vector3(0.016, 0.036, -0.162)     # 退殼桿推鈕前面
+const LOAD_PUSHED := Vector3(0.016, 0.036, -0.130)
+const LOAD_OUT := Vector3(0.0108, 0.0288, 0.035)     # 對準裝填門後面
+const LOAD_IN := Vector3(0.0108, 0.0288, -0.006)     # 子彈塞進去了
+const ROUND_HALF := 0.0148                           # 子彈原點到彈底
+
+
+## 一發的流程（_round_t 0→1）：伸手→推退殼桿把空殼頂出來→拿子彈→對準裝填門塞進去→放手。
+## 轉輪在塞完之後轉一格，下一發對到裝填門
+func _revolver_reload(delta: float, rp: float) -> void:
+	if _gate:
+		_gate.rotation.z = -1.4 * smoothstep(0.3, 0.8, rp)   # 往右下翻開
+	var was := _round_t
+	if _round_t < 1.0:
+		_round_t = minf(_round_t + delta / _round_dur, 1.0)
+	var t := _round_t
+	var hand := LOAD_AWAY
+	var push := 0.0
+	var round_at := Vector3.ZERO
+	var round_on := false
+	if t < 1.0:
+		if t < 0.15:
+			hand = LOAD_AWAY.lerp(LOAD_KNOB, smoothstep(0.0, 0.15, t))
+		elif t < 0.3:
+			push = smoothstep(0.15, 0.28, t)
+			hand = LOAD_KNOB.lerp(LOAD_PUSHED, push)
+		elif t < 0.48:
+			push = 1.0 - smoothstep(0.3, 0.4, t)
+			hand = LOAD_PUSHED.lerp(LOAD_FETCH, smoothstep(0.3, 0.48, t))
+		elif t < 0.66:
+			hand = LOAD_FETCH.lerp(LOAD_OUT, smoothstep(0.48, 0.66, t))
+		elif t < 0.82:
+			hand = LOAD_OUT.lerp(LOAD_IN, smoothstep(0.66, 0.82, t))
+		else:
+			hand = LOAD_IN.lerp(LOAD_AWAY, smoothstep(0.82, 1.0, t))
+		# 空殼：推退殼桿時從裝填門往後彈出、往下掉
+		if t > 0.2 and t < 0.45:
+			var k := t - 0.2
+			round_at = LOAD_IN + Vector3(0.0, 0.0, -ROUND_HALF) + Vector3(0.05 * k, -1.2 * k * k, 0.35 * k)
+			round_on = true
+		elif t >= 0.45 and t < 0.82:
+			round_at = hand + Vector3(0.0, 0.0, -ROUND_HALF)
+			round_on = true
+		if was < 0.85 and t >= 0.85:
+			_turns += 1
+	if _ejector:
+		_ejector.position = _ejector_rest + Vector3(0.0, 0.0, 0.032 * push)
+	if _load_hand:
+		# 沒在塞的時候手慢慢退到畫面外；退到了就藏起來
+		_load_hand.position = hand if t < 1.0 else _load_hand.position.lerp(LOAD_AWAY, minf(delta * 10.0, 1.0))
+		if _model:
+			_load_hand.basis = _model.basis.inverse() * Basis.from_euler(load_hand_rotation)
+		_load_hand.visible = rp > 0.05 and (t < 1.0 or _load_hand.position.distance_to(LOAD_AWAY) > 0.01)
+	if _round:
+		_round.visible = round_on
+		_round.position = round_at

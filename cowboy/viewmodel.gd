@@ -151,6 +151,7 @@ func _process(delta: float) -> void:
 		_update_melee_input(delta)
 	# 翻越、爬梯子時槍放低（手去撐東西了）
 	weapon.lower = move_toward(weapon.lower, 1.0 if (_player.vaulting or _player.is_climbing()) else 0.0, delta * 6.0)
+	weapon.aim = ads
 	_update_ads(Input.is_action_pressed("aim"), delta)
 	_update_breath(Input.is_action_pressed("sprint"), delta)
 	_update_sway(delta)
@@ -310,8 +311,7 @@ func try_fire(fanning := false) -> void:
 		dirs.append(_spread_direction(_camera, weapon.pellet_spread + (weapon.fan_spread if fanning else 0.0)))
 	var from := _camera.global_position
 	_launch(_index, from, dirs, false)
-	if _fx:
-		_fx.flash()
+	_muzzle_flash(weapon)
 	# 自己開的槍、或主機上的 bot 開的槍（bot 的 authority 是主機），廣播給其他人看火光和子彈
 	if is_multiplayer_authority():
 		_remote_shot.rpc(_index, from, dirs)
@@ -330,9 +330,18 @@ func _remote_shot(index: int, from: Vector3, dirs: PackedVector3Array) -> void:
 	if index < 0 or index >= _weapons.size():
 		return
 	_weapons[index].play_sound(&"Shoot")
-	if _fx:
-		_fx.flash()
+	_muzzle_flash(_weapons[index])
 	_launch(index, from, dirs, true)
+
+
+## 火光和煙擺到這把槍真正的槍口（槍在動，每把槍的槍口也不一樣）
+func _muzzle_flash(w: Weapon) -> void:
+	if not _fx:
+		return
+	var at = w.muzzle_global()
+	if at != null:
+		_fx.global_position = at
+	_fx.flash()
 
 
 ## 生子彈。從鏡頭中心出發（所以瞄具不用歸零：近距離打哪中哪，遠了往下掉）。
@@ -404,6 +413,7 @@ func try_reload() -> void:
 func cancel_reload() -> void:
 	_reload_id += 1
 	_reloading = false
+	weapon.stop_reload()
 
 
 ## 在正前方為軸的圓錐內隨機取一個方向。sqrt 是為了讓落點在圓面上均勻，

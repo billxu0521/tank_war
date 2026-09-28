@@ -5,6 +5,8 @@ class_name ShotFX
 
 @export_group("Muzzle")
 @export var flash_time := 0.05
+@export var smoke_lifetime := 1.2
+@export var smoke_size := 0.2
 
 @export_group("Holes")
 ## 打在牆上的彈孔。可破壞物（會動、會消失）不留孔。
@@ -62,6 +64,57 @@ func flash() -> void:
 		# 每發轉一個隨機角度，連射看起來才不像同一張貼圖閃爍
 		_flash.rotation.z = randf() * TAU
 	_flash_left = flash_time
+	_spawn_smoke(global_position, -global_basis.z)
+
+
+## 黑火藥的白煙：一團往前噴、慢慢變大、飄起來、散掉。Pax 開一槍眼前就是一團煙
+func _spawn_smoke(at: Vector3, forward: Vector3) -> void:
+	var smoke := CPUParticles3D.new()
+	smoke.emitting = false
+	smoke.mesh = _smoke_mesh()
+	smoke.amount = 16
+	smoke.lifetime = smoke_lifetime
+	smoke.one_shot = true
+	smoke.explosiveness = 0.9
+	smoke.direction = forward
+	smoke.spread = 30.0
+	smoke.initial_velocity_min = 1.2
+	smoke.initial_velocity_max = 3.5
+	smoke.damping_min = 3.0
+	smoke.damping_max = 5.0
+	smoke.gravity = Vector3(0.0, 0.25, 0.0)
+	smoke.scale_amount_min = 0.6
+	smoke.scale_amount_max = 1.2
+	var grow := Curve.new()
+	grow.add_point(Vector2(0.0, 0.3))
+	grow.add_point(Vector2(1.0, 1.0))
+	smoke.scale_amount_curve = grow
+	var fade := Gradient.new()
+	fade.set_color(0, Color(1, 1, 1, 0.5))
+	fade.set_color(1, Color(1, 1, 1, 0.0))
+	smoke.color_ramp = fade
+	smoke.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_world.add_child(smoke)
+	smoke.global_position = at
+	smoke.emitting = true
+	_free_after(smoke, smoke_lifetime + 0.1)
+
+
+var _smoke: SphereMesh
+func _smoke_mesh() -> SphereMesh:
+	if _smoke == null:
+		_smoke = SphereMesh.new()
+		_smoke.radius = smoke_size
+		_smoke.height = smoke_size * 2.0
+		_smoke.radial_segments = 8
+		_smoke.rings = 4
+		var mat := StandardMaterial3D.new()
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.vertex_color_use_as_albedo = true     # color_ramp 的透明度要靠這個才吃得到
+		mat.albedo_color = Color(0.7, 0.69, 0.66)
+		mat.roughness = 1.0
+		_smoke.material = mat
+	return _smoke
 
 
 ## 子彈打到東西：火花；solid = 打到不會動的世界，留彈孔；sound = 要不要出著彈聲。

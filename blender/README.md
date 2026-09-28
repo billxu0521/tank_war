@@ -7,7 +7,8 @@
 - `props.py` — 場景物件：穀倉（牆身＋屋頂分開，照實際大小縮放）、農舍、筒倉、柵欄、乾草捲、橡樹、松樹、
   山崖（圍牆的外觀）、麥子、草叢、恐龍蛋、篷車（撤離點），全部進 `props.glb`
 - `cowboy.py` — 牛仔：身體（原點在腳底）、頭（原點在眼睛 1.6 公尺，跟著上下看轉）、兩條腿（原點在髖關節，走路擺動）、
-  自己看的靴子、第一人稱握槍的手（HandGrip / HandSupport，位置寫在各槍場景的 grip_hand / support_hand）
+  自己看的靴子、第一人稱握槍的手（HandGrip / HandSupport，位置寫在各槍場景的 grip_hand / support_hand；
+  右手的拇指 HandGripThumb、前臂 HandGripArm 分開，左輪扳擊錘和轉手臂用；HandLoad 是左輪換彈捏子彈的左手）
 - `trex.py` — 18 個部件，**名字和位置直接抄 trex.gd 的 `_rig()`**，所以程式動畫不用改
 
 ## 怎麼重建

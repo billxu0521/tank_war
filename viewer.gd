@@ -124,6 +124,9 @@ func _build_cowboy() -> Node3D:
 		var gun: Node3D = GUNS[i].instantiate()   # 整個 glb 放進來，會動的零件在自己的轉軸上
 		gun.position = Vector3(0.55, 0.9 + i * 0.22, 0.2)
 		gun.rotation.y = -PI * 0.5                # 槍口朝右（遠離牛仔），從正面看得到側面
+		var loose := gun.get_node_or_null(^"RevolverRound")   # 換彈用的子彈，原點在扳機，不藏會卡在護弓裡
+		if loose:
+			loose.visible = false
 		root.add_child(gun)
 	return root
 

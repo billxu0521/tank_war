@@ -103,7 +103,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰兩條體力、沙盒、鄉村柵欄、地形起伏、F 開門爬梯子、翻柵欄和窗台、手腳、只剩連線和沙盒、遊戲局控制、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
+		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與左輪扳擊錘換彈動作音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰兩條體力、沙盒、鄉村柵欄、地形起伏、F 開門爬梯子、翻柵欄和窗台、手腳、只剩連線和沙盒、遊戲局控制、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
 	return true
 
 # --- 共用 ---
@@ -310,10 +310,43 @@ func _case_hunt_weapons() -> void:
 	_ck(revolver.get_node_or_null(revolver.cylinder_path) != null, "左輪的轉輪要找得到")
 	_ck(shotgun.get_node_or_null(shotgun.barrel_path) != null, "散彈的槍管要找得到，換彈才折得開")
 
-	# 開槍：程式動作要動起來（轉輪轉一格、後座）
+	# 開槍：程式動作要動起來。Pax：槍口大翻、拇指上去扳擊錘，扳到一半轉輪轉一格
 	var turns: int = revolver._turns
 	revolver.play(&"fire", 0.1, 0.45)
-	_ck(revolver._turns == turns + 1 and revolver._kick > 0.0, "開槍要有後座、轉輪要轉")
+	_ck(revolver._kick > 0.0, "開槍要有後座")
+	var thumb_max := 0.0
+	for i in 60:
+		revolver._procedural(0.45 / 50.0)
+		thumb_max = maxf(thumb_max, revolver._thumb.rotation.length())
+	_ck(revolver._turns == turns + 1, "扳完擊錘轉輪要轉一格")
+	_ck(thumb_max > 1.0 and revolver._thumb.rotation.length() < 0.05, "拇指要伸上去扳擊錘、再放回來")
+	var hammer: Node3D = revolver.get_node(revolver.hammer_path)
+	_ck(absf(hammer.rotation.x) < 0.01, "扳完擊錘要停在扳起來的位置")
+	_ck(revolver.muzzle_global() != null, "左輪要設槍口位置，火光和煙才對得上")
+
+	# 換彈：舉起來開裝填門，左手推退殼桿、捏著子彈塞進去，塞完轉一格
+	revolver.play(&"reload_start")
+	revolver.play(&"reload_round", 0.1, 0.55)
+	var gate: Node3D = revolver.get_node(revolver.gate_path)
+	var ejector: Node3D = revolver.get_node(revolver.ejector_path)
+	var round_seen := false
+	var hand_seen := false
+	var pushed := 0.0
+	var gate_open := 0.0
+	turns = revolver._turns
+	for i in 60:
+		revolver._procedural(0.55 / 50.0)
+		round_seen = round_seen or revolver._round.visible
+		hand_seen = hand_seen or revolver._load_hand.visible
+		pushed = maxf(pushed, ejector.position.z - revolver._ejector_rest.z)
+		gate_open = minf(gate_open, gate.rotation.z)
+	_ck(gate_open < -1.0, "換彈要打開裝填門")
+	_ck(pushed > 0.02 and round_seen and hand_seen, "左手要推退殼桿、拿子彈塞進去")
+	_ck(revolver._turns == turns + 1, "塞完一發轉輪要轉一格")
+	revolver.stop_reload()
+	for i in 60:
+		revolver._procedural(1.0 / 60.0)
+	_ck(gate.rotation.z > -0.05 and not revolver._load_hand.visible, "換彈中斷，門要關、左手要收走")
 
 	# 音效開頭不能有空白：扣扳機到出聲超過 20 毫秒就會覺得延遲
 	for w in vm._weapons:

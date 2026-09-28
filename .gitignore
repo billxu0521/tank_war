@@ -2,3 +2,5 @@
 .godot/
 /android/
 /build/
+.DS_Store
+docs/movie/
