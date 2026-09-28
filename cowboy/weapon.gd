@@ -81,6 +81,24 @@ const MOVEMENT_FALLBACK: Array[StringName] = [&"walk", &"run", &"jump_start", &"
 ## 折開式的槍管：換彈時往下折
 @export var barrel_path: NodePath
 
+@export_group("Reload pose")
+## 換彈時槍移到哪、轉多少：要讓塞子彈的入口朝向鏡頭（左輪的裝填門、步槍右側的門、散彈的膛室）
+@export var reload_offset := Vector3(0.0, -0.05, 0.0)
+@export var reload_rotation := Vector3(-0.35, 0.0, 0.5)
+
+@export_group("Hand reload")
+## 長槍的右手換彈：離開握把、伸到畫面外拿一顆、塞進去、回來握好。
+## 子彈的位置寫在 load_space 的座標裡（散彈是折開的槍管，步槍是整把槍）
+@export var hand_round_path: NodePath
+@export var load_space_path: NodePath = ^"Model"
+## 子彈中心：塞之前（對準入口）和塞進去之後
+@export var load_out := Vector3.ZERO
+@export var load_in := Vector3.ZERO
+## 手（拳頭中心）相對子彈中心的位置：拳頭在子彈後面
+@export var load_hand_offset := Vector3(0.0, -0.012, 0.045)
+## 折開時先把空殼彈出來（散彈）
+@export var load_eject := false
+
 @export_group("Revolver")
 ## 單動左輪的整套動作（照 Hunt 的 Pax）：開槍槍口大翻、拇指扳擊錘；
 ## 換彈舉起來開裝填門，左手推退殼桿、捏子彈一顆一顆塞。gate_path 空的就不做
@@ -89,9 +107,6 @@ const MOVEMENT_FALLBACK: Array[StringName] = [&"walk", &"run", &"jump_start", &"
 @export var round_path: NodePath
 ## 扳擊錘時拇指轉多少（弧度）：從貼在槍把左邊轉上去勾住扳手
 @export var thumb_cock := Vector3.ZERO
-## 換彈姿勢：槍舉起來、往左轉、右側（裝填門）朝鏡頭
-@export var reload_offset := Vector3(-0.03, 0.07, 0.03)
-@export var reload_rotation := Vector3(0.6, 1.2, 0.1)
 ## 塞彈的左手在鏡頭座標裡的朝向：從左下方伸過來、指尖朝右上（不跟著槍轉，不然手臂會直直立起來）
 @export var load_hand_rotation := Vector3(0.6, -0.5, -0.3)
 
@@ -121,6 +136,8 @@ var _thumb: Node3D
 var _load_hand: Node3D
 var _round: Node3D
 var _gate: Node3D
+var _grip: Node3D           # 右手，長槍換彈時會離開握把
+var _hand_round: Node3D
 var _ejector: Node3D
 var _ejector_rest := Vector3.ZERO
 
@@ -149,6 +166,9 @@ func _ready() -> void:
 	_round = get_node_or_null(round_path)
 	if _round:
 		_round.visible = false
+	_hand_round = get_node_or_null(hand_round_path)
+	if _hand_round:
+		_hand_round.visible = false
 	# GLTF 匯進來每個 clip 都不循環，把 looping 名單（含 _EMPTY 變體）改掉
 	for action in looping:
 		for n in [anim_map.get(action), anim_map.get(action + "_EMPTY")]:
@@ -190,6 +210,7 @@ func _add_hands() -> void:
 			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF   # 視角模型貼著鏡頭，影子會怪
 			parent.add_child(mi)
 			if h[0] == &"HandGrip":
+				_grip = mi
 				_thumb = _copy_mesh(src, &"HandGripThumb", mi)
 				var arm := _copy_mesh(src, &"HandGripArm", mi)
 				if arm:
@@ -342,10 +363,13 @@ func _procedural(delta: float) -> void:
 	elif _model:
 		var thrust := sin(PI * _melee)   # 推出去再收回來
 		# 後座：往後退、槍口上揚。換彈：往下沉、往內側翻，看得到裝填口。近戰：往前捅
-		_model.position = _rest_pos + Vector3(0.12 * lower, -0.05 * _reload_pose - 0.22 * lower,
+		var rp := smoothstep(0.0, 1.0, _reload_pose)
+		_model.position = _rest_pos + reload_offset * rp + Vector3(0.12 * lower, -0.22 * lower,
 			0.06 * _kick - 0.18 * thrust + 0.12 * windup + 0.05 * lower)
-		_model.rotation = _rest_rot + hip_rotation * (1.0 - aim) + Vector3(0.22 * _kick - 0.35 * _reload_pose - 0.3 * thrust - 0.8 * lower,
-			0.0, 0.5 * _reload_pose + 0.4 * windup + 0.5 * lower)
+		_model.rotation = _rest_rot + hip_rotation * (1.0 - aim) * (1.0 - rp) + reload_rotation * rp \
+			+ Vector3(0.22 * _kick - 0.3 * thrust - 0.8 * lower, 0.0, 0.4 * windup + 0.5 * lower)
+	if not _gate:
+		_hand_reload(delta)
 
 	# 擊錘：模型建的是扳起來的樣子。開槍瞬間往前打下去，上膛後半段扳回來
 	var hammer := get_node_or_null(hammer_path) as Node3D
@@ -364,6 +388,52 @@ func _procedural(delta: float) -> void:
 	var barrel := get_node_or_null(barrel_path) as Node3D
 	if barrel:
 		barrel.rotation.x = -0.6 * _reload_pose
+
+
+const HAND_POCKET := Vector3(0.14, -0.26, 0.16)   # 右手去拿子彈的地方（畫面外右下）
+
+
+## 長槍換一發（_round_t 0→1）：右手離開握把→畫面外拿子彈→對準入口→塞進去→回來握好。
+## 散彈折開的前段先把空殼往後上彈出來
+func _hand_reload(delta: float) -> void:
+	if not _grip or not _hand_round or not _model:
+		return
+	if _round_t < 1.0:
+		_round_t = minf(_round_t + delta / _round_dur, 1.0)
+	var t := _round_t
+	var space := get_node(load_space_path) as Node3D
+	var parent := _grip.get_parent() as Node3D
+	var to_parent := parent.global_transform.affine_inverse()
+	var rest := grip_hand.origin
+	var pocket := to_parent * _model.to_global(HAND_POCKET)
+	var out := to_parent * space.to_global(load_out + load_hand_offset)
+	var inn := to_parent * space.to_global(load_in + load_hand_offset)
+	var round_on := false
+	var round_at := Vector3.ZERO    # load_space 座標
+	if t < 1.0:
+		var hand := rest
+		if t < 0.25:
+			hand = rest.lerp(pocket, smoothstep(0.0, 0.25, t))
+		elif t < 0.5:
+			hand = pocket.lerp(out, smoothstep(0.25, 0.5, t))
+		elif t < 0.72:
+			hand = out.lerp(inn, smoothstep(0.5, 0.72, t))
+		else:
+			hand = inn.lerp(rest, smoothstep(0.72, 1.0, t))
+		_grip.position = hand
+		if t >= 0.3 and t < 0.72:
+			round_on = true
+			round_at = space.to_local(parent.to_global(hand)) - load_hand_offset
+		elif load_eject and t > 0.03 and t < 0.3:
+			var k := t / 0.3
+			round_at = load_in + Vector3(0.05 * k, 0.06 * k - 0.4 * k * k, 0.08 * k)   # 往後彈出一點、掉下去
+			round_on = true
+	else:
+		# 沒在換（或被打斷）：手滑回握把，不要瞬間跳回去
+		_grip.position = _grip.position.lerp(rest, minf(delta * 12.0, 1.0))
+	_hand_round.visible = round_on
+	if round_on:
+		_hand_round.global_transform = Transform3D(space.global_basis, space.to_global(round_at))
 
 
 # 塞彈的關鍵位置（槍模型座標，Godot 軸向）。捏的那一點＝彈底

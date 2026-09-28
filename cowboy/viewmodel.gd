@@ -71,11 +71,9 @@ class_name Viewmodel
 ## 存 NodePath 而不是直接 export Label：匯出的節點參考是在建立節點的當下解析的，
 ## HUD 在場景檔裡排在這個節點之後，那時候還不存在，只會拿到 null。
 @export var ammo_label_path: NodePath
-@export var crosshair_path: NodePath
 
 @onready var _player: Cowboy = owner
 @onready var ammo_label: Label = get_node_or_null(ammo_label_path)
-@onready var crosshair: Control = get_node_or_null(crosshair_path)
 @onready var _fx: ShotFX = get_parent().get_node_or_null("ShotFX")
 @onready var _camera: Camera3D = get_parent()
 
@@ -181,8 +179,6 @@ func _update_ads(wants: bool, delta: float) -> void:
 	ads = clampf(ads + (delta / ads_time) * (1.0 if aiming else -1.0), 0.0, 1.0)
 	_camera.fov = lerpf(hip_fov, ads_fov, ads)
 	weapon.position = _hip_positions[_index].lerp(weapon.ads_position, ads)
-	if crosshair:
-		crosshair.visible = ads < 1.0
 
 
 func _update_spread(delta: float) -> void:

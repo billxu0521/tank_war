@@ -74,7 +74,6 @@ fov = 90.0
 script = ExtResource("2_viewmodel")
 weapon_scenes = Array[PackedScene]([ExtResource("6_pistol"), ExtResource("7_sawnoff"), ExtResource("8_shotgun")])
 ammo_label_path = NodePath("../../../HUD/AmmoLabel")
-crosshair_path = NodePath("../../../HUD/Crosshair")
 
 ; 這個節點的位置就是槍口，曳光和火光從這裡出去。位置是目測調的，不對就調 transform。
 [node name="ShotFX" type="Node3D" parent="Head/Camera3D"]
@@ -126,7 +125,10 @@ volume_db = -8.0
 ; 準心、體力、彈藥跟著牛仔走，不放在 main.tscn 的 UI，省掉跨場景接線
 [node name="HUD" type="CanvasLayer" parent="."]
 
+; 不是準心：平常藏著，打中人才閃一下紅（命中提示）
 [node name="Crosshair" type="Label" parent="HUD"]
+visible = false
+modulate = Color(1, 0.3, 0.25, 1)
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0

@@ -29,6 +29,12 @@ support_parent = NodePath("Model")
 support_hand = Transform3D(1, 0, 0, 0, 1.0000, -0.0000, 0, 0.0000, 1.0000, 0.0000, 0.0120, -0.2200)
 hammer_path = NodePath("Model/RifleHammer")
 lever_path = NodePath("Model/RifleLever")
+hand_round_path = NodePath("Model/RifleRound")
+load_out = Vector3(0.032, 0.01, -0.035)
+load_in = Vector3(0.016, 0.01, -0.085)
+load_hand_offset = Vector3(0.012, -0.015, 0.04)
+reload_offset = Vector3(-0.07, 0.06, 0.0)
+reload_rotation = Vector3(0.1, 0.15, 0.9)
 
 [node name="Model" parent="." instance=ExtResource("2_model")]
 

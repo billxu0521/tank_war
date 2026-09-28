@@ -224,8 +224,9 @@ func _process(delta: float) -> void:
 	# 翻越：鏡頭往下點頭、往側邊歪一下，看得出自己撐過去了
 	var v := sin(PI * vault_t)
 	_camera.rotation = Vector3(-0.22 * v, 0.0, 0.12 * v)
-	# 打中人準心閃紅，遠距離看不出血條掉，這是唯一的命中確認
-	_crosshair.modulate = Color(1, 0.3, 0.25) if hit_until > Time.get_ticks_msec() else Color.WHITE
+	# 沒有準心（跟 Hunt 一樣靠槍身瞄）。打中人時畫面中間閃一下紅 +：
+	# 遠距離看不出血條掉，這是唯一的命中確認
+	_crosshair.visible = hit_until > Time.get_ticks_msec()
 	_hp_fill.size.x = (_hp_fill.get_parent() as Control).size.x * clampf(float(hp) / max_hp, 0.0, 1.0)
 	_combat_fill.size.x = (_combat_fill.get_parent() as Control).size.x * combat_stamina / max_combat
 
@@ -451,7 +452,8 @@ func _bot_threat(g: Node) -> Node3D:
 	if g == null:
 		return null
 	if g._sandbox:
-		return g.players.get_node_or_null(^"1")   # 沙盒裡只打玩家，不去打站樁的靶
+		var me: Node3D = g.players.get_node_or_null(^"1")   # 沙盒裡只打玩家，不去打站樁的靶
+		return null if me and _bush_hides(g, me) else me
 	var my_id := name.to_int()
 	if g.egg.carrier != 0 and g.egg.carrier != my_id:
 		var holder: Node3D = g.players.get_node_or_null(NodePath(str(g.egg.carrier)))
@@ -459,12 +461,17 @@ func _bot_threat(g: Node) -> Node3D:
 			return holder
 	var best: Node3D = null
 	for p in g.players.get_children():
-		if p == self:
+		if p == self or _bush_hides(g, p):
 			continue
 		if best == null or global_position.distance_to(p.global_position) \
 				< global_position.distance_to(best.global_position):
 			best = p
 	return best
+
+
+## 蹲在灌木叢裡的人 bot 看不到，除非走到 6 公尺內
+func _bush_hides(g: Node, p: Node3D) -> bool:
+	return global_position.distance_to(p.global_position) > 6.0 and g.hidden_in_bush(p)
 
 
 ## 轉身、抬頭對準，然後照一般玩家的流程扣扳機（散布、後座力、裝填都一樣）。
@@ -699,8 +706,9 @@ func spend_combat(amount: float) -> void:
 	_recover_wait = recover_delay
 
 
-## 見底鎖住時變紅，讓玩家知道現在按衝刺沒用。
+## 見底鎖住時變紅，讓玩家知道現在按衝刺沒用。滿格就藏起來（沒有準心，畫面中間只剩一條線很突兀）
 func _refresh_stamina_bar() -> void:
+	(_stamina_fill.get_parent() as Control).visible = stamina < max_stamina - 0.01
 	_stamina_fill.size.x = _stamina_bar_width * (stamina / max_stamina)
 	_stamina_fill.color = (
 		Color(0.85, 0.25, 0.2) if _sprint_locked else Color(0.85, 0.85, 0.8)

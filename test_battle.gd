@@ -103,7 +103,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與左輪扳擊錘換彈動作音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰兩條體力、沙盒、鄉村柵欄、地形起伏、F 開門爬梯子、翻柵欄和窗台、手腳、只剩連線和沙盒、遊戲局控制、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
+		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與左輪扳擊錘換彈動作音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰兩條體力、沙盒、鄉村柵欄灌木、地形起伏、F 開門爬梯子、翻柵欄和窗台、手腳、只剩連線和沙盒、遊戲局控制、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
 	return true
 
 # --- 共用 ---
@@ -310,6 +310,14 @@ func _case_hunt_weapons() -> void:
 	_ck(revolver.get_node_or_null(revolver.cylinder_path) != null, "左輪的轉輪要找得到")
 	_ck(shotgun.get_node_or_null(shotgun.barrel_path) != null, "散彈的槍管要找得到，換彈才折得開")
 
+	# 腰射時槍管要跟視線平行：從玩家眼睛看，槍管才會指向準心
+	revolver._since_fire = 9.0
+	revolver._procedural(0.016)
+	var cam: Camera3D = me.get_node(^"Head/Camera3D")
+	var bore: Vector3 = -revolver.get_node(^"Model").global_basis.z
+	var off := rad_to_deg(bore.angle_to(-cam.global_basis.z))
+	_ck(off < 1.0, "腰射時左輪槍管要朝正前方（現在偏 %.1f 度）" % off)
+
 	# 開槍：程式動作要動起來。Pax：槍口大翻、拇指上去扳擊錘，扳到一半轉輪轉一格
 	var turns: int = revolver._turns
 	revolver.play(&"fire", 0.1, 0.45)
@@ -323,6 +331,11 @@ func _case_hunt_weapons() -> void:
 	var hammer: Node3D = revolver.get_node(revolver.hammer_path)
 	_ck(absf(hammer.rotation.x) < 0.01, "扳完擊錘要停在扳起來的位置")
 	_ck(revolver.muzzle_global() != null, "左輪要設槍口位置，火光和煙才對得上")
+	# 瞄準高度要等於準星頂（＝槍身最高點）。改了模型沒跟著改，舉槍就會對歪
+	var body: MeshInstance3D = revolver.get_node(^"Model/Revolver")
+	var sight_top := body.position.y + body.mesh.get_aabb().end.y
+	_ck(absf(revolver.ads_position.y + sight_top) < 0.001,
+		"左輪舉槍高度 %.4f 要對上準星頂 %.4f" % [-revolver.ads_position.y, sight_top])
 
 	# 換彈：舉起來開裝填門，左手推退殼桿、捏著子彈塞進去，塞完轉一格
 	revolver.play(&"reload_start")
@@ -347,6 +360,20 @@ func _case_hunt_weapons() -> void:
 	for i in 60:
 		revolver._procedural(1.0 / 60.0)
 	_ck(gate.rotation.z > -0.05 and not revolver._load_hand.visible, "換彈中斷，門要關、左手要收走")
+
+	# 長槍換彈：右手離開握把、拿一顆塞進去、再回來握好
+	for w: Node in [shotgun, rifle]:
+		var rest: Vector3 = w.grip_hand.origin
+		w.play(&"reload_round", 0.1, 0.8)
+		var left := 0.0
+		var seen := false
+		for i in 60:
+			w._procedural(0.8 / 50.0)
+			left = maxf(left, w._grip.position.distance_to(rest))
+			seen = seen or w._hand_round.visible
+		_ck(left > 0.1 and seen, "%s 換彈時右手要離開握把、拿著子彈" % w.display_name)
+		_ck(w._grip.position.distance_to(rest) < 0.01, "%s 換完右手要回到握把" % w.display_name)
+		w.stop_reload()
 
 	# 音效開頭不能有空白：扣扳機到出聲超過 20 毫秒就會覺得延遲
 	for w in vm._weapons:
@@ -505,6 +532,19 @@ func _case_rural() -> void:
 	var c: Node = m.players.get_node(^"2")
 	_ck(m.FENCE_H >= c.vault_min_height and m.FENCE_H <= c.vault_max_height,
 		"柵欄 %.1f 公尺要在翻越範圍 %.1f~%.1f 內" % [m.FENCE_H, c.vault_min_height, c.vault_max_height])
+	# 灌木叢：夠多、不長在建築裡和路上；蹲在裡面才藏得住（站著頭會露出來）
+	_ck(m._bushes.size() > 200, "要有灌木叢可以躲（現在 %d 叢）" % m._bushes.size())
+	var bad := 0
+	for b: Vector3 in m._bushes:
+		if not m._is_clear(Vector2(b.x, b.z)) or absf(b.x) < 6.0 or absf(b.z) < 6.0:
+			bad += 1
+	_ck(bad == 0, "灌木不能長在建築裡或路上（%d 叢）" % bad)
+	c.global_position = m._bushes[0] + Vector3(0.3, 0.2, 0)
+	c.sync_crouching = false
+	_ck(not m.hidden_in_bush(c), "站在灌木裡頭會露出來，不算藏住")
+	c.sync_crouching = true
+	_ck(m.hidden_in_bush(c), "蹲在灌木裡要藏得住")
+	c.sync_crouching = false
 	var fences := 0
 	for b in m.get_node(^"Arena").get_children():
 		if b is StaticBody3D and m.SANDBOX_RANGE.has_point(Vector2(b.global_position.x, b.global_position.z)) \
@@ -515,7 +555,7 @@ func _case_rural() -> void:
 	_ck(fences > 20, "鄉村要有柵欄（現在 %d 段）" % fences)
 	# 場景物件的模型都要載得到，名字對不上的話會變成看不見的空氣牆
 	for n in [&"Barn", &"BarnRoof", &"House", &"SiloBody", &"SiloDome", &"FenceRail",
-			&"FencePost", &"HayBale", &"TreeOak", &"TreePine", &"Cliff", &"WheatTuft", &"GrassClump",
+			&"FencePost", &"HayBale", &"TreeOak", &"TreePine", &"Bush", &"Cliff", &"WheatTuft", &"GrassClump",
 			&"Egg", &"Wagon"]:
 		_ck(m._props.get(n) is Mesh, "props.glb 裡要有 %s" % n)
 	_end(m)
@@ -558,6 +598,11 @@ func _case_terrain() -> void:
 	for p in [Vector2(37, -81), Vector2(-101, 13), Vector2(66, 66), Vector2(-5, 130)]:
 		var q := PhysicsRayQueryParameters3D.create(Vector3(p.x, 100, p.y), Vector3(p.x, -100, p.y))
 		var hit: Dictionary = space.intersect_ray(q)
+		# 上面可能剛好有樹、乾草捲：穿過去，只量地形（有 HeightMapShape3D 的那個）
+		while not hit.is_empty() and not hit["collider"].get_children().any(
+				func(c: Node) -> bool: return c is CollisionShape3D and c.shape is HeightMapShape3D):
+			q.exclude = q.exclude + [hit["rid"]]
+			hit = space.intersect_ray(q)
 		var want := t.height(p.x, p.y)
 		_ck(not hit.is_empty() and absf(hit["position"].y - want) < 0.3,
 			"(%d, %d) 的地面碰撞要在 %.2f（打到 %s）" % [p.x, p.y, want, hit.get("position", "沒打到")])
@@ -569,12 +614,15 @@ func _case_interact() -> void:
 	var me: Node3D = m.players.get_node(^"1")
 	# 草不能長進屋裡
 	var inside := 0
-	for n in m.get_node(^"Arena").get_children():
-		if n is MultiMeshInstance3D and n.multimesh.mesh == m._props[&"GrassClump"]:
-			for i in n.multimesh.instance_count:
-				var o: Vector3 = n.multimesh.get_instance_transform(i).origin
-				if not m._is_clear(Vector2(o.x, o.z)):
-					inside += 1
+	var spots := []
+	m._grass_field(spots)   # 沒畫面時 _build_arena 不長草，這裡直接長一次，拿位置清單來檢查
+	for s: Vector2 in spots:
+		if not m._is_clear(s):
+			inside += 1
+	var blades := 0
+	for n in m.get_tree().get_nodes_in_group(&"grass"):
+		blades += n.multimesh.instance_count
+	_ck(blades > 100000 and blades == spots.size(), "草地要長滿（現在 %d 叢）" % blades)
 	_ck(inside == 0, "草叢不能長在建築裡（有 %d 叢）" % inside)
 	_ck(m._doors.size() >= 3, "每棟穀倉至少兩扇滑門＋後門（現在全場 %d 扇門）" % m._doors.size())
 	var d: Door = m._doors[0]   # 第一棟穀倉左邊那扇滑門
@@ -601,9 +649,9 @@ func _case_interact() -> void:
 	# 梯子：抓住往上爬，爬到頂站到閣樓上
 	var lad: Ladder = null
 	for n in m.get_node(^"Arena").get_children():
-		if n is Ladder:
+		# 挑最高的一座（大穀倉）；牧場的小棚子閣樓本來就只有 2 公尺
+		if n is Ladder and (lad == null or n.top_y - n.foot.y > lad.top_y - lad.foot.y):
 			lad = n
-			break
 	_ck(lad != null, "穀倉裡要有梯子")
 	if lad:
 		me.start_climb(lad)

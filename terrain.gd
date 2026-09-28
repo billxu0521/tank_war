@@ -10,8 +10,8 @@ extends RefCounted
 ## 所以蓋之前先 settle()：太近的兩塊把高度往中間拉。
 ## 要做河道、懸崖再加新的區塊種類。
 
-const AMP := 9.0          # 丘陵起伏大約正負這麼多公尺。圍牆 40 要高過「9 + 最高屋頂 22 + 恐龍跳 6.5」
-const FREQ := 0.010       # 越小丘陵越寬。0.010 ≈ 一座丘陵一百公尺寬；最陡的坡要在 40 度內（測試會量）
+const AMP := 10.0         # 丘陵起伏正負這麼多公尺（最高到最低差 20）。圍牆 40 要高過「10 + 最高屋頂 22 + 恐龍跳 6.5」
+const FREQ := 0.012       # 越小丘陵越寬。0.012 ≈ 一座丘陵八十公尺寬；最陡的坡要在 40 度內（測試會量）
 const EDGE_FADE := 30.0   # 離圍牆這麼近開始降回 0，山崖底部才接得上
 ## 整平區邊緣接回丘陵的過渡寬度。smoothstep 最陡處的斜率是 1.5 × 高低差 / 寬度，
 ## 實測平地和旁邊丘陵最多差 10 公尺以上（靶場 -4.6、旁邊丘陵 5.9），要 30 公尺才壓得在 40 度內
@@ -22,6 +22,10 @@ var cell := 2.0
 var _noise := FastNoiseLite.new()
 ## 整平區：{"rect": Rect2, "h": 目標高度, "fall": 邊緣過渡寬度}。圓形的用外接方形 + 圓距離
 var _pads: Array[Dictionary] = []
+## build() 算好的格點高度和顏色：草地一叢一叢查高度用這個內插，比 height() 快很多
+var _grid_h := PackedFloat32Array()
+var _grid_c := PackedColorArray()
+var _n := 0
 
 
 func _init(arena_size: float, seed_value: int) -> void:
@@ -34,7 +38,7 @@ func _init(arena_size: float, seed_value: int) -> void:
 
 ## 還沒整平的原始地形
 func raw(x: float, z: float) -> float:
-	var h := _noise.get_noise_2d(x, z) * AMP * 1.6   # 雜訊實際大多落在 ±0.6，放大一點才看得出起伏
+	var h := _noise.get_noise_2d(x, z) * AMP * 2.0   # 雜訊實際大多落在 ±0.5，放大到山頂和谷底常常碰到 ±AMP
 	var to_edge := size * 0.5 - maxf(absf(x), absf(z))
 	return clampf(h, -AMP, AMP) * smoothstep(0.0, EDGE_FADE, to_edge)
 
@@ -140,6 +144,24 @@ func slope(x: float, z: float) -> float:
 	return 1.0 - n.y
 
 
+## 格點內插的高度：跟畫出來的地面一樣（地面本來就是這些格點連成的），build() 之後才能用
+func fast_height(x: float, z: float) -> float:
+	var fx := (x + size * 0.5) / cell
+	var fz := (z + size * 0.5) / cell
+	var ix := clampi(int(fx), 0, _n - 2)
+	var iz := clampi(int(fz), 0, _n - 2)
+	var i := iz * _n + ix
+	return lerpf(lerpf(_grid_h[i], _grid_h[i + 1], fx - ix),
+		lerpf(_grid_h[i + _n], _grid_h[i + _n + 1], fx - ix), fz - iz)
+
+
+## 最近格點的地面顏色（sRGB）
+func fast_color(x: float, z: float) -> Color:
+	var ix := clampi(roundi((x + size * 0.5) / cell), 0, _n - 1)
+	var iz := clampi(roundi((z + size * 0.5) / cell), 0, _n - 1)
+	return _grid_c[iz * _n + ix]
+
+
 ## 蓋出地面：畫面是頂點上色的 ArrayMesh，碰撞是同一份格點的 HeightMapShape3D。
 ## color_at(x, z, h) -> Color 由呼叫的人決定（路、麥田、草地）
 func build(color_at: Callable) -> StaticBody3D:
@@ -150,6 +172,9 @@ func build(color_at: Callable) -> StaticBody3D:
 		for ix in n:
 			heights[iz * n + ix] = height(-size * 0.5 + ix * cell, -size * 0.5 + iz * cell)
 
+	_n = n
+	_grid_h = heights
+	_grid_c.resize(n * n)
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	for iz in n:
@@ -157,7 +182,9 @@ func build(color_at: Callable) -> StaticBody3D:
 			var x := -size * 0.5 + ix * cell
 			var z := -size * 0.5 + iz * cell
 			var h := heights[iz * n + ix]
-			st.set_color(color_at.call(x, z, h))
+			var col: Color = color_at.call(x, z, h)
+			_grid_c[iz * n + ix] = col
+			st.set_color(col)
 			st.add_vertex(Vector3(x, h, z))
 	for iz in n - 1:
 		for ix in n - 1:

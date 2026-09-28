@@ -1,4 +1,4 @@
-# 鄉村場景物件：穀倉、農舍、筒倉、柵欄、乾草捲、兩種樹、山崖、麥子、草叢、蛋、篷車。
+# 鄉村場景物件：穀倉、農舍、筒倉、柵欄、乾草捲、兩種樹、灌木叢、山崖、麥子、草叢、蛋、篷車。
 #
 # 座標用 Blender 的：X 右、Y 前（= Godot -Z）、Z 上。單位公尺。
 # 每個物件都以「自己的原點」為準建在世界原點（匯出後 main.gd 直接拿 mesh 擺）：
@@ -11,6 +11,7 @@
 #   FencePost   柵欄最後收尾的那根木樁
 #   HayBale     圓捆乾草，軸是直的（遊戲裡跟碰撞圓柱一起放倒），原點在中心
 #   TreeOak / TreePine  原點在樹根，基準樹幹高 5
+#   Bush        灌木叢，原點在地面中央，約 2.2 寬 1.5 高（沒有碰撞，只擋視線）
 #
 # 跟 main.gd 共用的數字（改一邊要改另一邊）：
 #   BARN / BARN_PITCH = main.gd _barn() 的基準大小和 _roof() 的 0.55
@@ -516,6 +517,28 @@ for k in range(4):
     cone(r, 0.05, 2.8, (0, 0, 3.2 + k * 1.5), (0, 0, k * 0.4), 10, m=PINE)
 pine = finish('TreePine', bevel=0.0, seg=1)
 
+# 灌木叢：九團壓扁的葉團疊成一叢，約 2.2 寬、1.5 高——站著露出頭、蹲下整個藏住。
+# 沒有碰撞（跟 Hunt 一樣只擋視線、不擋子彈，人也走得進去）
+BUSH_DARK = mat('p_bush', (0.20, 0.30, 0.13), 0.9)
+for (x, y, z, r, sz, m) in ((0, 0, 0.75, 0.80, 0.85, LEAF1), (0.65, 0.25, 0.55, 0.62, 0.8, LEAF2),
+                            (-0.60, 0.30, 0.58, 0.65, 0.8, BUSH_DARK), (0.15, -0.60, 0.52, 0.60, 0.8, LEAF2),
+                            (-0.25, 0.65, 0.50, 0.55, 0.8, LEAF1), (0.55, -0.35, 0.95, 0.48, 0.9, LEAF1),
+                            (-0.45, -0.40, 0.90, 0.50, 0.9, BUSH_DARK), (0.10, 0.20, 1.15, 0.50, 0.85, LEAF2),
+                            (0.85, 0.55, 0.35, 0.42, 0.75, BUSH_DARK)):
+    o = sphere(r, (x, y, z), 9, 6, m=m)
+    o.scale = (1.0, 1.0, sz)
+import random
+_br = random.Random(11)
+for k in range(10):                                   # 外圍再補十團小的，輪廓才毛毛的
+    a = k * math.tau / 10 + _br.uniform(-0.2, 0.2)
+    rr = _br.uniform(0.75, 1.05)
+    sphere(_br.uniform(0.28, 0.40), (rr * math.cos(a), rr * math.sin(a), _br.uniform(0.35, 1.0)), 7, 5,
+           m=(LEAF1, LEAF2, BUSH_DARK)[k % 3])
+bush = finish('Bush', bevel=0.0, seg=1)
+# 每個頂點隨機推進推出：一團團圓球看起來像葡萄，推亂了才像葉子
+for v in bush.data.vertices:
+    v.co += Vector((_br.uniform(-1, 1), _br.uniform(-1, 1), _br.uniform(-1, 1))) * 0.07
+
 # ================= 山崖（圍牆的外觀） =================
 # 一段 40 公尺寬。內側面在 y=0、岩塊都往 +Y（牆外）長，才不會凸進場地——
 # 碰撞是 main.gd 的平面牆，凸進來的石頭會變成看得到、摸不到的東西
@@ -624,7 +647,7 @@ bpy.ops.object.select_all(action='DESELECT')
 # 看圖用的排版：沿 X 排開（匯出前會歸位）
 LAYOUT = {'Barn': 0, 'BarnRoof': 0, 'BarnCol': -30, 'BarnDoorSlide': 0, 'BarnBackDoor': 4,
           'House': 22, 'HouseCol': -50, 'HouseDoor': 22, 'SiloBody': 38, 'SiloDome': 38,
-          'FenceRail': 48, 'FencePost': 48, 'HayBale': 53, 'TreeOak': 60, 'TreePine': 70,
+          'FenceRail': 48, 'FencePost': 48, 'HayBale': 53, 'TreeOak': 60, 'TreePine': 70, 'Bush': 76,
           'Cliff': 100, 'WheatTuft': 80, 'GrassClump': 82, 'Egg': 85, 'Wagon': 90}
 LIFT = {'BarnRoof': BARN[2], 'SiloDome': SILO_H, 'HayBale': 0.7, 'Egg': 0.5}
 

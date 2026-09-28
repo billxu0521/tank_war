@@ -5,8 +5,8 @@ extends Node3D
 const PORT := 24680
 const ARENA := 320.0        # 場地邊長
 const SPAWN_CLEARANCE := 7.0  # 出生點離建築至少這麼遠
-const FARM_GRID := 5          # 鄉村：5x5 塊地，每塊隨機是農莊／果園／麥田／牧場
-const FARM_CELL := 60.0
+const FARM_GRID := 6          # 鄉村：6x6 塊地，每塊隨機是農莊／果園／麥田／牧場（塊小、塊多＝物件緊湊）
+const FARM_CELL := 50.0
 const FENCE_H := 1.0          # 柵欄高度，要在牛仔的翻越範圍（0.4~1.5）內
 const BUILDING_MAX_H := 22.0  # 最高的東西（筒倉＋圓頂約 20、穀倉屋脊約 16）不能超過這個
 # 沙盒的靶場：從 (0, 110) 往 -Z 打，這一條不蓋東西。起點要在撤離區（z=138）外面
@@ -61,6 +61,7 @@ var _terrain: Terrain
 var _doors: Array[Door] = []   # 晚加入的人連進來時，把開著的門補送給他
 var _wheat_fields: Array[Rect2] = []   # 地形上色要知道哪裡是麥田
 var _blocked: Array[Rect2] = []  # 建築物在 XZ 平面佔的範圍
+var _bushes: Array[Vector3] = []  # 灌木叢的根部位置（bot 判斷人是不是躲在裡面）
 var _exits: Array[Vector3] = []  # 四個撤離區的中心
 var _cowboys := 0
 var _offline := false
@@ -74,6 +75,7 @@ var _sandbox := false
 
 func _ready() -> void:
 	_use_cjk_font()
+	_use_sky()
 	_load_props()
 	_skin_egg()
 	_build_arena()
@@ -120,7 +122,16 @@ func _set_menu(open: bool) -> void:
 	menu.visible = open
 	# 遊戲局控制只有主機（和沙盒）能用：bot 都在主機上跑
 	$UI/Root/Menu/Box/Controller.visible = multiplayer.is_server()
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if open else Input.MOUSE_MODE_CAPTURED
+	if open:
+		_show_cursor()
+	else:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+## 放開滑鼠並把游標搬到畫面中間。macOS（尤其在編輯器內嵌的遊戲視窗）從鎖定切回來時，
+## 游標常常解鎖了卻沒畫出來；搬一下會強迫系統重畫，也剛好落在選單按鈕旁邊
+func _show_cursor() -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	Input.warp_mouse(get_viewport().get_visible_rect().size / 2.0)
 
 func _on_resume_pressed() -> void:
 	_set_menu(false)
@@ -154,7 +165,7 @@ func _to_lobby(msg: String) -> void:
 	lobby.show()
 	hud.text = ""
 	status.text = msg
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	_show_cursor()
 
 # --- 連線 ---
 
@@ -526,7 +537,7 @@ func _build_arena() -> void:
 	for gx in FARM_GRID:
 		for gz in FARM_GRID:
 			var c := Vector3((gx - half) * FARM_CELL, 0, (gz - half) * FARM_CELL)
-			c += Vector3(rng.randf_range(-6, 6), 0, rng.randf_range(-6, 6))
+			c += Vector3(rng.randf_range(-3, 3), 0, rng.randf_range(-3, 3))   # 塊變小了，晃太多會撞到隔壁
 			var kind := rng.randi() % 4
 			if cells.is_empty():
 				kind = 0   # 第一格一定是農莊：_blocked[0] 要是一棟擋得住視線的穀倉（測試靠它）
@@ -582,19 +593,155 @@ func _build_arena() -> void:
 		p += Vector3(rng.randf_range(-3, 3), 0, rng.randf_range(-3, 3))
 		_tree(p, rng, 0.4)
 
-	# 草叢撒滿整片地，路上和建築周圍不長。一樣用自己的亂數
+	# 空地補東西：塊跟塊之間本來是一大片空草地，補上零星的樹和乾草捲，走到哪都有東西可以躲
+	for i in 260:
+		var p := Vector3(rng.randf_range(-inner + 12, inner - 12), 0, rng.randf_range(-inner + 12, inner - 12))
+		if absf(p.x) < 7.0 or absf(p.z) < 7.0 or not _free(p, 6) or not _is_clear(Vector2(p.x, p.z)) \
+				or _in_wheat(p):
+			continue
+		if rng.randf() < 0.6:
+			_tree(p, rng, 0.3)
+		else:
+			_hay_bale(p, rng.randf() * PI)
+			_block(p, Vector2(1.5, 1.5), 1.0)
+
+	# 灌木叢：兩三叢一群，蹲進去就看不到人。只擋視線不擋子彈，也沒碰撞（跟 Hunt 一樣）。
+	# 用自己的亂數，灌木多一叢少一叢不會影響其他東西的位置
+	var br := RandomNumberGenerator.new()
+	br.seed = 13
+	var bushes: Array[Transform3D] = []
+	for i in 170:
+		var c := Vector3(br.randf_range(-inner + 8, inner - 8), 0, br.randf_range(-inner + 8, inner - 8))
+		for k in br.randi_range(2, 4):
+			var p := c + Vector3(br.randf_range(-2.5, 2.5), 0, br.randf_range(-2.5, 2.5))
+			if absf(p.x) < 6.0 or absf(p.z) < 6.0 or not _free(p, 3) or not _is_clear(Vector2(p.x, p.z)) \
+					or _in_wheat(p):
+				continue
+			var s := br.randf_range(0.75, 1.3)
+			var at := _on_ground(p) + Vector3.DOWN * 0.15   # 埋一點，斜坡下坡那側才不會懸空
+			bushes.append(Transform3D(Basis(Vector3.UP, br.randf() * TAU).scaled(Vector3(s, s * br.randf_range(0.85, 1.15), s)), at))
+			_bushes.append(at)
+	_scatter(&"Bush", bushes, true)
+
+	# 草地：畫面用的，伺服器沒畫面就不長（測試會直接呼叫 _grass_field 檢查）
+	if DisplayServer.get_name() != "headless":
+		_grass_field()
+
+## 天空換成 sky.gdshader（有雲、有太陽盤）。霧只蓋一點點天空，不然雲全被霧洗掉
+func _use_sky() -> void:
+	var env: Environment = $Arena/WorldEnvironment.environment
+	var mat := ShaderMaterial.new()
+	mat.shader = preload("res://sky.gdshader")
+	env.sky.sky_material = mat
+	env.sky.radiance_size = Sky.RADIANCE_SIZE_64   # 環境光只要大概的顏色
+	env.fog_sky_affect = 0.1
+
+## 蹲在灌木叢裡（離某叢中心 1.2 公尺內）：灌木 1.5 公尺高，站著頭會露出來，蹲下才藏得住
+func hidden_in_bush(who: Node3D) -> bool:
+	if who.get(&"sync_crouching") != true:
+		return false
+	var at := Vector2(who.global_position.x, who.global_position.z)
+	for b: Vector3 in _bushes:
+		if at.distance_to(Vector2(b.x, b.z)) < 1.2:
+			return true
+	return false
+
+func _in_wheat(p: Vector3) -> bool:
+	for f: Rect2 in _wheat_fields:
+		if f.grow(2.0).has_point(Vector2(p.x, p.z)):
+			return true
+	return false
+
+const GRASS_CHUNK := 16.0
+const GRASS_PER_M2 := 6.0   # 效能旋鈕：電腦跑不動就調低（3 看得出一叢一叢的空隙）
+const GRASS_SHADER := preload("res://grass.gdshader")
+
+## 草地：16 公尺一塊的 MultiMesh，每塊自己剔除、45 公尺外不畫。
+## 顏色取地形頂點的顏色（麥田裡自動變黃），根部暗、尖端亮，風一波一波吹過去，腳邊的草會被撥開。
+## 路上、建築周圍不長。用自己的亂數，每台機器長得一樣。
+## spots 給一個陣列就把每叢的位置也放進去（測試用：沒畫面的伺服器讀不回 MultiMesh 裡的位置）
+func _grass_field(spots: Variant = null) -> void:
+	var mesh := _grass_mesh()
+	var mat := ShaderMaterial.new()
+	mat.shader = GRASS_SHADER
 	var gr := RandomNumberGenerator.new()
 	gr.seed = 7
-	var grass: Array[Transform3D] = []
-	while grass.size() < 3000:
-		var at := Vector3(gr.randf_range(-inner, inner), 0, gr.randf_range(-inner, inner))
-		if absf(at.x) < 5.0 or absf(at.z) < 5.0:
-			continue
-		if not _is_clear(Vector2(at.x, at.z)):
-			continue   # 建築周圍不長（院子踩禿了），更不能長進屋裡
-		at.y = _terrain.height(at.x, at.z)
-		grass.append(Transform3D(Basis(Vector3.UP, gr.randf() * TAU).scaled(Vector3.ONE * gr.randf_range(0.7, 1.5)), at))
-	_scatter(&"GrassClump", grass)
+	var per := int(GRASS_CHUNK * GRASS_CHUNK * GRASS_PER_M2)
+	var cells := int(ARENA / GRASS_CHUNK)
+	var half := GRASS_CHUNK * 0.5
+	for cx in cells:
+		for cz in cells:
+			var o := Vector3((cx + 0.5) * GRASS_CHUNK - ARENA * 0.5, 0, (cz + 0.5) * GRASS_CHUNK - ARENA * 0.5)
+			# 先挑出碰到這塊的建築：每叢都掃全場的建築會慢到讀圖卡好幾秒
+			var area := Rect2(o.x - half, o.z - half, GRASS_CHUNK, GRASS_CHUNK)
+			var near: Array[Rect2] = []
+			for r: Rect2 in _blocked:
+				if r.intersects(area):
+					near.append(r)
+			var xf: Array[Transform3D] = []
+			var cols: Array[Color] = []
+			for i in per:
+				var x := o.x + gr.randf_range(-half, half)
+				var z := o.z + gr.randf_range(-half, half)
+				var a := gr.randf() * TAU
+				var s := gr.randf_range(0.7, 1.3)
+				if absf(x) < 5.0 or absf(z) < 5.0:
+					continue
+				var inside := false
+				for r in near:
+					if r.has_point(Vector2(x, z)):
+						inside = true
+						break
+				if inside:
+					continue
+				xf.append(Transform3D(Basis(Vector3.UP, a).scaled(Vector3.ONE * s),
+					Vector3(x - o.x, _terrain.fast_height(x, z) - 0.03, z - o.z)))   # 相對塊中心
+				cols.append(_terrain.fast_color(x, z))
+				if spots != null:
+					spots.append(Vector2(x, z))
+			if xf.is_empty():
+				continue
+			var mm := MultiMesh.new()
+			mm.transform_format = MultiMesh.TRANSFORM_3D
+			mm.use_colors = true            # 一定要在 instance_count 之前設
+			mm.mesh = mesh
+			mm.instance_count = xf.size()
+			# ponytail: 一叢一叢設，全場約 30 萬次。讀圖太慢再改成一次填 mm.buffer
+			#（但沒畫面的伺服器不會存 buffer，測試會讀不到位置）
+			for i in xf.size():
+				mm.set_instance_transform(i, xf[i])
+				mm.set_instance_color(i, cols[i])
+			var mmi := MultiMeshInstance3D.new()
+			mmi.name = "Grass"
+			mmi.multimesh = mm
+			mmi.material_override = mat
+			mmi.position = Vector3(o.x, 0, o.z)   # 節點放在塊中心，可見距離才算得對
+			mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			mmi.visibility_range_end = 45.0
+			mmi.extra_cull_margin = 1.0   # 風吹會把葉子推出 AABB
+			mmi.add_to_group(&"grass")
+			$Arena.add_child(mmi)
+
+## 一叢七片葉子，每片兩段（根部四邊形＋尖端三角形）。UV.y＝離地高度比例，shader 靠它做漸層和擺動
+func _grass_mesh() -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var r := RandomNumberGenerator.new()
+	r.seed = 3
+	for k in 7:
+		var a := r.randf() * TAU
+		var h := r.randf_range(0.3, 0.55)
+		var lean := Vector3(cos(a), 0, sin(a)) * r.randf_range(0.05, 0.2)
+		var side := Vector3(-sin(a), 0, cos(a)) * 0.035
+		var at := Vector3(r.randf_range(-0.12, 0.12), 0, r.randf_range(-0.12, 0.12))
+		var mid := at + lean * 0.4 + Vector3(0, h * 0.5, 0)
+		var tip := at + lean + Vector3(0, h, 0)
+		for p: Vector3 in [at - side, at + side, mid + side * 0.7, at - side, mid + side * 0.7, mid - side * 0.7,
+				mid - side * 0.7, mid + side * 0.7, tip]:
+			st.set_normal(Vector3.UP)
+			st.set_uv(Vector2(0, p.y / h))
+			st.add_vertex(p)
+	return st.commit()
 
 ## 地面顏色直接畫在地形頂點上：泥土路跟著地形起伏、麥田是黃的、
 ## 坡頂偏乾黃、山谷偏深綠、陡坡露土、農莊的院子踩出一片泥地
@@ -651,7 +798,7 @@ func _farmstead(c: Vector3, rng: RandomNumberGenerator) -> void:
 func _orchard(c: Vector3, rng: RandomNumberGenerator) -> void:
 	for i in 5:
 		for j in 5:
-			var p := c + Vector3((i - 2) * 8.0, 0, (j - 2) * 8.0)
+			var p := c + Vector3((i - 2) * 6.5, 0, (j - 2) * 6.5)
 			if _free(p, 2) and rng.randf() > 0.15:
 				_tree(p, rng)
 
@@ -851,7 +998,7 @@ func _solid_mesh(pos: Vector3, mesh: Mesh, scale: Vector3) -> StaticBody3D:
 
 ## 一次撒幾千個一樣的東西（麥子、草叢）：MultiMesh 一次畫完，一叢一個節點會卡。
 ## 不投影子：幾千叢的影子很貴，而且貼著地面本來就看不太出來
-func _scatter(name: StringName, pts: Array[Transform3D]) -> void:
+func _scatter(name: StringName, pts: Array[Transform3D], shadows := false) -> void:
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.mesh = _props.get(name)
@@ -860,7 +1007,8 @@ func _scatter(name: StringName, pts: Array[Transform3D]) -> void:
 		mm.set_instance_transform(i, pts[i])
 	var mmi := MultiMeshInstance3D.new()
 	mmi.multimesh = mm
-	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	if not shadows:
+		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	$Arena.add_child(mmi)
 
 ## 擺一個 Blender 建的場景物件（models/props.glb）。parent 預設是場地
