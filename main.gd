@@ -1,5 +1,6 @@
 extends Node3D
-## 西部牛仔打恐龍 — 區網原型。開房的人當恐龍，加入的人當牛仔（第一人稱）。
+## 西部牛仔打恐龍 — 區網原型。兩個模式：連線模式（大家都是牛仔，第一人稱）和沙盒模式。
+## Esc 選單裡的「遊戲局控制」讓主機加移動標靶、牛仔 bot。恐龍的程式都還在，玩法定了再接回來。
 
 const PORT := 24680
 const ARENA := 320.0        # 場地邊長
@@ -79,7 +80,7 @@ func _ready() -> void:
 	_build_exits()
 	multiplayer.peer_connected.connect(_spawn)
 	multiplayer.peer_disconnected.connect(_despawn)
-	multiplayer.connected_to_server.connect(func() -> void: status.text = "已連線，你是牛仔。WASD 移動，滑鼠瞄準，左鍵開槍，右鍵舉槍")
+	multiplayer.connected_to_server.connect(func() -> void: status.text = "已連線。WASD 移動，滑鼠瞄準，左鍵開槍，右鍵舉槍")
 	multiplayer.connection_failed.connect(
 		func() -> void: _to_lobby.call_deferred("連線失敗，檢查 IP 和防火牆"))
 	multiplayer.server_disconnected.connect(
@@ -89,15 +90,12 @@ func _ready() -> void:
 ## 啟動參數，方便在同一台機器開兩個視窗對打：
 ##   TankWar.exe -- --host
 ##   TankWar.exe -- --join 192.168.1.5
-##   TankWar.exe -- --offline
 ##   TankWar.exe -- --sandbox
 ##   TankWar.exe -- --viewer
 func _autostart() -> void:
 	var args := OS.get_cmdline_user_args()
 	if args.has("--host"):
 		_on_host_pressed()
-	elif args.has("--offline"):
-		_on_offline_pressed()
 	elif args.has("--sandbox"):
 		_on_sandbox_pressed()
 	elif args.has("--viewer"):
@@ -120,6 +118,8 @@ func _unhandled_input(e: InputEvent) -> void:
 
 func _set_menu(open: bool) -> void:
 	menu.visible = open
+	# 遊戲局控制只有主機（和沙盒）能用：bot 都在主機上跑
+	$UI/Root/Menu/Box/Controller.visible = multiplayer.is_server()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE if open else Input.MOUSE_MODE_CAPTURED
 
 func _on_resume_pressed() -> void:
@@ -164,7 +164,7 @@ func _on_host_pressed() -> void:
 		status.text = "開房失敗，連接埠 %d 可能被占用" % PORT
 		return
 	multiplayer.multiplayer_peer = peer
-	_enter_game("你是恐龍。等牛仔加入…  本機 IP：" + _local_ips())
+	_enter_game("連線模式：大家都是牛仔。等人加入…  本機 IP：" + _local_ips())
 	_spawn(1)
 
 func _on_join_pressed() -> void:
@@ -174,27 +174,6 @@ func _on_join_pressed() -> void:
 		return
 	multiplayer.multiplayer_peer = peer
 	_enter_game("連線中…")
-
-## 離線 debug：不連線，自己當牛仔，配一隻會追人的恐龍 bot
-func _on_offline_pressed() -> void:
-	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
-	_offline = true
-	_enter_game("離線測試模式：你是牛仔，恐龍會自己追過來")
-	_add_player(COWBOY, 1).global_position = _on_ground(Vector3(-20, 1.0, 15))  # 編號 1 才操控得動
-	var target := _add_player(DINO, 2)
-	target.set(&"bot", true)
-	target.global_position = _spawn_point()  # 隨機遠處：寫死 35 公尺的話恐龍 4 秒就衝到，還沒看清楚就死了
-
-## 離線 debug：自己當恐龍，配三個會搶蛋、會開槍的牛仔 bot
-func _on_offline_dino_pressed() -> void:
-	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
-	_offline = true
-	_enter_game("離線測試模式：你是恐龍，三個牛仔 bot 會搶蛋也會開槍")
-	_add_player(DINO, 1).global_position = _spawn_point()  # 編號 1 才操控得動
-	for i in 3:
-		var t := _add_player(COWBOY, 2 + i)
-		t.set(&"bot", true)
-		t.global_position = _spawn_point()
 
 ## 沙盒：一個人在靶場練槍。前方 10／25／50／100 公尺各站一個牛仔靶，
 ## 旁邊一隻不會動的恐龍。靶不是 bot、也不是本機操控，所以站著不動、不會還擊。
@@ -225,6 +204,73 @@ func _on_sandbox_pressed() -> void:
 			_hay_bale(SANDBOX_START + Vector3(9, -0.1, -6), 0.0),
 			_hay_bale(SANDBOX_START + Vector3(9, -0.1, -9), 0.0)]:
 		prop.add_to_group(&"sandbox_prop")
+
+# --- 遊戲局控制（Esc 選單，只有主機） ---
+
+func _on_add_walker_pressed() -> void:
+	add_walker()
+
+func _on_add_bot_pressed() -> void:
+	add_bot()
+
+func _on_clear_bots_pressed() -> void:
+	clear_bots()
+
+## 移動標靶：在主機玩家前方 25 公尺，左右各 6 公尺來回走，不開槍
+func add_walker() -> Node3D:
+	if not multiplayer.is_server():
+		return null
+	var fwd := Vector3.FORWARD
+	var at := _spawn_point()
+	var me := players.get_node_or_null(^"1") as Node3D
+	if me:
+		fwd = -me.global_basis.z
+		fwd.y = 0.0
+		fwd = fwd.normalized()
+		at = me.global_position
+	# 只取水平位置：_on_ground 的 y 是「離地高度」，把已經貼地的高度帶進去會算兩次
+	var center := (at + fwd * 25.0) * Vector3(1, 0, 1)
+	var side := fwd.cross(Vector3.UP) * Vector3(1, 0, 1)
+	var w := _add_player(COWBOY, _next_bot_id())
+	_make_walker(w, _on_ground(center - side * 6.0), _on_ground(center + side * 6.0))
+	w.global_position = _on_ground(center)
+	return w
+
+func _make_walker(w: Node3D, a: Vector3, b: Vector3) -> void:
+	w.set(&"bot", true)
+	w.set(&"walker", true)
+	w.set(&"patrol_a", a)
+	w.set(&"patrol_b", b)
+
+## 牛仔 bot：會搶蛋、會開槍。沙盒裡直接來找你打（出現在前方 40 公尺）
+func add_bot() -> Node3D:
+	if not multiplayer.is_server():
+		return null
+	var b := _add_player(COWBOY, _next_bot_id())
+	b.set(&"bot", true)
+	var me := players.get_node_or_null(^"1") as Node3D
+	if _sandbox and me:
+		var fwd := -me.global_basis.z
+		b.global_position = _on_ground(Vector3(me.global_position.x + fwd.x * 40.0, 0.5, me.global_position.z + fwd.z * 40.0))
+	return b
+
+## 清掉所有電腦（移動標靶和 bot），排隊等重生的也一起取消
+func clear_bots() -> void:
+	if not multiplayer.is_server():
+		return
+	for p in players.get_children():
+		if Fighter.is_bot_id(p.name.to_int()):
+			if not p.is_in_group(&"dino"):
+				_cowboys -= 1
+			p.free()
+	_respawn_queue = _respawn_queue.filter(func(r: Dictionary) -> bool: return not Fighter.is_bot_id(int(r["id"])))
+
+## 電腦的編號：從 -1 往下找一個沒人用的（負數，見 Fighter.is_bot_id）
+func _next_bot_id() -> int:
+	var id := -1
+	while players.has_node(NodePath(str(id))) or _respawn_queue.any(func(r: Dictionary) -> bool: return int(r["id"]) == id):
+		id -= 1
+	return id
 
 ## 靶上的距離牌。只在沙盒用，跟著場地一起清。
 func _sign(pos: Vector3, text: String) -> void:
@@ -272,7 +318,7 @@ func _enter_game(msg: String) -> void:
 func _spawn(id: int) -> void:
 	if not multiplayer.is_server():
 		return  # 只有主機生，MultiplayerSpawner 會同步給大家
-	_add_player(DINO if id == 1 else COWBOY, id)
+	_add_player(COWBOY, id)
 	if id != 1:
 		for d in _doors:   # 門的開關不走同步器，晚來的人要補送一次
 			if d.is_open:
@@ -310,6 +356,8 @@ func _on_died(killer: Node, who: Node) -> void:
 		"id": who.name.to_int(),
 		"dino": as_dino,
 		"bot": bool(who.get(&"bot")),
+		"walker": who.get(&"walker") == true,   # 恐龍沒有這個屬性，拿到 null
+		"patrol": [who.get(&"patrol_a"), who.get(&"patrol_b")],
 		# 沙盒的靶要生回原地，不然打死一次靶就散到地圖各處
 		"pos": who.global_position if _sandbox else Vector3.INF,
 		"yaw": who.rotation.y,
@@ -326,10 +374,12 @@ func _respawn_step() -> void:
 			continue
 		_respawn_queue.remove_at(i)
 		var id: int = r["id"]
-		if id != 1 and not _offline and not multiplayer.get_peers().has(id):
-			continue  # 人已經離線就別生了
+		if id != 1 and not Fighter.is_bot_id(id) and not _offline and not multiplayer.get_peers().has(id):
+			continue  # 人已經離線就別生了（電腦不是連線，不用問）
 		var p := _add_player(DINO if r["dino"] else COWBOY, id)
 		p.set(&"bot", r["bot"])
+		if r["walker"]:
+			_make_walker(p, r["patrol"][0], r["patrol"][1])
 		if r["pos"] != Vector3.INF:
 			p.global_position = r["pos"] if id != 1 else _on_ground(SANDBOX_START)
 			p.rotation.y = r["yaw"]
@@ -365,7 +415,7 @@ func _physics_process(delta: float) -> void:
 		_set_clock.rpc(_clock)
 	if _time_left <= 0.0:
 		_over = true
-		_finish.rpc("時間到，沒有人把蛋帶走——恐龍獲勝！")
+		_finish.rpc("時間到，沒有人把蛋帶走")
 
 @rpc("authority", "call_local", "reliable")
 func _set_clock(secs: int) -> void:
@@ -424,10 +474,10 @@ func _process(_delta: float) -> void:
 	if _sandbox:
 		hud.text = "沙盒    我的血量：%s    恐龍靶血量：%s" % [mine, dino.hp if dino else "重生中"]
 		return
-	hud.text = "⏱ %d:%02d    我的血量：%s    恐龍血量：%s    存活牛仔：%d    蛋：%s" % [
+	hud.text = "⏱ %d:%02d    我的血量：%s    %s存活牛仔：%d    蛋：%s" % [
 		maxi(_clock, 0) / 60, maxi(_clock, 0) % 60,
 		mine,
-		dino.hp if dino else 0,
+		("恐龍血量：%d    " % dino.hp) if dino else "",
 		players.get_child_count() - (1 if dino else 0),
 		egg_state]
 

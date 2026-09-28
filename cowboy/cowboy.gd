@@ -72,6 +72,11 @@ class_name Cowboy
 @export var step_crouch_interval := 0.8
 
 @export_group("Bot")
+## 移動標靶：在 patrol_a / patrol_b 之間來回走，不開槍、不搶蛋
+@export var walker := false
+var patrol_a := Vector3.ZERO
+var patrol_b := Vector3.ZERO
+var _to_b := true
 ## bot 進這個距離才開槍。手槍腰射散布 4 度，再遠打人形靶就是浪費子彈。
 @export var bot_fire_range := 40.0
 
@@ -120,6 +125,7 @@ var vault_t := 0.0
 var _look_delta := Vector2.ZERO
 var _step_timer := 0.0
 var _was_on_floor := true
+const WALKER_SPEED := 3.0   # 移動標靶走多快（比人慢一點，練提前量）
 ## 走路擺腿：步伐相位、目前的擺幅、上一幀的位置
 var _stride := 0.0
 var _swing := 0.0
@@ -144,7 +150,8 @@ var _detour_sign := 0.0
 
 func _ready() -> void:
 	super()
-	is_local = is_multiplayer_authority()
+	# 電腦在主機上 authority 也是主機，但它不是「我」：不能搶相機、不能讀鍵盤
+	is_local = is_multiplayer_authority() and not is_bot_id(name.to_int())
 	stamina = max_stamina
 	combat_stamina = max_combat
 	_stand_head_y = head.position.y
@@ -365,6 +372,9 @@ func _bot_step(delta: float) -> void:
 	var g := get_tree().get_first_node_in_group(&"match")
 	if not is_on_floor():
 		velocity += get_gravity() * delta
+	if walker:
+		_walk_patrol(delta)
+		return
 
 	var want := Vector3.ZERO
 	if not _bot_should_hold(g):
@@ -390,6 +400,21 @@ func _bot_step(delta: float) -> void:
 	_bot_shoot(_bot_threat(g))
 
 
+## 移動標靶：來回走，走到端點就回頭，身體朝著走的方向（打側面比打正面難）
+func _walk_patrol(delta: float) -> void:
+	var target := patrol_b if _to_b else patrol_a
+	var to := target - global_position
+	to.y = 0.0
+	# 走到端點、或撞到柵欄牆壁走不動（生在建築旁邊時），就回頭
+	var stuck := is_on_wall() and Vector2(velocity.x, velocity.z).length() < 0.5
+	if to.length() < 0.5 or stuck:
+		_to_b = not _to_b
+		to = Vector3.ZERO
+	if to != Vector3.ZERO:
+		rotation.y = atan2(-to.x, -to.z)
+	_move_flat(to.normalized() * WALKER_SPEED, delta)
+
+
 ## 撿蛋和撤離都要在原地待滿時間，跑掉就歸零
 func _bot_should_hold(g: Node) -> bool:
 	if g == null:
@@ -404,6 +429,10 @@ func _bot_should_hold(g: Node) -> bool:
 func _bot_goal(g: Node) -> Vector3:
 	if g == null:
 		return global_position
+	if g._sandbox:
+		# 沙盒沒有蛋：直接去找玩家打，當陪練
+		var me := _bot_threat(g)
+		return me.global_position if me else global_position
 	var my_id := name.to_int()
 	if g.egg.carrier == my_id:
 		var best: Vector3 = g._exits[0]
@@ -421,6 +450,8 @@ func _bot_goal(g: Node) -> Vector3:
 func _bot_threat(g: Node) -> Node3D:
 	if g == null:
 		return null
+	if g._sandbox:
+		return g.players.get_node_or_null(^"1")   # 沙盒裡只打玩家，不去打站樁的靶
 	var my_id := name.to_int()
 	if g.egg.carrier != 0 and g.egg.carrier != my_id:
 		var holder: Node3D = g.players.get_node_or_null(NodePath(str(g.egg.carrier)))

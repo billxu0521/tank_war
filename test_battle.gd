@@ -37,6 +37,8 @@ func _process(_delta: float) -> bool:
 		_case_terrain()
 		_case_interact()
 		_case_vault()
+		_case_modes()
+		_case_controller()
 		_case_back_to_lobby()
 		_case_cover()
 		_case_trex_rig()
@@ -101,26 +103,45 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰兩條體力、沙盒、鄉村柵欄、地形起伏、F 開門爬梯子、翻柵欄和窗台、手腳、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
+		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰兩條體力、沙盒、鄉村柵欄、地形起伏、F 開門爬梯子、翻柵欄和窗台、手腳、只剩連線和沙盒、遊戲局控制、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
 	return true
 
 # --- 共用 ---
 
-func _new_game() -> Node:
+## 測試用的對局：不走大廳按鈕（扮演模式拿掉了），直接組。恐龍的規則還要測，恐龍留著
+func _offline_match() -> Node:
 	var m: Node = load("res://main.tscn").instantiate()
 	root.add_child(m)
-	m._on_host_pressed()  # 主機 = 恐龍（編號 1）
-	m._spawn(2)
-	m._spawn(3)
+	m.multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	m._offline = true
+	m._enter_game("test")
+	return m
+
+## 恐龍（編號 1，操控得動）＋兩個牛仔（2、3，在這台機器上是「別人的」）
+func _new_game() -> Node:
+	var m := _offline_match()
+	m._add_player(m.DINO, 1)
+	m._add_player(m.COWBOY, 2)
+	m._add_player(m.COWBOY, 3)
 	_ck(m._cowboys == 2, "應該有兩個牛仔")
 	_ck(m.players.get_node(^"1").hp == m.players.get_node(^"1").max_hp, "恐龍滿血出生")
 	_ck(m.players.get_node(^"2").hp == m.players.get_node(^"2").max_hp, "牛仔滿血出生")
 	return m
 
+## 自己的牛仔（編號 1）＋一隻恐龍 bot
 func _new_offline_game() -> Node:
-	var m: Node = load("res://main.tscn").instantiate()
-	root.add_child(m)
-	m._on_offline_pressed()  # 離線模式：編號 1 是自己的牛仔
+	var m := _offline_match()
+	m._add_player(m.COWBOY, 1).global_position = m._on_ground(Vector3(-20, 1.0, 15))
+	var d: Node3D = m._add_player(m.DINO, 2)
+	d.set(&"bot", true)
+	return m
+
+## 自己的恐龍（編號 1）＋三個牛仔 bot
+func _dino_vs_bots() -> Node:
+	var m := _offline_match()
+	m._add_player(m.DINO, 1)
+	for i in 3:
+		m._add_player(m.COWBOY, 2 + i).set(&"bot", true)
 	return m
 
 func _end(m: Node) -> void:
@@ -209,11 +230,9 @@ func _case_offline() -> void:
 	_ck(not m._over, "打爆靶子不會直接贏，要帶蛋撤離才算")
 	_end(m)
 
-## 離線當恐龍：自己控恐龍，三個牛仔 bot 會自己跑
+## 恐龍對三個牛仔 bot：bot 會自己跑、死了會重生
 func _case_offline_dino() -> void:
-	var m: Node = load("res://main.tscn").instantiate()
-	root.add_child(m)
-	m._on_offline_dino_pressed()
+	var m := _dino_vs_bots()
 	var me: Node = m.players.get_node(^"1")
 	_ck(m.players.get_child_count() == 4, "應該是一隻恐龍 + 三個牛仔 bot")
 	_ck(me.is_in_group(&"dino") and me.is_multiplayer_authority(), "自己是恐龍而且操控得動")
@@ -618,6 +637,69 @@ func _case_vault() -> void:
 	_ck(not me.try_vault(false), "沒按住往前不能翻")
 	_end(m)
 
+## 大廳只剩連線模式和沙盒；連線模式的主機也是牛仔；主機看得到遊戲局控制
+func _case_modes() -> void:
+	var m: Node = load("res://main.tscn").instantiate()
+	root.add_child(m)
+	_ck(not m.has_node(^"UI/Root/Lobby/OfflineBtn") and not m.has_node(^"UI/Root/Lobby/OfflineDinoBtn"),
+		"大廳不該再有扮演（我當恐龍）的按鈕")
+	for b in ["HostBtn", "JoinBtn", "SandboxBtn"]:
+		_ck(m.has_node(NodePath("UI/Root/Lobby/" + b)), "大廳要有 %s" % b)
+	m._on_host_pressed()
+	var host: Node = m.players.get_node_or_null(^"1")
+	_ck(host != null and not host.is_in_group(&"dino"), "連線模式的主機也是牛仔")
+	m._set_menu(true)
+	_ck(m.get_node(^"UI/Root/Menu/Box/Controller").visible, "主機按 Esc 要看得到遊戲局控制")
+	# 連線模式下 bot 由主機操控：不然同步器不送位置，別人看到它站著不動
+	var b: Node = m.add_bot()
+	_ck(b.get_multiplayer_authority() == 1 and not b.is_local, "bot 要由主機操控、但不是主機自己（不搶相機）")
+	# 加入的人的連線編號很大（實測 251338328），不能被當成電腦
+	m._spawn(251338328)
+	var guest: Node = m.players.get_node(^"251338328")
+	_ck(guest.get_multiplayer_authority() == 251338328, "加入的人要自己操控自己的牛仔")
+	_end(m)
+
+## 遊戲局控制：移動標靶來回走、不開槍、死了照樣生回標靶；bot 在沙盒找玩家；清除清乾淨
+func _case_controller() -> void:
+	var m: Node = load("res://main.tscn").instantiate()
+	root.add_child(m)
+	m._on_sandbox_pressed()
+	var before: int = m.players.get_child_count()
+	var w: Node3D = m.add_walker()
+	_ck(w != null and Fighter.is_bot_id(w.name.to_int()), "移動標靶的編號要是電腦的（負數）")
+	_ck(w.walker and w.bot and not w.is_local, "移動標靶是電腦、不是玩家")
+	var ground: float = m._terrain.height(w.patrol_a.x, w.patrol_a.z)
+	_ck(absf(w.patrol_a.y - ground) < 0.05 and absf(w.patrol_b.y - ground) < 0.5,
+		"巡邏點要貼地（在 %.2f，地面 %.2f）" % [w.patrol_a.y, ground])
+	_ck(w.patrol_a.distance_to(w.patrol_b) > 10.0, "要左右來回走一段")
+	# 剛生出來的角色這一幀還沒進物理世界，移動不了；檢查它想往巡邏點走、不開槍就好
+	var mag: int = w.viewmodel.weapon.mag
+	for i in 30:
+		w._bot_step(1.0 / 60.0)
+	var to_b: Vector3 = (w.patrol_b - w.global_position) * Vector3(1, 0, 1)
+	_ck(Vector3(w.velocity.x, 0, w.velocity.z).dot(to_b.normalized()) > 1.0,
+		"移動標靶要往巡邏點走（速度 %s）" % w.velocity)
+	_ck(w.viewmodel.weapon.mag == mag, "移動標靶不開槍")
+	var b: Node3D = m.add_bot()
+	_ck(b.bot and not b.walker, "牛仔 bot 要會打")
+	_ck(b._bot_threat(m) == m.players.get_node(^"1"), "沙盒裡 bot 要找玩家打，不去打站樁的靶")
+	_ck(m.players.get_child_count() == before + 2, "要多兩個電腦")
+	# 打死移動標靶：生回來還是移動標靶
+	var wid: int = w.name.to_int()
+	w.take_damage(9999)
+	w.free()
+	m._respawn_queue[-1]["at"] = m._time_left + 1.0
+	m._respawn_step()
+	var back: Node = m.players.get_node_or_null(NodePath(str(wid)))
+	_ck(back != null and back.walker, "移動標靶打死要生回移動標靶")
+	m.clear_bots()
+	var left := 0
+	for p in m.players.get_children():
+		if Fighter.is_bot_id(p.name.to_int()):
+			left += 1
+	_ck(left == 0 and m.players.get_child_count() == before, "清除要把電腦都清掉（剩 %d 個）" % left)
+	_end(m)
+
 ## 牛仔的操作都要有綁鍵，鍵盤和手把兩邊都要（FNE 的約定）
 func _case_input_map() -> void:
 	for a in ["move_forward", "move_back", "move_left", "move_right", "jump", "sprint",
@@ -643,7 +725,7 @@ func _case_back_to_lobby() -> void:
 
 	m._on_host_pressed()  # 連接埠要放掉了，才開得起第二局
 	m._spawn(2)
-	_ck(m.players.get_child_count() == 2 and m._cowboys == 1, "要能馬上重開一局")
+	_ck(m.players.get_child_count() == 2 and m._cowboys == 2, "要能馬上重開一局（連線模式大家都是牛仔）")
 	_end(m)
 
 ## 中間隔著建築物，恐龍就咬不到——牛仔躲掩蔽的依據
@@ -963,12 +1045,10 @@ func _case_arena_walls() -> void:
 	_ck(walls.size() == 4, "四面都要有圍牆（現在 %d 面）" % walls.size())
 	_end(m)
 
-## 開一局「我當恐龍」，等下面的 _phase 3 看牛仔 bot 會不會自己跑
+## 開一局恐龍對三個牛仔 bot，等下面的 _phase 3 看牛仔 bot 會不會自己跑
 func _start_bot_case() -> void:
 	_phase = 3
-	_bot_game = load("res://main.tscn").instantiate()
-	root.add_child(_bot_game)
-	_bot_game._on_offline_dino_pressed()
+	_bot_game = _dino_vs_bots()
 	_bot_cowboy = _bot_game.players.get_node(^"2")
 	_bot_from = Vector2(_bot_cowboy.global_position.x, _bot_cowboy.global_position.z)
 

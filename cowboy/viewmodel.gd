@@ -312,7 +312,7 @@ func try_fire(fanning := false) -> void:
 	_launch(_index, from, dirs, false)
 	if _fx:
 		_fx.flash()
-	# bot 在主機上跑，authority 卻是它自己的編號，不能用 authority 的身分廣播
+	# 自己開的槍、或主機上的 bot 開的槍（bot 的 authority 是主機），廣播給其他人看火光和子彈
 	if is_multiplayer_authority():
 		_remote_shot.rpc(_index, from, dirs)
 

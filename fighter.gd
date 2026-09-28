@@ -1,3 +1,4 @@
+class_name Fighter
 extends CharacterBody3D
 ## 牛仔和恐龍共用的部分：血量、死亡、多人連線權限。
 ##
@@ -26,9 +27,17 @@ var _was_captured := false
 var _settle_until := 0
 
 
+## 電腦（移動標靶、bot）用負數編號，由主機操控。
+## 玩家的連線編號一定是正數（主機 1，其他人是很大的亂數，實測 251338328），負數保證不會撞。
+## 不能用「1000 以上」：加入的人編號都比 1000 大，會被當成電腦、自己操控不了
+static func is_bot_id(id: int) -> bool:
+	return id < 0
+
 func _enter_tree() -> void:
-	# 節點名字就是玩家的連線編號，誰的節點誰操控
-	set_multiplayer_authority(name.to_int())
+	# 節點名字就是玩家的連線編號，誰的節點誰操控。電腦由主機操控——
+	# 不然 authority 是一個不存在的連線，同步器不送位置，其他人看到它站著不動
+	var id := name.to_int()
+	set_multiplayer_authority(1 if is_bot_id(id) else id)
 
 func _ready() -> void:
 	hp = max_hp

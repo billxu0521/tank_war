@@ -81,7 +81,9 @@ replication_config = SubResource("egg_repl")
 _spawnable_scenes = PackedStringArray("res://cowboy/cowboy.tscn", "res://dino.tscn")
 spawn_path = NodePath("../Players")
 
+; 大廳、選單、狀態列：蓋在牛仔的 HUD（準心、體力條）上面，不然選單打開時準心壓在按鈕上
 [node name="UI" type="CanvasLayer" parent="."]
+layer = 5
 
 [node name="Root" type="Control" parent="UI"]
 anchors_preset = 15
@@ -100,24 +102,21 @@ theme_override_constants/separation = 8
 text = "西部牛仔打恐龍"
 
 [node name="Hint" type="Label" parent="UI/Root/Lobby"]
-text = "開房的人當恐龍，加入的人當牛仔。
-WASD 移動，滑鼠瞄準，左鍵攻擊，Esc 開選單。\n牛仔：1 左輪 2 單管散彈 3 槓桿步槍。右鍵舉槍，舉槍時 Shift 閉氣，R 換彈，V 槍托（按住蓄力＝重擊），\n　　　Shift 跑，C 切換蹲／Ctrl 按住蹲，頂著矮牆按 Space 翻越。左輪腰射按住左鍵＝搧擊錘。打頭一槍死。\n恐龍：左鍵吐火球，F 咬，Space 跳躍，Shift 衝刺，貼建築按 W 爬。\n一局四分鐘。牛仔互為對手，先把蛋帶進藍色撤離區的人贏。\n死了五秒後滿血重生，不設命數；時間到沒人撤離就是恐龍贏。"
+text = "兩個模式：連線模式（大家都是牛仔，開房的人把 IP 給朋友）、沙盒模式（一個人練槍）。
+WASD 移動，滑鼠瞄準，左鍵開槍，右鍵舉槍，Esc 開選單（主機可以在選單加移動標靶、牛仔 bot）。
+1 左輪 2 單管散彈 3 槓桿步槍。舉槍時 Shift 閉氣，R 換彈，V 槍托（按住蓄力＝重擊），F 開門／爬梯子，
+Shift 跑，C 切換蹲／Ctrl 按住蹲，靠近矮牆按住往前＋Space 翻越。左輪腰射按住左鍵＝搧擊錘。打頭一槍死。
+連線模式一局四分鐘，先把蛋帶進藍色撤離區的人贏；死了五秒後重生。"
 
 [node name="IP" type="LineEdit" parent="UI/Root/Lobby"]
 text = "127.0.0.1"
 placeholder_text = "主機 IP"
 
 [node name="HostBtn" type="Button" parent="UI/Root/Lobby"]
-text = "開房（我當恐龍）"
+text = "開房（連線模式）"
 
 [node name="JoinBtn" type="Button" parent="UI/Root/Lobby"]
-text = "加入（我當牛仔）"
-
-[node name="OfflineBtn" type="Button" parent="UI/Root/Lobby"]
-text = "離線測試：我當牛仔（打會追人的恐龍）"
-
-[node name="OfflineDinoBtn" type="Button" parent="UI/Root/Lobby"]
-text = "離線測試：我當恐龍（對三個牛仔 bot）"
+text = "加入（連線模式）"
 
 [node name="SandboxBtn" type="Button" parent="UI/Root/Lobby"]
 text = "沙盒模式（牛仔練習場，打靶、練翻越）"
@@ -140,10 +139,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -120.0
-offset_top = -90.0
-offset_right = 120.0
-offset_bottom = 90.0
+offset_left = -140.0
+offset_top = -170.0
+offset_right = 140.0
+offset_bottom = 170.0
 theme_override_constants/separation = 10
 
 [node name="Title" type="Label" parent="UI/Root/Menu/Box"]
@@ -158,6 +157,25 @@ text = "回到大廳"
 
 [node name="QuitBtn" type="Button" parent="UI/Root/Menu/Box"]
 text = "離開遊戲"
+
+; 遊戲局控制：只有主機看得到（bot 都在主機上跑），main.gd 的 _set_menu 決定顯示
+[node name="Controller" type="VBoxContainer" parent="UI/Root/Menu/Box"]
+theme_override_constants/separation = 8
+
+[node name="Sep" type="HSeparator" parent="UI/Root/Menu/Box/Controller"]
+
+[node name="Title" type="Label" parent="UI/Root/Menu/Box/Controller"]
+text = "遊戲局控制"
+horizontal_alignment = 1
+
+[node name="WalkerBtn" type="Button" parent="UI/Root/Menu/Box/Controller"]
+text = "＋移動標靶（前方來回走）"
+
+[node name="BotBtn" type="Button" parent="UI/Root/Menu/Box/Controller"]
+text = "＋牛仔 bot（會開槍）"
+
+[node name="ClearBotsBtn" type="Button" parent="UI/Root/Menu/Box/Controller"]
+text = "清除所有 bot"
 
 [node name="Status" type="Label" parent="UI/Root"]
 anchor_top = 1.0
@@ -200,10 +218,11 @@ theme_override_styles/fill = SubResource("bar_fill")
 
 [connection signal="pressed" from="UI/Root/Lobby/HostBtn" to="." method="_on_host_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/JoinBtn" to="." method="_on_join_pressed"]
-[connection signal="pressed" from="UI/Root/Lobby/OfflineBtn" to="." method="_on_offline_pressed"]
-[connection signal="pressed" from="UI/Root/Lobby/OfflineDinoBtn" to="." method="_on_offline_dino_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/SandboxBtn" to="." method="_on_sandbox_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/ViewerBtn" to="." method="_on_viewer_pressed"]
 [connection signal="pressed" from="UI/Root/Menu/Box/ResumeBtn" to="." method="_on_resume_pressed"]
 [connection signal="pressed" from="UI/Root/Menu/Box/LeaveBtn" to="." method="_on_leave_pressed"]
 [connection signal="pressed" from="UI/Root/Menu/Box/QuitBtn" to="." method="_on_quit_pressed"]
+[connection signal="pressed" from="UI/Root/Menu/Box/Controller/WalkerBtn" to="." method="_on_add_walker_pressed"]
+[connection signal="pressed" from="UI/Root/Menu/Box/Controller/BotBtn" to="." method="_on_add_bot_pressed"]
+[connection signal="pressed" from="UI/Root/Menu/Box/Controller/ClearBotsBtn" to="." method="_on_clear_bots_pressed"]
