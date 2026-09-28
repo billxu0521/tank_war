@@ -36,6 +36,7 @@ func _process(_delta: float) -> bool:
 		_case_rural()
 		_case_terrain()
 		_case_interact()
+		_case_vault()
 		_case_back_to_lobby()
 		_case_cover()
 		_case_trex_rig()
@@ -50,7 +51,11 @@ func _process(_delta: float) -> bool:
 		_case_arena_walls()
 		_start_gun_case()
 		return false
-	# 剩下的要跨好幾個 frame 才驗得到
+	# 剩下的要跨好幾個 frame 才驗得到。總幀數設上限：腳本編譯壞掉時各階段等不到條件，
+	# 沒有上限測試會永遠卡住，而不是回報失敗
+	if _frames > 3000:
+		_ck(false, "測試跑超過 3000 幀還沒結束（卡在第 %d 階段）" % _phase)
+		return _done()
 	match _phase:
 		0:  # 牛仔開槍打恐龍。等一個物理幀讓位置進到物理世界，射線才打得到；
 			# 子彈會飛，15 公尺要飛幾幀才到
@@ -96,7 +101,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰兩條體力、沙盒、鄉村柵欄、地形起伏、F 開門爬梯子、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
+		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰兩條體力、沙盒、鄉村柵欄、地形起伏、F 開門爬梯子、翻柵欄和窗台、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
 	return true
 
 # --- 共用 ---
@@ -553,6 +558,52 @@ func _case_interact() -> void:
 		me.climb_step(0.5, 1.0, false)
 		me.climb_step(0.1, 0.0, true)
 		_ck(not me.is_climbing(), "爬到一半要放得開")
+	_end(m)
+
+## 翻越：柵欄、窗台翻得過去（不用先撞上去），穀倉的牆太高翻不過去
+func _case_vault() -> void:
+	var m := _new_offline_game()
+	var me: Node3D = m.players.get_node(^"1")
+	m.players.get_node(^"2").global_position = Vector3(0, 300, 0)   # 恐龍閃開
+
+	# 柵欄：找一段柵欄，站在它前面 0.7 公尺、面向它
+	var fence: Node3D = null
+	for n in m.get_node(^"Arena").get_children():
+		if n is StaticBody3D and n.get_child_count() > 3 and absf(n.global_basis.x.y) < 0.02:
+			fence = n   # 挑一段平的，斜坡上的柵欄起跳點不好算
+			break
+	_ck(fence != null, "場上要有柵欄")
+	if fence:
+		var normal: Vector3 = fence.global_basis.z
+		var at: Vector3 = fence.global_position + normal * 0.7
+		me.global_position = m._on_ground(Vector3(at.x, 0, at.z))   # _on_ground 的 y 是離地高度，別把已經貼地的高度再加一次
+		me.rotation = Vector3(0, atan2(normal.x, normal.z), 0)
+		var before: float = me.stamina
+		_ck(me.try_vault(true), "站在柵欄前按 Space 要翻得過去（不用先撞上去）")
+		_ck(me.vaulting and me.stamina < before, "翻越要開始動作、吃體力")
+		me.vaulting = false
+
+	# 農舍的窗：窗台 1 公尺，從窗外翻進屋裡
+	var house := Vector3.ZERO
+	for n in m.get_node(^"Arena").get_children():
+		if n is MeshInstance3D and n.mesh == m._props[&"House"]:
+			house = n.global_position
+			break
+	me.global_position = m._on_ground(Vector3(house.x + 3.0, 0, house.z + 4.0 + 0.7))
+	me.rotation = Vector3.ZERO   # 面向 -Z，對著前牆的右窗
+	me.stamina = me.max_stamina
+	_ck(me.try_vault(true), "站在窗外要能從窗戶翻進去")
+	me.vaulting = false
+
+	# 穀倉的牆 8 公尺：翻不過去
+	var b: Rect2 = m._blocked[0]
+	var c := b.get_center()
+	var wall_x: float = c.x + (b.size.x - 2.0 * m.SPAWN_CLEARANCE) * 0.5
+	me.global_position = m._on_ground(Vector3(wall_x + 0.7, 0, c.y + 3.0))
+	me.rotation = Vector3(0, PI * 0.5, 0)   # 面向 -X，對著穀倉右牆
+	me.stamina = me.max_stamina
+	_ck(not me.try_vault(true), "穀倉的牆太高，不能翻")
+	_ck(not me.try_vault(false), "沒按住往前不能翻")
 	_end(m)
 
 ## 牛仔的操作都要有綁鍵，鍵盤和手把兩邊都要（FNE 的約定）

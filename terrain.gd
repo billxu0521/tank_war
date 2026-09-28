@@ -42,21 +42,35 @@ func raw(x: float, z: float) -> float:
 ## 這一點的地面高度（整平區已經算進去）
 func height(x: float, z: float) -> float:
 	var h := raw(x, z)
-	# 平均時權重取 4 次方：站在某塊平地正中央（權重 1）就幾乎只聽它的，
-	# 旁邊那塊的過渡帶（權重 0.5 → 0.06）插不太進來；兩塊之間照樣平順接起來。
-	# 兩塊平地本身的高度已經在 settle() 裡拉近過，中間不會擠出陡坡
-	var wmax := 0.0
-	var wsum := 0.0
-	var hsum := 0.0
+	# 每塊平地的權重再乘上「不在其他平地裡」的程度：站在某塊平地中央（權重 1），
+	# 其他平地的權重全變 0，高度一定剛好是這塊的——單純加權平均會被隔壁過渡帶拉歪（實測 0.8 公尺，
+	# 窗台下的牆腳被埋掉，翻越偵測直接從底下穿過去）。兩塊之間照樣平順接起來
+	var ws: Array[float] = []
+	var hs: Array[float] = []
 	for p: Dictionary in _pads:
 		var w := _pad_weight(p, x, z)
-		var k := pow(w, 4.0)
-		wmax = maxf(wmax, w)
-		wsum += k
-		hsum += k * float(p["h"])
-	if wsum <= 0.0:
+		if w > 0.0:
+			ws.append(w)
+			hs.append(p["h"])
+	if ws.is_empty():
 		return h
-	return lerpf(h, hsum / wsum, wmax)
+	var wmax := 0.0
+	var best := 0.0
+	var esum := 0.0
+	var hsum := 0.0
+	for i in ws.size():
+		var e := ws[i]
+		for j in ws.size():
+			if j != i:
+				e *= 1.0 - ws[j]
+		esum += e
+		hsum += e * hs[i]
+		if ws[i] > wmax:
+			wmax = ws[i]
+			best = hs[i]
+	# 兩塊平地的核心重疊時兩個都乘成 0；settle() 已經把它們拉成一樣高，取權重最大的就好
+	var target := hsum / esum if esum > 1e-6 else best
+	return lerpf(h, target, wmax)
 
 
 ## 圓形整平區（農莊、撤離區）：半徑內全平，往外 PAD_FALL 公尺慢慢接回丘陵。

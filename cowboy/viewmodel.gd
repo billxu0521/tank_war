@@ -149,6 +149,8 @@ func _process(delta: float) -> void:
 				if Input.is_action_just_pressed("weapon_%d" % (i + 1)):
 					switch_weapon(i)
 		_update_melee_input(delta)
+	# 翻越、爬梯子時槍放低（手去撐東西了）
+	weapon.lower = move_toward(weapon.lower, 1.0 if (_player.vaulting or _player.is_climbing()) else 0.0, delta * 6.0)
 	_update_ads(Input.is_action_pressed("aim"), delta)
 	_update_breath(Input.is_action_pressed("sprint"), delta)
 	_update_sway(delta)

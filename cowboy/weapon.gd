@@ -81,6 +81,8 @@ var _reload_pose := 0.0  # 0 = 平常，1 = 換彈姿勢
 var _melee := 0.0        # 近戰槍托往前推，1 → 0
 ## 重擊蓄力 0..1，Viewmodel 每幀設。蓄越滿槍拉得越後面
 var windup := 0.0
+## 把槍放低 0..1（翻越、爬梯子時手要去撐東西），Viewmodel 每幀設
+var lower := 0.0
 
 @onready var _anim: AnimationPlayer = find_child("AnimationPlayer", true, false)
 
@@ -205,10 +207,10 @@ func _procedural(delta: float) -> void:
 	if _model:
 		var thrust := sin(PI * _melee)   # 推出去再收回來
 		# 後座：往後退、槍口上揚。換彈：往下沉、往內側翻，看得到裝填口。近戰：往前捅
-		_model.position = _rest_pos + Vector3(0.0, -0.05 * _reload_pose,
-			0.06 * _kick - 0.18 * thrust + 0.12 * windup)
-		_model.rotation = _rest_rot + Vector3(0.22 * _kick - 0.35 * _reload_pose - 0.3 * thrust,
-			0.0, 0.5 * _reload_pose + 0.4 * windup)
+		_model.position = _rest_pos + Vector3(0.12 * lower, -0.05 * _reload_pose - 0.22 * lower,
+			0.06 * _kick - 0.18 * thrust + 0.12 * windup + 0.05 * lower)
+		_model.rotation = _rest_rot + Vector3(0.22 * _kick - 0.35 * _reload_pose - 0.3 * thrust - 0.8 * lower,
+			0.0, 0.5 * _reload_pose + 0.4 * windup + 0.5 * lower)
 
 	# 擊錘：模型建的是扳起來的樣子。開槍瞬間往前打下去，上膛後半段扳回來
 	var hammer := get_node_or_null(hammer_path) as Node3D

@@ -42,7 +42,7 @@ class_name Cowboy
 @export var vault_max_height := 1.5
 ## 障礙要在多近才翻得到。
 @export var vault_reach := 1.0
-@export var vault_time := 0.45
+@export var vault_time := 0.55
 @export var vault_stamina := 20.0
 ## 翻上去之後往前站多遠（從障礙前緣算）。要大於「障礙厚度 + 膠囊半徑」，
 ## 不然翻過薄牆時人會落在牆邊，膠囊卡進牆裡導致整個翻越被判定為不可行。
@@ -112,6 +112,8 @@ var _stand_head_y: float
 var _stamina_bar_width: float
 ## 翻越中：位置交給 Tween，一般移動和重力都先停掉
 var vaulting := false
+## 翻越進度 0..1（鏡頭點頭、槍放低、撐障礙的那隻手都看這個）
+var vault_t := 0.0
 ## 這一 frame 累積的滑鼠視角增量（弧度），給 Viewmodel 的武器搖擺用，讀走就清零
 var _look_delta := Vector2.ZERO
 var _step_timer := 0.0
@@ -180,6 +182,9 @@ func _process(delta: float) -> void:
 		# 換成 AudioStreamPlayer3D 再加一條 RPC。
 		_apply_crouch(sync_crouching, delta)
 		return
+	# 翻越：鏡頭往下點頭、往側邊歪一下，看得出自己撐過去了
+	var v := sin(PI * vault_t)
+	_camera.rotation = Vector3(-0.22 * v, 0.0, 0.12 * v)
 	# 打中人準心閃紅，遠距離看不出血條掉，這是唯一的命中確認
 	_crosshair.modulate = Color(1, 0.3, 0.25) if hit_until > Time.get_ticks_msec() else Color.WHITE
 	_hp_fill.size.x = (_hp_fill.get_parent() as Control).size.x * clampf(float(hp) / max_hp, 0.0, 1.0)
@@ -520,17 +525,16 @@ func update_stamina(wants_sprint: bool, delta: float) -> bool:
 
 
 ## 面前有沒有翻得過去的東西？有就翻，回傳 true。
-## 三個條件缺一不可：往前推、身體真的頂到東西（`is_on_wall()`）、那個東西高度剛好。
-## 站在障礙旁邊按跳不算——要「撞上去」才會翻。
+## 條件：往前推、面前 vault_reach 內有東西、那個東西高度剛好（柵欄、窗台、乾草捲、矮牆）。
+## 不用先撞上去——以前要 is_on_wall()，走到柵欄前按 Space 常常沒反應，看起來像沒有翻越。
 ##
 ## pressing_forward 用傳的不用自己讀 Input：headless 測試沒辦法模擬按鍵。
 ##
-## ponytail: 位置直接用 Tween 拉過去，沒有攀爬動畫，翻越途中也不做碰撞。
-## 要做「翻到一半被打斷」再改成自己算位移。
+## ponytail: 翻越途中位置交給 Tween、不做碰撞。要做「翻到一半被打斷」再改成自己算位移。
 func try_vault(pressing_forward: bool) -> bool:
 	if vaulting or stamina < vault_stamina:
 		return false
-	if not pressing_forward or not is_on_wall():
+	if not pressing_forward:
 		return false
 
 	var forward := -global_transform.basis.z
@@ -540,10 +544,15 @@ func try_vault(pressing_forward: bool) -> bool:
 	if wall.is_empty():
 		return false
 
-	# 從障礙上方往下打，找出頂面在哪
-	var probe := Vector3(wall["position"].x, 0.0, wall["position"].z) + forward * 0.25
-	probe.y = global_position.y + vault_max_height + 0.3
-	var top := _ray(probe, probe + Vector3.DOWN * (vault_max_height + 0.6))
+	# 從障礙上方往下打，找出頂面在哪。往裡探三個深度取最高的：
+	# 柵欄和牆只有 20 公分厚，只探一個 25 公分會越過它、打到另一邊的地上，當成「太矮不用翻」
+	var top := {}
+	for depth: float in [0.05, 0.15, 0.3]:
+		var probe := Vector3(wall["position"].x, 0.0, wall["position"].z) + forward * depth
+		probe.y = global_position.y + vault_max_height + 0.3
+		var hit := _ray(probe, probe + Vector3.DOWN * (vault_max_height + 0.6))
+		if not hit.is_empty() and (top.is_empty() or hit["position"].y > top["position"].y):
+			top = hit
 	if top.is_empty():
 		return false
 
@@ -564,14 +573,24 @@ func try_vault(pressing_forward: bool) -> bool:
 	spend_stamina(vault_stamina)
 	vaulting = true
 	velocity = Vector3.ZERO
-	# 先垂直爬上去再往前跨，一條斜線會像穿模而不是翻越
+	if _jump_sound:
+		_jump_sound.play()
+	# 一條「先往上撐、越過頂面、往前落下」的曲線。直線拉過去會像穿模而不是翻越
+	var start := global_position
+	var over := Vector3(top["position"].x, top["position"].y + 0.25, top["position"].z)
+	var c1 := Vector3(start.x, over.y + 0.15, start.z)
+	var c2 := over + forward * 0.3
 	var tween := create_tween()
-	tween.tween_property(
-		self, "global_position", Vector3(global_position.x, landing.y, global_position.z),
-		vault_time * 0.6
-	)
-	tween.tween_property(self, "global_position", landing, vault_time * 0.4)
-	tween.finished.connect(func(): vaulting = false)
+	tween.set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+	tween.tween_method(func(t: float) -> void:
+		vault_t = t
+		global_position = start.bezier_interpolate(c1, c2, landing, t), 0.0, 1.0, vault_time)
+	tween.finished.connect(func():
+		vaulting = false
+		vault_t = 0.0
+		_fall_top = global_position.y
+		if _land_sound:
+			_land_sound.play())
 	return true
 
 
