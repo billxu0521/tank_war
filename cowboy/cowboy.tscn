@@ -101,6 +101,13 @@ cast_shadow = 0
 ; 原點在腳底，網格一樣由 _skin() 換上來
 [node name="Body" type="MeshInstance3D" parent="."]
 
+; 兩條腿掛在身體底下（蹲下時跟著壓），原點在髖關節，走路時 cowboy.gd 讓它們前後擺
+[node name="LegL" type="MeshInstance3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1, 0.88, 0)
+
+[node name="LegR" type="MeshInstance3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, 0.88, 0)
+
 [node name="Sync" type="MultiplayerSynchronizer" parent="."]
 replication_config = SubResource("Sync_player")
 

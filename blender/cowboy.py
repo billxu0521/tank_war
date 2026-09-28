@@ -3,6 +3,8 @@
 # 座標用 Blender 的：X 右、Y 前（= Godot -Z）、Z 上。單位公尺，身高 1.8（跟碰撞膠囊一樣）。
 # 兩個物件：
 #   CowboyBody  原點在腳底，掛在 cowboy.tscn 的 Body 節點（蹲下時整個沿 Y 壓扁）
+#   CowboyLegL/R 兩條腿，原點在髖關節（±0.10, 0.88），遊戲裡走路時前後擺
+#   HandGrip / HandSupport 第一人稱握槍的右手、托護木的左手，原點在握的那一點（槍的場景裡擺位置）
 #   CowboyHead  原點在眼睛高度（1.6，= Head 節點的位置），掛在 Head/Face——
 #               頭跟著上下看的角度轉，別人才看得出你在看哪裡
 # EYE 跟 cowboy.tscn 的 Head 高度共用，改了要一起改。爆頭判定也是從 Head 往下算的。
@@ -76,12 +78,6 @@ def rbox(size, loc, rot=(0, 0, 0), m=None, taper_top=1.0):
 # ================= 身體（原點在腳底） =================
 # 功能零件：靴子（鞋跟、鞋頭）、牛仔褲兩條腿、槍帶＋皮帶扣＋右腰槍套和左輪握把、
 # 襯衫、背心、長風衣（肩、敞開的前襟、垂到膝蓋的下擺）、手臂、手
-for sx in (-1, 1):
-    x = sx * 0.10
-    rbox((0.11, 0.26, 0.09), (x, 0.03, 0.045), m=BOOT)                  # 鞋身
-    rbox((0.10, 0.06, 0.05), (x, -0.08, 0.025), m=BOOT)                 # 鞋跟（馬靴高跟）
-    cyl(0.062, 0.26, (x, 0.0, 0.20), (0, 0, 0), 14, m=BOOT)             # 靴筒
-    cyl(0.068, 0.60, (x, 0.0, 0.58), (0, 0, 0), 14, m=DENIM)            # 褲管
 rbox((0.30, 0.18, 0.16), (0, 0.0, 0.90), m=DENIM)                        # 臀（包在風衣裡）
 rbox((0.05, 0.02, 0.04), (0, 0.132, 0.95), m=METAL)                      # 皮帶扣
 # 右腰槍套掛在風衣外面（風衣下擺往後撥開），握把往後翹，一眼看得出帶著槍
@@ -114,6 +110,72 @@ cyl(0.075, 0.06, (0, 0.005, 1.47), (0, 0, 0), 14, m=SCARF)                # 領�
 cone(0.07, 0.01, 0.10, (0, 0.06, 1.42), (math.pi, 0, 0), 4, m=SCARF)      # 領巾前面垂下的三角
 body = finish('CowboyBody', bevel=0.006, seg=1, smooth_mats=('c_skin', 'c_scarf', 'c_duster'))
 
+# ================= 兩條腿（原點在髖關節，遊戲裡繞這裡前後擺） =================
+HIP = 0.88
+legs = {}
+for sx, name in ((-1, 'CowboyLegL'), (1, 'CowboyLegR')):
+    x = sx * 0.10
+    rbox((0.11, 0.26, 0.09), (x, 0.03, 0.045), m=BOOT)                  # 鞋身
+    rbox((0.10, 0.06, 0.05), (x, -0.08, 0.025), m=BOOT)                 # 鞋跟（馬靴高跟）
+    cyl(0.062, 0.26, (x, 0.0, 0.20), (0, 0, 0), 14, m=BOOT)             # 靴筒
+    cyl(0.068, HIP - 0.25, (x, 0.0, 0.25 + (HIP - 0.25) / 2), (0, 0, 0), 14, m=DENIM)   # 褲管
+    sphere(0.07, (x, 0.0, HIP), 14, 8, m=DENIM)                         # 髖關節（擺動時上端不會露出斷面）
+    legs[name] = finish(name, bevel=0.006, seg=1, smooth_mats=('c_denim',))
+    # 第一人稱自己看的版本：只有靴子。整條腿從正上方看只看得到褲管頂端（兩個藍色圓盤），
+    # 只留靴子，低頭看到的是靴筒和往前伸的鞋頭。原點一樣在髖關節，擺動一樣
+    rbox((0.11, 0.26, 0.09), (x, 0.03, 0.045), m=BOOT)
+    rbox((0.10, 0.06, 0.05), (x, -0.08, 0.025), m=BOOT)
+    cyl(0.062, 0.26, (x, 0.0, 0.20), (0, 0, 0), 14, m=BOOT)
+    legs[name.replace('Leg', 'Shin')] = finish(name.replace('Leg', 'Shin'), bevel=0.006, seg=1, smooth_mats=('c_denim',))
+
+# ================= 第一人稱的手（原點在握的那一點） =================
+# 握槍的右手：槍把沿 Z（直的），手掌貼在槍把右側（+X），四根手指一節一節繞過槍把前面（+Y）
+# 到左邊，拇指從上面扣過去；後面接前臂和風衣袖子，往右後下方伸出畫面
+from mathutils import Vector
+
+
+def limb(r, length, start, direction, m, v=10):
+    """從 start 往 direction 長一截圓柱（前臂、袖子）"""
+    d = Vector(direction).normalized()
+    c = Vector(start) + d * (length / 2)
+    rot = d.to_track_quat('Z', 'Y').to_euler()
+    return cyl(r, length, tuple(c), tuple(rot), v, m=m)
+
+
+def finger(center, axis, r, angles, z, m, seg=(0.018, 0.024, 0.017)):
+    """一根手指：沿著繞某軸的圓弧排三節。axis='z' 繞直的槍把、'y' 繞橫的護木"""
+    for a in angles:
+        a = math.radians(a)
+        if axis == 'z':
+            loc = (center[0] + r * math.cos(a), center[1] + r * math.sin(a), z)
+            rbox(seg, loc, (0, 0, a), m=m)
+        else:
+            loc = (center[0] + r * math.cos(a), z, center[2] + r * math.sin(a))
+            rbox((seg[0], seg[2], seg[1]), loc, (0, -a, 0), m=m)
+
+
+rbox((0.024, 0.07, 0.09), (0.03, -0.008, 0.0), m=SKIN)                   # 手掌
+for k, z in enumerate((0.03, 0.01, -0.01, -0.032)):                       # 四根手指（小指短一點）
+    finger((0, 0), 'z', 0.031, (55, 105, 150) if k < 3 else (60, 110), z, SKIN)
+rbox((0.022, 0.05, 0.02), (0.005, -0.012, 0.05), (0.3, 0, -0.9), m=SKIN)   # 拇指從上面扣過去
+# 前臂往下斜得多：長槍舉起來時握把就在鏡頭正下方，往後平伸的手臂會擋掉半個畫面
+ARM_R = (0.22, -0.55, -0.80)
+limb(0.028, 0.10, (0.035, -0.03, -0.02), ARM_R, SKIN)                     # 手腕
+limb(0.029, 0.012, (0.057, -0.085, -0.10), ARM_R, SHIRT)                  # 襯衫袖口
+limb(0.040, 0.36, (0.060, -0.09, -0.105), ARM_R, DUSTER, 12)              # 風衣袖子
+grip = finish('HandGrip', bevel=0.004, seg=1, smooth_mats=('c_skin', 'c_duster'))
+
+# 托護木的左手：護木沿 Y（橫的），掌心朝上托在下面，手指從右側（+X）往上包，拇指在左側
+rbox((0.07, 0.09, 0.022), (0.0, 0.0, -0.033), m=SKIN)                    # 手掌
+for k, y in enumerate((-0.03, -0.01, 0.01, 0.03)):
+    finger((0, 0, 0), 'y', 0.032, (-40, 5, 45) if k < 3 else (-40, 5), y, SKIN)
+rbox((0.02, 0.05, 0.02), (-0.034, 0.02, -0.01), (0, 0, 0.3), m=SKIN)      # 拇指
+ARM_L = (-0.30, -0.60, -0.70)
+limb(0.028, 0.10, (-0.01, -0.035, -0.04), ARM_L, SKIN)
+limb(0.029, 0.012, (-0.04, -0.095, -0.11), ARM_L, SHIRT)
+limb(0.040, 0.36, (-0.043, -0.10, -0.115), ARM_L, DUSTER, 12)
+support = finish('HandSupport', bevel=0.004, seg=1, smooth_mats=('c_skin', 'c_duster'))
+
 # ================= 頭（原點在眼睛高度） =================
 # 功能零件：頭、鼻子、眼睛、耳朵、八字鬍、帽子（帽頂中間壓凹、帽帶、往上捲的寬帽簷）
 sphere(0.105, (0, 0.0, 1.62), 20, 14, m=SKIN)                             # 頭
@@ -133,7 +195,9 @@ cyl(0.121, 0.03, (0, 0.0, 1.74), (0, 0, 0), 20, m=BAND)                   # 帽�
 head = finish('CowboyHead', bevel=0.004, seg=1, smooth_mats=('c_skin', 'c_hat'))
 # join 完原點停在第一個零件上（身體是左腳靴子），遊戲只拿 mesh，原點不對整個人就歪掉。
 # 旋轉先烘進網格，再把原點搬到該在的地方：身體在腳底中央、頭在眼睛
-for o, anchor in ((body, (0, 0, 0)), (head, (0, 0, EYE))):
+for o, anchor in ((body, (0, 0, 0)), (head, (0, 0, EYE)), (legs['CowboyLegL'], (-0.10, 0, HIP)),
+                  (legs['CowboyLegR'], (0.10, 0, HIP)), (legs['CowboyShinL'], (-0.10, 0, HIP)),
+                  (legs['CowboyShinR'], (0.10, 0, HIP)), (grip, (0, 0, 0)), (support, (0, 0, 0))):
     bpy.ops.object.select_all(action='DESELECT')
     o.select_set(True)
     bpy.context.view_layer.objects.active = o
@@ -145,7 +209,7 @@ bpy.ops.object.select_all(action='DESELECT')
 
 
 def export(out_dir):
-    """一個 cowboy.glb，兩個節點。頭的節點位置留在眼睛高度，遊戲只拿 mesh 不拿位置"""
+    """一個 cowboy.glb。遊戲只拿 mesh 不拿節點位置，原點都已經搬到該轉的地方"""
     for o in bpy.data.objects:
         if o.type == 'MESH':
             o.select_set(True)

@@ -21,7 +21,11 @@ reserve = 20
 hit_range = 250.0
 muzzle_velocity = 440.0
 effective_range = 60.0
-ads_position = Vector3(0, -0.058, -0.12)
+ads_position = Vector3(0, -0.058, -0.2)
+grip_parent = NodePath("Model/RifleLever")
+grip_hand = Transform3D(1, 0, 0, 0, 0.8525, 0.5227, 0, -0.5227, 0.8525, 0.0000, -0.0010, 0.1350)
+support_parent = NodePath("Model")
+support_hand = Transform3D(1, 0, 0, 0, 1.0000, -0.0000, 0, 0.0000, 1.0000, 0.0000, 0.0120, -0.2200)
 hammer_path = NodePath("Model/RifleHammer")
 lever_path = NodePath("Model/RifleLever")
 

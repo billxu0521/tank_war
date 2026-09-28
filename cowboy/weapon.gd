@@ -55,6 +55,15 @@ const MOVEMENT_FALLBACK: Array[StringName] = [&"walk", &"run", &"jump_start", &"
 ## 這些動作要循環。命名 clip 改 loop_mode，分段則播到尾跳回頭。
 @export var looping: Array[String] = ["idle", "walk", "run", "jump_fall"]
 
+@export_group("Hands")
+## 第一人稱的手（models/cowboy.glb 的 HandGrip / HandSupport）掛在哪個零件底下、放哪。
+## 掛在會動的零件底下就會跟著動：步槍的右手掛拉桿、散彈的左手掛槍管（換彈折開時手跟著下去）
+@export var grip_parent: NodePath = ^"Model"
+@export var grip_hand := Transform3D()
+## 空的＝單手拿（左輪）
+@export var support_parent: NodePath
+@export var support_hand := Transform3D()
+
 @export_group("Procedural")
 ## 沒有 AnimationPlayer 時用這些零件做動作。路徑相對於武器根節點，沒有就留空。
 @export var model_path: NodePath = ^"Model"
@@ -92,8 +101,12 @@ var _seg_start := 0.0
 var _seg_loop := false
 
 
+const ARMS := preload("res://models/cowboy.glb")
+
+
 func _ready() -> void:
 	mag = mag_size
+	_add_hands()
 	_model = get_node_or_null(model_path)
 	if _model:
 		_rest_pos = _model.position
@@ -124,6 +137,21 @@ func _process(delta: float) -> void:
 func damage_at(dist: float) -> float:
 	var t := inverse_lerp(effective_range, hit_range, dist)
 	return damage * lerpf(1.0, falloff_min, clampf(t, 0.0, 1.0))
+
+
+func _add_hands() -> void:
+	var src := ARMS.instantiate()
+	for h: Array in [[&"HandGrip", grip_parent, grip_hand], [&"HandSupport", support_parent, support_hand]]:
+		var parent := get_node_or_null(h[1] as NodePath) if h[1] != NodePath() else null
+		var from := src.get_node_or_null(String(h[0])) as MeshInstance3D
+		if parent and from:
+			var mi := MeshInstance3D.new()
+			mi.name = String(h[0])
+			mi.mesh = from.mesh
+			mi.transform = h[2]
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF   # 視角模型貼著鏡頭，影子會怪
+			parent.add_child(mi)
+	src.free()
 
 
 func has_action(action: StringName) -> bool:

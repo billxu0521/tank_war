@@ -24,6 +24,7 @@ hit_range = 80.0
 muzzle_velocity = 330.0
 effective_range = 25.0
 ads_position = Vector3(0, -0.058, -0.5)
+grip_hand = Transform3D(1, 0, 0, 0, 0.9211, 0.3894, 0, -0.3894, 0.9211, 0.0000, -0.0350, 0.0320)
 cylinder_path = NodePath("Model/RevolverCylinder")
 hammer_path = NodePath("Model/RevolverHammer")
 

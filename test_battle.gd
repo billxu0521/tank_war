@@ -101,7 +101,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰兩條體力、沙盒、鄉村柵欄、地形起伏、F 開門爬梯子、翻柵欄和窗台、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
+		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰兩條體力、沙盒、鄉村柵欄、地形起伏、F 開門爬梯子、翻柵欄和窗台、手腳、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
 	return true
 
 # --- 共用 ---
@@ -254,7 +254,19 @@ func _case_cowboy() -> void:
 	m = _new_offline_game()
 	var me: Node = m.players.get_node(^"1")
 	_ck(me.is_local and me.get_node(^"Head/Camera3D").current, "自己的牛仔要用自己的相機")
-	_ck(not me.get_node(^"Body").visible, "第一人稱看不到自己的身體")
+	_ck(me.get_node(^"Body").cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY,
+		"第一人稱看不到自己的身體，但要有影子")
+	_ck(me.get_node(^"Body/LegL").mesh != null and me.get_node(^"Body/LegL").visible, "低頭要看得到自己的腿")
+	# 走路擺腿：往前走一段，兩條腿要往相反方向擺
+	for i in 20:
+		me.global_position += Vector3(0, 0, -0.05)
+		me._swing_legs(1.0 / 60.0)
+	var l: float = me.get_node(^"Body/LegL").rotation.x
+	var r: float = me.get_node(^"Body/LegR").rotation.x
+	_ck(absf(l) > 0.02 and l * r < 0.0, "走路時兩條腿要反向擺（左 %.2f 右 %.2f）" % [l, r])
+	var gun: Node = me.viewmodel._weapons[2]
+	_ck(gun.get_node_or_null(^"Model/RifleLever/HandGrip") != null and gun.get_node_or_null(^"Model/HandSupport") != null,
+		"步槍要有兩隻手：右手在拉桿上、左手托護木")
 	_end(m)
 
 ## Hunt 式的三把槍和它們的規則

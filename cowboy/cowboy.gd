@@ -89,6 +89,8 @@ const MODEL := preload("res://models/cowboy.glb")
 @onready var _prompt: Label = $HUD/PromptLabel
 @onready var _body: MeshInstance3D = $Body
 @onready var _face: MeshInstance3D = $Head/Face
+@onready var _leg_l: MeshInstance3D = $Body/LegL
+@onready var _leg_r: MeshInstance3D = $Body/LegR
 @onready var _step_sound: AudioStreamPlayer = get_node_or_null("StepSound")
 @onready var _jump_sound: AudioStreamPlayer = get_node_or_null("JumpSound")
 @onready var _land_sound: AudioStreamPlayer = get_node_or_null("LandSound")
@@ -118,6 +120,14 @@ var vault_t := 0.0
 var _look_delta := Vector2.ZERO
 var _step_timer := 0.0
 var _was_on_floor := true
+## 走路擺腿：步伐相位、目前的擺幅、上一幀的位置
+var _stride := 0.0
+var _swing := 0.0
+var _last_pos := Vector3.ZERO
+const STRIDE_RATE := 3.0          # 每走一公尺相位走多少，越大步子越碎
+## 自己的腿往前挪多少：腿在鏡頭正下方的話，低頭只看得到兩個褲管的頂端；
+## 往前一點才看得到褲管和靴子的正面
+const LOCAL_LEG_FORWARD := 0.25
 ## C 切換的蹲下（Ctrl 是按住蹲）。Hunt 兩種都有，切換的比較不累手
 var crouch_toggled := false
 ## 看著的門或梯子（有 interact() 的東西），沒有就是 null
@@ -141,10 +151,14 @@ func _ready() -> void:
 	_stamina_bar_width = _stamina_fill.size.x
 	_refresh_stamina_bar()
 
-	# 第一人稱不該看到自己的軀幹和臉
 	_skin()
-	_body.visible = not is_local
-	_face.visible = not is_local
+	if is_local:
+		# 第一人稱看不到自己的軀幹和臉，但影子要在（地上看得到自己的影子，像 Hunt 那樣）。
+		# 腿照樣畫：低頭看得到自己的靴子
+		_body.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+		_face.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+		for leg in [_leg_l, _leg_r]:
+			leg.position.z -= LOCAL_LEG_FORWARD
 	if not is_local:
 		_become_remote()
 		return
@@ -153,11 +167,28 @@ func _ready() -> void:
 	_camera.current = true
 
 
+## 走路時兩條腿繞髖關節前後擺，擺幅跟速度走。速度用位置差算：
+## 遠端的人沒有 velocity（位置是同步器塞的），自己和 bot 用這個也一樣準
+func _swing_legs(delta: float) -> void:
+	var moved := global_position - _last_pos
+	_last_pos = global_position
+	var speed := Vector2(moved.x, moved.z).length() / maxf(delta, 0.0001)
+	if speed > 20.0 or vaulting or _ladder:
+		speed = 0.0   # 瞬移（重生、爬到頂）和翻越、爬梯子時不擺
+	_stride += speed * delta * STRIDE_RATE
+	var amp := clampf(speed / walk_speed, 0.0, 1.4) * 0.45
+	_swing = move_toward(_swing, amp, delta * 3.0)   # 停下來時慢慢收，不要一下彈回直的
+	_leg_l.rotation.x = sin(_stride) * _swing
+	_leg_r.rotation.x = -sin(_stride) * _swing
+
+
 ## 把 Blender 建的牛仔（blender/cowboy.py）換到身體和頭上。
 ## 頭掛在 Head 底下，跟著上下看的角度轉，別人看得出你在看哪裡。
 func _skin() -> void:
 	var src := MODEL.instantiate()
-	for pair in [["CowboyBody", _body], ["CowboyHead", _face]]:
+	# 自己看自己的腿只畫靴子（整條腿從正上方看只看得到褲管頂端）
+	var leg := "Shin" if is_local else "Leg"
+	for pair in [["CowboyBody", _body], ["CowboyHead", _face], ["Cowboy%sL" % leg, _leg_l], ["Cowboy%sR" % leg, _leg_r]]:
 		var from := src.get_node_or_null(NodePath(pair[0])) as MeshInstance3D
 		if from:
 			(pair[1] as MeshInstance3D).mesh = from.mesh
@@ -176,6 +207,7 @@ func _become_remote() -> void:
 
 
 func _process(delta: float) -> void:
+	_swing_legs(delta)
 	if not is_local:
 		# 遠端角色拿同步過來的蹲下狀態重跑一次姿勢
 		# ponytail: 腳步聲和落地聲沒有同步，聽不到別人走路。要做就把 AudioStreamPlayer
