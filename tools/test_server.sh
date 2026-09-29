@@ -17,7 +17,8 @@ KEY_NAME=tankwar
 PORT=24680
 
 api() {   # api 方法 路徑 [JSON]。失敗就把 Vultr 回的錯誤印出來再停
-	OUT=$(curl -s -w '\n%{http_code}' -X "$1" -H "Authorization: Bearer ${VULTR_API_KEY}" \
+	# -4：Vultr 的 API 只放行白名單上的 IP，家裡網路走 IPv6 的話位址不在名單上，會被擋（401）
+	OUT=$(curl -4 -s -w '\n%{http_code}' -X "$1" -H "Authorization: Bearer ${VULTR_API_KEY}" \
 		-H "Content-Type: application/json" "https://api.vultr.com/v2/$2" ${3:+-d "$3"})
 	CODE=$(echo "${OUT}" | tail -1)
 	BODY=$(echo "${OUT}" | sed '$d')
@@ -28,8 +29,11 @@ api() {   # api 方法 路徑 [JSON]。失敗就把 Vultr 回的錯誤印出來�
 	echo "${BODY}"
 }
 
+## 先存下回應再交給 jq：直接接管線的話 api 失敗會被 jq 的成功蓋掉，
+## Vultr 出錯時會誤報「沒有開著的測試站」（2026-09-29 真的發生過，主機其實還開著在計費）
 instance_id() {
-	api GET "instances?label=${LABEL}" | jq -r '.instances[0].id // empty'
+	BODY=$(api GET "instances?label=${LABEL}") || exit 1
+	echo "${BODY}" | jq -r '.instances[0].id // empty'
 }
 
 case "$1" in
