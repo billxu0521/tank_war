@@ -21,6 +21,7 @@ class_name Viewmodel
 @export var hip_spread := 4.0
 @export var ads_spread := 0.3
 @export var spread_per_shot := 1.5
+var remote_shots := 0   # 收到別人這把槍開了幾槍（連線測試用來確認三人以上也看得到）
 @export var max_spread := 8.0
 @export var spread_recover := 6.0
 
@@ -307,6 +308,7 @@ func try_fire(fanning := false) -> void:
 		dirs.append(_spread_direction(_camera, weapon.pellet_spread + (weapon.fan_spread if fanning else 0.0)))
 	var from := _camera.global_position
 	_launch(_index, from, dirs, false)
+	_alert_boss(from)
 	_muzzle_flash(weapon)
 	# 自己開的槍、或主機上的 bot 開的槍（bot 的 authority 是主機），廣播給其他人看火光和子彈
 	if is_multiplayer_authority():
@@ -318,16 +320,24 @@ func try_fire(fanning := false) -> void:
 
 ## 別人畫面上的這一槍：火光、槍聲、同樣起點和方向的子彈（只有外觀）。
 ## 扣血只在開槍的人那邊判定一次，再請主機執行（Cowboy.deal_damage）。
-##
-## ponytail: ENet 不會把 rpc 從客戶端直送另一個客戶端，三人以上時客戶端 A
-## 開的槍客戶端 B 看不到。要補就讓主機收到之後再轉發一次。
+## 客戶端 A 開的槍，主機會轉發給客戶端 B（SceneMultiplayer 的 server_relay 預設開著）。
+## 2026-09-29 用專用伺服器＋兩個客戶端實測過：B 收得到 A 的每一槍
 @rpc("authority", "call_remote", "unreliable")
 func _remote_shot(index: int, from: Vector3, dirs: PackedVector3Array) -> void:
 	if index < 0 or index >= _weapons.size():
 		return
+	remote_shots += 1
 	_weapons[index].play_sound(&"Shoot")
 	_muzzle_flash(_weapons[index])
 	_launch(index, from, dirs, true)
+	_alert_boss(from)
+
+
+## 槍聲引來恐龍 boss。boss 在主機上跑：主機自己（和主機上的 bot）開槍走 try_fire，
+## 客戶端開槍時主機收到的是 _remote_shot，兩邊都會通知到
+func _alert_boss(at: Vector3) -> void:
+	if multiplayer.is_server():
+		get_tree().call_group(&"boss", &"hear", at)
 
 
 ## 火光和煙擺到這把槍真正的槍口（槍在動，每把槍的槍口也不一樣）

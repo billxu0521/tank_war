@@ -52,7 +52,7 @@ var _stagger := 0.0
 
 func _ready() -> void:
 	super()
-	$CamPivot/Camera3D.current = is_multiplayer_authority()
+	$CamPivot/Camera3D.current = is_multiplayer_authority() and not bot   # 電腦恐龍的權限在主機，別搶走主機玩家的相機
 
 func _unhandled_input(e: InputEvent) -> void:
 	var look := mouse_look(e)

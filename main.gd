@@ -3,26 +3,39 @@ extends Node3D
 ## Esc 選單裡的「遊戲局控制」讓主機加移動標靶、牛仔 bot。恐龍的程式都還在，玩法定了再接回來。
 
 const PORT := 24680
-const ARENA := 320.0        # 場地邊長
+## 測試站：雲端主機上一直開著的專用伺服器（`-- --server`，見 README 的「測試站」）。
+## 還沒架好就空著，大廳的「連到測試站」按鈕會關掉
+const TEST_SERVER := ""
+const NEXT_ROUND_DELAY := 10.0   # 專用伺服器一局結束後隔幾秒開下一局
+const ARENA := 192.0        # 場地邊長（原本 320，縮 40%：交火更密集）
 const SPAWN_CLEARANCE := 7.0  # 出生點離建築至少這麼遠
-const FARM_GRID := 6          # 鄉村：6x6 塊地，每塊隨機是農莊／果園／麥田／牧場（塊小、塊多＝物件緊湊）
-const FARM_CELL := 50.0
+const FARM_GRID := 4          # 鄉村：4x4 塊地，每塊隨機是農莊／果園／麥田／牧場
+const FARM_CELL := 44.0
 const FENCE_H := 1.0          # 柵欄高度，要在牛仔的翻越範圍（0.4~1.5）內
 const BUILDING_MAX_H := 22.0  # 最高的東西（筒倉＋圓頂約 20、穀倉屋脊約 16）不能超過這個
-# 沙盒的靶場：從 (0, 110) 往 -Z 打，這一條不蓋東西。起點要在撤離區（z=138）外面
-const SANDBOX_RANGE := Rect2(-25, -5, 50, 125)
-const SANDBOX_START := Vector3(0, 0.1, 110)   # y 是離地高度，用 _on_ground() 換成實際位置
+# 沙盒的靶場：從 (0, 84) 往 -Z 打到 100 公尺，這一條不蓋東西。撤離區在東西兩端，不會壓到
+const SANDBOX_RANGE := Rect2(-20, -25, 40, 115)   # 靶在路兩側 4 公尺、恐龍靶 12 公尺；再窄旁邊的坡會超過 40 度
+const SANDBOX_START := Vector3(0, 0.1, 84)   # y 是離地高度，用 _on_ground() 換成實際位置
 const SANDBOX_TARGETS := [10, 25, 50, 100]   # 牛仔靶的距離（公尺）：左輪、散彈、步槍各自的有效距離
-const GRASS := Color(0.40, 0.44, 0.24)
-const DIRT := Color(0.45, 0.36, 0.24)
-const WHEAT := Color(0.78, 0.66, 0.34)
+const GRASS := Color(0.82, 0.65, 0.39)   # 乾草原：枯黃偏沙色
+const DIRT := Color(0.93, 0.76, 0.50)    # 沙土路，比草地亮
+const WHEAT := Color(0.70, 0.56, 0.33)
 # 場景物件的模型（blender/props.py）。這幾個基準尺寸跟那邊共用，改一邊要改另一邊
 const PROPS := preload("res://models/props.glb")
 const BARN_BASE := Vector3(14, 8, 20)   # 穀倉模型的寬、牆高、長
 const BARN_PITCH := 0.55
 const SILO_BASE_H := 15.0
 const FENCE_SEG := 2.5
-const TREE_BASE_TRUNK := 5.0
+const TREE_BASE_TRUNK := 5.0   # 松樹的基準樹幹高
+# 闊葉樹（blender/tree.py → trees.glb）：三種大小各自建模，尺寸就是實際公尺。
+# 每種 [樹幹胸口半徑, 碰撞圓柱高（到分叉點再往上一點）]，改了 tree.py 的樹幹這裡要跟著改
+const TREES := preload("res://models/trees.glb")
+const TREE_KINDS := {&"TreeOakS": [0.17, 1.4], &"TreeOakM": [0.41, 1.8], &"TreeOak": [0.55, 2.4]}
+# 石頭（blender/rock.py → rocks.glb）：Rock01..16，尺寸是實際公尺、原點在底部中央。
+# 01~04 大石（最大那顆 6 公尺寬，縮小一點當掩體）、05~11 單顆、12~16 石頭堆
+const ROCKS := preload("res://models/rocks.glb")
+const ROCK_COVER := [&"Rock01", &"Rock02", &"Rock03", &"Rock04", &"Rock05", &"Rock07", &"Rock12", &"Rock16"]
+const ROCK_SCATTER := [&"Rock06", &"Rock08", &"Rock09", &"Rock10", &"Rock11", &"Rock13", &"Rock14", &"Rock15"]
 # 門和梯子的位置（blender/props.py 的同名常數，改一邊要改另一邊）
 const BARN_T := 0.25
 const BARN_DOOR_W := 5.0
@@ -45,6 +58,8 @@ const MATCH_SECONDS := 240.0  # 一局四分鐘
 const RESPAWN_DELAY := 5.0    # 死亡的代價是節奏，不是失去參賽資格
 const COWBOY := preload("res://cowboy/cowboy.tscn")
 const DINO := preload("res://dino.tscn")
+const BOSS := preload("res://boss.tscn")
+const BOSS_ID := -999   # 負數＝電腦（主機操控）；固定編號，場上最多一隻
 
 @onready var lobby: VBoxContainer = $UI/Root/Lobby
 @onready var ip_edit: LineEdit = $UI/Root/Lobby/IP
@@ -65,6 +80,8 @@ var _bushes: Array[Vector3] = []  # 灌木叢的根部位置（bot 判斷人是�
 var _exits: Array[Vector3] = []  # 四個撤離區的中心
 var _cowboys := 0
 var _offline := false
+var _dedicated := false   # 專用伺服器（測試站）：主機自己不是玩家
+var _next_round := 0.0
 var _time_left := 0.0
 var _clock := 0                     # 主機廣播的剩餘秒數
 var _respawn_queue: Array[Dictionary] = []
@@ -74,8 +91,10 @@ var _over := false
 var _sandbox := false
 
 func _ready() -> void:
+	_flatten_models()
 	_use_cjk_font()
 	_use_sky()
+	_use_outline()
 	_load_props()
 	_skin_egg()
 	_build_arena()
@@ -94,9 +113,16 @@ func _ready() -> void:
 ##   TankWar.exe -- --join 192.168.1.5
 ##   TankWar.exe -- --sandbox
 ##   TankWar.exe -- --viewer
+##   godot --headless -- --server    專用伺服器（測試站）：自己不下場，一局結束自動開下一局
 func _autostart() -> void:
 	var args := OS.get_cmdline_user_args()
-	if args.has("--host"):
+	var test_btn: Button = $UI/Root/Lobby/TestServerBtn
+	test_btn.disabled = TEST_SERVER == ""
+	if test_btn.disabled:
+		test_btn.text = "連到測試站（還沒架好）"
+	if args.has("--server"):
+		_start_dedicated()
+	elif args.has("--host"):
 		_on_host_pressed()
 	elif args.has("--sandbox"):
 		_on_sandbox_pressed()
@@ -177,6 +203,25 @@ func _on_host_pressed() -> void:
 	multiplayer.multiplayer_peer = peer
 	_enter_game("連線模式：大家都是牛仔。等人加入…  本機 IP：" + _local_ips())
 	_spawn(1)
+	spawn_boss()
+
+## 專用伺服器：開房但自己不下場（沒有編號 1 的牛仔），恐龍 boss 照生。
+## 一局結束 NEXT_ROUND_DELAY 秒後自動開下一局，不用有人去按
+func _start_dedicated() -> void:
+	var peer := ENetMultiplayerPeer.new()
+	if peer.create_server(PORT) != OK:
+		printerr("開不了伺服器，連接埠 %d 可能被占用" % PORT)
+		get_tree().quit(1)
+		return
+	multiplayer.multiplayer_peer = peer
+	_dedicated = true
+	_enter_game("專用伺服器")
+	spawn_boss()
+	print("測試站開好了，連接埠 %d（UDP）" % PORT)
+
+func _on_test_server_pressed() -> void:
+	ip_edit.text = TEST_SERVER
+	_on_join_pressed()
 
 func _on_join_pressed() -> void:
 	var peer := ENetMultiplayerPeer.new()
@@ -227,6 +272,22 @@ func _on_add_bot_pressed() -> void:
 func _on_clear_bots_pressed() -> void:
 	clear_bots()
 
+func _on_add_boss_pressed() -> void:
+	spawn_boss()
+
+## 恐龍 boss（boss.gd）：生在蛋旁邊守著。場上已經有就不再生。
+## 沙盒裡蛋藏起來了，改生在玩家前方 40 公尺，方便測試
+func spawn_boss() -> Node3D:
+	if not multiplayer.is_server() or players.has_node(NodePath(str(BOSS_ID))):
+		return null
+	var b := _add_player(BOSS, BOSS_ID)
+	var at := egg.global_position + Vector3(10, 0, 0)
+	var me := players.get_node_or_null(^"1") as Node3D
+	if _sandbox and me:
+		at = me.global_position - me.global_basis.z * 40.0
+	b.global_position = _on_ground(Vector3(at.x, 4.2, at.z))
+	return b
+
 ## 移動標靶：在主機玩家前方 25 公尺，左右各 6 公尺來回走，不開槍
 func add_walker() -> Node3D:
 	if not multiplayer.is_server():
@@ -270,7 +331,7 @@ func clear_bots() -> void:
 	if not multiplayer.is_server():
 		return
 	for p in players.get_children():
-		if Fighter.is_bot_id(p.name.to_int()):
+		if Fighter.is_bot_id(p.name.to_int()) and not p.is_in_group(&"boss"):   # boss 不算 bot，清不掉
 			if not p.is_in_group(&"dino"):
 				_cowboys -= 1
 			p.free()
@@ -411,6 +472,11 @@ func _finish(msg: String) -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 func _physics_process(delta: float) -> void:
+	if _dedicated and _over:
+		_next_round -= delta
+		if _next_round <= 0.0:
+			_new_round()
+		return
 	if lobby.visible or _over or not multiplayer.is_server():
 		return
 	_respawn_step()
@@ -426,7 +492,32 @@ func _physics_process(delta: float) -> void:
 		_set_clock.rpc(_clock)
 	if _time_left <= 0.0:
 		_over = true
+		_next_round = NEXT_ROUND_DELAY
 		_finish.rpc("時間到，沒有人把蛋帶走")
+
+## 專用伺服器開下一局：時間和蛋歸位，每個牛仔重生（刪掉重生，客戶端的位置才會跟著換），boss 回蛋旁邊
+func _new_round() -> void:
+	_over = false
+	_enter_game("專用伺服器")
+	egg.extract = 0.0
+	_cowboys = 0
+	for p in players.get_children():
+		if p.is_in_group(&"boss"):
+			p.global_position = _on_ground(egg.global_position + Vector3(10, 4.2 - egg.global_position.y, 0))
+			p.hp = p.max_hp
+			continue
+		var id := p.name.to_int()
+		var scene: PackedScene = DINO if p.is_in_group(&"dino") else COWBOY
+		players.remove_child(p)
+		p.queue_free()
+		_add_player(scene, id)
+	_announce.rpc("新的一局開始！")
+
+@rpc("authority", "call_local", "reliable")
+func _announce(msg: String) -> void:
+	status.text = msg
+	if not lobby.visible:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 @rpc("authority", "call_local", "reliable")
 func _set_clock(secs: int) -> void:
@@ -451,12 +542,15 @@ func _egg_step(delta: float) -> void:
 		egg.extract += delta
 		if egg.extract >= EXTRACT_SECONDS:
 			_over = true
+			_next_round = NEXT_ROUND_DELAY
 			_finish_egg.rpc(egg.carrier)
 			return
 	else:
 		egg.extract = 0.0
 
 func _process(_delta: float) -> void:
+	if _compass:
+		_compass.visible = not lobby.visible
 	# 連線還沒建立好就問 id 會噴錯
 	if lobby.visible or multiplayer.multiplayer_peer == null \
 			or multiplayer.multiplayer_peer.get_connection_status() != MultiplayerPeer.CONNECTION_CONNECTED:
@@ -464,13 +558,15 @@ func _process(_delta: float) -> void:
 	var me := players.get_node_or_null(NodePath(str(multiplayer.get_unique_id())))
 	var dino := get_tree().get_first_node_in_group(&"dino")
 	_update_crosshair(me)
+	_update_boss_bar()
+	_update_compass()
 	stamina_bar.visible = me != null and me == dino
 	if stamina_bar.visible:
 		stamina_bar.value = me.stamina
 		stamina_bar.modulate = Color(1, 0.35, 0.3) if me.exhausted else Color.WHITE
 	var egg_state := "無人持有"
 	if egg.carrier == multiplayer.get_unique_id():
-		egg_state = "在你身上！帶去藍色撤離區"
+		egg_state = "在你身上！帶去撤離區"
 	elif egg.carrier != 0:
 		egg_state = "被牛仔 %d 拿走了" % egg.carrier
 	if egg.pickup > 0.0:
@@ -529,9 +625,8 @@ func _build_arena() -> void:
 	# 第一輪：先決定每一格是什麼，要平地的先整平（建築、撤離區、靶場）。
 	# 地形要在擺任何東西之前定案，所以擺東西留到第二輪
 	_terrain.flatten_rect(SANDBOX_RANGE)
-	var d := ARENA * 0.5 - 22.0
-	for ez in [d, -d]:
-		_terrain.flatten_circle(Vector2(0, ez), EXIT_RADIUS + 5.0)
+	for e: Vector2 in _exit_spots():
+		_terrain.flatten_circle(e, EXIT_RADIUS + 5.0)
 	var half := (FARM_GRID - 1) * 0.5
 	var cells: Array[Array] = []
 	for gx in FARM_GRID:
@@ -562,7 +657,7 @@ func _build_arena() -> void:
 			[Vector3(-e, WALL_H * 0.5, 0), Vector3(WALL_T, WALL_H, long)]]:
 		_solid_box(w[0], w[1]).add_to_group(&"arena_wall")
 	var inner := ARENA * 0.5
-	var segs := 9
+	var segs := 5   # 一段剛好 40 公尺＝山崖模型原本的寬
 	var seg := long / segs
 	# [這一面的起點, 沿著牆往哪走, 模型要轉多少才讓岩塊長在牆外]
 	for side: Array in [[Vector3(-long * 0.5, 0, -inner), Vector3.RIGHT, 0.0],
@@ -584,17 +679,18 @@ func _build_arena() -> void:
 
 	# 沿著圍牆種一圈樹，把牆藏在林子後面
 	var edge := ARENA * 0.5 - 6.0
-	for i in 64:
-		var t := float(i) / 64.0 * 4.0
+	for i in 40:
+		var t := float(i) / 40.0 * 4.0
 		var side := int(t)
 		var u := (t - side) * ARENA - ARENA * 0.5
 		var p: Vector3 = [Vector3(u, 0, -edge), Vector3(edge, 0, u),
 			Vector3(-u, 0, edge), Vector3(-edge, 0, -u)][side]
 		p += Vector3(rng.randf_range(-3, 3), 0, rng.randf_range(-3, 3))
-		_tree(p, rng, 0.4)
+		if _free(p, 2) and _is_clear(Vector2(p.x, p.z)):   # 地圖小了，邊緣就是農莊和靶場
+			_tree(p, rng, 0.4)
 
 	# 空地補東西：塊跟塊之間本來是一大片空草地，補上零星的樹和乾草捲，走到哪都有東西可以躲
-	for i in 260:
+	for i in 110:
 		var p := Vector3(rng.randf_range(-inner + 12, inner - 12), 0, rng.randf_range(-inner + 12, inner - 12))
 		if absf(p.x) < 7.0 or absf(p.z) < 7.0 or not _free(p, 6) or not _is_clear(Vector2(p.x, p.z)) \
 				or _in_wheat(p):
@@ -610,7 +706,7 @@ func _build_arena() -> void:
 	var br := RandomNumberGenerator.new()
 	br.seed = 13
 	var bushes: Array[Transform3D] = []
-	for i in 170:
+	for i in 80:
 		var c := Vector3(br.randf_range(-inner + 8, inner - 8), 0, br.randf_range(-inner + 8, inner - 8))
 		for k in br.randi_range(2, 4):
 			var p := c + Vector3(br.randf_range(-2.5, 2.5), 0, br.randf_range(-2.5, 2.5))
@@ -622,10 +718,87 @@ func _build_arena() -> void:
 			bushes.append(Transform3D(Basis(Vector3.UP, br.randf() * TAU).scaled(Vector3(s, s * br.randf_range(0.85, 1.15), s)), at))
 			_bushes.append(at)
 	_scatter(&"Bush", bushes, true)
+	_rocks(inner)
 
 	# 草地：畫面用的，伺服器沒畫面就不長（測試會直接呼叫 _grass_field 檢查）
 	if DisplayServer.get_name() != "headless":
 		_grass_field()
+
+## 描線：一片蓋滿畫面的方塊，用 outline.gdshader 從深度和法線畫出輪廓和稜線。
+## 放在場地底下，任何相機（玩家、檢視模式、截圖）都會畫到；剔除邊界拉很大，不會因為方塊不在視野裡被跳過
+func _use_outline() -> void:
+	var quad := QuadMesh.new()
+	quad.size = Vector2(2, 2)
+	var mat := ShaderMaterial.new()
+	mat.shader = preload("res://outline.gdshader")
+	quad.material = mat
+	var mi := MeshInstance3D.new()
+	mi.mesh = quad
+	mi.extra_cull_margin = 16384.0
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	$Arena.add_child(mi)
+
+## 上方的方位條：看著的方向、蛋在哪、兩個撤離區在哪（都附距離）。
+## 蛋在自己身上就不標蛋；沙盒沒有蛋也不標
+var _compass: Compass
+func _update_compass() -> void:
+	var cam := get_viewport().get_camera_3d()
+	if _compass == null:
+		_compass = Compass.new()
+		$UI/Root.add_child(_compass)
+	if cam == null:
+		return
+	_compass.set_view(cam)
+	var at := cam.global_position
+	var marks := []
+	if egg.visible and egg.carrier != multiplayer.get_unique_id():
+		marks.append({"deg": Compass.bearing(at, egg.global_position), "dist": at.distance_to(egg.global_position),
+			"color": Compass.EGG_COLOR, "label": "蛋"})
+	for e: Vector3 in _exits:
+		marks.append({"deg": Compass.bearing(at, e), "dist": at.distance_to(e),
+			"color": Compass.EXIT_COLOR, "label": "撤離"})
+	_compass.marks = marks
+	_compass.queue_redraw()
+
+## boss 的體力條（畫面上方中間，每個人都看得到）：看牠還跑不跑得動，決定現在要逃還是要躲。
+## 跑不動（力竭）變紅、倒地變灰
+var _boss_bar: ProgressBar
+var _boss_label: Label
+func _update_boss_bar() -> void:
+	var b := get_tree().get_first_node_in_group(&"boss")
+	if _boss_bar == null:
+		_boss_bar = ProgressBar.new()
+		_boss_bar.show_percentage = false
+		_boss_bar.set_anchors_preset(Control.PRESET_CENTER_TOP)
+		_boss_bar.offset_left = -160
+		_boss_bar.offset_right = 160
+		_boss_bar.offset_top = 104   # 在方位條（compass.gd）下面
+		_boss_bar.offset_bottom = 118
+		_boss_bar.add_theme_stylebox_override(&"background", stamina_bar.get_theme_stylebox(&"background"))
+		_boss_bar.add_theme_stylebox_override(&"fill", stamina_bar.get_theme_stylebox(&"fill"))
+		_boss_label = Label.new()
+		_boss_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
+		_boss_label.offset_left = -160
+		_boss_label.offset_right = 160
+		_boss_label.offset_top = 80
+		_boss_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		$UI/Root.add_child(_boss_label)
+		$UI/Root.add_child(_boss_bar)
+	_boss_bar.visible = b != null
+	_boss_label.visible = b != null
+	if b == null:
+		return
+	_boss_bar.value = b.stamina
+	var state := "奔跑中" if b.running else "走路"
+	if b.down_left > 0.0:
+		state = "倒地 %d 秒" % ceili(b.down_left)
+		_boss_bar.modulate = Color(0.6, 0.6, 0.6)
+	elif b.exhausted:
+		state = "跑不動了！"
+		_boss_bar.modulate = Color(1, 0.35, 0.3)
+	else:
+		_boss_bar.modulate = Color.WHITE
+	_boss_label.text = "恐龍 boss　體力（%s）" % state
 
 ## 天空換成 sky.gdshader（有雲、有太陽盤）。霧只蓋一點點天空，不然雲全被霧洗掉
 func _use_sky() -> void:
@@ -635,6 +808,61 @@ func _use_sky() -> void:
 	env.sky.sky_material = mat
 	env.sky.radiance_size = Sky.RADIANCE_SIZE_64   # 環境光只要大概的顏色
 	env.fog_sky_affect = 0.1
+
+## 石頭：空地上零星的大石當掩體（有碰撞、擋子彈），山崖腳下堆一圈碎石和石頭堆（把牆腳藏起來）。
+## 用自己的亂數，多一顆少一顆不會影響其他東西的位置
+func _rocks(inner: float) -> void:
+	var rr := RandomNumberGenerator.new()
+	rr.seed = 21
+	for i in 60:   # 空地：大石和石頭堆，當掩體
+		var p := Vector3(rr.randf_range(-inner + 12, inner - 12), 0, rr.randf_range(-inner + 12, inner - 12))
+		var kind: StringName = ROCK_COVER[rr.randi() % ROCK_COVER.size()]
+		var s := rr.randf_range(0.45, 0.7) if kind in [&"Rock01", &"Rock02", &"Rock03", &"Rock04"] else rr.randf_range(0.8, 1.2)
+		var yaw := rr.randf() * TAU
+		if absf(p.x) < 7.0 or absf(p.z) < 7.0 or not _free(p, 5) or not _is_clear(Vector2(p.x, p.z)) or _in_wheat(p) \
+				or _near_bush(p, _props.get(kind).get_aabb().size.x * s * 0.5 + 2.0):
+			continue
+		_rock(kind, p, s, yaw, true)
+	var edge := inner - 4.0
+	for i in 70:   # 山崖腳下：碎石、小石頭堆，只是外觀
+		var t := rr.randf() * 4.0
+		var side := int(t)
+		var u := (t - side) * inner * 2.0 - inner
+		var p: Vector3 = [Vector3(u, 0, -edge), Vector3(edge, 0, u), Vector3(-u, 0, edge), Vector3(-edge, 0, -u)][side]
+		p += Vector3(rr.randf_range(-2.5, 2.5), 0, rr.randf_range(-2.5, 2.5))
+		var kind: StringName = ROCK_SCATTER[rr.randi() % ROCK_SCATTER.size()]
+		var s := rr.randf_range(0.9, 1.6)
+		var yaw := rr.randf() * TAU
+		if not _free(p, 3) or not _is_clear(Vector2(p.x, p.z)):
+			continue
+		_rock(kind, p, s, yaw, false)
+
+## 灌木先撒，石頭後放：石頭不能壓在灌木上（灌木會被圈進石頭的保留區）
+func _near_bush(p: Vector3, r: float) -> bool:
+	for b: Vector3 in _bushes:
+		if Vector2(p.x, p.z).distance_to(Vector2(b.x, b.z)) < r:
+			return true
+	return false
+
+## 一顆石頭：往下埋一點（斜坡上才不會懸空）。solid 的用模型的凸包當碰撞，擋人也擋子彈
+func _rock(kind: StringName, p: Vector3, s: float, yaw: float, solid: bool) -> void:
+	var at := _on_ground(p) + Vector3.DOWN * 0.15 * s
+	var mesh: Mesh = _props.get(kind)
+	var size := mesh.get_aabb().size * s
+	if solid:
+		var hull := mesh.create_convex_shape() as ConvexPolygonShape3D
+		var pts := PackedVector3Array()
+		for v in hull.points:
+			pts.append(v * s)
+		var shape := ConvexPolygonShape3D.new()
+		shape.points = pts
+		var body := _body(at, shape)
+		body.rotation.y = yaw
+		_prop(kind, Vector3.ZERO, Vector3.ONE * s, body)
+		_block(p, Vector2(size.x, size.z), 1.5)
+	else:
+		var mi := _prop(kind, at, Vector3.ONE * s)
+		mi.rotation.y = yaw
 
 ## 蹲在灌木叢裡（離某叢中心 1.2 公尺內）：灌木 1.5 公尺高，站著頭會露出來，蹲下才藏得住
 func hidden_in_bush(who: Node3D) -> bool:
@@ -751,7 +979,7 @@ func _ground_color(x: float, z: float, h: float) -> Color:
 	for f: Rect2 in _wheat_fields:
 		if f.has_point(Vector2(x, z)):
 			return WHEAT
-	var c := GRASS.lerp(Color(0.55, 0.52, 0.30), clampf((h + Terrain.AMP) / (Terrain.AMP * 2.0), 0.0, 1.0) * 0.55)
+	var c := GRASS.lerp(Color(0.86, 0.71, 0.43), clampf((h + Terrain.AMP) / (Terrain.AMP * 2.0), 0.0, 1.0) * 0.55)
 	return c.lerp(DIRT, clampf(_terrain.slope(x, z) * 5.0, 0.0, 0.7))
 
 ## 把「離地多高」換成實際位置：v.y 當作離地面的高度
@@ -766,10 +994,15 @@ func _free(pos: Vector3, radius: float) -> bool:
 	return true
 
 func _reserved() -> Array[Rect2]:
+	var out: Array[Rect2] = [SANDBOX_RANGE]
+	for e: Vector2 in _exit_spots():
+		out.append(Rect2(e.x - EXIT_RADIUS - 4, e.y - EXIT_RADIUS - 4, EXIT_RADIUS * 2 + 8, EXIT_RADIUS * 2 + 8))
+	return out
+
+## 兩個撤離區的中心：東西兩端（南北向那條路留給沙盒靶場）
+func _exit_spots() -> Array[Vector2]:
 	var d := ARENA * 0.5 - 22.0
-	return [SANDBOX_RANGE,
-		Rect2(-EXIT_RADIUS - 4, d - EXIT_RADIUS - 4, EXIT_RADIUS * 2 + 8, EXIT_RADIUS * 2 + 8),
-		Rect2(-EXIT_RADIUS - 4, -d - EXIT_RADIUS - 4, EXIT_RADIUS * 2 + 8, EXIT_RADIUS * 2 + 8)]
+	return [Vector2(d, 0), Vector2(-d, 0)]
 
 ## 農莊：穀倉＋農舍＋筒倉，外面一圈柵欄。穀倉是恐龍爬上去看全場的制高點
 func _farmstead(c: Vector3, rng: RandomNumberGenerator) -> void:
@@ -924,8 +1157,19 @@ func _hay_bale(p: Vector3, yaw: float) -> StaticBody3D:
 func _tree(p: Vector3, rng: RandomNumberGenerator, pine_chance := 0.0) -> void:
 	var h := rng.randf_range(4.0, 6.0)
 	p = _on_ground(p) + Vector3.DOWN * 0.3   # 往下埋一點：斜坡上樹根的下坡那側才不會懸空
-	_solid_cyl(p + Vector3(0, h * 0.5, 0), 0.35, h)
-	var mi := _prop(&"TreePine" if rng.randf() < pine_chance else &"TreeOak", p, Vector3.ONE * (h / TREE_BASE_TRUNK))
+	var mi: MeshInstance3D
+	if rng.randf() < pine_chance:
+		_solid_cyl(p + Vector3(0, h * 0.5, 0), 0.35, h)
+		mi = _prop(&"TreePine", p, Vector3.ONE * (h / TREE_BASE_TRUNK))
+	else:
+		# 闊葉樹：同一個亂數 h 決定大中小（小 25%、中 40%、大 35%）和 ±10% 的縮放，
+		# 亂數用量跟以前一樣，後面擺的東西位置不會跟著變
+		var t := (h - 4.0) / 2.0
+		var kind: StringName = &"TreeOakS" if t < 0.25 else (&"TreeOakM" if t < 0.65 else &"TreeOak")
+		var s := 0.9 + 0.2 * fmod(t * 7.0, 1.0)
+		var trunk: Array = TREE_KINDS[kind]
+		_solid_cyl(p + Vector3(0, trunk[1] * s * 0.5, 0), trunk[0] * s, trunk[1] * s)
+		mi = _prop(kind, p, Vector3.ONE * s)
 	mi.rotation.y = rng.randf() * TAU   # 每棵轉個角度，一整排才不會長得一模一樣
 	_block(p, Vector2(1, 1), 1.5)
 
@@ -979,8 +1223,9 @@ func _ladder(at: Vector3, height: float, foot: Vector3, top_y: float, exit: Vect
 func _lamp(at: Vector3, reach: float) -> void:
 	var light := OmniLight3D.new()
 	light.light_color = Color(1.0, 0.72, 0.42)
-	light.light_energy = 1.4
+	light.light_energy = 0.6
 	light.omni_range = reach
+	light.omni_attenuation = 2.0   # 很快衰減：沒開影子，光會穿牆照到屋外地面
 	light.shadow_enabled = false
 	light.position = at
 	$Arena.add_child(light)
@@ -1030,13 +1275,42 @@ func _skin_egg() -> void:
 	glow.albedo_color = Color(0.28, 0.24, 0.14)
 	mi.material_overlay = glow
 
-## 從 props.glb 把每個物件的網格拿出來，場上幾百個物件共用同一份
+## 從 props.glb、trees.glb 把每個物件的網格拿出來，場上幾百個物件共用同一份
 func _load_props() -> void:
-	var src := PROPS.instantiate()
-	for c in src.get_children():
-		if c is MeshInstance3D:
-			_props[StringName(c.name)] = c.mesh
-	src.free()
+	for glb: PackedScene in [PROPS, TREES, ROCKS]:
+		var src := glb.instantiate()
+		for c in src.get_children():
+			if c is MeshInstance3D:
+				_props[StringName(c.name)] = c.mesh
+		src.free()
+
+## 樹的材質不要高光：朝太陽的面疊一層白色反光，會把葉子受光面的黃沖成灰，折面的明暗差就被吃掉。
+## Blender 那邊設了 Specular 0，但 glTF 匯進來 Godot 還是預設 0.5，要在這裡補。
+## 全部模型都不要高光：朝太陽的面疊一層反光會把顏色沖灰、反射粉色的天空（牆和門廊泛粉紫）。
+## Blender 設了 Specular 0，但 glTF 匯進來 Godot 還是預設 0.5，要在這裡補。
+## 網格被資源快取住，改一次之後各處 instantiate 出來的都是改好的那份（glb 要留著，快取才不會被丟掉）
+const FLAT_MODELS := ["res://models/props.glb", "res://models/trees.glb", "res://models/rocks.glb",
+	"res://models/cowboy.glb", "res://models/trex.glb", "res://models/revolver.glb",
+	"res://models/shotgun.glb", "res://models/rifle.glb"]
+static var _flat_keep: Array[PackedScene] = []
+static func _flatten_models() -> void:
+	if not _flat_keep.is_empty():
+		return
+	for path: String in FLAT_MODELS:
+		var scene: PackedScene = load(path)
+		_flat_keep.append(scene)
+		var inst := scene.instantiate()
+		for mi: MeshInstance3D in inst.find_children("*", "MeshInstance3D", true, false):
+			for i in mi.mesh.get_surface_count():
+				var m := mi.mesh.surface_get_material(i) as BaseMaterial3D
+				if m:
+					m.metallic_specular = 0.0
+					m.metallic = 0.0
+					if m.resource_name in ["p_wheat", "p_grass"]:   # 字串比對（StringName 放在陣列裡比不到）
+						m.roughness = 0.5   # 描線跳過的記號（見 grass.gdshader）
+					elif m.resource_name in ["p_rock1", "p_rock2"]:
+						m.roughness = 0.75  # 山崖的記號：描線提早淡掉（見 outline.gdshader）
+		inst.free()
 
 ## 出生點避開這塊地
 func _block(p: Vector3, size: Vector2, clearance: float) -> void:
@@ -1071,13 +1345,13 @@ func _claim_step(delta: float) -> void:
 ## 兩個撤離區，對邊各一個。只有一個出口的話恐龍蹲在那裡就好；
 ## 兩個保留了選擇，但競爭比四個集中，撤離區更容易變成三方交會的爭奪點。
 func _build_exits() -> void:
-	var d := ARENA * 0.5 - 22.0
-	for c: Vector3 in [_on_ground(Vector3(0, 0, d)), _on_ground(Vector3(0, 0, -d))]:
+	for e: Vector2 in _exit_spots():
+		var c := _on_ground(Vector3(e.x, 0, e.y))
 		_exits.append(c)
 		var mesh := BoxMesh.new()
 		mesh.size = Vector3(EXIT_RADIUS * 2.0, 0.3, EXIT_RADIUS * 2.0)
 		var mat := StandardMaterial3D.new()
-		mat.albedo_color = Color(0.25, 0.75, 0.95, 0.55)
+		mat.albedo_color = Color(0.95, 0.78, 0.4, 0.25)   # 半透明暖金：看得出來，又不像貼上去的藍色佔位片
 		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 		mesh.material = mat
 		var mi := MeshInstance3D.new()
@@ -1085,7 +1359,7 @@ func _build_exits() -> void:
 		mi.position = c + Vector3(0, 0.15, 0)
 		$Arena.add_child(mi)
 		# 撤離點旁邊停一台篷車：遠遠就認得出「從這裡走」
-		_prop(&"Wagon", _on_ground(c * Vector3(1, 0, 1) + Vector3(EXIT_RADIUS + 3.0, 0, 0))).rotation.y = 0.4
+		_prop(&"Wagon", _on_ground(c * Vector3(1, 0, 1) + Vector3(0, 0, EXIT_RADIUS + 3.0))).rotation.y = 0.4
 
 ## 找一個不在建築物裡面的出生點
 func _spawn_point(span := ARENA * 0.45) -> Vector3:

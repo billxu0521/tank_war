@@ -10,7 +10,7 @@
 #   FenceRail   一段 2.5 公尺的柵欄（一根木樁＋兩根橫木），遊戲裡沿長度排
 #   FencePost   柵欄最後收尾的那根木樁
 #   HayBale     圓捆乾草，軸是直的（遊戲裡跟碰撞圓柱一起放倒），原點在中心
-#   TreeOak / TreePine  原點在樹根，基準樹幹高 5
+#   TreePine          原點在樹根，基準樹幹高 5（闊葉樹在 tree.py）
 #   Bush        灌木叢，原點在地面中央，約 2.2 寬 1.5 高（沒有碰撞，只擋視線）
 #
 # 跟 main.gd 共用的數字（改一邊要改另一邊）：
@@ -42,27 +42,26 @@ TRUNK = 5.0
 for _o in list(bpy.data.objects):
     bpy.data.objects.remove(_o)
 wipe()
-RED    = mat('p_red',    (0.50, 0.13, 0.10), 0.85)
-RED_D  = mat('p_red_d',  (0.38, 0.09, 0.07), 0.85)
-TRIM   = mat('p_trim',   (0.86, 0.84, 0.78), 0.8)
-ROOF   = mat('p_roof',   (0.30, 0.29, 0.28), 0.6, 0.5)   # 鐵皮屋頂
-STONE  = mat('p_stone',  (0.45, 0.43, 0.40), 0.95)
+RED    = mat('p_red',    (0.36, 0.24, 0.16), 0.85)   # 穀倉牆板：風化的褐色木頭（名字留著，遊戲的材質表認這個名字）
+RED_D  = mat('p_red_d',  (0.26, 0.17, 0.11), 0.85)
+TRIM   = mat('p_trim',   (0.46, 0.34, 0.22), 0.8)
+ROOF   = mat('p_roof',   (0.156, 0.093, 0.058), 0.9)   # 鐵皮屋頂（不要金屬：金屬會反射天空變成紫灰）
+STONE  = mat('p_stone',  (0.254, 0.162, 0.098), 0.95)
 WOOD   = mat('p_wood',   (0.48, 0.36, 0.24), 0.9)
 WOOD_D = mat('p_wood_d', (0.28, 0.20, 0.14), 0.9)
-GLASS  = mat('p_glass',  (0.10, 0.12, 0.14), 0.2)
-WHITE  = mat('p_white',  (0.82, 0.79, 0.72), 0.9)        # 農舍的白色護牆板
-SHUT   = mat('p_shut',   (0.20, 0.30, 0.22), 0.8)        # 百葉窗
-SHING  = mat('p_shing',  (0.30, 0.30, 0.32), 0.9)        # 瓦片
-BRICK  = mat('p_brick',  (0.50, 0.25, 0.18), 0.95)
-SILO   = mat('p_silo',   (0.62, 0.62, 0.60), 0.5, 0.6)
-BAND   = mat('p_band',   (0.42, 0.42, 0.42), 0.4, 0.8)
-HAY    = mat('p_hay',    (0.80, 0.68, 0.36), 1.0)
-HAY_D  = mat('p_hay_d',  (0.62, 0.50, 0.25), 1.0)
-TWINE  = mat('p_twine',  (0.35, 0.28, 0.18), 0.9)
+GLASS  = mat('p_glass',  (0.060, 0.050, 0.045), 1.0)
+WHITE  = mat('p_white',  (0.360, 0.240, 0.140), 0.9)        # 農舍護牆板（褐色木頭）
+SHUT   = mat('p_shut',   (0.24, 0.17, 0.11), 0.8)        # 百葉窗
+SHING  = mat('p_shing',  (0.144, 0.089, 0.058), 0.9)        # 瓦片
+BRICK  = mat('p_brick',  (0.155, 0.076, 0.051), 0.95)   # 暗磚：太飽和的磚紅會是全圖最跳的點
+SILO   = mat('p_silo',   (0.352, 0.235, 0.133), 0.9)
+BAND   = mat('p_band',   (0.200, 0.180, 0.160), 0.9)
+HAY    = mat('p_hay',    (0.434, 0.254, 0.065), 1.0)   # 金黃乾草
+HAY_D  = mat('p_hay_d',  (0.254, 0.145, 0.034), 1.0)
 BARK   = mat('p_bark',   (0.30, 0.22, 0.16), 1.0)
-LEAF1  = mat('p_leaf1',  (0.22, 0.34, 0.14), 0.9)
-LEAF2  = mat('p_leaf2',  (0.30, 0.40, 0.16), 0.9)
-PINE   = mat('p_pine',   (0.13, 0.25, 0.14), 0.9)
+LEAF1  = mat('p_leaf1',  (0.122, 0.141, 0.025), 0.9)   # 跟樹冠（tree.py 的 tree_leaf）同色
+LEAF2  = mat('p_leaf2',  (0.150, 0.165, 0.030), 0.9)
+PINE   = mat('p_pine',   (0.093, 0.128, 0.045), 0.9)   # 跟闊葉樹同一片林子的暗綠
 
 
 def prism(w, rise, depth, loc, m=None):
@@ -187,7 +186,7 @@ LAMP = mat('p_lamp', (1.0, 0.78, 0.40), 0.3)
 _bsdf = next(n for n in LAMP.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
 _bsdf.inputs['Emission Color'].default_value = (1.0, 0.70, 0.30, 1.0)
 _bsdf.inputs['Emission Strength'].default_value = 4.0
-IRON = mat('p_iron', (0.12, 0.12, 0.13), 0.5, 0.7)
+IRON = mat('p_iron', (0.060, 0.055, 0.050), 0.9)
 CLOTH = mat('p_cloth', (0.55, 0.18, 0.14), 0.95)
 LINEN = mat('p_linen', (0.85, 0.83, 0.76), 0.95)
 PLANK = mat('p_plank', (0.40, 0.29, 0.19), 0.9)
@@ -212,20 +211,21 @@ for sy in (-1, 1):
     for x0, x1 in ((-W / 2, -BARN_DOOR_W / 2), (BARN_DOOR_W / 2, W / 2)) if sy < 0 else ((-W / 2, W / 2),):
         box((x1 - x0, 0.45, 0.5), ((x0 + x1) / 2, sy * L / 2, 0.25), m=STONE)
 box((W - 2 * T, L - 2 * T, 0.04), (0, 0, 0.02), m=PLANK)                        # 地板
+PLANK_STEP = 3.5   # 直條板間距：一面牆 4~6 條寬板（一公尺一條太密，跟樹和石頭的大稜面不是同一套）
 for sx in (-1, 1):                                                             # 側牆直條板（窗那段斷開）
-    for k in range(int(L)):
-        y = -L / 2 + 0.5 + k
+    for k in range(int(L / PLANK_STEP)):
+        y = -L / 2 + PLANK_STEP / 2 + k * PLANK_STEP
         o = clear_of(y, SIDE)
         segs = [(0.6, H)] if not o else [(0.6, o[2] - 0.1), (o[3] + 0.1, H)]
         for z0, z1 in segs:
-            box((0.06, 0.12, z1 - z0), (sx * (W / 2 + 0.03), y, (z0 + z1) / 2), m=RED_D)
+            box((0.06, 0.25, z1 - z0), (sx * (W / 2 + 0.03), y, (z0 + z1) / 2), m=RED_D)
 for sy, ops in ((-1, FRONT), (1, BACK)):                                       # 前後牆直條板（門那段斷開）
-    for k in range(int(W)):
-        x = -W / 2 + 0.5 + k
+    for k in range(int(W / PLANK_STEP)):
+        x = -W / 2 + PLANK_STEP / 2 + k * PLANK_STEP
         o = clear_of(x, ops)
         segs = [(0.6, H)] if not o else [(o[3] + 0.1, H)]
         for z0, z1 in segs:
-            box((0.12, 0.06, z1 - z0), (x, sy * (L / 2 + 0.03), (z0 + z1) / 2), m=RED_D)
+            box((0.25, 0.06, z1 - z0), (x, sy * (L / 2 + 0.03), (z0 + z1) / 2), m=RED_D)
 for sx in (-1, 1):                                                             # 轉角白包邊
     for sy in (-1, 1):
         box((0.28, 0.28, H), (sx * W / 2, sy * L / 2, H / 2), m=TRIM)
@@ -366,8 +366,8 @@ def strips(axis, at, a0, a1, z, ops):
         u = max(u, c1)
 
 
-for k in range(1, int(HH / 0.3)):                                              # 護牆板：一條一條橫的，開口處斷開
-    z = 0.4 + k * 0.3
+for k in range(1, int(HH / 0.9)):                                              # 護牆板：寬的橫板（0.3 公尺一條太密），開口處斷開
+    z = 0.4 + k * 0.9
     strips('x', -(HL / 2 + 0.02), -HW / 2, HW / 2, z, HFRONT)
     strips('x', HL / 2 + 0.02, -HW / 2, HW / 2, z, HBACK)
     for sx in (-1, 1):
@@ -384,8 +384,8 @@ for sx in (-1, 1):
 box((1.4, 0.14, 0.14), (0, -HL / 2 - 0.08, 2.27), m=TRIM)                      # 門框
 for sx in (-1, 1):
     box((0.14, 0.14, 2.3), (sx * 0.62, -HL / 2 - 0.08, 1.15), m=TRIM)
-# 前廊：地板很薄（8 公分）——遊戲裡沒有碰撞，走上去腳只陷一點點
-box((HW, 2.2, 0.08), (0, -HL / 2 - 1.1, 0.04), m=WOOD)
+# 前廊：地板 20 公分厚——遊戲裡沒有碰撞，走上去腳只陷一點點；太薄的話地面會從底下穿上來，看起來像半透明的玻璃
+box((HW, 2.2, 0.2), (0, -HL / 2 - 1.1, 0.1), m=WOOD_D)   # 比牆暗一階：淺色木頭在屋簷陰影裡吃到冷色環境光，會讀成淡紫灰的玻璃
 for x in (-4.8, -1.6, 1.6, 4.8):
     box((0.16, 0.16, 2.7), (x, -HL / 2 - 2.1, 1.35), m=TRIM)                     # 柱子
 box((HW + 0.4, 2.6, 0.12), (0, -HL / 2 - 1.2, 2.75), (-0.15, 0, 0), m=SHING)   # 前廊的小屋頂
@@ -449,10 +449,10 @@ hdoor = finish('HouseDoor', bevel=0.01, seg=1)
 
 # ================= 筒倉 =================
 # 功能零件：水泥底座、筒身、一圈圈的鐵箍、側面的爬梯（兩根扶手＋橫檔）、圓頂＋頂上的通風帽
-cyl(SILO_R + 0.25, 0.6, (0, 0, 0.3), (0, 0, 0), 32, m=STONE)
-cyl(SILO_R, SILO_H, (0, 0, SILO_H / 2), (0, 0, 0), 32, m=SILO)
-for k in range(1, int(SILO_H / 1.5)):
-    cyl(SILO_R + 0.04, 0.12, (0, 0, k * 1.5), (0, 0, 0), 32, m=BAND)
+cyl(SILO_R + 0.25, 0.6, (0, 0, 0.3), (0, 0, 0), 12, m=STONE)   # 12 邊平面著色，跟樹和石頭同一套稜面感
+cyl(SILO_R, SILO_H, (0, 0, SILO_H / 2), (0, 0, 0), 12, m=SILO)
+for k in range(1, 5):                                                          # 環箍只留 4 道（很多條細線太碎）
+    cyl(SILO_R + 0.04, 0.2, (0, 0, k * SILO_H / 5), (0, 0, 0), 12, m=BAND)
 for sy in (-1, 1):                                                             # 爬梯
     box((0.08, 0.08, SILO_H - 1.0), (SILO_R + 0.25, sy * 0.25, SILO_H / 2 + 0.5), m=BAND)
 for k in range(int((SILO_H - 1.0) / 0.4)):
@@ -484,31 +484,15 @@ fpost = finish('FencePost', bevel=0.01, seg=1)
 
 # ================= 乾草捲 =================
 # 功能零件：捲起來的草（兩個端面一圈圈的年輪）、綁草的麻繩、端面邊緣收圓
-cyl(0.70, 1.20, (0, 0, 0), (0, 0, 0), 32, m=HAY)
+cyl(0.70, 1.20, (0, 0, 0), (0, 0, 0), 12, m=HAY)                           # 12 邊平面著色（平滑的圓柱是舊風格）
 for sz in (-1, 1):
-    cyl(0.66, 0.06, (0, 0, sz * 0.62), (0, 0, 0), 32, m=HAY)                   # 端面收圓一點
-    for r in (0.18, 0.34, 0.50):                                               # 端面的一圈圈捲痕
-        bpy.ops.mesh.primitive_torus_add(major_radius=r, minor_radius=0.018, major_segments=24,
-                                         minor_segments=4, location=(0, 0, sz * 0.655))
-        _push(bpy.context.object, HAY_D)
-for z in (-0.35, 0.0, 0.35):                                                   # 麻繩
-    bpy.ops.mesh.primitive_torus_add(major_radius=0.705, minor_radius=0.014, major_segments=32,
-                                     minor_segments=4, location=(0, 0, z))
-    _push(bpy.context.object, TWINE)
-bale = finish('HayBale', bevel=0.03, seg=2, smooth_mats=('p_hay',))
+    cyl(0.62, 0.06, (0, 0, sz * 0.62), (0, 0, 0), 12, m=HAY)                   # 端面收一圈
+    cyl(0.40, 0.04, (0, 0, sz * 0.66), (0, 0, 0), 12, m=HAY_D)                 # 捲痕：兩圈大的內縮面，不刻細線
+    cyl(0.18, 0.04, (0, 0, sz * 0.69), (0, 0, 0), 12, m=HAY)
+bale = finish('HayBale', bevel=0.0, seg=1)
 
 # ================= 樹 =================
-# 橡樹：樹根往外撐、樹幹、三根分枝、七團樹葉（一團團而不是一顆球，輪廓才像樹）
-cone(0.60, 0.35, 0.8, (0, 0, 0.4), (0, 0, 0), 10, m=BARK)                        # 根部
-cyl(0.35, TRUNK, (0, 0, TRUNK / 2), (0, 0, 0), 10, m=BARK)
-for ang, tilt in ((0.3, 0.6), (2.4, 0.7), (4.3, 0.55)):
-    dx, dy = math.cos(ang), math.sin(ang)
-    cyl(0.14, 2.2, (dx * 0.6, dy * 0.6, TRUNK - 0.3), (tilt * -dy, tilt * dx, 0), 8, m=BARK)
-for (x, y, z, r, m) in ((0, 0, 7.2, 2.3, LEAF1), (1.6, 0.4, 6.3, 1.7, LEAF2), (-1.5, 0.8, 6.4, 1.8, LEAF1),
-                        (0.4, -1.6, 6.5, 1.7, LEAF2), (-0.6, 1.4, 7.6, 1.5, LEAF2), (1.0, -0.7, 7.8, 1.5, LEAF1),
-                        (-1.2, -1.0, 6.0, 1.4, LEAF2)):
-    sphere(r, (x, y, z), 12, 8, m=m)
-oak = finish('TreeOak', bevel=0.0, seg=1)
+# 闊葉樹在 tree.py（另外輸出成 trees.glb）
 
 # 松樹：直的樹幹，四層往上縮的錐形樹冠
 cyl(0.30, TRUNK + 2.0, (0, 0, (TRUNK + 2.0) / 2), (0, 0, 0), 8, m=BARK)
@@ -519,7 +503,7 @@ pine = finish('TreePine', bevel=0.0, seg=1)
 
 # 灌木叢：九團壓扁的葉團疊成一叢，約 2.2 寬、1.5 高——站著露出頭、蹲下整個藏住。
 # 沒有碰撞（跟 Hunt 一樣只擋視線、不擋子彈，人也走得進去）
-BUSH_DARK = mat('p_bush', (0.20, 0.30, 0.13), 0.9)
+BUSH_DARK = mat('p_bush', (0.090, 0.105, 0.020), 0.9)
 for (x, y, z, r, sz, m) in ((0, 0, 0.75, 0.80, 0.85, LEAF1), (0.65, 0.25, 0.55, 0.62, 0.8, LEAF2),
                             (-0.60, 0.30, 0.58, 0.65, 0.8, BUSH_DARK), (0.15, -0.60, 0.52, 0.60, 0.8, LEAF2),
                             (-0.25, 0.65, 0.50, 0.55, 0.8, LEAF1), (0.55, -0.35, 0.95, 0.48, 0.9, LEAF1),
@@ -544,38 +528,59 @@ for v in bush.data.vertices:
 # 碰撞是 main.gd 的平面牆，凸進來的石頭會變成看得到、摸不到的東西
 import random
 random.seed(20260927)
-ROCK1 = mat('p_rock1', (0.40, 0.36, 0.31), 0.95)
-ROCK2 = mat('p_rock2', (0.33, 0.30, 0.27), 0.95)
-MOSS  = mat('p_moss',  (0.30, 0.36, 0.20), 1.0)
+ROCK1 = mat('p_rock1', (0.124, 0.061, 0.042), 0.95)   # 石頭色系、明度降 25%：山崖面積大，太亮會搶過天空
+ROCK2 = mat('p_rock2', (0.098, 0.050, 0.039), 0.95)
 CW = 40.0
-for i in range(22):                                   # 大岩塊：底下寬、往上收，頂端參差
-    x = -CW / 2 + random.uniform(0, CW)
-    h = random.uniform(26, 46)
-    w = random.uniform(7, 13)
-    d = random.uniform(6, 12)
-    box((w, d, h), (x, d / 2 - 0.2, h / 2), (random.uniform(-0.08, 0.08), random.uniform(-0.12, 0.12),
-        random.uniform(-0.3, 0.3)), m=random.choice((ROCK1, ROCK2)))
+# 橫向分層的大塊台地（mesa）：四層岩層由下往上一層比一層往後退，每層是幾塊寬的方岩，
+# 從場地裡看是一階一階的大面，不是一條條垂直的細條紋（細條紋像布簾，跟石頭的大稜面不是同一套）
+z0 = 0.0
+# 四層岩層、一層比一層往後退，最上層最厚。每層是少數幾塊很寬的扁柱（15~40 公尺，一段牆只有兩三塊），
+# 同一層頂面高度差不到 1 公尺，連成一條岩層線（塊小又各自凸出來，俯瞰像一堆貨箱）
+for layer, (hl, back) in enumerate(((8, 0.0), (9, 2.0), (10, 3.5), (12, 5.5))):
+    x = -CW / 2 - 6
+    while x < CW / 2 + 6:
+        w = random.uniform(15, 40)
+        h = hl + 1.5 + random.uniform(-0.5, 0.5)     # 多 1.5 公尺插進上一層：層跟層之間不透出亮縫
+        d = random.uniform(9, 13)
+        o = cyl(0.5, h, (x + w / 2, back + random.uniform(-2, 2) + d / 2 - 0.2, z0 + h / 2),
+                (random.uniform(-0.05, 0.05), random.uniform(-0.05, 0.05), random.uniform(-0.12, 0.12)),
+                random.randint(6, 8), m=ROCK1 if (layer + int(x)) % 3 else ROCK2)
+        # 正面沿垂直方向切一刀、摺線往前推：同一塊在光下有兩個色階（整片平的正面近看像方格磚牆）
+        bm = bmesh.new()
+        bm.from_mesh(o.data)
+        cut = bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:],
+                                     plane_co=(random.uniform(-0.2, 0.2), 0, 0), plane_no=(1, 0, 0))
+        push = random.uniform(0.12, 0.2) * w / d * 0.5
+        for v in cut['geom_cut']:
+            if isinstance(v, bmesh.types.BMVert) and v.co.y < -0.1:
+                v.co.y -= push
+        bm.to_mesh(o.data)
+        bm.free()
+        for v in o.data.vertices:                    # 牆面往上收約 6 度：頂面那圈往後縮（近看才不是一片垂直的方格牆）
+            if v.co.z > 0:
+                v.co.y = v.co.y * 0.9 + 0.5 * math.tan(math.radians(6)) * h / d
+                v.co.x *= 0.95
+        o.scale = (w, d, 1)
+        x += w - 4.0                                  # 重疊 4 公尺：扁柱兩端是斜的，重疊少了會透出縫
+    z0 += hl
 for i in range(26):                                   # 牆腳的碎石堆（貼著內側面）
     x = -CW / 2 + random.uniform(0, CW)
     r = random.uniform(1.0, 2.6)
     box((r * 1.6, r * 1.2, r), (x, r * 0.5, r * 0.45), (0, 0, random.uniform(0, 1.5)), m=ROCK2)
-for i in range(12):                                   # 頂上的草皮
-    x = -CW / 2 + random.uniform(0, CW)
-    box((random.uniform(4, 9), 6, 0.8), (x, 4, random.uniform(38, 45)), m=MOSS)
 cliff = finish('Cliff', bevel=0.3, seg=1)
 
 # ================= 麥子、草叢（沒有碰撞，遊戲裡用 MultiMesh 撒幾千叢） =================
 # 三片交叉的葉片＋穗，三十幾個三角形。一叢一叢的輪廓比一塊平板像田
-WHEAT = mat('p_wheat', (0.82, 0.70, 0.36), 1.0)
-GRASS = mat('p_grass', (0.33, 0.42, 0.20), 1.0)
-for k in range(7):                                    # 七根麥稈，各自往外歪一點，頂端一顆麥穗
-    a = k * math.tau / 7 + 0.3
+WHEAT = mat('p_wheat', (0.434, 0.279, 0.080), 1.0)
+GRASS = mat('p_grass', (0.62, 0.52, 0.28), 1.0)   # 枯黃的草叢
+for k in range(4):                                    # 四根粗麥稈，各自往外歪一點，頂端一顆麥穗（七根細的俯瞰像白色雜訊）
+    a = k * math.tau / 4 + 0.3
     r = 0.06 + 0.05 * (k % 3)
     tilt = 0.10 + 0.05 * (k % 2)
     h = 0.72 + 0.06 * ((k * 3) % 4)
     x, y = r * math.cos(a), r * math.sin(a)
-    box((0.018, 0.018, h), (x, y, h / 2), (-tilt * math.sin(a), tilt * math.cos(a), 0), m=WHEAT)
-    box((0.045, 0.045, 0.14), (x + tilt * h * math.cos(a), y + tilt * h * math.sin(a), h + 0.05),
+    box((0.036, 0.036, h), (x, y, h / 2), (-tilt * math.sin(a), tilt * math.cos(a), 0), m=WHEAT)
+    box((0.07, 0.07, 0.16), (x + tilt * h * math.cos(a), y + tilt * h * math.sin(a), h + 0.05),
         (-tilt * math.sin(a), tilt * math.cos(a), a), m=WHEAT)
 wheat = finish('WheatTuft', bevel=0.0, seg=1)
 for k in range(6):                                    # 六片細長的草葉往外散開
@@ -647,7 +652,7 @@ bpy.ops.object.select_all(action='DESELECT')
 # 看圖用的排版：沿 X 排開（匯出前會歸位）
 LAYOUT = {'Barn': 0, 'BarnRoof': 0, 'BarnCol': -30, 'BarnDoorSlide': 0, 'BarnBackDoor': 4,
           'House': 22, 'HouseCol': -50, 'HouseDoor': 22, 'SiloBody': 38, 'SiloDome': 38,
-          'FenceRail': 48, 'FencePost': 48, 'HayBale': 53, 'TreeOak': 60, 'TreePine': 70, 'Bush': 76,
+          'FenceRail': 48, 'FencePost': 48, 'HayBale': 53, 'TreePine': 70, 'Bush': 76,
           'Cliff': 100, 'WheatTuft': 80, 'GrassClump': 82, 'Egg': 85, 'Wagon': 90}
 LIFT = {'BarnRoof': BARN[2], 'SiloDome': SILO_H, 'HayBale': 0.7, 'Egg': 0.5}
 

@@ -39,6 +39,6 @@ void fragment() {
 	vec3 base = ground * 0.55;
 	vec3 top = mix(ground, to_linear(dry_tint), 0.12) * 1.05;
 	ALBEDO = mix(base, top, tip);
-	ROUGHNESS = 1.0;
+	ROUGHNESS = 0.5;   // 記號：描線（outline.gdshader）看到 0.5 就跳過，草葉一根根描線會變成一片雜訊。反光關了，粗糙度不影響外觀
 	BACKLIGHT = vec3(0.3) * tip;   // 逆光的草尖透光
 }

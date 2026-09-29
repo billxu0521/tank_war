@@ -3,10 +3,11 @@ from mathutils import Vector
 exec(open(BASE + '/common.py').read())
 
 wipe()
-BODY  = mat('t_body',  (0.34, 0.58, 0.27), 0.75)
-BELLY = mat('t_belly', (0.56, 0.69, 0.40), 0.75)
-DARK  = mat('t_dark',  (0.21, 0.36, 0.18), 0.75)
-BONE  = mat('t_bone',  (0.90, 0.88, 0.78), 0.40)
+# 橄欖褐綠：跟樹冠同色系但更暗（原本的鼠尾草綠太飽和、太粉嫩）。線性值，sRGB 約 #7E8246 / #A89060 / #5A6034 / #C8BCA0
+BODY  = mat('t_body',  (0.209, 0.223, 0.061), 0.9)
+BELLY = mat('t_belly', (0.392, 0.279, 0.117), 0.9)
+DARK  = mat('t_dark',  (0.102, 0.117, 0.034), 0.9)
+BONE  = mat('t_bone',  (0.578, 0.503, 0.352), 0.8)
 EYE   = mat('t_eye',   (0.85, 0.55, 0.10), 0.20)
 PUPIL = mat('t_pupil', (0.04, 0.03, 0.03), 0.20)
 
@@ -47,7 +48,8 @@ for name, parent, off, _s, _c in RIG:
     WORLD[name] = (WORLD[parent] if parent else Vector((0, 0, 0))) + B(off)
 
 # ---- 有機外型小工具 ----
-def blob(size, loc, m=None, shape=None, seg=22, ring=14):
+# 低多邊形：分段 10×7、平面著色，跟樹和石頭的大稜面同一套（平滑的膠囊感是舊風格）
+def blob(size, loc, m=None, shape=None, seg=10, ring=7):
     o = sphere(0.5, loc, seg, ring, m)   # 頂點是本地座標，別再減 loc
     for v in o.data.vertices:
         sz = S(size)
@@ -55,10 +57,10 @@ def blob(size, loc, m=None, shape=None, seg=22, ring=14):
         v.co = shape(c) if shape else c
     return o
 
-def seg(size, loc, m=None, front=1.0, back=1.0, v=28, n=3.0):
+def seg(size, loc, m=None, front=1.0, back=1.0, v=12, n=3.0):
     """軀幹用的一節：中段飽滿、兩端收圓，接起來才不會一節一節像毛毛蟲。
     size 是 Godot 的(寬, 高, 長)"""
-    o = sphere(0.5, loc, v, 18, m)
+    o = sphere(0.5, loc, v, 8, m)
     for vt in o.data.vertices:
         x, y, z = vt.co
         u = max(-1.0, min(1.0, y / 0.5))
@@ -229,7 +231,7 @@ def scutes(name):
 for name, _p, _o, _s, _c in RIG:
     build(name)
     scutes(name)
-    o = finish(name, bevel=0.008, seg=1, smooth=True)
+    o = finish(name, bevel=0.0, seg=1, smooth=False)
     bpy.context.scene.cursor.location = WORLD[name]
     bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
     if name in HEAD_SCALE:

@@ -1,0 +1,53 @@
+[gd_scene load_steps=5 format=3]
+
+
+[ext_resource type="Script" path="res://boss.gd" id="1"]
+[ext_resource type="Script" path="res://trex.gd" id="2"]
+
+[sub_resource type="CapsuleShape3D" id="s1"]
+radius = 2.4
+height = 8.1
+
+[sub_resource type="SceneReplicationConfig" id="r1"]
+properties/0/path = NodePath(".:position")
+properties/0/spawn = true
+properties/0/replication_mode = 1
+properties/1/path = NodePath(".:rotation")
+properties/1/spawn = true
+properties/1/replication_mode = 1
+properties/2/path = NodePath(".:look_pitch")
+properties/2/spawn = true
+properties/2/replication_mode = 1
+properties/3/path = NodePath(".:stamina")
+properties/3/spawn = true
+properties/3/replication_mode = 1
+properties/4/path = NodePath(".:exhausted")
+properties/4/spawn = true
+properties/4/replication_mode = 1
+properties/5/path = NodePath(".:down_left")
+properties/5/spawn = true
+properties/5/replication_mode = 1
+properties/6/path = NodePath(".:running")
+properties/6/spawn = true
+properties/6/replication_mode = 1
+
+[node name="Boss" type="CharacterBody3D" groups=["dino", "boss"]]
+script = ExtResource("1")
+max_hp = 900
+bot = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+shape = SubResource("s1")
+
+[node name="Trex" type="Node3D" parent="."]
+transform = Transform3D(1.5, 0, 0, 0, 1.5, 0, 0, 0, 1.5, 0, -4.05, 0)
+script = ExtResource("2")
+
+[node name="CamPivot" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.9211, 0.3894, 0, -0.3894, 0.9211, 0, 2.0, 0)
+
+[node name="Camera3D" type="Camera3D" parent="CamPivot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 17)
+
+[node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("r1")

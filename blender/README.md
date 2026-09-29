@@ -4,7 +4,9 @@
 
 - `common.py` — box / cyl / blob 這些小工具，最後 `finish()` 合併並加倒角
 - `weapons.py` — 牛仔的三把槍（左輪、單管散彈、槓桿步槍），各自匯出一個 `.glb`
-- `props.py` — 場景物件：穀倉（牆身＋屋頂分開，照實際大小縮放）、農舍、筒倉、柵欄、乾草捲、橡樹、松樹、
+- `tree.py` — 闊葉樹大中小三棵（`TreeOak` / `TreeOakM` / `TreeOakS`），進 `trees.glb`。**不用開 Blender**，背景直接跑，
+  一輪迭代用 `tools/model_iter.sh tree <版號>`（做法和教訓見 [docs/程式建模迭代.md](../docs/程式建模迭代.md)）
+- `props.py` — 場景物件：穀倉（牆身＋屋頂分開，照實際大小縮放）、農舍、筒倉、柵欄、乾草捲、松樹、
   山崖（圍牆的外觀）、麥子、草叢、恐龍蛋、篷車（撤離點），全部進 `props.glb`
 - `cowboy.py` — 牛仔：身體（原點在腳底）、頭（原點在眼睛 1.6 公尺，跟著上下看轉）、兩條腿（原點在髖關節，走路擺動）、
   自己看的靴子、第一人稱握槍的手（HandGrip / HandSupport，位置寫在各槍場景的 grip_hand / support_hand；
@@ -13,7 +15,14 @@
 
 ## 怎麼重建
 
-Blender 開著、BlenderMCP 連上之後，在 Blender 裡執行：
+不用開 Blender 也可以，背景跑（`tree.py` 就是這樣做的）：
+
+```sh
+/Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup \
+    --python-expr "BASE='$PWD/blender'; exec(open(BASE+'/props.py').read()); export('$PWD/models')"
+```
+
+或者 Blender 開著、BlenderMCP 連上之後，在 Blender 裡執行：
 
 ```python
 BASE = '<這個資料夾的絕對路徑>'

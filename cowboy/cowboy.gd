@@ -152,6 +152,12 @@ func _ready() -> void:
 	super()
 	# 電腦在主機上 authority 也是主機，但它不是「我」：不能搶相機、不能讀鍵盤
 	is_local = is_multiplayer_authority() and not is_bot_id(name.to_int())
+	# 客戶端的牛仔位置由自己同步出去，主機選的出生點傳不過來，不處理的話每個人都生在地圖正中間
+	# （剛好在蛋和恐龍 boss 旁邊）。地圖每台一樣，自己挑一個出生點就好
+	if is_local and not multiplayer.is_server():
+		var g := get_tree().get_first_node_in_group(&"match")
+		if g:
+			position = g._spawn_point()
 	stamina = max_stamina
 	combat_stamina = max_combat
 	_stand_head_y = head.position.y

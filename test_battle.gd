@@ -51,6 +51,9 @@ func _process(_delta: float) -> bool:
 		_case_fireball()
 		_case_stagger()
 		_case_arena_walls()
+		_case_boss()
+		_case_compass()
+		_case_dedicated_round()
 		_start_gun_case()
 		return false
 	# 剩下的要跨好幾個 frame 才驗得到。總幀數設上限：腳本編譯壞掉時各階段等不到條件，
@@ -103,7 +106,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與左輪扳擊錘換彈動作音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰兩條體力、沙盒、鄉村柵欄灌木、地形起伏、F 開門爬梯子、翻柵欄和窗台、手腳、只剩連線和沙盒、遊戲局控制、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌都正常")
+		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與左輪扳擊錘換彈動作音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰兩條體力、沙盒、鄉村柵欄灌木貼圖、地形起伏、F 開門爬梯子、翻柵欄和窗台、手腳、只剩連線和沙盒、遊戲局控制、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌、恐龍 boss 行為樹、方位條、測試站自動開下一局都正常")
 	return true
 
 # --- 共用 ---
@@ -533,7 +536,7 @@ func _case_rural() -> void:
 	_ck(m.FENCE_H >= c.vault_min_height and m.FENCE_H <= c.vault_max_height,
 		"柵欄 %.1f 公尺要在翻越範圍 %.1f~%.1f 內" % [m.FENCE_H, c.vault_min_height, c.vault_max_height])
 	# 灌木叢：夠多、不長在建築裡和路上；蹲在裡面才藏得住（站著頭會露出來）
-	_ck(m._bushes.size() > 200, "要有灌木叢可以躲（現在 %d 叢）" % m._bushes.size())
+	_ck(m._bushes.size() > m.ARENA * m.ARENA / 500.0, "要有灌木叢可以躲（現在 %d 叢）" % m._bushes.size())   # 每 500 平方公尺至少一叢
 	var bad := 0
 	for b: Vector3 in m._bushes:
 		if not m._is_clear(Vector2(b.x, b.z)) or absf(b.x) < 6.0 or absf(b.z) < 6.0:
@@ -555,9 +558,9 @@ func _case_rural() -> void:
 	_ck(fences > 20, "鄉村要有柵欄（現在 %d 段）" % fences)
 	# 場景物件的模型都要載得到，名字對不上的話會變成看不見的空氣牆
 	for n in [&"Barn", &"BarnRoof", &"House", &"SiloBody", &"SiloDome", &"FenceRail",
-			&"FencePost", &"HayBale", &"TreeOak", &"TreePine", &"Bush", &"Cliff", &"WheatTuft", &"GrassClump",
-			&"Egg", &"Wagon"]:
-		_ck(m._props.get(n) is Mesh, "props.glb 裡要有 %s" % n)
+			&"FencePost", &"HayBale", &"TreeOak", &"TreeOakM", &"TreeOakS", &"TreePine", &"Bush", &"Cliff", &"WheatTuft", &"GrassClump",
+			&"Egg", &"Wagon", &"Rock01", &"Rock16"]:
+		_ck(m._props.get(n) is Mesh, "props.glb / trees.glb / rocks.glb 裡要有 %s" % n)
 	_end(m)
 
 ## 地形：有起伏、該平的地方平、碰撞跟畫面對得上
@@ -595,7 +598,7 @@ func _case_terrain() -> void:
 
 	# 碰撞跟畫面同一份高度：往下打射線，打到的高度要等於 height()
 	var space: PhysicsDirectSpaceState3D = m.get_world_3d().direct_space_state
-	for p in [Vector2(37, -81), Vector2(-101, 13), Vector2(66, 66), Vector2(-5, 130)]:
+	for p in [Vector2(22, -49), Vector2(-60, 8), Vector2(40, 40), Vector2(-3, 78)]:
 		var q := PhysicsRayQueryParameters3D.create(Vector3(p.x, 100, p.y), Vector3(p.x, -100, p.y))
 		var hit: Dictionary = space.intersect_ray(q)
 		# 上面可能剛好有樹、乾草捲：穿過去，只量地形（有 HeightMapShape3D 的那個）
@@ -806,7 +809,8 @@ func _case_back_to_lobby() -> void:
 
 	m._on_host_pressed()  # 連接埠要放掉了，才開得起第二局
 	m._spawn(2)
-	_ck(m.players.get_child_count() == 2 and m._cowboys == 2, "要能馬上重開一局（連線模式大家都是牛仔）")
+	_ck(m.players.get_child_count() == 3 and m._cowboys == 2, "要能馬上重開一局（連線模式大家都是牛仔）")
+	_ck(m.players.has_node(NodePath(str(m.BOSS_ID))), "連線模式開房要自動生恐龍 boss")
 	_end(m)
 
 ## 中間隔著建築物，恐龍就咬不到——牛仔躲掩蔽的依據
@@ -832,6 +836,80 @@ func _case_cover() -> void:
 	var before: int = t.hp
 	d._hit_nearby(100.0, d.BITE_DAMAGE, 0.3)
 	_ck(t.hp == before, "躲在建築後面就不該被打到")
+	_end(m)
+
+## 專用伺服器（測試站）：一局結束自動開下一局，人和 boss 都還在
+func _case_dedicated_round() -> void:
+	var m := _offline_match()
+	m._dedicated = true
+	m._add_player(m.COWBOY, 2)
+	m.spawn_boss()
+	m._over = true
+	m._next_round = 0.0
+	m._physics_process(0.1)
+	_ck(not m._over and m._time_left > m.MATCH_SECONDS - 1.0, "專用伺服器一局結束要自動開下一局")
+	_ck(m.players.has_node(^"2") and m.players.has_node(NodePath(str(m.BOSS_ID))), "開下一局玩家和 boss 都要還在")
+	_ck(m._cowboys == 1, "開下一局牛仔數要重算（現在 %d）" % m._cowboys)
+	_end(m)
+
+## 方位條：0 = 北（-Z），順時針，東 = 90
+func _case_compass() -> void:
+	_ck(is_equal_approx(Compass.bearing(Vector3.ZERO, Vector3(0, 0, -10)), 0.0), "正北（-Z）是 0 度")
+	_ck(is_equal_approx(Compass.bearing(Vector3.ZERO, Vector3(10, 0, 0)), 90.0), "正東（+X）是 90 度")
+	_ck(is_equal_approx(Compass.bearing(Vector3.ZERO, Vector3(0, 0, 10)), 180.0), "正南（+Z）是 180 度")
+	_ck(is_equal_approx(Compass.bearing(Vector3.ZERO, Vector3(-10, 0, 0)), 270.0), "正西（-X）是 270 度")
+
+## 恐龍 boss：視力差、聽力好、優先追持蛋者、自己的體力、走慢跑快、打不死
+func _case_boss() -> void:
+	var m := _offline_match()
+	var c: Node3D = m._add_player(m.COWBOY, 2)
+	var carrier: Node3D = m._add_player(m.COWBOY, 3)
+	var b: Node3D = m.spawn_boss()
+	_ck(b != null and b.is_in_group(&"boss"), "要生得出恐龍 boss")
+	_ck(m.spawn_boss() == null, "boss 場上最多一隻")
+	_ck(b.WALK < c.walk_speed and b.RUN > c.sprint_speed,
+		"boss 走路要比牛仔慢（%.1f vs %.1f）、跑步要比牛仔快（%.1f vs %.1f）" % [b.WALK, c.walk_speed, b.RUN, c.sprint_speed])
+	# 視力：放在沙盒靶場那條路上（整平、沒蓋東西，視線不會被擋）
+	carrier.global_position = Vector3(0, 500, 0)
+	b.global_position = m._on_ground(Vector3(0, 4.2, 40))
+	b.rotation.y = 0.0   # 面向 -Z
+	c.global_position = m._on_ground(Vector3(0, 0.1, 10))
+	_ck(not b.can_see(c), "視力差：正前方 30 公尺看不到")
+	c.global_position = m._on_ground(Vector3(0, 0.1, 28))
+	_ck(b.can_see(c), "正前方 12 公尺要看得到")
+	c.set(&"sync_crouching", true)
+	_ck(not b.can_see(c), "蹲著的人 12 公尺看不到")
+	c.set(&"sync_crouching", false)
+	c.global_position = m._on_ground(Vector3(0, 0.1, 52))
+	_ck(not b.can_see(c), "背後 12 公尺看不到")
+	c.global_position = m._on_ground(Vector3(0, 0.1, 43))
+	_ck(b.can_see(c), "背後 3 公尺（太近）也會發現")
+	# 聽力：遠處的槍聲聽得到
+	c.global_position = Vector3(0, 500, 0)
+	b.hear(m._on_ground(Vector3(60, 1, -60)))
+	_ck(b._noise_left > 0.0, "100 公尺外的槍聲要聽得到")
+	# 優先追持蛋者：眼前有別人也一樣
+	c.global_position = m._on_ground(Vector3(0, 0.1, 28))
+	carrier.global_position = m._on_ground(Vector3(15, 0.1, -20))
+	m.egg.carrier = 3
+	b.think(1.0 / 60.0)
+	_ck(b._target == carrier, "有人拿著蛋就優先追持蛋者")
+	m.egg.carrier = 0
+	# 自己的體力：一直跑會見底，見底只能走，回到一定量才能再跑
+	c.global_position = Vector3(0, 500, 0)
+	for i in 600:
+		b._move(-b.global_basis.z, true, 1.0 / 60.0)
+	_ck(b.exhausted and not b.running, "一直跑體力會見底，見底只能走")
+	for i in 30:
+		b._move(-b.global_basis.z, true, 1.0 / 60.0)
+	_ck(not b.running, "剛見底回一點點還不能跑")
+	# 打不死：血打光倒地、血補滿；倒地時打不動
+	b.take_damage(b.max_hp + 100, c)
+	_ck(is_instance_valid(b) and b.down_left > 0.0 and b.hp == b.max_hp, "boss 打不死：血打光要倒地、血補滿")
+	b.take_damage(100, c)
+	_ck(b.hp == b.max_hp, "倒地時打不動")
+	m.clear_bots()
+	_ck(m.players.has_node(NodePath(str(m.BOSS_ID))), "清除 bot 不會把 boss 清掉")
 	_end(m)
 
 ## 暴龍骨架：骨頭要建得起來，跑起來兩隻腳要反相擺動
