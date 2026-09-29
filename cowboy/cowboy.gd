@@ -15,8 +15,8 @@ class_name Cowboy
 @export var air_accel := 6.0
 
 @export_group("Stamina")
-## 跟 Hunt 一樣有兩條體力：跑步體力（跑、跳、翻越、閉氣）和近戰體力（槍托，左下黃條）。
-## 任何一條在出力，兩條都不回——邊跑邊敲就是兩條一起見底。
+## 一條體力：跑、跳、翻越、閉氣、槍托都吃這條（左下黃條）。
+## 體力不夠只影響移動速度（見底後不能跑，回到 sprint_min_stamina 才能再跑）；跳、翻越、近戰照樣做得到。
 @export var max_stamina := 100.0
 ## 全力跑約 18 秒見底。Hunt 基礎約 34 秒，但這張圖只有 320 公尺，跑得太久就沒有「跑步很吵」以外的代價
 @export var sprint_drain := 5.5
@@ -24,8 +24,6 @@ class_name Cowboy
 ## 停止出力後要等這麼久才開始回。沒有這段延遲，「衝一下放開再衝」等於無限衝刺。
 ## Hunt 約 3 秒，這裡取短一點，交火節奏比較快
 @export var recover_delay := 2.0
-@export var max_combat := 100.0
-@export var combat_recover := 25.0
 ## 體力見底後要回到這個值才准再衝。少了門檻會在零點附近抖動衝刺，一步一頓。
 @export var sprint_min_stamina := 25.0
 @export var jump_stamina := 15.0
@@ -90,7 +88,6 @@ const MODEL := preload("res://models/cowboy.glb")
 @onready var _stamina_fill: ColorRect = $HUD/StaminaBar/Fill
 @onready var _crosshair: Control = $HUD/Crosshair
 @onready var _hp_fill: ColorRect = $HUD/HealthBar/Fill
-@onready var _combat_fill: ColorRect = $HUD/CombatBar/Fill
 @onready var _prompt: Label = $HUD/PromptLabel
 @onready var _body: MeshInstance3D = $Body
 @onready var _face: MeshInstance3D = $Head/Face
@@ -108,8 +105,6 @@ var is_local := true
 var sync_crouching := false
 
 var stamina: float
-## 近戰體力。見底還能輕擊，但變慢；不能重擊
-var combat_stamina: float
 ## 大於 0 的時候體力不回復
 var _recover_wait := 0.0
 ## 體力見底過，還沒回到門檻，暫時不准衝刺
@@ -159,7 +154,6 @@ func _ready() -> void:
 		if g:
 			position = g._spawn_point()
 	stamina = max_stamina
-	combat_stamina = max_combat
 	_stand_head_y = head.position.y
 	_stamina_bar_width = _stamina_fill.size.x
 	_refresh_stamina_bar()
@@ -234,7 +228,6 @@ func _process(delta: float) -> void:
 	# 遠距離看不出血條掉，這是唯一的命中確認
 	_crosshair.visible = hit_until > Time.get_ticks_msec()
 	_hp_fill.size.x = (_hp_fill.get_parent() as Control).size.x * clampf(float(hp) / max_hp, 0.0, 1.0)
-	_combat_fill.size.x = (_combat_fill.get_parent() as Control).size.x * combat_stamina / max_combat
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -293,11 +286,10 @@ func _physics_process(delta: float) -> void:
 		# 前進頂著東西按跳＝翻越，其餘情況才是普通跳。get_vector 的 y 是 -1 代表往前
 		if try_vault(input.y < 0.0):
 			return
-		if stamina >= jump_stamina:
-			velocity.y = jump_velocity
-			spend_stamina(jump_stamina)
-			if _jump_sound:
-				_jump_sound.play()
+		velocity.y = jump_velocity
+		spend_stamina(jump_stamina)
+		if _jump_sound:
+			_jump_sound.play()
 
 	var speed := crouch_speed
 	if not crouching:
@@ -593,7 +585,6 @@ func update_stamina(wants_sprint: bool, delta: float) -> bool:
 		_recover_wait = maxf(_recover_wait - delta, 0.0)
 		if _recover_wait == 0.0:
 			stamina = minf(stamina + stamina_recover * delta, max_stamina)
-			combat_stamina = minf(combat_stamina + combat_recover * delta, max_combat)
 		if _sprint_locked and stamina >= sprint_min_stamina:
 			_sprint_locked = false
 	_refresh_stamina_bar()
@@ -608,7 +599,7 @@ func update_stamina(wants_sprint: bool, delta: float) -> bool:
 ##
 ## ponytail: 翻越途中位置交給 Tween、不做碰撞。要做「翻到一半被打斷」再改成自己算位移。
 func try_vault(pressing_forward: bool) -> bool:
-	if vaulting or stamina < vault_stamina:
+	if vaulting:
 		return false
 	if not pressing_forward:
 		return false
@@ -706,18 +697,11 @@ func spend_stamina(amount: float) -> void:
 	_refresh_stamina_bar()
 
 
-## 近戰體力的消耗。一樣會壓住兩條的回復。
-func spend_combat(amount: float) -> void:
-	combat_stamina = maxf(combat_stamina - amount, 0.0)
-	_recover_wait = recover_delay
-
-
-## 見底鎖住時變紅，讓玩家知道現在按衝刺沒用。滿格就藏起來（沒有準心，畫面中間只剩一條線很突兀）
+## 見底鎖住時變紅，讓玩家知道現在按衝刺沒用
 func _refresh_stamina_bar() -> void:
-	(_stamina_fill.get_parent() as Control).visible = stamina < max_stamina - 0.01
 	_stamina_fill.size.x = _stamina_bar_width * (stamina / max_stamina)
 	_stamina_fill.color = (
-		Color(0.85, 0.25, 0.2) if _sprint_locked else Color(0.85, 0.85, 0.8)
+		Color(0.85, 0.25, 0.2) if _sprint_locked else Color(0.92, 0.75, 0.18)
 	)
 
 

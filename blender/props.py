@@ -28,7 +28,10 @@ BARN = (14.0, 20.0, 8.0)       # 寬（X）、長（Y）、牆高（Z）
 BARN_PITCH = 0.55
 BARN_T = 0.25                  # 牆厚
 BARN_DOOR_W, BARN_DOOR_H = 5.0, 4.8   # 大門開口（兩扇滑門各一半寬）
-BARN_BACK_X = 4.0              # 後門中心的 X（寬 1.2、高 2.2）
+BARN_BACK_X = 4.0              # 後門中心的 X
+# 後門開口。穀倉會照實際大小縮放（最小 0.86 倍寬、0.875 倍高），這個大小縮完還是站著過得去；
+# 小棚子（0.57 倍、0.5 倍）縮完約 0.9 × 1.4，蹲著鑽得過
+BARN_BACK_W, BARN_BACK_H = 1.6, 2.8
 BARN_LOFT = 4.0                # 閣樓地板頂面高度（後半部，邊緣在 y=0）
 BARN_LADDER_X = -2.5           # 梯子的 X（靠在閣樓邊緣）
 HOUSE = (10.0, 8.0, 5.0)
@@ -199,7 +202,7 @@ PLANK = mat('p_plank', (0.40, 0.29, 0.19), 0.9)
 W, L, H = BARN
 T = BARN_T
 FRONT = [(0.0, BARN_DOOR_W, 0.0, BARN_DOOR_H)]                  # 大門
-BACK = [(BARN_BACK_X, 1.2, 0.0, 2.2)]                            # 後門
+BACK = [(BARN_BACK_X, BARN_BACK_W, 0.0, BARN_BACK_H)]                          # 後門
 SIDE = [(y, 1.1, 4.75, 6.05) for y in (-6.0, 0.0, 6.0)]          # 側窗（閣樓高度，趴在閣樓往外打）
 wall('x', -L / 2 + T / 2, -W / 2, W / 2, H, T, FRONT, RED)
 wall('x', L / 2 - T / 2, -W / 2, W / 2, H, T, BACK, RED)
@@ -235,8 +238,8 @@ for sx in (-1, 1):                                                             #
 box((BARN_DOOR_W + 0.5, 0.2, 0.25), (0, -L / 2 - 0.02, BARN_DOOR_H + 0.12), m=TRIM)
 box((BARN_DOOR_W * 2 + 0.6, 0.12, 0.18), (0, -L / 2 - 0.26, BARN_DOOR_H + 0.25), m=BAND)   # 滑門軌道（門往兩邊拉）
 for sx in (-1, 1):                                                             # 後門門框
-    box((0.12, 0.16, 2.3), (BARN_BACK_X + sx * 0.66, L / 2 + 0.02, 1.15), m=TRIM)
-box((1.44, 0.16, 0.12), (BARN_BACK_X, L / 2 + 0.02, 2.26), m=TRIM)
+    box((0.12, 0.16, BARN_BACK_H + 0.1), (BARN_BACK_X + sx * (BARN_BACK_W / 2 + 0.06), L / 2 + 0.02, (BARN_BACK_H + 0.1) / 2), m=TRIM)
+box((BARN_BACK_W + 0.24, 0.16, 0.12), (BARN_BACK_X, L / 2 + 0.02, BARN_BACK_H + 0.06), m=TRIM)
 for sx in (-1, 1):
     for y, _w, b, top in SIDE:
         window(sx * (W / 2 + 0.02), y, (b + top) / 2, 'x+' if sx > 0 else 'x-', h=top - b)
@@ -301,11 +304,12 @@ for sx in (-1, 1):
     box((0.22, 0.08, BARN_DOOR_H), (sx * (BARN_DOOR_W / 4 - 0.11), -0.1, BARN_DOOR_H / 2), m=TRIM)
 cyl(0.08, 0.1, (0, 0, BARN_DOOR_H + 0.2), (math.pi / 2, 0, 0), 10, m=BAND)      # 吊輪
 slide = finish('BarnDoorSlide', bevel=0.02, seg=1)
-box((1.2, 0.08, 2.2), (0.6, 0, 1.1), m=RED_D)                                   # 後門：原點在門軸
-for z in (0.4, 1.8):
-    box((1.1, 0.1, 0.12), (0.6, 0, z), m=TRIM)
-box((1.2, 0.1, 0.1), (0.6, 0, 1.1), (0, math.atan2(1.4, 1.1), 0), m=TRIM)
-sphere(0.04, (1.05, -0.07, 1.05), 8, 6, m=BAND)
+BW, BH = BARN_BACK_W, BARN_BACK_H
+box((BW, 0.08, BH), (BW / 2, 0, BH / 2), m=RED_D)                                # 後門：原點在門軸
+for z in (0.4, BH - 0.4):
+    box((BW - 0.1, 0.1, 0.12), (BW / 2, 0, z), m=TRIM)
+box((math.hypot(BW - 0.1, BH - 0.8), 0.1, 0.1), (BW / 2, 0, BH / 2), (0, math.atan2(BH - 0.8, BW - 0.1), 0), m=TRIM)
+sphere(0.04, (BW - 0.15, -0.07, BH / 2), 8, 6, m=BAND)
 back_door = finish('BarnBackDoor', bevel=0.01, seg=1)
 
 rise = gable_roof(W, L, BARN_PITCH, ROOF, rib=BAND)

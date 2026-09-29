@@ -50,6 +50,11 @@ func on_hit() -> void:
 func take_damage(amount: int, source: Node = null) -> void:
 	if hp <= 0:
 		return
+	# 選單關掉恐龍攻擊時，恐龍（含 boss、火球）打人不扣血。傷害都在主機算，只看主機的開關就好
+	if is_instance_valid(source) and source.is_in_group(&"dino"):
+		var g := get_tree().get_first_node_in_group(&"match")
+		if g and not g.dino_attacks:
+			return
 	_last_hit_by = source
 	_sync_hp.rpc(hp - amount)
 

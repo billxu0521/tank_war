@@ -74,12 +74,23 @@ func advance(delta: float) -> void:
 	queue_free()
 
 
+## 打到的是什麼材質：會扣血的噴血，地形噴土，石頭噴石屑，其他（房子、柵欄、樹）都當木頭
+static func surface_of(target: Object) -> StringName:
+	if target.has_method(&"take_damage"):
+		return &"blood"
+	if target is Node and target.is_in_group(&"ground"):
+		return &"dirt"
+	if target is Node and target.is_in_group(&"stone"):
+		return &"stone"
+	return &"wood"
+
+
 func _impact(hit: Dictionary) -> void:
 	var target: Object = hit["collider"]
 	# 認方法不認型別：恐龍、別的牛仔都吃同一發子彈
 	var flesh: bool = target.has_method(&"take_damage")
 	if is_instance_valid(fx):
-		fx.impact(hit["position"], hit["normal"], not flesh, sound)
+		fx.impact(hit["position"], hit["normal"], surface_of(target), sound)
 	if visual_only or not flesh or not is_instance_valid(shooter):
 		return
 	var dmg := weapon.damage_at(_traveled)

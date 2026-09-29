@@ -34,6 +34,7 @@ func _process(_delta: float) -> bool:
 		_case_hunt_weapons()
 		_case_sandbox()
 		_case_rural()
+		_case_fx_and_ambience()
 		_case_terrain()
 		_case_interact()
 		_case_vault()
@@ -49,6 +50,8 @@ func _process(_delta: float) -> bool:
 		_case_dino_cannot_take_egg()
 		_case_respawn()
 		_case_fireball()
+		_case_dino_attack_switch()
+		_case_ui()
 		_case_stagger()
 		_case_arena_walls()
 		_case_boss()
@@ -106,7 +109,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與左輪扳擊錘換彈動作音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰兩條體力、沙盒、鄉村柵欄灌木貼圖、地形起伏、F 開門爬梯子、翻柵欄和窗台、手腳、只剩連線和沙盒、遊戲局控制、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、中彈踉蹌、恐龍 boss 行為樹、方位條、測試站自動開下一局都正常")
+		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與左輪扳擊錘換彈動作音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰一條體力、沙盒、鄉村柵欄灌木貼圖、著彈碎屑與環境聲、地形起伏、F 開門爬梯子、翻柵欄和窗台、手腳、只剩連線和沙盒、遊戲局控制、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、恐龍攻擊開關、介面（大廳存 IP、勝負畫面、倒數）、中彈踉蹌、恐龍 boss 行為樹、方位條、測試站自動開下一局都正常")
 	return true
 
 # --- 共用 ---
@@ -460,32 +463,38 @@ func _case_hunt_weapons() -> void:
 		"重擊要比輕擊痛、也比較貴")
 	# 真的敲到人要跨物理幀，見 _phase 0
 
-	# 兩條體力：跑步不吃近戰體力、近戰不吃跑步體力；出力時兩條都不回
+	# 一條體力：跑、跳、翻越、槍托都吃它；不夠只影響移動速度，其他照樣做得到
 	me.stamina = me.max_stamina
-	me.combat_stamina = me.max_combat
 	var t := 0.0
 	while me.update_stamina(true, 0.1) and t < 120.0:
 		t += 0.1
 	_ck(t > 12.0 and t < 30.0, "全力跑要撐 12~30 秒（現在 %.1f 秒）" % t)
-	_ck(is_equal_approx(me.combat_stamina, me.max_combat), "跑步不該吃近戰體力")
+	_ck(not me.update_stamina(true, 0.1), "體力見底要跑不動")
 	me.stamina = 50.0
 	vm._melee_cooldown = 0.0
 	vm.try_melee()
-	_ck(is_equal_approx(me.stamina, 50.0) and me.combat_stamina < me.max_combat,
-		"槍托吃近戰體力，不吃跑步體力")
-	var combat_after: float = me.combat_stamina
+	_ck(is_equal_approx(me.stamina, 50.0 - vm.melee_stamina), "槍托吃同一條體力")
+	var after: float = me.stamina
 	me.update_stamina(false, 0.5)
-	_ck(is_equal_approx(me.stamina, 50.0) and is_equal_approx(me.combat_stamina, combat_after),
-		"剛敲完還在回復延遲內，兩條都不回")
+	_ck(is_equal_approx(me.stamina, after), "剛出力完還在回復延遲內，不回")
 	for i in 60:
 		me.update_stamina(false, 0.1)
-	_ck(me.stamina > 50.0 and me.combat_stamina > combat_after, "延遲過後兩條都要回")
-	# 近戰體力見底：還能輕擊，但慢一倍
-	me.combat_stamina = 0.0
+	_ck(me.stamina > after, "延遲過後要回")
+	me.stamina = 0.0
 	vm._melee_cooldown = 0.0
 	vm.try_melee(true)
-	_ck(is_equal_approx(vm._melee_cooldown, vm.melee_cooldown * 2.0),
-		"黃條見底時重擊退成輕擊，而且慢一倍（冷卻 %.2f）" % vm._melee_cooldown)
+	_ck(is_equal_approx(vm._melee_cooldown, vm.heavy_cooldown), "體力見底照樣重擊，不變慢（冷卻 %.2f）" % vm._melee_cooldown)
+	# 蓄力近戰時按右鍵舉不起槍；放掉近戰才舉得起來
+	Input.action_press("aim")
+	vm._melee_held = 0.1
+	vm.ads = 0.0
+	vm._process(0.1)
+	_ck(vm.ads == 0.0, "蓄力近戰時不能舉槍（ads %.2f）" % vm.ads)
+	vm._melee_held = -1.0
+	vm._process(0.1)
+	_ck(vm.ads > 0.0, "沒在蓄力就舉得起槍")
+	Input.action_release("aim")
+	vm.ads = 0.0
 	_end(m)
 
 ## 音檔開頭到第一個超過 -40dB 的樣本有幾秒。只認 16 位元 WAV（槍聲都轉成這種了）
@@ -542,6 +551,24 @@ func _case_rural() -> void:
 		if not m._is_clear(Vector2(b.x, b.z)) or absf(b.x) < 6.0 or absf(b.z) < 6.0:
 			bad += 1
 	_ck(bad == 0, "灌木不能長在建築裡或路上（%d 叢）" % bad)
+	# 穀倉後門：大穀倉站著走得過去，小棚子蹲著鑽得過去（0.8.1 回饋：門小到人過不去）
+	var backs := 0
+	for d in m.get_node(^"Arena").get_children():
+		if not d is Door or (d.get_child(1) as MeshInstance3D).mesh != m._props[&"BarnBackDoor"]:
+			continue
+		backs += 1
+		var sc: Vector3 = (d.get_child(1) as MeshInstance3D).scale
+		var cap := CapsuleShape3D.new()
+		cap.radius = c.get_node(^"CollisionShape3D").shape.radius
+		cap.height = c.stand_height if sc.y > 0.8 else c.crouch_height
+		var q := PhysicsShapeQueryParameters3D.new()
+		q.shape = cap
+		q.exclude = [d.get_rid()]
+		var mid: Vector3 = d.global_position + Vector3(m.BARN_BACK_W * 0.5 * sc.x, cap.height * 0.5 + 0.05, 0)
+		q.transform = Transform3D(Basis(), mid)
+		var hits := m.get_viewport().world_3d.direct_space_state.intersect_shape(q, 4)
+		_ck(hits.is_empty(), "穀倉後門要過得去（縮放 %.2f × %.2f，%s 卡住）" % [sc.x, sc.y, "站著" if sc.y > 0.8 else "蹲著"])
+	_ck(backs > 0, "場上要有穀倉後門")
 	c.global_position = m._bushes[0] + Vector3(0.3, 0.2, 0)
 	c.sync_crouching = false
 	_ck(not m.hidden_in_bush(c), "站在灌木裡頭會露出來，不算藏住")
@@ -561,6 +588,36 @@ func _case_rural() -> void:
 			&"FencePost", &"HayBale", &"TreeOak", &"TreeOakM", &"TreeOakS", &"TreePine", &"Bush", &"Cliff", &"WheatTuft", &"GrassClump",
 			&"Egg", &"Wagon", &"Rock01", &"Rock16"]:
 		_ck(m._props.get(n) is Mesh, "props.glb / trees.glb / rocks.glb 裡要有 %s" % n)
+	_end(m)
+
+## 著彈照材質噴不同碎屑；煙囪冒煙、果園鳥叫、全場背景聲都有擺上去
+func _case_fx_and_ambience() -> void:
+	var m := _new_game()
+	var arena: Node = m.get_node(^"Arena")
+	var kinds := {}
+	for b in arena.get_children():
+		if b is StaticBody3D:
+			kinds[Bullet.surface_of(b)] = true
+	_ck(kinds.has(&"dirt") and kinds.has(&"stone") and kinds.has(&"wood"),
+		"場上要打得出土、石屑、木屑三種（現在 %s）" % [kinds.keys()])
+	_ck(Bullet.surface_of(m.players.get_node(^"1")) == &"blood", "打到恐龍要噴血")
+	var before := arena.get_child_count()
+	for surface: StringName in Fx.SURFACES:
+		Fx.hit(arena, Vector3(0, 1, 0), Vector3.UP, surface)
+	_ck(arena.get_child_count() > before + Fx.SURFACES.size() - 1, "每種著彈都要生出粒子")
+	var smoke := 0
+	var sounds := 0
+	var bg := false
+	for n in arena.get_children():
+		if n is CPUParticles3D and not n.one_shot:
+			smoke += 1
+		if n is AudioStreamPlayer3D and n.stream == m.BIRDS:
+			sounds += 1
+		if n is AudioStreamPlayer and n.stream == m.AMBIENT:
+			bg = n.autoplay and n.stream.loop
+	_ck(smoke > 0, "房子的煙囪要冒煙")
+	_ck(sounds > 0 and m.BIRDS.loop, "果園要有循環的鳥叫")
+	_ck(bg, "全場要有循環的背景聲")
 	_end(m)
 
 ## 地形：有起伏、該平的地方平、碰撞跟畫面對得上
@@ -696,6 +753,9 @@ func _case_vault() -> void:
 		var before: float = me.stamina
 		_ck(me.try_vault(true), "站在柵欄前按 Space 要翻得過去（不用先撞上去）")
 		_ck(me.vaulting and me.stamina < before, "翻越要開始動作、吃體力")
+		me.vaulting = false
+		me.stamina = 0.0
+		_ck(me.try_vault(true), "體力見底也要翻得過去（體力只影響移動速度）")
 		me.vaulting = false
 
 	# 農舍的窗：窗台 1 公尺，從窗外翻進屋裡
@@ -1151,6 +1211,80 @@ func _case_fireball() -> void:
 	_end(m)
 
 ## 衝刺改成技能：按一下衝固定秒數，然後進 CD，全程不吃體力
+## 選單的恐龍攻擊開關：關掉時恐龍打人不扣血，牛仔互打照扣
+func _case_dino_attack_switch() -> void:
+	var m := _new_game()
+	var dino: Node = m.players.get_node(^"1")
+	var c: Node = m.players.get_node(^"2")
+	var hp0: int = c.hp
+	m._on_dino_attack_toggled(false)
+	c.take_damage(50, dino)
+	_ck(c.hp == hp0, "關掉恐龍攻擊，恐龍打人不該扣血")
+	c.take_damage(10, m.players.get_node(^"3"))
+	_ck(c.hp == hp0 - 10, "關掉恐龍攻擊，牛仔互打還是要扣血")
+	m._on_dino_attack_toggled(true)
+	c.take_damage(50, dino)
+	_ck(c.hp == hp0 - 60, "打開恐龍攻擊，恐龍打人要扣血")
+	_ck(m.get_node(^"UI/Root/Menu/Box/Controller/DinoAttackBtn").button_pressed, "選單開關預設是開的")
+	_end(m)
+
+## 0.8.1 回饋的介面：大廳順序和存 IP、勝負畫面、重開一局、倒數、boss 體力條、右上角
+func _case_ui() -> void:
+	var m := _new_game()
+	var lobby: Node = m.lobby
+	_ck(lobby.get_node(^"HostBtn").get_index() < lobby.get_node(^"JoinBtn").get_index()
+		and lobby.get_node(^"JoinBtn").get_index() < lobby.get_node(^"IPRow").get_index(),
+		"大廳順序要是：開房、加入、IP 列")
+	# 存 IP：換一個測試用的檔，不動到真的清單
+	m.saved_ips_path = "user://test_saved_ips.cfg"
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(m.saved_ips_path))
+	m._load_saved_ips()
+	_ck(m.saved_ips.disabled, "沒存過 IP 時「⋯」要是灰的")
+	m.ip_edit.text = "10.1.2.3"
+	m._on_save_ip_pressed()
+	m._on_save_ip_pressed()
+	var popup: PopupMenu = m.saved_ips.get_popup()
+	_ck(popup.item_count == 1 and popup.get_item_text(0) == "10.1.2.3", "「＋」要存下目前的 IP，而且不重複")
+	m.ip_edit.text = ""
+	popup.index_pressed.emit(0)
+	_ck(m.ip_edit.text == "10.1.2.3", "「⋯」選了要填回 IP 欄")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(m.saved_ips_path))
+
+	# boss 體力條：牛仔看不到
+	var boss: Node = m.spawn_boss()
+	m._update_boss_bar(m.players.get_node(^"2"))
+	_ck(not m._boss_bar.visible, "當牛仔時不該看到 boss 體力條")
+
+	# 倒數：死了之後方位條下面出現重生倒數；撤離中出現撤離倒數
+	var me: Node = m.players.get_node(^"2")
+	m._update_center_info(me)
+	m._update_center_info(null)
+	_ck(m.center_info.text.contains("秒後重生"), "死了要顯示重生倒數（現在「%s」）" % m.center_info.text)
+	m._update_center_info(me)
+	m.egg.carrier = 3
+	m.egg.extract = 2.0
+	m._update_center_info(me)
+	_ck(m.center_info.text.contains("還剩 3.0"), "撤離要倒數（現在「%s」）" % m.center_info.text)
+	m.egg.extract = 0.0
+	m.egg.carrier = 0
+
+	# 勝負：畫面中間大字＋按鈕；主機按重開一局就開新的一局，bot 照樣是 bot
+	var bot: Node = m.add_bot()
+	var bot_id := bot.name
+	m._over = true
+	m._finish("時間到，沒有人把蛋帶走")
+	_ck(m.result.visible and m.get_node(^"UI/Root/Result/Box/Text").text.contains("時間到"), "勝負要顯示在畫面中間")
+	_ck(m.get_node(^"UI/Root/Result/Box/RestartBtn").visible, "開房的人要看得到重開一局")
+	m._on_restart_pressed()
+	_ck(not m.result.visible and not m._over, "重開一局後勝負畫面要收掉、比賽重新開始")
+	_ck(m.players.get_node(NodePath(bot_id)).bot, "重開一局後 bot 還是 bot")
+	m._update_net_info()
+	_ck(m.net_info.text.contains("本機 IP") and m.net_info.text.contains("FPS"), "右上角要有本機 IP 和 FPS（現在「%s」）" % m.net_info.text)
+	_ck(m.get_tree().get_nodes_in_group(&"exit_pipe").size() == m._exits.size() * 2, "每個撤離點中間都要有綠色水管")
+	m._to_lobby("")
+	_ck(not m.result.visible and not m._boss_bar.visible, "回大廳後勝負畫面和 boss 體力條都要收掉")
+	_end(m)
+
 func _case_sprint_skill() -> void:
 	var m := _new_game()   # 主機 = 恐龍，編號 1
 	var d: Node = m.players.get_node(^"1")
@@ -1225,17 +1359,17 @@ func _start_gun_case() -> void:
 	_brawler.global_position = spot + Vector3(0, 0, -15.0 - 3.4)
 	_brawler.rotation.y = PI   # 面向 +Z，對著恐龍
 
-## 重擊比輕擊痛；體力不夠重擊就退成輕擊
+## 重擊比輕擊痛；體力見底照樣重擊
 func _check_melee_hits() -> void:
 	var vm: Node = _brawler.viewmodel
-	_brawler.combat_stamina = _brawler.max_combat
+	_brawler.stamina = _brawler.max_stamina
 	var hp0: int = _dino.hp
 	vm.try_melee(true)
 	_ck(hp0 - _dino.hp == vm.heavy_damage, "重擊要打出 %d 傷（打出 %d）" % [vm.heavy_damage, hp0 - _dino.hp])
-	_ck(is_equal_approx(_brawler.combat_stamina, _brawler.max_combat - vm.heavy_stamina),
-		"重擊要扣 %.0f 近戰體力" % vm.heavy_stamina)
-	_brawler.combat_stamina = vm.heavy_stamina - 1.0
+	_ck(is_equal_approx(_brawler.stamina, _brawler.max_stamina - vm.heavy_stamina),
+		"重擊要扣 %.0f 體力" % vm.heavy_stamina)
+	_brawler.stamina = 0.0
 	vm._melee_cooldown = 0.0
 	hp0 = _dino.hp
 	vm.try_melee(true)
-	_ck(hp0 - _dino.hp == vm.melee_damage, "體力不夠重擊，要退成輕擊（打出 %d）" % (hp0 - _dino.hp))
+	_ck(hp0 - _dino.hp == vm.heavy_damage, "體力見底照樣重擊（打出 %d）" % (hp0 - _dino.hp))

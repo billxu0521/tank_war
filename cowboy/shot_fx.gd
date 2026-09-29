@@ -1,6 +1,6 @@
 extends Node3D
 class_name ShotFX
-## 開槍的視覺回饋：槍口火光、曳光、命中火花。全部用內建節點，沒有任何素材。
+## 開槍的視覺回饋：槍口火光、曳光、著彈碎屑（碎屑和煙在 Fx 特效庫）。全部用內建節點，沒有任何素材。
 ## 這個節點自己的位置就是槍口——曳光從相機原點出去會看起來像從眼睛射出來。
 
 @export_group("Muzzle")
@@ -19,12 +19,6 @@ class_name ShotFX
 @export_group("Tracer")
 @export var tracer_width := 0.02
 @export var tracer_material: StandardMaterial3D
-
-@export_group("Impact")
-@export var spark_count := 12
-@export var spark_lifetime := 0.35
-@export var spark_speed := 4.0
-@export var spark_size := 0.03
 
 @onready var _light: OmniLight3D = $Light
 @onready var _flash: MeshInstance3D = get_node_or_null("Flash")
@@ -64,63 +58,14 @@ func flash() -> void:
 		# 每發轉一個隨機角度，連射看起來才不像同一張貼圖閃爍
 		_flash.rotation.z = randf() * TAU
 	_flash_left = flash_time
-	_spawn_smoke(global_position, -global_basis.z)
+	Fx.gun_smoke(_world, global_position, -global_basis.z, smoke_lifetime, smoke_size)
 
 
-## 黑火藥的白煙：一團往前噴、慢慢變大、飄起來、散掉。Pax 開一槍眼前就是一團煙
-func _spawn_smoke(at: Vector3, forward: Vector3) -> void:
-	var smoke := CPUParticles3D.new()
-	smoke.emitting = false
-	smoke.mesh = _smoke_mesh()
-	smoke.amount = 16
-	smoke.lifetime = smoke_lifetime
-	smoke.one_shot = true
-	smoke.explosiveness = 0.9
-	smoke.direction = forward
-	smoke.spread = 30.0
-	smoke.initial_velocity_min = 1.2
-	smoke.initial_velocity_max = 3.5
-	smoke.damping_min = 3.0
-	smoke.damping_max = 5.0
-	smoke.gravity = Vector3(0.0, 0.25, 0.0)
-	smoke.scale_amount_min = 0.6
-	smoke.scale_amount_max = 1.2
-	var grow := Curve.new()
-	grow.add_point(Vector2(0.0, 0.3))
-	grow.add_point(Vector2(1.0, 1.0))
-	smoke.scale_amount_curve = grow
-	var fade := Gradient.new()
-	fade.set_color(0, Color(1, 1, 1, 0.5))
-	fade.set_color(1, Color(1, 1, 1, 0.0))
-	smoke.color_ramp = fade
-	smoke.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	_world.add_child(smoke)
-	smoke.global_position = at
-	smoke.emitting = true
-	_free_after(smoke, smoke_lifetime + 0.1)
-
-
-var _smoke: SphereMesh
-func _smoke_mesh() -> SphereMesh:
-	if _smoke == null:
-		_smoke = SphereMesh.new()
-		_smoke.radius = smoke_size
-		_smoke.height = smoke_size * 2.0
-		_smoke.radial_segments = 8
-		_smoke.rings = 4
-		var mat := StandardMaterial3D.new()
-		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		mat.vertex_color_use_as_albedo = true     # color_ramp 的透明度要靠這個才吃得到
-		mat.albedo_color = Color(0.7, 0.69, 0.66)
-		mat.roughness = 1.0
-		_smoke.material = mat
-	return _smoke
-
-
-## 子彈打到東西：火花；solid = 打到不會動的世界，留彈孔；sound = 要不要出著彈聲。
-func impact(at: Vector3, normal: Vector3, solid: bool, sound := true) -> void:
-	_spawn_sparks(at, normal)
-	if solid:
+## 子彈打到東西：照材質噴碎屑（Fx.SURFACES）；打到不會動的世界（不是血肉）留彈孔；
+## sound = 要不要出著彈聲。
+func impact(at: Vector3, normal: Vector3, surface: StringName, sound := true) -> void:
+	Fx.hit(_world, at, normal, surface)
+	if surface != &"blood":
 		_spawn_hole(at, normal)
 	if sound:
 		impact_sound(at)
@@ -159,33 +104,6 @@ func impact_sound(at: Vector3) -> void:
 	snd.global_position = at
 	snd.play()
 	snd.finished.connect(snd.queue_free)
-
-
-func _spawn_sparks(at: Vector3, normal: Vector3) -> void:
-	var mesh := BoxMesh.new()
-	mesh.size = Vector3.ONE * spark_size
-	mesh.material = tracer_material
-
-	var sparks := CPUParticles3D.new()
-	# 粒子是世界座標的，一進場景就會噴。先關掉，擺好位置再開，
-	# 不然整把火花會生在父節點原點而不是命中點。
-	sparks.emitting = false
-	sparks.mesh = mesh
-	sparks.amount = spark_count
-	sparks.lifetime = spark_lifetime
-	sparks.one_shot = true
-	# 全部同一瞬間噴出來，不要拖成一條連續的煙。
-	# CPUParticles3D 叫 explosiveness，GPUParticles3D 才是 explosiveness_ratio
-	sparks.explosiveness = 1.0
-	# direction 是節點的本地座標，這裡不轉節點所以本地就等於世界
-	sparks.direction = normal
-	sparks.spread = 45.0
-	sparks.initial_velocity_min = spark_speed * 0.4
-	sparks.initial_velocity_max = spark_speed
-	_world.add_child(sparks)
-	sparks.global_position = at
-	sparks.emitting = true
-	_free_after(sparks, spark_lifetime)
 
 
 ## 用訊號不用 await：節點被別人先砍掉（重開一局清場）時，連線會自己斷，不會噴錯。

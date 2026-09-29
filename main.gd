@@ -41,6 +41,8 @@ const BARN_T := 0.25
 const BARN_DOOR_W := 5.0
 const BARN_DOOR_H := 4.8
 const BARN_BACK_X := 4.0
+const BARN_BACK_W := 1.6   # 後門開口，跟 blender/props.py 一樣
+const BARN_BACK_H := 2.8
 const BARN_LOFT := 4.0
 const BARN_LADDER_X := -2.5
 const HOUSE_T := 0.2
@@ -59,10 +61,16 @@ const RESPAWN_DELAY := 5.0    # 死亡的代價是節奏，不是失去參賽資
 const COWBOY := preload("res://cowboy/cowboy.tscn")
 const DINO := preload("res://dino.tscn")
 const BOSS := preload("res://boss.tscn")
+const AMBIENT := preload("res://assets/audio/ambient/forest.ogg")
+const BIRDS := preload("res://assets/audio/ambient/birds.ogg")
 const BOSS_ID := -999   # 負數＝電腦（主機操控）；固定編號，場上最多一隻
 
 @onready var lobby: VBoxContainer = $UI/Root/Lobby
-@onready var ip_edit: LineEdit = $UI/Root/Lobby/IP
+@onready var ip_edit: LineEdit = $UI/Root/Lobby/IPRow/IP
+@onready var saved_ips: MenuButton = $UI/Root/Lobby/IPRow/SavedIpBtn
+@onready var center_info: Label = $UI/Root/CenterInfo   # 方位條下面：重生倒數、撤離倒數
+@onready var net_info: Label = $UI/Root/NetInfo         # 右上角：本機 IP、延遲、每秒畫面數
+@onready var result: Control = $UI/Root/Result          # 勝負畫面
 @onready var status: Label = $UI/Root/Status
 @onready var hud: Label = $UI/Root/Hud
 @onready var stamina_bar: ProgressBar = $UI/Root/Stamina
@@ -76,6 +84,7 @@ var _terrain: Terrain
 var _doors: Array[Door] = []   # 晚加入的人連進來時，把開著的門補送給他
 var _wheat_fields: Array[Rect2] = []   # 地形上色要知道哪裡是麥田
 var _blocked: Array[Rect2] = []  # 建築物在 XZ 平面佔的範圍
+var _drift: Node3D   # 落葉飛蟲，跟著鏡頭走（Fx.drift）
 var _bushes: Array[Vector3] = []  # 灌木叢的根部位置（bot 判斷人是不是躲在裡面）
 var _exits: Array[Vector3] = []  # 四個撤離區的中心
 var _cowboys := 0
@@ -93,6 +102,10 @@ var _sandbox := false
 func _ready() -> void:
 	_flatten_models()
 	_use_cjk_font()
+	_ips = _local_ips()
+	_load_saved_ips()
+	saved_ips.get_popup().index_pressed.connect(func(i: int) -> void:
+		ip_edit.text = saved_ips.get_popup().get_item_text(i))
 	_use_sky()
 	_use_outline()
 	_load_props()
@@ -139,7 +152,7 @@ func _unhandled_input(e: InputEvent) -> void:
 		return
 	if e is InputEventKey and e.pressed and e.keycode == KEY_ESCAPE:
 		_set_menu(not menu.visible)
-	elif e is InputEventMouseButton and e.pressed and not menu.visible:
+	elif e is InputEventMouseButton and e.pressed and not menu.visible and not result.visible:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED  # 點畫面重新鎖回滑鼠
 
 # --- 暫停選單 ---
@@ -186,6 +199,12 @@ func _to_lobby(msg: String) -> void:
 	_respawn_queue.clear()
 	egg.carrier = 0
 	menu.hide()
+	result.hide()
+	center_info.text = ""
+	if _boss_bar:
+		_boss_bar.hide()
+		_boss_label.hide()
+	_had_me = false
 	crosshair.hide()
 	stamina_bar.hide()
 	lobby.show()
@@ -271,6 +290,16 @@ func _on_add_bot_pressed() -> void:
 
 func _on_clear_bots_pressed() -> void:
 	clear_bots()
+
+## 選單的「恐龍攻擊」開關：關掉時恐龍咬、踩、火球都打不痛（fighter.take_damage 擋），測恐龍行為用
+var dino_attacks := true
+var _ips := ""          # 本機 IP，開遊戲時查一次就好
+var _had_me := false    # 這局我已經生出來過；之後角色不見了就是死了，開始重生倒數
+var _dead_ms := -1
+var saved_ips_path := "user://saved_ips.cfg"   # 測試會換成別的檔，不動到真的清單
+
+func _on_dino_attack_toggled(on: bool) -> void:
+	dino_attacks = on
 
 func _on_add_boss_pressed() -> void:
 	spawn_boss()
@@ -466,10 +495,25 @@ func _finish_egg(winner: int) -> void:
 	_finish("你帶著蛋撤離，獲勝！" if winner == multiplayer.get_unique_id()
 		else "牛仔 %d 帶著蛋撤離，你輸了" % winner)
 
+## 勝負畫面：畫面中間大字＋按鈕。重開一局只有開房的人能按；測試站（專用伺服器）自己會開下一局
 @rpc("authority", "call_local", "reliable")
 func _finish(msg: String) -> void:
-	status.text = msg + "  （按 Esc 放開滑鼠）"
-	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	status.text = msg
+	$UI/Root/Result/Box/Text.text = msg
+	var host := multiplayer.is_server()
+	$UI/Root/Result/Box/RestartBtn.visible = host
+	$UI/Root/Result/Box/Sub.text = "" if host else ("%d 秒後自動開下一局" % NEXT_ROUND_DELAY if _joined_dedicated() else "等開房的人重開一局")
+	menu.hide()
+	result.show()
+	_show_cursor()
+
+## 客戶端分不出主機是不是測試站，看連的 IP 是不是測試站的
+func _joined_dedicated() -> bool:
+	return TEST_SERVER != "" and ip_edit.text == TEST_SERVER
+
+func _on_restart_pressed() -> void:
+	if multiplayer.is_server():
+		_new_round()
 
 func _physics_process(delta: float) -> void:
 	if _dedicated and _over:
@@ -498,7 +542,7 @@ func _physics_process(delta: float) -> void:
 ## 專用伺服器開下一局：時間和蛋歸位，每個牛仔重生（刪掉重生，客戶端的位置才會跟著換），boss 回蛋旁邊
 func _new_round() -> void:
 	_over = false
-	_enter_game("專用伺服器")
+	_enter_game("專用伺服器" if _dedicated else "新的一局")
 	egg.extract = 0.0
 	_cowboys = 0
 	for p in players.get_children():
@@ -508,14 +552,21 @@ func _new_round() -> void:
 			continue
 		var id := p.name.to_int()
 		var scene: PackedScene = DINO if p.is_in_group(&"dino") else COWBOY
+		var bot: bool = p.get(&"bot") == true
+		var patrol := [p.get(&"patrol_a"), p.get(&"patrol_b")] if p.get(&"walker") == true else []
 		players.remove_child(p)
 		p.queue_free()
-		_add_player(scene, id)
+		var q := _add_player(scene, id)
+		q.set(&"bot", bot)   # 開房的人按重開一局時場上可能有 bot 和移動標靶，要照原樣生回來
+		if patrol:
+			_make_walker(q, patrol[0], patrol[1])
 	_announce.rpc("新的一局開始！")
 
 @rpc("authority", "call_local", "reliable")
 func _announce(msg: String) -> void:
 	status.text = msg
+	result.hide()
+	_had_me = false
 	if not lobby.visible:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
@@ -549,6 +600,10 @@ func _egg_step(delta: float) -> void:
 		egg.extract = 0.0
 
 func _process(_delta: float) -> void:
+	var cam := get_viewport().get_camera_3d()
+	if _drift and cam:
+		_drift.global_position = cam.global_position
+	_update_net_info()
 	if _compass:
 		_compass.visible = not lobby.visible
 	# 連線還沒建立好就問 id 會噴錯
@@ -557,8 +612,14 @@ func _process(_delta: float) -> void:
 		return
 	var me := players.get_node_or_null(NodePath(str(multiplayer.get_unique_id())))
 	var dino := get_tree().get_first_node_in_group(&"dino")
+	# 保險：遊戲中、沒開選單和勝負畫面，游標卻沒鎖住（系統自己放掉的，0.8.1 回饋「舉槍後跑出游標」），就鎖回去。
+	# 視窗沒焦點時鎖不住，等切回來再鎖
+	if not menu.visible and not result.visible and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED \
+			and get_window().has_focus():
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	_update_center_info(me)
 	_update_crosshair(me)
-	_update_boss_bar()
+	_update_boss_bar(me)
 	_update_compass()
 	stamina_bar.visible = me != null and me == dino
 	if stamina_bar.visible:
@@ -569,15 +630,7 @@ func _process(_delta: float) -> void:
 		egg_state = "在你身上！帶去撤離區"
 	elif egg.carrier != 0:
 		egg_state = "被牛仔 %d 拿走了" % egg.carrier
-	if egg.pickup > 0.0:
-		egg_state += "　撿取中 %.1f/%.0f 秒" % [egg.pickup, PICKUP_SECONDS]
-	if egg.extract > 0.0:
-		egg_state += "　撤離中 %.1f/%.0f 秒" % [egg.extract, EXTRACT_SECONDS]
-	var mine := "陣亡"
-	if me != null:
-		mine = str(me.hp)
-	elif _respawn_seconds_for(multiplayer.get_unique_id()) > 0:
-		mine = "重生中 %d 秒" % _respawn_seconds_for(multiplayer.get_unique_id())
+	var mine := str(me.hp) if me != null else "陣亡"
 	if _sandbox:
 		hud.text = "沙盒    我的血量：%s    恐龍靶血量：%s" % [mine, dino.hp if dino else "重生中"]
 		return
@@ -588,18 +641,67 @@ func _process(_delta: float) -> void:
 		players.get_child_count() - (1 if dino else 0),
 		egg_state]
 
+## 方位條下面的倒數：重生、撤離、撿蛋。重生倒數用自己這台的時間算（主機的重生佇列客戶端看不到）
+func _update_center_info(me: Node) -> void:
+	var now := Time.get_ticks_msec()
+	if me != null:
+		_had_me = true
+		_dead_ms = -1
+	elif _had_me and _dead_ms < 0:
+		_dead_ms = now
+	var t := ""
+	if result.visible:
+		t = ""
+	elif me == null and _dead_ms >= 0:
+		t = "%d 秒後重生" % maxi(1, ceili(RESPAWN_DELAY - (now - _dead_ms) / 1000.0))
+	elif egg.extract > 0.0:
+		var who := "你" if egg.carrier == multiplayer.get_unique_id() else "牛仔 %d" % egg.carrier
+		t = "%s撤離中：還剩 %.1f 秒" % [who, maxf(EXTRACT_SECONDS - egg.extract, 0.0)]
+	elif egg.pickup > 0.0:
+		t = "有人在撿蛋：還剩 %.1f 秒" % maxf(PICKUP_SECONDS - egg.pickup, 0.0)
+	center_info.text = t
+
+## 右上角：本機 IP（開房的人報給朋友用）、連線延遲、每秒畫面數
+func _update_net_info() -> void:
+	var parts: Array[String] = ["本機 IP：" + _ips]
+	var peer := multiplayer.multiplayer_peer as ENetMultiplayerPeer
+	if not lobby.visible and peer and not multiplayer.is_server() \
+			and peer.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED:
+		var p := peer.get_peer(1)
+		if p:
+			parts.append("延遲 %d ms" % p.get_statistic(ENetPacketPeer.PEER_ROUND_TRIP_TIME))
+	if not lobby.visible:
+		parts.append("%d FPS" % Engine.get_frames_per_second())
+	net_info.text = "　".join(parts)
+
+## 大廳存過的 IP：「＋」把目前的存起來，「⋯」選一個填回去
+func _load_saved_ips() -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(saved_ips_path)   # 第一次開沒有檔案，當作空的
+	var popup := saved_ips.get_popup()
+	popup.clear()
+	for a: String in cfg.get_value("ips", "list", []):
+		popup.add_item(a)
+	saved_ips.disabled = popup.item_count == 0
+
+func _on_save_ip_pressed() -> void:
+	var a := ip_edit.text.strip_edges()
+	var cfg := ConfigFile.new()
+	cfg.load(saved_ips_path)
+	var list: Array = cfg.get_value("ips", "list", [])
+	if a == "" or list.has(a):
+		return
+	list.append(a)
+	cfg.set_value("ips", "list", list)
+	cfg.save(saved_ips_path)
+	_load_saved_ips()
+	status.text = "存好了：" + a
+
 func _dist_to_exit(p: Vector3) -> float:
 	var best := 9999.0
 	for e: Vector3 in _exits:
 		best = minf(best, Vector2(p.x - e.x, p.z - e.z).length())
 	return best
-
-## 還要幾秒才重生（只有主機知道，客戶端看到的是 0）
-func _respawn_seconds_for(id: int) -> int:
-	for r: Dictionary in _respawn_queue:
-		if int(r["id"]) == id:
-			return maxi(0, ceili(_time_left - float(r["at"])))
-	return 0
 
 ## 準心畫在「火球會落到哪」，不是螢幕正中央——抬頭時看得出彈道往上跑。
 ## 牛仔的準心在自己的 HUD 裡（子彈是直線，畫正中央就對），沒有 aim_point，這裡就不顯示。
@@ -644,7 +746,9 @@ func _build_arena() -> void:
 						_wheat_fields.append(Rect2(c.x - 20, c.z - 20, 40, 40))
 				3: _terrain.flatten_circle(Vector2(c.x, c.z + 22), 12.0)  # 牧場的小棚
 	_terrain.settle()   # 靠太近的平地把高度拉近，中間才不會擠出陡坡
-	$Arena.add_child(_terrain.build(_ground_color))
+	var ground := _terrain.build(_ground_color)
+	ground.add_to_group(&"ground")   # 子彈打到噴土（Bullet.surface_of）
+	$Arena.add_child(ground)
 
 	# 四周圍牆，東西才不會掉出場外。內側牆面剛好貼齊地板邊緣，不留縫。
 	# 碰撞是平的牆（看不見），外觀是一段段山崖（blender/props.py 的 Cliff），
@@ -723,6 +827,23 @@ func _build_arena() -> void:
 	# 草地：畫面用的，伺服器沒畫面就不長（測試會直接呼叫 _grass_field 檢查）
 	if DisplayServer.get_name() != "headless":
 		_grass_field()
+		_drift = Fx.drift($Arena)
+	# 全場的背景聲（風、林子）。不是 3D 的，走到哪都一樣大聲
+	var bg := AudioStreamPlayer.new()
+	bg.stream = AMBIENT
+	bg.volume_db = -6.0
+	bg.autoplay = true
+	$Arena.add_child(bg)
+
+## 定點的環境聲：一直循環，離 reach 公尺外就聽不到
+func _sound_at(stream: AudioStream, at: Vector3, reach: float) -> AudioStreamPlayer3D:
+	var s := AudioStreamPlayer3D.new()
+	s.stream = stream
+	s.max_distance = reach
+	s.autoplay = true
+	$Arena.add_child(s)
+	s.global_position = at
+	return s
 
 ## 描線：一片蓋滿畫面的方塊，用 outline.gdshader 從深度和法線畫出輪廓和稜線。
 ## 放在場地底下，任何相機（玩家、檢視模式、截圖）都會畫到；剔除邊界拉很大，不會因為方塊不在視野裡被跳過
@@ -764,23 +885,26 @@ func _update_compass() -> void:
 ## 跑不動（力竭）變紅、倒地變灰
 var _boss_bar: ProgressBar
 var _boss_label: Label
-func _update_boss_bar() -> void:
+func _update_boss_bar(me: Node) -> void:
 	var b := get_tree().get_first_node_in_group(&"boss")
+	# 當牛仔時不顯示（0.8.1 回饋）。沙盒是測恐龍行為的地方，留著
+	if not _sandbox and not (me != null and me.is_in_group(&"dino")):
+		b = null
 	if _boss_bar == null:
 		_boss_bar = ProgressBar.new()
 		_boss_bar.show_percentage = false
 		_boss_bar.set_anchors_preset(Control.PRESET_CENTER_TOP)
 		_boss_bar.offset_left = -160
 		_boss_bar.offset_right = 160
-		_boss_bar.offset_top = 104   # 在方位條（compass.gd）下面
-		_boss_bar.offset_bottom = 118
+		_boss_bar.offset_top = 140   # 在方位條（compass.gd）和倒數（CenterInfo）下面
+		_boss_bar.offset_bottom = 154
 		_boss_bar.add_theme_stylebox_override(&"background", stamina_bar.get_theme_stylebox(&"background"))
 		_boss_bar.add_theme_stylebox_override(&"fill", stamina_bar.get_theme_stylebox(&"fill"))
 		_boss_label = Label.new()
 		_boss_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
 		_boss_label.offset_left = -160
 		_boss_label.offset_right = 160
-		_boss_label.offset_top = 80
+		_boss_label.offset_top = 116
 		_boss_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		$UI/Root.add_child(_boss_label)
 		$UI/Root.add_child(_boss_bar)
@@ -857,6 +981,7 @@ func _rock(kind: StringName, p: Vector3, s: float, yaw: float, solid: bool) -> v
 		var shape := ConvexPolygonShape3D.new()
 		shape.points = pts
 		var body := _body(at, shape)
+		body.add_to_group(&"stone")   # 子彈打到噴石屑
 		body.rotation.y = yaw
 		_prop(kind, Vector3.ZERO, Vector3.ONE * s, body)
 		_block(p, Vector2(size.x, size.z), 1.5)
@@ -1027,8 +1152,9 @@ func _farmstead(c: Vector3, rng: RandomNumberGenerator) -> void:
 			if _free(c + p, 2):
 				_fence(c + p, r * 2.0 / 8.0, side % 2 == 1)
 
-## 果園：整齊的樹，樹幹擋子彈、樹冠擋視線不擋子彈
+## 果園：整齊的樹，樹幹擋子彈、樹冠擋視線不擋子彈。林子裡有鳥叫，走近才聽得到
 func _orchard(c: Vector3, rng: RandomNumberGenerator) -> void:
+	_sound_at(BIRDS, _on_ground(c) + Vector3(0, 5, 0), 35.0)
 	for i in 5:
 		for j in 5:
 			var p := c + Vector3((i - 2) * 6.5, 0, (j - 2) * 6.5)
@@ -1083,8 +1209,8 @@ func _barn(p: Vector3, size: Vector3, clearance := SPAWN_CLEARANCE) -> void:
 			Vector3(BARN_DOOR_W * 0.5, BARN_DOOR_H, 0.16), Vector3.ZERO, Vector3(s.x, s.y, 1))
 		d.slide = Vector3(side * BARN_DOOR_W * 0.5 * s.x, 0, 0)
 	# 後門：門軸在開口左緣，往裡推開
-	var back := _door(&"BarnBackDoor", p + Vector3((BARN_BACK_X - 0.6) * s.x, 0, -(BARN_BASE.z * 0.5 - BARN_T * 0.5) * s.z),
-		Vector3(1.2, 2.2, 0.08), Vector3(0.6, 0, 0), Vector3(s.x, s.y, 1))
+	var back := _door(&"BarnBackDoor", p + Vector3((BARN_BACK_X - BARN_BACK_W * 0.5) * s.x, 0, -(BARN_BASE.z * 0.5 - BARN_T * 0.5) * s.z),
+		Vector3(BARN_BACK_W, BARN_BACK_H, 0.08), Vector3(BARN_BACK_W * 0.5, 0, 0), Vector3(s.x, s.y, 1))
 	back.swing = -PI * 0.5
 	# 閣樓的梯子：靠在閣樓邊緣（z=0），人站在梯子前面（+Z 那側）面向 -Z 爬
 	var loft := BARN_LOFT * s.y
@@ -1100,6 +1226,7 @@ func _house(p: Vector3) -> void:
 	_solid_mesh(p, _props.get(&"HouseCol"), Vector3.ONE)   # 空心：牆、隔間、窗洞、大件家具
 	_roof(p, size, 0.5)
 	_solid_box(p + Vector3(3, size.y + 2.5, 0), Vector3(0.9, 3.0, 0.9))   # 煙囪
+	Fx.chimney($Arena, p + Vector3(3, size.y + 4.1, 0))
 	_prop(&"House", p)
 	# 前門：門軸在門洞左緣，往屋裡推開
 	var d := _door(&"HouseDoor", p + Vector3(-0.55, 0, size.z * 0.5 - HOUSE_T * 0.5),
@@ -1358,8 +1485,30 @@ func _build_exits() -> void:
 		mi.mesh = mesh
 		mi.position = c + Vector3(0, 0.15, 0)
 		$Arena.add_child(mi)
+		_exit_pipe(c)
 		# 撤離點旁邊停一台篷車：遠遠就認得出「從這裡走」
 		_prop(&"Wagon", _on_ground(c * Vector3(1, 0, 1) + Vector3(0, 0, EXIT_RADIUS + 3.0))).rotation.y = 0.4
+
+## 撤離點中間的綠色水管：遠遠就看得到撤離點在哪（0.8.1 回饋 U14）。
+## ponytail: 佔位用的，之後換正式的撤離標的物模型。有碰撞，不然會變成看得到摸不到的東西
+func _exit_pipe(c: Vector3) -> void:
+	const R := 1.2
+	const H := 6.0   # 比柵欄、乾草高很多，隔著小丘也看得到管口
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.2, 0.62, 0.22)
+	mat.roughness = 0.6
+	for part: Array in [[R, H, H * 0.5], [R + 0.25, 0.8, H - 0.4]]:   # [半徑, 高, 中心高]：管身＋頂上一圈管口
+		var mesh := CylinderMesh.new()
+		mesh.top_radius = part[0]
+		mesh.bottom_radius = part[0]
+		mesh.height = part[1]
+		mesh.material = mat
+		var mi := MeshInstance3D.new()
+		mi.mesh = mesh
+		mi.position = c + Vector3(0, part[2], 0)
+		mi.add_to_group(&"exit_pipe")
+		$Arena.add_child(mi)
+	_solid_cyl(c + Vector3(0, H * 0.5, 0), R + 0.25, H)
 
 ## 找一個不在建築物裡面的出生點
 func _spawn_point(span := ARENA * 0.45) -> Vector3:
@@ -1414,6 +1563,7 @@ func _use_cjk_font() -> void:
 func _local_ips() -> String:
 	var out: Array[String] = []
 	for a: String in IP.get_local_addresses():
-		if a.begins_with("192.168.") or a.begins_with("10.") or a.begins_with("172."):
+		# 結尾 .0 是網段不是能連的位址（虛擬網卡常有），列出來只會讓人填錯
+		if (a.begins_with("192.168.") or a.begins_with("10.") or a.begins_with("172.")) and not a.ends_with(".0"):
 			out.append(a)
 	return ", ".join(out) if not out.is_empty() else "自己查 ifconfig"

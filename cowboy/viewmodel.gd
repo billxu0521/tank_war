@@ -35,8 +35,9 @@ var remote_shots := 0   # 收到別人這把槍開了幾槍（連線測試用來
 
 @export_group("Sway")
 ## 視角轉動時武器的拖曳量（rad 對 rad），移動時的位移量（公尺）。
-@export var sway_amount := 0.06
-@export var move_sway := 0.03
+## ponytail: 0.8.1 回饋覺得鏡頭和槍不同步、有慣性，先關掉試試（原本 0.06 / 0.03）。確定不要再整段拆掉
+@export var sway_amount := 0.0
+@export var move_sway := 0.0
 @export var sway_return_speed := 6.0
 
 @export_group("Breath")
@@ -44,7 +45,6 @@ var remote_shots := 0   # 收到別人這把槍開了幾槍（連線測試用來
 @export var ads_sway := 0.35
 ## 閉氣每秒吃多少體力。體力見底放掉，而且晃得更兇
 @export var breath_drain := 20.0
-@export var winded_sway_mult := 2.5
 ## 蹲下時晃動乘這個。Hunt：蹲下會減少所有槍的晃動——要打遠就蹲
 @export var crouch_sway_mult := 0.5
 
@@ -133,7 +133,9 @@ func _process(delta: float) -> void:
 		return
 	# 滑鼠放開（Esc）時不接受開火，不然在選單狀態亂點也會射。爬梯子兩手都在梯子上，也不能開槍
 	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not _player.is_climbing():
-		if Input.is_action_just_pressed("fire"):
+		if _melee_held >= 0.0:
+			pass   # 蓄力近戰中：兩手都在揮槍托，不能開槍、換彈、換槍
+		elif Input.is_action_just_pressed("fire"):
 			try_fire()
 		elif weapon.fan_interval > 0.0 and ads < 0.5 and Input.is_action_pressed("fire"):
 			try_fire(true)   # 左輪腰射按住＝搧擊錘，快但散
@@ -151,7 +153,7 @@ func _process(delta: float) -> void:
 	# 翻越、爬梯子時槍放低（手去撐東西了）
 	weapon.lower = move_toward(weapon.lower, 1.0 if (_player.vaulting or _player.is_climbing()) else 0.0, delta * 6.0)
 	weapon.aim = ads
-	_update_ads(Input.is_action_pressed("aim"), delta)
+	_update_ads(Input.is_action_pressed("aim") and _melee_held < 0.0, delta)
 	_update_breath(Input.is_action_pressed("sprint"), delta)
 	_update_sway(delta)
 	_update_anim(delta)
@@ -221,8 +223,6 @@ func _update_breath(want_hold: bool, delta: float) -> void:
 	var amp := 0.0
 	if ads > 0.0 and not holding_breath:
 		amp = deg_to_rad(ads_sway) * ads
-		if _player.stamina < _player.sprint_min_stamina:
-			amp *= winded_sway_mult   # 跑完喘，手會抖
 		if _player.sync_crouching:
 			amp *= crouch_sway_mult
 		_sway_t += delta
@@ -249,18 +249,13 @@ func _update_melee_input(delta: float) -> void:
 	weapon.windup = clampf(_melee_held / heavy_charge_time, 0.0, 1.0) if _melee_held >= 0.0 else 0.0
 
 
-## 槍托敲人，吃近戰體力（左下黃條）。照 Hunt：體力不夠重擊就退成輕擊；
-## 見底了還能輕擊，但慢一倍（傷害不變）。
+## 槍托敲人，吃體力（跟跑步同一條）。體力不夠也照樣揮——體力只影響移動速度
 func try_melee(heavy := false) -> void:
-	if heavy and _player.combat_stamina < heavy_stamina:
-		heavy = false
 	if _melee_cooldown > 0.0:
 		return
-	var cost := heavy_stamina if heavy else melee_stamina
-	var winded: bool = _player.combat_stamina < cost
 	cancel_reload()
-	_melee_cooldown = (heavy_cooldown if heavy else melee_cooldown) * (2.0 if winded else 1.0)
-	_player.spend_combat(cost)
+	_melee_cooldown = heavy_cooldown if heavy else melee_cooldown
+	_player.spend_stamina(heavy_stamina if heavy else melee_stamina)
 	_anim_lock = weapon.play(&"melee", blend)
 	var from := _camera.global_position
 	var to := from - _camera.global_transform.basis.z * melee_range
