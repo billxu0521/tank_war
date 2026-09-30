@@ -2,8 +2,9 @@ extends SceneTree
 ## 烘焙：跑一次自動擺設，把擺設清單存成場景檔 levels/ranch.tscn，之後在 Godot 編輯器裡手調。
 ## **會蓋掉手調過的結果**——只在第一次、或確定要從頭來的時候跑（舊版從 git 拿得回來）。
 ##   godot --headless --path . --script tools/bake_level.gd
+##   godot --headless --path . --script tools/bake_level.gd -- --range    靶場（levels/range.tscn）
 
-const OUT := "res://levels/ranch.tscn"
+var OUT := "res://levels/ranch.tscn"
 # 分組（編輯器的場景樹比較好找）。建築那組要照原本的順序：門的名字 Door0、Door1… 照蓋的順序
 # 街道也會擋出生點，放在建築後面：測試拿「第一個擋住的範圍」當穀倉用
 const GROUPS := [["地形", ["flat", "wheat"]], ["建築", ["barn", "house", "silo", "hay_shed", "windmill", "shop", "water_tower"]],
@@ -24,6 +25,9 @@ var _m: Node
 func _process(_d: float) -> bool:
 	_f += 1
 	if _f == 1:
+		if OS.get_cmdline_user_args().has("--range"):
+			load("res://main.gd").mode = &"range"
+			OUT = load("res://main.gd").RANGE_LEVEL
 		_m = load("res://main.tscn").instantiate()
 		_m.level_path = ""   # 不讀舊的場景檔：自動擺一份
 		root.add_child(_m)

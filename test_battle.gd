@@ -33,6 +33,8 @@ func _process(_delta: float) -> bool:
 		_case_input_map()
 		_case_hunt_weapons()
 		_case_sandbox()
+		_case_range()
+		_case_net_smooth()
 		_case_rural()
 		_case_fx_and_ambience()
 		_case_terrain()
@@ -400,6 +402,16 @@ func _case_hunt_weapons() -> void:
 	Viewmodel.aim_toggle = false
 	m._load_settings()
 	_ck(Viewmodel.aim_toggle, "瞄準切換的設定要存起來")
+	m._on_fps_cap_selected(2)
+	_ck(Engine.max_fps == m._refresh_hz() / 2, "幀率上限選「螢幕的一半」要鎖在刷新率一半（現在 %d）" % Engine.max_fps)
+	m._on_vsync_toggled(false)
+	m.fps_cap = 0
+	m.vsync = true
+	m._load_settings()
+	_ck(m.fps_cap == 2 and not m.vsync and Engine.max_fps == m._refresh_hz() / 2, "畫面設定要存起來，重開照樣套用")
+	m._on_fps_cap_selected(0)
+	m._on_vsync_toggled(true)
+	_ck(Engine.max_fps == 0, "選「不限」要拿掉上限")
 	m._on_aim_toggle_toggled(false)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(m.settings_path))
 	for w in vm._weapons:
@@ -601,6 +613,49 @@ func _sound_lead(stream: AudioStream) -> float:
 		if absi(data.decode_s16(i)) > 328:   # 32768 × 0.01 ≈ -40dB
 			return float(i / 2 / ch) / wav.mix_rate
 	return 99.0
+
+## 別人的角色平滑顯示（Fighter.net_step）：畫面晚 100 毫秒，在前後兩筆之間補；
+## 封包晚到不影響（用送出時間算），新的還沒到就停在最後一筆
+func _case_net_smooth() -> void:
+	var m := _offline_match()
+	var c: Node3D = m._add_player(m.COWBOY, 5)
+	_ck(not c.net_smooth, "主機（離線也算）上不做平滑：咬人、找人要看即時位置")
+	c.net_state = [0, Vector3(3, 0, 0), Vector3.ZERO]
+	_ck(c.position.x == 3.0, "主機收到位置要直接套")
+	c.net_smooth = true
+	var r := Vector3(0, 1.0, 0)
+	c._snaps = [[0.0, 1000.0, Vector3.ZERO, Vector3.ZERO], [50.0, 1090.0, Vector3(5, 0, 0), r * 0.5],   # 第二包晚到 40 毫秒
+		[100.0, 1100.0, Vector3(10, 0, 0), r]]
+	c.net_step(1175.0)   # 畫面時間 = 1175 - 時差 1000 - 延遲 100 = 75
+	_ck(absf(c.position.x - 7.5) < 0.01 and absf(c.rotation.y - 0.75) < 0.01, "要在兩筆之間補（現在 x=%.2f、朝向 %.2f）" % [c.position.x, c.rotation.y])
+	c.net_step(1150.0)
+	_ck(absf(c.position.x - 5.0) < 0.01, "晚到的那包不影響位置（現在 x=%.2f）" % c.position.x)
+	c.net_step(1400.0)
+	_ck(c.position.x == 10.0, "新的還沒到就停在最後一筆，不要亂猜")
+	_end(m)
+
+## 靶場：另一張地圖，靶照距離站好、擺設乾淨，打中跳字，回大廳就切回牧場
+func _case_range() -> void:
+	var Main: GDScript = load("res://main.gd")
+	Main.mode = &"range"
+	var m: Node = load("res://main.tscn").instantiate()
+	root.add_child(m)
+	m._start_range()
+	_ck(m.level_path == Main.RANGE_LEVEL and ResourceLoader.exists(m.level_path), "靶場要讀自己的場景檔")
+	_ck(m.players.get_child_count() == 2 + m.RANGE_TARGETS.size(), "要有自己、恐龍靶和 %d 個牛仔靶" % m.RANGE_TARGETS.size())
+	var me: Node3D = m.players.get_node(^"1")
+	var far: Node3D = m.players.get_node(NodePath(str(2 + m.RANGE_TARGETS.size())))
+	_ck(absf(-(far.global_position - me.global_position).z - 150.0) < 1.0, "最遠的靶在 150 公尺")
+	var probs := LevelCheck.run(m._level, false)
+	_ck(probs.is_empty(), "靶場擺設檢查有問題：%s" % [probs.slice(0, 5)])
+	var before: int = m.get_node(^"Arena").get_child_count()
+	m.hit_popup(far.global_position, 42, 150.0, false)
+	_ck(m.get_node(^"Arena").get_child_count() == before + 1 and m._last_hit.contains("42"), "打中要跳傷害數字")
+	m._process(0.016)
+	_ck(m.hud.text.contains("準星距離"), "畫面上要有準星距離")
+	m._to_lobby("")
+	_ck(Main.mode == &"", "離開靶場要切回牧場")
+	_end(m)
 
 ## 沙盒：靶站好、沒有時間限制、子彈無限、靶打死生回原地
 func _case_sandbox() -> void:

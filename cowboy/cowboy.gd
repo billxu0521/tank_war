@@ -172,6 +172,8 @@ func _ready() -> void:
 	# 場景裡會有好幾台相機（每個玩家一台），不能靠 Godot 自動挑第一台——
 	# 那台可能是別人的。自己的一定要明講。
 	_camera.current = true
+	# 相機不走物理插值（見 _process）：轉視角是滑鼠事件，補間會讓轉頭慢半拍。槍和手跟著相機
+	_camera.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 
 
 ## 走路時兩條腿繞髖關節前後擺，擺幅跟速度走。速度用位置差算：
@@ -224,6 +226,10 @@ func _process(delta: float) -> void:
 	# 翻越：鏡頭往下點頭、往側邊歪一下，看得出自己撐過去了
 	var v := sin(PI * vault_t)
 	_camera.rotation = Vector3(-0.22 * v, 0.0, 0.12 * v)
+	# 相機位置用補間後的（移動不抖），朝向用現在的（轉頭零延遲）：
+	# 相機掛在頭底下，差多少就往回挪多少。瞬移後補間會重設，這個差就是 0
+	var lag := head.get_global_transform_interpolated().origin - head.global_position
+	_camera.position = head.global_basis.inverse() * lag
 	# 沒有準心（跟 Hunt 一樣靠槍身瞄）。打中人時畫面中間閃一下紅 +：
 	# 遠距離看不出血條掉，這是唯一的命中確認
 	_crosshair.visible = hit_until > Time.get_ticks_msec()

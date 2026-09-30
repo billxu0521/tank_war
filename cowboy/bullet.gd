@@ -95,6 +95,10 @@ func _impact(hit: Dictionary) -> void:
 		return
 	var dmg := weapon.damage_at(_traveled)
 	# 爆頭秒殺只在有效射程內成立，跟 Hunt 一樣。距離用子彈實際飛了多遠
-	if _traveled <= weapon.falloff_start and Viewmodel.is_headshot(target, hit["position"]):
+	var head: bool = _traveled <= weapon.falloff_start and Viewmodel.is_headshot(target, hit["position"])
+	if head:
 		dmg = target.max_hp
 	shooter.deal_damage(target, roundi(dmg))
+	var g := get_tree().get_first_node_in_group(&"match")
+	if g:
+		g.hit_popup(hit["position"], roundi(dmg), _traveled, head)   # 靶場才會跳字

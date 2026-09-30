@@ -1,5 +1,6 @@
 shader_type spatial;
 // 描線（main.gd 的 _use_outline 掛一片蓋滿畫面的方塊）：畫完之後看深度和法線，
+// 半透明的東西（槍口火光、煙）看不到深度，所以這片要在它們之前畫（render_priority 最低），它們才蓋得住線
 // 物件的輪廓（深度跳一大截）和稜線（法線轉很多）畫成深色線。遠處慢慢淡掉，不然整片山崖和林子變成一團線。
 // 不用「模型放大一圈反過來畫」的做法：模型都是平面著色，每個面各自往外推會裂開，線斷成一截一截。
 render_mode unshaded, depth_test_disabled, depth_draw_never, cull_disabled, fog_disabled, shadows_disabled;
@@ -15,7 +16,8 @@ uniform float fade_start = 40.0;     // 公尺：輪廓線從這裡開始淡
 uniform float fade_end = 110.0;
 uniform float ridge_fade_start = 8.0;   // 稜線（板縫、環箍、切面）淡得快：近看有細節，遠看只剩外輪廓，不然建築像描圖紙
 uniform float ridge_fade_end = 20.0;
-uniform float near_dist = 1.5;       // 這麼近的是第一人稱的槍和手：另外一套描線（見 fragment）
+uniform float gun_mark = 0.65;       // 第一人稱的槍和手：粗糙度 = 這個（viewmodel.gd 的 OUTLINE_MARK），另外一套描線（見 fragment）。
+                                     // 以前用「離鏡頭 1.5 公尺內」認，貼近牆和木桶時它們也被當成槍描粗線
 
 void vertex() {
 	POSITION = vec4(VERTEX.xy, 1.0, 1.0);   // 蓋滿整個畫面，不管相機在哪
@@ -30,10 +32,14 @@ vec3 nrm(vec2 uv) {
 	return texture(normal_tex, uv).xyz * 2.0 - 1.0;
 }
 
+bool is_gun(vec2 uv) {
+	return abs(texture(normal_tex, uv).a - gun_mark) < 0.015;
+}
+
 void fragment() {
 	vec2 uv = SCREEN_UV;
 	float d = lin_depth(uv, INV_PROJECTION_MATRIX);
-	bool near = d < near_dist;
+	bool near = is_gun(uv);
 	vec2 px = width * (near ? 1.6 : 1.0) * (VIEWPORT_SIZE.y / 1080.0) / VIEWPORT_SIZE;
 	px = max(px, 1.0 / VIEWPORT_SIZE);
 	vec3 n = nrm(uv);
@@ -55,7 +61,7 @@ void fragment() {
 			edge = 1.0;
 		}
 		// 槍和手：外輪廓也畫在背景那一側（槍是深色的，線畫在槍身上等於看不到），貼著槍描一圈深線
-		if (dn < near_dist && d - dn > dn * 0.015) {
+		if (is_gun(u) && d - dn > dn * 0.015) {
 			edge = 1.0;
 		}
 		if (d < 500.0 && dot(n, nrm(u)) < 1.0 - (near ? 0.45 : normal_edge)) {

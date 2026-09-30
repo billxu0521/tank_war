@@ -26,6 +26,21 @@ var _last_hit_by: Node = null  # 只有主機需要，用來記誰殺了誰
 var _was_captured := false
 var _settle_until := 0
 
+# --- 別人的角色：平滑顯示 ---
+# 同步器只同步 net_state = [送出時的時間, 位置, 朝向]。收到的先存起來，畫面刻意晚 NET_DELAY 毫秒，
+# 在前後兩筆之間補（跟 FPS 遊戲的「插值」同一招）：網路一時慢了、一次來兩包，看起來還是順的。
+# 只有客戶端這樣做。主機（含測試站）收到就直接套：恐龍咬人、boss 找人都在主機算，不能看慢了的位置。
+# 客戶端自己判定打中（Bullet），打的就是畫面上看到的位置，所以「看到哪、打哪」還是對得上
+const NET_DELAY := 100.0
+const NET_KEEP := 1000.0   # 存最近這麼多毫秒
+var net_smooth := false     # _ready 決定；測試會直接打開
+var _snaps: Array = []      # [送出時間, 收到時間, 位置, 朝向]，照時間排
+var net_state: Array:
+	get:
+		return [Time.get_ticks_msec(), position, rotation]
+	set(v):
+		_net_push(v)
+
 
 ## 電腦（移動標靶、bot）用負數編號，由主機操控。
 ## 玩家的連線編號一定是正數（主機 1，其他人是很大的亂數，實測 251338328），負數保證不會撞。
@@ -41,6 +56,55 @@ func _enter_tree() -> void:
 
 func _ready() -> void:
 	hp = max_hp
+	# 物理插值（project.godot 開著）：畫面在前後兩個物理步之間補，高刷新率螢幕才不會一頓一頓。
+	# 生出來之後呼叫的人才擺位置，等這一幀結束再重設，不然第一幀會從原點滑過去
+	reset_physics_interpolation.call_deferred()
+	net_smooth = not is_multiplayer_authority() and not multiplayer.is_server()
+	if net_smooth:
+		physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF   # 自己每幀補，不再經過物理插值
+
+
+func _net_push(v: Array) -> void:
+	if not net_smooth:
+		position = v[1]   # 主機、還沒進場景（生出來那一包）：直接套
+		rotation = v[2]
+		return
+	var now := float(Time.get_ticks_msec())
+	_snaps.append([float(v[0]), now, v[1], v[2]])
+	while _snaps.size() > 2 and _snaps[0][1] < now - NET_KEEP:
+		_snaps.pop_front()
+
+
+## 照畫面時間在兩筆之間補。對方的時鐘跟我們不一樣：用「收到 - 送出」最小的那筆當兩邊的時差
+## （最快到的那包最接近真正的時差），再往回退 NET_DELAY
+func net_step(now: float) -> void:
+	if _snaps.is_empty():
+		return
+	var off := INF
+	for s: Array in _snaps:
+		off = minf(off, s[1] - s[0])
+	var t := now - off - NET_DELAY
+	var last: Array = _snaps[-1]
+	if t >= last[0]:   # 新的還沒到：停在最後一筆，不亂猜
+		position = last[2]
+		rotation = last[3]
+		return
+	for i in range(_snaps.size() - 1, 0, -1):
+		var a: Array = _snaps[i - 1]
+		if a[0] <= t:
+			var b: Array = _snaps[i]
+			var k := clampf((t - a[0]) / maxf(b[0] - a[0], 0.001), 0.0, 1.0)
+			position = (a[2] as Vector3).lerp(b[2], k)
+			rotation = Quaternion.from_euler(a[3]).slerp(Quaternion.from_euler(b[3]), k).get_euler()
+			return
+	position = _snaps[0][2]
+	rotation = _snaps[0][3]
+
+
+func _notification(what: int) -> void:
+	# 牛仔、恐龍各有自己的 _process；這裡用通知，子類別不用記得呼叫
+	if what == NOTIFICATION_PROCESS and net_smooth:
+		net_step(float(Time.get_ticks_msec()))
 
 ## 自己射出去的彈打中有血的東西時呼叫。純本機回饋，不走網路。
 func on_hit() -> void:

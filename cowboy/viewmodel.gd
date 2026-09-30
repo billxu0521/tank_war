@@ -41,6 +41,15 @@ var remote_shots := 0   # 收到別人這把槍開了幾槍（連線測試用來
 @export var move_sway := 0.0
 @export var sway_return_speed := 6.0
 
+@export_group("Run")
+## 跑步（衝刺）時槍放低、往內收、槍口朝下斜（公尺、弧度）。放下舉起各約 0.18 秒——看得出「現在在跑，不能馬上開槍」
+@export var sprint_pos := Vector3(0.02, -0.035, 0.03)
+@export var sprint_rot := Vector3(-0.1, 0.16, 0.18)
+@export var sprint_blend_time := 0.18
+## 手跟著腳步晃：走路小、跑步大（公尺）。一步晃一次，跟腳步聲同一個節奏（cowboy 的 step_*_interval）
+@export var bob_walk := 0.008
+@export var bob_sprint := 0.03
+
 @export_group("Breath")
 ## 舉槍時準心會慢慢飄（度）。Hunt 的遠距離要閉氣才打得準，就是這個
 @export var ads_sway := 0.35
@@ -100,6 +109,11 @@ var _melee_cooldown := 0.0
 var _melee_held := -1.0
 ## 舉槍晃動：已經套到視角上的偏移（弧度），下一幀只補差值
 var _sway_applied := Vector2.ZERO
+var _sway_pos := Vector3.ZERO   # 轉視角、移動的拖曳（目前關著）
+var _sway_rot := Vector3.ZERO
+var sprint_k := 0.0             # 0 = 平常，1 = 完全是跑步姿勢
+var _bob_t := 0.0
+var _bob_amp := 0.0
 var _sway_t := 0.0
 ## 這一幀是不是在閉氣，給 HUD 和測試看
 var holding_breath := false
@@ -124,6 +138,24 @@ func _ready() -> void:
 	weapon.visible = true
 	_refresh_ammo()
 	weapon.play(&"idle", blend)
+	_mark_for_outline()
+
+
+## 描線（outline.gdshader）認槍和手的記號：粗糙度剛好 OUTLINE_MARK。以前用「離鏡頭 1.5 公尺內」認，
+## 貼近牆和木桶時它們也被當成槍、黑邊突然變粗；有些零件的粗糙度又剛好撞到草（0.5）和遠山（0.75）的記號。
+## 材質複製一份再改，不動到別人（第三人稱、場景裡）共用的同一個材質
+const OUTLINE_MARK := 0.65
+
+func _mark_for_outline() -> void:
+	for mi: MeshInstance3D in find_children("*", "MeshInstance3D", true, false):
+		if mi.mesh == null:
+			continue
+		for i in mi.mesh.get_surface_count():
+			var mat := mi.get_active_material(i) as BaseMaterial3D
+			if mat and mat.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED:   # 火光這類半透明的不寫粗糙度，不用改
+				mat = mat.duplicate()
+				mat.roughness = OUTLINE_MARK
+				mi.set_surface_override_material(i, mat)
 
 
 func _process(delta: float) -> void:
@@ -230,8 +262,24 @@ func _update_sway(delta: float) -> void:
 	var target_rot := Vector3(-look.y, -look.x, 0.0) * sway_amount * 60.0 * strength
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var target_pos := Vector3(-input.x, 0.0, -input.y) * move_sway * strength
-	rotation = rotation.lerp(target_rot.limit_length(0.08), sway_return_speed * delta)
-	position = position.lerp(target_pos, sway_return_speed * delta)
+	_sway_rot = _sway_rot.lerp(target_rot.limit_length(0.08), sway_return_speed * delta)
+	_sway_pos = _sway_pos.lerp(target_pos, sway_return_speed * delta)
+
+	# 跑步姿勢和腳步晃動：直接疊上去，不走上面的 lerp（lerp 會把晃動磨平、慢半拍）
+	var speed := Vector2(_player.velocity.x, _player.velocity.z).length()
+	var moving := _player.is_on_floor() and speed > 0.5
+	var sprinting := moving and _player.is_sprinting()
+	sprint_k = move_toward(sprint_k, 1.0 if sprinting else 0.0, delta / sprint_blend_time)
+	var e := smoothstep(0.0, 1.0, sprint_k)
+	var interval: float = _player.step_sprint_interval if sprinting else _player.step_walk_interval
+	if moving:
+		_bob_t += delta * PI / interval   # 半圈一步
+	var want_amp := (lerpf(bob_walk, bob_sprint, e) if moving else 0.0) * (1.0 - ads)
+	_bob_amp = move_toward(_bob_amp, want_amp, delta * 0.2)   # 停下來慢慢收，不要一下子定住
+	# 左右各一步，上下每步沉一次（8 字）；跑步時再加一點側傾
+	var bob := Vector3(cos(_bob_t), -absf(sin(_bob_t)) * 0.8, 0.0) * _bob_amp
+	position = _sway_pos + sprint_pos * e + bob
+	rotation = _sway_rot + sprint_rot * e + Vector3(0.0, 0.0, cos(_bob_t) * _bob_amp * 2.0)
 
 
 ## 舉槍時準心沿一個慢慢的 8 字飄。直接轉視角，所以真的影響落點——
@@ -369,7 +417,7 @@ func _muzzle_flash(w: Weapon) -> void:
 	var at = w.muzzle_global()
 	if at != null:
 		_fx.global_position = at
-	_fx.flash()
+	_fx.flash(w.smoke)
 
 
 ## 生子彈。從鏡頭中心出發（所以瞄具不用歸零：近距離打哪中哪，遠了往下掉）。

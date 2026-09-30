@@ -34,18 +34,15 @@ stream_3/stream = ExtResource("15_step3")
 ; 只複製別人真的看得到的東西。體力、彈藥、傾身、後座力、散布都是自己
 ; 畫面上的狀態，同步它們只是浪費頻寬。
 [sub_resource type="SceneReplicationConfig" id="Sync_player"]
-properties/0/path = NodePath(".:position")
+properties/0/path = NodePath(".:net_state")
 properties/0/spawn = true
 properties/0/replication_mode = 1
-properties/1/path = NodePath(".:rotation")
+properties/1/path = NodePath("Head:rotation:x")
 properties/1/spawn = true
 properties/1/replication_mode = 1
-properties/2/path = NodePath("Head:rotation:x")
+properties/2/path = NodePath(".:sync_crouching")
 properties/2/spawn = true
 properties/2/replication_mode = 1
-properties/3/path = NodePath(".:sync_crouching")
-properties/3/spawn = true
-properties/3/replication_mode = 1
 
 [sub_resource type="QuadMesh" id="Mesh_flash"]
 size = Vector2(0.28, 0.28)

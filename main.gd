@@ -90,7 +90,10 @@ var _props := {}   # 物件名 -> Mesh，從 props.glb 拿出來共用
 var _terrain: Terrain
 var _level: Array[Dictionary] = []   # 擺設清單：場地上每樣東西一筆（見 _build_level）
 ## 手調過的場景檔（在 Godot 編輯器裡改，見 docs/場景編輯.md）。烘焙工具設成空的：不讀場景檔，自動擺一份初稿
-var level_path := "res://levels/ranch.tscn"
+## 目前的地圖：&"" 是牧場（連線、沙盒），&"range" 是靶場。靜態的：換地圖要重載整個場景，重載後還記得
+static var mode := &""
+const RANGE_LEVEL := "res://levels/range.tscn"
+var level_path := RANGE_LEVEL if mode == &"range" else "res://levels/ranch.tscn"
 var _houses_built := 0   # 第幾棟農舍：三種輪流蓋（不用亂數，後面擺的東西位置才不會跟著變）
 var _doors: Array[Door] = []   # 晚加入的人連進來時，把開著的門補送給他
 var _wheat_fields: Array[Rect2] = []   # 地形上色要知道哪裡是麥田
@@ -125,7 +128,8 @@ func _ready() -> void:
 	_skin_egg()
 	_load_level()
 	_build_arena()
-	_build_exits()
+	if mode != &"range":
+		_build_exits()
 	multiplayer.peer_connected.connect(_spawn)
 	multiplayer.peer_disconnected.connect(_despawn)
 	multiplayer.connected_to_server.connect(func() -> void: status.text = "已連線。WASD 移動，滑鼠瞄準，左鍵開槍，右鍵舉槍")
@@ -139,6 +143,7 @@ func _ready() -> void:
 ##   TankWar.exe -- --host
 ##   TankWar.exe -- --join 192.168.1.5
 ##   TankWar.exe -- --sandbox
+##   TankWar.exe -- --range
 ##   TankWar.exe -- --viewer
 ##   godot --headless -- --server    專用伺服器（測試站）：自己不下場，一局結束自動開下一局
 func _autostart() -> void:
@@ -147,7 +152,9 @@ func _autostart() -> void:
 	test_btn.disabled = TEST_SERVER == ""
 	if test_btn.disabled:
 		test_btn.text = "連到測試站（還沒架好）"
-	if args.has("--server"):
+	if mode == &"range" or args.has("--range"):
+		_start_range()
+	elif args.has("--server"):
 		_start_dedicated()
 	elif args.has("--host"):
 		_on_host_pressed()
@@ -265,6 +272,11 @@ func _to_lobby(msg: String) -> void:
 	hud.text = ""
 	status.text = msg
 	_show_cursor()
+	# 靶場是另一張地圖：回大廳就重載回牧場（測試自己組的場景不是 current_scene，不重載）
+	if mode == &"range":
+		mode = &""
+		if get_tree().current_scene == self:
+			get_tree().reload_current_scene.call_deferred()
 
 # --- 連線 ---
 
@@ -304,35 +316,92 @@ func _on_join_pressed() -> void:
 	multiplayer.multiplayer_peer = peer
 	_enter_game("連線中…")
 
-## 沙盒：一個人在靶場練槍。前方 10／25／50／100 公尺各站一個牛仔靶，
+## 沙盒：一個人在牧場的靶道練槍。前方 10／25／50／100 公尺各站一個牛仔靶，
 ## 旁邊一隻不會動的恐龍。靶不是 bot、也不是本機操控，所以站著不動、不會還擊。
 func _on_sandbox_pressed() -> void:
-	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
-	_offline = true
-	_sandbox = true
-	egg.visible = false
-	_enter_game("沙盒模式：沒有時間限制、子彈無限。靶打死會在原地重生。Esc 回大廳")
-	var me := _add_player(COWBOY, 1)   # 編號 1 才操控得動
-	me.global_position = _on_ground(SANDBOX_START)
-	for w in me.viewmodel._weapons:
-		w.reserve = -1
-	me.viewmodel._refresh_ammo()
-	var id := 3
-	for dist in SANDBOX_TARGETS:
-		var t := _add_player(COWBOY, id)
-		t.global_position = _on_ground(SANDBOX_START + Vector3(-4 if id % 2 else 4, 0, -dist))
-		t.rotation.y = PI   # 面對玩家，打頭才對得到臉
-		_sign(t.global_position + Vector3(0, 2.6, 0), "%d m" % dist)
-		id += 1
-	var dino := _add_player(DINO, 2)
-	dino.global_position = _on_ground(SANDBOX_START + Vector3(12, 4.0, -45))
-	dino.rotation.y = 0.4
-	_sign(dino.global_position + Vector3(0, 6.5, 0), "恐龍 45 m")
+	var xs := SANDBOX_TARGETS.map(func(d: int) -> float: return -4.0 if SANDBOX_TARGETS.find(d) % 2 == 0 else 4.0)
+	_start_practice(SANDBOX_START, SANDBOX_TARGETS, xs, Vector3(12, 4.0, -45),
+		"沙盒模式：沒有時間限制、子彈無限。靶打死會在原地重生。Esc 回大廳")
 	# 翻越練習：一段柵欄、兩個乾草捲，就在出生點旁邊
 	for prop in [_fence(SANDBOX_START + Vector3(-10, -0.1, -4), 6.0, -PI * 0.5),
 			_hay_bale(SANDBOX_START + Vector3(9, -0.1, -6), 0.0),
 			_hay_bale(SANDBOX_START + Vector3(9, -0.1, -9), 0.0)]:
 		prop.add_to_group(&"sandbox_prop")
+
+## 靶場：另一張平地地圖（levels/range.tscn），專門測手感。打中跳傷害數字，畫面上有準星距離。
+## 大廳按鈕只是切地圖、重載場景，重載完 _autostart 看到 mode 就會進來這裡
+func _on_range_pressed() -> void:
+	mode = &"range"
+	get_tree().reload_current_scene.call_deferred()
+
+const RANGE_START := Vector3(0, 0.1, 75)   # 射擊線。往 -Z 打，75 公尺剛好是橫的那條土路
+const RANGE_TARGETS := [10, 25, 50, 75, 100, 150]
+const RANGE_X := [-12.0, -7.5, -2.5, 2.5, 7.5, 12.0]   # 近的靶放外側，才不會擋到遠的
+
+func _start_range() -> void:
+	_start_practice(RANGE_START, RANGE_TARGETS, RANGE_X, Vector3(16, 4.0, -40),
+		"靶場：打中會跳傷害和距離，準星下面是準星指到的距離。Esc 回大廳")
+	for d in range(10, 160, 10):   # 左邊每 10 公尺一塊距離牌，跟地上的土線對齊
+		_sign(_on_ground(RANGE_START + Vector3(-18, 1.2, -d)), "%d m" % d)
+
+## 練槍的共用部分：自己（編號 1，子彈無限）、每個距離一個牛仔靶、一隻恐龍靶
+func _start_practice(start: Vector3, dists: Array, xs: Array, dino_at: Vector3, msg: String) -> void:
+	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	_offline = true
+	_sandbox = true
+	egg.visible = false
+	_enter_game(msg)
+	var me := _add_player(COWBOY, 1)   # 編號 1 才操控得動
+	me.global_position = _on_ground(start)
+	for w in me.viewmodel._weapons:
+		w.reserve = -1
+	me.viewmodel._refresh_ammo()
+	for i in dists.size():
+		var t := _add_player(COWBOY, 3 + i)
+		t.global_position = _on_ground(start + Vector3(xs[i], 0, -dists[i]))
+		t.rotation.y = PI   # 面對玩家，打頭才對得到臉
+		_sign(t.global_position + Vector3(0, 2.6, 0), "%d m" % dists[i])
+	var dino := _add_player(DINO, 2)
+	dino.global_position = _on_ground(start + dino_at)
+	dino.rotation.y = 0.4
+	_sign(dino.global_position + Vector3(0, 6.5, 0), "恐龍 %d m" % roundi(-dino_at.z))
+
+## 靶場：打中的地方跳出傷害（爆頭紅字）和這發飛了幾公尺，往上飄、一秒多淡掉。Bullet 打中人時叫
+func hit_popup(pos: Vector3, dmg: int, dist: float, head: bool) -> void:
+	if mode != &"range":
+		return
+	_last_hit = "%s%d（%.1f m）" % ["爆頭 " if head else "", dmg, dist]
+	var l := Label3D.new()
+	l.text = "%s%d\n%.1f m" % ["爆頭 " if head else "", dmg, dist]
+	l.font = $UI/Root.theme.default_font
+	l.font_size = 48
+	l.outline_size = 12
+	l.fixed_size = true   # 在螢幕上一樣大：150 公尺外也看得清楚
+	l.pixel_size = 0.0009
+	l.modulate = Color(1, 0.25, 0.2) if head else Color(1, 0.95, 0.7)
+	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	l.no_depth_test = true
+	$Arena.add_child(l)
+	l.global_position = pos + Vector3(0, 0.3, 0)
+	var tw := l.create_tween().set_parallel()
+	tw.tween_property(l, ^"global_position:y", l.global_position.y + 0.8 + dist * 0.012, 1.4)   # 遠的飄高一點，看起來一樣快
+	tw.tween_property(l, ^"modulate:a", 0.0, 1.4).set_delay(0.4)
+	tw.chain().tween_callback(l.queue_free)
+
+var _last_hit := "—"
+
+## 準星指到多遠：從鏡頭中心往前掃 400 公尺，撞到什麼就量到那裡
+func _aim_distance(me: Node3D) -> String:
+	var cam := get_viewport().get_camera_3d()
+	if cam == null or me == null:
+		return "—"
+	var from := cam.global_position
+	var mine: Array[RID] = [me.get_rid()]   # 自己身上的碰撞（頭、身體的判定區）和看不見的圍牆都不算
+	for n in me.find_children("*", "CollisionObject3D", true, false) + get_tree().get_nodes_in_group(&"arena_wall"):
+		mine.append(n.get_rid())
+	var q := PhysicsRayQueryParameters3D.create(from, from - cam.global_basis.z * 400.0, 1, mine)
+	var hit := get_world_3d().direct_space_state.intersect_ray(q)
+	return "—" if hit.is_empty() else "%.1f m" % from.distance_to(hit["position"])
 
 # --- 遊戲局控制（Esc 選單，只有主機） ---
 
@@ -359,14 +428,52 @@ func _load_settings() -> void:
 	cfg.load(settings_path)   # 第一次開沒有檔案，用預設值
 	Viewmodel.aim_toggle = cfg.get_value("controls", "aim_toggle", false)
 	$UI/Root/Menu/Box/AimToggleBtn.set_pressed_no_signal(Viewmodel.aim_toggle)
+	var caps: OptionButton = $UI/Root/Menu/Box/FpsCapBtn
+	caps.clear()
+	var hz := _refresh_hz()
+	for label: String in [FPS_CAPS[0], FPS_CAPS[1] % hz, FPS_CAPS[2] % (hz / 2)]:
+		caps.add_item(label)
+	vsync = cfg.get_value("display", "vsync", true)
+	fps_cap = cfg.get_value("display", "fps_cap", 0)
+	$UI/Root/Menu/Box/VsyncBtn.set_pressed_no_signal(vsync)
+	caps.select(fps_cap)
+	_apply_display()
+
+func _save_setting(section: String, key: String, value: Variant) -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(settings_path)
+	cfg.set_value(section, key, value)
+	cfg.save(settings_path)
 
 ## 選單的「瞄準：按一下切換」：關掉是按住右鍵才舉槍
 func _on_aim_toggle_toggled(on: bool) -> void:
 	Viewmodel.aim_toggle = on
-	var cfg := ConfigFile.new()
-	cfg.load(settings_path)
-	cfg.set_value("controls", "aim_toggle", on)
-	cfg.save(settings_path)
+	_save_setting("controls", "aim_toggle", on)
+
+## 畫面設定：垂直同步、幀率上限。上限只給跟螢幕刷新率對得上的數字（刷新率、一半）：
+## 隨便填一個（例如 60Hz 螢幕鎖 50）每幀間隔會長短不一，平均幀數對了看起來還是卡
+const FPS_CAPS := ["幀率上限：不限", "幀率上限：跟螢幕一樣（%d）", "幀率上限：螢幕的一半（%d）"]
+var vsync := true
+var fps_cap := 0
+
+func _refresh_hz() -> int:
+	var hz := roundi(DisplayServer.screen_get_refresh_rate())
+	return hz if hz > 0 else 60   # 查不到（無頭模式、某些系統）當 60
+
+func _apply_display() -> void:
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync else DisplayServer.VSYNC_DISABLED)
+	var hz := _refresh_hz()
+	Engine.max_fps = [0, hz, hz / 2][fps_cap]
+
+func _on_vsync_toggled(on: bool) -> void:
+	vsync = on
+	_apply_display()
+	_save_setting("display", "vsync", on)
+
+func _on_fps_cap_selected(i: int) -> void:
+	fps_cap = i
+	_apply_display()
+	_save_setting("display", "fps_cap", i)
 
 func _on_dino_attack_toggled(on: bool) -> void:
 	dino_attacks = on
@@ -479,6 +586,7 @@ func _enter_game(msg: String) -> void:
 		egg.carrier = 0
 		var at := _spawn_point(ARENA * 0.22)  # 放中央附近，不要一開始就在出口旁邊
 		egg.global_position = _on_ground(Vector3(at.x, 0.5, at.z))
+		egg.reset_physics_interpolation()   # 瞬移：不要從上一局的位置滑過來
 	lobby.hide()
 	menu.hide()
 	status.text = msg
@@ -618,6 +726,7 @@ func _new_round() -> void:
 	for p in players.get_children():
 		if p.is_in_group(&"boss"):
 			p.global_position = _on_ground(egg.global_position + Vector3(10, 4.2 - egg.global_position.y, 0))
+			p.reset_physics_interpolation()
 			p.hp = p.max_hp
 			continue
 		var id := p.name.to_int()
@@ -669,7 +778,8 @@ func _egg_step(delta: float) -> void:
 	else:
 		egg.extract = 0.0
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_track_frame_time(delta)
 	var cam := get_viewport().get_camera_3d()
 	if _drift and cam:
 		_drift.global_position = cam.global_position
@@ -701,6 +811,9 @@ func _process(_delta: float) -> void:
 	elif egg.carrier != 0:
 		egg_state = "被牛仔 %d 拿走了" % egg.carrier
 	var mine := str(me.hp) if me != null else "陣亡"
+	if mode == &"range":
+		hud.text = "靶場    準星距離：%s    上一發：%s" % [_aim_distance(me), _last_hit]
+		return
 	if _sandbox:
 		hud.text = "沙盒    我的血量：%s    恐龍靶血量：%s" % [mine, dino.hp if dino else "重生中"]
 		return
@@ -731,7 +844,20 @@ func _update_center_info(me: Node) -> void:
 		t = "有人在撿蛋：還剩 %.1f 秒" % maxf(PICKUP_SECONDS - egg.pickup, 0.0)
 	center_info.text = t
 
-## 右上角：本機 IP（開房的人報給朋友用）、連線延遲、每秒畫面數
+## 最近一秒最慢的一幀。平均 FPS 看不出卡頓：60 FPS 裡夾幾幀 50 毫秒，數字照樣是 60
+var _slow := 0.0
+var _slow_shown := 0.0
+var _slow_since := 0
+
+func _track_frame_time(delta: float) -> void:
+	_slow = maxf(_slow, delta * 1000.0)
+	var now := Time.get_ticks_msec()
+	if now - _slow_since >= 1000:
+		_slow_shown = _slow
+		_slow = 0.0
+		_slow_since = now
+
+## 右上角：本機 IP（開房的人報給朋友用）、連線延遲、每秒畫面數、最慢一幀
 func _update_net_info() -> void:
 	var parts: Array[String] = ["本機 IP：" + _ips]
 	var peer := multiplayer.multiplayer_peer as ENetMultiplayerPeer
@@ -741,7 +867,7 @@ func _update_net_info() -> void:
 		if p:
 			parts.append("延遲 %d ms" % p.get_statistic(ENetPacketPeer.PEER_ROUND_TRIP_TIME))
 	if not lobby.visible:
-		parts.append("%d FPS" % Engine.get_frames_per_second())
+		parts.append("%d FPS（最慢一幀 %.0f ms）" % [Engine.get_frames_per_second(), _slow_shown])
 	net_info.text = "　".join(parts)
 
 ## 大廳存過的 IP：「＋」把目前的存起來，「⋯」選一個填回去
@@ -940,6 +1066,9 @@ func _build_level() -> void:
 func _generate_level() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 20260926
+	if mode == &"range":
+		_generate_range(rng)
+		return
 	# 十字路（x=0、z=0 兩條路）把場地分成四區：西北農社區、東北城鎮、西南麥田、東南森林。
 	# 沙盒靶場在南北那條路的南段、撤離點在東西兩端，位置不動。農社區先蓋：_blocked[0] 要是一棟擋得住視線的穀倉（測試靠它）
 	_zone_farm(rng)
@@ -1054,6 +1183,7 @@ func _use_outline() -> void:
 	quad.size = Vector2(2, 2)
 	var mat := ShaderMaterial.new()
 	mat.shader = preload("res://outline.gdshader")
+	mat.render_priority = Material.RENDER_PRIORITY_MIN   # 比火光、煙先畫：它們蓋在線上，不會被框一圈黑邊
 	quad.material = mat
 	var mi := MeshInstance3D.new()
 	mi.mesh = quad
@@ -1366,6 +1496,30 @@ func _farmstead(c: Vector3, rng: RandomNumberGenerator) -> void:
 	var mill := c + Vector3(15, 0, -12)
 	if _free(mill, 3) and _is_clear(Vector2(mill.x, mill.z)):
 		_put({kind = &"windmill", pos = mill})
+
+## 靶場的地圖：整片壓平，中間一條靶道，每 10 公尺一條橫的土線；兩側柵欄，射擊線後面擺個棚子和雜物，
+## 盡頭一排樹當背景。靶（牛仔、恐龍）是開局才生的，不在清單裡（見 _start_range）
+func _generate_range(rng: RandomNumberGenerator) -> void:
+	_put({kind = &"flat", pos = Vector3.ZERO, r = 150.0})
+	var z0 := RANGE_START.z
+	_put({kind = &"road", pos = Vector3(0, 0, z0), size = Vector3(44, 0, 6)})   # 射擊線
+	for d in range(10, 160, 10):
+		if d != 75:   # 75 公尺那條是場地本來的十字路
+			_put({kind = &"road", pos = Vector3(0, 0, z0 - d), size = Vector3(36, 0, 2)})
+	for side: float in [-1.0, 1.0]:
+		for k in 15:
+			_put({kind = &"fence", pos = Vector3(side * 20.0, 0, z0 - 3.0 - k * 10.0), length = 10.0, yaw = -PI * 0.5})
+	var shed := Vector3(-34, 0, z0 - 4)
+	_gen_barn(shed, Vector3(8, 4, 6), 3.0)
+	_gen_clutter(Vector3(10, 0, z0 + 3.5), 0.0)
+	_gen_clutter(Vector3(-10, 0, z0 + 3.5), 0.0)
+	_put({kind = &"prop", name = &"Wagon", pos = Vector3(30, 0, z0 - 2), yaw = 0.3})
+	for x in range(-44, 45, 7):
+		_gen_tree(Vector3(x + rng.randf_range(-2, 2), 0, -79 + rng.randf_range(-1.5, 1.5)), rng, 0.3)
+	for i in 24:   # 靶道兩側外面零星的樹
+		var p := Vector3((30 + rng.randf_range(0, 45)) * (1 if i % 2 else -1), 0, rng.randf_range(-70, 55))
+		if _free(p, 2) and _is_clear(Vector2(p.x, p.z), 2.0):
+			_gen_tree(p, rng, 0.3)
 
 ## 四個區域（x、z 範圍）。十字路寬 8 公尺；西南那塊的東邊讓給沙盒靶場
 const ZONE_FARM := Rect2(-84, -84, 76, 76)

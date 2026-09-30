@@ -86,6 +86,8 @@ enum Action { SINGLE_ACTION, DOUBLE_ACTION, BOLT, LEVER, BREAK }
 @export var minimum_damage := 12.5
 ## 最大判定距離：子彈飛這麼遠就消失。散彈 30 公尺外彈丸就散光了，步槍打得到場地另一頭
 @export var max_range := 100.0
+## 槍口煙量：左輪 = 1，越大煙團越大、留越久（Fx.gun_smoke）
+@export var smoke := 1.0
 
 @export_group("Aim")
 ## 槍口在模型裡的位置（Godot 軸向）。火光和煙從這裡出去；零＝用 ShotFX 原本的位置

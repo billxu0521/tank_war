@@ -47,7 +47,8 @@ static func _radius(f: Dictionary, ax: Vector2) -> float:
 		+ absf(Vector2(sin(f.yaw), cos(f.yaw)).dot(ax)) * maxf(h.y, 0.0)
 
 
-static func run(recs: Array) -> Array:
+## ranch：牧場才要檢查沙盒靶道和撤離區（靶場地圖沒有這兩樣）
+static func run(recs: Array, ranch := true) -> Array:
 	var problems := []
 	var half := Main.ARENA * 0.5
 	var meshes := Main.meshes()
@@ -70,9 +71,9 @@ static func run(recs: Array) -> Array:
 		var fp := footprint(rec)
 		if fp.is_empty():
 			continue
-		if Main.SANDBOX_RANGE.grow(-SHRINK).intersects(fp.box):
+		if ranch and Main.SANDBOX_RANGE.grow(-SHRINK).intersects(fp.box):
 			problems.append([name, "擋到沙盒靶場"])
-		for e: Vector2 in Main.exit_spots():
+		for e: Vector2 in Main.exit_spots() if ranch else []:
 			if (fp.c as Vector2).distance_to(e) < Main.EXIT_RADIUS:
 				problems.append([name, "擋在撤離區裡"])
 		for other: Array in placed:

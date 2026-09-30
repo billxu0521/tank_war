@@ -69,7 +69,7 @@ func check() -> Array:
 	var problems := LevelCheck.run(all.map(func(it: LevelItem) -> Dictionary:
 		var rec := it.to_record()
 		rec.node = String(it.name)
-		return rec))
+		return rec), scene_file_path != Main.RANGE_LEVEL)
 	# 有問題的物件頭上放一個紅色方塊（不存進場景檔），修好再按一次就消失
 	var bad := {}
 	for p: Array in problems:

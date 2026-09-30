@@ -2,7 +2,9 @@ class_name Fx
 extends RefCounted
 ## 特效庫：一行叫得出來的一次性效果和場景氣氛。
 ## 純表演，不影響傷害判定，所以不需要同步——各端各自播。
-## ponytail: 全部用 CPUParticles3D 程式建，沒有貼圖素材。要更細緻再換 GPUParticles3D + 貼圖
+## 全部用 CPUParticles3D 程式建。煙是一張柔邊的煙團貼圖（tools/make_smoke_card.py），碎屑是小方塊
+
+const WIND := Vector3(0.3, 0.1, 0.08)   # 全場同一個風向：煙囪、槍口煙都往這邊飄
 
 ## 子彈打到的東西是什麼 → [顏色, 碎屑大小, 顆數, 速度, 多一團煙塵嗎]
 const SURFACES := {
@@ -53,8 +55,8 @@ static func hit(world: Node, at: Vector3, normal: Vector3, surface: StringName) 
 ## 一團煙：往 forward 噴、變大、飄起來、散掉。槍口黑火藥煙、著彈煙塵都是這個
 static func puff(world: Node, at: Vector3, forward: Vector3, color: Color,
 		lifetime: float, size: float, amount := 8) -> void:
-	var p := _emitter(_ball(size, color), amount, lifetime)
-	p.explosiveness = 0.9
+	var p := _emitter(_card(size, color), amount, lifetime)   # 全部同時噴（見 gun_smoke：分批噴會閃黑）
+	_spin(p)
 	p.direction = forward
 	p.spread = 30.0
 	p.initial_velocity_min = 1.2
@@ -64,34 +66,66 @@ static func puff(world: Node, at: Vector3, forward: Vector3, color: Color,
 	p.gravity = Vector3(0, 0.25, 0)
 	p.scale_amount_min = 0.6
 	p.scale_amount_max = 1.2
-	var grow := Curve.new()
-	grow.add_point(Vector2(0, 0.3))
-	grow.add_point(Vector2(1, 1.0))
-	p.scale_amount_curve = grow
+	p.scale_amount_curve = _grow(0.3, 1.0)
 	p.color_ramp = _fade(color)
 	_once(world, p, at)
 
 
-## 黑火藥的白煙（原本在 ShotFX 裡）
-static func gun_smoke(world: Node, at: Vector3, forward: Vector3, lifetime := 1.2, size := 0.2) -> void:
-	puff(world, at, forward, Color(0.7, 0.69, 0.66, 0.5), lifetime, size, 16)
+## 黑火藥的白煙，照 Hunt 分兩段。amount 是這把槍的煙量（Weapon.smoke，左輪 = 1）：
+##   一、往前噴的一股：很快、半秒內停住
+##   二、停在槍口前面的一團：慢慢變大、順著風飄走，留好幾秒——遠處的人看得出「那邊有人開槍」
+static func gun_smoke(world: Node, at: Vector3, forward: Vector3, amount := 1.0) -> void:
+	var c := Color(0.8, 0.79, 0.76, 0.75)
+	var jet := _emitter(_card(0.17 * amount, c), 12, 0.6)
+	jet.direction = forward
+	jet.spread = 6.0
+	jet.initial_velocity_min = 5.0
+	jet.initial_velocity_max = 10.0 * amount
+	jet.damping_min = 18.0
+	jet.damping_max = 24.0
+	jet.gravity = Vector3.ZERO
+	jet.scale_amount_curve = _grow(0.4, 1.6)
+	jet.color_ramp = _fade(c)
+	_spin(jet)
+	_once(world, jet, at)
+
+	var cloud := _emitter(_card(0.4 * amount, c), 20, (2.5 + amount) * 1.5 - 1.0)   # 左輪約 4 秒、散彈槍約 5 秒散掉
+	# 不能設成小於 1（分批噴）：還沒輪到噴的煙片會被畫成黑色，開槍瞬間槍口前一團黑閃
+	cloud.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	cloud.emission_sphere_radius = 0.25 * amount
+	cloud.direction = forward
+	cloud.spread = 50.0
+	cloud.initial_velocity_min = 0.3
+	cloud.initial_velocity_max = 1.0 * amount
+	cloud.damping_min = 0.5
+	cloud.damping_max = 1.0
+	cloud.gravity = WIND
+	cloud.scale_amount_min = 0.7
+	cloud.scale_amount_curve = _grow(0.5, 2.4)
+	# 一出來很快變濃，之後慢慢淡掉。點要一次整組給：新的 Gradient 自帶黑白兩點，
+	# 用 add_point 插進去順序會亂，前幾格取到黑色，煙團一出來整團是黑的
+	var g := Gradient.new()
+	g.offsets = PackedFloat32Array([0.0, 0.05, 0.5, 1.0])
+	g.colors = PackedColorArray([Color(1, 1, 1, 0), Color(1, 1, 1, 0.85), Color(1, 1, 1, 0.55), Color(1, 1, 1, 0)])
+	cloud.color_ramp = g
+	_spin(cloud)
+	_once(world, cloud, at + forward * (0.5 + 0.3 * amount))
 
 
 ## 煙囪一直冒的煙。回傳節點，要停掉就 queue_free
 static func chimney(parent: Node3D, pos: Vector3) -> CPUParticles3D:
 	var c := Color(0.55, 0.55, 0.55, 0.5)
-	var p := _emitter(_ball(0.35, c), 24, 6.0)
+	var p := _emitter(_card(0.35, c), 24, 6.0)
+	_spin(p)
 	p.one_shot = false
 	p.explosiveness = 0.0   # 一顆一顆接著冒，不是一陣一陣
+	p.preprocess = p.lifetime   # 一出現就是冒了一陣子的樣子：還沒冒出來的煙片會畫成黑色
 	p.direction = Vector3.UP
 	p.spread = 8.0
 	p.initial_velocity_min = 0.8
 	p.initial_velocity_max = 1.2
-	p.gravity = Vector3(0.25, 0.1, 0)   # 一點點風，煙往同一邊斜
-	var grow := Curve.new()
-	grow.add_point(Vector2(0, 0.5))
-	grow.add_point(Vector2(1, 3.0))
-	p.scale_amount_curve = grow
+	p.gravity = WIND   # 一點點風，煙往同一邊斜
+	p.scale_amount_curve = _grow(0.5, 3.0)
 	p.color_ramp = _fade(c)
 	parent.add_child(p)
 	p.position = pos
@@ -183,14 +217,44 @@ static func _box(size: float, color: Color, shape := Vector3.ONE) -> BoxMesh:
 	return m
 
 
-static func _ball(size: float, color: Color) -> SphereMesh:
-	var m := SphereMesh.new()
-	m.radius = size
-	m.height = size * 2.0
-	m.radial_segments = 8
-	m.rings = 4
-	m.material = _mat(color)
+## 一片煙：永遠面向鏡頭的方形，貼柔邊的煙團圖。size 是看起來的半徑（圖的邊緣是透明的，方形要大一點）。
+## 碰到地面、牆會淡掉（proximity fade），不會切出一條硬邊
+static var _smoke_tex: Texture2D
+
+static func _card(size: float, color: Color) -> QuadMesh:
+	if _smoke_tex == null:
+		_smoke_tex = load("res://assets/textures/smoke_card.png")
+	var mat := _mat(color)
+	mat.albedo_texture = _smoke_tex
+	mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	mat.proximity_fade_enabled = true
+	mat.proximity_fade_distance = 0.4
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.disable_receive_shadows = true   # 槍和手的影子落在煙上，槍口那股會整團變黑
+	# 煙片永遠朝著鏡頭，逆光時朝鏡頭那面是背光面，整團發黑。讓光透過來（跟樹葉一樣），逆光的煙反而是亮的
+	mat.backlight_enabled = true
+	mat.backlight = Color(0.8, 0.8, 0.8)
+	var m := QuadMesh.new()
+	m.size = Vector2.ONE * size * 2.6
+	m.material = mat
 	return m
+
+
+## 每片轉個隨機角度、慢慢自轉，同一張圖疊起來才不像複製貼上
+static func _spin(p: CPUParticles3D) -> void:
+	p.angle_min = -180.0
+	p.angle_max = 180.0
+	p.angular_velocity_min = -25.0
+	p.angular_velocity_max = 25.0
+
+
+## 大小從 a 倍長到 b 倍
+static func _grow(a: float, b: float) -> Curve:
+	var c := Curve.new()
+	c.max_value = maxf(b, 1.0)
+	c.add_point(Vector2(0, a))
+	c.add_point(Vector2(1, b))
+	return c
 
 
 ## 從原本的透明度淡到全透明

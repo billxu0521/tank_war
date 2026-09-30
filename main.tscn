@@ -154,6 +154,10 @@ text = "連到測試站"
 layout_mode = 2
 text = "沙盒模式（牛仔練習場，打靶、練翻越）"
 
+[node name="RangeBtn" type="Button" parent="UI/Root/Lobby" unique_id=1799944931]
+layout_mode = 2
+text = "靶場模式（測手感：跳傷害、顯示距離）"
+
 [node name="ViewerBtn" type="Button" parent="UI/Root/Lobby" unique_id=1105424422]
 layout_mode = 2
 text = "檢視模型（看牛仔、槍和恐龍長怎樣）"
@@ -194,6 +198,13 @@ text = "繼續遊戲"
 [node name="AimToggleBtn" type="CheckButton" parent="UI/Root/Menu/Box" unique_id=1964021260]
 layout_mode = 2
 text = "瞄準：按一下切換（關＝按住右鍵）"
+
+[node name="VsyncBtn" type="CheckButton" parent="UI/Root/Menu/Box" unique_id=1964021261]
+layout_mode = 2
+text = "垂直同步（關掉畫面可能撕裂，延遲稍低）"
+
+[node name="FpsCapBtn" type="OptionButton" parent="UI/Root/Menu/Box" unique_id=1964021262]
+layout_mode = 2
 
 [node name="LeaveBtn" type="Button" parent="UI/Root/Menu/Box" unique_id=1356984258]
 layout_mode = 2
@@ -358,8 +369,11 @@ show_percentage = false
 [connection signal="pressed" from="UI/Root/Lobby/JoinBtn" to="." method="_on_join_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/TestServerBtn" to="." method="_on_test_server_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/SandboxBtn" to="." method="_on_sandbox_pressed"]
+[connection signal="pressed" from="UI/Root/Lobby/RangeBtn" to="." method="_on_range_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/ViewerBtn" to="." method="_on_viewer_pressed"]
 [connection signal="pressed" from="UI/Root/Menu/Box/ResumeBtn" to="." method="_on_resume_pressed"]
+[connection signal="toggled" from="UI/Root/Menu/Box/VsyncBtn" to="." method="_on_vsync_toggled"]
+[connection signal="item_selected" from="UI/Root/Menu/Box/FpsCapBtn" to="." method="_on_fps_cap_selected"]
 [connection signal="pressed" from="UI/Root/Menu/Box/LeaveBtn" to="." method="_on_leave_pressed"]
 [connection signal="pressed" from="UI/Root/Menu/Box/QuitBtn" to="." method="_on_quit_pressed"]
 [connection signal="pressed" from="UI/Root/Menu/Box/Controller/WalkerBtn" to="." method="_on_add_walker_pressed"]
