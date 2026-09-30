@@ -10,10 +10,13 @@ import bpy, bmesh, math, os, random, sys
 from mathutils import Vector
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-_src = open(BASE + '/house.py', encoding='utf-8').read()
-exec(_src[:_src.index('# ---- 以上是材質和工具')])   # 借用 house.py 的材質和工具
+sys.path.insert(0, BASE)
+import pipeline, house
+from house import *   # 借用 house.py 的材質和工具（木板、瓦片、石頭、提燈……）
+from house import _parts, _push   # 底線開頭的 import * 不會帶進來
 
-rnd = random.Random(20261002)
+house.rnd = random.Random(20261002)   # house.py 的工具用的是 house.rnd：換成這支自己的種子
+rnd = house.rnd
 BOARD = mat('t_board', (0.07, 0.047, 0.032), 0.95)  # 招牌底：深褐（跟屋頂一樣深）
 LETTER = mat('t_letter', (0.42, 0.30, 0.17), 0.9)   # 招牌上的字：淺木色，深底淺字對比才大
 STAR = mat('t_star', (0.55, 0.45, 0.28), 0.6)       # 警長的星星
@@ -387,12 +390,11 @@ def preview(obs, path):
     print('preview ->', path)
 
 
-a = args()
-obs = build_saloon() + build_store() + build_sheriff() + build_water_tower()
-settle(obs)
-for o in obs:
-    print(o.name, 'tris:', sum(len(p.vertices) - 2 for p in o.data.polygons))
-if a['--out']:
-    export(obs, a['--out'])
-if a['--preview']:
-    preview(obs, a['--preview'])
+def build_all():
+    obs = build_saloon() + build_store() + build_sheriff() + build_water_tower()
+    settle(obs)
+    return obs
+
+
+if __name__ == '__main__':
+    pipeline.run(build_all, preview, budget=20000)

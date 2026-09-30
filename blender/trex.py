@@ -1,5 +1,8 @@
-import bpy, math
+import bpy, math, os, sys
 from mathutils import Vector
+BASE = globals().get('BASE') or os.path.dirname(os.path.abspath(__file__))   # Blender 裡 exec 時自己給 BASE；背景跑時從檔案位置算
+sys.path.insert(0, BASE)
+import pipeline
 exec(open(BASE + '/common.py').read())
 
 wipe()
@@ -263,3 +266,9 @@ def export(path):
     bpy.ops.export_scene.gltf(filepath=path, export_format='GLB', use_selection=True,
                               export_apply=True, export_yup=True)
     print('exported ->', path)
+
+
+if __name__ == '__main__':   # 背景跑：tools/model_iter.sh trex <版號>（輸出 --out 資料夾裡的 trex.glb）；匯出會把部件歸零，先渲染
+    pipeline.run(lambda: [o for o in bpy.data.objects if o.type == 'MESH'],
+                 lambda obs, path: pipeline.scene_preview(obs, path, side=True), budget=8000, preview_first=True,
+                 export_fn=lambda obs, out: export(os.path.join(os.path.dirname(out) or '.', 'trex.glb')))

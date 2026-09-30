@@ -17,6 +17,8 @@ from mathutils import Vector, Matrix
 
 BASE = os.path.dirname(os.path.abspath(__file__))
 exec(open(BASE + '/common.py').read())
+sys.path.insert(0, BASE)
+import pipeline
 
 HW, HL = 10.0, 8.0          # 主屋牆外緣：寬（X）、深（Y）
 T = 0.2                     # 牆厚
@@ -36,12 +38,6 @@ VARIANTS = {
 CHIMNEY = {}                # 名字 -> 煙囪頂 (x, y, z)，建的時候填
 
 rnd = random.Random(20260930)
-
-
-def args():
-    a = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
-    return {k: (a[a.index(k) + 1] if k in a else None) for k in ('--out', '--preview')}
-
 
 bpy.ops.wm.read_factory_settings(use_empty=True)
 # 顏色都是線性值。每組三個只差亮度（±8%），不變色相：一片片板子看得出來，又不會像拼布
@@ -639,16 +635,6 @@ def settle(obs):
         bpy.ops.object.origin_set(type='ORIGIN_CURSOR')
 
 
-def export(obs, path):
-    bpy.ops.object.select_all(action='DESELECT')
-    for o in obs:
-        o.select_set(True)
-    bpy.context.view_layer.objects.active = obs[0]
-    bpy.ops.export_scene.gltf(filepath=path, export_format='GLB', use_selection=True,
-                              export_apply=True, export_yup=True)
-    print('exported ->', path)
-
-
 def preview(houses, path):
     """參考圖那棟的角度（左前上方看）：上排三種的正面，下排轉 180 度看背面。正交相機、暖色斜光"""
     sc = bpy.context.scene
@@ -704,17 +690,15 @@ def preview(houses, path):
     print('preview ->', path)
 
 
-# ---- 以上是材質和工具，kit.py 只讀到這一行為止（借用同一套木板、瓦片、石頭）；以下才真的建房子 ----
-a = args()
-obs = []
-for name, v in VARIANTS.items():
-    obs += build(name, v)
-obs.append(door())
-settle(obs)
-for o in obs:
-    print(o.name, 'tris:', sum(len(p.vertices) - 2 for p in o.data.polygons))
-print('CHIMNEY', CHIMNEY)
-if a['--out']:
-    export(obs, a['--out'])
-if a['--preview']:
-    preview([o for o in obs if o.name in VARIANTS], a['--preview'])
+def build_all():
+    obs = []
+    for name, v in VARIANTS.items():
+        obs += build(name, v)
+    obs.append(door())
+    settle(obs)
+    print('CHIMNEY', CHIMNEY)
+    return obs
+
+
+if __name__ == '__main__':
+    pipeline.run(build_all, lambda obs, path: preview([o for o in obs if o.name in VARIANTS], path), budget=25000)

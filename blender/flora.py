@@ -13,11 +13,12 @@
 import bpy, bmesh, math, os, random, sys
 from mathutils import Vector, Matrix
 
-BASE = os.path.dirname(os.path.abspath(__file__))
-_src = open(BASE + '/grove.py', encoding='utf-8').read()
-exec(_src[:_src.index('\na = args()')])   # grove.py 自己又借了 tree.py：gem、spike、mats、obj、studio……
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import pipeline, grove
+from pipeline import studio
+from grove import *   # 借用 grove.py 的工具：gem、spike、mats、obj、limb、frame……
 
-rnd = random.Random(31)
+rnd = grove.rnd   # 跟 grove 的工具共用同一個亂數（gem、spike 裡面用的就是它）；每樣植物開始建之前都會重設種子
 # 顏色（線性值），比照樹的暗度（參考圖的顏色約乘 0.55）
 CACTUS = (0.075, 0.12, 0.03)       # 稜的斜面和溝：暗一階的綠（不能黑）
 CACTUS_RIB = (0.11, 0.165, 0.035)   # 稜頂：亮一階、偏黃綠
@@ -321,22 +322,21 @@ def preview(obs, path):
     studio(path, 10.2, (5.1, -30, 2.4), (1680, 790))
 
 
-a = args()
-bpy.ops.wm.read_factory_settings(use_empty=True)
-plants = [
-    # 手臂：(接點高度比例, 方位, 水平伸出, 往上長, 粗細)。左臂接得低、右臂高
-    saguaro('Saguaro', 5.0, 0.48, [(0.36, 180, 1.0, 1.4, 0.72), (0.52, 0, 0.8, 1.1, 0.68)], 31),
-    saguaro('SaguaroS', 2.6, 0.3, [(0.45, 190, 0.65, 0.55, 0.72), (0.35, -10, 0.6, 0.45, 0.7)], 32),
-    barrel(), pear(),
-    tuft('GrassTall', 18, 1.0, (0, 25), 0.06, 30, DRY, 35, core=0.1, droop=3, short=0.6),
-    tuft('GrassDense', 30, 0.75, (5, 45), 0.055, 20, DRY, 36, core=0.18, outer=0.6, maxang=50),
-    tuft('GrassSmall', 18, 0.4, (10, 45), 0.04, 20, DRY, 37, core=0.05, droop=2, short=0.7),
-    desert_bush(),
-    tuft('ScrubBush', 47, 0.35, (15, 40), 0.048, 10, SCRUB, 39, core=0.3, outer=0.65, blunt=0.3, maxang=40, jit=15, thick=0.1, squash=0.56, crown=1.3),
-]
-for t in plants:
-    print(t.name, 'tris:', sum(len(p.vertices) - 2 for p in t.data.polygons), 'size:', tuple(round(x, 2) for x in t.dimensions))
-if a['--out']:
-    export(plants, a['--out'])
-if a['--preview']:
-    preview(plants, a['--preview'])
+def build_all():
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    return [
+        # 手臂：(接點高度比例, 方位, 水平伸出, 往上長, 粗細)。左臂接得低、右臂高
+        saguaro('Saguaro', 5.0, 0.48, [(0.36, 180, 1.0, 1.4, 0.72), (0.52, 0, 0.8, 1.1, 0.68)], 31),
+        saguaro('SaguaroS', 2.6, 0.3, [(0.45, 190, 0.65, 0.55, 0.72), (0.35, -10, 0.6, 0.45, 0.7)], 32),
+        barrel(), pear(),
+        tuft('GrassTall', 18, 1.0, (0, 25), 0.06, 30, DRY, 35, core=0.1, droop=3, short=0.6),
+        tuft('GrassDense', 30, 0.75, (5, 45), 0.055, 20, DRY, 36, core=0.18, outer=0.6, maxang=50),
+        tuft('GrassSmall', 18, 0.4, (10, 45), 0.04, 20, DRY, 37, core=0.05, droop=2, short=0.7),
+        desert_bush(),
+        tuft('ScrubBush', 47, 0.35, (15, 40), 0.048, 10, SCRUB, 39, core=0.3, outer=0.65, blunt=0.3, maxang=40, jit=15, thick=0.1, squash=0.56, crown=1.3),
+    ]
+
+
+if __name__ == '__main__':
+    # 仙人掌 3000 以內；草和灌木會用 MultiMesh 撒幾百叢，1000 以內
+    pipeline.run(build_all, preview, budget={'Saguaro': 3000, 'SaguaroS': 3000, 'BarrelCactus': 3000, 'PricklyPear': 3000, '*': 1000})

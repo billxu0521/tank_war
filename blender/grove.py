@@ -10,10 +10,11 @@ import bpy, bmesh, math, os, random, sys
 import numpy as np
 from mathutils import Vector, Euler
 
-BASE = os.path.dirname(os.path.abspath(__file__))
-# 借用 tree.py 的工具（limb、bend、blob、material、studio……），讀到腳本真的開始跑那行為止
-_src = open(BASE + '/tree.py', encoding='utf-8').read()
-exec(_src[:_src.index('\na = args()')])
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import pipeline, tree
+from pipeline import studio
+from tree import *   # 借用 tree.py 的工具（limb、bend、material、葉片卡……）
+from tree import rng
 
 rnd = random.Random(11)
 
@@ -412,13 +413,16 @@ def preview(obs, oak, path):
     studio(path, 60, (30, -60, 20), (1680, 1120))
 
 
-a = args()
-bpy.ops.wm.read_factory_settings(use_empty=True)
-trees = [maple(), pine(), joshua(), dead(), willow()]
-for t in trees:
-    print(t.name, 'tris:', sum(len(p.vertices) - 2 for p in t.data.polygons), 'size:', tuple(round(x, 1) for x in t.dimensions))
-if a['--out']:
-    export(trees, a['--out'])
-if a['--preview']:
-    MATS = materials()
-    preview(trees, build('TreeOak', SIZES['TreeOak']), a['--preview'])
+
+def build_all():
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    return [maple(), pine(), joshua(), dead(), willow()]
+
+
+def preview_all(trees, path):
+    tree.MATS = tree.materials()   # 闊葉樹（tree.py 建）也放進來一起對照
+    preview(trees, tree.build('TreeOak', tree.SIZES['TreeOak']), path)
+
+
+if __name__ == '__main__':
+    pipeline.run(build_all, preview_all, budget=8000)

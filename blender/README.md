@@ -14,7 +14,7 @@
   球形仙人掌 `BarrelCactus`、仙人掌片 `PricklyPear`、草叢 `GrassTall` / `GrassDense` / `GrassSmall`、灌木 `DesertBush` / `ScrubBush`，
   進 `floras.glb`。沒碰撞的遊戲開場用 MultiMesh 撒（main.gd `_flora_field`）。`REF=docs/image/flora.png tools/model_iter.sh flora <版號>`
 - `kit.py` — 場景小物件（`docs/image/house.png` 裡房子以外的）：吊燈、木桶、木箱、方草捆、車輪、柵欄、圍欄門、繫柱架、風車、倉庫，進 `kits.glb`。
-  借用 house.py 的材質和工具（讀到 house.py 裡「以上是材質和工具」那行為止）。`REF=docs/image/house.png tools/model_iter.sh kit <版號>`
+  借用 house.py 的材質和工具（`from house import *`）。`REF=docs/image/house.png tools/model_iter.sh kit <版號>`
 - `props.py` — 場景物件：穀倉（牆身＋屋頂分開，照實際大小縮放）、筒倉、柵欄、乾草捲、松樹、
   麥子、草叢、恐龍蛋、篷車（撤離點），全部進 `props.glb`
 - `cowboy.py` — 牛仔：身體（原點在腳底）、頭（原點在眼睛 1.6 公尺，跟著上下看轉）、兩條腿（原點在髖關節，走路擺動）、
@@ -22,13 +22,34 @@
   右手的拇指 HandGripThumb、前臂 HandGripArm 分開，左輪扳擊錘和轉手臂用；HandLoad 是左輪換彈捏子彈的左手）
 - `trex.py` — 18 個部件，**名字和位置直接抄 trex.gd 的 `_rig()`**，所以程式動畫不用改
 
+## 共用入口（pipeline.py）
+
+每支腳本最後都是 `pipeline.run(build_all, preview, budget=…)`：讀 `--out` / `--preview` 參數、印面數、
+**送審前自動檢查**、匯出、渲染預覽。所以每支都能用 `tools/model_iter.sh <名字> <版號>` 背景跑一輪
+（weapons、props、cowboy、trex 沒有參考圖，只出預覽；它們一次匯出好幾個 glb，放在 models/ 各自的檔名）。
+
+自動檢查（`pipeline.check`）沒過會印 `CHECK FAIL`，model_iter.sh 就停，不匯出、不出對照圖、不送審：
+- 面數超過預算（每支腳本在 `run` 的 `budget` 寫）
+- 有材質但沒有任何面用它：該長的零件沒長出來
+- 葉片卡沒有渲染用的貼圖座標：葉子會整片消失
+- 封閉零件是反面
+
+檢查本身的測試：`Blender --background --factory-startup --python tools/test_pipeline_check.py`
+
+**共用工具用 import**：grove.py `from tree import *`、flora.py `from grove import *`、kit.py / town.py `from house import *`。
+被 import 的腳本主程式寫在 `if __name__ == '__main__':` 底下，import 時不會跑。注意兩件事：
+- 下游改到共用的全域變數要改在來源模組上，例如 kit.py 的 `house.rnd = …`、grove.py 的 `tree.MATS = …`（只在自己這邊重新指定，來源的函式看不到）
+- 底線開頭的名字 `import *` 不會帶進來，要另外寫（kit.py 的 `from house import _parts, _push`）
+
+改共用工具之後，用 `tools/glb_signature.py` 比對下游模型的幾何有沒有變（glb 檔的位元組每次匯出都可能不同，比幾何才準）。
+
 ## 怎麼重建
 
-不用開 Blender 也可以，背景跑（`tree.py` 就是這樣做的）：
+不用開 Blender，背景跑一輪（每支都可以）：`tools/model_iter.sh props 1`。只要匯出不要預覽：
 
 ```sh
 /Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup \
-    --python-expr "BASE='$PWD/blender'; exec(open(BASE+'/props.py').read()); export('$PWD/models')"
+    --python blender/props.py -- --out models/props.glb
 ```
 
 或者 Blender 開著、BlenderMCP 連上之後，在 Blender 裡執行：

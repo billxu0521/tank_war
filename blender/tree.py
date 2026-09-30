@@ -1,5 +1,5 @@
-# 闊葉樹（docs/image/tree.png 的風格）：粗短的樹幹、往上分叉的枝幹、十幾團多面體葉團堆成的寬樹冠。
-# 平面著色（flat shading）的低多邊形，一面一個顏色。
+# 闊葉樹（docs/image/tree.png 的風格）：粗短的樹幹、往上分叉的枝幹、十幾團葉子堆成的寬樹冠。
+# 樹幹平面著色（flat shading）；葉子是葉片卡（card、core、on_core，grove.py 也用這裡的工具）。
 #
 # 不用開 Blender 視窗、不用 MCP，直接在背景跑：
 #   /Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup \
@@ -10,6 +10,10 @@
 # 碰撞圓柱的半徑和高度照各棵的樹幹粗細、分叉高度寫在 TREE_KINDS，這裡改了樹幹那邊要跟著改。
 import bpy, bmesh, math, os, random, sys
 from mathutils import Vector, Matrix, Euler, noise
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import pipeline
+from pipeline import studio
 
 SEED = 7
 # 三種大小各自長，不是同一棵等比縮放，尺寸直接用公尺寫（照參考圖量的比例）：
@@ -30,15 +34,6 @@ SIZES = {
 }
 
 rng = random.Random(SEED)
-
-
-def args():
-    a = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
-    out = {'--out': None, '--preview': None}
-    for k in out:
-        if k in a:
-            out[k] = a[a.index(k) + 1]
-    return out
 
 
 def material(name, rgb, rough=1.0):
@@ -342,15 +337,6 @@ def to_object(name, bm, s):
     return ob
 
 
-def export(obs, path):
-    for o in bpy.context.scene.objects:
-        o.select_set(o in obs)
-    bpy.context.view_layer.objects.active = obs[0]
-    bpy.ops.export_scene.gltf(filepath=path, export_format='GLB', use_selection=True,
-                              export_apply=True, export_yup=True)
-    print('exported ->', path)
-
-
 def preview(obs, path):
     """照參考圖的排法：上排正、右、背、左四個面，下排大中小三棵。正交相機、白底、暖色斜光"""
     sc = bpy.context.scene
@@ -367,64 +353,19 @@ def preview(obs, path):
         copies.append(o)
     for o in copies:
         sc.collection.objects.link(o)
+        o.visible_shadow = False   # 葉片卡不互投影子（遊戲裡葉片不接收影子），不然樹冠裡面全黑
     for o in obs:
         o.hide_render = True
 
     studio(path, 58, (0, -60, -0.5))
 
 
-def studio(path, ortho, loc, res=(1680, 940)):
-    """正交相機從 -Y 往 +Y 看、暖色斜光、Cycles 渲染到 path（grove.py、flora.py 也用）"""
-    sc = bpy.context.scene
-    cam = bpy.data.objects.new('cam', bpy.data.cameras.new('cam'))
-    cam.data.type = 'ORTHO'
-    cam.data.ortho_scale = ortho
-    cam.location = loc
-    cam.rotation_euler = (math.radians(90), 0, 0)
-    sc.collection.objects.link(cam)
-    sc.camera = cam
-
-    sun = bpy.data.objects.new('sun', bpy.data.lights.new('sun', 'SUN'))
-    sun.data.energy = 8.0
-    sun.data.color = (1.0, 0.83, 0.58)                               # 淡暖黃（約 #FFEBC8）：受光面金黃、側面還留得住橄欖綠，太橘整棵會變芥末色
-    sun.rotation_euler = (math.radians(35), 0, math.radians(35))   # 右前上方仰角約 55 度：每團都有亮面和暗面，樹冠也不會把樹幹上段整段遮黑
-    sc.collection.objects.link(sun)
-
-    world = bpy.data.worlds.new('w')
-    world.use_nodes = True
-    bg = next(n for n in world.node_tree.nodes if n.type == 'BACKGROUND')
-    bg.inputs['Color'].default_value = (0.58, 0.6, 0.48, 1)        # 約 #C8CCB8 帶一點綠的環境光，暗面才是深橄欖不是灰藍
-    bg.inputs['Strength'].default_value = 0.28   # 太弱暗面會變黑，參考圖的暗面還是深橄欖綠   # 環境光弱一點，暗面才看得出層次
-    sc.world = world
-
-    # Cycles：光線追蹤才有葉團之間的暗縫和互相投影，跟參考圖一樣（EEVEE 預設沒有，整團會糊成一片）
-    sc.render.engine = 'CYCLES'
-    sc.cycles.samples = 64
-    sc.cycles.transparent_max_bounces = 128   # 葉片卡一疊幾十層透明，預設 8 層穿不過去會變黑
-    prefs = bpy.context.preferences.addons['cycles'].preferences
-    try:
-        prefs.compute_device_type = 'METAL'
-        prefs.get_devices()
-        for d in prefs.devices:
-            d.use = True
-        sc.cycles.device = 'GPU'
-    except TypeError:
-        pass   # 沒有 Metal 就用 CPU
-    sc.view_settings.view_transform = 'Standard'
-    sc.render.resolution_x, sc.render.resolution_y = res
-    sc.render.film_transparent = True   # 背景由 tools/model_iter.sh 墊成白色
-    sc.render.filepath = path
-    bpy.ops.render.render(write_still=True)
-    print('preview ->', path)
+def build_all():
+    global MATS
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    MATS = materials()
+    return [build(n, c) for n, c in SIZES.items()]
 
 
-a = args()
-bpy.ops.wm.read_factory_settings(use_empty=True)
-MATS = materials()
-trees = [build(n, c) for n, c in SIZES.items()]
-for t in trees:
-    print(t.name, 'tris:', sum(len(p.vertices) - 2 for p in t.data.polygons))
-if a['--out']:
-    export(trees, a['--out'])
-if a['--preview']:
-    preview(trees, a['--preview'])
+if __name__ == '__main__':
+    pipeline.run(build_all, preview, budget=6000)

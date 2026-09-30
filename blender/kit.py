@@ -18,11 +18,13 @@ import bpy, bmesh, math, os, random, sys
 from mathutils import Vector, Matrix
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-# 借用 house.py 的材質和工具（木板、瓦片、石頭、提燈……），讀到「以下才真的建房子」那行為止
-_src = open(BASE + '/house.py', encoding='utf-8').read()
-exec(_src[:_src.index('# ---- 以上是材質和工具')])
+sys.path.insert(0, BASE)
+import pipeline, house
+from house import *   # 借用 house.py 的材質和工具（木板、瓦片、石頭、提燈……）
+from house import _parts, _push   # 底線開頭的 import * 不會帶進來
 
-rnd = random.Random(20261001)
+house.rnd = random.Random(20261001)   # house.py 的工具用的是 house.rnd：換成這支自己的種子
+rnd = house.rnd
 FENCE_H, FENCE_SEG = 1.0, 2.5
 WINDMILL_TOWER = 8.0
 WINDMILL_HUB = (0.0, -0.9, WINDMILL_TOWER + 0.9)
@@ -449,13 +451,12 @@ def preview(obs, path):
     print('preview ->', path)
 
 
-a = args()
-obs = [build_lantern(), build_barrel(), build_crate(), build_hay(), build_wheel()]
-obs += build_fence() + build_gate() + [build_hitch()] + build_windmill() + build_shed()
-settle(obs)
-for o in obs:
-    print(o.name, 'tris:', sum(len(p.vertices) - 2 for p in o.data.polygons))
-if a['--out']:
-    export(obs, a['--out'])
-if a['--preview']:
-    preview(obs, a['--preview'])
+def build_all():
+    obs = [build_lantern(), build_barrel(), build_crate(), build_hay(), build_wheel()]
+    obs += build_fence() + build_gate() + [build_hitch()] + build_windmill() + build_shed()
+    settle(obs)
+    return obs
+
+
+if __name__ == '__main__':
+    pipeline.run(build_all, preview, budget={"HayShed": 20000, "*": 3000})

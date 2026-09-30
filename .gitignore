@@ -10,3 +10,6 @@ docs/movie/
 
 # 建模／風格迭代的每一輪截圖（幾百 MB），只留在本機；定案的對照圖另外放在 docs/image/final/
 docs/image/*_iter/
+
+# Blender 腳本互相 import 時產生的快取
+blender/__pycache__/

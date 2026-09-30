@@ -79,9 +79,8 @@ def finish(name, bevel=0.012, seg=2, smooth=False, smooth_mats=()):
     smooth=False 是硬表面（槍、坦克）：每個面平面著色，邊角才利。
     smooth=True 是生物：整顆平滑著色，不然球面一格一格像多面體。
     smooth_mats：硬表面物件裡要平滑的材質名（槍的木頭部分：金屬邊要利、木頭要圓）"""
-    global _parts
     parts = [p for p in _parts if p.name in bpy.data.objects]
-    _parts = []
+    _parts.clear()   # 原地清空：import 這支工具的腳本拿的是同一份清單
     bpy.ops.object.select_all(action='DESELECT')
     for p in parts: p.select_set(True)
     bpy.context.view_layer.objects.active = parts[0]
@@ -112,10 +111,9 @@ def solid(size, loc, rot=(0, 0, 0), m=None):
 
 def make_col(name):
     """把記下來的碰撞方塊合成一個物件（沒有倒角、沒有材質，遊戲裡只拿來做形狀）"""
-    global COL
     for size, loc, rot in COL:
         box(size, loc, rot)
-    COL = []
+    COL.clear()
     return finish(name, bevel=0.0, seg=1)
 
 
