@@ -50,6 +50,18 @@ func _plan() -> void:
 	_views.append(["town", _ground(Vector3(82, 0, -46)) + up * 2.5, _ground(Vector3(20, 0, -46)) + up * 3])
 	_views.append(["wheat", _ground(Vector3(-22, 0, 78)) + up * 3, _ground(Vector3(-55, 0, 36)) + up * 2])
 	_views.append(["forest", _ground(Vector3(61, 0, 63)) + up * 3, _ground(Vector3(52, 0, 48)) + up * 3])
+	_views.append(["forest_edge", _ground(Vector3(12, 0, 12)) + up * 3, _ground(Vector3(45, 0, 40)) + up * 4])
+	# 城鎮店面後面的荒漠植被（tools/plant_flora.gd 種的仙人掌、約書亞樹，main.gd _flora_field 撒的草叢）
+	_views.append(["desert_n", _ground(Vector3(66, 0, -80)) + up * 2.5, _ground(Vector3(20, 0, -76)) + up * 2])
+	_views.append(["desert_s", _ground(Vector3(14, 0, -12)) + up * 2.5, _ground(Vector3(60, 0, -16)) + up * 2])
+	# 葉片卡的樹近看（blender/grove.py）：場上的都被別的樹擋住，在空的靶場臨時種一棵楓樹、一棵闊葉樹並排拍
+	var spot := _ground(Vector3(-12, 0, 60))
+	for k: Array in [[&"TreeMaple", Vector3(-4, 0, 0)], [&"TreeOak", Vector3(5, 0, 0)]]:
+		var mi := MeshInstance3D.new()
+		mi.mesh = _main._props[k[0]]
+		_main.get_node(^"Arena").add_child(mi)
+		mi.global_position = _ground(spot + k[1])
+	_views.append(["maple", spot + Vector3(0, 2.5, 20), spot + up * 4.5])
 	for kind: StringName in [&"Windmill", &"HayShed"]:     # 場景小物件（kits.glb）：風車、麥田角落的倉庫
 		var n := _find(kind)
 		if n:

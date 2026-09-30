@@ -28,7 +28,12 @@ const TREE_BASE_TRUNK := 5.0   # 松樹的基準樹幹高
 # 闊葉樹（blender/tree.py → trees.glb）：三種大小各自建模，尺寸就是實際公尺。
 # 每種 [樹幹胸口半徑, 碰撞圓柱高（到分叉點再往上一點）]，改了 tree.py 的樹幹這裡要跟著改
 const TREES := preload("res://models/trees.glb")
-const TREE_KINDS := {&"TreeOakS": [0.17, 1.4], &"TreeOakM": [0.41, 1.8], &"TreeOak": [0.55, 2.4]}
+const TREE_KINDS := {&"TreeOakS": [0.17, 1.4], &"TreeOakM": [0.41, 1.8], &"TreeOak": [0.55, 2.4],
+	# 五種新樹（blender/grove.py → groves.glb）和柱狀仙人掌（blender/flora.py → floras.glb），一樣是實際公尺
+	&"TreeMaple": [0.41, 3.4], &"TreePine2": [0.45, 6.0], &"TreeJoshua": [0.4, 1.9], &"TreeDead": [0.62, 3.4],
+	&"TreeWillow": [0.42, 3.0], &"Saguaro": [0.46, 5.0], &"SaguaroS": [0.28, 2.6]}
+const GROVES := preload("res://models/groves.glb")
+const FLORAS := preload("res://models/floras.glb")
 # 石頭（blender/rock.py → rocks.glb）：Rock01..16，尺寸是實際公尺、原點在底部中央。
 # 01~04 大石（最大那顆 6 公尺寬，縮小一點當掩體）、05~11 單顆、12~16 石頭堆
 const ROCKS := preload("res://models/rocks.glb")
@@ -934,7 +939,8 @@ func _build_arena() -> void:
 			[Vector3(e, WALL_H * 0.5, 0), Vector3(WALL_T, WALL_H, long)],
 			[Vector3(-e, WALL_H * 0.5, 0), Vector3(WALL_T, WALL_H, long)]]:
 		_solid_box(w[0], w[1]).add_to_group(&"arena_wall")
-	$Arena.add_child(FarLand.build(_terrain, _ground_color, [_props[&"TreeOakM"], _props[&"TreeOakS"], _props[&"Bush"]],
+	$Arena.add_child(FarLand.build(_terrain, _ground_color, [_props[&"TreeOakM"], _props[&"TreeOakS"], _props[&"Bush"],
+		_props[&"TreePine2"], _props[&"Saguaro"]],
 		_props[&"FenceRail"], FENCE_SEG))
 
 	_build_level()
@@ -942,6 +948,7 @@ func _build_arena() -> void:
 	# 草地：畫面用的，伺服器沒畫面就不長（測試會直接呼叫 _grass_field 檢查）
 	if DisplayServer.get_name() != "headless":
 		_grass_field()
+		_flora_field()
 		_drift = Fx.drift($Arena)
 
 # --- 擺設清單（場景編輯工具，見 docs/plans/2026-09-30-場景編輯工具.md） ---
@@ -1336,6 +1343,35 @@ func _in_wheat(p: Vector3) -> bool:
 		if f.grow(2.0).has_point(Vector2(p.x, p.z)):
 			return true
 	return false
+
+## 荒野的矮植物（blender/flora.py）：草叢、灌木、小仙人掌。只有外觀、沒碰撞也不藏人（都不到一公尺半），
+## 伺服器不長。城鎮區是荒漠長得最多、也只有那裡有球形仙人掌和仙人掌片；其他地方零星幾叢。路上、建築旁、麥田、靶場、撤離區不長。
+## 用自己的亂數，每台機器長得一樣。名字: [城鎮區幾叢, 其他地方幾叢]
+const FLORA_MIX := {&"GrassTall": [70, 110], &"GrassDense": [60, 90], &"GrassSmall": [90, 150], &"ScrubBush": [60, 40],
+	&"DesertBush": [15, 30], &"BarrelCactus": [18, 0], &"PricklyPear": [14, 0]}
+func _flora_field() -> void:
+	var fr := RandomNumberGenerator.new()
+	fr.seed = 29
+	var half := ARENA * 0.5 - 3.0
+	for name: StringName in FLORA_MIX:
+		var pts: Array[Transform3D] = []
+		for zone in 2:
+			var want: int = FLORA_MIX[name][zone]
+			var placed := 0
+			for i in want * 4:   # 試到種滿為止，擋到的位置跳過
+				if placed == want:
+					break
+				var p := Vector2(fr.randf_range(ZONE_TOWN.position.x, ZONE_TOWN.end.x), fr.randf_range(ZONE_TOWN.position.y, ZONE_TOWN.end.y)) \
+					if zone == 0 else Vector2(fr.randf_range(-half, half), fr.randf_range(-half, half))
+				var yaw := fr.randf() * TAU
+				var s := fr.randf_range(0.8, 1.2)
+				if absf(p.x) < 5.0 or absf(p.y) < 5.0 or (zone == 1 and ZONE_TOWN.has_point(p)) or not _is_clear(p, 0.5) \
+						or _in_wheat(Vector3(p.x, 0, p.y)) or not _free(Vector3(p.x, 0, p.y), 1.0) \
+						or _roads.any(func(r: Rect2) -> bool: return r.has_point(p)):
+					continue
+				pts.append(Transform3D(Basis(Vector3.UP, yaw).scaled(Vector3.ONE * s), _on_ground(Vector3(p.x, 0, p.y)) + Vector3.DOWN * 0.05))
+				placed += 1
+		_scatter(name, pts, name in [&"BarrelCactus", &"PricklyPear", &"DesertBush"])
 
 const GRASS_CHUNK := 16.0
 const GRASS_PER_M2 := 6.0   # 效能旋鈕：電腦跑不動就調低（3 看得出一叢一叢的空隙）
@@ -1943,7 +1979,7 @@ func _load_props() -> void:
 static var _mesh_table := {}
 static func meshes() -> Dictionary:
 	if _mesh_table.is_empty():
-		for glb: PackedScene in [PROPS, TREES, ROCKS, HOUSES, KIT, TOWNS]:
+		for glb: PackedScene in [PROPS, TREES, ROCKS, HOUSES, KIT, TOWNS, GROVES, FLORAS]:
 			var src := glb.instantiate()
 			for c in src.get_children():
 				if c is MeshInstance3D:
@@ -1957,6 +1993,7 @@ static func meshes() -> Dictionary:
 ## Blender 設了 Specular 0，但 glTF 匯進來 Godot 還是預設 0.5，要在這裡補。
 ## 網格被資源快取住，改一次之後各處 instantiate 出來的都是改好的那份（glb 要留著，快取才不會被丟掉）
 const FLAT_MODELS := ["res://models/props.glb", "res://models/trees.glb", "res://models/rocks.glb", "res://models/houses.glb", "res://models/kits.glb", "res://models/towns.glb",
+	"res://models/groves.glb", "res://models/floras.glb",
 	"res://models/cowboy.glb", "res://models/trex.glb", "res://models/revolver.glb",
 	"res://models/shotgun.glb", "res://models/rifle.glb"]
 static var _flat_keep: Array[PackedScene] = []
@@ -1975,6 +2012,10 @@ static func _flatten_models() -> void:
 					m.metallic = 0.0
 					if m.resource_name in ["p_wheat", "p_grass"]:   # 字串比對（StringName 放在陣列裡比不到）
 						m.roughness = 0.5   # 描線跳過的記號（見 grass.gdshader）
+					if m.resource_name.contains("leafcard"):   # 樹的葉片卡（blender/grove.py）：透明底挖空；
+						m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR   # 不接收影子，不然一層層葉片互遮，樹冠裡面全黑
+						m.alpha_scissor_threshold = 0.5
+						m.disable_receive_shadows = true
 					if m.albedo_texture == null:   # 材質可能好幾個網格共用，只疊一次
 						_add_grain(m)
 		inst.free()

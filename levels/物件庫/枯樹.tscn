@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_item.gd" id="1_slub0"]
+
+[node name="枯樹" type="Node3D" unique_id=58737714]
+script = ExtResource("1_slub0")
+kind = "tree"
+variant = &"TreeDead"

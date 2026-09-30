@@ -16,7 +16,8 @@ extends Node3D
 ##   hay_bale 圓草捆，flag = 出生點要避開
 ##   kit      小物件（木桶、木箱、方草捆……），variant = 模型名
 ##   prop     只有外觀的模型（篷車），variant = 模型名
-##   tree     樹，variant = TreeOak / TreeOakM / TreeOakS / TreePine，大小用節點的縮放
+##   tree     樹，variant = TreeOak / TreeOakM / TreeOakS / TreePine / TreePine2 / TreeMaple / TreeWillow / TreeJoshua / TreeDead
+##            或柱狀仙人掌 Saguaro / SaguaroS（有碰撞），大小用節點的縮放
 ##   rock     石頭，variant = Rock01..16，大小用節點的縮放，flag = 有碰撞（掩體）
 ##   bush     灌木，大小用節點的縮放
 ##   shop     城鎮店面，variant = Saloon / Store / Sheriff（正面朝自己的 +Z，轉向用節點的朝向）

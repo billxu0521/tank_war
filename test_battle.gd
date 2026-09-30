@@ -736,8 +736,10 @@ func _case_rural() -> void:
 			&"FencePost", &"HayBale", &"TreeOak", &"TreeOakM", &"TreeOakS", &"TreePine", &"Bush", &"WheatTuft", &"GrassClump",
 			&"Egg", &"Wagon", &"Rock01", &"Rock16", &"Lantern", &"Barrel", &"Crate", &"HayBlock", &"Wheel",
 			&"FenceGate", &"GatePost", &"HitchRail", &"Windmill", &"WindmillRotor", &"HayShed", &"HayShedCol",
-			&"Saloon", &"SaloonCol", &"Store", &"StoreCol", &"Sheriff", &"SheriffCol", &"WaterTower", &"WaterTowerCol"]:
-		_ck(m._props.get(n) is Mesh, "模型檔（props、trees、rocks、houses、kits、towns）裡要有 %s" % n)
+			&"Saloon", &"SaloonCol", &"Store", &"StoreCol", &"Sheriff", &"SheriffCol", &"WaterTower", &"WaterTowerCol",
+			&"TreeMaple", &"TreePine2", &"TreeJoshua", &"TreeDead", &"TreeWillow", &"Saguaro", &"SaguaroS", &"BarrelCactus",
+			&"PricklyPear", &"GrassTall", &"GrassDense", &"GrassSmall", &"DesertBush", &"ScrubBush"]:
+		_ck(m._props.get(n) is Mesh, "模型檔（props、trees、rocks、houses、kits、towns、groves、floras）裡要有 %s" % n)
 	# 場景小物件要貼著地面：不能浮在半空、也不能埋進地裡（車輪是輪軸中心，另外算）
 	var floating := []
 	for mi: MeshInstance3D in m.find_children("*", "MeshInstance3D", true, false):

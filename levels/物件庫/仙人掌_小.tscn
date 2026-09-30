@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_item.gd" id="1_6ufvl"]
+
+[node name="仙人掌_小" type="Node3D" unique_id=1110094528]
+script = ExtResource("1_6ufvl")
+kind = "tree"
+variant = &"SaguaroS"

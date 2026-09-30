@@ -2,8 +2,7 @@
 
 [ext_resource type="Script" path="res://levels/level_item.gd" id="1_xkjta"]
 
-[node name="松樹" type="Node3D" unique_id=1867054142]
-transform = Transform3D(1.1, 0, 0, 0, 1.1, 0, 0, 0, 1.1, 0, 0, 0)
+[node name="松樹" type="Node3D" unique_id=1173526718]
 script = ExtResource("1_xkjta")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"

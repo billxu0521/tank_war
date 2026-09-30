@@ -8,6 +8,11 @@
   一輪迭代用 `tools/model_iter.sh tree <版號>`（做法和教訓見 [docs/程式建模迭代.md](../docs/程式建模迭代.md)）
 - `house.py` — 農舍三種（`House1` 前廊農舍、`House2` 圓木小屋、`House3` 直板高屋），各帶碰撞 `House<N>Col`，門 `HouseDoor` 共用，進 `houses.glb`。
   跟 tree.py 一樣背景跑：`tools/model_iter.sh house <版號>`
+- `grove.py` — 五種新樹（`docs/image/tree_list.png`）：楓樹 `TreeMaple`、松樹 `TreePine2`、約書亞樹 `TreeJoshua`、枯樹 `TreeDead`、柳樹 `TreeWillow`，
+  進 `groves.glb`。借用 tree.py 的工具。`REF=docs/image/tree_list.png tools/model_iter.sh grove <版號>`
+- `flora.py` — 荒野矮植物（`docs/image/plante.png` 左邊兩區）：柱狀仙人掌大小 `Saguaro` / `SaguaroS`（有碰撞，當樹擺）、
+  球形仙人掌 `BarrelCactus`、仙人掌片 `PricklyPear`、草叢 `GrassTall` / `GrassDense` / `GrassSmall`、灌木 `DesertBush` / `ScrubBush`，
+  進 `floras.glb`。沒碰撞的遊戲開場用 MultiMesh 撒（main.gd `_flora_field`）。`REF=docs/image/flora.png tools/model_iter.sh flora <版號>`
 - `kit.py` — 場景小物件（`docs/image/house.png` 裡房子以外的）：吊燈、木桶、木箱、方草捆、車輪、柵欄、圍欄門、繫柱架、風車、倉庫，進 `kits.glb`。
   借用 house.py 的材質和工具（讀到 house.py 裡「以上是材質和工具」那行為止）。`REF=docs/image/house.png tools/model_iter.sh kit <版號>`
 - `props.py` — 場景物件：穀倉（牆身＋屋頂分開，照實際大小縮放）、筒倉、柵欄、乾草捲、松樹、

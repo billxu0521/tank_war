@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_item.gd" id="1_dbi51"]
+
+[node name="約書亞樹" type="Node3D" unique_id=417008693]
+script = ExtResource("1_dbi51")
+kind = "tree"
+variant = &"TreeJoshua"

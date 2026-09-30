@@ -8,7 +8,7 @@
 #
 # 跟遊戲的約定（main.gd _tree() 的 TREE_KINDS）：原點在樹根、尺寸就是實際公尺，遊戲只做 ±10% 的隨機縮放。
 # 碰撞圓柱的半徑和高度照各棵的樹幹粗細、分叉高度寫在 TREE_KINDS，這裡改了樹幹那邊要跟著改。
-import bpy, bmesh, math, random, sys
+import bpy, bmesh, math, os, random, sys
 from mathutils import Vector, Matrix, Euler, noise
 
 SEED = 7
@@ -122,10 +122,131 @@ def inside(p, blobs):
     return p if d.length <= r * 0.6 else c + d.normalized() * r * 0.6
 
 
+TEX = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'assets', 'textures')
+
+
+def card_material(name, png):
+    """葉片卡的材質：透明底的貼圖（tools/make_leaf_card.py 畫的），顏色直接用貼圖，alpha 一刀切挖空。
+    剔背面（卡片正反兩面是分開的兩組面，法線都朝外）。名字要有 leafcard：main.gd 認這個字設透明、不接收影子"""
+    m = bpy.data.materials.new(name)
+    nt = m.node_tree
+    p = next(n for n in nt.nodes if n.type == 'BSDF_PRINCIPLED')
+    tex = nt.nodes.new('ShaderNodeTexImage')
+    tex.image = bpy.data.images.load(os.path.join(TEX, png))
+    nt.links.new(tex.outputs['Color'], p.inputs['Base Color'])
+    clip = nt.nodes.new('ShaderNodeMath')   # 透明度一刀切（>0.5 就是實的），跟遊戲裡的 alpha scissor 一樣
+    clip.operation = 'GREATER_THAN'
+    clip.inputs[1].default_value = 0.5
+    nt.links.new(tex.outputs['Alpha'], clip.inputs[0])
+    nt.links.new(clip.outputs[0], p.inputs['Alpha'])
+    p.inputs['Roughness'].default_value = 1.0
+    for key in ('Specular IOR Level', 'Specular'):
+        if key in p.inputs:
+            p.inputs[key].default_value = 0.0
+    m.use_backface_culling = True
+    return m
+
+
+def _card_quad(bm, corners, uvs, mi, nc):
+    """一片卡：正反兩面各一組面（點分開），UV 照 uvs；每個點記一個「從 nc 往外、偏上一點」的法線"""
+    uv = bm.loops.layers.uv.verify()
+    ln = bm.verts.layers.float_vector.get('lnorm') or bm.verts.layers.float_vector.new('lnorm')
+    for order in (range(len(corners)), range(len(corners) - 1, -1, -1)):
+        order = list(order)
+        vs = []
+        for i in order:
+            v = bm.verts.new(corners[i])
+            v[ln] = ((corners[i] - nc).normalized() + Vector((0, 0, 0.4))).normalized()
+            vs.append(v)
+        f = bm.faces.new(vs)
+        f.material_index = mi
+        for loop, i in zip(f.loops, order):
+            loop[uv].uv = uvs[i]
+
+
+def card(bm, c, nrm, size, mi, nc, rand=None):
+    """一組葉片卡：兩片交叉的正方形（中心 c、邊長 size、第一片朝 nrm），UV 貼滿整張圖。
+    nc 是這團葉子的中心：法線從那裡往外，整團像一顆球一樣受光，不會每片各自一個亮暗、讀起來一片雜訊"""
+    rand = rand or rng
+    nrm = nrm.normalized()
+    u, v = frame(nrm)
+    spin = rand.uniform(0, math.tau)
+    u, v = u * math.cos(spin) + v * math.sin(spin), -u * math.sin(spin) + v * math.cos(spin)
+    h = size * 0.5
+    for a, b in ((u, v), (u, nrm)):   # 第二片沿 u 軸轉 90 度：側面看不會變成一條線
+        _card_quad(bm, [c - a * h - b * h, c + a * h - b * h, c + a * h + b * h, c - a * h + b * h],
+                   [(0, 0), (1, 0), (1, 1), (0, 1)], mi, nc)
+
+
+def ribbon(bm, pts, width, side, mi, nc):
+    """一條長條卡（柳條）：沿 pts 由上往下，寬 width，兩條交叉（一條沿 side、一條轉 90 度）。貼圖的上緣在第一個點"""
+    down = (pts[-1] - pts[0]).normalized()
+    for s in (side.normalized(), down.cross(side).normalized()):
+        n = len(pts)
+        for i in range(n - 1):
+            q = [pts[i] - s * width * 0.5, pts[i] + s * width * 0.5, pts[i + 1] + s * width * 0.5, pts[i + 1] - s * width * 0.5]
+            v0, v1 = 1 - i / (n - 1), 1 - (i + 1) / (n - 1)
+            _card_quad(bm, q, [(0, v0), (1, v0), (1, v1), (0, v1)], mi, nc)
+
+
+def core(bm, c, r, mi, sq=(1, 1, 1), subdiv=2):
+    """一團葉子的芯：實心的暗色多面體（subdiv 2 是 80 面、1 是 20 面），墊在葉片卡底下：卡片之間看進去不透空，整團有亮頂暗底"""
+    tmp = bmesh.new()
+    bmesh.ops.create_icosphere(tmp, subdivisions=subdiv, radius=1.0)
+    for v in tmp.verts:
+        q = v.co * rng.uniform(0.92, 1.08)
+        v.co = c + Vector((q.x * r * sq[0], q.y * r * sq[1], q.z * r * sq[2]))
+    me = bpy.data.meshes.new('tmp')
+    tmp.to_mesh(me)
+    tmp.free()
+    before = set(bm.faces)
+    bm.from_mesh(me)
+    bpy.data.meshes.remove(me)
+    for f in bm.faces:
+        if f not in before:
+            f.material_index = mi
+
+
+def on_core(bm, c, cr, n, size, mi, rand=None, spread=0.25, sq=(1, 1, 1), top=0.6, push=0.1, up=0.0):
+    """在芯（中心 c、半徑 cr）的表面撒 n 組葉片卡，卡片大致貼著表面（法線跟芯的法線差不到 30 度）。
+    top：放在上半球的比例（下半也要鋪，不然團的下半是裸露的芯）；push：卡片再往外推卡片大小的幾成，
+    葉子的邊緣蓋過芯的輪廓，團的外緣才是葉子的鋸齒、不是多面體的直邊。up：卡片朝上的偏向（松樹的扁雲要平鋪）"""
+    rand = rand or rng
+    for k in range(n):
+        d = Vector([rand.uniform(-1, 1) for _ in range(3)])
+        d.z = abs(d.z) if rand.random() < top else -abs(d.z)
+        d = d.normalized()
+        q = c + Vector((d.x * sq[0], d.y * sq[1], d.z * sq[2])) * cr * rand.uniform(0.9, 1.05) + d * size * push
+        card(bm, q, d + Vector((0, 0, up if d.z >= 0 else 0.0)) + Vector([rand.uniform(-spread, spread) for _ in range(3)]), size * rand.uniform(0.85, 1.15), mi, c, rand)
+
+
+def apply_card_normals(ob):
+    """葉片卡的面改用 _card_quad 記下來的法線（平滑著色），其他面維持平面著色"""
+    me = ob.data
+    if me.uv_layers:   # 合併物件（樹幹＋葉子）之後，貼圖座標不一定是「渲染用的那組」，不設的話整張取到透明的角落、葉子全消失
+        me.uv_layers[0].active = me.uv_layers[0].active_render = True
+    cardmats = {i for i, m in enumerate(me.materials) if m and 'leafcard' in m.name}
+    for p in me.polygons:
+        p.use_smooth = p.material_index in cardmats
+    attr = me.attributes.get('lnorm')
+    if attr is None:
+        return
+    if cardmats:
+        normals = []
+        for p in me.polygons:
+            for li in p.loop_indices:
+                normals.append(Vector(attr.data[me.loops[li].vertex_index].vector) if p.material_index in cardmats
+                               else p.normal.copy())
+        me.normals_split_custom_set(normals)
+    me.attributes.remove(attr)
+
+
 def materials():
     # 線性值。換成 sRGB 約：樹皮 #816145、葉子 #6F7938。比照參考圖定案時略亮、略綠：遊戲的光比預覽暗又暖，固有色往反方向補。
     # 葉子只用一種顏色：每團顏色不同看起來像拼貼，明暗交給光照
-    return [material('tree_bark', (0.133, 0.055, 0.024)), material('tree_leaf', (0.055, 0.068, 0.018))]
+    # 葉子是葉片卡（一張畫了一簇橡樹葉的透明圖，tools/make_leaf_card.py）
+    return [material('tree_bark', (0.133, 0.055, 0.024)), card_material('tree_leafcard_oak', 'leaf_oak.png'),
+            material('tree_leaf_core', (0.10, 0.13, 0.02))]   # 芯：葉色最暗的一階
 
 
 def build(name, cfg):
@@ -189,9 +310,13 @@ def build(name, cfg):
             end = inside(end, blobs)
             limb(bm, bend(start, end, 3, 0.1 * k), [r0, r0 * 0.75, r0 * 0.5, r0 * 0.3], 5, 0)
 
+    # 每個葉團：一顆暗色實心的芯（半徑是卡片的 45%，露出來不超過兩成），表面貼一把葉片卡（團越大越多），
+    # 法線從團中心往外：一團一團像球一樣受光（亮頂暗底），團裡面不透空
     leaves = bmesh.new()
     for c, r in blobs:
-        blob(leaves, c, r, 1)
+        size = r * 0.95
+        core(leaves, c, size * 0.45, 2)
+        on_core(leaves, c, size * 0.45, int(8 + 9 * r), size, 1)
 
     wood = to_object(name, bm, 1.0)
     crown = to_object(name + '_leaves', leaves, 1.0)
@@ -200,8 +325,7 @@ def build(name, cfg):
         o.select_set(o in (wood, crown))
     ctx.view_layer.objects.active = wood
     bpy.ops.object.join()
-    for p in wood.data.polygons:
-        p.use_smooth = False   # 平面著色：一面一個顏色
+    apply_card_normals(wood)   # 樹幹平面著色（一面一個顏色），葉片卡用記下來的法線
     return wood
 
 
@@ -246,10 +370,16 @@ def preview(obs, path):
     for o in obs:
         o.hide_render = True
 
+    studio(path, 58, (0, -60, -0.5))
+
+
+def studio(path, ortho, loc, res=(1680, 940)):
+    """正交相機從 -Y 往 +Y 看、暖色斜光、Cycles 渲染到 path（grove.py、flora.py 也用）"""
+    sc = bpy.context.scene
     cam = bpy.data.objects.new('cam', bpy.data.cameras.new('cam'))
     cam.data.type = 'ORTHO'
-    cam.data.ortho_scale = 58
-    cam.location = (0, -60, -0.5)
+    cam.data.ortho_scale = ortho
+    cam.location = loc
     cam.rotation_euler = (math.radians(90), 0, 0)
     sc.collection.objects.link(cam)
     sc.camera = cam
@@ -270,6 +400,7 @@ def preview(obs, path):
     # Cycles：光線追蹤才有葉團之間的暗縫和互相投影，跟參考圖一樣（EEVEE 預設沒有，整團會糊成一片）
     sc.render.engine = 'CYCLES'
     sc.cycles.samples = 64
+    sc.cycles.transparent_max_bounces = 128   # 葉片卡一疊幾十層透明，預設 8 層穿不過去會變黑
     prefs = bpy.context.preferences.addons['cycles'].preferences
     try:
         prefs.compute_device_type = 'METAL'
@@ -280,7 +411,7 @@ def preview(obs, path):
     except TypeError:
         pass   # 沒有 Metal 就用 CPU
     sc.view_settings.view_transform = 'Standard'
-    sc.render.resolution_x, sc.render.resolution_y = 1680, 940
+    sc.render.resolution_x, sc.render.resolution_y = res
     sc.render.film_transparent = True   # 背景由 tools/model_iter.sh 墊成白色
     sc.render.filepath = path
     bpy.ops.render.render(write_still=True)

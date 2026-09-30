@@ -905,7 +905,7 @@ variant = &"Barrel"
 transform = Transform3D(-0.18481724, 0, 1.0822573, 0, 1.0979245, 0, -1.0822573, 0, -0.18481724, 25.167633, 0, 13.026987)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹2" type="Node3D" parent="樹" unique_id=480454081]
 transform = Transform3D(0.9382987, 0, 0.56161165, 0, 1.093532, 0, -0.56161165, 0, 0.9382987, 31.419638, 0, 10.662474)
@@ -929,7 +929,7 @@ variant = &"TreeOakM"
 transform = Transform3D(1.0002726, 0, 0.040068336, 0, 1.0010748, 0, -0.040068336, 0, 1.0002726, 30.429268, 0, 20.252026)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹6" type="Node3D" parent="樹" unique_id=1732190260]
 transform = Transform3D(0.38113034, 0, 0.84513927, 0, 0.9271034, 0, -0.84513927, 0, 0.38113034, 57.76808, 0, 20.190407)
@@ -953,7 +953,7 @@ variant = &"TreeOakM"
 transform = Transform3D(0.68576616, 0, 0.50798345, 0, 0.85341805, 0, -0.50798345, 0, 0.68576616, 42.6228, 0, 23.194422)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹10" type="Node3D" parent="樹" unique_id=1872975710]
 transform = Transform3D(-0.71760064, 0, 0.72314686, 0, 1.0187699, 0, -0.72314686, 0, -0.71760064, 51.572693, 0, 26.165958)
@@ -965,7 +965,7 @@ variant = &"TreeOak"
 transform = Transform3D(0.21769454, 0, -0.9819446, 0, 1.0057863, 0, 0.9819446, 0, 0.21769454, 58.7507, 0, 24.957273)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreeOak"
+variant = &"TreeMaple"
 
 [node name="樹12" type="Node3D" parent="樹" unique_id=1889439932]
 transform = Transform3D(0.9113718, 0, 0.30866316, 0, 0.96222216, 0, -0.30866316, 0, 0.9113718, 62.554543, 0, 24.362213)
@@ -977,13 +977,13 @@ variant = &"TreeOak"
 transform = Transform3D(1.1866614, 0, -0.09720999, 0, 1.1906364, 0, 0.09720999, 0, 1.1866614, 72.34483, 0, 25.421581)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹14" type="Node3D" parent="樹" unique_id=1970795443]
 transform = Transform3D(0.7395735, 0, -0.45232546, 0, 0.8669298, 0, 0.45232546, 0, 0.7395735, 77.25556, 0, 26.118391)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹15" type="Node3D" parent="樹" unique_id=26094334]
 transform = Transform3D(-0.0779967, 0, 0.9096786, 0, 0.9130162, 0, -0.9096786, 0, -0.0779967, 25.87469, 0, 30.056623)
@@ -995,31 +995,31 @@ variant = &"TreeOakS"
 transform = Transform3D(-0.76215935, 0, -0.6070713, 0, 0.97438306, 0, 0.6070713, 0, -0.76215935, 33.123924, 0, 31.396854)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹17" type="Node3D" parent="樹" unique_id=1631273938]
 transform = Transform3D(0.8799183, 0, -0.0111200875, 0, 0.87998855, 0, 0.0111200875, 0, 0.8799183, 37.527386, 0, 33.204536)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹18" type="Node3D" parent="樹" unique_id=1448465864]
 transform = Transform3D(-0.32346484, 0, 0.7705637, 0, 0.83570206, 0, -0.7705637, 0, -0.32346484, 45.449512, 0, 30.680494)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹19" type="Node3D" parent="樹" unique_id=343463715]
 transform = Transform3D(-0.6930578, 0, 0.48113748, 0, 0.84369564, 0, -0.48113748, 0, -0.6930578, 51.071594, 0, 30.377462)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹20" type="Node3D" parent="樹" unique_id=919329444]
 transform = Transform3D(1.0264986, 0, 0.30016053, 0, 1.0694839, 0, -0.30016053, 0, 1.0264986, 56.075825, 0, 30.300581)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹21" type="Node3D" parent="樹" unique_id=2141924236]
 transform = Transform3D(0.9275944, 0, 0.008079488, 0, 0.9276296, 0, -0.008079488, 0, 0.9275944, 62.398075, 0, 32.563137)
@@ -1031,7 +1031,7 @@ variant = &"TreeOak"
 transform = Transform3D(-0.7406375, 0, -0.6935209, 0, 1.0146502, 0, 0.6935209, 0, -0.7406375, 72.02341, 0, 31.768951)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreeOak"
+variant = &"TreeMaple"
 
 [node name="樹23" type="Node3D" parent="樹" unique_id=1871213298]
 transform = Transform3D(0.57380956, 0, -0.7545405, 0, 0.9479392, 0, 0.7545405, 0, 0.57380956, 78.73994, 0, 30.911564)
@@ -1043,19 +1043,19 @@ variant = &"TreeOak"
 transform = Transform3D(0.91130084, 0, 0.3517226, 0, 0.9768204, 0, -0.3517226, 0, 0.91130084, 24.282442, 0, 36.153587)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreeOakS"
+variant = &"TreeMaple"
 
 [node name="樹25" type="Node3D" parent="樹" unique_id=1671323124]
 transform = Transform3D(-0.81138396, 0, -0.660048, 0, 1.045948, 0, 0.660048, 0, -0.81138396, 37.610947, 0, 36.56917)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹26" type="Node3D" parent="樹" unique_id=879722595]
 transform = Transform3D(-0.9257861, 0, -0.05735087, 0, 0.9275608, 0, 0.05735087, 0, -0.9257861, 69.37324, 0, 36.895496)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹27" type="Node3D" parent="樹" unique_id=1655072709]
 transform = Transform3D(-1.0616302, 0, -0.27473944, 0, 1.0966041, 0, 0.27473944, 0, -1.0616302, 77.98721, 0, 39.441273)
@@ -1067,37 +1067,37 @@ variant = &"TreeOakM"
 transform = Transform3D(0.8707714, 0, -0.34286746, 0, 0.9358424, 0, 0.34286746, 0, 0.8707714, 25.429686, 0, 43.074226)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹29" type="Node3D" parent="樹" unique_id=217197287]
 transform = Transform3D(-1.1271073, 0, -0.20877023, 0, 1.1462791, 0, 0.20877023, 0, -1.1271073, 72.18115, 0, 43.01148)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹30" type="Node3D" parent="樹" unique_id=2124359302]
 transform = Transform3D(0.98625916, 0, 0.50840706, 0, 1.1095877, 0, -0.50840706, 0, 0.98625916, 77.90524, 0, 45.49411)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹31" type="Node3D" parent="樹" unique_id=1582801729]
 transform = Transform3D(-0.897855, 0, 0.4303842, 0, 0.99567777, 0, -0.4303842, 0, -0.897855, 29.661268, 0, 52.66643)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹32" type="Node3D" parent="樹" unique_id=175133614]
 transform = Transform3D(0.5160976, 0, 0.94876355, 0, 1.0800505, 0, -0.94876355, 0, 0.5160976, 65.43108, 0, 50.77068)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹33" type="Node3D" parent="樹" unique_id=1828711954]
 transform = Transform3D(-0.039318915, 0, 1.0041798, 0, 1.0049493, 0, -1.0041798, 0, -0.039318915, 69.23413, 0, 50.747746)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹34" type="Node3D" parent="樹" unique_id=714548737]
 transform = Transform3D(1.0203702, 0, 0.028236095, 0, 1.0207609, 0, -0.028236095, 0, 1.0203702, 26.971281, 0, 56.400333)
@@ -1109,13 +1109,13 @@ variant = &"TreeOakM"
 transform = Transform3D(-0.94595206, 0, -0.42406592, 0, 1.0366567, 0, 0.42406592, 0, -0.94595206, 38.838936, 0, 56.17313)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹36" type="Node3D" parent="樹" unique_id=1688165713]
 transform = Transform3D(-0.37578884, 0, 0.9137557, 0, 0.9880115, 0, -0.9137557, 0, -0.37578884, 78.50357, 0, 56.05662)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹37" type="Node3D" parent="樹" unique_id=591877033]
 transform = Transform3D(0.13008556, 0, 0.9760576, 0, 0.9846881, 0, -0.9760576, 0, 0.13008556, 26.14124, 0, 65.95964)
@@ -1127,7 +1127,7 @@ variant = &"TreeOakS"
 transform = Transform3D(-1.0029649, 0, 0.017636038, 0, 1.00312, 0, -0.017636038, 0, -1.0029649, 33.099743, 0, 63.42224)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹39" type="Node3D" parent="樹" unique_id=2007089540]
 transform = Transform3D(0.24848354, 0, 1.0045418, 0, 1.0348179, 0, -1.0045418, 0, 0.24848354, 51.238243, 0, 63.618587)
@@ -1145,13 +1145,13 @@ variant = &"TreeOakS"
 transform = Transform3D(-0.565687, 0, -0.80590326, 0, 0.98462266, 0, 0.80590326, 0, -0.565687, 63.07998, 0, 65.620094)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreeOakS"
+variant = &"TreeMaple"
 
 [node name="樹42" type="Node3D" parent="樹" unique_id=706497232]
 transform = Transform3D(0.86344904, 0, 0.30434766, 0, 0.9155172, 0, -0.30434766, 0, 0.86344904, 69.335175, 0, 64.53331)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreeOak"
+variant = &"TreeWillow"
 
 [node name="樹43" type="Node3D" parent="樹" unique_id=1351699038]
 transform = Transform3D(0.3233765, 0, 0.9354649, 0, 0.98978126, 0, -0.9354649, 0, 0.3233765, 23.209856, 0, 71.24552)
@@ -1175,13 +1175,13 @@ variant = &"TreeOakM"
 transform = Transform3D(-0.79475456, 0, -0.15148553, 0, 0.80906284, 0, 0.15148553, 0, -0.79475456, 50.08457, 0, 72.23657)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹47" type="Node3D" parent="樹" unique_id=1545249428]
 transform = Transform3D(0.43354696, 0, 0.7273406, 0, 0.84675103, 0, -0.7273406, 0, 0.43354696, 57.142082, 0, 71.03227)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹48" type="Node3D" parent="樹" unique_id=1068731252]
 transform = Transform3D(0.7516987, 0, -0.60912234, 0, 0.9675128, 0, 0.60912234, 0, 0.7516987, 62.53983, 0, 71.468025)
@@ -1193,13 +1193,13 @@ variant = &"TreeOakS"
 transform = Transform3D(0.18361644, 0, -1.0753655, 0, 1.090929, 0, 1.0753655, 0, 0.18361644, 77.41617, 0, 69.210434)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreeOak"
+variant = &"TreeMaple"
 
 [node name="樹50" type="Node3D" parent="樹" unique_id=1690078600]
 transform = Transform3D(-0.11360037, 0, 0.96968114, 0, 0.97631276, 0, -0.96968114, 0, -0.11360037, 24.221495, 0, 78.58168)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹51" type="Node3D" parent="樹" unique_id=342506821]
 transform = Transform3D(0.13223282, 0, -0.9243284, 0, 0.93373895, 0, 0.9243284, 0, 0.13223282, 31.468412, 0, 75.03067)
@@ -1217,25 +1217,25 @@ variant = &"TreeOakM"
 transform = Transform3D(-1.0303748, 0, 0.21983947, 0, 1.0535661, 0, -0.21983947, 0, -1.0303748, 57.189957, 0, 77.249275)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹54" type="Node3D" parent="樹" unique_id=1565769163]
 transform = Transform3D(0.5408187, 0, -0.9195596, 0, 1.0668058, 0, 0.9195596, 0, 0.5408187, 63.27751, 0, 77.90555)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹55" type="Node3D" parent="樹" unique_id=1851352989]
 transform = Transform3D(0.9916568, 0, -0.11325388, 0, 0.99810296, 0, 0.11325388, 0, 0.9916568, 71.817314, 0, 78.00338)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹56" type="Node3D" parent="樹" unique_id=1878923719]
 transform = Transform3D(-0.8091259, 0, 0.47765645, 0, 0.9395959, 0, -0.47765645, 0, -0.8091259, 76.49842, 0, 78.13693)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreeOak"
+variant = &"TreeMaple"
 
 [node name="樹57" type="Node3D" parent="樹" unique_id=272698922]
 transform = Transform3D(0.27531907, 0, 0.8605311, 0, 0.90350115, 0, -0.8605311, 0, 0.27531907, -51.024902, 0, -79.78495)
@@ -1259,13 +1259,13 @@ variant = &"TreeOakS"
 transform = Transform3D(0.8485249, 0, -0.50594944, 0, 0.98791665, 0, 0.50594944, 0, 0.8485249, 79.508835, 0, 51.810196)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹61" type="Node3D" parent="樹" unique_id=1663219315]
 transform = Transform3D(0.25538135, 0, 0.7736367, 0, 0.81469834, 0, -0.7736367, 0, 0.25538135, 66.78835, 0, 78.909676)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹62" type="Node3D" parent="樹" unique_id=33798103]
 transform = Transform3D(0.5038951, 0, -0.86067563, 0, 0.9973329, 0, 0.86067563, 0, 0.5038951, 49.999886, 0, 75.79831)
@@ -1277,13 +1277,13 @@ variant = &"TreeOak"
 transform = Transform3D(-0.92665184, 0, -0.051884837, 0, 0.92810327, 0, 0.051884837, 0, -0.92665184, 35.674526, 0, 79.445625)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹64" type="Node3D" parent="樹" unique_id=116688199]
 transform = Transform3D(-0.13532287, 0, 0.79280335, 0, 0.8042695, 0, -0.79280335, 0, -0.13532287, -33.483208, 0, 75.79757)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹65" type="Node3D" parent="樹" unique_id=536523233]
 transform = Transform3D(0.77279, 0, 0.6874501, 0, 1.0343075, 0, -0.6874501, 0, 0.77279, -47.49534, 0, 76.117905)
@@ -1319,13 +1319,13 @@ variant = &"TreeOakS"
 transform = Transform3D(-0.45535982, 0, -1.0040374, 0, 1.1024716, 0, 1.0040374, 0, -0.45535982, -75.596085, 0, -34.032043)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹71" type="Node3D" parent="樹" unique_id=2060626191]
 transform = Transform3D(0.67593324, 0, 0.73810226, 0, 1.00084, 0, -0.73810226, 0, 0.67593324, 45.70835, 0, 34.375336)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreeOak"
+variant = &"TreeMaple"
 
 [node name="樹72" type="Node3D" parent="樹" unique_id=1959863397]
 transform = Transform3D(0.5559787, 0, -0.89471275, 0, 1.0533866, 0, 0.89471275, 0, 0.5559787, -49.88784, 0, -65.04943)
@@ -1361,19 +1361,19 @@ variant = &"TreeOakS"
 transform = Transform3D(0.71668524, 0, 0.77543205, 0, 1.0559037, 0, -0.77543205, 0, 0.71668524, 38.804245, 0, 52.247612)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹78" type="Node3D" parent="樹" unique_id=179939766]
 transform = Transform3D(0.41989923, 0, 0.7415995, 0, 0.8522237, 0, -0.7415995, 0, 0.41989923, 27.056976, 0, 19.295258)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="樹79" type="Node3D" parent="樹" unique_id=1560078136]
 transform = Transform3D(-0.38731474, 0, 0.76215965, 0, 0.8549269, 0, -0.76215965, 0, -0.38731474, -32.75847, 0, -12.056641)
 script = ExtResource("2_r0647")
 kind = "tree"
-variant = &"TreePine"
+variant = &"TreePine2"
 
 [node name="灌木" type="Node3D" parent="." unique_id=787470405]
 
@@ -1906,3 +1906,107 @@ transform = Transform3D(1.539141, 0, -0.15842919, 0, 1.5472734, 0, 0.15842919, 0
 script = ExtResource("2_r0647")
 kind = "rock"
 variant = &"Rock09"
+
+[node name="植被" type="Node3D" parent="." unique_id=1617977407]
+
+[node name="枯樹1" type="Node3D" parent="植被" unique_id=296452700]
+transform = Transform3D(0.1847809, 0, 0.89212835, 0, 0.9110637, 0, -0.89212835, 0, 0.1847809, 64.1784, 0, -74.04869)
+script = ExtResource("2_r0647")
+kind = "tree"
+variant = &"TreeDead"
+
+[node name="仙人掌1" type="Node3D" parent="植被" unique_id=284206030]
+transform = Transform3D(0.9542964, 0, -0.29633114, 0, 0.9992466, 0, 0.29633114, 0, 0.9542964, 29.308851, 0, -11.650586)
+script = ExtResource("2_r0647")
+kind = "tree"
+variant = &"Saguaro"
+
+[node name="仙人掌2" type="Node3D" parent="植被" unique_id=1735100759]
+transform = Transform3D(0.594662, 0, 0.88378453, 0, 1.065222, 0, -0.88378453, 0, 0.594662, 37.438545, 0, -81.9583)
+script = ExtResource("2_r0647")
+kind = "tree"
+variant = &"Saguaro"
+
+[node name="約書亞樹1" type="Node3D" parent="植被" unique_id=1137433872]
+transform = Transform3D(-0.09663129, 0, -0.8923106, 0, 0.89752764, 0, 0.8923106, 0, -0.09663129, 58.28569, 0, -73.151825)
+script = ExtResource("2_r0647")
+kind = "tree"
+variant = &"TreeJoshua"
+
+[node name="小仙人掌1" type="Node3D" parent="植被" unique_id=1627422019]
+transform = Transform3D(-0.14025727, 0, 0.9523583, 0, 0.96263105, 0, -0.9523583, 0, -0.14025727, 24.868177, 0, -80.50376)
+script = ExtResource("2_r0647")
+kind = "tree"
+variant = &"SaguaroS"
+
+[node name="約書亞樹2" type="Node3D" parent="植被" unique_id=583924290]
+transform = Transform3D(1.0138172, 0, 0.39669237, 0, 1.0886644, 0, -0.39669237, 0, 1.0138172, 32.387543, 0, -73.346436)
+script = ExtResource("2_r0647")
+kind = "tree"
+variant = &"TreeJoshua"
+
+[node name="小仙人掌2" type="Node3D" parent="植被" unique_id=1632902150]
+transform = Transform3D(-1.0586665, 0, -0.4126656, 0, 1.1362516, 0, 0.4126656, 0, -1.0586665, 45.098072, 0, -16.771875)
+script = ExtResource("2_r0647")
+kind = "tree"
+variant = &"SaguaroS"
+
+[node name="約書亞樹3" type="Node3D" parent="植被" unique_id=1095934508]
+transform = Transform3D(0.344679, 0, -1.030086, 0, 1.0862231, 0, 1.030086, 0, 0.344679, 24.314928, 0, -10.503713)
+script = ExtResource("2_r0647")
+kind = "tree"
+variant = &"TreeJoshua"
+
+[node name="仙人掌3" type="Node3D" parent="植被" unique_id=715516512]
+transform = Transform3D(0.9170057, 0, 0.3443475, 0, 0.9795278, 0, -0.3443475, 0, 0.9170057, 74.40877, 0, -18.959991)
+script = ExtResource("2_r0647")
+kind = "tree"
+variant = &"Saguaro"
+
+[node name="仙人掌4" type="Node3D" parent="植被" unique_id=1007327517]
+transform = Transform3D(-0.9199507, 0, 0.50005203, 0, 1.0470728, 0, -0.50005203, 0, -0.9199507, 44.37948, 0, -74.00331)
+script = ExtResource("2_r0647")
+kind = "tree"
+variant = &"Saguaro"
+
+[node name="仙人掌5" type="Node3D" parent="植被" unique_id=988970350]
+transform = Transform3D(0.6793675, 0, 0.85231245, 0, 1.0899434, 0, -0.85231245, 0, 0.6793675, 50.88881, 0, -72.75798)
+script = ExtResource("2_r0647")
+kind = "tree"
+variant = &"Saguaro"
+
+[node name="仙人掌6" type="Node3D" parent="植被" unique_id=1442883367]
+transform = Transform3D(0.55796754, 0, -0.6905064, 0, 0.88776505, 0, 0.6905064, 0, 0.55796754, 71.115364, 0, -82.16733)
+script = ExtResource("2_r0647")
+kind = "tree"
+variant = &"Saguaro"
+
+[node name="小仙人掌3" type="Node3D" parent="植被" unique_id=1737652211]
+transform = Transform3D(0.96698815, 0, -0.58974546, 0, 1.1326367, 0, 0.58974546, 0, 0.96698815, 69.49214, 0, -72.24765)
+script = ExtResource("2_r0647")
+kind = "tree"
+variant = &"SaguaroS"
+
+[node name="小仙人掌4" type="Node3D" parent="植被" unique_id=83418956]
+transform = Transform3D(0.065395124, 0, 0.9893826, 0, 0.9915415, 0, -0.9893826, 0, 0.065395124, 21.488953, 0, -72.126495)
+script = ExtResource("2_r0647")
+kind = "tree"
+variant = &"SaguaroS"
+
+[node name="約書亞樹4" type="Node3D" parent="植被" unique_id=1354002448]
+transform = Transform3D(0.821914, 0, -0.3209759, 0, 0.8823651, 0, 0.3209759, 0, 0.821914, 81.90629, 0, -10.484038)
+script = ExtResource("2_r0647")
+kind = "tree"
+variant = &"TreeJoshua"
+
+[node name="仙人掌7" type="Node3D" parent="植被" unique_id=130982476]
+transform = Transform3D(-0.031958483, 0, -1.0926553, 0, 1.0931226, 0, 1.0926553, 0, -0.031958483, 49.884438, 0, -19.814962)
+script = ExtResource("2_r0647")
+kind = "tree"
+variant = &"Saguaro"
+
+[node name="枯樹2" type="Node3D" parent="植被" unique_id=909231132]
+transform = Transform3D(-0.065393835, 0, 1.0509813, 0, 1.0530138, 0, -1.0509813, 0, -0.065393835, 81.06608, 0, -72.2979)
+script = ExtResource("2_r0647")
+kind = "tree"
+variant = &"TreeDead"
