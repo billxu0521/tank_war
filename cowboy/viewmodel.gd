@@ -12,26 +12,16 @@ class_name Viewmodel
 @export_group("Aim")
 @export var hip_fov := 90.0
 @export var ads_fov := 55.0
-## 舉槍到定位要多久。過渡期間散布還是腰射值——「舉槍要時間」不用另外寫規則。
-@export var ads_time := 0.2
 @export var ads_speed_scale := 0.5
 
 @export_group("Spread")
-## 散布半角，單位是度。
-@export var hip_spread := 4.0
-@export var ads_spread := 0.3
+## 舉槍時間、腰射／瞄準散布、後座力是每把槍自己的（weapon.gd）。
+## 這裡是三把共用的連射散布累積（規格 L1 的 bloom）：每發加多少、上限、每秒縮回多少，散布單位是度
 @export var spread_per_shot := 1.5
 var remote_shots := 0   # 收到別人這把槍開了幾槍（連線測試用來確認三人以上也看得到）
 @export var max_spread := 8.0
 @export var spread_recover := 6.0
 
-@export_group("Recoil")
-@export var recoil_up := 1.2
-@export var recoil_up_var := 0.4
-@export var recoil_side := 0.5
-## 只回復這個比例。回滿等於沒有後座力——連射到最後準心還在原地。
-@export var recoil_recover_ratio := 0.7
-@export var recoil_recover_time := 0.25
 
 @export_group("Sway")
 ## 視角轉動時武器的拖曳量（rad 對 rad），移動時的位移量（公尺）。
@@ -179,14 +169,15 @@ func switch_weapon(index: int) -> void:
 ## 舉槍／放下的過渡。衝刺會強制放下。
 func _update_ads(wants: bool, delta: float) -> void:
 	var aiming := wants and not _player.is_sprinting()
-	ads = clampf(ads + (delta / ads_time) * (1.0 if aiming else -1.0), 0.0, 1.0)
+	# 舉槍到定位要時間，過渡期間散布還是腰射值——「舉槍要時間」不用另外寫規則
+	ads = clampf(ads + (delta / weapon.ads_in if aiming else -delta / weapon.ads_out), 0.0, 1.0)
 	_camera.fov = lerpf(hip_fov, ads_fov, ads)
 	weapon.position = _hip_positions[_index].lerp(weapon.ads_position, ads)
 
 
 func _update_spread(delta: float) -> void:
 	# 舉滿了才吃 ADS 的精準值，過渡期間一律當腰射
-	var base := ads_spread if ads >= 1.0 else hip_spread
+	var base := weapon.spread_ads if ads >= 1.0 else weapon.spread_hip
 	spread = maxf(spread - spread_recover * delta, base)
 
 
@@ -277,7 +268,7 @@ func try_fire(fanning := false) -> void:
 		return
 	if _reloading:
 		# 折開式換到一半槍是拆開的，打不了；逐發裝填則隨時可以中止開打
-		if weapon.reload_whole_mag:
+		if weapon.reload_type == Weapon.Reload.WHOLE:
 			return
 		cancel_reload()
 	if weapon.mag == 0:
@@ -368,19 +359,19 @@ func _launch(index: int, from: Vector3, dirs: PackedVector3Array, visual_only: b
 
 ## 逐發：一次壓一發，隨時可被開火中斷。整匣：播完 reload 一次補滿。
 func try_reload() -> void:
-	if _reloading or weapon.mag == weapon.mag_size or weapon.reserve == 0:
+	if _reloading or weapon.mag == weapon.capacity or weapon.reserve == 0:
 		return
 	_reload_id += 1
 	var id := _reload_id
 	_reloading = true
 	weapon.play_sound(&"Reload")
 
-	if weapon.reload_whole_mag:
+	if weapon.reload_type == Weapon.Reload.WHOLE:
 		weapon.play(&"reload", blend, weapon.reload_time)
 		await get_tree().create_timer(weapon.reload_time).timeout
 		if id != _reload_id:
 			return
-		var take := weapon.mag_size - weapon.mag
+		var take := weapon.capacity - weapon.mag
 		if weapon.reserve > 0:
 			take = mini(take, weapon.reserve)
 			weapon.reserve -= take
@@ -394,10 +385,10 @@ func try_reload() -> void:
 		await get_tree().create_timer(lead).timeout
 		if id != _reload_id:
 			return
-	while weapon.mag < weapon.mag_size and weapon.reserve != 0:
-		weapon.play(&"reload_round", blend, weapon.reload_time)
+	while weapon.mag < weapon.capacity and weapon.reserve != 0:
+		weapon.play(&"reload_round", blend, weapon.reload_insert)
 		# 用計時器而不是 animation_finished：不會被其他動作的 finished 訊號搶走
-		await get_tree().create_timer(weapon.reload_time).timeout
+		await get_tree().create_timer(weapon.reload_insert).timeout
 		# 序號對不上代表這輪已經被中止（或被新的一輪取代），直接收手。
 		# 只看 _reloading 旗標不夠：中止後馬上重按 R，舊迴圈會誤以為是自己還活著
 		if id != _reload_id:
@@ -432,13 +423,14 @@ func _spread_direction(cam: Camera3D, extra := 0.0) -> Vector3:
 
 
 ## 直接轉視角而不是只晃畫面，這樣它真的影響下一發落點。
+## 只回正一部分（recoil_return_ratio）：回滿等於沒有後座力——連射到最後準心還在原地
 func _apply_recoil() -> void:
-	var s := weapon.recoil_scale
-	var up := deg_to_rad(recoil_up + randf_range(-recoil_up_var, recoil_up_var)) * s
-	var side := deg_to_rad(randf_range(-recoil_side, recoil_side)) * s
+	var w := weapon
+	var up := deg_to_rad(w.recoil_pitch + randf_range(-w.recoil_pitch_random, w.recoil_pitch_random))
+	var side := deg_to_rad(randf_range(-w.recoil_yaw, w.recoil_yaw))
 	_player.rotate_view(Vector2(-side, -up))
-	_recoil_left += Vector2(up, side) * recoil_recover_ratio
-	_recoil_time_left = recoil_recover_time
+	_recoil_left += Vector2(up, side) * w.recoil_return_ratio
+	_recoil_time_left = w.recoil_return_time
 
 
 func _update_anim(delta: float) -> void:

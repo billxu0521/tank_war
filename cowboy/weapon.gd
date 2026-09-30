@@ -12,36 +12,66 @@ class_name Weapon
 ## 支援的動作名。movement 類缺漏時退回 idle。
 const MOVEMENT_FALLBACK: Array[StringName] = [&"walk", &"run", &"jump_start", &"jump_fall", &"jump_end"]
 
-@export_group("Stats")
+# 參數名字和分類照企劃的《槍枝參數規格》（docs/discord/2026-09-30-槍枝參數規格.md），
+# 標 L1、L2 的是規格裡還沒排進這階段、但現在手感已經用到的（先留著，數字不動）。
+enum Reload { WHOLE, PER_ROUND }
+
+@export_group("基礎")
 @export var display_name := "武器"
-@export var mag_size := 12
 ## 每顆彈丸的傷害。總傷害 = damage × pellets 全中。
 @export var damage := 25.0
-## 一發射出幾顆彈丸。霰彈 > 1。
+## 彈藥容量：最多裝幾發（現在剩幾發是 mag）
+@export var capacity := 12
+## 起始備彈：一開始另外帶幾發。-1 = 無限（沙盒）。遊戲中剩多少是 reserve
+@export var starting_reserve := -1
+## L1 每發彈丸數：霰彈 > 1
 @export var pellets := 1
-## 彈丸各自的額外散布半角（度），疊在 host 的散布上。
+## L2 彈丸各自的額外散布半角（度），疊在散布上
 @export var pellet_spread := 0.0
+
+@export_group("動作時間")
+## 舉起瞄具、放下瞄具各要幾秒
+@export var ads_in := 0.2
+@export var ads_out := 0.2
+## 最短擊發間隔：開一槍後至少隔幾秒才能開下一槍
 @export var fire_interval := 0.22
-## true = 一次換整匣（sawnoff 折開式），false = 一發一發壓（手槍、泵動霰彈）。
-@export var reload_whole_mag := false
-## 逐發模式是每發秒數；整匣模式是總秒數。
-@export var reload_time := 0.45
-## host 的後座力乘上這個倍率。霰彈 > 1。
-@export var recoil_scale := 1.0
-## 彈匣外的備彈。-1 = 無限。
-@export var reserve := -1
-## 腰射按住扳機可以搧擊錘連發（左輪），這是連發間隔。0 = 不能搧。
+## 裝填類型：WHOLE 整組換（折開式散彈），PER_ROUND 一顆一顆裝（左輪、步槍）
+@export var reload_type := Reload.PER_ROUND
+## 整組裝填時間（秒）
+@export var reload_time := 1.6
+## 逐發裝填：每顆子彈幾秒
+@export var reload_insert := 0.45
+## 規格外：腰射按住扳機可以搧擊錘連發（左輪），這是連發間隔。0 = 不能搧
 @export var fan_interval := 0.0
-## 搧擊錘時每發額外的散布（度）。快但不準，只適合貼臉。
+## 規格外：搧擊錘時每發額外的散布（度）。快但不準，只適合貼臉
 @export var fan_spread := 6.0
-## 射程：子彈飛這麼遠就消失。散彈 30 公尺外彈丸就散光了，步槍打得到場地另一頭。
-@export var hit_range := 100.0
+
+@export_group("後座力")
+## 垂直後座力：每發往上抬幾度（先射出子彈才抬）
+@export var recoil_pitch := 1.2
+## L2 每發上抬的隨機範圍（±度）
+@export var recoil_pitch_random := 0.4
+## L1 水平後座力：每發往左右隨機偏幾度（±）
+@export var recoil_yaw := 0.5
+## 後座力回復時間：偏掉的準心幾秒內回正
+@export var recoil_return_time := 0.25
+## 回正多少（1 = 回滿；0.7 = 回七成，剩下的玩家自己壓）
+@export var recoil_return_ratio := 0.7
+
+@export_group("散布")
+## 腰射、瞄準的散布（度，中心到邊緣）。腰射也是基礎散布
+@export var spread_hip := 4.0
+@export var spread_ads := 0.3
+
+@export_group("彈道")
 ## 子彈初速（m/s）。重力是真實的 9.8，所以越慢掉越多：
 ## 左輪 330 打 50 公尺掉 11 公分，步槍 440 打 150 公尺掉 57 公分
 @export var muzzle_velocity := 330.0
-## 有效射程：這個距離內傷害全額、打頭一槍死；超過就遞減，到 hit_range 剩 falloff_min
-@export var effective_range := 25.0
+## 衰減起始距離：這個距離內傷害全額、打頭一槍死；超過就遞減，到最大判定距離剩 falloff_min 倍
+@export var falloff_start := 25.0
 @export var falloff_min := 0.5
+## 最大判定距離：子彈飛這麼遠就消失。散彈 30 公尺外彈丸就散光了，步槍打得到場地另一頭
+@export var max_range := 100.0
 
 @export_group("Aim")
 ## 槍口在模型裡的位置（Godot 軸向）。火光和煙從這裡出去；零＝用 ShotFX 原本的位置
@@ -111,6 +141,7 @@ const MOVEMENT_FALLBACK: Array[StringName] = [&"walk", &"run", &"jump_start", &"
 @export var load_hand_rotation := Vector3(0.6, -0.5, -0.3)
 
 var mag: int
+var reserve := 0   # 遊戲中還剩幾發備彈，-1 = 無限
 var current_action := &""
 
 var _model: Node3D
@@ -153,7 +184,8 @@ const ARMS := preload("res://models/cowboy.glb")
 
 
 func _ready() -> void:
-	mag = mag_size
+	mag = capacity
+	reserve = starting_reserve
 	_add_hands()
 	_model = get_node_or_null(model_path)
 	if _model:
@@ -191,9 +223,9 @@ func _process(delta: float) -> void:
 			_seg_end = -1.0
 
 
-## 這個距離打中的傷害。有效射程內全額，之後線性遞減到射程盡頭剩 falloff_min。
+## 這個距離打中的傷害。衰減起始距離內全額，之後線性遞減到最大判定距離剩 falloff_min 倍。
 func damage_at(dist: float) -> float:
-	var t := inverse_lerp(effective_range, hit_range, dist)
+	var t := inverse_lerp(falloff_start, max_range, dist)
 	return damage * lerpf(1.0, falloff_min, clampf(t, 0.0, 1.0))
 
 

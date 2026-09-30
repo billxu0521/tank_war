@@ -60,7 +60,7 @@ func advance(delta: float) -> void:
 	if hit.is_empty():
 		_traveled += from.distance_to(to)
 		global_position = to
-		if _traveled > weapon.hit_range:
+		if _traveled > weapon.max_range:
 			queue_free()
 			return
 		if _streak:
@@ -95,6 +95,6 @@ func _impact(hit: Dictionary) -> void:
 		return
 	var dmg := weapon.damage_at(_traveled)
 	# 爆頭秒殺只在有效射程內成立，跟 Hunt 一樣。距離用子彈實際飛了多遠
-	if _traveled <= weapon.effective_range and Viewmodel.is_headshot(target, hit["position"]):
+	if _traveled <= weapon.falloff_start and Viewmodel.is_headshot(target, hit["position"]):
 		dmg = target.max_hp
 	shooter.deal_damage(target, roundi(dmg))

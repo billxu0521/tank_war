@@ -188,8 +188,8 @@ func _case_dino_death() -> void:
 	var dino: Node = m.players.get_node(^"1")
 	# 左輪的持續輸出 = 一輪的傷害 / (打完一輪 + 逐發換彈)
 	var gun: Node = m.players.get_node(^"2").viewmodel._weapons[0]
-	var cycle: float = gun.mag_size * (gun.fire_interval + gun.reload_time)
-	var dps: float = gun.mag_size * gun.damage / cycle
+	var cycle: float = gun.capacity * (gun.fire_interval + gun.reload_insert)
+	var dps: float = gun.capacity * gun.damage / cycle
 	var secs: float = dino.max_hp / (3.0 * dps)
 	_ck(secs > 8.0 and secs < 20.0, "平衡目標：3 個牛仔用左輪 8~20 秒打死恐龍（現在 %.1f 秒）" % secs)
 
@@ -306,9 +306,18 @@ func _case_hunt_weapons() -> void:
 	var rifle: Node = vm._weapons[2]
 	_ck(revolver.fan_interval > 0.0 and revolver.fan_interval < revolver.fire_interval,
 		"左輪要能搧擊錘，而且比正常扳擊錘快")
-	_ck(shotgun.mag_size == 1 and shotgun.reload_whole_mag, "單管散彈一次一發、折開整個換")
-	_ck(rifle.hit_range > revolver.hit_range and revolver.hit_range > shotgun.hit_range,
+	_ck(shotgun.capacity == 1 and shotgun.reload_type == Weapon.Reload.WHOLE, "單管散彈一次一發、折開整個換")
+	_ck(rifle.max_range > revolver.max_range and revolver.max_range > shotgun.max_range,
 		"射程要是步槍 > 左輪 > 散彈")
+	# 散布、舉槍時間、後座力是每把槍自己的：換到步槍就用步槍的數字
+	vm.switch_weapon(2)
+	rifle.spread_hip = 2.0
+	vm.spread = 0.0
+	vm.ads = 0.0
+	vm._update_spread(0.1)
+	_ck(is_equal_approx(vm.spread, 2.0), "腰射散布要用手上那把槍自己的（現在 %.1f）" % vm.spread)
+	rifle.spread_hip = 4.0
+	vm.switch_weapon(0)
 	for w in vm._weapons:
 		_ck(w.reserve > 0, "%s 的備彈要有限（Hunt 的子彈要省著用）" % w.display_name)
 		_ck(w.get_node_or_null(^"Model") != null, "%s 要有 Blender 建的模型" % w.display_name)
@@ -404,9 +413,9 @@ func _case_hunt_weapons() -> void:
 
 	# 有效射程：射程內全額，超過遞減，射程盡頭剩一半；射程要照步槍 > 左輪 > 散彈排
 	for w in vm._weapons:
-		_ck(is_equal_approx(w.damage_at(w.effective_range * 0.5), w.damage), "%s 有效射程內要全額" % w.display_name)
-		_ck(w.damage_at(w.hit_range) < w.damage * 0.6, "%s 射程盡頭傷害要打折" % w.display_name)
-	_ck(rifle.effective_range > revolver.effective_range and revolver.effective_range > shotgun.effective_range,
+		_ck(is_equal_approx(w.damage_at(w.falloff_start * 0.5), w.damage), "%s 有效射程內要全額" % w.display_name)
+		_ck(w.damage_at(w.max_range) < w.damage * 0.6, "%s 射程盡頭傷害要打折" % w.display_name)
+	_ck(rifle.falloff_start > revolver.falloff_start and revolver.falloff_start > shotgun.falloff_start,
 		"有效射程要是步槍 > 左輪 > 散彈")
 
 	# 爆頭一槍死：打到頭的高度才算，打身體不算
