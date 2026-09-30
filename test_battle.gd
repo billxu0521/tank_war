@@ -679,8 +679,33 @@ func _case_rural() -> void:
 	# 場景物件的模型都要載得到，名字對不上的話會變成看不見的空氣牆
 	for n in [&"Barn", &"BarnRoof", &"House1", &"House2", &"House3", &"House1Col", &"HouseDoor", &"SiloBody", &"SiloDome", &"FenceRail",
 			&"FencePost", &"HayBale", &"TreeOak", &"TreeOakM", &"TreeOakS", &"TreePine", &"Bush", &"WheatTuft", &"GrassClump",
-			&"Egg", &"Wagon", &"Rock01", &"Rock16"]:
-		_ck(m._props.get(n) is Mesh, "props / trees / rocks / houses.glb 裡要有 %s" % n)
+			&"Egg", &"Wagon", &"Rock01", &"Rock16", &"Lantern", &"Barrel", &"Crate", &"HayBlock", &"Wheel",
+			&"FenceGate", &"GatePost", &"HitchRail", &"Windmill", &"WindmillRotor", &"HayShed", &"HayShedCol"]:
+		_ck(m._props.get(n) is Mesh, "props / trees / rocks / houses / kits.glb 裡要有 %s" % n)
+	# 場景小物件要貼著地面：不能浮在半空、也不能埋進地裡（車輪是輪軸中心，另外算）
+	var floating := []
+	for mi: MeshInstance3D in m.find_children("*", "MeshInstance3D", true, false):
+		for kind: StringName in [&"Barrel", &"Crate", &"HitchRail", &"GatePost", &"FenceGate", &"Windmill", &"HayShed", &"Wheel"]:
+			if mi.mesh == m._props.get(kind):
+				var p := mi.global_position
+				var above: float = p.y - m._terrain.height(p.x, p.z) - (0.6 if kind == &"Wheel" else 0.0)
+				if absf(above) > 0.35:
+					floating.append("%s %.1f" % [kind, above])
+	_ck(floating.is_empty(), "場景小物件要貼地（離地多少公尺：%s）" % [floating])
+	# 柵欄不能穿過農舍（牧場的房子以前跨到隔壁格，隔壁農莊的圍欄從房子中間穿過去）
+	var houses: Array[Vector3] = []
+	var rails: Array[Vector3] = []
+	for mi: MeshInstance3D in m.find_children("*", "MeshInstance3D", true, false):
+		if mi.mesh in [m._props.get(&"House1"), m._props.get(&"House2"), m._props.get(&"House3")]:
+			houses.append(mi.global_position)
+		elif mi.mesh == m._props.get(&"FenceRail"):
+			rails.append(mi.global_position)
+	var through := 0
+	for h in houses:
+		for r in rails:
+			if absf(r.x - h.x) < 5.2 and absf(r.z - h.z) < 4.2:
+				through += 1
+	_ck(houses.size() >= 3 and through == 0, "柵欄不能穿過農舍（%d 段穿過）" % through)
 	_end(m)
 
 ## 著彈照材質噴不同碎屑；煙囪冒煙

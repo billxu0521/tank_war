@@ -51,6 +51,11 @@ func _plan() -> void:
 		if house:
 			var h := house.global_position
 			_views.append([String(kind).to_lower(), _ground(h + Vector3(-11, 0, 17)) + up * 6, h + up * 3])
+	for kind: StringName in [&"Windmill", &"HayShed"]:     # 場景小物件（kits.glb）：風車、麥田角落的倉庫
+		var n := _find(kind)
+		if n:
+			var q := n.global_position
+			_views.append([String(kind).to_lower(), _ground(q + Vector3(-9, 0, 13)) + up * 3.5, q + up * 2.5])
 	if rock:
 		var r := rock.global_position
 		_views.append(["rock", _ground(r + Vector3(9, 0, 8)) + up * 3, r + up])

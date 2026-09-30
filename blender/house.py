@@ -704,6 +704,7 @@ def preview(houses, path):
     print('preview ->', path)
 
 
+# ---- 以上是材質和工具，kit.py 只讀到這一行為止（借用同一套木板、瓦片、石頭）；以下才真的建房子 ----
 a = args()
 obs = []
 for name, v in VARIANTS.items():

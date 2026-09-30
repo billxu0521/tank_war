@@ -49,6 +49,10 @@ const HOUSE_T := 0.2
 # 農舍三種（blender/house.py → houses.glb）：主屋牆都是 10 × 8，門在正面中央，整棟架高 HOUSE_FLOOR。
 # 牆、屋頂、煙囪、前廊、台階斜坡的碰撞都在 House<N>Col 裡。每種 [煙囪頂（冒煙的地方）]，跟 house.py 的 CHIMNEY 一樣
 const HOUSES := preload("res://models/houses.glb")
+# 場景小物件（blender/kit.py → kits.glb）：木桶、木箱、方草捆、車輪、柵欄、圍欄門、繫柱架、風車、倉庫、吊燈
+const KIT := preload("res://models/kits.glb")
+const WINDMILL_HUB := Vector3(0.0, 8.9, 0.9)   # 風車葉輪掛在哪（kit.py 的 WINDMILL_HUB 換成 Godot 座標）
+const HAY_BLOCK := Vector3(1.1, 0.48, 0.55)    # 方草捆大小（kit.py 的 HAY_SIZE）
 const HOUSE_FLOOR := 0.45
 const HOUSE_KINDS := {&"House1": Vector3(5.6, 10.11, -2.0), &"House2": Vector3(-5.6, 7.09, -1.8),
 	&"House3": Vector3(3.4, 10.66, -1.6)}
@@ -805,9 +809,10 @@ func _build_arena() -> void:
 				2:
 					if _free(c, 20):
 						_wheat_fields.append(Rect2(c.x - 20, c.z - 20, 40, 40))
+					_terrain.flatten_circle(Vector2(c.x + 13, c.z - 14), 7.0)   # 麥田角落的倉庫
 				3:
 					_terrain.flatten_circle(Vector2(c.x, c.z + 22), 12.0)  # 牧場的小棚
-					_terrain.flatten_circle(Vector2(c.x, c.z - 20), 12.0)  # 牧場的農舍（台階前面也要平）
+					_terrain.flatten_circle(Vector2(c.x, c.z - 14), 12.0)  # 牧場的農舍（台階前面也要平）
 	_terrain.settle()   # 靠太近的平地把高度拉近，中間才不會擠出陡坡
 	var ground := _terrain.build(_ground_color)
 	ground.add_to_group(&"ground")   # 子彈打到噴土（Bullet.surface_of）
@@ -1189,6 +1194,14 @@ func _farmstead(c: Vector3, rng: RandomNumberGenerator) -> void:
 			var p: Vector3 = [Vector3(u, 0, -r), Vector3(r, 0, u), Vector3(u, 0, r), Vector3(-r, 0, u)][side]
 			if _free(c + p, 2):
 				_fence(c + p, r * 2.0 / 8.0, side % 2 == 1)
+	# 南北兩個缺口各一對圍欄門，敞開往外。缺口太靠場地邊緣（門開出去會撞到場邊柵欄）就不裝
+	for zz: float in [-r, r]:
+		if _free(c + Vector3(0, 0, zz), 7) and absf(c.z + zz) < ARENA * 0.5 - 6.0:
+			_gate(c + Vector3(-r / 4.0 + 0.2, 0, zz), signf(zz), true)   # 門柱往缺口內縮一點，不跟柵欄端點的木樁疊在一起
+			_gate(c + Vector3(r / 4.0 - 0.2, 0, zz), signf(zz), false)
+	var mill := c + Vector3(15, 0, -12)
+	if _free(mill, 3) and _is_clear(Vector2(mill.x, mill.z)):
+		_windmill(mill)
 
 ## 果園：整齊的樹，樹幹擋子彈、樹冠擋視線不擋子彈
 func _orchard(c: Vector3, rng: RandomNumberGenerator) -> void:
@@ -1210,23 +1223,40 @@ func _hayfield(c: Vector3, rng: RandomNumberGenerator) -> void:
 			for gz in 36:
 				var at := _on_ground(c + Vector3(-19.5 + gx * 1.1 + wr.randf_range(-0.4, 0.4), 0,
 					-19.5 + gz * 1.1 + wr.randf_range(-0.4, 0.4)))
+				if _shed_corner(c).has_point(Vector2(at.x, at.z)):
+					continue   # 倉庫那個角落不長麥子（亂數照樣用掉，其他麥子位置不變）
 				pts.append(Transform3D(Basis(Vector3.UP, wr.randf() * TAU).scaled(Vector3.ONE * wr.randf_range(0.8, 1.2)), at))
 		_scatter(&"WheatTuft", pts)
 	for i in 7:
 		var p := c + Vector3(rng.randf_range(-18, 18), 0, rng.randf_range(-18, 18))
 		if _free(p, 2):
-			_hay_bale(p, rng.randf() * PI)
+			var yaw := rng.randf() * PI   # 先抽：落在倉庫角落不擺，但亂數照樣用掉，後面擺的東西位置不變
+			if not _shed_corner(c).has_point(Vector2(p.x, p.z)):
+				_hay_bale(p, yaw)
+	var shed := c + Vector3(13, 0, -14)
+	if _free(shed, 6):
+		_hay_shed(shed)
+		_hay_stack(c + Vector3(8.8, 0, -12.5), PI * 0.5)
+		_clutter(c + Vector3(17.5, 0, -9.8), 0.0)
+
+## 麥田裡蓋倉庫的那個角落（不長麥子、不放圓捆）
+func _shed_corner(c: Vector3) -> Rect2:
+	return Rect2(c.x + 7.5, c.z - 19.0, 12.0, 11.0)
 
 ## 牧場：柵欄隔成欄位＋一間小棚＋一棟農舍。翻越練習場
 func _pasture(c: Vector3, rng: RandomNumberGenerator) -> void:
-	var home := c + Vector3(0, 0, -20)       # 牧場主人的房子，先蓋：柵欄碰到它就不擺（不用亂數，後面擺的東西位置不變）
+	# 牧場主人的房子：放在格子裡面（-20 會跨到隔壁格，隔壁農莊的圍欄穿過房子）。不用亂數，後面擺的東西位置不變
+	var home := c + Vector3(0, 0, -14)
+	var home_area := Rect2()                 # 房子連前廊台階、後面小倉、門前的繫柱架和雜物佔的地，柵欄碰到就不擺
 	if _free(home, 8):
 		_house(home)
+		home_area = Rect2(home.x - 7.5, home.z - 7.5, 15.0, 17.5)
 	for k in 5:
 		var z := c.z + (k - 2) * 9.0
 		for seg in 4:
 			var p := Vector3(c.x - 15 + seg * 10.0, 0, z)
-			if _free(p, 2) and rng.randf() > 0.2:
+			# 亂數照樣先抽（後面擺的東西位置不變），碰到房子那段才不擺
+			if _free(p, 2) and rng.randf() > 0.2 and not home_area.intersects(Rect2(p.x - 5.0, p.z - 0.3, 10.0, 0.6)):
 				_fence(p, 10.0, false)
 	var shed := c + Vector3(rng.randf_range(-10, 10), 0, 22)
 	if _free(shed, 6):
@@ -1258,6 +1288,12 @@ func _barn(p: Vector3, size: Vector3, clearance := SPAWN_CLEARANCE) -> void:
 	_ladder(p + Vector3(lx, 0, 0.15 * s.z), loft + 1.0, p + Vector3(lx, 0, 0.15 * s.z + 0.5), loft,
 		p + Vector3(lx, loft + 0.1, -1.0 * s.z), 0.0)
 	_lamp(p + Vector3(0, loft - 1.0, 3.0 * s.z), 7.0 * s.x)
+	# 門口外面：一邊一堆雜物、另一邊牆上靠一個車輪（放在滑門拉開的範圍外），側牆邊疊草捆。
+	# 這些函式自己貼地，要給不含高度的座標（p 上面已經貼過地了，再貼一次會浮在半空）
+	var flat := Vector3(p.x, 0, p.z)
+	_clutter(flat + Vector3(-(BARN_DOOR_W * s.x + 1.9), 0, size.z * 0.5 + 1.3), 0.0)
+	_lean_wheel(flat + Vector3(BARN_DOOR_W * s.x + 0.9, 0, size.z * 0.5), 0.0)
+	_hay_stack(flat + Vector3(-(size.x * 0.5 + 0.8), 0, size.z * 0.15), PI * 0.5)
 	_block(p, Vector2(size.x, size.z), clearance)
 
 ## 農舍：空心的，進得去。三種外觀輪流（前廊農舍、圓木小屋、直板高屋），碰撞跟著外觀走
@@ -1273,7 +1309,88 @@ func _house(p: Vector3) -> void:
 		Vector3(1.1, 2.2, 0.08), Vector3(0.55, 0, 0), Vector3.ONE)
 	d.swing = PI * 0.5
 	_lamp(p + Vector3(-1.5, 2.6 + HOUSE_FLOOR, 1.8), 5.0)
+	var flat := Vector3(p.x, 0, p.z)                    # 下面的函式自己貼地（p 已經貼過了）
+	_hitch(flat + Vector3(-4.5, 0, 10.5))               # 門前的繫柱架（台階旁邊，不擋路）
+	_clutter(flat + Vector3(-6.9, 0, 1.4), PI * 0.5)    # 左側牆邊一排木桶木箱
 	_block(p, Vector2(12, 13), SPAWN_CLEARANCE)   # 含前廊、煙囪、後面的小倉
+
+## --- 場景小物件（kits.glb） ---
+## 下面這些函式都自己貼地：p 給不含高度的位置（p.y 是離地高度，通常 0）。
+## 已經 _on_ground 過的座標要先把 y 歸零，不然地面多高就浮多高
+
+## 擺一個小物件：碰撞是一個方塊（size，底部貼地）。size 是 ZERO 就只有外觀
+func _kit(name: StringName, p: Vector3, yaw: float, size := Vector3.ZERO) -> Node3D:
+	p = _on_ground(p)
+	if size == Vector3.ZERO:
+		var mi := _prop(name, p)
+		mi.rotation.y = yaw
+		return mi
+	var body := _solid_box(p + Vector3(0, size.y * 0.5, 0), size)
+	body.rotation.y = yaw
+	_prop(name, Vector3(0, -size.y * 0.5, 0), Vector3.ONE, body)
+	return body
+
+## 一小堆雜物（木桶、木箱、方草捆）排成一列：蹲得進去的矮掩體，擋子彈。
+## 用自己的亂數（照位置算）：多擺少擺不影響其他東西的位置
+func _clutter(p: Vector3, yaw: float) -> void:
+	var r := RandomNumberGenerator.new()
+	r.seed = int(p.x * 131.0 + p.z * 17.0)
+	var along := Basis(Vector3.UP, yaw)
+	var kinds := [[&"Barrel", Vector3(0.7, 0.93, 0.7)], [&"Crate", Vector3(0.8, 0.8, 0.8)], [&"HayBlock", HAY_BLOCK]]
+	var n := r.randi_range(2, 4)
+	for i in n:
+		var k: Array = kinds[r.randi() % kinds.size()]
+		var off := along * Vector3((i - (n - 1) * 0.5) * 1.25, 0, r.randf_range(-0.3, 0.3))
+		_kit(k[0], p + off, yaw + r.randf_range(-0.3, 0.3), k[1])
+
+## 疊起來的方草捆：底下兩捆、上面一捆。掉在上面跟圓捆一樣算軟（摔落傷害減半）
+func _hay_stack(p: Vector3, yaw: float) -> void:
+	var along := Basis(Vector3.UP, yaw)
+	for off: Vector3 in [Vector3(-0.56, 0, 0), Vector3(0.56, 0, 0), Vector3(0, HAY_BLOCK.y, 0)]:
+		var at := _on_ground(p + along * Vector3(off.x, 0, 0)) + Vector3(0, off.y + HAY_BLOCK.y * 0.5, 0)
+		var body := _solid_box(at, HAY_BLOCK)
+		body.rotation.y = yaw
+		body.add_to_group(&"soft")
+		_prop(&"HayBlock", Vector3(0, -HAY_BLOCK.y * 0.5, 0), Vector3.ONE, body)
+
+## 靠在牆上的車輪（只有外觀）。p 是牆腳，牆面朝 yaw 方向（0 = 朝 +Z），輪子頂端往牆那邊倒一點
+func _lean_wheel(p: Vector3, yaw: float) -> void:
+	var turn := Basis(Vector3.UP, yaw)
+	var mi := _prop(&"Wheel", _on_ground(p) + turn * Vector3(0, 0.6, 0.24))
+	mi.basis = turn * Basis(Vector3.RIGHT, -0.18) * Basis(Vector3.UP, PI * 0.5)
+
+## 馬匹繫柱架：兩根柱子有碰撞，中間的繫馬橫桿 1 公尺高，翻得過去
+func _hitch(p: Vector3) -> void:
+	p = _on_ground(p)
+	_prop(&"HitchRail", p)
+	for sx: float in [-1.6, 1.6]:
+		_solid_box(p + Vector3(sx, 1.25, 0), Vector3(0.2, 2.5, 0.2))
+	_solid_box(p + Vector3(0, 1.0, 0), Vector3(3.2, 0.1, 0.1))
+
+## 圍欄門：門柱有碰撞，門板敞開往外（只有外觀，不擋路）。left = 缺口左邊（-X 那側）；out = 往外是 -Z（-1）還是 +Z（+1）
+func _gate(p: Vector3, out: float, left: bool) -> void:
+	_kit(&"GatePost", p, 0.0, Vector3(0.24, 1.6, 0.24))
+	var leaf := _prop(&"FenceGate", _on_ground(p) + Vector3(0.12 if left else -0.12, 0, 0))
+	leaf.rotation.y = deg_to_rad(100.0 if left else 80.0) * -out   # 門板本來往 +X 長，轉過去朝外敞開
+
+## 風車塔：四根塔腳底部有碰撞；葉輪一直慢慢轉
+func _windmill(p: Vector3) -> void:
+	p = _on_ground(p)
+	_prop(&"Windmill", p)
+	for sx: float in [-1.2, 1.2]:
+		for sz: float in [-1.2, 1.2]:
+			_solid_box(p + Vector3(sx, 1.5, sz), Vector3(0.3, 3.0, 0.3))
+	var rotor := _prop(&"WindmillRotor", p + WINDMILL_HUB)
+	rotor.create_tween().set_loops().tween_property(rotor, ^"rotation:z", TAU, 7.0).as_relative()
+	_block(p, Vector2(3, 3), 2.0)
+
+## 倉庫／圍棚：門朝 +Z 敞開，裡面疊著方草捆。牆、屋頂、草捆的碰撞是 HayShedCol
+func _hay_shed(p: Vector3) -> void:
+	p = _on_ground(p)
+	_solid_mesh(p, _props.get(&"HayShedCol"), Vector3.ONE)
+	_prop(&"HayShed", p)
+	_prop(&"Lantern", p + Vector3(2.0, 2.95, 3.25))
+	_block(p, Vector2(8, 7), 2.0)
 
 func _silo(p: Vector3, h: float) -> void:
 	p = _on_ground(p)
@@ -1444,7 +1561,7 @@ func _skin_egg() -> void:
 
 ## 從 props.glb、trees.glb 把每個物件的網格拿出來，場上幾百個物件共用同一份
 func _load_props() -> void:
-	for glb: PackedScene in [PROPS, TREES, ROCKS, HOUSES]:
+	for glb: PackedScene in [PROPS, TREES, ROCKS, HOUSES, KIT]:
 		var src := glb.instantiate()
 		for c in src.get_children():
 			if c is MeshInstance3D:
@@ -1456,7 +1573,7 @@ func _load_props() -> void:
 ## 全部模型都不要高光：朝太陽的面疊一層反光會把顏色沖灰、反射粉色的天空（牆和門廊泛粉紫）。
 ## Blender 設了 Specular 0，但 glTF 匯進來 Godot 還是預設 0.5，要在這裡補。
 ## 網格被資源快取住，改一次之後各處 instantiate 出來的都是改好的那份（glb 要留著，快取才不會被丟掉）
-const FLAT_MODELS := ["res://models/props.glb", "res://models/trees.glb", "res://models/rocks.glb", "res://models/houses.glb",
+const FLAT_MODELS := ["res://models/props.glb", "res://models/trees.glb", "res://models/rocks.glb", "res://models/houses.glb", "res://models/kits.glb",
 	"res://models/cowboy.glb", "res://models/trex.glb", "res://models/revolver.glb",
 	"res://models/shotgun.glb", "res://models/rifle.glb"]
 static var _flat_keep: Array[PackedScene] = []
@@ -1605,6 +1722,7 @@ func _build_exits() -> void:
 		_exit_pipe(c)
 		# 撤離點旁邊停一台篷車：遠遠就認得出「從這裡走」
 		_prop(&"Wagon", _on_ground(c * Vector3(1, 0, 1) + Vector3(0, 0, EXIT_RADIUS + 3.0))).rotation.y = 0.4
+		_clutter(c * Vector3(1, 0, 1) + Vector3(3.5, 0, EXIT_RADIUS + 1.2), 0.4)   # 篷車卸下來的貨
 
 ## 撤離點中間的綠色水管：遠遠就看得到撤離點在哪（0.8.1 回饋 U14）。
 ## ponytail: 佔位用的，之後換正式的撤離標的物模型。有碰撞，不然會變成看得到摸不到的東西

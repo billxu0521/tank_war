@@ -6,8 +6,6 @@
 #   BarnRoof    屋頂＋山牆三角，原點在牆頂中央。遊戲裡 X、高度用同一個倍率縮，斜度才不會變
 #   SiloBody    筒倉筒身，原點在地面中央，基準高 15（遊戲裡只縮高度）
 #   SiloDome    圓頂，原點在筒身頂
-#   FenceRail   一段 2.5 公尺的柵欄（一根木樁＋兩根橫木），遊戲裡沿長度排
-#   FencePost   柵欄最後收尾的那根木樁
 #   HayBale     圓捆乾草，軸是直的（遊戲裡跟碰撞圓柱一起放倒），原點在中心
 #   TreePine          原點在樹根，基準樹幹高 5（闊葉樹在 tree.py）
 #   Bush        灌木叢，原點在地面中央，約 2.2 寬 1.5 高（沒有碰撞，只擋視線）
@@ -17,7 +15,6 @@
 #   BARN_DOOR_*、BARN_BACK_X、BARN_LOFT、BARN_LADDER_X = main.gd 擺門和梯子的位置
 #   BarnCol 是碰撞形狀（遊戲裡看不見），牆和開口在這裡定義一次就好
 #   農舍在 house.py（另外輸出成 houses.glb）
-#   FENCE_H = main.gd FENCE_H，FENCE_SEG = 柵欄一段多長
 #
 # 重建：Blender 裡 BASE = '<這個資料夾>'; exec(open(BASE + '/props.py').read()); export('<專案>/models')
 import bpy, bmesh, math, os
@@ -34,7 +31,6 @@ BARN_BACK_W, BARN_BACK_H = 1.6, 2.8
 BARN_LOFT = 4.0                # 閣樓地板頂面高度（後半部，邊緣在 y=0）
 BARN_LADDER_X = -2.5           # 梯子的 X（靠在閣樓邊緣）
 SILO_R, SILO_H = 3.0, 15.0
-FENCE_H, FENCE_SEG = 1.0, 2.5
 TRUNK = 5.0
 
 for _o in list(bpy.data.objects):
@@ -300,19 +296,7 @@ cyl(0.35, 0.5, (0, 0, 1.75), (0, 0, 0), 12, m=BAND)                            #
 cone(0.55, 0.05, 0.35, (0, 0, 2.15), (0, 0, 0), 12, m=SILO)
 dome = finish('SiloDome', bevel=0.02, seg=1)
 
-# ================= 柵欄 =================
-# 功能零件：木樁（頂端削斜，雨水才流得掉）、兩根圓木橫木、橫木釘在木樁上的鐵釘
-def post(x):
-    box((0.15, 0.15, FENCE_H + 0.1), (x, 0, (FENCE_H + 0.1) / 2), m=WOOD_D)
-    cone(0.11, 0.02, 0.10, (x, 0, FENCE_H + 0.15), (0, 0, math.pi / 4), 4, m=WOOD_D)
-
-post(-FENCE_SEG / 2)
-for z, tilt in ((0.45, 0.02), (0.90, -0.015)):                                 # 橫木稍微歪一點，看起來是手工釘的
-    cyl(0.055, FENCE_SEG + 0.1, (0, 0.10, z), (tilt, math.pi / 2, 0), 8, m=WOOD)
-    sphere(0.02, (-FENCE_SEG / 2 + 0.05, 0.16, z), 6, 4, m=BAND)
-rail = finish('FenceRail', bevel=0.01, seg=1)
-post(0)
-fpost = finish('FencePost', bevel=0.01, seg=1)
+# 柵欄在 kit.py（跟 house.png 同一套：方木樁＋三條橫板）
 
 # ================= 乾草捲 =================
 # 功能零件：捲起來的草（兩個端面一圈圈的年輪）、綁草的麻繩、端面邊緣收圓
@@ -439,7 +423,7 @@ bpy.ops.object.select_all(action='DESELECT')
 # 看圖用的排版：沿 X 排開（匯出前會歸位）
 LAYOUT = {'Barn': 0, 'BarnRoof': 0, 'BarnCol': -30, 'BarnDoorSlide': 0, 'BarnBackDoor': 4,
           'SiloBody': 38, 'SiloDome': 38,
-          'FenceRail': 48, 'FencePost': 48, 'HayBale': 53, 'TreePine': 70, 'Bush': 76,
+          'HayBale': 53, 'TreePine': 70, 'Bush': 76,
           'WheatTuft': 80, 'GrassClump': 82, 'Egg': 85, 'Wagon': 90}
 LIFT = {'BarnRoof': BARN[2], 'SiloDome': SILO_H, 'HayBale': 0.7, 'Egg': 0.5}
 

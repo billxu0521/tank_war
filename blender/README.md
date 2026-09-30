@@ -8,6 +8,8 @@
   一輪迭代用 `tools/model_iter.sh tree <版號>`（做法和教訓見 [docs/程式建模迭代.md](../docs/程式建模迭代.md)）
 - `house.py` — 農舍三種（`House1` 前廊農舍、`House2` 圓木小屋、`House3` 直板高屋），各帶碰撞 `House<N>Col`，門 `HouseDoor` 共用，進 `houses.glb`。
   跟 tree.py 一樣背景跑：`tools/model_iter.sh house <版號>`
+- `kit.py` — 場景小物件（`docs/image/house.png` 裡房子以外的）：吊燈、木桶、木箱、方草捆、車輪、柵欄、圍欄門、繫柱架、風車、倉庫，進 `kits.glb`。
+  借用 house.py 的材質和工具（讀到 house.py 裡「以上是材質和工具」那行為止）。`REF=docs/image/house.png tools/model_iter.sh kit <版號>`
 - `props.py` — 場景物件：穀倉（牆身＋屋頂分開，照實際大小縮放）、筒倉、柵欄、乾草捲、松樹、
   麥子、草叢、恐龍蛋、篷車（撤離點），全部進 `props.glb`
 - `cowboy.py` — 牛仔：身體（原點在腳底）、頭（原點在眼睛 1.6 公尺，跟著上下看轉）、兩條腿（原點在髖關節，走路擺動）、
@@ -82,7 +84,7 @@ export('<專案>/models')                                   # 三個 .glb
 - 穀倉基準 14 × 20 × 8、屋頂斜度 0.55 ＝ main.gd 的 `BARN_BASE`、`BARN_PITCH`
 - 屋頂斜板的擺法（`gable_roof()`）照抄 main.gd 的 `_roof()`，碰撞就是那樣算的
 - 農舍在 house.py：主屋牆 10 × 8、地板高 0.45（`HOUSE_FLOOR`）、煙囪頂（`HOUSE_KINDS`）跟 main.gd 共用
-- 筒倉基準高 15、柵欄一段 2.5 公尺、樹幹基準高 5 ＝ `SILO_BASE_H`、`FENCE_SEG`、`TREE_BASE_TRUNK`
+- 筒倉基準高 15、樹幹基準高 5；柵欄一段 2.5 公尺（在 kit.py） ＝ `SILO_BASE_H`、`FENCE_SEG`、`TREE_BASE_TRUNK`
 - 麥子、草叢沒有碰撞，遊戲裡用 MultiMesh 撒幾千叢，模型要保持在幾十個三角形以內
 
 ## 空心建築（穀倉、農舍）
