@@ -201,6 +201,21 @@ func build(color_at: Callable) -> StaticBody3D:
 	mat.vertex_color_use_as_albedo = true
 	mat.vertex_color_is_srgb = true   # 不設的話顏色被當成線性，整片地會被洗成淡土黃
 	mat.roughness = 0.95
+	# 地面紋理（tools/make_ground_tex.py）：灰階，跟頂點顏色相乘。用世界座標從上往下投影，不用另外算 UV。
+	# 近看一張 4 公尺（碎石、草梗），再疊一張 48 公尺的大塊深淺；兩張平均都比白暗，albedo 調亮補回來（整體亮度跟沒貼圖時一樣）
+	mat.albedo_texture = preload("res://assets/textures/ground_detail.png")
+	mat.albedo_color = Color(1.2, 1.2, 1.2)   # 對照截圖調的：地面整體亮度跟沒貼圖時差不多
+	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC   # 斜看遠處不糊成條紋
+	mat.uv1_triplanar = true
+	mat.uv1_world_triplanar = true
+	mat.uv1_scale = Vector3.ONE / 4.0
+	mat.detail_enabled = true
+	mat.detail_albedo = preload("res://assets/textures/ground_macro.png")
+	mat.detail_blend_mode = BaseMaterial3D.BLEND_MODE_MUL
+	mat.detail_uv_layer = BaseMaterial3D.DETAIL_UV_2
+	mat.uv2_triplanar = true
+	mat.uv2_world_triplanar = true
+	mat.uv2_scale = Vector3.ONE / 48.0
 	st.set_material(mat)
 
 	var body := StaticBody3D.new()
