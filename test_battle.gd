@@ -680,8 +680,9 @@ func _case_rural() -> void:
 	for n in [&"Barn", &"BarnRoof", &"House1", &"House2", &"House3", &"House1Col", &"HouseDoor", &"SiloBody", &"SiloDome", &"FenceRail",
 			&"FencePost", &"HayBale", &"TreeOak", &"TreeOakM", &"TreeOakS", &"TreePine", &"Bush", &"WheatTuft", &"GrassClump",
 			&"Egg", &"Wagon", &"Rock01", &"Rock16", &"Lantern", &"Barrel", &"Crate", &"HayBlock", &"Wheel",
-			&"FenceGate", &"GatePost", &"HitchRail", &"Windmill", &"WindmillRotor", &"HayShed", &"HayShedCol"]:
-		_ck(m._props.get(n) is Mesh, "props / trees / rocks / houses / kits.glb 裡要有 %s" % n)
+			&"FenceGate", &"GatePost", &"HitchRail", &"Windmill", &"WindmillRotor", &"HayShed", &"HayShedCol",
+			&"Saloon", &"SaloonCol", &"Store", &"StoreCol", &"Sheriff", &"SheriffCol", &"WaterTower", &"WaterTowerCol"]:
+		_ck(m._props.get(n) is Mesh, "模型檔（props、trees、rocks、houses、kits、towns）裡要有 %s" % n)
 	# 場景小物件要貼著地面：不能浮在半空、也不能埋進地裡（車輪是輪軸中心，另外算）
 	var floating := []
 	for mi: MeshInstance3D in m.find_children("*", "MeshInstance3D", true, false):
@@ -692,6 +693,18 @@ func _case_rural() -> void:
 				if absf(above) > 0.35:
 					floating.append("%s %.1f" % [kind, above])
 	_ck(floating.is_empty(), "場景小物件要貼地（離地多少公尺：%s）" % [floating])
+	# 擺設檢查（編輯器的「檢查擺設」按鈕跑的同一支）：場景檔要乾淨；檢查本身要抓得到重疊
+	var probs := LevelCheck.run(m._level)
+	_ck(probs.is_empty(), "擺設檢查有問題：%s" % [probs.slice(0, 5)])
+	_ck(not LevelCheck.run([{kind = &"kit", name = &"Crate", pos = Vector3(3, 0, 40), yaw = 0.0},
+		{kind = &"fence", pos = Vector3(3, 0, 40), length = 10.0, yaw = 0.3}]).is_empty(), "擺設檢查要抓得到木箱卡在柵欄裡")
+	_ck(not LevelCheck.run([{kind = &"fence", pos = Vector3(3, 0, 40), length = 10.0, yaw = 0.0},
+		{kind = &"fence", pos = Vector3(3, 0, 40), length = 10.0, yaw = -PI * 0.5}]).is_empty(), "擺設檢查要抓得到兩道柵欄交叉")
+	_ck(LevelCheck.run([{kind = &"fence", pos = Vector3(60, 0, 40), length = 10.0, yaw = 0.0},   # 離開沙盒靶場
+		{kind = &"fence", pos = Vector3(65, 0, 45), length = 10.0, yaw = -PI * 0.5},
+		{kind = &"kit", name = &"HayBlock", pos = Vector3(63, 0, 30), yaw = 0.0},
+		{kind = &"kit", name = &"HayBlock", pos = Vector3(63, m.HAY_BLOCK.y, 30), yaw = 0.0}]).is_empty(), "柵欄在轉角接起來、草捆疊高不算重疊")
+	_ck(m.level_path != "" and ResourceLoader.exists(m.level_path), "場地要照場景檔 levels/ranch.tscn 蓋")
 	# 柵欄不能穿過農舍（牧場的房子以前跨到隔壁格，隔壁農莊的圍欄從房子中間穿過去）
 	var houses: Array[Vector3] = []
 	var rails: Array[Vector3] = []
@@ -792,7 +805,7 @@ func _case_interact() -> void:
 	var blades := 0
 	for n in m.get_tree().get_nodes_in_group(&"grass"):
 		blades += n.multimesh.instance_count
-	_ck(blades > 100000 and blades == spots.size(), "草地要長滿（現在 %d 叢）" % blades)
+	_ck(blades > m.ARENA * m.ARENA * 2.0 and blades == spots.size(), "草地要長滿（現在 %d 叢）" % blades)
 	_ck(inside == 0, "草叢不能長在建築裡（有 %d 叢）" % inside)
 	_ck(m._doors.size() >= 3, "每棟穀倉至少兩扇滑門＋後門（現在全場 %d 扇門）" % m._doors.size())
 	var d: Door = m._doors[0]   # 第一棟穀倉左邊那扇滑門

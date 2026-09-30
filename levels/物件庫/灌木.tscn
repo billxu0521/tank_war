@@ -1,0 +1,7 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_item.gd" id="1_wgj4l"]
+
+[node name="灌木" type="Node3D" unique_id=842820194]
+script = ExtResource("1_wgj4l")
+kind = "bush"

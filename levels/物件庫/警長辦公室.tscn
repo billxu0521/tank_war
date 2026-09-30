@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_item.gd" id="1_eevvd"]
+
+[node name="警長辦公室" type="Node3D" unique_id=551205451]
+script = ExtResource("1_eevvd")
+kind = "shop"
+variant = &"Sheriff"

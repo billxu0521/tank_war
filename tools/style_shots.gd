@@ -46,11 +46,10 @@ func _plan() -> void:
 	if barn:
 		var b := barn.global_position
 		_views.append(["farm", _ground(b + Vector3(38, 0, 32)) + up * 12, b + up * 3])
-	for kind: StringName in [&"House1", &"House2", &"House3"]:   # 三種農舍，左前方看（正面朝 +Z）
-		var house := _find(kind)
-		if house:
-			var h := house.global_position
-			_views.append([String(kind).to_lower(), _ground(h + Vector3(-11, 0, 17)) + up * 6, h + up * 3])
+	# 四個區域各一張：城鎮主街（從街口往西看）、麥田、森林小屋
+	_views.append(["town", _ground(Vector3(82, 0, -46)) + up * 2.5, _ground(Vector3(20, 0, -46)) + up * 3])
+	_views.append(["wheat", _ground(Vector3(-22, 0, 78)) + up * 3, _ground(Vector3(-55, 0, 36)) + up * 2])
+	_views.append(["forest", _ground(Vector3(61, 0, 63)) + up * 3, _ground(Vector3(52, 0, 48)) + up * 3])
 	for kind: StringName in [&"Windmill", &"HayShed"]:     # 場景小物件（kits.glb）：風車、麥田角落的倉庫
 		var n := _find(kind)
 		if n:
@@ -65,7 +64,7 @@ func _plan() -> void:
 	if dino:
 		var d := dino.global_position
 		_views.append(["dino", _ground(d + Vector3(-8, 0, 9)) + up * 3.5, d + up * 2.5])
-	_views.append(["overview", Vector3(40, 45, 70), Vector3(0, 0, 0)])
+	_views.append(["overview", Vector3(0, 230, 1), Vector3(0, 0, 0)])   # 正上方：看四個區域
 
 func _ground(p: Vector3) -> Vector3:
 	return _main._on_ground(Vector3(p.x, 0, p.z))

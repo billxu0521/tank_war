@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_item.gd" id="1_0rhbx"]
+
+[node name="雜貨店" type="Node3D" unique_id=495227385]
+script = ExtResource("1_0rhbx")
+kind = "shop"
+variant = &"Store"

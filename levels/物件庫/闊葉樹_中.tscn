@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_item.gd" id="1_w5o4t"]
+
+[node name="闊葉樹_中" type="Node3D" unique_id=802676031]
+script = ExtResource("1_w5o4t")
+kind = "tree"
+variant = &"TreeOakM"

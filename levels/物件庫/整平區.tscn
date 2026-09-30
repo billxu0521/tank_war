@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_item.gd" id="1_e6ipe"]
+
+[node name="整平區" type="Node3D" unique_id=1178794361]
+script = ExtResource("1_e6ipe")
+kind = "flat"
+amount = 12.0

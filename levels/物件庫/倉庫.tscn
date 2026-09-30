@@ -1,0 +1,7 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_item.gd" id="1_6wu8c"]
+
+[node name="倉庫" type="Node3D" unique_id=1580877534]
+script = ExtResource("1_6wu8c")
+kind = "hay_shed"

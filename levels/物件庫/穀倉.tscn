@@ -1,0 +1,9 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_item.gd" id="1_1nt0p"]
+
+[node name="穀倉" type="Node3D" unique_id=591060425]
+script = ExtResource("1_1nt0p")
+kind = "barn"
+size = Vector3(14, 8, 20)
+amount = 7.0

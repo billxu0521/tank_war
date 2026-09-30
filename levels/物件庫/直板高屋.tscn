@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_item.gd" id="1_i2gba"]
+
+[node name="直板高屋" type="Node3D" unique_id=524414608]
+script = ExtResource("1_i2gba")
+kind = "house"
+variant = &"House3"

@@ -1,0 +1,7 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_item.gd" id="1_ipjes"]
+
+[node name="方草捆" type="Node3D" unique_id=1243309817]
+script = ExtResource("1_ipjes")
+variant = &"HayBlock"

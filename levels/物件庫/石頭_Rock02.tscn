@@ -1,0 +1,10 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_item.gd" id="1_g4708"]
+
+[node name="石頭_Rock02" type="Node3D" unique_id=1880830417]
+transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, 0, 0, 0)
+script = ExtResource("1_g4708")
+kind = "rock"
+variant = &"Rock02"
+flag = true
