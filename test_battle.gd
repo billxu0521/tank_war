@@ -317,7 +317,91 @@ func _case_hunt_weapons() -> void:
 	vm._update_spread(0.1)
 	_ck(is_equal_approx(vm.spread, 2.0), "腰射散布要用手上那把槍自己的（現在 %.1f）" % vm.spread)
 	rifle.spread_hip = 4.0
+
+	# 拉栓（cycle_time）比擊發間隔長時，要等拉栓做完才能開，兩段同時起算不相加
+	var old_interval: float = rifle.fire_interval
+	var old_cycle: float = rifle.cycle_time
+	rifle.fire_interval = 0.3
+	rifle.cycle_time = 1.0
+	rifle.mag = rifle.capacity
+	vm._fire_cooldown = 0.0
+	vm.try_fire()
+	vm._process(0.5)
+	vm.try_fire()
+	_ck(rifle.mag == rifle.capacity - 1, "拉栓還沒做完不能開下一槍")
+	vm._process(0.55)
+	vm.try_fire()
+	_ck(rifle.mag == rifle.capacity - 2, "拉栓做完（1 秒，不是 1.3 秒）就能開")
+	rifle.fire_interval = old_interval
+	rifle.cycle_time = old_cycle
 	vm.switch_weapon(0)
+
+	# 傷害衰減：起點前全額、終點剩最低傷害、再遠也是最低傷害
+	_ck(is_equal_approx(revolver.damage_at(revolver.falloff_end), revolver.minimum_damage)
+		and is_equal_approx(revolver.damage_at(revolver.falloff_end * 2.0), revolver.minimum_damage)
+		and is_equal_approx(revolver.damage_at((revolver.falloff_start + revolver.falloff_end) * 0.5),
+			(revolver.damage + revolver.minimum_damage) * 0.5),
+		"傷害衰減要是：起點全額、中間一半、終點以後都是最低傷害")
+
+	# 瞄準後第一發完全準（開關打開時）：舉滿、站著、沒有累積散布 -> 正正打在準心
+	revolver.ads_first_shot_perfect = true
+	vm.ads = 1.0
+	vm.spread = revolver.spread_ads
+	me.velocity = Vector3.ZERO
+	var eye: Camera3D = vm._camera
+	_ck(vm._spread_direction(eye).is_equal_approx(-eye.global_transform.basis.z), "瞄準第一發要完全準")
+	revolver.ads_first_shot_perfect = false
+	vm.ads = 0.0
+
+	# 逐發裝填中按開火：reload_fire_shoots 關掉時只停止裝填，不開槍
+	vm.reload_fire_shoots = false
+	revolver.mag = 3
+	vm._fire_cooldown = 0.0
+	vm.try_reload()
+	vm.try_fire()
+	_ck(revolver.mag == 3 and not vm._reloading, "裝填中按開火（只停不開）：停下裝填、不開槍")
+	vm.reload_fire_shoots = true
+	revolver.mag = revolver.capacity
+
+	# 參數表（cowboy/weapons/weapons.csv）：每一列都要是真的參數、三把槍都有欄、選項翻得回來、改了會生效
+	var table: Dictionary = Weapon.table()
+	_ck(table.has("revolver") and table.has("shotgun") and table.has("rifle"), "參數表要有三把槍的欄")
+	for key: String in table.get("revolver", {}):
+		_ck(revolver.get(key) != null, "參數表的 %s 不是槍的參數（打錯字？）" % key)
+	_ck(revolver.action_type == Weapon.Action.SINGLE_ACTION and shotgun.reload_type == Weapon.Reload.WHOLE
+		and revolver.ads_first_shot_perfect == false, "參數表的選項（射擊類型、裝填類型、是／否）要翻對")
+	var old_dmg: String = table["rifle"]["damage"]
+	table["rifle"]["damage"] = "77"
+	rifle.apply_table()
+	_ck(is_equal_approx(rifle.damage, 77.0), "改參數表要生效")
+	table["rifle"]["damage"] = old_dmg
+	rifle.apply_table()
+
+	# 武器介紹的射速：用規格第 07 節的例子——裝 3 發、每發拉栓 2 秒、整組裝填 9 秒 -> 不含裝填 30、含裝填 12 發／分
+	var ex: Weapon = Weapon.new()
+	ex.capacity = 3
+	ex.fire_interval = 0.5
+	ex.cycle_time = 2.0
+	ex.reload_type = Weapon.Reload.WHOLE
+	ex.reload_time = 9.0
+	_ck(is_equal_approx(ex.rpm(), 30.0) and is_equal_approx(ex.rpm(true), 12.0),
+		"射速算法要跟規格的例子一樣（現在 %.1f / %.1f）" % [ex.rpm(), ex.rpm(true)])
+	ex.free()
+	_ck(is_equal_approx(revolver.full_reload_time(),
+		revolver.reload_start + revolver.capacity * revolver.reload_insert + revolver.reload_end), "逐發裝填總時間 = 準備 + 發數 × 每顆 + 收尾")
+	m._set_menu(true)
+	var info: GridContainer = m.menu.get_node(^"WeaponInfo")
+	_ck(info.visible and info.get_child_count() == (revolver.info_rows().size() + 1) * 4, "Esc 選單要有三把槍的武器介紹")
+	m._set_menu(false)
+
+	# 瞄準按住／切換：玩家的設定要存起來，下次開遊戲還在
+	m.settings_path = "user://test_settings.cfg"
+	m._on_aim_toggle_toggled(true)
+	Viewmodel.aim_toggle = false
+	m._load_settings()
+	_ck(Viewmodel.aim_toggle, "瞄準切換的設定要存起來")
+	m._on_aim_toggle_toggled(false)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(m.settings_path))
 	for w in vm._weapons:
 		_ck(w.reserve > 0, "%s 的備彈要有限（Hunt 的子彈要省著用）" % w.display_name)
 		_ck(w.get_node_or_null(^"Model") != null, "%s 要有 Blender 建的模型" % w.display_name)

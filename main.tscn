@@ -191,6 +191,10 @@ horizontal_alignment = 1
 layout_mode = 2
 text = "繼續遊戲"
 
+[node name="AimToggleBtn" type="CheckButton" parent="UI/Root/Menu/Box" unique_id=1964021260]
+layout_mode = 2
+text = "瞄準：按一下切換（關＝按住右鍵）"
+
 [node name="LeaveBtn" type="Button" parent="UI/Root/Menu/Box" unique_id=1356984258]
 layout_mode = 2
 text = "回到大廳"
@@ -362,4 +366,5 @@ show_percentage = false
 [connection signal="pressed" from="UI/Root/Menu/Box/Controller/BotBtn" to="." method="_on_add_bot_pressed"]
 [connection signal="pressed" from="UI/Root/Menu/Box/Controller/ClearBotsBtn" to="." method="_on_clear_bots_pressed"]
 [connection signal="toggled" from="UI/Root/Menu/Box/Controller/DinoAttackBtn" to="." method="_on_dino_attack_toggled"]
+[connection signal="toggled" from="UI/Root/Menu/Box/AimToggleBtn" to="." method="_on_aim_toggle_toggled"]
 [connection signal="pressed" from="UI/Root/Menu/Box/Controller/BossBtn" to="." method="_on_add_boss_pressed"]

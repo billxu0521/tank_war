@@ -108,6 +108,7 @@ func _ready() -> void:
 	_use_cjk_font()
 	_ips = _local_ips()
 	_load_saved_ips()
+	_load_settings()
 	saved_ips.get_popup().index_pressed.connect(func(i: int) -> void:
 		ip_edit.text = saved_ips.get_popup().get_item_text(i))
 	_use_sky()
@@ -166,9 +167,49 @@ func _set_menu(open: bool) -> void:
 	# 遊戲局控制只有主機（和沙盒）能用：bot 都在主機上跑
 	$UI/Root/Menu/Box/Controller.visible = multiplayer.is_server()
 	if open:
+		_fill_weapon_info()
 		_show_cursor()
 	else:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+## Esc 選單右邊的武器介紹：手上幾把槍並排比。數字從參數算出來（weapon.gd 的 info_rows），不另外填。
+## 當恐龍、或還沒進遊戲就不顯示
+func _fill_weapon_info() -> void:
+	var grid: GridContainer = menu.get_node_or_null(^"WeaponInfo")
+	if grid == null:
+		grid = GridContainer.new()
+		grid.name = "WeaponInfo"
+		grid.set_anchors_and_offsets_preset(Control.PRESET_CENTER_RIGHT, Control.PRESET_MODE_MINSIZE, 40)
+		grid.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+		grid.add_theme_constant_override(&"h_separation", 24)
+		grid.add_theme_constant_override(&"v_separation", 6)
+		menu.add_child(grid)
+	for c in grid.get_children():
+		c.free()
+	var me := players.get_node_or_null(str(multiplayer.get_unique_id()))
+	var vm: Node = me.get(&"viewmodel") if me else null
+	grid.visible = vm != null
+	if vm == null:
+		return
+	var guns: Array = vm._weapons
+	grid.columns = guns.size() + 1
+	var cells: Array = [["武器"]]
+	for w: Weapon in guns:
+		cells[0].append(w.display_name)
+	var rows: Array = guns[0].info_rows()
+	for r in rows.size():
+		var line: Array = [rows[r][0]]
+		for w: Weapon in guns:
+			line.append(w.info_rows()[r][1])
+		cells.append(line)
+	for line: Array in cells:
+		for i in line.size():
+			var l := Label.new()
+			l.text = line[i]
+			l.add_theme_font_size_override(&"font_size", 15)
+			if i == 0 or line == cells[0]:
+				l.modulate = Color(1.0, 0.85, 0.55)
+			grid.add_child(l)
 
 ## 放開滑鼠並把游標搬到畫面中間。macOS（尤其在編輯器內嵌的遊戲視窗）從鎖定切回來時，
 ## 游標常常解鎖了卻沒畫出來；搬一下會強迫系統重畫，也剛好落在選單按鈕旁邊
@@ -301,6 +342,22 @@ var _ips := ""          # 本機 IP，開遊戲時查一次就好
 var _had_me := false    # 這局我已經生出來過；之後角色不見了就是死了，開始重生倒數
 var _dead_ms := -1
 var saved_ips_path := "user://saved_ips.cfg"   # 測試會換成別的檔，不動到真的清單
+
+var settings_path := "user://settings.cfg"      # 玩家自己的設定（瞄準按住／切換）
+
+func _load_settings() -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(settings_path)   # 第一次開沒有檔案，用預設值
+	Viewmodel.aim_toggle = cfg.get_value("controls", "aim_toggle", false)
+	$UI/Root/Menu/Box/AimToggleBtn.set_pressed_no_signal(Viewmodel.aim_toggle)
+
+## 選單的「瞄準：按一下切換」：關掉是按住右鍵才舉槍
+func _on_aim_toggle_toggled(on: bool) -> void:
+	Viewmodel.aim_toggle = on
+	var cfg := ConfigFile.new()
+	cfg.load(settings_path)
+	cfg.set_value("controls", "aim_toggle", on)
+	cfg.save(settings_path)
 
 func _on_dino_attack_toggled(on: bool) -> void:
 	dino_attacks = on

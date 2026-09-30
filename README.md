@@ -24,12 +24,14 @@
 
 | 鍵 | 槍 | 彈匣／備彈 | 傷害 | 有效射程 | 特色 |
 |---|---|---|---|---|---|
-| 1 | 左輪 | 6／18 | 50（三發死） | 25 m | 每發扳一次擊錘（0.45 秒）；**腰射按住左鍵＝搧擊錘**，0.16 秒一發但很散 |
+| 1 | 左輪 | 6／18 | 50（三發死） | 25 m | 每發扳一次擊錘（0.45 秒）；**腰射按住左鍵（0.2 秒以上）＝搧擊錘**，0.16 秒一發但很散；快速連點不會變成搧擊錘 |
 | 2 | 單管散彈 | 1／10 | 10 顆 × 14 | 8 m | 折開式，一發就要換（1.6 秒）；30 公尺外就散光 |
 | 3 | 槓桿步槍 | 10／20 | 60 | 60 m | 每發拉一次桿（0.8 秒），射程 250 公尺；遠距離要閉氣 |
 
 子彈有限，Hunt 的節奏就是省著打。
-超過有效射程，打頭不再秒殺、傷害線性遞減，到射程盡頭剩一半。
+超過有效射程（衰減起始距離），打頭不再秒殺、傷害線性遞減，到衰減終止距離降到最低傷害。
+**所有數字在 `cowboy/weapons/weapons.csv`**（Excel 打得開，改完重開遊戲就生效）；Esc 選單右邊有三把槍的比較表。
+參數的意思照企劃的[槍枝參數規格](docs/discord/2026-09-30-槍枝參數規格.md)，這階段做 L0（[規劃](docs/plans/2026-09-30-槍枝-L0.md)）。
 **子彈會飛、會掉**：初速左輪 330、散彈 300、步槍 440 m/s，重力 9.8。從鏡頭中心出發，
 近距離打哪中哪，步槍打 150 公尺約掉 57 公分，遠距離要抬高一點。
 
@@ -162,6 +164,8 @@ TankWar.exe -- --sandbox    # 沙盒：靶場練槍
 ```sh
 godot                                    # 開專案
 godot --headless --script test_battle.gd # 自我檢查（壞掉會 exit 1）
+godot --headless --script tools/test_weapon_l0.gd   # 槍枝 L0 驗收（要等換彈計時，約一分鐘）
+godot --headless --script tools/test_house_walk.gd  # 三種農舍走得上前廊
 ./build.sh                               # 打包 Windows + macOS 到 build/
 godot --headless --quit --editor         # 新增 class_name 後重建型別快取
 ```
@@ -172,7 +176,7 @@ godot --headless --quit --editor         # 新增 class_name 後重建型別快�
 | `terrain.gd` | 丘陵地形：高度、整平區、畫面網格和碰撞（同一份高度） |
 | `interact/` | F 互動的東西：`door.gd`（開關走主機、晚加入補送）、`ladder.gd`（爬的邏輯在 cowboy.gd） |
 | `fighter.gd` | 牛仔恐龍共用：血量、死亡、連線權限、中彈閃紅 |
-| `cowboy/` | 牛仔：`cowboy.gd` 移動與 bot、`viewmodel.gd` 開槍與 Hunt 規則、`weapon.gd` 槍的數值與程式動作、`weapons/*.tscn` 三把槍 |
+| `cowboy/` | 牛仔：`cowboy.gd` 移動與 bot、`viewmodel.gd` 開槍與 Hunt 規則、`weapon.gd` 槍的參數與程式動作、`weapons/*.tscn` 三把槍、`weapons/weapons.csv` 參數表 |
 | `models/*.glb` `blender/*.py` | 模型和產生它的 Blender 腳本（牛仔、槍、恐龍、場景物件），重建方式見 `blender/README.md` |
 | `dino.*` `trex.gd` `fireball.*` | 恐龍、骨架程式動畫（見 [程序化動畫筆記](docs/程序化動畫.md)）、火球 |
 | `assets/` | 從 FNE 搬來的音效、材質。授權見 `CREDITS.md` |

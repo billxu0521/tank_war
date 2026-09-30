@@ -14,6 +14,17 @@ class_name Viewmodel
 @export var ads_fov := 55.0
 @export var ads_speed_scale := 0.5
 
+@export_group("操作規則")
+## 三把槍一致的操作方式（企劃規格裡「待討論」的幾項，先做成開關）
+## 提早按開火要不要記住：扳擊錘、拉栓還沒做完就按，等槍好了自動射出。false = 要再按一次
+@export var fire_buffer := false
+## 逐發裝填中按開火：true = 停下裝填、馬上開槍；false = 只停下裝填，要再按一次才開（規格建議的做法）
+@export var reload_fire_shoots := true
+## 搧擊錘要持續按住開火鍵多久才算（秒）。快速連點每下都很短，不會被當成搧擊錘連發
+@export var fan_hold := 0.2
+## 瞄準按一下切換（true）或按住（false）。玩家自己的設定，Esc 選單裡改，存在 user://settings.cfg
+static var aim_toggle := false
+
 @export_group("Spread")
 ## 舉槍時間、腰射／瞄準散布、後座力是每把槍自己的（weapon.gd）。
 ## 這裡是三把共用的連射散布累積（規格 L1 的 bloom）：每發加多少、上限、每秒縮回多少，散布單位是度
@@ -97,6 +108,9 @@ var _recoil_left := Vector2.ZERO
 var _recoil_time_left := 0.0
 ## 每開一輪裝填就 +1，讓上一輪的 await 醒來時知道自己已經過期
 var _reload_id := 0
+var _fire_queued := false   # 等槍好了自動射的那一發：裝填中按開火（槍回正後射），或 fire_buffer 開著時提早按的
+var _aim_latched := false   # aim_toggle 開著時：現在是不是舉著
+var _fire_hold := 0.0       # 開火鍵這一次已經按住多久
 
 
 func _ready() -> void:
@@ -114,6 +128,9 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_fire_cooldown = maxf(_fire_cooldown - delta, 0.0)
+	if _fire_queued and _fire_cooldown <= 0.0:
+		_fire_queued = false
+		try_fire()
 	_melee_cooldown = maxf(_melee_cooldown - delta, 0.0)
 	_update_spread(delta)
 	_update_recoil(delta)
@@ -126,8 +143,11 @@ func _process(delta: float) -> void:
 		if _melee_held >= 0.0:
 			pass   # 蓄力近戰中：兩手都在揮槍托，不能開槍、換彈、換槍
 		elif Input.is_action_just_pressed("fire"):
-			try_fire()
-		elif weapon.fan_interval > 0.0 and ads < 0.5 and Input.is_action_pressed("fire"):
+			if _fire_cooldown > 0.0 and fire_buffer and not _reloading:
+				_fire_queued = true
+			else:
+				try_fire()
+		elif _wants_fan():
 			try_fire(true)   # 左輪腰射按住＝搧擊錘，快但散
 		elif Input.is_action_just_pressed("reload"):
 			try_reload()
@@ -143,7 +163,15 @@ func _process(delta: float) -> void:
 	# 翻越、爬梯子時槍放低（手去撐東西了）
 	weapon.lower = move_toward(weapon.lower, 1.0 if (_player.vaulting or _player.is_climbing()) else 0.0, delta * 6.0)
 	weapon.aim = ads
-	_update_ads(Input.is_action_pressed("aim") and _melee_held < 0.0, delta)
+	_fire_hold = _fire_hold + delta if Input.is_action_pressed("fire") else 0.0
+	var wants_aim := Input.is_action_pressed("aim")
+	if aim_toggle:
+		if Input.is_action_just_pressed("aim"):
+			_aim_latched = not _aim_latched
+		if _player.is_sprinting():
+			_aim_latched = false   # 衝刺會放下槍，切換模式也一樣
+		wants_aim = _aim_latched
+	_update_ads(wants_aim and _melee_held < 0.0, delta)
 	_update_breath(Input.is_action_pressed("sprint"), delta)
 	_update_sway(delta)
 	_update_anim(delta)
@@ -152,8 +180,9 @@ func _process(delta: float) -> void:
 func switch_weapon(index: int) -> void:
 	if index == _index or index < 0 or index >= _weapons.size():
 		return
-	# 換槍等於放棄這輪裝填
+	# 換槍等於放棄這輪裝填，排隊中的那一發也不射
 	cancel_reload()
+	_fire_queued = false
 	weapon.visible = false
 	_index = index
 	weapon = _weapons[index]
@@ -271,6 +300,11 @@ func try_fire(fanning := false) -> void:
 		if weapon.reload_type == Weapon.Reload.WHOLE:
 			return
 		cancel_reload()
+		# 槍還在裝填姿勢（裝填門開著、手在塞子彈）：先回正，回好了才射這一發，不在半路開槍
+		_fire_cooldown = maxf(_fire_cooldown, weapon.ready_after_reload())
+		if reload_fire_shoots:
+			_fire_queued = true
+		return
 	if weapon.mag == 0:
 		if weapon.reserve != 0:
 			try_reload()
@@ -280,13 +314,15 @@ func try_fire(fanning := false) -> void:
 
 	weapon.mag -= 1
 	_refresh_ammo()
-	_fire_cooldown = weapon.fan_interval if fanning else weapon.fire_interval
+	# 擊發間隔和扳擊錘／拉栓同時起算，兩個都結束才能開下一槍。搧擊錘是手掌拍擊錘，沒有另外的上膛動作
+	_fire_cooldown = weapon.fan_interval if fanning else maxf(weapon.fire_interval, weapon.cycle_time)
 	weapon.play_sound(&"Shoot")
 	# 最後一發用 _EMPTY 版本（手槍滑套後定）
 	var action := &"fire"
 	if weapon.mag == 0 and weapon.has_action(&"fire_EMPTY"):
 		action = &"fire_EMPTY"
-	_anim_lock = weapon.play(action, blend, _fire_cooldown)
+	# 畫面上的扳擊錘／拉栓照 cycle_time 做完：還沒拉好不會先看起來已經好了
+	_anim_lock = weapon.play(action, blend, weapon.cycle_time if weapon.cycle_time > 0.0 and not fanning else _fire_cooldown)
 
 	# 每顆彈丸一顆子彈，各自帶散布。霰彈的體感就是這裡來的：近距離全中、遠距離散光
 	var dirs := PackedVector3Array()
@@ -380,9 +416,9 @@ func try_reload() -> void:
 		_reloading = false
 		return
 
-	if weapon.has_action(&"reload_start"):
-		var lead := weapon.play(&"reload_start", blend)
-		await get_tree().create_timer(lead).timeout
+	if weapon.reload_start > 0.0:
+		weapon.play(&"reload_start", blend, weapon.reload_start)
+		await get_tree().create_timer(weapon.reload_start).timeout
 		if id != _reload_id:
 			return
 	while weapon.mag < weapon.capacity and weapon.reserve != 0:
@@ -397,8 +433,9 @@ func try_reload() -> void:
 		if weapon.reserve > 0:
 			weapon.reserve -= 1
 		_refresh_ammo()
-	if weapon.has_action(&"reload_end"):
-		_anim_lock = weapon.play(&"reload_end", blend)
+	if weapon.reload_end > 0.0:
+		_anim_lock = weapon.play(&"reload_end", blend, weapon.reload_end)
+		_fire_cooldown = maxf(_fire_cooldown, weapon.reload_end)   # 裝填門還沒關好不能開
 	_reloading = false
 
 
@@ -414,12 +451,26 @@ func _spread_direction(cam: Camera3D, extra := 0.0) -> Vector3:
 	var basis := cam.global_transform.basis
 	var forward := -basis.z
 	var total := spread + extra
+	if _first_shot_perfect():
+		total = extra   # 霰彈的彈丸還是各自散開
 	if total <= 0.0:
 		return forward
 	var angle := deg_to_rad(total) * sqrt(randf())
 	var roll := randf() * TAU
 	var side := basis.x * cos(roll) + basis.y * sin(roll)
 	return (forward + side * tan(angle)).normalized()
+
+
+## 搧擊錘：左輪腰射、開火鍵「持續」按住夠久。只看「現在按著」的話，快速連點時某一下剛好跨過冷卻結束，
+## 就會被當成搧擊錘，用 0.16 秒的間隔連發出去
+func _wants_fan() -> bool:
+	return weapon.fan_interval > 0.0 and ads < 0.5 and _fire_hold >= fan_hold
+
+
+## 瞄準後第一發完全準：舉滿瞄具、站著不動、沒有連射累積的散布
+func _first_shot_perfect() -> bool:
+	return weapon.ads_first_shot_perfect and ads >= 1.0 and spread <= weapon.spread_ads + 0.001 \
+		and Vector2(_player.velocity.x, _player.velocity.z).length() < 0.5
 
 
 ## 直接轉視角而不是只晃畫面，這樣它真的影響下一發落點。
