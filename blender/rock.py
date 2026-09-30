@@ -354,7 +354,7 @@ def preview(obs, path):
 
 a = args()
 bpy.ops.wm.read_factory_settings(use_empty=True)
-MAT = material('rock_stone', (0.32, 0.17, 0.08))   # 線性值。比參考圖定案時略亮、紅綠比低一點：遊戲的光比預覽暗又暖，固有色往反方向補
+MAT = material('rock_stone', (0.153, 0.083, 0.039))   # 線性值。比參考圖定案時略亮、紅綠比低一點：遊戲的光比預覽暗又暖，固有色往反方向補
 rocks = [build(i, parts, MAT) for i, (cx, by, parts) in enumerate(ROCKS)]
 print('rocks:', len(rocks), 'tris:', sum(sum(len(p.vertices) - 2 for p in r.data.polygons) for r in rocks))
 if a['--out']:

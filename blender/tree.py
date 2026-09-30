@@ -125,7 +125,7 @@ def inside(p, blobs):
 def materials():
     # 線性值。換成 sRGB 約：樹皮 #816145、葉子 #6F7938。比照參考圖定案時略亮、略綠：遊戲的光比預覽暗又暖，固有色往反方向補。
     # 葉子只用一種顏色：每團顏色不同看起來像拼貼，明暗交給光照
-    return [material('tree_bark', (0.22, 0.12, 0.06)), material('tree_leaf', (0.16, 0.19, 0.04))]
+    return [material('tree_bark', (0.133, 0.055, 0.024)), material('tree_leaf', (0.055, 0.068, 0.018))]
 
 
 def build(name, cfg):

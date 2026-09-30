@@ -6,8 +6,10 @@
 - `weapons.py` — 牛仔的三把槍（左輪、單管散彈、槓桿步槍），各自匯出一個 `.glb`
 - `tree.py` — 闊葉樹大中小三棵（`TreeOak` / `TreeOakM` / `TreeOakS`），進 `trees.glb`。**不用開 Blender**，背景直接跑，
   一輪迭代用 `tools/model_iter.sh tree <版號>`（做法和教訓見 [docs/程式建模迭代.md](../docs/程式建模迭代.md)）
-- `props.py` — 場景物件：穀倉（牆身＋屋頂分開，照實際大小縮放）、農舍、筒倉、柵欄、乾草捲、松樹、
-  山崖（圍牆的外觀）、麥子、草叢、恐龍蛋、篷車（撤離點），全部進 `props.glb`
+- `house.py` — 農舍三種（`House1` 前廊農舍、`House2` 圓木小屋、`House3` 直板高屋），各帶碰撞 `House<N>Col`，門 `HouseDoor` 共用，進 `houses.glb`。
+  跟 tree.py 一樣背景跑：`tools/model_iter.sh house <版號>`
+- `props.py` — 場景物件：穀倉（牆身＋屋頂分開，照實際大小縮放）、筒倉、柵欄、乾草捲、松樹、
+  麥子、草叢、恐龍蛋、篷車（撤離點），全部進 `props.glb`
 - `cowboy.py` — 牛仔：身體（原點在腳底）、頭（原點在眼睛 1.6 公尺，跟著上下看轉）、兩條腿（原點在髖關節，走路擺動）、
   自己看的靴子、第一人稱握槍的手（HandGrip / HandSupport，位置寫在各槍場景的 grip_hand / support_hand；
   右手的拇指 HandGripThumb、前臂 HandGripArm 分開，左輪扳擊錘和轉手臂用；HandLoad 是左輪換彈捏子彈的左手）
@@ -79,15 +81,14 @@ export('<專案>/models')                                   # 三個 .glb
 所以改模型不會動到翻越高度、掩蔽、恐龍爬牆。要對齊的數字：
 - 穀倉基準 14 × 20 × 8、屋頂斜度 0.55 ＝ main.gd 的 `BARN_BASE`、`BARN_PITCH`
 - 屋頂斜板的擺法（`gable_roof()`）照抄 main.gd 的 `_roof()`，碰撞就是那樣算的
-- 農舍 10 × 8 × 5、斜度 0.5、煙囪位置 ＝ main.gd 的 `_house()`
+- 農舍在 house.py：主屋牆 10 × 8、地板高 0.45（`HOUSE_FLOOR`）、煙囪頂（`HOUSE_KINDS`）跟 main.gd 共用
 - 筒倉基準高 15、柵欄一段 2.5 公尺、樹幹基準高 5 ＝ `SILO_BASE_H`、`FENCE_SEG`、`TREE_BASE_TRUNK`
-- 山崖一段寬 40（`CLIFF_W`）；岩塊只能往牆外（Blender +Y）長，凸進場地會變成看得到摸不到
 - 麥子、草叢沒有碰撞，遊戲裡用 MultiMesh 撒幾千叢，模型要保持在幾十個三角形以內
 
 ## 空心建築（穀倉、農舍）
 
 蓋牆用 `wall()`（自動在門窗開口處切開）、要擋人的家具用 `solid()`：兩個都會順便記一份碰撞方塊，
-最後 `make_col()` 合成 `BarnCol` / `HouseCol`，遊戲拿來當碰撞形狀（看不見）。
+最後 `make_col()` 合成 `BarnCol` / `House<N>Col`（這幾個函式在 common.py，house.py 也用），遊戲拿來當碰撞形狀（看不見）。
 畫面和碰撞只在這裡定義一次。門是另外的物件（`BarnDoorSlide`、`BarnBackDoor`、`HouseDoor`），
 原點在門軸或底部中央，遊戲裡會動。門和梯子的位置常數（`BARN_DOOR_*`、`BARN_BACK_X`、
 `BARN_LOFT`、`BARN_LADDER_X`）跟 main.gd 共用。

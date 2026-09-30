@@ -109,7 +109,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與左輪扳擊錘換彈動作音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰一條體力、沙盒、鄉村柵欄灌木貼圖、著彈碎屑與環境聲、地形起伏、F 開門爬梯子、翻柵欄和窗台、手腳、只剩連線和沙盒、遊戲局控制、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、恐龍攻擊開關、介面（大廳存 IP、勝負畫面、倒數）、中彈踉蹌、恐龍 boss 行為樹、方位條、測試站自動開下一局都正常")
+		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與左輪扳擊錘換彈動作音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰一條體力、沙盒、鄉村柵欄灌木貼圖、著彈碎屑與煙囪煙、地形起伏、F 開門爬梯子、翻柵欄和窗台、手腳、只剩連線和沙盒、遊戲局控制、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、恐龍攻擊開關、介面（大廳存 IP、勝負畫面、倒數）、中彈踉蹌、恐龍 boss 行為樹、方位條、測試站自動開下一局都正常")
 	return true
 
 # --- 共用 ---
@@ -584,13 +584,13 @@ func _case_rural() -> void:
 			fences += 1
 	_ck(fences > 20, "鄉村要有柵欄（現在 %d 段）" % fences)
 	# 場景物件的模型都要載得到，名字對不上的話會變成看不見的空氣牆
-	for n in [&"Barn", &"BarnRoof", &"House", &"SiloBody", &"SiloDome", &"FenceRail",
-			&"FencePost", &"HayBale", &"TreeOak", &"TreeOakM", &"TreeOakS", &"TreePine", &"Bush", &"Cliff", &"WheatTuft", &"GrassClump",
+	for n in [&"Barn", &"BarnRoof", &"House1", &"House2", &"House3", &"House1Col", &"HouseDoor", &"SiloBody", &"SiloDome", &"FenceRail",
+			&"FencePost", &"HayBale", &"TreeOak", &"TreeOakM", &"TreeOakS", &"TreePine", &"Bush", &"WheatTuft", &"GrassClump",
 			&"Egg", &"Wagon", &"Rock01", &"Rock16"]:
-		_ck(m._props.get(n) is Mesh, "props.glb / trees.glb / rocks.glb 裡要有 %s" % n)
+		_ck(m._props.get(n) is Mesh, "props / trees / rocks / houses.glb 裡要有 %s" % n)
 	_end(m)
 
-## 著彈照材質噴不同碎屑；煙囪冒煙、果園鳥叫、全場背景聲都有擺上去
+## 著彈照材質噴不同碎屑；煙囪冒煙
 func _case_fx_and_ambience() -> void:
 	var m := _new_game()
 	var arena: Node = m.get_node(^"Arena")
@@ -606,18 +606,10 @@ func _case_fx_and_ambience() -> void:
 		Fx.hit(arena, Vector3(0, 1, 0), Vector3.UP, surface)
 	_ck(arena.get_child_count() > before + Fx.SURFACES.size() - 1, "每種著彈都要生出粒子")
 	var smoke := 0
-	var sounds := 0
-	var bg := false
 	for n in arena.get_children():
 		if n is CPUParticles3D and not n.one_shot:
 			smoke += 1
-		if n is AudioStreamPlayer3D and n.stream == m.BIRDS:
-			sounds += 1
-		if n is AudioStreamPlayer and n.stream == m.AMBIENT:
-			bg = n.autoplay and n.stream.loop
 	_ck(smoke > 0, "房子的煙囪要冒煙")
-	_ck(sounds > 0 and m.BIRDS.loop, "果園要有循環的鳥叫")
-	_ck(bg, "全場要有循環的背景聲")
 	_end(m)
 
 ## 地形：有起伏、該平的地方平、碰撞跟畫面對得上
@@ -758,14 +750,14 @@ func _case_vault() -> void:
 		_ck(me.try_vault(true), "體力見底也要翻得過去（體力只影響移動速度）")
 		me.vaulting = false
 
-	# 農舍的窗：窗台 1 公尺，從窗外翻進屋裡
+	# 農舍的窗：窗台離地 1 公尺，從窗外翻進屋裡（用左側牆的窗：正面有前廊擋著）
 	var house := Vector3.ZERO
 	for n in m.get_node(^"Arena").get_children():
-		if n is MeshInstance3D and n.mesh == m._props[&"House"]:
+		if n is MeshInstance3D and n.mesh == m._props[&"House1"]:
 			house = n.global_position
 			break
-	me.global_position = m._on_ground(Vector3(house.x + 3.0, 0, house.z + 4.0 + 0.7))
-	me.rotation = Vector3.ZERO   # 面向 -Z，對著前牆的右窗
+	me.global_position = m._on_ground(Vector3(house.x - 5.0 - 0.7, 0, house.z))
+	me.rotation = Vector3(0, -PI * 0.5, 0)   # 面向 +X，對著左牆的窗
 	me.stamina = me.max_stamina
 	_ck(me.try_vault(true), "站在窗外要能從窗戶翻進去")
 	me.vaulting = false
@@ -1326,7 +1318,7 @@ func _case_arena_walls() -> void:
 	# 建築不能蓋超過上限，不然上面那條就白算了
 	var tallest := 0.0
 	for c in m.get_node(^"Arena").get_children():
-		if c.is_in_group(&"arena_wall"):
+		if c.is_in_group(&"arena_wall") or c.name == &"FarLand":   # 遠景在牆外、沒有碰撞，不是建築
 			continue
 		for mi in c.get_children():
 			if mi is MeshInstance3D:

@@ -36,15 +36,3 @@ Media 內標示 Joblab Studio Games）。**包內沒有授權檔，正式發布�
 CC0（公眾領域，不需標示），這裡登記只是記錄出處。手把輸入配置與用固定加速度
 （`move_toward`）做移動，都是從它學來的。原始碼放在 `resouce/`（`.gdignore`
 擋著不進匯入，也不進版控）。
-
-
-## 環境音效（opengameart.org，CC0）
-
-`assets/audio/ambient/forest.ogg`（全場背景聲）、`assets/audio/ambient/birds.ogg`（果園鳥叫）
-
-- 背景：["Forest Ambience"](https://opengameart.org/content/forest-ambience) by TinyWorlds，
-  原檔太小聲，加了 20dB 轉成 ogg
-- 鳥叫：["Ambient Bird Sounds"](https://opengameart.org/content/ambient-bird-sounds) by isaiah658，
-  轉成單聲道（3D 定點聲要單聲道）
-
-兩者皆 CC0（公眾領域，可商用，不需標示），登記只是記錄出處。

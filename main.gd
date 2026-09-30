@@ -17,9 +17,9 @@ const BUILDING_MAX_H := 22.0  # 最高的東西（筒倉＋圓頂約 20、穀倉
 const SANDBOX_RANGE := Rect2(-20, -25, 40, 115)   # 靶在路兩側 4 公尺、恐龍靶 12 公尺；再窄旁邊的坡會超過 40 度
 const SANDBOX_START := Vector3(0, 0.1, 84)   # y 是離地高度，用 _on_ground() 換成實際位置
 const SANDBOX_TARGETS := [10, 25, 50, 100]   # 牛仔靶的距離（公尺）：左輪、散彈、步槍各自的有效距離
-const GRASS := Color(0.82, 0.65, 0.39)   # 乾草原：枯黃偏沙色
-const DIRT := Color(0.93, 0.76, 0.50)    # 沙土路，比草地亮
-const WHEAT := Color(0.70, 0.56, 0.33)
+const GRASS := Color(0.49, 0.34, 0.21)   # 乾草原：黃昏裡偏紅的枯黃
+const DIRT := Color(0.52, 0.39, 0.27)    # 沙土路，比草地亮
+const WHEAT := Color(0.45, 0.33, 0.18)
 # 場景物件的模型（blender/props.py）。這幾個基準尺寸跟那邊共用，改一邊要改另一邊
 const PROPS := preload("res://models/props.glb")
 const BARN_BASE := Vector3(14, 8, 20)   # 穀倉模型的寬、牆高、長
@@ -46,7 +46,12 @@ const BARN_BACK_H := 2.8
 const BARN_LOFT := 4.0
 const BARN_LADDER_X := -2.5
 const HOUSE_T := 0.2
-const CLIFF_W := 40.0
+# 農舍三種（blender/house.py → houses.glb）：主屋牆都是 10 × 8，門在正面中央，整棟架高 HOUSE_FLOOR。
+# 牆、屋頂、煙囪、前廊、台階斜坡的碰撞都在 House<N>Col 裡。每種 [煙囪頂（冒煙的地方）]，跟 house.py 的 CHIMNEY 一樣
+const HOUSES := preload("res://models/houses.glb")
+const HOUSE_FLOOR := 0.45
+const HOUSE_KINDS := {&"House1": Vector3(5.6, 10.11, -2.0), &"House2": Vector3(-5.6, 7.09, -1.8),
+	&"House3": Vector3(3.4, 10.66, -1.6)}
 # 圍牆不給爬（見 dino.gd 的 _on_climbable_wall），所以恐龍能到的最高點就是
 # 「站上最高的屋頂再跳一下」。圍牆要比那個高，才翻不出去。
 const WALL_H := 40.0
@@ -61,8 +66,6 @@ const RESPAWN_DELAY := 5.0    # 死亡的代價是節奏，不是失去參賽資
 const COWBOY := preload("res://cowboy/cowboy.tscn")
 const DINO := preload("res://dino.tscn")
 const BOSS := preload("res://boss.tscn")
-const AMBIENT := preload("res://assets/audio/ambient/forest.ogg")
-const BIRDS := preload("res://assets/audio/ambient/birds.ogg")
 const BOSS_ID := -999   # 負數＝電腦（主機操控）；固定編號，場上最多一隻
 
 @onready var lobby: VBoxContainer = $UI/Root/Lobby
@@ -81,6 +84,7 @@ const BOSS_ID := -999   # 負數＝電腦（主機操控）；固定編號，場
 
 var _props := {}   # 物件名 -> Mesh，從 props.glb 拿出來共用
 var _terrain: Terrain
+var _houses_built := 0   # 第幾棟農舍：三種輪流蓋（不用亂數，後面擺的東西位置才不會跟著變）
 var _doors: Array[Door] = []   # 晚加入的人連進來時，把開著的門補送給他
 var _wheat_fields: Array[Rect2] = []   # 地形上色要知道哪裡是麥田
 var _blocked: Array[Rect2] = []  # 建築物在 XZ 平面佔的範圍
@@ -744,15 +748,16 @@ func _build_arena() -> void:
 				2:
 					if _free(c, 20):
 						_wheat_fields.append(Rect2(c.x - 20, c.z - 20, 40, 40))
-				3: _terrain.flatten_circle(Vector2(c.x, c.z + 22), 12.0)  # 牧場的小棚
+				3:
+					_terrain.flatten_circle(Vector2(c.x, c.z + 22), 12.0)  # 牧場的小棚
+					_terrain.flatten_circle(Vector2(c.x, c.z - 20), 12.0)  # 牧場的農舍（台階前面也要平）
 	_terrain.settle()   # 靠太近的平地把高度拉近，中間才不會擠出陡坡
 	var ground := _terrain.build(_ground_color)
 	ground.add_to_group(&"ground")   # 子彈打到噴土（Bullet.surface_of）
 	$Arena.add_child(ground)
 
 	# 四周圍牆，東西才不會掉出場外。內側牆面剛好貼齊地板邊緣，不留縫。
-	# 碰撞是平的牆（看不見），外觀是一段段山崖（blender/props.py 的 Cliff），
-	# 岩塊都長在牆面外側，不會凸進場地變成看得到摸不到的東西
+	# 牆看不見：外面是一路延伸到地平線的遠景（far_land.gd），邊上一圈柵欄讓人看得出邊界
 	var e := (ARENA + WALL_T) * 0.5
 	var long := ARENA + WALL_T * 2.0
 	for w: Array in [[Vector3(0, WALL_H * 0.5, e), Vector3(long, WALL_H, WALL_T)],
@@ -761,16 +766,8 @@ func _build_arena() -> void:
 			[Vector3(-e, WALL_H * 0.5, 0), Vector3(WALL_T, WALL_H, long)]]:
 		_solid_box(w[0], w[1]).add_to_group(&"arena_wall")
 	var inner := ARENA * 0.5
-	var segs := 5   # 一段剛好 40 公尺＝山崖模型原本的寬
-	var seg := long / segs
-	# [這一面的起點, 沿著牆往哪走, 模型要轉多少才讓岩塊長在牆外]
-	for side: Array in [[Vector3(-long * 0.5, 0, -inner), Vector3.RIGHT, 0.0],
-			[Vector3(-long * 0.5, 0, inner), Vector3.RIGHT, PI],
-			[Vector3(inner, 0, -long * 0.5), Vector3.BACK, -PI * 0.5],
-			[Vector3(-inner, 0, -long * 0.5), Vector3.BACK, PI * 0.5]]:
-		for i in segs:
-			var mi := _prop(&"Cliff", side[0] + side[1] * seg * (i + 0.5), Vector3(seg / CLIFF_W, 1, 1))
-			mi.rotation.y = side[2]
+	$Arena.add_child(FarLand.build(_terrain, _ground_color, [_props[&"TreeOakM"], _props[&"TreeOakS"], _props[&"Bush"]],
+		_props[&"FenceRail"], FENCE_SEG))
 
 	# 第二輪：把東西擺上去。每個擺東西的函式自己問地形高度
 	for cell in cells:
@@ -781,7 +778,7 @@ func _build_arena() -> void:
 			2: _hayfield(c, rng)
 			3: _pasture(c, rng)
 
-	# 沿著圍牆種一圈樹，把牆藏在林子後面
+	# 沿著場邊種一圈樹
 	var edge := ARENA * 0.5 - 6.0
 	for i in 40:
 		var t := float(i) / 40.0 * 4.0
@@ -828,22 +825,6 @@ func _build_arena() -> void:
 	if DisplayServer.get_name() != "headless":
 		_grass_field()
 		_drift = Fx.drift($Arena)
-	# 全場的背景聲（風、林子）。不是 3D 的，走到哪都一樣大聲
-	var bg := AudioStreamPlayer.new()
-	bg.stream = AMBIENT
-	bg.volume_db = -6.0
-	bg.autoplay = true
-	$Arena.add_child(bg)
-
-## 定點的環境聲：一直循環，離 reach 公尺外就聽不到
-func _sound_at(stream: AudioStream, at: Vector3, reach: float) -> AudioStreamPlayer3D:
-	var s := AudioStreamPlayer3D.new()
-	s.stream = stream
-	s.max_distance = reach
-	s.autoplay = true
-	$Arena.add_child(s)
-	s.global_position = at
-	return s
 
 ## 描線：一片蓋滿畫面的方塊，用 outline.gdshader 從深度和法線畫出輪廓和稜線。
 ## 放在場地底下，任何相機（玩家、檢視模式、截圖）都會畫到；剔除邊界拉很大，不會因為方塊不在視野裡被跳過
@@ -931,7 +912,7 @@ func _use_sky() -> void:
 	mat.shader = preload("res://sky.gdshader")
 	env.sky.sky_material = mat
 	env.sky.radiance_size = Sky.RADIANCE_SIZE_64   # 環境光只要大概的顏色
-	env.fog_sky_affect = 0.1
+	env.fog_sky_affect = 0.0   # 霧的灰紫色會混進地平線的橘
 
 ## 石頭：空地上零星的大石當掩體（有碰撞、擋子彈），山崖腳下堆一圈碎石和石頭堆（把牆腳藏起來）。
 ## 用自己的亂數，多一顆少一顆不會影響其他東西的位置
@@ -1152,9 +1133,8 @@ func _farmstead(c: Vector3, rng: RandomNumberGenerator) -> void:
 			if _free(c + p, 2):
 				_fence(c + p, r * 2.0 / 8.0, side % 2 == 1)
 
-## 果園：整齊的樹，樹幹擋子彈、樹冠擋視線不擋子彈。林子裡有鳥叫，走近才聽得到
+## 果園：整齊的樹，樹幹擋子彈、樹冠擋視線不擋子彈
 func _orchard(c: Vector3, rng: RandomNumberGenerator) -> void:
-	_sound_at(BIRDS, _on_ground(c) + Vector3(0, 5, 0), 35.0)
 	for i in 5:
 		for j in 5:
 			var p := c + Vector3((i - 2) * 6.5, 0, (j - 2) * 6.5)
@@ -1180,8 +1160,11 @@ func _hayfield(c: Vector3, rng: RandomNumberGenerator) -> void:
 		if _free(p, 2):
 			_hay_bale(p, rng.randf() * PI)
 
-## 牧場：柵欄隔成欄位＋一間小棚。翻越練習場
+## 牧場：柵欄隔成欄位＋一間小棚＋一棟農舍。翻越練習場
 func _pasture(c: Vector3, rng: RandomNumberGenerator) -> void:
+	var home := c + Vector3(0, 0, -20)       # 牧場主人的房子，先蓋：柵欄碰到它就不擺（不用亂數，後面擺的東西位置不變）
+	if _free(home, 8):
+		_house(home)
 	for k in 5:
 		var z := c.z + (k - 2) * 9.0
 		for seg in 4:
@@ -1220,20 +1203,20 @@ func _barn(p: Vector3, size: Vector3, clearance := SPAWN_CLEARANCE) -> void:
 	_lamp(p + Vector3(0, loft - 1.0, 3.0 * s.z), 7.0 * s.x)
 	_block(p, Vector2(size.x, size.z), clearance)
 
+## 農舍：空心的，進得去。三種外觀輪流（前廊農舍、圓木小屋、直板高屋），碰撞跟著外觀走
 func _house(p: Vector3) -> void:
-	var size := Vector3(10, 5, 8)   # 跟 blender/props.py 的 HOUSE 一樣
+	var kind: StringName = HOUSE_KINDS.keys()[_houses_built % HOUSE_KINDS.size()]
+	_houses_built += 1
 	p = _on_ground(p)
-	_solid_mesh(p, _props.get(&"HouseCol"), Vector3.ONE)   # 空心：牆、隔間、窗洞、大件家具
-	_roof(p, size, 0.5)
-	_solid_box(p + Vector3(3, size.y + 2.5, 0), Vector3(0.9, 3.0, 0.9))   # 煙囪
-	Fx.chimney($Arena, p + Vector3(3, size.y + 4.1, 0))
-	_prop(&"House", p)
+	_solid_mesh(p, _props.get(StringName(kind + "Col")), Vector3.ONE)
+	Fx.chimney($Arena, p + HOUSE_KINDS[kind])
+	_prop(kind, p)
 	# 前門：門軸在門洞左緣，往屋裡推開
-	var d := _door(&"HouseDoor", p + Vector3(-0.55, 0, size.z * 0.5 - HOUSE_T * 0.5),
+	var d := _door(&"HouseDoor", p + Vector3(-0.55, HOUSE_FLOOR, 4.0 - HOUSE_T * 0.5),
 		Vector3(1.1, 2.2, 0.08), Vector3(0.55, 0, 0), Vector3.ONE)
 	d.swing = PI * 0.5
-	_lamp(p + Vector3(-1.5, 2.6, 1.8), 5.0)
-	_block(p, Vector2(size.x, size.z), SPAWN_CLEARANCE)
+	_lamp(p + Vector3(-1.5, 2.6 + HOUSE_FLOOR, 1.8), 5.0)
+	_block(p, Vector2(12, 13), SPAWN_CLEARANCE)   # 含前廊、煙囪、後面的小倉
 
 func _silo(p: Vector3, h: float) -> void:
 	p = _on_ground(p)
@@ -1404,7 +1387,7 @@ func _skin_egg() -> void:
 
 ## 從 props.glb、trees.glb 把每個物件的網格拿出來，場上幾百個物件共用同一份
 func _load_props() -> void:
-	for glb: PackedScene in [PROPS, TREES, ROCKS]:
+	for glb: PackedScene in [PROPS, TREES, ROCKS, HOUSES]:
 		var src := glb.instantiate()
 		for c in src.get_children():
 			if c is MeshInstance3D:
@@ -1416,7 +1399,7 @@ func _load_props() -> void:
 ## 全部模型都不要高光：朝太陽的面疊一層反光會把顏色沖灰、反射粉色的天空（牆和門廊泛粉紫）。
 ## Blender 設了 Specular 0，但 glTF 匯進來 Godot 還是預設 0.5，要在這裡補。
 ## 網格被資源快取住，改一次之後各處 instantiate 出來的都是改好的那份（glb 要留著，快取才不會被丟掉）
-const FLAT_MODELS := ["res://models/props.glb", "res://models/trees.glb", "res://models/rocks.glb",
+const FLAT_MODELS := ["res://models/props.glb", "res://models/trees.glb", "res://models/rocks.glb", "res://models/houses.glb",
 	"res://models/cowboy.glb", "res://models/trex.glb", "res://models/revolver.glb",
 	"res://models/shotgun.glb", "res://models/rifle.glb"]
 static var _flat_keep: Array[PackedScene] = []
@@ -1435,9 +1418,86 @@ static func _flatten_models() -> void:
 					m.metallic = 0.0
 					if m.resource_name in ["p_wheat", "p_grass"]:   # 字串比對（StringName 放在陣列裡比不到）
 						m.roughness = 0.5   # 描線跳過的記號（見 grass.gdshader）
-					elif m.resource_name in ["p_rock1", "p_rock2"]:
-						m.roughness = 0.75  # 山崖的記號：描線提早淡掉（見 outline.gdshader）
+					if m.albedo_texture == null:   # 材質可能好幾個網格共用，只疊一次
+						_add_grain(m)
 		inst.free()
+
+## 紋理：純色平面看起來像塑膠，在材質上疊一層淡淡的程式雜訊——木紋（橫向細條）、石斑、乾草絲、恐龍鱗片。
+## 物件自己的座標三面投影（triplanar），不用 UV，會動的東西紋理也黏著走。
+## 只動明暗十幾趴：折面之間的明暗差（兩三成）還在，不會像照片貼圖把折面洗掉（見 docs/程式建模迭代.md）。
+## 規則：材質名字含有前面那個字 -> [紋理種類, 三個軸的縮放（越大越密）]。第一個對到的算數；葉子、布、金屬不加
+const GRAIN_RULES := [
+	["leaf", null], ["pine", null], ["bush", null], ["lit", null], ["lamp", null], ["glass", null],
+	["wood", [&"wood", Vector3(0.35, 3.0, 0.35)]], ["plank", [&"wood", Vector3(0.35, 3.0, 0.35)]],
+	["log", [&"wood", Vector3(0.35, 3.0, 0.35)]], ["trim", [&"wood", Vector3(0.35, 3.0, 0.35)]],
+	["post", [&"wood", Vector3(0.35, 3.0, 0.35)]], ["shut", [&"wood", Vector3(0.35, 3.0, 0.35)]],
+	["p_red", [&"wood", Vector3(3.0, 0.35, 3.0)]], ["p_silo", [&"wood", Vector3(3.0, 0.35, 3.0)]],   # 直條板：直紋
+	["p_white", [&"wood", Vector3(0.35, 3.0, 0.35)]], ["h_inner", [&"wood", Vector3(0.35, 3.0, 0.35)]],
+	["bark", [&"wood", Vector3(3.0, 0.5, 3.0)]],
+	["shing", [&"stone", Vector3(1.2, 1.2, 1.2)]], ["roof", [&"stone", Vector3(1.2, 1.2, 1.2)]],
+	["stone", [&"stone", Vector3(0.4, 0.4, 0.4)]], ["brick", [&"stone", Vector3(0.4, 0.4, 0.4)]],
+	["chink", [&"stone", Vector3(1.5, 1.5, 1.5)]],
+	["hay", [&"hay", Vector3(1.5, 1.5, 1.5)]],
+	["t_body", [&"scale", Vector3(2.5, 2.5, 2.5)]], ["t_belly", [&"scale", Vector3(2.5, 2.5, 2.5)]],
+	["t_dark", [&"scale", Vector3(2.5, 2.5, 2.5)]],
+]
+static var _grain_tex := {}
+static func _add_grain(m: BaseMaterial3D) -> void:
+	var name := String(m.resource_name)
+	if name in ["wood", "wood2", "wood_red"]:
+		return   # 槍的木頭：拿在手上很近、尺寸很小，這套縮放不合
+	for rule: Array in GRAIN_RULES:
+		if not name.contains(rule[0]):
+			continue
+		if rule[1] == null:
+			return
+		var kind: StringName = rule[1][0]
+		if not _grain_tex.has(kind):
+			_grain_tex[kind] = _make_grain(kind)
+		m.albedo_texture = _grain_tex[kind][0]
+		m.albedo_color = m.albedo_color / _grain_tex[kind][1]   # 補回平均變暗的量，整體顏色跟以前一樣
+		m.uv1_triplanar = true
+		m.uv1_scale = rule[1][1]
+		return
+
+## 產生一張可以無縫重複的雜訊圖，回傳 [圖, 平均亮度（線性）]
+static func _make_grain(kind: StringName) -> Array:
+	var n := FastNoiseLite.new()
+	n.seed = 7
+	var lo := 0.80   # 最暗的地方（sRGB）；白色 = 原色
+	match kind:
+		&"wood":
+			n.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+			n.frequency = 0.03
+			n.fractal_octaves = 3
+		&"stone":
+			n.noise_type = FastNoiseLite.TYPE_CELLULAR
+			n.frequency = 0.035
+			n.cellular_return_type = FastNoiseLite.RETURN_CELL_VALUE
+			n.fractal_octaves = 2
+			lo = 0.78
+		&"hay":
+			n.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+			n.frequency = 0.12
+			lo = 0.74
+		&"scale":
+			n.noise_type = FastNoiseLite.TYPE_CELLULAR
+			n.frequency = 0.08
+			n.cellular_return_type = FastNoiseLite.RETURN_DISTANCE2_SUB
+			n.fractal_type = FastNoiseLite.FRACTAL_NONE
+			lo = 0.82
+	var g := Gradient.new()
+	g.set_color(0, Color(lo, lo, lo))
+	g.set_color(1, Color.WHITE)
+	var t := NoiseTexture2D.new()
+	t.width = 256
+	t.height = 256
+	t.seamless = true
+	t.noise = n
+	t.color_ramp = g
+	t.generate_mipmaps = true
+	var mean := (pow(lo, 2.2) + 1.0) * 0.5
+	return [t, mean]
 
 ## 出生點避開這塊地
 func _block(p: Vector3, size: Vector2, clearance: float) -> void:

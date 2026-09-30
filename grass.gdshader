@@ -5,7 +5,7 @@ render_mode cull_disabled, specular_disabled, world_vertex_coords;
 
 uniform float wind_strength = 0.22;
 uniform vec2 wind_dir = vec2(1.0, 0.35);
-uniform vec3 dry_tint : source_color = vec3(0.85, 0.75, 0.45); // 黃昏的乾草尖
+uniform vec3 dry_tint : source_color = vec3(0.55, 0.58, 0.20); // 乾草尖：偏黃綠（參考圖的草叢），不跟地面一樣橘
 uniform float fade_start = 30.0;
 uniform float fade_end = 42.0;   // 要比 visibility_range_end(45) 小
 uniform float push_radius = 1.2;
@@ -36,8 +36,8 @@ void vertex() {
 }
 
 void fragment() {
-	vec3 base = ground * 0.55;
-	vec3 top = mix(ground, to_linear(dry_tint), 0.12) * 1.05;
+	vec3 base = mix(ground, to_linear(dry_tint), 0.4) * 0.55;
+	vec3 top = mix(ground, to_linear(dry_tint), 0.7);
 	ALBEDO = mix(base, top, tip);
 	ROUGHNESS = 0.5;   // 記號：描線（outline.gdshader）看到 0.5 就跳過，草葉一根根描線會變成一片雜訊。反光關了，粗糙度不影響外觀
 	BACKLIGHT = vec3(0.3) * tip;   // 逆光的草尖透光

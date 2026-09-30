@@ -99,6 +99,54 @@ def finish(name, bevel=0.012, seg=2, smooth=False, smooth_mats=()):
     b.harden_normals = False
     return o
 
+# ---- 碰撞：蓋牆的時候順便記一份，最後變成 *Col 物件給遊戲當碰撞形狀 ----
+# 牆、門洞、窗洞只定義一次，畫面和碰撞一定對得上
+COL = []
+
+
+def solid(size, loc, rot=(0, 0, 0), m=None):
+    """有碰撞的方塊：牆、閣樓地板、柱子、家具"""
+    COL.append((size, loc, rot))
+    return box(size, loc, rot, m=m)
+
+
+def make_col(name):
+    """把記下來的碰撞方塊合成一個物件（沒有倒角、沒有材質，遊戲裡只拿來做形狀）"""
+    global COL
+    for size, loc, rot in COL:
+        box(size, loc, rot)
+    COL = []
+    return finish(name, bevel=0.0, seg=1)
+
+
+def wall(axis, at, a0, a1, h, t, openings, m):
+    """一面有開口的牆。axis='x'：沿 X 的牆（前後牆），在 y=at；axis='y'：沿 Y 的牆（側牆），在 x=at。
+    openings = [(中心, 寬, 下緣, 上緣)]。開口兩側整片、開口上下各補一塊"""
+    def piece(u0, u1, z0, z1):
+        if u1 - u0 < 0.01 or z1 - z0 < 0.01:
+            return
+        cu, cz = (u0 + u1) / 2, (z0 + z1) / 2
+        if axis == 'x':
+            solid((u1 - u0, t, z1 - z0), (cu, at, cz), m=m)
+        else:
+            solid((t, u1 - u0, z1 - z0), (at, cu, cz), m=m)
+    u = a0
+    for (c, w, b, top) in sorted(openings):
+        piece(u, c - w / 2, 0, h)
+        piece(c - w / 2, c + w / 2, 0, b)
+        piece(c - w / 2, c + w / 2, top, h)
+        u = c + w / 2
+    piece(u, a1, 0, h)
+
+
+def clear_of(u, openings, pad=0.1):
+    """u 這個位置有沒有落在某個開口的寬度裡；有就回傳那個開口（護牆板要在那裡斷開）"""
+    for o in openings:
+        if abs(u - o[0]) < o[1] / 2 + pad:
+            return o
+    return None
+
+
 def view(eye, target, persp=True):
     """視窗從 eye 看向 target（Blender 座標）。截圖檢查用，比手調四元數可靠"""
     eye, target = Vector(eye), Vector(target)

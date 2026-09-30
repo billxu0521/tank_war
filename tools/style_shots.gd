@@ -1,5 +1,5 @@
 extends SceneTree
-## 風格檢查用的截圖：開沙盒，從幾個固定角度各拍一張（第一人稱、農莊、掩體石頭、山崖腳下、恐龍和牛仔近看、高處俯瞰），
+## 風格檢查用的截圖：開沙盒，從幾個固定角度各拍一張（第一人稱、農莊、三種農舍、掩體石頭、往場外看遠景、恐龍近看、高處俯瞰），
 ## 存到 OUT 資料夾，給 tools/style_iter.sh 拼成一張給人和審查子代理看。
 ##   OUT=docs/image/style_iter/v1 godot --path . --resolution 1280x720 --script tools/style_shots.gd
 
@@ -46,19 +46,17 @@ func _plan() -> void:
 	if barn:
 		var b := barn.global_position
 		_views.append(["farm", _ground(b + Vector3(38, 0, 32)) + up * 12, b + up * 3])
+	for kind: StringName in [&"House1", &"House2", &"House3"]:   # 三種農舍，左前方看（正面朝 +Z）
+		var house := _find(kind)
+		if house:
+			var h := house.global_position
+			_views.append([String(kind).to_lower(), _ground(h + Vector3(-11, 0, 17)) + up * 6, h + up * 3])
 	if rock:
 		var r := rock.global_position
 		_views.append(["rock", _ground(r + Vector3(9, 0, 8)) + up * 3, r + up])
-	# 山崖：挑一段在邊的中間的（角落兩面牆夾著，相機會卡進另一面牆）
-	var cliff: Node3D = null
-	for n in _all(&"Cliff"):
-		var p: Vector3 = n.global_position
-		if cliff == null or minf(absf(p.x), absf(p.z)) < minf(absf(cliff.global_position.x), absf(cliff.global_position.z)):
-			cliff = n
-	if cliff:
-		var c := cliff.global_position
-		var inward := (Vector3(-signf(c.x), 0, 0) if absf(c.x) > absf(c.z) else Vector3(0, 0, -signf(c.z)))
-		_views.append(["cliff", _ground(c + inward * 40) + up * 6, c + up * 10])
+	# 遠景：站在場邊往外看（北邊中間，路一直延伸到地平線）
+	var half: float = _main.ARENA * 0.5
+	_views.append(["far", _ground(Vector3(10, 0, -half + 12)) + up * 2.5, _ground(Vector3(-40, 0, -half - 300)) + up * 30])
 	if dino:
 		var d := dino.global_position
 		_views.append(["dino", _ground(d + Vector3(-8, 0, 9)) + up * 3.5, d + up * 2.5])
