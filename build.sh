@@ -6,7 +6,7 @@ cd "$(dirname "$0")"
 echo "== 先跑自我檢查 =="
 godot --headless --script test_battle.gd
 
-for target in "Windows Desktop:build/windows/TankWar.exe" "macOS:build/macos/TankWar.zip"; do
+for target in "Windows Desktop:build/windows/OvD.exe" "macOS:build/macos/OvD.zip"; do
 	preset="${target%%:*}"
 	out="${target#*:}"
 	echo "== 匯出 $preset =="

@@ -1,4 +1,7 @@
-# 西部牛仔打恐龍
+# Outlaws vs Dinosaurs 法外狂徒大戰恐龍
+
+簡稱 **OvD**（原名「西部牛仔打恐龍」，更早是 Tank War；GitHub repo 名稱還是 `tank_war`）。
+
 
 非對稱連線對戰原型。**多個第一人稱牛仔 vs 一隻大恐龍**，Godot 4.7 + 3D，區網直連。
 
@@ -142,9 +145,9 @@ Godot 內建 ENet，**同區網直連**，連接埠 24680。大家都是牛仔�
 啟動參數，方便一台機器開兩個視窗：
 
 ```sh
-TankWar.exe -- --host
-TankWar.exe -- --join 127.0.0.1
-TankWar.exe -- --sandbox    # 沙盒：靶場練槍
+OvD.exe -- --host
+OvD.exe -- --join 127.0.0.1
+OvD.exe -- --sandbox    # 沙盒：靶場練槍
 ```
 
 
@@ -152,7 +155,7 @@ TankWar.exe -- --sandbox    # 沙盒：靶場練槍
 
 雲端主機上一直開著一個伺服器，大家在大廳按「**連到測試站**」就進同一局，不用誰開房、不用設定路由器。
 
-- 伺服器模式：`TankWar.x86_64 --headless -- --server`。自己不下場，恐龍 boss 照生，**一局結束 10 秒後自動開下一局**
+- 伺服器模式：`OvD.x86_64 --headless -- --server`。自己不下場，恐龍 boss 照生，**一局結束 10 秒後自動開下一局**
 - 架站／更新：`tools/deploy_server.sh 使用者@主機位址`（匯出 Linux 版、複製上去、裝成掛掉自動重開的服務）
 - 主機的防火牆要開 **UDP 24680**
 - 大廳按鈕連的位址寫在 `main.gd` 的 `TEST_SERVER`，填好之後要重新打包客戶端

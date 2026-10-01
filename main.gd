@@ -1,5 +1,5 @@
 extends Node3D
-## 西部牛仔打恐龍 — 區網原型。兩個模式：連線模式（大家都是牛仔，第一人稱）和沙盒模式。
+## Outlaws vs Dinosaurs 法外狂徒大戰恐龍（簡稱 OvD）— 區網原型。兩個模式：連線模式（大家都是牛仔，第一人稱）和沙盒模式。
 ## Esc 選單裡的「遊戲局控制」讓主機加移動標靶、牛仔 bot。恐龍的程式都還在，玩法定了再接回來。
 
 const PORT := 24680
@@ -145,11 +145,11 @@ func _ready() -> void:
 	_autostart.call_deferred()
 
 ## 啟動參數，方便在同一台機器開兩個視窗對打：
-##   TankWar.exe -- --host
-##   TankWar.exe -- --join 192.168.1.5
-##   TankWar.exe -- --sandbox
-##   TankWar.exe -- --range
-##   TankWar.exe -- --viewer
+##   OvD.exe -- --host
+##   OvD.exe -- --join 192.168.1.5
+##   OvD.exe -- --sandbox
+##   OvD.exe -- --range
+##   OvD.exe -- --viewer
 ##   godot --headless -- --server    專用伺服器（測試站）：自己不下場，一局結束自動開下一局
 func _autostart() -> void:
 	var args := OS.get_cmdline_user_args()

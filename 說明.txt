@@ -1,4 +1,4 @@
-西部牛仔打恐龍 — 區網對戰原型
+Outlaws vs Dinosaurs 法外狂徒大戰恐龍（OvD）— 區網對戰原型
 
 【怎麼開始】
 兩個模式：
@@ -89,10 +89,10 @@
   打死恐龍不算贏，只是少一個威脅五秒。
 
 【想在同一台機器開兩個視窗試】
-  TankWar.exe -- --host
-  TankWar.exe -- --join 127.0.0.1
-  TankWar.exe -- --sandbox      直接進沙盒
-  （macOS 是 open -n 西部牛仔打恐龍.app --args -- --host）
+  OvD.exe -- --host
+  OvD.exe -- --join 127.0.0.1
+  OvD.exe -- --sandbox      直接進沙盒
+  （macOS 是 open -n "Outlaws vs Dinosaurs 法外狂徒大戰恐龍.app" --args -- --host）
 
 【連不上的話】
   用的是 TCP/UDP 連接埠 24680。

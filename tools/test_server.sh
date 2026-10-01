@@ -9,11 +9,11 @@ cd "$(dirname "$0")/.."
 set -a; . ./.env; set +a
 : "${VULTR_API_KEY:?.env 裡要有 VULTR_API_KEY}"
 
-LABEL=tankwar-test
+LABEL=tankwar-test    # 沿用舊名：改了的話，已經開著的測試站 down 會找不到、一直計費
 REGION=nrt            # 東京
 PLAN=vhf-1c-1gb       # 1 顆高頻處理器、1GB，每月 6 美元（按小時算）
 OS_ID=2284            # Ubuntu 24.04
-KEY_NAME=tankwar
+KEY_NAME=tankwar      # Vultr 上已經登記的金鑰名字，沿用舊名
 PORT=24680
 
 api() {   # api 方法 路徑 [JSON]。失敗就把 Vultr 回的錯誤印出來再停
