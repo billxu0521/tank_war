@@ -35,6 +35,14 @@ var _idx := {}          # 骨頭名字 -> index
 var _phase := 0.0
 var look_pitch := 0.0   # 由 dino.gd 餵進來，讓頭跟著視角抬
 var _bite := 0.0        # 1 -> 0，咬擊動作的進度
+## boss 的動作狀態（boss.gd 的 ACT_*，同步來的）：預備動作的姿勢從這裡來。0 = 沒在出招
+var act := 0
+# 幾個姿勢的份量（0~1），每幀往 act 要的值追，動作才不會一格一格跳
+var _rear := 0.0     # 咬的預備：頭往後仰、嘴微張
+var _roar := 0.0     # 蓄力：仰頭張大嘴吼、頭甩
+var _crouch := 0.0   # 撲擊的預備：身體壓低、往前傾
+var _lunge := 0.0    # 撲出去：身體前衝、嘴張開
+var _stun := 0.0     # 被打斷：頭垂下來晃
 var _last_pos := Vector3.ZERO
 var _yaw_prev := 0.0
 # 骨鏈的角度和角速度。用 Array 不用 PackedFloat32Array，才傳得進函式改得到
@@ -132,6 +140,15 @@ func _process(delta: float) -> void:
 	_phase += delta * (2.0 + speed * 0.55)
 	_bite = maxf(_bite - delta * 3.5, 0.0)
 	var chomp := sin(_bite * PI)  # 0 -> 1 -> 0
+	# 預備動作的姿勢（boss.gd 的 ACT_*：1 咬預備、3 蓄力、5 撲擊預備、6 撲出去、8 被打斷）。
+	# 這副骨架俯仰是正的往上抬（跟 chomp 那幾行相反），看截圖確認過
+	var k := 1.0 - exp(-10.0 * delta)
+	_rear += (float(act == 1) - _rear) * k
+	_roar += (float(act == 3) - _roar) * k
+	_crouch += (float(act == 5) - _crouch) * k
+	_lunge += (float(act == 6) - _lunge) * k
+	_stun += (float(act == 8) - _stun) * k
+	var shake := sin(_breath * 23.0) * 0.08 * _roar + sin(_breath * 7.0) * 0.18 * _stun
 
 	# 身體這一幀轉了多快，是尾巴甩動的源頭
 	var yaw := global_rotation.y
@@ -175,8 +192,8 @@ func _process(delta: float) -> void:
 
 	# 身體隨步伐上下起伏，再疊上位移延遲和呼吸
 	skel.position = Vector3(_drift.x,
-		absf(sin(_phase)) * 0.12 * stride + sin(_breath * 0.5) * 0.025 * idle,
-		_drift.y)
+		absf(sin(_phase)) * 0.12 * stride + sin(_breath * 0.5) * 0.025 * idle - _crouch * 0.55,
+		_drift.y - _lunge * 0.3)
 
 	# 尾巴：轉身往外甩 + 走路跟著擺，然後一節傳一節
 	var tail_yaw_drive := clampf(-yaw_rate * 0.20, -0.65, 0.65) + sin(_phase) * 0.09 * stride
@@ -191,14 +208,15 @@ func _process(delta: float) -> void:
 		SPINE_STIFF, SPINE_DAMP, delta)
 	# 側傾分散在幾節脊椎上（不放在 root，不然腿會跟著翻起來），
 	# 頭再反向轉回去——掠食者跑起來頭是穩的，這一下最像活的。
-	_pose_pyr("spine1", 0.06 + sin(_phase * 0.4) * 0.02 + _lean.y * 0.50,
+	_pose_pyr("spine1", 0.06 + sin(_phase * 0.4) * 0.02 + _lean.y * 0.50 - _crouch * 0.30 - _lunge * 0.20 + _roar * 0.15,
 		_spine_yaw[0], _lean.x * 0.45)
 	_pose_pyr("spine2", _lean.y * 0.30, _spine_yaw[1], _lean.x * 0.35)
 	_pose_pyr("neck", -0.20 + sin(_phase) * 0.05 * stride + chomp * 0.35 + look_pitch * 0.45
-		+ sin(_breath) * 0.030 * idle, _spine_yaw[2], _lean.x * 0.25)
-	_pose_pyr("head", 0.18 - chomp * 0.25 + look_pitch * 0.35 - _lean.y * 0.55,
-		_spine_yaw[3] + sin(_breath * 0.31) * 0.10 * idle, -_lean.x * 0.75)
-	_pose("jaw", Vector3.RIGHT, -0.12 - chomp * 0.65)
+		+ sin(_breath) * 0.030 * idle + _rear * 0.45 + _roar * 0.55 - _crouch * 0.15 - _stun * 0.45,
+		_spine_yaw[2] + shake, _lean.x * 0.25)
+	_pose_pyr("head", 0.18 - chomp * 0.25 + look_pitch * 0.35 - _lean.y * 0.55 + _rear * 0.25 + _roar * 0.40 - _stun * 0.25,
+		_spine_yaw[3] + sin(_breath * 0.31) * 0.10 * idle + shake, -_lean.x * 0.75 + shake * 0.5)
+	_pose("jaw", Vector3.RIGHT, -0.12 - chomp * 0.65 - _rear * 0.30 - _roar * 0.75 - _lunge * 0.60 - _stun * 0.25)
 
 	# 小手貼著身體晃一下
 	_pose("arm_l", Vector3.RIGHT, -0.7 + sin(_phase) * 0.15 * stride + sin(_breath) * 0.04 * idle)

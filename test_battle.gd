@@ -41,6 +41,7 @@ func _process(_delta: float) -> bool:
 		_case_interact()
 		_case_vault()
 		_case_modes()
+		_case_match_rules()
 		_case_controller()
 		_case_back_to_lobby()
 		_case_cover()
@@ -111,7 +112,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與左輪扳擊錘換彈動作音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰一條體力、沙盒、鄉村柵欄灌木貼圖、著彈碎屑與煙囪煙、地形起伏、F 開門爬梯子、翻柵欄和窗台、手腳、只剩連線和沙盒、遊戲局控制、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、恐龍攻擊開關、介面（大廳存 IP、勝負畫面、倒數）、中彈踉蹌、恐龍 boss 行為樹、方位條、測試站自動開下一局都正常")
+		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與左輪扳擊錘換彈動作音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰一條體力、沙盒、鄉村柵欄灌木貼圖、著彈碎屑與煙囪煙、地形起伏、F 開門爬梯子、翻柵欄和窗台、手腳、只剩連線和沙盒、遊戲局控制、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、恐龍攻擊開關、介面（大廳存 IP、勝負畫面、倒數）、中彈踉蹌、恐龍 boss 行為樹（導演、三招預備動作、導航網格）、方位條、測試站自動開下一局都正常")
 	return true
 
 # --- 共用 ---
@@ -1001,6 +1002,70 @@ func _case_modes() -> void:
 	_ck(guest.get_multiplayer_authority() == 251338328, "加入的人要自己操控自己的牛仔")
 	_end(m)
 
+## 大廳的對局模式：搶蛋、死鬥（重生 3 次、剩一人贏）、恐龍決鬥（重生 5 次、打死恐龍大家贏）
+func _case_match_rules() -> void:
+	var m := _offline_match()
+	_ck(m.mode_pick.item_count == 3, "大廳要能選三種模式（現在 %d）" % m.mode_pick.item_count)
+	# 死鬥：沒有蛋，每人重生 3 次，用完出局，剩一個人贏
+	m._on_mode_picked(m.RULES.keys().find(&"deathmatch"))
+	m._apply_rules()
+	_ck(m.rules == &"deathmatch" and not m.egg.visible, "死鬥沒有蛋")
+	for id in [1, 2, 3]:
+		m._add_player(m.COWBOY, id)
+	_ck(m._lives.size() == 3 and int(m._lives[2]) == 3, "死鬥每人可以重生 3 次")
+	m.players.get_node(^"2").take_damage(9999)
+	_ck(int(m._lives[2]) == 2 and m._respawn_queue.size() == 1, "死一次扣一次重生、排進重生佇列")
+	m._respawn_queue.clear()
+	m.players.remove_child(m.players.get_node(^"2"))   # 死掉的那個還在等刪除，先拿掉才不會撞名
+	m._add_player(m.COWBOY, 2)   # 當作重生回來
+	m._lives[2] = 0
+	m.players.get_node(^"2").take_damage(9999)
+	_ck(m._out.has(2) and m._respawn_queue.is_empty(), "重生用完再死就出局、不排重生")
+	_ck(not m._over, "還有兩個人，不會結束")
+	m._lives[3] = 0
+	m.players.get_node(^"3").take_damage(9999)
+	_ck(m._over and m.result.visible and m.get_node(^"UI/Root/Result/Box/Text").text.contains("獲勝"),
+		"只剩一個人就結束，他獲勝（現在：%s）" % m.get_node(^"UI/Root/Result/Box/Text").text)
+	_end(m)
+	# 恐龍決鬥：每人重生 5 次，恐龍打得死，打死大家贏
+	m = _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"dino_duel"))
+	m._apply_rules()
+	m._add_player(m.COWBOY, 1)
+	m._add_player(m.COWBOY, 2)
+	var b: Node = m.spawn_boss()
+	_ck(int(m._lives[1]) == 5, "恐龍決鬥每人可以重生 5 次")
+	_ck(b.max_hp == m.DUEL_BOSS_HP and b.hp == m.DUEL_BOSS_HP, "決鬥的恐龍血量 %d" % m.DUEL_BOSS_HP)
+	var c2: Node = m.players.get_node(^"2")
+	c2.take_damage(30, m.players.get_node(^"1"))
+	_ck(c2.hp == c2.max_hp - 30, "隊友火力：打到隊友會扣血")
+	b.take_damage(b.max_hp + 10)
+	_ck(m._over and m.get_node(^"UI/Root/Result/Box/Text").text.contains("所有牛仔獲勝"), "恐龍死了大家贏")
+	_end(m)
+	m = _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"dino_duel"))
+	m._apply_rules()
+	m._add_player(m.COWBOY, 1)
+	m._add_player(m.COWBOY, 2)
+	m.spawn_boss()
+	for id in [1, 2]:
+		m._lives[id] = 0
+		m.players.get_node(NodePath(str(id))).take_damage(9999)
+	_ck(m._over and m.get_node(^"UI/Root/Result/Box/Text").text.contains("恐龍獲勝"), "牛仔全部出局就是恐龍贏")
+	# 重開一局：重生次數補滿、出局的人回來、恐龍回場
+	m._new_round()
+	_ck(not m._over and int(m._lives.get(1, -1)) == 5 and m.players.has_node(^"1") and m.players.has_node(^"2"),
+		"重開一局：出局的人回來、重生次數補滿")
+	_ck(m.players.has_node(NodePath(str(m.BOSS_ID))), "重開一局恐龍要在")
+	_end(m)
+	# 搶蛋（原本的模式）：不限重生
+	m = _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"egg"))
+	m._apply_rules()
+	m._add_player(m.COWBOY, 1)
+	_ck(m.egg.visible and m._lives.is_empty(), "搶蛋模式有蛋、不限重生")
+	_end(m)
+
 ## 遊戲局控制：移動標靶來回走、不開槍、死了照樣生回標靶；bot 在沙盒找玩家；清除清乾淨
 func _case_controller() -> void:
 	var m: Node = load("res://main.tscn").instantiate()
@@ -1117,18 +1182,19 @@ func _case_compass() -> void:
 	_ck(is_equal_approx(Compass.bearing(Vector3.ZERO, Vector3(0, 0, 10)), 180.0), "正南（+Z）是 180 度")
 	_ck(is_equal_approx(Compass.bearing(Vector3.ZERO, Vector3(-10, 0, 0)), 270.0), "正西（-X）是 270 度")
 
-## 恐龍 boss：視力差、聽力好、優先追持蛋者、自己的體力、走慢跑快、打不死
+## 恐龍 boss：視力差、聽力好、跟蛋無關、導演只給大概方向、追太久會退開、三招都有預備動作、自己的體力、打不死
 func _case_boss() -> void:
 	var m := _offline_match()
 	var c: Node3D = m._add_player(m.COWBOY, 2)
-	var carrier: Node3D = m._add_player(m.COWBOY, 3)
+	var other: Node3D = m._add_player(m.COWBOY, 3)
+	other.global_position = Vector3(0, 500, 0)
 	var b: Node3D = m.spawn_boss()
 	_ck(b != null and b.is_in_group(&"boss"), "要生得出恐龍 boss")
 	_ck(m.spawn_boss() == null, "boss 場上最多一隻")
 	_ck(b.WALK < c.walk_speed and b.RUN > c.sprint_speed,
 		"boss 走路要比牛仔慢（%.1f vs %.1f）、跑步要比牛仔快（%.1f vs %.1f）" % [b.WALK, c.walk_speed, b.RUN, c.sprint_speed])
+	_ck(is_instance_valid(m._nav_region), "生 boss 要順便烘導航網格")
 	# 視力：放在沙盒靶場那條路上（整平、沒蓋東西，視線不會被擋）
-	carrier.global_position = Vector3(0, 500, 0)
 	b.global_position = m._on_ground(Vector3(0, 4.2, 40))
 	b.rotation.y = 0.0   # 面向 -Z
 	c.global_position = m._on_ground(Vector3(0, 0.1, 10))
@@ -1142,28 +1208,117 @@ func _case_boss() -> void:
 	_ck(not b.can_see(c), "背後 12 公尺看不到")
 	c.global_position = m._on_ground(Vector3(0, 0.1, 43))
 	_ck(b.can_see(c), "背後 3 公尺（太近）也會發現")
-	# 聽力：遠處的槍聲聽得到
+	# 聽力：遠處的槍聲聽得到；放鬆的時候只理近的
 	c.global_position = Vector3(0, 500, 0)
 	b.hear(m._on_ground(Vector3(60, 1, -60)))
 	_ck(b._noise_left > 0.0, "100 公尺外的槍聲要聽得到")
-	# 優先追持蛋者：眼前有別人也一樣
-	c.global_position = m._on_ground(Vector3(0, 0.1, 28))
-	carrier.global_position = m._on_ground(Vector3(15, 0.1, -20))
+	b._noise_left = 0.0
+	b.director.phase = Director.Phase.RELAX
+	b.hear(m._on_ground(Vector3(60, 1, -60)))
+	_ck(b._noise_left == 0.0, "放鬆的時候遠處的槍聲不理")
+	b.director.phase = Director.Phase.BUILD
+	# 跟蛋無關：有人拿著蛋也不會知道他在哪
 	m.egg.carrier = 3
+	other.global_position = m._on_ground(Vector3(15, 0.1, -20))
 	b.think(1.0 / 60.0)
-	_ck(b._target == carrier, "有人拿著蛋就優先追持蛋者")
+	_ck(b._target != other, "有人拿蛋恐龍也不知道他在哪（不再追持蛋者）")
 	m.egg.carrier = 0
+	other.global_position = Vector3(0, 500, 0)
+	# 導演：閒著太久給一個大概方向，不是那個人的位置
+	var rng := RandomNumberGenerator.new()
+	var hint: Vector3 = b.director.hint_for(c, rng)
+	var off := Vector2(hint.x - c.global_position.x, hint.z - c.global_position.z).length()
+	_ck(off >= Director.HINT_FUZZ.x - 0.01 and off <= Director.HINT_FUZZ.y + 0.01, "提示點要離那個人 12~20 公尺（現在 %.1f）" % off)
+	var d := Director.new()
+	var got := Vector3.INF
+	for i in int(Director.HINT_IDLE * 60) + 2:
+		var h := d.step(1.0 / 60.0, null, false, [c], rng)
+		if h != Vector3.INF:
+			got = h
+	_ck(got != Vector3.INF, "恐龍閒著 %d 秒，導演要給一次方向" % Director.HINT_IDLE)
+	# 威脅滿了就退開，退完放鬆，放鬆完回到醞釀
+	d = Director.new()
+	for i in int(Director.MENACE_MAX / Director.MENACE_SEE * 60) + 5:
+		d.step(1.0 / 60.0, c, false, [c], rng)
+	_ck(d.phase == Director.Phase.RETREAT, "一直看到人，威脅滿了要退開")
+	for i in int((Director.RETREAT_TIME + Director.RELAX_TIME) * 60) + 5:
+		d.step(1.0 / 60.0, c, false, [c], rng)
+	_ck(d.phase == Director.Phase.BUILD and d.menace < 5.0, "退開、放鬆完回到醞釀，威脅從頭累積")
+	# 咬：有預備動作，預備時不扣血，時間到才咬下去
+	b.director = Director.new()
+	b.global_position = m._on_ground(Vector3(0, 4.2, 40))
+	b.rotation.y = 0.0
+	c.global_position = m._on_ground(Vector3(0, 0.1, 34))   # 嘴巴正前方
+	var hp0: int = c.hp
+	b._attack_gap = 0.0
+	b.think(1.0 / 60.0)
+	_ck(b.act == b.ACT_BITE_WIND, "嘴邊有人要先預備（現在 act=%d）" % b.act)
+	for i in int(b.BITE_WIND * 60) - 3:
+		b.think(1.0 / 60.0)
+	_ck(c.hp == hp0, "預備動作時還不能扣血")
+	for i in 6:
+		b.think(1.0 / 60.0)
+	_ck(c.hp == hp0 - b.BITE_DAMAGE, "預備完要咬下去（%d → %d）" % [hp0, c.hp])
+	# 預備時往旁邊閃開就咬不到
+	c.hp = c.max_hp
+	b.act = b.ACT_NONE
+	b._attack_gap = 0.0
+	b.think(1.0 / 60.0)
+	c.global_position = m._on_ground(Vector3(9, 0.1, 34))
+	for i in int(b.BITE_WIND * 60) + 3:
+		b.think(1.0 / 60.0)
+	_ck(c.hp == c.max_hp, "預備時往旁邊閃開要咬不到")
+	# 蓄力甩尾：人在背後就蓄力；打中頭打斷，暈一陣子、不會掃出去
+	b.act = b.ACT_NONE
+	b._attack_gap = 0.0
+	b._sweep_cd = 0.0
+	c.global_position = m._on_ground(Vector3(0, 0.1, 46))   # 背後 6 公尺
+	b.think(1.0 / 60.0)
+	_ck(b.act == b.ACT_CHARGE_WIND, "人在背後要蓄力甩尾（現在 act=%d）" % b.act)
+	b.head_hit()
+	_ck(b.act == b.ACT_STUN, "蓄力時打中頭要打斷")
+	for i in int(b.CHARGE_WIND * 60) + 3:
+		b.think(1.0 / 60.0)
+	_ck(c.hp == c.max_hp, "被打斷就不會掃出去")
+	# 沒打斷就整圈掃開
+	b.act = b.ACT_NONE
+	b._attack_gap = 0.0
+	b._sweep_cd = 0.0
+	b.think(1.0 / 60.0)
+	for i in int(b.CHARGE_WIND * 60) + 3:
+		b.think(1.0 / 60.0)
+	_ck(c.hp == c.max_hp - b.SWEEP_DAMAGE, "蓄力完要掃到背後的人")
+	# 撲擊：起跳那一刻方向鎖死，之後閃開就撲不到
+	c.hp = c.max_hp
+	b.act = b.ACT_NONE
+	b._attack_gap = 0.0
+	b._sweep_cd = 99.0
+	b._pounce_cd = 0.0
+	b.global_position = m._on_ground(Vector3(0, 4.2, 60))
+	b.rotation.y = 0.0
+	c.global_position = m._on_ground(Vector3(0, 0.1, 44))   # 正前方 16 公尺
+	_ck(b.pounce_clear(c.global_position), "靶場那條路上撲過去的路線要是空的")
+	b.think(1.0 / 60.0)
+	_ck(b.act == b.ACT_POUNCE_WIND, "中距離正前方要撲（現在 act=%d）" % b.act)
+	for i in int(b.POUNCE_WIND * 60) + 2:
+		b.think(1.0 / 60.0)
+	c.global_position = m._on_ground(Vector3(8, 0.1, 44))   # 起跳之後往旁邊閃
+	for i in 70:
+		b.think(1.0 / 60.0)
+	_ck(c.hp == c.max_hp, "起跳後方向鎖死，往旁邊閃要撲不到（%d）" % c.hp)
 	# 自己的體力：一直跑會見底，見底只能走，回到一定量才能再跑
 	c.global_position = Vector3(0, 500, 0)
+	b.act = b.ACT_NONE
 	for i in 600:
 		b._move(-b.global_basis.z, true, 1.0 / 60.0)
 	_ck(b.exhausted and not b.running, "一直跑體力會見底，見底只能走")
 	for i in 30:
 		b._move(-b.global_basis.z, true, 1.0 / 60.0)
 	_ck(not b.running, "剛見底回一點點還不能跑")
-	# 打不死：血打光倒地、血補滿；倒地時打不動
+	# 打不死：血打光倒地、血補滿、起來先退開；倒地時打不動
 	b.take_damage(b.max_hp + 100, c)
 	_ck(is_instance_valid(b) and b.down_left > 0.0 and b.hp == b.max_hp, "boss 打不死：血打光要倒地、血補滿")
+	_ck(b.director.phase == Director.Phase.RETREAT, "被打倒之後要退開")
 	b.take_damage(100, c)
 	_ck(b.hp == b.max_hp, "倒地時打不動")
 	m.clear_bots()

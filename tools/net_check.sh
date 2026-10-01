@@ -1,15 +1,15 @@
 #!/bin/sh
 # 真的連線的檢查：本機開專用伺服器＋兩個客戶端（tools/net_check.gd），看扣血、血量同步、槍聲有沒有傳到。
-# 改了連線（RPC、同步器、主機檢查）之後跑一次：tools/net_check.sh
+# 改了連線（RPC、同步器、主機檢查）之後跑一次：tools/net_check.sh；指定模式：MODE=deathmatch tools/net_check.sh
 cd "$(dirname "$0")/.."
 LOG=$(mktemp -d)
-godot --headless --path . -- --server > "$LOG/server.txt" 2>&1 &
+godot --headless --path . -- --server ${MODE:+--mode $MODE} > "$LOG/server.txt" 2>&1 &
 SERVER=$!
 sleep 4
-ROLE=a godot --headless --path . --script tools/net_check.gd > "$LOG/a.txt" 2>&1 &
+MODE=$MODE ROLE=a godot --headless --path . --script tools/net_check.gd > "$LOG/a.txt" 2>&1 &
 A=$!
 sleep 1
-ROLE=b godot --headless --path . --script tools/net_check.gd > "$LOG/b.txt" 2>&1 &
+MODE=$MODE ROLE=b godot --headless --path . --script tools/net_check.gd > "$LOG/b.txt" 2>&1 &
 B=$!
 wait $A $B
 sleep 2   # 等伺服器處理完客戶端離開，再關

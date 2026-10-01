@@ -102,7 +102,7 @@ mouse_filter = 2
 layout_mode = 0
 offset_left = 24.0
 offset_top = 24.0
-offset_right = 340.0
+offset_right = 484.0
 offset_bottom = 320.0
 theme_override_constants/separation = 8
 
@@ -113,19 +113,39 @@ text = "Outlaws vs Dinosaurs
 
 [node name="Hint" type="Label" parent="UI/Root/Lobby" unique_id=156416433]
 layout_mode = 2
-text = "兩個模式：連線模式（大家都是牛仔，開房的人把 IP 給朋友）、沙盒模式（一個人練槍）。
-WASD 移動，滑鼠瞄準，左鍵開槍，右鍵舉槍，Esc 開選單（主機可以在選單加移動標靶、牛仔 bot）。
+autowrap_mode = 3
+text = "WASD 移動，滑鼠瞄準，左鍵開槍，右鍵舉槍，Esc 開選單（開房的人可以在選單加 bot）。
 1 左輪 2 單管散彈 3 槓桿步槍。舉槍時 Shift 閉氣，R 換彈，V 槍托（按住蓄力＝重擊），F 開門／爬梯子，
-Shift 跑，C 切換蹲／Ctrl 按住蹲，靠近矮牆按住往前＋Space 翻越。左輪腰射按住左鍵＝搧擊錘。打頭一槍死。
-連線模式一局四分鐘，先把蛋帶進撤離區的人贏；死了五秒後重生。"
+Shift 跑，C 切換蹲／Ctrl 按住蹲，靠近矮牆按住往前＋Space 翻越。左輪腰射按住左鍵＝搧擊錘。打頭一槍死。"
+
+[node name="OnlineLabel" type="Label" parent="UI/Root/Lobby" unique_id=1500016901]
+layout_mode = 2
+text = "── 連線對戰 ──"
+
+[node name="ModeRow" type="HBoxContainer" parent="UI/Root/Lobby" unique_id=1500016902]
+layout_mode = 2
+
+[node name="ModeLabel" type="Label" parent="UI/Root/Lobby/ModeRow" unique_id=1500016903]
+layout_mode = 2
+text = "模式"
+
+[node name="ModePick" type="OptionButton" parent="UI/Root/Lobby/ModeRow" unique_id=1500016904]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ModeDesc" type="Label" parent="UI/Root/Lobby" unique_id=1500016905]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+autowrap_mode = 3
+modulate = Color(1, 0.88, 0.65, 1)
 
 [node name="HostBtn" type="Button" parent="UI/Root/Lobby" unique_id=1944247746]
 layout_mode = 2
-text = "開房（連線模式）"
+text = "開房（用上面選的模式）"
 
 [node name="JoinBtn" type="Button" parent="UI/Root/Lobby" unique_id=315188606]
 layout_mode = 2
-text = "加入（連線模式）"
+text = "加入（模式照開房的人）"
 
 [node name="IPRow" type="HBoxContainer" parent="UI/Root/Lobby" unique_id=1514768845]
 layout_mode = 2
@@ -150,6 +170,10 @@ flat = false
 [node name="TestServerBtn" type="Button" parent="UI/Root/Lobby" unique_id=1799944930]
 layout_mode = 2
 text = "連到測試站"
+
+[node name="PracticeLabel" type="Label" parent="UI/Root/Lobby" unique_id=1500016906]
+layout_mode = 2
+text = "── 一個人練習 ──"
 
 [node name="SandboxBtn" type="Button" parent="UI/Root/Lobby" unique_id=1799944929]
 layout_mode = 2
@@ -367,6 +391,7 @@ show_percentage = false
 [connection signal="pressed" from="UI/Root/Result/Box/RestartBtn" to="." method="_on_restart_pressed"]
 [connection signal="pressed" from="UI/Root/Result/Box/LobbyBtn" to="." method="_on_leave_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/HostBtn" to="." method="_on_host_pressed"]
+[connection signal="item_selected" from="UI/Root/Lobby/ModeRow/ModePick" to="." method="_on_mode_picked"]
 [connection signal="pressed" from="UI/Root/Lobby/JoinBtn" to="." method="_on_join_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/TestServerBtn" to="." method="_on_test_server_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/SandboxBtn" to="." method="_on_sandbox_pressed"]

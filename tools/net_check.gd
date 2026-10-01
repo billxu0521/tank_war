@@ -31,12 +31,15 @@ func _process(_d: float) -> bool:
 	if _a == null or _b == null:
 		_find()
 		return false
+	var want := OS.get_environment("MODE")   # 伺服器用 --mode 開的話，客戶端要收到同一個模式和重生次數
+	if want != "" and (String(_m.rules) != want or _m._lives.size() < 2):
+		return false
 	if _role == "a":
 		if _f % 60 == 0 and _b.hp == _b.max_hp:
 			_a.deal_damage(_b, 30)   # 一發合理的傷害：主機要扣
 			_a.viewmodel.try_fire()  # 一槍：B 要聽得到
 		if _b.hp == _b.max_hp - 30:
-			print("NET OK（A 看到 B 被扣到 %d）" % _b.hp)
+			print("NET OK（A 看到 B 被扣到 %d，模式 %s，重生次數 %s）" % [_b.hp, _m.rules, _m._lives])
 			return true
 	else:
 		if _b.hp == _b.max_hp - 30 and _a.viewmodel.remote_shots > 0:

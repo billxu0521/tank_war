@@ -12,6 +12,8 @@ const GRAVITY := 9.8
 ## 從鏡頭中心出發，前幾公尺不畫，不然第一幀整條曳光糊在自己臉上
 const SHOW_AFTER := 3.0
 const STREAK_LENGTH := 1.5
+## 打在恐龍頭的位置這麼近算打中頭（boss 放大 1.5 倍，頭約 1.2 × 2 公尺）
+const DINO_HEAD := 1.6
 
 var origin := Vector3.ZERO
 var vel := Vector3.ZERO
@@ -98,7 +100,9 @@ func _impact(hit: Dictionary) -> void:
 	var head: bool = _traveled <= weapon.falloff_start and Viewmodel.is_headshot(target, hit["position"])
 	if head:
 		dmg = target.max_hp
-	shooter.deal_damage(target, roundi(dmg))
+	# 恐龍 boss 沒有爆頭秒殺，但打中頭可以打斷牠的蓄力（boss.gd 的 head_hit）
+	var dino_head: bool = target.has_method(&"head_position") and hit["position"].distance_to(target.head_position()) < DINO_HEAD
+	shooter.deal_damage(target, roundi(dmg), dino_head)
 	var g := get_tree().get_first_node_in_group(&"match")
 	if g:
 		g.hit_popup(hit["position"], roundi(dmg), _traveled, head)   # 靶場才會跳字

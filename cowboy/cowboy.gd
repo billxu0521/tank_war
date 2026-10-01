@@ -498,12 +498,15 @@ func _bot_shoot(threat: Node3D) -> void:
 ## viewmodel 打中東西時呼叫。扣血只有主機能做（fighter.take_damage），
 ## 客戶端要請主機代打：請求送到 Main（Main.request_damage）不送到自己這個節點——
 ## 同時開槍時自己可能已經在主機上被打死刪掉了，送到自己會找不到節點，同歸於盡就不成立
-func deal_damage(target: Node, amount: int) -> void:
+## head：打中恐龍的頭（可以打斷蓄力，見 boss.gd 的 head_hit）
+func deal_damage(target: Node, amount: int, head := false) -> void:
 	on_hit()
 	if multiplayer.is_server():
+		if head and target.has_method(&"head_hit"):
+			target.head_hit()
 		target.take_damage(amount, self)
 	else:
-		_match().request_damage.rpc_id(1, name.to_int(), target.get_path(), amount, _camera.global_position)
+		_match().request_damage.rpc_id(1, name.to_int(), target.get_path(), amount, _camera.global_position, head)
 
 
 func _match() -> Node:
