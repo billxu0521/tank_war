@@ -77,6 +77,7 @@ def limb(bm, pts, radii, sides, mi, twist=0.0, roots=(), root_k=(1.15, 1.08)):
             f.material_index = mi
     cap = bm.faces.new(list(reversed(rings[0])))   # 底部封起來：從下面看不會看到空心
     cap.material_index = mi
+    bm.faces.new(rings[-1]).material_index = mi   # 末端也封起來：細枝的尖端露在葉子外面時，看進管子裡是一個暗方塊
 
 
 def bend(p0, p1, n, wobble):
@@ -151,7 +152,7 @@ def _card_quad(bm, corners, uvs, mi, nc):
         vs = []
         for i in order:
             v = bm.verts.new(corners[i])
-            v[ln] = ((corners[i] - nc).normalized() + Vector((0, 0, 0.4))).normalized()
+            v[ln] = ((corners[i] - nc).normalized() + Vector((0, 0, 0.3))).normalized()   # 偏上一點：每團上亮下暗，底部不會全黑
             vs.append(v)
         f = bm.faces.new(vs)
         f.material_index = mi
@@ -159,7 +160,7 @@ def _card_quad(bm, corners, uvs, mi, nc):
             loop[uv].uv = uvs[i]
 
 
-def card(bm, c, nrm, size, mi, nc, rand=None):
+def card(bm, c, nrm, size, mi, nc, rand=None, cross=True):
     """一組葉片卡：兩片交叉的正方形（中心 c、邊長 size、第一片朝 nrm），UV 貼滿整張圖。
     nc 是這團葉子的中心：法線從那裡往外，整團像一顆球一樣受光，不會每片各自一個亮暗、讀起來一片雜訊"""
     rand = rand or rng
@@ -168,7 +169,7 @@ def card(bm, c, nrm, size, mi, nc, rand=None):
     spin = rand.uniform(0, math.tau)
     u, v = u * math.cos(spin) + v * math.sin(spin), -u * math.sin(spin) + v * math.cos(spin)
     h = size * 0.5
-    for a, b in ((u, v), (u, nrm)):   # 第二片沿 u 軸轉 90 度：側面看不會變成一條線
+    for a, b in ((u, v), (u, nrm))[:2 if cross else 1]:   # 第二片沿 u 軸轉 90 度：側面看不會變成一條線（貼在芯上的不用，會戳出去變成刺）
         _card_quad(bm, [c - a * h - b * h, c + a * h - b * h, c + a * h + b * h, c - a * h + b * h],
                    [(0, 0), (1, 0), (1, 1), (0, 1)], mi, nc)
 
@@ -202,17 +203,30 @@ def core(bm, c, r, mi, sq=(1, 1, 1), subdiv=2):
             f.material_index = mi
 
 
-def on_core(bm, c, cr, n, size, mi, rand=None, spread=0.25, sq=(1, 1, 1), top=0.6, push=0.1, up=0.0):
+def on_core(bm, c, cr, n, size, mi, rand=None, spread=0.25, sq=(1, 1, 1), top=0.6, push=0.1, up=0.0, cross=True, bottom=1.0, maxel=90, cap=None, fan=0.0):
     """在芯（中心 c、半徑 cr）的表面撒 n 組葉片卡，卡片大致貼著表面（法線跟芯的法線差不到 30 度）。
-    top：放在上半球的比例（下半也要鋪，不然團的下半是裸露的芯）；push：卡片再往外推卡片大小的幾成，
-    葉子的邊緣蓋過芯的輪廓，團的外緣才是葉子的鋸齒、不是多面體的直邊。up：卡片朝上的偏向（松樹的扁雲要平鋪）"""
+    bottom：下半球壓扁的倍率（松樹的團上圓下平）。top：放在上半球的比例（下半也要鋪，不然團的下半是裸露的芯）；push：卡片再往外推卡片大小的幾成，
+    葉子的邊緣蓋過芯的輪廓，團的外緣才是葉子的鋸齒、不是多面體的直邊。up：卡片朝上的偏向（松樹的扁雲要平鋪）。
+    fan：卡片從貼著表面往外翻幾度，並把卡片往外推半張的 sin(fan)，葉子像一叢張開、往外伸出去，不是一片片往內包"""
     rand = rand or rng
     for k in range(n):
         d = Vector([rand.uniform(-1, 1) for _ in range(3)])
         d.z = abs(d.z) if rand.random() < top else -abs(d.z)
         d = d.normalized()
-        q = c + Vector((d.x * sq[0], d.y * sq[1], d.z * sq[2])) * cr * rand.uniform(0.9, 1.05) + d * size * push
-        card(bm, q, d + Vector((0, 0, up if d.z >= 0 else 0.0)) + Vector([rand.uniform(-spread, spread) for _ in range(3)]), size * rand.uniform(0.85, 1.15), mi, c, rand)
+        # cap=(往外推, 大小倍率)：團頂上 35% 的卡片（從樹下往上看都是側面）縮在輪廓裡，不會伸出去被看成一條條
+        on_cap = cap is not None and d.z > 0.3
+        q = c + Vector((d.x * sq[0], d.y * sq[1], d.z * sq[2] * (bottom if d.z < 0 else 1))) * cr * rand.uniform(0.9, 1.05) + d * size * (cap[0] if on_cap else push)
+        nrm = (d + Vector((0, 0, up if d.z >= 0 else 0.0)) + Vector([rand.uniform(-spread, spread) for _ in range(3)])).normalized()
+        el = math.radians(maxel)   # 卡片法線的仰角上限：頂上水平的卡片從地面往上看剛好側面朝鏡頭，會被拉成一條條
+        if nrm.z > math.sin(el):
+            h = nrm.xy.normalized() if nrm.xy.length > 1e-6 else Vector((1, 0))
+            nrm = Vector((h.x * math.cos(el), h.y * math.cos(el), math.sin(el)))
+        if fan:
+            f = math.radians(fan * rand.uniform(0.8, 1.2))
+            t = d.cross(Vector([rand.uniform(-1, 1) for _ in range(3)])).normalized()   # 隨便一個切線方向
+            nrm = (nrm * math.cos(f) + t * math.sin(f)).normalized()
+            q = q + d * size * 0.5 * math.sin(f)
+        card(bm, q, nrm, size * rand.uniform(0.85, 1.15) * (cap[1] if on_cap else 1), mi, c, rand, cross)
 
 
 def apply_card_normals(ob):
@@ -241,7 +255,7 @@ def materials():
     # 葉子只用一種顏色：每團顏色不同看起來像拼貼，明暗交給光照
     # 葉子是葉片卡（一張畫了一簇橡樹葉的透明圖，tools/make_leaf_card.py）
     return [material('tree_bark', (0.133, 0.055, 0.024)), card_material('tree_leafcard_oak', 'leaf_oak.png'),
-            material('tree_leaf_core', (0.10, 0.13, 0.02))]   # 芯：葉色最暗的一階
+            material('tree_leaf_core', (0.15, 0.18, 0.03))]   # 芯：接近葉子的中間色（葉子往外翻開後會看到，太暗像一個洞）
 
 
 def build(name, cfg):
@@ -305,13 +319,22 @@ def build(name, cfg):
             end = inside(end, blobs)
             limb(bm, bend(start, end, 3, 0.1 * k), [r0, r0 * 0.75, r0 * 0.5, r0 * 0.3], 5, 0)
 
-    # 每個葉團：一顆暗色實心的芯（半徑是卡片的 45%，露出來不超過兩成），表面貼一把葉片卡（團越大越多），
-    # 法線從團中心往外：一團一團像球一樣受光（亮頂暗底），團裡面不透空
+    # 每個葉團拆成三顆小葉簇，往外、往上推（樹冠裡面空出來，看得到枝幹），細枝從葉團中心連過去。
+    # 每顆小葉簇：一顆暗色實心的芯，表面平貼一層單片葉片卡（不交叉，才不會一片垂直戳出去變成刺），
+    # 法線從簇中心往外、偏上：每簇上面亮、下面暗
     leaves = bmesh.new()
+    axis = Vector((0, 0, 0))
     for c, r in blobs:
-        size = r * 0.95
-        core(leaves, c, size * 0.45, 2)
-        on_core(leaves, c, size * 0.45, int(8 + 9 * r), size, 1)
+        out = (c - Vector((0, 0, c.z))) * 0.6 + Vector((0, 0, r * 0.8))
+        for j in range(3):
+            d = (out.normalized() + Vector([rng.uniform(-0.9, 0.9) for _ in range(3)])).normalized()
+            if d.z < -0.3:
+                d.z = -d.z
+            q = c + d * r * 0.4
+            sr = r * rng.uniform(0.74, 0.84)
+            limb(bm, [c - d * r * 0.2, c.lerp(q, 0.5), q], [0.09 * k, 0.07 * k, 0.05 * k], 4, 0)   # 細枝
+            core(leaves, q, sr * 0.5, 2, subdiv=1)
+            on_core(leaves, q, sr * 0.5, int(5 + 7 * sr), sr * 1.25, 1, spread=0.2, top=0.7, up=0.5, cross=False, push=0.05, maxel=45, fan=55)   # 葉子從芯的表面往外翻約 55 度張開：太斜會被拉成長條
 
     wood = to_object(name, bm, 1.0)
     crown = to_object(name + '_leaves', leaves, 1.0)

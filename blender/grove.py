@@ -37,6 +37,7 @@ def limb(bm, pts, radii, sides, mi, twist=0.0, roots=(), root_k=(1.15, 1.08)):
         for k in range(sides):
             bm.faces.new((a[k], a[(k + 1) % sides], b[(k + 1) % sides], b[k])).material_index = mi
     bm.faces.new(list(reversed(rings[0]))).material_index = mi
+    bm.faces.new(rings[-1]).material_index = mi   # 末端也封起來：細枝的尖端露在葉子外面時，看進管子裡是一個暗方塊
 UP = Vector((0, 0, 1))
 
 
@@ -163,7 +164,7 @@ BARK = (0.133, 0.055, 0.024)
 MAPLE = ((0.34, 0.12, 0.012), (0.38, 0.21, 0.025), (0.40, 0.075, 0.012))   # 橘、黃橘、紅橘
 PINE = (0.042, 0.062, 0.019)   # 遊戲的光比預覽暗，背光面會黑掉：比參考圖的暗綠再亮一點
 PINE_BARK = (0.105, 0.055, 0.032)
-PINE_CORE = (0.035, 0.055, 0.014)   # 葉簇的芯：松針最暗那階（偏黃的橄欖深綠）   # 比闊葉樹的樹皮灰一點：太橘
+PINE_CORE = (0.1, 0.1, 0.042)   # 芯：葉色最暗那階（偏綠的橄欖，線性值）   # 葉簇的芯：松針最暗那階（偏黃的橄欖深綠）   # 比闊葉樹的樹皮灰一點：太橘
 YUCCA = (0.12, 0.145, 0.025)
 YUCCA_DEAD = (0.11, 0.07, 0.03)
 DEAD_BARK = (0.12, 0.085, 0.058)
@@ -172,7 +173,7 @@ WILLOW = (0.13, 0.16, 0.026)
 
 def maple():
     rnd.seed(21)
-    ms = mats(('tree_bark_maple', BARK),) + [card_material('tree_leafcard_maple', 'leaf_maple.png')] + mats(('tree_leaf_maple_core', (0.30, 0.09, 0.01)))
+    ms = mats(('tree_bark_maple', BARK),) + [card_material('tree_leafcard_maple', 'leaf_maple.png')] + mats(('tree_leaf_maple_core', (0.45, 0.15, 0.02)))
     bm = bmesh.new()
     top, d, r = trunk(bm, 3.2, 0.45, flare=1.4)
     tips = []
@@ -190,13 +191,13 @@ def maple():
         a = k * 2.39996
         w = math.sqrt(1 - z * z) * (k != 9)
         cc = c0 + Vector((w * math.cos(a) * 2.1, w * math.sin(a) * 2.1, z * 2.1))
-        core(bm, cc, 0.7, 2, sq=(1, 1, 0.85))   # 每團一顆暗色的芯（卡片的 45%），卡片貼著芯的表面：團裡不透空、輪廓是圓的
-        on_core(bm, cc, 0.7, 18, 1.55, 1, rnd, sq=(1, 1, 0.85))
+        core(bm, cc, 0.45, 2, sq=(1, 1, 0.85))   # 每團一顆暗色的芯（卡片的 45%），卡片貼著芯的表面：團裡不透空、輪廓是圓的
+        on_core(bm, cc, 0.55, 28, 1.55, 1, rnd, sq=(1, 1, 0.85), spread=0.2, push=0.05, cross=False, fan=55)   # 葉子往外翻開
     # 頂端中央補三團（最高點是一個圓鈍的尖頂，不會中間凹下去像愛心），70% 高度正面再補一團填洞
     for off in ((-0.7, 0, 2.0), (0, 0, 2.4), (0.7, 0, 2.0), (0.5, -0.9, 1.0)):
         q = c0 + Vector(off) + Vector((0, rnd.uniform(-0.3, 0.3), 0))
-        core(bm, q, 0.62, 2)
-        on_core(bm, q, 0.62, 13, 1.4, 1, rnd)
+        core(bm, q, 0.4, 2)
+        on_core(bm, q, 0.5, 15, 1.4, 1, rnd, spread=0.2, push=0.05, cross=False, fan=55)
     return obj('TreeMaple', bm, ms)
 
 
@@ -210,9 +211,10 @@ def pine():
     # 枝：從 30% 高度往上一圈圈伸出，越高越短，接近水平微微往上；枝端一團壓扁的葉團，枝中段再一團小的
     tiers = 8
     idx = 0
+    PA, PB, PC = 1.15, 0.95, 1.3   # 枝長補償（全部、58~72% 高度、72% 以上）：自動試幾組、量預覽圖的輪廓挑出來的
     for t in range(tiers):
         f = t / (tiers - 1)
-        n = 3 if t < 2 else 2   # 雲團共 18 團，一團貼一團
+        n = 3   # 24 團：團太少的話一根枝伸長整個輪廓就歪
         for i in range(n):   # 每層繞樹幹亂轉、每簇高度錯開 ±30% 層距
             # 先決定雲團（枝端）在哪個高度，再倒推枝從樹幹哪裡長出來：枝往上斜，雲團會比枝根高
             zt = H * (0.3 + 0.6 * f) + rnd.uniform(-0.3, 0.3) * H * 0.6 / (tiers - 1)
@@ -221,13 +223,13 @@ def pine():
             out = Vector((math.cos(yaw), math.sin(yaw), 0))
             # 整棵照參考圖量出來的輪廓：最寬是樹高 0.75 倍、在 45~50% 高度；以最寬為 1，70% 高 0.77、80% 高 0.52、90% 高 0.28。
             # 水平伸出 = 那個高度的半寬扣掉雲團半徑，雲團外緣剛好落在輪廓上
-            w = 0.72 * (1.2 - 0.45 * f) * 1.6   # 團寬約樹高的 0.2
+            w = 0.72 * (1.2 - 0.45 * f) * 1.64   # 團寬約樹高的 0.18，團跟團之間留得出縫
             prof = float(np.interp(zt / H, (0.25, 0.35, 0.47, 0.6, 0.7, 0.8, 0.9, 1.0), (0.55, 0.85, 1.0, 0.9, 0.77, 0.52, 0.28, 0.08)))
             if zt / H > 0.72:   # 上段的團小一點：團太大，80% 高度的寬度會被團本身撐開
-                w *= 0.7
+                w *= 0.55
             reach = max(0.25, H * 0.375 * prof * rnd.uniform(0.9, 1.0) - w * 1.2)
             # 枝朝四面八方長，朝前後的枝投影到畫面上會變短：量預覽圖的寬度再補回來（全部 ×1.22，55~72% 高度再 ×1.25、72% 以上 ×0.8（雲團比枝端高，畫面上會往上移一截），量過預覽圖定的）
-            reach *= 1.22 * (1.1 if 0.58 <= zt / H <= 0.72 else (0.7 if zt / H > 0.72 else 1.0))
+            reach *= PA * (PB if 0.58 <= zt / H <= 0.72 else (PC if zt / H > 0.72 else 1.0))
             reach *= 0.8 if 0.5 <= zt / H < 0.58 else (1.12 if 0.36 <= zt / H < 0.5 else 1.0)   # 最寬處壓在 42~52% 高度（雲團在畫面上比 zt 高一截）
             el = math.radians(25)   # 枝往上斜 25 度，末段再往上彎 10 度：不會像梯子的橫桿
             L = reach / math.cos(el)
@@ -239,17 +241,17 @@ def pine():
             side = Vector((-out.y, out.x, 0))
             # 三顆扁雲片（暗色實心的芯），每顆表面貼幾組短松針的葉片卡：讀起來是一片圓潤、表面有細紋的扁雲
             # 每根枝一團雲（枝端一大顆、往內一小顆靠在一起），團跟團之間留縫、看得到枝條和樹幹；枝的末端藏在團裡
-            for tt, dy, dz, k in ((1.0, 0, 0.3, 1.15), (max(0.4, 1 - 1.1 * w / max(L, 0.1)), 0.3, 0.2, 0.9)):
+            for tt, dy, dz, k in ((1.0, 0, 0.3, 1.2),):   # 每根枝一團，團跟團之間才有縫
                 q = p0.lerp(pts[-1], tt) + side * dy * w + Vector((0, 0, dz))
                 gr = w * k * rnd.uniform(0.9, 1.1)
-                sq = (1.05, 1.05, 0.35)   # 芯很扁（厚 35%），卡片蓋得住
-                core(bm, q, gr * 0.72, 1, sq, subdiv=1)   # 芯是卡片的 45%，蓋在卡片底下
-                on_core(bm, q, gr * 0.72, 9, gr * 1.25, 2, rnd, spread=0.2, sq=sq, top=0.75, up=1.5)   # 卡片多半朝上平鋪：讀起來是一片扁雲
+                sq = (1.05, 1.05, 0.6)   # 圓蓬蓬的團（參考圖的松樹是一團團圓的葉簇，不是扁盤）
+                core(bm, q, gr * 0.45, 1, sq, subdiv=1)   # 芯是卡片的 35%，蓋得住
+                on_core(bm, q, gr * 0.45, 16, gr * 1.3, 2, rnd, spread=0.1, sq=sq, top=0.7, up=0.6, cross=False, push=0.05, bottom=0.3, fan=35)   # 上圓下平的一團，葉子微微往外翻開
     # 尖頂：四簇往上疊（第一簇偏一邊、在 83% 高度，補起頂團下面那段只看得到樹幹的「脖子」），其他對準樹幹軸線
-    for k, (off, rr) in enumerate((((0.5, 0.3, -0.1), 0.9), ((0, 0, 0.4), 1.25), ((0, 0, 1.0), 1.1), ((0, 0, 1.55), 0.6))):
+    for k, (off, rr) in enumerate((((0.5, 0.3, -0.1), 0.75), ((0, 0, 0.4), 1.0), ((0, 0, 1.0), 0.9), ((0, 0, 1.55), 0.55))):
         q = top + Vector(off)
-        core(bm, q, rr * 0.72, 1, (1.1, 1.1, 0.35), subdiv=1)
-        on_core(bm, q, rr * 0.72, 7, rr * 1.25, 2, rnd, spread=0.2, sq=(1.1, 1.1, 0.35), top=0.75, up=1.5)
+        core(bm, q, rr * 0.65, 1, (1.1, 1.1, 0.35), subdiv=1)   # 頂團的芯小一點，頂上才不會露出一片灰色平面
+        on_core(bm, q, rr * 0.72, 10, rr * 1.25, 2, rnd, spread=0.1, sq=(1.1, 1.1, 0.35), top=0.7, up=0.6, cross=False, push=0.05, bottom=0.3, fan=35)
     return obj('TreePine2', bm, ms)
 
 

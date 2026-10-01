@@ -62,6 +62,7 @@ func _plan() -> void:
 		_main.get_node(^"Arena").add_child(mi)
 		mi.global_position = _ground(spot + k[1])
 	_views.append(["maple", spot + Vector3(0, 2.5, 20), spot + up * 4.5])
+	_views.append(["oak_close", spot + Vector3(3, 3.5, 9), spot + Vector3(5, 6.5, 0)])   # 近看葉子
 	for kind: StringName in [&"Windmill", &"HayShed"]:     # 場景小物件（kits.glb）：風車、麥田角落的倉庫
 		var n := _find(kind)
 		if n:

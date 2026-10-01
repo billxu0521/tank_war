@@ -1992,6 +1992,7 @@ static func meshes() -> Dictionary:
 ## 全部模型都不要高光：朝太陽的面疊一層反光會把顏色沖灰、反射粉色的天空（牆和門廊泛粉紫）。
 ## Blender 設了 Specular 0，但 glTF 匯進來 Godot 還是預設 0.5，要在這裡補。
 ## 網格被資源快取住，改一次之後各處 instantiate 出來的都是改好的那份（glb 要留著，快取才不會被丟掉）
+const LEAVES_SHADER := preload("res://leaves.gdshader")
 const FLAT_MODELS := ["res://models/props.glb", "res://models/trees.glb", "res://models/rocks.glb", "res://models/houses.glb", "res://models/kits.glb", "res://models/towns.glb",
 	"res://models/groves.glb", "res://models/floras.glb",
 	"res://models/cowboy.glb", "res://models/trex.glb", "res://models/revolver.glb",
@@ -2012,10 +2013,12 @@ static func _flatten_models() -> void:
 					m.metallic = 0.0
 					if m.resource_name in ["p_wheat", "p_grass"]:   # 字串比對（StringName 放在陣列裡比不到）
 						m.roughness = 0.5   # 描線跳過的記號（見 grass.gdshader）
-					if m.resource_name.contains("leafcard"):   # 樹的葉片卡（blender/grove.py）：透明底挖空；
-						m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR   # 不接收影子，不然一層層葉片互遮，樹冠裡面全黑
-						m.alpha_scissor_threshold = 0.5
-						m.disable_receive_shadows = true
+					if m.resource_name.contains("leafcard"):   # 樹的葉片卡（blender/tree.py、grove.py）：換成會隨風擺的葉子材質
+						var leaf := ShaderMaterial.new()          # （透明底挖空、不接收影子，見 leaves.gdshader）
+						leaf.shader = LEAVES_SHADER
+						leaf.set_shader_parameter(&"leaf_tex", m.albedo_texture)
+						mi.mesh.surface_set_material(i, leaf)   # 網格是共用的：場上每棵、遠景的樹都跟著換
+						continue
 					if m.albedo_texture == null:   # 材質可能好幾個網格共用，只疊一次
 						_add_grain(m)
 		inst.free()

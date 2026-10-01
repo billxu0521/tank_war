@@ -8,13 +8,14 @@ import random
 from PIL import Image, ImageDraw
 
 S = 512   # 畫大再縮小，邊緣才不會鋸齒太重
+OUTLINE = 5   # 每片葉子外面一圈暗邊的粗細（畫圖的像素；縮小後約 3 像素）
 OUT = 256
 rnd = random.Random(20261002)
 # 楓葉：橘、黃橘、紅橘（grove.py 的 MAPLE 換成 sRGB 再亮一點：貼圖留白多，整簇讀起來會比實心葉團暗）
 MAPLE = [(228, 132, 34), (236, 172, 52), (214, 90, 30)]
 # 參考圖 tree_list.png 的色票，比照楓樹的亮度
 OAK = [(118, 132, 52), (130, 142, 58), (106, 120, 46)]        # 橄欖綠，三階只差一點（差太多遠看是雜訊）
-PINE = [(80, 96, 46), (96, 110, 56), (64, 78, 38)]            # 偏黃的橄欖深綠松針
+PINE = [(90, 90, 58), (98, 106, 68), (106, 120, 78)]   # 暗、中、亮：色相約 60/72/80 度（參考圖只取葉子的像素量的），亮葉偏綠、暗葉偏橄欖
 WILLOW = [(150, 160, 58), (170, 172, 70), (126, 140, 48)]     # 黃綠柳葉
 YUCCA = [(128, 140, 50), (150, 158, 62), (104, 116, 40)]      # 約書亞樹的尖葉
 
@@ -66,11 +67,12 @@ def shade(c, k):
 
 
 def draw_leaf(d, pts, cx, cy, rot, col, k, contrast=1.0):
+    d.polygon(pts, fill=shade(col, 0.5 * k) + (255,), outline=shade(col, 0.5 * k) + (255,), width=OUTLINE)   # 一圈暗邊：葉子跟葉子分得開
     d.polygon(pts, fill=shade(col, (1 + 0.08 * contrast) * k) + (255,))
     d.polygon(half(pts, cx, cy, rot, -1), fill=shade(col, (1 - 0.18 * contrast) * k) + (255,))   # 左半暗一階
 
 
-def cluster(colors, weights, n, spread, size, shape, stem=True, seed=20261002, contrast=1.0):
+def cluster(colors, weights, n, spread, size, shape, stem=True, seed=20261002, contrast=1.0, by_depth=False):
     """一簇 n 片葉子：黃金角螺旋鋪滿整張（半徑 spread），每片大小 size 範圍、方向亂轉，從後排畫到前排（後排暗）。
     shape(cx, cy, size, rot) 回傳葉子外形的點列"""
     rnd.seed(seed)
@@ -82,9 +84,11 @@ def cluster(colors, weights, n, spread, size, shape, stem=True, seed=20261002, c
         a = i * 2.39996 + rnd.uniform(-0.3, 0.3)   # 黃金角螺旋：整張平均鋪滿，不會擠在一邊
         r = math.sqrt((i + 0.5) / n) * spread * S
         leaves.append((S / 2 + math.cos(a) * r, S / 2 + math.sin(a) * r, rnd.uniform(*size) * S,
-                       rnd.uniform(-70, 70), rnd.choices(colors, weights)[0], rnd.random()))
-    for cx, cy, sz, rot, col, depth in sorted(leaves, key=lambda l: l[5]):
-        k = 1 - 0.28 * contrast * (1 - depth)   # 後排暗
+                       rnd.uniform(-70, 70), rnd.choices(colors, weights)[0], rnd.choices((0.0, 0.5, 1.0), (30, 40, 30))[0]))
+        if by_depth:   # 顏色跟著明度走（colors 是暗、中、亮）
+            leaves[-1] = leaves[-1][:4] + (colors[int(leaves[-1][5] * 2)], leaves[-1][5])
+    for cx, cy, sz, rot, col, depth in sorted(leaves, key=lambda l: l[5] + rnd.random() * 0.01):
+        k = 0.8 + 0.26 * depth   # 三個明度（暗 30%、中 40%、亮 30%），暗的畫在後面：亮葉疊在暗葉上，一片片分得開
         draw_leaf(d, shape(cx, cy, sz, rot), cx, cy, rot, col, k, contrast)
         if stem:
             t = math.radians(rot)
@@ -94,21 +98,28 @@ def cluster(colors, weights, n, spread, size, shape, stem=True, seed=20261002, c
 
 
 def maple_card():
-    return cluster(MAPLE, (45, 40, 15), 6, 0.22, (0.26, 0.3), maple_leaf)   # 六片大葉：單片約樹高 1/35
+    return cluster(MAPLE, (45, 40, 15), 14, 0.34, (0.17, 0.21), maple_leaf, stem=False)   # 十四片：遊戲裡單片約 25 公分（太大會看起來像一塊塊布）
 
 
 def oak_card():
     """闊葉樹：十六片長橢圓、邊緣三四道圓波（橡樹葉），葉柄在中心附近"""
     def oak_leaf(cx, cy, size, rot):
-        w = lambda t: 0.3 * math.sin(math.pi * t) ** 0.7 * (1 + 0.22 * math.sin(t * math.pi * 7))
+        w = lambda t: 0.3 * math.sin(math.pi * t) ** 0.45 * (1 + 0.16 * math.cos(t * math.pi * 8))   # 圓鈍的裂片、葉尖也是圓的
         pts = blade_leaf(cx, cy, size, rot, w)
         t0 = math.radians(rot)
         return [(x - math.sin(t0) * size * 0.5, y + math.cos(t0) * size * 0.5) for x, y in pts]   # 中心對齊葉子中間
-    return cluster(OAK, (50, 25, 25), 7, 0.2, (0.58, 0.68), oak_leaf, seed=11, contrast=0.7)   # 七片大葉：單片約樹高 1/40
+    return cluster(OAK, (50, 25, 25), 16, 0.34, (0.24, 0.3), oak_leaf, stem=False, seed=11, contrast=0.7)   # 十六片：遊戲裡單片約 25 公分；不畫葉柄（近看像裂縫）
 
 
 def pine_card():
-    """松樹：一片圓潤的雲狀葉簇，表面是很多撮短松針（每撮十幾根往外放射），輪廓毛毛的圓；後排暗、前排亮"""
+    """松樹（參考圖是一團團圓蓬蓬的葉簇）：很多片小圓葉，跟橡樹同一種畫法、顏色是偏黃的橄欖深綠"""
+    oval = lambda cx, cy, size, rot: [(x - math.sin(math.radians(rot)) * size * 0.5, y + math.cos(math.radians(rot)) * size * 0.5)
+                                      for x, y in blade_leaf(cx, cy, size, rot, lambda t: 0.32 * math.sin(math.pi * t) ** 0.6)]
+    return cluster(PINE, (1, 1, 1), 72, 0.38, (0.1, 0.125), oval, stem=False, seed=12, contrast=0.7, by_depth=True)   # 七十二片小圓葉擠成一團（單片約樹高 1/60）
+
+
+def pine_needle_card():
+    """（舊的）松樹：一片圓潤的雲狀葉簇，表面是很多撮短松針（每撮十幾根往外放射），輪廓毛毛的圓；後排暗、前排亮"""
     rnd.seed(12)
     img = Image.new('RGBA', (S, S), PINE[0] + (0,))
     d = ImageDraw.Draw(img)
