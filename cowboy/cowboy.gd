@@ -174,6 +174,44 @@ func _ready() -> void:
 	_camera.current = true
 	# 相機不走物理插值（見 _process）：轉視角是滑鼠事件，補間會讓轉頭慢半拍。槍和手跟著相機
 	_camera.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	_hurt_hud = HurtHud.new(_camera)
+	$HUD.add_child(_hurt_hud)
+	$HUD.move_child(_hurt_hud, 0)   # 墊在血條、彈藥這些下面
+	# 血條掉血殘影：掉的那段先變淺色，等一下才縮回去，看得出這一下掉了多少
+	_hp_lost = ColorRect.new()
+	_hp_lost.color = Color(1.0, 0.85, 0.6, 0.9)
+	_hp_lost.size = _hp_fill.size
+	_hp_fill.get_parent().add_child(_hp_lost)
+	_hp_fill.get_parent().move_child(_hp_lost, 0)
+
+
+# --- 被打的回饋（只有自己的牛仔）---
+var _hurt_hud: HurtHud
+var _hp_lost: ColorRect
+var _hp_lag := -1.0          # 殘影現在畫到的血量
+var _hp_lag_wait := 0.0      # 掉血後殘影先停這麼久才開始縮
+var _kick := Vector2.ZERO    # 鏡頭被打歪多少（弧度：x 上下、y 左右），每幀彈回來
+
+## 被打了：畫面四周閃紅、準心外圍標出打你的方向、鏡頭抖一下（傷越重抖越大）
+func _on_hurt(amount: int, from: Vector3) -> void:
+	if not is_local or _hurt_hud == null:
+		return
+	var frac := float(amount) / max_hp
+	_hurt_hud.hurt(frac, from)
+	_kick += Vector2(randf_range(0.03, 0.06), randf_range(-0.05, 0.05)) * (0.5 + frac * 3.0)
+	_hp_lag_wait = 0.4
+
+func _update_hurt(delta: float) -> void:
+	if _hurt_hud == null:
+		return
+	_hurt_hud.low = clampf((HurtHud.LOW_HP - float(hp) / max_hp) / HurtHud.LOW_HP, 0.0, 1.0)
+	_kick = _kick.lerp(Vector2.ZERO, 1.0 - exp(-12.0 * delta))
+	if _hp_lag < hp:
+		_hp_lag = hp
+	_hp_lag_wait -= delta
+	if _hp_lag_wait <= 0.0:
+		_hp_lag = move_toward(_hp_lag, hp, max_hp * 0.8 * delta)
+	_hp_lost.size = Vector2((_hp_fill.get_parent() as Control).size.x * clampf(_hp_lag / max_hp, 0.0, 1.0), _hp_fill.size.y)
 
 
 ## 走路時兩條腿繞髖關節前後擺，擺幅跟速度走。速度用位置差算：
@@ -225,7 +263,8 @@ func _process(delta: float) -> void:
 		return
 	# 翻越：鏡頭往下點頭、往側邊歪一下，看得出自己撐過去了
 	var v := sin(PI * vault_t)
-	_camera.rotation = Vector3(-0.22 * v, 0.0, 0.12 * v)
+	_update_hurt(delta)
+	_camera.rotation = Vector3(-0.22 * v + _kick.x, _kick.y, 0.12 * v + _kick.y * 0.5)
 	# 相機位置用補間後的（移動不抖），朝向用現在的（轉頭零延遲）：
 	# 相機掛在頭底下，差多少就往回挪多少。瞬移後補間會重設，這個差就是 0
 	var lag := head.get_global_transform_interpolated().origin - head.global_position

@@ -112,6 +112,52 @@ static func gun_smoke(world: Node, at: Vector3, forward: Vector3, amount := 1.0)
 	_once(world, cloud, at + forward * (0.5 + 0.3 * amount))
 
 
+## 塵土：大東西（恐龍）踩地、出招揚起的一團土。dir 是往哪邊噴（腳步是往後上方），size 是一片多大
+const DUST := Color(0.63, 0.5, 0.36, 0.55)   # 跟沙土路（main.gd 的 DIRT）同色系、亮一點
+static func dust(world: Node, at: Vector3, dir: Vector3, size := 0.7, amount := 6, speed := 2.5, life := 1.6) -> void:
+	var p := _emitter(_card(size, DUST), amount, life)
+	_spin(p)
+	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	p.emission_sphere_radius = size * 0.6
+	p.direction = dir
+	p.spread = 40.0
+	p.initial_velocity_min = speed * 0.4
+	p.initial_velocity_max = speed
+	p.damping_min = 2.0
+	p.damping_max = 3.5
+	p.gravity = WIND + Vector3(0, 0.15, 0)   # 慢慢飄起來、順著風散掉
+	p.scale_amount_min = 0.7
+	p.scale_amount_max = 1.3
+	p.scale_amount_curve = _grow(0.4, 1.8)
+	p.color_ramp = _fade(DUST)
+	_once(world, p, at)
+
+
+## 一圈往外推開的塵土（甩尾掃地、重摔、跺地的震波）
+static func dust_ring(world: Node, at: Vector3, radius: float, amount := 24, speed := 7.0, size := 0.9) -> void:
+	var p := _emitter(_card(size, DUST), amount, 1.8)
+	_spin(p)
+	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_RING
+	p.emission_ring_axis = Vector3.UP
+	p.emission_ring_radius = radius
+	p.emission_ring_inner_radius = radius * 0.6
+	p.emission_ring_height = 0.2
+	p.direction = Vector3.UP
+	p.spread = 25.0
+	p.initial_velocity_min = 0.5
+	p.initial_velocity_max = 2.0
+	p.radial_accel_min = speed     # 從圈的中心往外推
+	p.radial_accel_max = speed * 1.5
+	p.damping_min = 4.0
+	p.damping_max = 6.0
+	p.gravity = WIND
+	p.scale_amount_min = 0.8
+	p.scale_amount_max = 1.4
+	p.scale_amount_curve = _grow(0.5, 2.0)
+	p.color_ramp = _fade(DUST)
+	_once(world, p, at)
+
+
 ## 煙囪一直冒的煙。回傳節點，要停掉就 queue_free
 static func chimney(parent: Node3D, pos: Vector3) -> CPUParticles3D:
 	var c := Color(0.55, 0.55, 0.55, 0.5)

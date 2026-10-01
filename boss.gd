@@ -114,6 +114,7 @@ var _stuck_t := 0.0
 var _unstick_left := 0.0      # 脫困中：往後退、往旁邊繞
 var _unstick_dir := Vector3.ZERO
 var _shown_act := ACT_NONE    # 各台：上一次播過動作和叫聲的狀態
+var _was_down := false        # 各台：上一幀是不是倒地（倒地那一下揚土）
 
 
 func _ready() -> void:
@@ -142,6 +143,11 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	super(delta)
 	$Trex.rotation.z = lerpf($Trex.rotation.z, 1.35 if down_left > 0.0 else 0.0, minf(delta * 4.0, 1.0))
+	if down_left > 0.0 and not _was_down:   # 倒地：整隻摔下去揚起一大圈土
+		var w: Node = get_tree().get_first_node_in_group(&"arena")
+		if w:
+			Fx.dust_ring(w, global_position + Vector3.DOWN * 3.5, 4.0, 40, 9.0, 1.2)
+	_was_down = down_left > 0.0
 	$Trex.act = act
 	if act != _shown_act:
 		_shown_act = act
@@ -365,8 +371,7 @@ func _strike_bite() -> void:
 	_hit_around(mouth(), BITE_RADIUS, BITE_DAMAGE)
 
 func _strike_sweep() -> void:
-	_hit_around(global_position, SWEEP_RADIUS, SWEEP_DAMAGE)
-	_play_fx.rpc(true)   # 地上踢起一圈灰
+	_hit_around(global_position, SWEEP_RADIUS, SWEEP_DAMAGE)   # 掃起的一圈土是各台自己播（trex.gd 的 _act_fx）
 
 ## 判定點附近的牛仔扣血（一招每人最多一次、中間隔著東西打不到）
 func _hit_around(at: Vector3, radius: float, damage: int) -> void:
@@ -501,10 +506,11 @@ func _go(to: Vector3, want_run: bool, delta: float) -> void:
 	var off := absf(wrapf(want - rotation.y, -PI, PI))
 	_move(-global_basis.z * clampf(cos(off), 0.15, 1.0), want_run, delta)
 
-func _turn_to(p: Node3D, speed: float, delta: float) -> void:
+## p 可能已經被刪掉（預備出招時目標剛好死掉）：參數不寫型別，先檢查再用
+func _turn_to(p: Object, speed: float, delta: float) -> void:
 	if not is_instance_valid(p):
 		return
-	var d := p.global_position - global_position
+	var d: Vector3 = (p as Node3D).global_position - global_position
 	rotation.y = rotate_toward(rotation.y, atan2(-d.x, -d.z), speed * delta)
 
 ## 走或跑。跑吃體力，見底就只能走，回到 RECOVER_AT 才能再跑

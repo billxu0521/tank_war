@@ -179,6 +179,10 @@ text = "── 一個人練習 ──"
 layout_mode = 2
 text = "沙盒模式（牛仔練習場，打靶、練翻越）"
 
+[node name="SoloDinoBtn" type="Button" parent="UI/Root/Lobby" unique_id=1799944932]
+layout_mode = 2
+text = "單人打恐龍（測恐龍行為，接關無限）"
+
 [node name="RangeBtn" type="Button" parent="UI/Root/Lobby" unique_id=1799944931]
 layout_mode = 2
 text = "靶場模式（測手感：跳傷害、顯示距離）"
@@ -396,6 +400,7 @@ show_percentage = false
 [connection signal="pressed" from="UI/Root/Lobby/TestServerBtn" to="." method="_on_test_server_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/SandboxBtn" to="." method="_on_sandbox_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/RangeBtn" to="." method="_on_range_pressed"]
+[connection signal="pressed" from="UI/Root/Lobby/SoloDinoBtn" to="." method="_on_solo_dino_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/ViewerBtn" to="." method="_on_viewer_pressed"]
 [connection signal="pressed" from="UI/Root/Menu/Box/ResumeBtn" to="." method="_on_resume_pressed"]
 [connection signal="toggled" from="UI/Root/Menu/Box/VsyncBtn" to="." method="_on_vsync_toggled"]

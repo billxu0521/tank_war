@@ -122,16 +122,21 @@ func take_damage(amount: int, source: Node = null) -> void:
 		if g and not g.dino_attacks:
 			return
 	_last_hit_by = source
-	_sync_hp.rpc(hp - amount)
+	# 從哪裡打來的（給被打的人畫受傷方向）：恐龍是身體中心、牛仔是胸口；摔落沒有來源
+	var from := Vector3.INF
+	if is_instance_valid(source) and source is Node3D and source != self:
+		from = (source as Node3D).global_position + (Vector3.ZERO if source.is_in_group(&"dino") else Vector3.UP * 1.3)
+	_sync_hp.rpc(hp - amount, from)
 
 ## 血量只有主機能改。annotation 寫 any_peer 是因為牛仔節點的 authority 是玩家本人（他自己控制移動），
 ## 寫 authority 的話主機反而發不出來；所以收到時自己檢查是不是主機（編號 1）送的
 @rpc("any_peer", "call_local", "reliable")
-func _sync_hp(v: int) -> void:
+func _sync_hp(v: int, from := Vector3.INF) -> void:
 	if multiplayer.get_remote_sender_id() != 1:
 		return
 	if v < hp:
 		_flash_red()
+		_on_hurt(hp - v, from)
 	hp = v
 	if hp <= 0:
 		died.emit(_last_hit_by)
@@ -143,12 +148,18 @@ func _sync_hp(v: int) -> void:
 ## 衰減到 1200ms 才停），不擋掉的話砲塔一進遊戲就自己甩到隨機角度。
 ## ponytail: 直接用固定時間窗擋掉，夠簡單也夠用。如果哪天在別的機器上還是會甩，
 ## 就把 LOOK_SETTLE_MS 調大，或改成「等到位移出現一段空檔才開始吃輸入」。
+## 這個角色吃不吃這台電腦的滑鼠：要是自己操控的，而且不是電腦。
+## 電腦（boss、bot、移動標靶）也是主機在操控，authority 是主機——不擋的話主機玩家一動滑鼠，
+## 牠們的頭和身體也跟著轉（恐龍的頭跟主機玩家一起轉的 bug、0.8.1 回饋 B4）
+func takes_mouse() -> bool:
+	return is_multiplayer_authority() and not is_bot_id(name.to_int())
+
 func mouse_look(e: InputEvent) -> Vector2:
 	var captured := Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
 	if captured != _was_captured:
 		_was_captured = captured
 		_settle_until = Time.get_ticks_msec() + LOOK_SETTLE_MS
-	if not captured or not is_multiplayer_authority() or not (e is InputEventMouseMotion):
+	if not captured or not takes_mouse() or not (e is InputEventMouseMotion):
 		return Vector2.ZERO
 	if Time.get_ticks_msec() < _settle_until:
 		return Vector2.ZERO
@@ -171,6 +182,10 @@ func _apply_gravity(delta: float) -> void:
 
 ## 中彈閃一下紅。用 material_overlay 蓋在原本材質上，
 ## 每次都新建材質，才不會跟別台共用的材質互相干擾。
+## 被打了（每台都會呼叫）。牛仔在這裡做自己畫面上的受傷回饋（cowboy.gd）；from 是傷害來源，摔落是 INF
+func _on_hurt(_amount: int, _from: Vector3) -> void:
+	pass
+
 func _flash_red() -> void:
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED

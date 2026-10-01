@@ -42,6 +42,7 @@ func _process(_delta: float) -> bool:
 		_case_vault()
 		_case_modes()
 		_case_match_rules()
+		_case_solo_dino()
 		_case_controller()
 		_case_back_to_lobby()
 		_case_cover()
@@ -1066,6 +1067,26 @@ func _case_match_rules() -> void:
 	_ck(m.egg.visible and m._lives.is_empty(), "搶蛋模式有蛋、不限重生")
 	_end(m)
 
+## 單人打恐龍：沙盒的場地、只有自己和恐龍 boss、子彈無限、接關無限
+func _case_solo_dino() -> void:
+	var m: Node = load("res://main.tscn").instantiate()
+	root.add_child(m)
+	_ck(m.has_node(^"UI/Root/Lobby/SoloDinoBtn"), "大廳要有單人打恐龍")
+	m._on_solo_dino_pressed()
+	var me: Node3D = m.players.get_node_or_null(^"1")
+	var b: Node3D = m.players.get_node_or_null(NodePath(str(m.BOSS_ID)))
+	_ck(me != null and b != null and m.players.get_child_count() == 2, "只有自己和恐龍 boss（現在 %d 個）" % m.players.get_child_count())
+	_ck(me.global_position.distance_to(b.global_position) > 60.0, "恐龍要生在遠處，靠導演給的方向找過來")
+	_ck(me.viewmodel._weapons.all(func(w: Node) -> bool: return w.reserve == -1), "子彈無限")
+	for i in 3:   # 死三次都要接得回來
+		m.players.get_node(^"1").take_damage(9999)
+		m.players.remove_child(m.players.get_node(^"1"))
+		m._time_left -= m.RESPAWN_DELAY + 1.0
+		m._respawn_step()
+	_ck(m.players.has_node(^"1") and m._continues == 3 and not m._over, "接關無限：死了一直回來（接關 %d 次）" % m._continues)
+	_ck(m._boss_debug().begins_with("恐龍："), "畫面要顯示恐龍在做什麼")
+	_end(m)
+
 ## 遊戲局控制：移動標靶來回走、不開槍、死了照樣生回標靶；bot 在沙盒找玩家；清除清乾淨
 func _case_controller() -> void:
 	var m: Node = load("res://main.tscn").instantiate()
@@ -1321,6 +1342,9 @@ func _case_boss() -> void:
 	_ck(b.director.phase == Director.Phase.RETREAT, "被打倒之後要退開")
 	b.take_damage(100, c)
 	_ck(b.hp == b.max_hp, "倒地時打不動")
+	# 主機玩家動滑鼠，boss 的頭和身體不能跟著轉（boss 的 authority 也是主機）
+	_ck(not b.takes_mouse(), "boss 不能吃主機的滑鼠（不然頭會跟著主機玩家轉）")
+	_ck(not m.add_bot().takes_mouse(), "牛仔 bot 也不能吃主機的滑鼠")
 	m.clear_bots()
 	_ck(m.players.has_node(NodePath(str(m.BOSS_ID))), "清除 bot 不會把 boss 清掉")
 	_end(m)

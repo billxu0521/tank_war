@@ -137,6 +137,8 @@ var _claimer := 0   # 正在撿蛋的牛仔編號
 var _over := false
 ## 沙盒：沒有時間限制、沒有蛋，靶打死會在原地重生，子彈無限
 var _sandbox := false
+var _solo_dino := false   # 單人打恐龍（測恐龍行為用）：沙盒的場地，只有自己和恐龍 boss，接關無限
+var _continues := 0       # 單人打恐龍：接關了幾次
 
 func _ready() -> void:
 	_flatten_models()
@@ -172,6 +174,7 @@ func _ready() -> void:
 ##   OvD.exe -- --sandbox
 ##   OvD.exe -- --range
 ##   OvD.exe -- --viewer
+##   OvD.exe -- --solo-dino    單人打恐龍（測恐龍行為）
 ##   OvD.exe -- --host --mode deathmatch    指定模式（egg、deathmatch、dino_duel）
 ##   godot --headless -- --server    專用伺服器（測試站）：自己不下場，一局結束自動開下一局
 func _autostart() -> void:
@@ -191,6 +194,8 @@ func _autostart() -> void:
 		_on_host_pressed()
 	elif args.has("--sandbox"):
 		_on_sandbox_pressed()
+	elif args.has("--solo-dino"):
+		_on_solo_dino_pressed()
 	elif args.has("--viewer"):
 		_on_viewer_pressed()
 	else:
@@ -284,6 +289,7 @@ func _to_lobby(msg: String) -> void:
 	_over = false
 	_offline = false
 	_sandbox = false
+	_solo_dino = false
 	_lives.clear()
 	_out.clear()
 	rules = RULES.keys()[mode_pick.selected]   # 加入別人的房間時被主機改過，回大廳換回自己選的
@@ -431,6 +437,24 @@ func _on_sandbox_pressed() -> void:
 			_hay_bale(SANDBOX_START + Vector3(9, -0.1, -6), 0.0),
 			_hay_bale(SANDBOX_START + Vector3(9, -0.1, -9), 0.0)]:
 		prop.add_to_group(&"sandbox_prop")
+
+## 單人打恐龍：測恐龍行為用。場地跟沙盒一樣，只有自己和一隻恐龍 boss（導演、三招、找路都照連線模式），
+## 子彈無限、接關無限：死了五秒後在地圖上隨機一個地方回來。恐龍生在離你最遠的地方，要靠導演給的方向找過來。
+## 畫面上方顯示恐龍的導演階段、威脅值、正在出的招
+func _on_solo_dino_pressed() -> void:
+	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	_offline = true
+	_sandbox = true
+	_solo_dino = true
+	_continues = 0
+	egg.visible = false
+	_enter_game("單人打恐龍：接關無限、子彈無限，測恐龍行為用。Esc 回大廳")
+	var me := _add_player(COWBOY, 1)
+	me.global_position = _on_ground(SANDBOX_START)
+	for w in me.viewmodel._weapons:
+		w.reserve = -1
+	me.viewmodel._refresh_ammo()
+	spawn_boss()
 
 ## 靶場：另一張平地地圖（levels/range.tscn），專門測手感。打中跳傷害數字，畫面上有準星距離。
 ## 大廳按鈕只是切地圖、重載場景，重載完 _autostart 看到 mode 就會進來這裡
@@ -593,7 +617,7 @@ func spawn_boss() -> Node3D:
 	var at := _far_from_cowboys()
 	var b := _add_player(BOSS, BOSS_ID)
 	var me := players.get_node_or_null(^"1") as Node3D
-	if _sandbox and me:
+	if _sandbox and me and not _solo_dino:   # 沙盒：生在前方 40 公尺方便看；單人打恐龍：離你最遠，要自己找過來
 		at = me.global_position - me.global_basis.z * 40.0
 	b.global_position = _on_ground(Vector3(at.x, 4.2, at.z))
 	if rules == &"dino_duel" and not _sandbox:
@@ -879,7 +903,10 @@ func _respawn_step() -> void:
 		p.set(&"bot", r["bot"])
 		if r["walker"]:
 			_make_walker(p, r["patrol"][0], r["patrol"][1])
-		if r["pos"] != Vector3.INF:
+		if _solo_dino and id == 1:
+			_continues += 1
+			p.global_position = _spawn_point()   # 接關：地圖上隨機一個地方
+		elif r["pos"] != Vector3.INF:
 			p.global_position = r["pos"] if id != 1 else _on_ground(SANDBOX_START)
 			p.rotation.y = r["yaw"]
 		if _sandbox and id == 1:
@@ -1051,6 +1078,9 @@ func _process(delta: float) -> void:
 	if mode == &"range":
 		hud.text = "靶場    準星距離：%s    上一發：%s" % [_aim_distance(me), _last_hit]
 		return
+	if _solo_dino:
+		hud.text = "單人打恐龍    我的血量：%s    接關 %d 次\n%s" % [mine, _continues, _boss_debug()]
+		return
 	if _sandbox:
 		hud.text = "沙盒    我的血量：%s    恐龍靶血量：%s" % [mine, dino.hp if dino else "重生中"]
 		return
@@ -1088,6 +1118,25 @@ func _update_spectator(me: Node) -> void:
 	back.y = 0.0
 	_spectator.look_at_from_position(p.global_position + back.normalized() * 6.0 + Vector3.UP * 4.0, p.global_position + Vector3.UP * 1.5)
 	_spectator.current = true
+
+## 單人打恐龍的除錯資訊：導演在哪個階段、威脅值、恐龍在做什麼
+const BOSS_ACTS := ["", "咬（預備）", "咬！", "蓄力甩尾（打頭打斷）", "甩尾！", "撲擊（預備）", "撲擊！", "收招", "被打斷"]
+func _boss_debug() -> String:
+	var b := get_tree().get_first_node_in_group(&"boss")
+	if b == null:
+		return "恐龍：不在場上"
+	var d: Director = b.director
+	var phase: String = ["醞釀", "退開", "放鬆"][d.phase]
+	var doing: String = "倒地" if b.down_left > 0.0 else BOSS_ACTS[b.act]
+	if doing == "":
+		doing = "追人" if b._sees_now else ("找最後看到的地方" if b._seen_left > 0.0 else ("查聲音" if b._noise_left > 0.0
+			else ("照導演的方向找" if b._hint != Vector3.INF else "閒逛")))
+	var extra := "　剩 %d 秒" % ceili(d.phase_left) if d.phase != Director.Phase.BUILD else "　威脅 %d / %d" % [roundi(d.menace), roundi(Director.MENACE_MAX)]
+	return "恐龍：%s%s　｜　%s　｜　距離 %d m" % [phase, extra, doing, _dist_to_boss(b)]
+
+func _dist_to_boss(b: Node3D) -> int:
+	var me := players.get_node_or_null(^"1") as Node3D
+	return roundi(me.global_position.distance_to(b.global_position)) if me else -1
 
 ## 方位條下面的倒數：重生、撤離、撿蛋。重生倒數用自己這台的時間算（主機的重生佇列客戶端看不到）
 func _update_center_info(me: Node) -> void:
@@ -1478,9 +1527,13 @@ func _update_compass() -> void:
 	if egg.visible and egg.carrier != multiplayer.get_unique_id():
 		marks.append({"deg": Compass.bearing(at, egg.global_position), "dist": at.distance_to(egg.global_position),
 			"color": Compass.EGG_COLOR, "label": "蛋"})
-	for e: Vector3 in (_exits if RULES[rules].egg else []):
+	for e: Vector3 in (_exits if RULES[rules].egg and not _solo_dino else []):
 		marks.append({"deg": Compass.bearing(at, e), "dist": at.distance_to(e),
 			"color": Compass.EXIT_COLOR, "label": "撤離"})
+	var boss := get_tree().get_first_node_in_group(&"boss") as Node3D
+	if _solo_dino and boss:   # 測恐龍行為：標出恐龍在哪
+		marks.append({"deg": Compass.bearing(at, boss.global_position), "dist": at.distance_to(boss.global_position),
+			"color": Color(1, 0.35, 0.3), "label": "恐龍"})
 	_compass.marks = marks
 	_compass.queue_redraw()
 
