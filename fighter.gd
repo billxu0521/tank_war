@@ -30,8 +30,10 @@ var _settle_until := 0
 # 同步器只同步 net_state = [送出時的時間, 位置, 朝向]。收到的先存起來，畫面刻意晚 NET_DELAY 毫秒，
 # 在前後兩筆之間補（跟 FPS 遊戲的「插值」同一招）：網路一時慢了、一次來兩包，看起來還是順的。
 # 只有客戶端這樣做。主機（含測試站）收到就直接套：恐龍咬人、boss 找人都在主機算，不能看慢了的位置。
-# 客戶端自己判定打中（Bullet），打的就是畫面上看到的位置，所以「看到哪、打哪」還是對得上
-const NET_DELAY := 100.0
+# 客戶端自己判定打中（Bullet），打的就是畫面上看到的位置，所以「看到哪、打哪」還是對得上。
+# 晚越多越順但越不準（躲到牆後還中彈）：同步器每秒送 40 次（cowboy.tscn、boss.tscn 的 replication_interval），
+# 晚 60ms 等於手上隨時有兩三筆可以補，晚一包也不會停住
+const NET_DELAY := 60.0
 const NET_KEEP := 1000.0   # 存最近這麼多毫秒
 var net_smooth := false     # _ready 決定；測試會直接打開
 var _snaps: Array = []      # [送出時間, 收到時間, 位置, 朝向]，照時間排
@@ -122,9 +124,12 @@ func take_damage(amount: int, source: Node = null) -> void:
 	_last_hit_by = source
 	_sync_hp.rpc(hp - amount)
 
-# ponytail: 主機算完傷害直接廣播結果，不驗證來源。原型不防作弊，要防再改成主機權威輸入。
+## 血量只有主機能改。annotation 寫 any_peer 是因為牛仔節點的 authority 是玩家本人（他自己控制移動），
+## 寫 authority 的話主機反而發不出來；所以收到時自己檢查是不是主機（編號 1）送的
 @rpc("any_peer", "call_local", "reliable")
 func _sync_hp(v: int) -> void:
+	if multiplayer.get_remote_sender_id() != 1:
+		return
 	if v < hp:
 		_flash_red()
 	hp = v

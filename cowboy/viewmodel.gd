@@ -392,7 +392,8 @@ func try_fire(fanning := false) -> void:
 ## 扣血只在開槍的人那邊判定一次，再請主機執行（Cowboy.deal_damage）。
 ## 客戶端 A 開的槍，主機會轉發給客戶端 B（SceneMultiplayer 的 server_relay 預設開著）。
 ## 2026-09-29 用專用伺服器＋兩個客戶端實測過：B 收得到 A 的每一槍
-@rpc("authority", "call_remote", "unreliable")
+## 保證送到（reliable）：槍聲是情報，恐龍 boss 也靠它找人，掉一包就少聽到一槍。手動槍射速慢，多花的頻寬可以不計
+@rpc("authority", "call_remote", "reliable")
 func _remote_shot(index: int, from: Vector3, dirs: PackedVector3Array) -> void:
 	if index < 0 or index >= _weapons.size():
 		return

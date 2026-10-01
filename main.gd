@@ -305,6 +305,7 @@ func _start_dedicated() -> void:
 		return
 	multiplayer.multiplayer_peer = peer
 	_dedicated = true
+	Engine.max_fps = 120   # 沒畫面也會一直空轉：不鎖的話吃滿一顆處理器，跟物理一樣每秒 120 次就夠
 	_enter_game("專用伺服器")
 	spawn_boss()
 	print("測試站開好了，連接埠 %d（UDP）" % PORT)
@@ -627,6 +628,44 @@ func _despawn(id: int) -> void:
 		if id != 1:
 			_cowboys -= 1
 
+## 客戶端打中東西，請主機扣血（Cowboy.deal_damage、摔落的 _hurt_self）。主機檢查合不合理才扣：
+## - 只收開槍者本人送的（別人不能假冒）
+## - 開槍者還活著，或剛死不到 DEATH_GRACE_MS：兩人同時開槍可以同歸於盡（跟 Hunt 一樣），
+##   不會因為誰的封包先到主機就只算一邊
+## - 一發的傷害不超過 MAX_HIT（打頭秒殺另外算，傷害剛好等於目標的滿血）；扣自己（摔落）不限
+## - 開槍位置離主機看到的開槍者不遠、離目標在射程內
+## ponytail: 不重算射線、不限射速。有人真的作弊再加主機重算命中（docs 知識庫「延遲補償」那篇）
+const DEATH_GRACE_MS := 300
+const MAX_HIT := 60          # 單發最大傷害：步槍 60、重擊槍托 60（cowboy/weapons/*.tscn、viewmodel.gd），改了這裡要跟著改
+const MAX_SHOT_RANGE := 270.0   # 步槍射程 250 再加一點
+var _died_at := {}            # 牛仔的連線編號 -> [死的時刻（毫秒）, 位置]
+
+@rpc("any_peer", "call_remote", "reliable")
+func request_damage(shooter_id: int, target_path: NodePath, amount: int, from: Vector3) -> void:
+	if not multiplayer.is_server() or multiplayer.get_remote_sender_id() != shooter_id:
+		return
+	apply_damage_request(shooter_id, get_node_or_null(target_path), amount, from)
+
+## request_damage 檢查完來源之後的部分（測試直接呼叫這個）。扣了回傳 true
+func apply_damage_request(shooter_id: int, target: Node, amount: int, from: Vector3) -> bool:
+	if target == null or not target.has_method(&"take_damage"):
+		return false
+	var shooter := players.get_node_or_null(NodePath(str(shooter_id)))
+	var at: Vector3
+	if shooter:
+		at = shooter.global_position
+	elif _died_at.has(shooter_id) and Time.get_ticks_msec() - int(_died_at[shooter_id][0]) <= DEATH_GRACE_MS:
+		at = _died_at[shooter_id][1]
+	else:
+		return false
+	var self_hit := target == shooter
+	if not self_hit and amount > MAX_HIT and amount != int(target.get(&"max_hp")):
+		return false
+	if from.distance_to(at) > 5.0 or (not self_hit and from.distance_to((target as Node3D).global_position) > MAX_SHOT_RANGE):
+		return false
+	target.take_damage(amount, shooter)
+	return true
+
 ## 無限重生，不設命數。死亡的代價是節奏——等重生，而且蛋會掉在原地被別人撿走。
 ## 勝負只有兩種：有人帶蛋撤離（那個人贏），或時間到（恐龍贏）。
 ## 「打死恐龍」不算贏，不然三個牛仔會理性地先聯手弄死恐龍，跟互相競爭矛盾。
@@ -634,6 +673,7 @@ func _on_died(killer: Node, who: Node) -> void:
 	if _over:
 		return
 	var as_dino := who.is_in_group(&"dino")
+	_died_at[who.name.to_int()] = [Time.get_ticks_msec(), who.global_position]   # 同歸於盡用（request_damage）
 	if not as_dino:
 		_cowboys -= 1
 	_respawn_queue.append({
@@ -871,6 +911,8 @@ func _update_net_info() -> void:
 		var p := peer.get_peer(1)
 		if p:
 			parts.append("延遲 %d ms" % p.get_statistic(ENetPacketPeer.PEER_ROUND_TRIP_TIME))
+			# 掉包率：ENet 的統計是乘了 PACKET_LOSS_SCALE（65536）的比例
+			parts.append("掉包 %.1f%%" % (100.0 * p.get_statistic(ENetPacketPeer.PEER_PACKET_LOSS) / ENetPacketPeer.PACKET_LOSS_SCALE))
 	if not lobby.visible:
 		parts.append("%d FPS（最慢一幀 %.0f ms）" % [Engine.get_frames_per_second(), _slow_shown])
 	net_info.text = "　".join(parts)

@@ -361,7 +361,7 @@ func _hurt_self(amount: int) -> void:
 	if multiplayer.is_server():
 		take_damage(amount, null)
 	else:
-		_request_damage.rpc_id(1, get_path(), amount)
+		_match().request_damage.rpc_id(1, name.to_int(), get_path(), amount, _camera.global_position)
 
 
 # --- bot ---
@@ -496,24 +496,18 @@ func _bot_shoot(threat: Node3D) -> void:
 # --- 開槍打中：走主機 ---
 
 ## viewmodel 打中東西時呼叫。扣血只有主機能做（fighter.take_damage），
-## 客戶端要請主機代打。
-## ponytail: 主機不驗證命中，跟原本一樣不防作弊。要防再改成主機自己重算射線。
+## 客戶端要請主機代打：請求送到 Main（Main.request_damage）不送到自己這個節點——
+## 同時開槍時自己可能已經在主機上被打死刪掉了，送到自己會找不到節點，同歸於盡就不成立
 func deal_damage(target: Node, amount: int) -> void:
 	on_hit()
 	if multiplayer.is_server():
 		target.take_damage(amount, self)
 	else:
-		_request_damage.rpc_id(1, target.get_path(), amount)
+		_match().request_damage.rpc_id(1, name.to_int(), target.get_path(), amount, _camera.global_position)
 
 
-@rpc("any_peer", "call_remote", "reliable")
-func _request_damage(target_path: NodePath, amount: int) -> void:
-	# 只收這個牛仔本人送來的，別人不能假冒他開槍
-	if multiplayer.get_remote_sender_id() != get_multiplayer_authority():
-		return
-	var target := get_node_or_null(target_path)
-	if target and target.has_method(&"take_damage"):
-		target.take_damage(amount, self)
+func _match() -> Node:
+	return get_tree().get_first_node_in_group(&"match")
 
 
 # --- 互動：門、梯子 ---

@@ -167,6 +167,7 @@ OvD.exe -- --sandbox    # 沙盒：靶場練槍
 ```sh
 godot                                    # 開專案
 godot --headless --script test_battle.gd # 自我檢查（壞掉會 exit 1）
+tools/net_check.sh                       # 真的連線：本機開伺服器＋兩個客戶端，看扣血、血量同步、槍聲（改了連線要跑）
 godot --headless --script tools/test_weapon_l0.gd   # 槍枝 L0 驗收（要等換彈計時，約一分鐘）
 godot --headless --script tools/test_house_walk.gd  # 三種農舍走得上前廊
 ./build.sh                               # 打包 Windows + macOS 到 build/

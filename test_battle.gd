@@ -276,6 +276,23 @@ func _case_cowboy() -> void:
 	c.deal_damage(victim, 30)
 	_ck(victim.hp == victim.max_hp - 30, "主機上打中要直接扣血（現在 %d）" % victim.hp)
 	_ck(victim._last_hit_by == c, "要記得是誰打的，擊殺播報才對得上")
+	# 客戶端請主機扣血（Main.request_damage）：主機要檢查合不合理
+	var eye: Vector3 = c.global_position + Vector3.UP * 1.6
+	_ck(m.apply_damage_request(2, victim, 30, eye) and victim.hp == victim.max_hp - 60, "合理的一發要扣")
+	_ck(not m.apply_damage_request(2, victim, 100, eye), "一發超過最大傷害（又不是打頭秒殺）不能扣")
+	_ck(not m.apply_damage_request(2, victim, 30, eye + Vector3(100, 0, 0)), "開槍位置離開槍者太遠不能扣")
+	var hp_c: int = c.hp
+	_ck(m.apply_damage_request(2, victim, victim.max_hp, eye) and victim.hp <= 0, "打頭秒殺（傷害＝滿血）要扣")
+	# 同時開槍：3 號剛被打死（主機上已經刪掉），他死前打出的那發在寬限時間內還是要算——同歸於盡
+	var eye3: Vector3 = victim.global_position + Vector3.UP * 1.6
+	victim.get_parent().remove_child(victim)
+	_ck(m.apply_damage_request(3, c, 30, eye3) and c.hp == hp_c - 30, "剛死的人打出的子彈要算（同歸於盡）")
+	m._died_at[3][0] = int(m._died_at[3][0]) - m.DEATH_GRACE_MS - 100
+	_ck(not m.apply_damage_request(3, c, 30, eye3), "死了超過寬限時間就不算")
+	# 最大傷害要跟著槍的數字走：改了槍的傷害、忘了改 MAX_HIT，主機會把正常的一發擋掉
+	for w: Node in c.viewmodel._weapons:
+		_ck(w.damage <= m.MAX_HIT, "%s 單發 %d 超過 Main.MAX_HIT" % [w.name, w.damage])
+	_ck(c.viewmodel.heavy_damage <= m.MAX_HIT and c.viewmodel.melee_damage <= m.MAX_HIT, "槍托傷害超過 Main.MAX_HIT")
 	_end(m)
 
 	m = _new_offline_game()
@@ -614,7 +631,7 @@ func _sound_lead(stream: AudioStream) -> float:
 			return float(i / 2 / ch) / wav.mix_rate
 	return 99.0
 
-## 別人的角色平滑顯示（Fighter.net_step）：畫面晚 100 毫秒，在前後兩筆之間補；
+## 別人的角色平滑顯示（Fighter.net_step）：畫面晚 NET_DELAY 毫秒，在前後兩筆之間補；
 ## 封包晚到不影響（用送出時間算），新的還沒到就停在最後一筆
 func _case_net_smooth() -> void:
 	var m := _offline_match()
@@ -626,11 +643,12 @@ func _case_net_smooth() -> void:
 	var r := Vector3(0, 1.0, 0)
 	c._snaps = [[0.0, 1000.0, Vector3.ZERO, Vector3.ZERO], [50.0, 1090.0, Vector3(5, 0, 0), r * 0.5],   # 第二包晚到 40 毫秒
 		[100.0, 1100.0, Vector3(10, 0, 0), r]]
-	c.net_step(1175.0)   # 畫面時間 = 1175 - 時差 1000 - 延遲 100 = 75
+	var d: float = c.NET_DELAY
+	c.net_step(1075.0 + d)   # 畫面時間 = 1075 + 延遲 - 時差 1000 - 延遲 = 75
 	_ck(absf(c.position.x - 7.5) < 0.01 and absf(c.rotation.y - 0.75) < 0.01, "要在兩筆之間補（現在 x=%.2f、朝向 %.2f）" % [c.position.x, c.rotation.y])
-	c.net_step(1150.0)
+	c.net_step(1050.0 + d)
 	_ck(absf(c.position.x - 5.0) < 0.01, "晚到的那包不影響位置（現在 x=%.2f）" % c.position.x)
-	c.net_step(1400.0)
+	c.net_step(1300.0 + d)
 	_ck(c.position.x == 10.0, "新的還沒到就停在最後一筆，不要亂猜")
 	_end(m)
 
