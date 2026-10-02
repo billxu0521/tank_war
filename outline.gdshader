@@ -50,8 +50,6 @@ uniform float rim_strength = 0.9;
 uniform vec3 rim_far_color : source_color = vec3(0.776, 0.353, 0.208);   // 遠處目標的輪廓光改成指南的強調色 #C65A35：小小一個也一眼看出是目標
 uniform float rim_far_start = 30.0;   // 公尺：從這裡開始轉成強調色、輪廓光變強
 uniform float rim_far_end = 60.0;
-uniform float far_line_start = 30.0;   // 公尺：遠處目標從這裡開始加粗外框（到 far_line_end 多兩圈）
-uniform float far_line_end = 90.0;
 uniform float target_line_alpha = 0.6;   // 目標輪廓線的濃度（1 = 全黑不透明）
 uniform float target_fade_end = 300.0;   // 公尺：目標的輪廓線到這裡才淡完（一般物件 fade_end）
 
@@ -180,7 +178,6 @@ void fragment() {
 	bool cliff = abs(r - 0.75) < 0.05 && !lf;
 	float edge = 0.0;
 	float ridge = 0.0;
-	float far_line = 0.0;   // 遠處目標加粗的外框：0～1，越遠越粗、越偏強調色
 	vec2 offs[4] = vec2[](vec2(px.x, 0.0), vec2(-px.x, 0.0), vec2(0.0, px.y), vec2(0.0, -px.y));
 	for (int i = 0; i < 4; i++) {
 		vec2 u = uv + offs[i];
@@ -196,17 +193,6 @@ void fragment() {
 		// 目標也是：背景那一側也畫，線變兩倍粗，剪影從背景跳出來
 		if (is_target(u) && d - dn > dn * depth_edge) {
 			edge = 2.0;
-		}
-		// 遠處的目標再往外描兩圈、用強調色：50 公尺外的牛仔只剩幾個像素，輪廓光在那麼小的東西上看不出來（靶場實拍）
-		for (int k = 2; k <= 3; k++) {
-			vec2 uk = uv + offs[i] * float(k);
-			if (is_target(uk)) {
-				float dk = lin_depth(uk, INV_PROJECTION_MATRIX);
-				if (d - dk > dk * depth_edge && smoothstep(far_line_start, far_line_end, dk) * 2.0 > float(k) - 1.5) {
-					edge = 2.0;
-					far_line = max(far_line, smoothstep(far_line_start, far_line_end, dk));
-				}
-			}
 		}
 		if (d < 500.0 && !lf && dot(n, nrm(u)) < 1.0 - (near ? 0.45 : normal_edge)) {
 			ridge = near ? 1.0 : 0.5;   // 槍和手的零件交界要清楚（原本近處不畫稜線，槍和手糊成一團）
@@ -225,10 +211,6 @@ void fragment() {
 	bool solid_line = near || (target_edge && edge > 0.0);
 	vec3 line = solid_line ? line_color * 0.6 : mix(line_color, under * 0.35, 0.5);
 	a = near ? a : (solid_line ? a * target_line_alpha : a * 0.65);
-	if (far_line > 0.0) {   // 遠處目標的粗外框：強調色、不透明
-		line = mix(line_color * 0.6, rim_far_color, far_line);
-		a = max(a, 0.9 * far_line);
-	}
 	// 槍和手不做風格處理：第一人稱要乾淨（指南第 11 節）
 	vec3 base = under;
 	if (target) {
