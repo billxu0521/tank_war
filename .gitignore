@@ -13,3 +13,4 @@ docs/image/*_iter/
 
 # Blender 腳本互相 import 時產生的快取
 blender/__pycache__/
+__pycache__/

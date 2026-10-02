@@ -19,6 +19,10 @@ func _process(_d: float) -> bool:
 		_main._on_sandbox_pressed()
 	if _f == 40:
 		_plan()
+		# SHADER="paint_radius=5,ramp_steps=0"：拍之前改描線／風格 shader（outline.gdshader）的參數，比對用
+		var mat: ShaderMaterial = (_main.get_node(^"Arena/Outline") as MeshInstance3D).mesh.material
+		for kv in OS.get_environment("SHADER").split(",", false):
+			mat.set_shader_parameter(kv.get_slice("=", 0), kv.get_slice("=", 1).to_float())
 	if _f > 40 and (_f - 40) % 30 == 0:
 		_main.menu.visible = false
 		if _i > 0:

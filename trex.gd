@@ -1,9 +1,6 @@
 class_name Trex
 extends Node3D
-## 暴龍：一副 Skeleton3D，每根骨頭掛一塊 Blender 建好的部件（模型缺件就退回灰盒）。
-##
-## ponytail: 部件是剛體掛在骨頭上（BoneAttachment3D），不做蒙皮權重。
-## 關節處會有接縫，但看得出關節在動就夠了，要平滑變形再換成真正的 skinned mesh。
+## 暴龍：Blender 建的蒙皮模型（models/trex_hd.glb，blender/trex_hd.py 產生）——一整張皮包在 47 根骨頭上。
 ##
 ## 動畫是程式算的，不用 AnimationPlayer——走路快慢直接跟著實際位移，
 ## 而且不管是自己那隻還是別人同步過來的都會動。
@@ -11,12 +8,14 @@ extends Node3D
 ## 尾巴和脊椎用「旋轉延遲傳遞」：每一節用彈簧去追**前一節上一幀**的角度。
 ## 追不上就是延遲，追過頭就是過衝，慣性和彈性都是這樣長出來的。
 ## 參考 https://www.youtube.com/watch?v=7yXqfESL5qo
+##
+## 骨頭的靜止朝向是 Blender 給的（每根沿自己的方向），下面的動作程式都當成「靜止時沒有轉角、軸是世界的 x 右 y 上 z 後」來寫，
+## 所以 _set_rot 會先換算：在父骨的靜止朝向裡套上旋轉。改骨架不用動任何一行動作程式。
 
-const BODY := Color(0.34, 0.58, 0.27)
-const BELLY := Color(0.56, 0.69, 0.40)
-const DARK := Color(0.21, 0.36, 0.18)
-
-const MODEL := preload("res://models/trex.glb")  # Blender 建的部件，名字對應骨頭
+const MODEL := preload("res://models/trex_hd.glb")
+const MODEL_LIFT := 0.25   # 舊模型腳底離原點約 0.25，新模型腳底在 0；墊回去，boss / dino 場景的位置和碰撞不用改
+const TAIL_N := 8          # 尾巴節數（舊骨架 4 節）。每節角度乘 TAIL_PER，整條彎的總量跟以前一樣
+const TAIL_PER := 0.5
 
 const TAIL_STIFF := 26.0   # 越大跟得越緊，延遲越短
 const TAIL_DAMP := 4.5     # 越小晃越久（過衝越明顯）
@@ -29,6 +28,9 @@ const LEAN_DAMP := 5.5
 const LEAN_MAX := 0.40     # 最多傾 23 度
 const DRIFT_STIFF := 22.0
 const DRIFT_DAMP := 6.0
+# 中彈：往子彈推的方向晃一下（衝量踢進側傾和位移延遲的彈簧，彈簧自己會穩回來）
+const FLINCH_LEAN := 3.0
+const FLINCH_DRIFT := 2.0
 
 var skel: Skeleton3D
 var _idx := {}          # 骨頭名字 -> index
@@ -45,6 +47,15 @@ var _lunge := 0.0    # 撲出去：身體前衝、嘴張開
 var _stun := 0.0     # 被打斷：頭垂下來晃
 var _sweep := 0.0    # 甩尾：尾巴甩直、兩腳張開
 var _recover := 0.0  # 收招：甩頭、喘
+var _spot := 0.0     # 發現人：挺起來、頭抬高張嘴吼（不跺腳、不揮手，跟蓄力分得開）
+## boss 的心情（boss.gd 的 MOOD_*：0 逛、1 找、2 追，同步來的）。每個心情頭的高低、動法不一樣，玩家看得出牠在幹嘛。
+## -1 = 不是 boss（玩家操控的恐龍），不套心情的姿勢
+var mood := -1
+var _roam := 0.0     # 逛：頭放低、不時低頭聞地
+var _search := 0.0   # 找：頭抬高、左右張望
+var _hunt := 0.0     # 追：頭往前伸低、嘴微張、尾巴打直
+var _toss := 0.0     # 頭被打中：甩一下頭，1 → 0
+var _toss_side := 1.0
 var _act_t := 0.0    # 這個動作開始多久了（每台自己算，不同步）
 var _last_act := 0
 var _snap := 0.0     # 出手那一下的衝量（咬下去、撲出去）：1 → 0
@@ -56,10 +67,11 @@ var _fx_tick := 0.0   # 連續噴的特效（長吼的鼻息、撲擊的塵土�
 var _last_pos := Vector3.ZERO
 var _yaw_prev := 0.0
 # 骨鏈的角度和角速度。用 Array 不用 PackedFloat32Array，才傳得進函式改得到
-var _tail_yaw := [0.0, 0.0, 0.0, 0.0]
-var _tail_yaw_v := [0.0, 0.0, 0.0, 0.0]
-var _tail_pitch := [0.0, 0.0, 0.0, 0.0]
-var _tail_pitch_v := [0.0, 0.0, 0.0, 0.0]
+var _tail_yaw := []
+var _tail_yaw_v := []
+var _tail_pitch := []
+var _tail_pitch_v := []
+var _rest := []         # 每根骨頭的全域靜止朝向（Basis）
 var _spine_yaw := [0.0, 0.0, 0.0, 0.0]   # spine1, spine2, neck, head
 var _spine_yaw_v := [0.0, 0.0, 0.0, 0.0]
 var _lean := Vector2.ZERO     # x 側傾（正 = 往左倒）, y 俯仰（正 = 抬頭）
@@ -69,77 +81,43 @@ var _drift_v := Vector2.ZERO
 var _local_v := Vector3.ZERO  # 上一幀的本地速度，用來算加速度
 var _breath := 0.0
 
-## [骨頭, 父骨, 相對父骨的位置, 方塊尺寸, 方塊相對骨頭的中心, 顏色]
-func _rig() -> Array:
-	return [
-		["root",    "",       Vector3(0, 2.3, 0),      Vector3(1.4, 1.3, 1.4), Vector3(0, 0, 0),        BODY],
-
-		["spine1",  "root",   Vector3(0, 0.05, -0.65), Vector3(1.4, 1.3, 1.2), Vector3(0, 0.02, -0.3),  BODY],
-		["spine2",  "spine1", Vector3(0, 0.10, -0.70), Vector3(1.2, 1.1, 1.1), Vector3(0, 0.05, -0.3),  BODY],
-		["neck",    "spine2", Vector3(0, 0.30, -0.55), Vector3(0.8, 0.8, 0.9), Vector3(0, 0.05, -0.35), BODY],
-		["head",    "neck",   Vector3(0, 0.15, -0.60), Vector3(0.8, 0.7, 1.4), Vector3(0, 0.10, -0.55), BODY],
-		["jaw",     "head",   Vector3(0, -0.20, -0.25),Vector3(0.7, 0.28, 1.1),Vector3(0, -0.05, -0.5), BELLY],
-
-		["arm_l",   "spine2", Vector3(0.42, -0.35, -0.30), Vector3(0.22, 0.22, 0.65), Vector3(0, -0.12, -0.25), DARK],
-		["arm_r",   "spine2", Vector3(-0.42, -0.35, -0.30),Vector3(0.22, 0.22, 0.65), Vector3(0, -0.12, -0.25), DARK],
-
-		["tail1",   "root",   Vector3(0, 0.05, 0.65),  Vector3(1.0, 1.0, 1.1), Vector3(0, 0, 0.35),     BODY],
-		["tail2",   "tail1",  Vector3(0, -0.05, 0.75), Vector3(0.8, 0.8, 1.1), Vector3(0, 0, 0.35),     BODY],
-		["tail3",   "tail2",  Vector3(0, -0.05, 0.75), Vector3(0.55, 0.55, 1.0),Vector3(0, 0, 0.35),    BODY],
-		["tail4",   "tail3",  Vector3(0, -0.05, 0.70), Vector3(0.32, 0.32, 1.0),Vector3(0, 0, 0.35),    DARK],
-
-		["thigh_l", "root",   Vector3(0.52, -0.20, 0.10),  Vector3(0.7, 1.2, 0.95), Vector3(0, -0.45, 0),    BODY],
-		["shin_l",  "thigh_l",Vector3(0, -0.85, 0.08), Vector3(0.42, 1.1, 0.5), Vector3(0, -0.45, 0),    BODY],
-		["foot_l",  "shin_l", Vector3(0, -0.80, -0.10),Vector3(0.5, 0.24, 1.1),Vector3(0, -0.06, -0.3),  DARK],
-
-		["thigh_r", "root",   Vector3(-0.52, -0.20, 0.10), Vector3(0.7, 1.2, 0.95), Vector3(0, -0.45, 0),    BODY],
-		["shin_r",  "thigh_r",Vector3(0, -0.85, 0.08), Vector3(0.42, 1.1, 0.5), Vector3(0, -0.45, 0),    BODY],
-		["foot_r",  "shin_r", Vector3(0, -0.80, -0.10),Vector3(0.5, 0.24, 1.1),Vector3(0, -0.06, -0.3),  DARK],
-	]
-
 func _ready() -> void:
-	skel = Skeleton3D.new()
-	add_child(skel)
-	for e in _rig():
-		skel.add_bone(e[0])
-		var i := skel.find_bone(e[0])
-		_idx[e[0]] = i
-		if e[1] != "":
-			skel.set_bone_parent(i, _idx[e[1]])
-		skel.set_bone_rest(i, Transform3D(Basis(), e[2]))
-	skel.reset_bone_poses()
-
-	var parts := MODEL.instantiate()
-	for e in _rig():
-		var att := BoneAttachment3D.new()
-		skel.add_child(att)
-		att.bone_name = e[0]
-		var src := parts.get_node_or_null(NodePath(e[0])) as MeshInstance3D
-		if src:
-			var mi := MeshInstance3D.new()
-			mi.mesh = src.mesh
-			mi.transform = src.transform
-			att.add_child(mi)
-		else:
-			att.add_child(_box(e[3], e[4], e[5]))   # 模型缺這塊就退回灰盒
-	parts.free()
-
+	var parts := MODEL.instantiate() as Node3D
+	add_child(parts)
+	parts.position.y = MODEL_LIFT
+	Viewmodel.mark_meshes(parts, Viewmodel.TARGET_MARK)
+	_recolor(parts)
+	skel = parts.find_children("*", "Skeleton3D", true, false)[0]
+	for i in skel.get_bone_count():
+		_idx[skel.get_bone_name(i)] = i
+		_rest.append(skel.get_bone_global_rest(i).basis.orthonormalized())
+	for i in TAIL_N:
+		for a in [_tail_yaw, _tail_yaw_v, _tail_pitch, _tail_pitch_v]:
+			a.append(0.0)
 	_last_pos = global_position
 
-func _box(size: Vector3, offset: Vector3, col: Color) -> MeshInstance3D:
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = col
-	var mesh := BoxMesh.new()
-	mesh.size = size
-	mesh.material = mat
-	var mi := MeshInstance3D.new()
-	mi.mesh = mesh
-	mi.position = offset
-	return mi
+## 主色從橄欖綠改成偏冷的灰綠：橄欖綠跟樹、枯草同色相，背後有樹就融進去（美術風格評估第 3 項，FPS 可讀性）。
+## 改在遊戲裡不改模型檔：材質在 mark_meshes 已經複製過一份，只動這隻恐龍
+const RECOLOR := {"d_olive": Color("666a4c"), "d_moss": Color("555a45")}   # 純冷灰綠背光面像石像，往暖橄欖 #73704A 偏一點（第 80 版審查）
+func _recolor(root: Node) -> void:
+	for mi: MeshInstance3D in root.find_children("*", "MeshInstance3D", true, false):
+		for i in mi.mesh.get_surface_count():
+			var m := mi.get_active_material(i) as BaseMaterial3D
+			if m and RECOLOR.has(m.resource_name):
+				m.albedo_color = RECOLOR[m.resource_name]
 
 ## 咬一口，讓嘴巴張開再合上
 func bite() -> void:
 	_bite = 1.0
+
+## 中彈晃一下。push：本地座標裡被推的方向（水平、長度 1）；strength 0~1。head：頭被打中，甩頭
+func flinch(push: Vector3, strength: float, head: bool) -> void:
+	if head:
+		_toss = 1.0
+		_toss_side = 1.0 if randf() < 0.5 else -1.0
+		return
+	_lean_v += Vector2(-push.x, push.z) * FLINCH_LEAN * strength   # 往右推就往右倒、從前面打就往後仰
+	_drift_v += Vector2(push.x, push.z) * FLINCH_DRIFT * strength
 
 func _process(delta: float) -> void:
 	var moved := (global_position - _last_pos) / maxf(delta, 0.0001)
@@ -150,7 +128,7 @@ func _process(delta: float) -> void:
 	_phase += delta * (2.0 + speed * 0.55)
 	_bite = maxf(_bite - delta * 3.5, 0.0)
 	var chomp := sin(_bite * PI)  # 0 -> 1 -> 0
-	# 預備動作的姿勢（boss.gd 的 ACT_*：1 咬預備、3 蓄力、5 撲擊預備、6 撲出去、8 被打斷）。
+	# 預備動作的姿勢（boss.gd 的 ACT_*：1 咬預備、3 蓄力、5 撲擊預備、6 撲出去、8 被打斷、9 發現人）。
 	# 這副骨架俯仰是正的往上抬（跟 chomp 那幾行相反），看截圖確認過
 	if act != _last_act:
 		_act_fx(_last_act, act)
@@ -172,6 +150,16 @@ func _process(delta: float) -> void:
 	_crouch += (float(act == 5) - _crouch) * k
 	_lunge += (float(act == 6) - _lunge) * k
 	_stun += (float(act == 8) - _stun) * k
+	_spot += (float(act == 9) - _spot) * k
+	var km := 1.0 - exp(-4.0 * delta)   # 心情換得慢一點，不是一格一格跳
+	_search += (float(mood == 1) - _search) * km
+	_hunt += (float(mood == 2) - _hunt) * km
+	_roam += (float(mood == 0) - _roam) * km
+	var roam := _roam
+	var sniff := pow(maxf(sin(_breath * 0.35), 0.0), 4.0) * roam   # 逛的時候不時低頭聞地
+	var scan := sin(_breath * 1.1) * 0.45 * _search                # 找的時候左右張望
+	_toss = maxf(_toss - delta * 4.0, 0.0)
+	var toss := sin(_toss * PI)
 	var shake := sin(_breath * 23.0) * 0.08 * _roar + sin(_breath * 7.0) * 0.18 * _stun
 
 	# 身體這一幀轉了多快，是尾巴甩動的源頭
@@ -239,11 +227,12 @@ func _process(delta: float) -> void:
 	var tail_yaw_drive := clampf(-yaw_rate * 0.20, -0.65, 0.65) + sin(_phase) * 0.09 * stride \
 		+ sin(_act_t * 9.0) * 0.55 * _roar + 0.9 * _sweep
 	var tail_pitch_drive := clampf(-moved.y * 0.035, -0.30, 0.30) + 0.06 \
-		- _rear * 0.20 - _roar * 0.35 - _snap * 0.30 + _crouch * 0.10 + _stun * 0.40   # 尾巴俯仰正的是往下（看截圖確認過）
+		- _rear * 0.20 - _roar * 0.35 - _snap * 0.30 + _crouch * 0.10 + _stun * 0.40 \
+		- _hunt * 0.08 - _spot * 0.25   # 尾巴俯仰正的是往下（看截圖確認過）
 	_propagate(_tail_yaw, _tail_yaw_v, tail_yaw_drive, TAIL_STIFF, TAIL_DAMP, delta)
 	_propagate(_tail_pitch, _tail_pitch_v, tail_pitch_drive, TAIL_STIFF, TAIL_DAMP, delta)
-	for i in 4:
-		_pose_pyr("tail%d" % (i + 1), _tail_pitch[i], _tail_yaw[i], _lean.x * 0.12)
+	for i in TAIL_N:
+		_pose_pyr("tail%d" % (i + 1), _tail_pitch[i] * TAIL_PER, _tail_yaw[i] * TAIL_PER, _lean.x * 0.12 * TAIL_PER)
 
 	# 脊椎到頭：同一套邏輯，但幅度小、追得緊，轉身時上半身會晚一點跟上
 	_propagate(_spine_yaw, _spine_yaw_v, clampf(-yaw_rate * 0.09, -0.28, 0.28),
@@ -251,16 +240,20 @@ func _process(delta: float) -> void:
 	# 側傾分散在幾節脊椎上（不放在 root，不然腿會跟著翻起來），
 	# 頭再反向轉回去——掠食者跑起來頭是穩的，這一下最像活的。
 	_pose_pyr("spine1", 0.06 + sin(_phase * 0.4) * 0.02 + _lean.y * 0.50 - _crouch * 0.30 - _lunge * 0.20 + _roar * 0.15
-		+ _rear * 0.12 - _snap * 0.35 * float(act == 2),
+		+ _rear * 0.12 - _snap * 0.35 * float(act == 2) + _spot * 0.15,
 		_spine_yaw[0], _lean.x * 0.45)
 	_pose_pyr("spine2", _lean.y * 0.30, _spine_yaw[1], _lean.x * 0.35)
 	_pose_pyr("neck", -0.20 + sin(_phase) * 0.05 * stride + chomp * 0.35 + look_pitch * 0.45
 		+ sin(_breath) * 0.030 * idle + _rear * 0.45 + _roar * 0.55 - _crouch * 0.15 - _stun * 0.45
-		- _snap * 0.45 * float(act == 2),
-		_spine_yaw[2] + shake + sin(_act_t * 11.0) * 0.25 * _recover, _lean.x * 0.25)
-	_pose_pyr("head", 0.18 - chomp * 0.25 + look_pitch * 0.35 - _lean.y * 0.55 + _rear * 0.25 + _roar * 0.40 - _stun * 0.25,
-		_spine_yaw[3] + sin(_breath * 0.31) * 0.10 * idle + shake, -_lean.x * 0.75 + shake * 0.5)
-	_pose("jaw", Vector3.RIGHT, -0.12 - chomp * 0.65 - _rear * 0.30 - _roar * 0.75 - _lunge * 0.60 - _stun * 0.25)
+		- _snap * 0.45 * float(act == 2) + _spot * 0.55 + _search * 0.25 - _hunt * 0.12 - roam * 0.08 - sniff * 0.35
+		+ toss * 0.25,
+		_spine_yaw[2] + shake + sin(_act_t * 11.0) * 0.25 * _recover + scan * 0.5 + toss * 0.3 * _toss_side, _lean.x * 0.25)
+	_pose_pyr("head", 0.18 - chomp * 0.25 + look_pitch * 0.35 - _lean.y * 0.55 + _rear * 0.25 + _roar * 0.40 - _stun * 0.25
+		+ _spot * 0.30 - _hunt * 0.08 - sniff * 0.25 + toss * 0.2,
+		_spine_yaw[3] + sin(_breath * 0.31) * 0.10 * idle + shake + scan + toss * 0.4 * _toss_side,
+		-_lean.x * 0.75 + shake * 0.5)
+	_pose("jaw", Vector3.RIGHT, -0.12 - chomp * 0.65 - _rear * 0.30 - _roar * 0.75 - _lunge * 0.60 - _stun * 0.25
+		- _spot * 0.80 - _hunt * 0.12)
 
 	# 小手貼著身體晃一下；長吼時亂揮、撲出去時往前抓、撲擊預備時收起來、被打斷時垂下
 	var flail := sin(_act_t * 14.0) * 0.5 * _roar
@@ -333,6 +326,8 @@ func _act_fx(from: int, to: int) -> void:
 			Fx.dust(w, feet, Vector3.UP - fwd * 0.6, 1.1, 10, 4.5)
 		8:   # 被打斷：踉蹌揚起一點土
 			Fx.dust(w, feet, Vector3.UP, 0.7, 6, 2.0)
+		9:   # 發現人：鼻孔噴一大口氣
+			Fx.puff(w, bone_pos("head") + fwd * 1.2, (fwd + Vector3.UP * 0.5).normalized(), Color(0.85, 0.82, 0.78, 0.5), 1.2, 0.5, 6)
 	if from == 6 and to == 7:   # 撲擊落地：一圈土
 		Fx.dust_ring(w, feet, 2.0, 24, 8.0, 1.0)
 
@@ -351,7 +346,21 @@ func _pose_py(bone: String, pitch: float, yaw: float) -> void:
 	_pose_pyr(bone, pitch, yaw, 0.0)
 
 func _pose_pyr(bone: String, pitch: float, yaw: float, roll: float) -> void:
-	skel.set_bone_pose_rotation(_idx[bone], Quaternion.from_euler(Vector3(pitch, yaw, roll)))
+	_set_rot(bone, Basis.from_euler(Vector3(pitch, yaw, roll)))
 
 func _pose(bone: String, axis: Vector3, angle: float) -> void:
-	skel.set_bone_pose_rotation(_idx[bone], Quaternion(axis, angle))
+	_set_rot(bone, Basis(axis, angle))
+
+## 讀回動作程式寫進去的旋轉（_set_rot 的反算），測試和除錯用：自己靜止 · 本地 · 自己靜止⁻¹ 換回父骨世界朝向裡的 q
+func pose_rot(bone: String) -> Quaternion:
+	var i: int = _idx[bone]
+	var p := skel.get_bone_parent(i)
+	var ap: Basis = _rest[p] if p >= 0 else Basis()
+	return (ap * Basis(skel.get_bone_pose_rotation(i)) * _rest[i].inverse()).get_rotation_quaternion()
+
+## q 是「父骨的世界朝向」裡的旋轉（舊骨架的寫法）。換成這根骨頭的本地旋轉：父靜止⁻¹ · q · 自己靜止
+func _set_rot(bone: String, q: Basis) -> void:
+	var i: int = _idx[bone]
+	var p := skel.get_bone_parent(i)
+	var ap: Basis = _rest[p] if p >= 0 else Basis()
+	skel.set_bone_pose_rotation(i, (ap.inverse() * q * _rest[i]).get_rotation_quaternion())

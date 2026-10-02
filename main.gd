@@ -17,6 +17,7 @@ const SANDBOX_START := Vector3(0, 0.1, 76)   # y 是離地高度，用 _on_groun
 const SANDBOX_TARGETS := [10, 25, 50, 100]   # 牛仔靶的距離（公尺）：左輪、散彈、步槍各自的有效距離
 const GRASS := Color(0.49, 0.34, 0.21)   # 乾草原：黃昏裡偏紅的枯黃
 const DIRT := Color(0.52, 0.39, 0.27)    # 沙土路，比草地亮
+const PATH := Color(0.74, 0.6, 0.45)     # 荒地小路（Trails）：踩實的乾土，比草地亮一截（夕陽下要一眼看出路線）
 const WHEAT := Color(0.45, 0.33, 0.18)
 # 場景物件的模型（blender/props.py）。這幾個基準尺寸跟那邊共用，改一邊要改另一邊
 const PROPS := preload("res://models/props.glb")
@@ -121,7 +122,7 @@ var level_path := RANGE_LEVEL if mode == &"range" else "res://levels/ranch.tscn"
 var _houses_built := 0   # 第幾棟農舍：三種輪流蓋（不用亂數，後面擺的東西位置才不會跟著變）
 var _doors: Array[Door] = []   # 晚加入的人連進來時，把開著的門補送給他
 var _wheat_fields: Array[Rect2] = []   # 地形上色要知道哪裡是麥田
-var _roads: Array[Rect2] = []          # 城鎮主街這類另外鋪的土路（地形上色）；十字路的兩條在 ground_color 裡
+var _roads: Array[Rect2] = []          # 城鎮主街這類另外鋪的土路（地形上色）；彎彎曲曲的荒地小路在 Trails（trails.gd）
 var _blocked: Array[Rect2] = []  # 建築物在 XZ 平面佔的範圍
 var _drift: Node3D   # 落葉飛蟲，跟著鏡頭走（Fx.drift）
 var _bushes: Array[Vector3] = []  # 灌木叢的根部位置（bot 判斷人是不是躲在裡面）
@@ -141,6 +142,8 @@ var _solo_dino := false   # 單人打恐龍（測恐龍行為用）：沙盒的�
 var _continues := 0       # 單人打恐龍：接關了幾次
 
 func _ready() -> void:
+	BugReport.install()
+	_add_report_button()
 	_flatten_models()
 	_use_cjk_font()
 	_ips = _local_ips()
@@ -204,13 +207,62 @@ func _autostart() -> void:
 			ip_edit.text = args[i + 1]
 			_on_join_pressed()
 
+## 診斷（暫時，滑鼠視角卡住的 bug 修好就拿掉）：_input 在介面之前收到，跟角色收到的次數比，看事件是不是被介面吃掉
+var _diag_t := 0.0
+func _input(e: InputEvent) -> void:
+	if e is InputEventMouseMotion:
+		Fighter._diag("遊戲收到")
+
+func _diag_print(delta: float) -> void:
+	_diag_t += delta
+	if _diag_t < 0.5 or Fighter.diag.is_empty():
+		return
+	_diag_t = 0.0
+	var hov := get_viewport().gui_get_hovered_control()
+	print("[滑鼠診斷] %s　鎖定=%s　視窗焦點=%s　選單=%s　還要等=%dms　滑鼠下的介面=%s" % [
+		Fighter.diag, Input.mouse_mode == Input.MOUSE_MODE_CAPTURED, get_window().has_focus(), menu.visible,
+		maxi(Fighter._look_from - Time.get_ticks_msec(), 0), hov.get_path() if hov else "無"])
+	Fighter.diag.clear()
+
 func _unhandled_input(e: InputEvent) -> void:
+	if e is InputEventKey and e.pressed and not e.echo and e.keycode == KEY_F8:
+		report_bug()   # 大廳、遊戲中都能按
+		return
 	if lobby.visible:
 		return
 	if e is InputEventKey and e.pressed and e.keycode == KEY_ESCAPE:
 		_set_menu(not menu.visible)
 	elif e is InputEventMouseButton and e.pressed and not menu.visible and not result.visible:
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED  # 點畫面重新鎖回滑鼠
+		Fighter.lock_mouse()  # 點畫面重新鎖回滑鼠
+
+# --- 問題回報（bug_report.gd）---
+
+## Esc 選單裡的「回報問題」，放在「離開遊戲」上面
+func _add_report_button() -> void:
+	var b := Button.new()
+	b.name = "ReportBtn"
+	b.text = "回報問題（F8）"
+	b.pressed.connect(report_bug)
+	var box := $UI/Root/Menu/Box
+	box.add_child(b)
+	box.move_child(b, $UI/Root/Menu/Box/QuitBtn.get_index())
+
+## 存回報檔、複製到剪貼簿，告訴玩家貼到哪裡。回傳存檔路徑（測試用）
+func report_bug() -> String:
+	var path := BugReport.instance.save(_game_state())
+	status.text = ("回報存好了，也複製到剪貼簿：貼到 Discord 這一版的討論串就好\n" + path) if path != "" \
+		else "回報存檔失敗（已複製到剪貼簿，直接貼到 Discord）"
+	return path
+
+## 報告裡的「遊戲」那一行：在哪、玩什麼、當誰、連線狀況
+func _game_state() -> String:
+	if lobby.visible:
+		return "在大廳"
+	var me := players.get_node_or_null(NodePath(str(multiplayer.get_unique_id())))
+	var role := "觀戰" if me == null else ("恐龍" if me.is_in_group(&"dino") else "牛仔")
+	var where := "單人打恐龍" if _solo_dino else ("沙盒" if _sandbox else ("靶場" if mode == &"range" else String(RULES.get(rules, {}).get("name", rules))))
+	var net := "離線" if _offline else ("專用伺服器" if _dedicated else ("主機" if multiplayer.is_server() else "連線中（編號 %d）" % multiplayer.get_unique_id()))
+	return "%s　當%s　%s　場上 %d 個角色" % [where, role, net, players.get_child_count()]
 
 # --- 暫停選單 ---
 
@@ -222,7 +274,7 @@ func _set_menu(open: bool) -> void:
 		_fill_weapon_info()
 		_show_cursor()
 	else:
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		Fighter.lock_mouse()
 
 ## Esc 選單右邊的武器介紹：手上幾把槍並排比。數字從參數算出來（weapon.gd 的 info_rows），不另外填。
 ## 當恐龍、或還沒進遊戲就不顯示
@@ -765,7 +817,7 @@ func _enter_game(msg: String) -> void:
 	lobby.hide()
 	menu.hide()
 	status.text = msg
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	Fighter.lock_mouse()
 
 # --- 生怪 / 勝負 ---
 
@@ -1010,7 +1062,7 @@ func _announce(msg: String) -> void:
 	result.hide()
 	_had_me = false
 	if not lobby.visible:
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		Fighter.lock_mouse()
 
 @rpc("authority", "call_local", "reliable")
 func _set_clock(secs: int) -> void:
@@ -1043,6 +1095,9 @@ func _egg_step(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	_track_frame_time(delta)
+	_diag_print(delta)
+	if BugReport.instance.take_new_error():
+		status.text = "遊戲記到一個錯誤，按 F8 存成回報檔（會複製到剪貼簿）"
 	var cam := get_viewport().get_camera_3d()
 	if _drift and cam:
 		_drift.global_position = cam.global_position
@@ -1059,7 +1114,7 @@ func _process(delta: float) -> void:
 	# 視窗沒焦點時鎖不住，等切回來再鎖
 	if not menu.visible and not result.visible and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED \
 			and get_window().has_focus():
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		Fighter.lock_mouse()
 	_update_center_info(me)
 	_update_spectator(me)
 	_update_crosshair(me)
@@ -1120,7 +1175,7 @@ func _update_spectator(me: Node) -> void:
 	_spectator.current = true
 
 ## 單人打恐龍的除錯資訊：導演在哪個階段、威脅值、恐龍在做什麼
-const BOSS_ACTS := ["", "咬（預備）", "咬！", "蓄力甩尾（打頭打斷）", "甩尾！", "撲擊（預備）", "撲擊！", "收招", "被打斷"]
+const BOSS_ACTS := ["", "咬（預備）", "咬！", "蓄力甩尾（打頭打斷）", "甩尾！", "撲擊（預備）", "撲擊！", "收招", "被打斷", "發現你了（吼）"]
 func _boss_debug() -> String:
 	var b := get_tree().get_first_node_in_group(&"boss")
 	if b == null:
@@ -1129,8 +1184,8 @@ func _boss_debug() -> String:
 	var phase: String = ["醞釀", "退開", "放鬆"][d.phase]
 	var doing: String = "倒地" if b.down_left > 0.0 else BOSS_ACTS[b.act]
 	if doing == "":
-		doing = "追人" if b._sees_now else ("找最後看到的地方" if b._seen_left > 0.0 else ("查聲音" if b._noise_left > 0.0
-			else ("照導演的方向找" if b._hint != Vector3.INF else "閒逛")))
+		doing = "追人" if b._sees_now else ("盯著（還不確定）" if b._glimpse else ("找最後看到的地方" if b._seen_left > 0.0 else ("查聲音" if b._noise_left > 0.0
+			else ("照導演的方向找" if b._hint != Vector3.INF else "閒逛"))))
 	var extra := "　剩 %d 秒" % ceili(d.phase_left) if d.phase != Director.Phase.BUILD else "　威脅 %d / %d" % [roundi(d.menace), roundi(Director.MENACE_MAX)]
 	return "恐龍：%s%s　｜　%s　｜　距離 %d m" % [phase, extra, doing, _dist_to_boss(b)]
 
@@ -1234,6 +1289,7 @@ func _update_crosshair(me: Node) -> void:
 
 func _build_arena() -> void:
 	# 擺設清單：有手調過的場景檔就照它，沒有就自動擺一份初稿（見 docs/場景編輯.md）
+	Trails.enabled = mode != &"range"   # 自動擺設、地面上色、草都會查小路，最先設
 	if _level.is_empty():
 		_generate_level()
 	# 地形要在擺任何東西之前定案：整平區（農莊、倉庫、牧場的房子……）在清單裡
@@ -1284,9 +1340,7 @@ func _load_level() -> void:
 ## 遊戲和編輯器（LevelRoot）用同一支，編輯器裡看到的地面才跟遊戲一樣
 static func make_terrain(flats: Array) -> Terrain:
 	var t := Terrain.new(ARENA, 20260927)
-	t.flatten_rect(SANDBOX_RANGE)
-	for e: Vector2 in exit_spots():
-		t.flatten_circle(e, EXIT_RADIUS + 5.0)
+	# 沙盒靶場和撤離區不再整平：以前的十字路一整條是平的，現在跟周圍一樣有起伏。只有清單裡的整平區（建築底下、城鎮街道）是平的
 	for f: Array in flats:
 		t.flatten_circle(f[0], f[1])
 	t.settle()   # 靠太近的平地把高度拉近，中間才不會擠出陡坡
@@ -1389,7 +1443,7 @@ func _generate_level() -> void:
 	if mode == &"range":
 		_generate_range(rng)
 		return
-	# 十字路（x=0、z=0 兩條路）把場地分成四區：西北農社區、東北城鎮、西南麥田、東南森林。
+	# 場地分四區：西北農社區、東北城鎮、西南麥田、東南森林，之間用彎曲的荒地小路（trails.gd）連起來。
 	# 沙盒靶場在南北那條路的南段、撤離點在東西兩端，位置不動。農社區先蓋：_blocked[0] 要是一棟擋得住視線的穀倉（測試靠它）
 	_zone_farm(rng)
 	_zone_town(rng)
@@ -1405,30 +1459,37 @@ func _generate_level() -> void:
 		var p: Vector3 = [Vector3(u, 0, -edge), Vector3(edge, 0, u),
 			Vector3(-u, 0, edge), Vector3(-edge, 0, -u)][side]
 		p += Vector3(rng.randf_range(-3, 3), 0, rng.randf_range(-3, 3))
-		if _free(p, 2) and _is_clear(Vector2(p.x, p.z)) and _inside(p, 2.5) and not ZONE_TOWN.has_point(Vector2(p.x, p.z)):   # 四個角會跑出場外
+		if _free(p, 2) and _is_clear(Vector2(p.x, p.z)) and _inside(p, 2.5) and not ZONE_TOWN.has_point(Vector2(p.x, p.z)) \
+				and Trails.edge(p.x, p.z) > 2.0:   # 四個角會跑出場外；主路從東西兩邊出場
 			_gen_tree(p, rng, 0.4)
 
-	# 空地補東西：塊跟塊之間本來是一大片空草地，補上零星的樹和乾草捲，走到哪都有東西可以躲
+	# 空地補東西：塊跟塊之間本來是一大片空草地，補上樹和乾草捲，走到哪都有東西可以躲。
+	# 樹照植被密度（Terrain.vegetation）長：濕地一叢一叢成林、旱地零星；乾草捲不挑地方
 	var inner := ARENA * 0.5
-	for i in 110:
+	for i in 260:   # 次數照「掩體總量跟改之前差不多」調的
 		var p := Vector3(rng.randf_range(-inner + 12, inner - 12), 0, rng.randf_range(-inner + 12, inner - 12))
-		if absf(p.x) < 7.0 or absf(p.z) < 7.0 or not _free(p, 6) or not _is_clear(Vector2(p.x, p.z)) \
+		if Trails.edge(p.x, p.z) < 3.0 or not _free(p, 6) or not _is_clear(Vector2(p.x, p.z)) \
 				or _in_wheat(p) or ZONE_TOWN.has_point(Vector2(p.x, p.z)):
 			continue
-		if rng.randf() < 0.6:
+		var roll := rng.randf()
+		if roll < Terrain.vegetation(p.x, p.z) * 0.8:
 			_gen_tree(p, rng, 0.3)
-		else:
-			_put({kind = &"hay_bale", pos = p, yaw = rng.randf() * PI, block = true})
+		elif roll > 0.8:
+			var bale := {kind = &"hay_bale", pos = p, yaw = rng.randf() * PI, block = true}
+			if not _overlaps_placed(bale):   # 柵欄不在 _blocked 裡（太細），用擺設檢查的佔地來比
+				_put(bale)
 
 	# 灌木叢：兩三叢一群，蹲進去就看不到人。只擋視線不擋子彈，也沒碰撞（跟 Hunt 一樣）。
 	# 用自己的亂數，灌木多一叢少一叢不會影響其他東西的位置
 	var br := RandomNumberGenerator.new()
 	br.seed = 13
-	for i in 180:   # 城鎮和麥田不長，其他地方要補多一點
+	for i in 300:   # 城鎮和麥田不長，其他地方要補多一點
 		var c := Vector3(br.randf_range(-inner + 8, inner - 8), 0, br.randf_range(-inner + 8, inner - 8))
+		if br.randf() > Terrain.vegetation(c.x, c.z) * 1.6:   # 濕地多、旱地少（不是沒有：旱地也要有地方躲）
+			continue
 		for k in br.randi_range(2, 4):
 			var p := c + Vector3(br.randf_range(-2.5, 2.5), 0, br.randf_range(-2.5, 2.5))
-			if absf(p.x) < 6.0 or absf(p.z) < 6.0 or not _free(p, 3) or not _is_clear(Vector2(p.x, p.z)) \
+			if Trails.edge(p.x, p.z) < 2.0 or not _free(p, 3) or not _is_clear(Vector2(p.x, p.z)) \
 					or _in_wheat(p) or ZONE_TOWN.has_point(Vector2(p.x, p.z)):
 				continue
 			var s := br.randf_range(0.75, 1.3)
@@ -1440,6 +1501,13 @@ func _generate_level() -> void:
 	for ex: Vector2 in exit_spots():
 		_put({kind = &"prop", name = &"Wagon", pos = Vector3(ex.x, 0, ex.y + EXIT_RADIUS + 3.0), yaw = 0.4})
 		_gen_clutter(Vector3(ex.x + 3.5, 0, ex.y + EXIT_RADIUS + 1.2), 0.4)
+
+## rec 的佔地跟已經擺好的東西重不重疊（跟擺設檢查 LevelCheck 同一套算法）
+func _overlaps_placed(rec: Dictionary) -> bool:
+	var fp := LevelCheck.footprint(rec)
+	return not fp.is_empty() and _level.any(func(o: Dictionary) -> bool:
+		var f := LevelCheck.footprint(o)
+		return not f.is_empty() and LevelCheck.overlap(fp, f))
 
 ## 離場邊至少 margin 公尺（場邊有看不見的牆）
 func _inside(p: Vector3, margin: float) -> bool:
@@ -1506,6 +1574,7 @@ func _use_outline() -> void:
 	mat.render_priority = Material.RENDER_PRIORITY_MIN   # 比火光、煙先畫：它們蓋在線上，不會被框一圈黑邊
 	quad.material = mat
 	var mi := MeshInstance3D.new()
+	mi.name = &"Outline"   # tools/style_shots.gd 用名字找它調油畫感
 	mi.mesh = quad
 	mi.extra_cull_margin = 16384.0
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -1602,13 +1671,15 @@ func _use_sky() -> void:
 func _gen_rocks(inner: float) -> void:
 	var rr := RandomNumberGenerator.new()
 	rr.seed = 21
-	for i in 60:   # 空地：大石和石頭堆，當掩體
+	for i in 120:   # 空地：大石和石頭堆，當掩體。旱地多（植被密度低的地方），樹林裡少
 		var p := Vector3(rr.randf_range(-inner + 12, inner - 12), 0, rr.randf_range(-inner + 12, inner - 12))
+		if rr.randf() < Terrain.vegetation(p.x, p.z) * 0.8:
+			continue
 		var kind: StringName = ROCK_COVER[rr.randi() % ROCK_COVER.size()]
 		var s := rr.randf_range(0.45, 0.7) if kind in [&"Rock01", &"Rock02", &"Rock03", &"Rock04"] else rr.randf_range(0.8, 1.2)
 		var yaw := rr.randf() * TAU
 		var half: float = _props.get(kind).get_aabb().size.x * s * 0.5
-		if absf(p.x) < 7.0 or absf(p.z) < 7.0 or not _free(p, 5) or not _is_clear(Vector2(p.x, p.z), half) or _in_wheat(p) \
+		if Trails.edge(p.x, p.z) < 3.0 or not _free(p, 5) or not _is_clear(Vector2(p.x, p.z), half) or _in_wheat(p) \
 				or ZONE_TOWN.has_point(Vector2(p.x, p.z)) \
 				or _near_bush(p, half + 2.0):
 			continue
@@ -1623,7 +1694,7 @@ func _gen_rocks(inner: float) -> void:
 		var kind: StringName = ROCK_SCATTER[rr.randi() % ROCK_SCATTER.size()]
 		var s := rr.randf_range(0.9, 1.6)
 		var yaw := rr.randf() * TAU
-		if not _free(p, 3) or not _is_clear(Vector2(p.x, p.z)) or not _inside(p, 2.0):
+		if Trails.edge(p.x, p.z) < 1.0 or not _free(p, 3) or not _is_clear(Vector2(p.x, p.z)) or not _inside(p, 2.0):
 			continue
 		_put({kind = &"rock", mesh = kind, pos = p, s = s, yaw = yaw, solid = false})
 
@@ -1672,6 +1743,8 @@ func _in_wheat(p: Vector3) -> bool:
 ## 荒野的矮植物（blender/flora.py）：草叢、灌木、小仙人掌。只有外觀、沒碰撞也不藏人（都不到一公尺半），
 ## 伺服器不長。城鎮區是荒漠長得最多、也只有那裡有球形仙人掌和仙人掌片；其他地方零星幾叢。路上、建築旁、麥田、靶場、撤離區不長。
 ## 用自己的亂數，每台機器長得一樣。名字: [城鎮區幾叢, 其他地方幾叢]
+## 城鎮區以外照植被密度（Terrain.vegetation）挑地方：高草長在濕地（樹林旁），矮灌木、仙人掌長在旱地
+const FLORA_WET := [&"GrassTall", &"GrassDense", &"GrassSmall"]
 const FLORA_MIX := {&"GrassTall": [70, 110], &"GrassDense": [60, 90], &"GrassSmall": [90, 150], &"ScrubBush": [60, 40],
 	&"DesertBush": [15, 30], &"BarrelCactus": [18, 0], &"PricklyPear": [14, 0]}
 func _flora_field() -> void:
@@ -1683,14 +1756,17 @@ func _flora_field() -> void:
 		for zone in 2:
 			var want: int = FLORA_MIX[name][zone]
 			var placed := 0
-			for i in want * 4:   # 試到種滿為止，擋到的位置跳過
+			for i in want * 8:   # 試到種滿為止，擋到的位置跳過
 				if placed == want:
 					break
 				var p := Vector2(fr.randf_range(ZONE_TOWN.position.x, ZONE_TOWN.end.x), fr.randf_range(ZONE_TOWN.position.y, ZONE_TOWN.end.y)) \
 					if zone == 0 else Vector2(fr.randf_range(-half, half), fr.randf_range(-half, half))
 				var yaw := fr.randf() * TAU
 				var s := fr.randf_range(0.8, 1.2)
-				if absf(p.x) < 5.0 or absf(p.y) < 5.0 or (zone == 1 and ZONE_TOWN.has_point(p)) or not _is_clear(p, 0.5) \
+				var v := Terrain.vegetation(p.x, p.y)
+				if zone == 1 and fr.randf() > (v if name in FLORA_WET else 1.0 - v):
+					continue
+				if Trails.edge(p.x, p.y) < 1.0 or (zone == 1 and ZONE_TOWN.has_point(p)) or not _is_clear(p, 0.5) \
 						or _in_wheat(Vector3(p.x, 0, p.y)) or not _free(Vector3(p.x, 0, p.y), 1.0) \
 						or _roads.any(func(r: Rect2) -> bool: return r.has_point(p)):
 					continue
@@ -1721,7 +1797,7 @@ func _grass_field(spots: Variant = null) -> void:
 			# 先挑出碰到這塊的建築：每叢都掃全場的建築會慢到讀圖卡好幾秒
 			var area := Rect2(o.x - half, o.z - half, GRASS_CHUNK, GRASS_CHUNK)
 			var near: Array[Rect2] = []
-			for r: Rect2 in _blocked:
+			for r: Rect2 in _blocked + _roads:   # 鋪的路（城鎮主街、靶場的靶道）上也不長
 				if r.intersects(area):
 					near.append(r)
 			var xf: Array[Transform3D] = []
@@ -1731,7 +1807,10 @@ func _grass_field(spots: Variant = null) -> void:
 				var z := o.z + gr.randf_range(-half, half)
 				var a := gr.randf() * TAU
 				var s := gr.randf_range(0.7, 1.3)
-				if absf(x) < 5.0 or absf(z) < 5.0:
+				if Trails.edge(x, z) < 0.3:   # 路邊一點點草探進路面，比切齊的邊自然
+					continue
+				# 植被密度：濕地長滿，旱地剩三成——一片一片的草地和裸土，不是整片均勻的地毯
+				if gr.randf() > lerpf(0.3, 1.0, Terrain.vegetation(x, z)):
 					continue
 				var inside := false
 				for r in near:
@@ -1796,13 +1875,20 @@ func _ground_color(x: float, z: float, h: float) -> Color:
 
 ## 地面顏色：路、麥田、草地（越高越黃、越陡越露土）。編輯器畫地形（LevelRoot）也用這支
 static func ground_color(t: Terrain, wheat: Array[Rect2], roads: Array[Rect2], x: float, z: float, h: float) -> Color:
-	if absf(x) < 4.0 or absf(z) < 4.0 or roads.any(func(r: Rect2) -> bool: return r.has_point(Vector2(x, z))):
-		return DIRT
+	if roads.any(func(r: Rect2) -> bool: return r.has_point(Vector2(x, z))):
+		return DIRT   # 透明度 1：地面 shader 換成小路的紋理（terrain.gdshader）
 	for f: Rect2 in wheat:
 		if f.has_point(Vector2(x, z)):
-			return WHEAT
+			return Color(WHEAT, 0.0)   # 透明度 0：不是路
 	var c := GRASS.lerp(Color(0.86, 0.71, 0.43), clampf((h + Terrain.AMP) / (Terrain.AMP * 2.0), 0.0, 1.0) * 0.55)
-	return c.lerp(DIRT, clampf(t.slope(x, z) * 5.0, 0.0, 0.7))
+	# 旱地（植被密度低）偏乾土色，跟上面長的草、仙人掌、石頭對得上
+	c = c.lerp(DIRT, (1.0 - Terrain.vegetation(x, z)) * 0.35)
+	c = c.lerp(DIRT, clampf(t.slope(x, z) * 5.0, 0.0, 0.7))
+	# 荒地小路：顏色往乾土拉，透明度 = 路的濃度（terrain.gdshader 照它換紋理）
+	var w := Trails.weight(x, z)
+	c = c.lerp(PATH, w)
+	c.a = w
+	return c
 
 ## 把「離地多高」換成實際位置：v.y 當作離地面的高度
 func _on_ground(v: Vector3) -> Vector3:
@@ -1864,8 +1950,11 @@ func _generate_range(rng: RandomNumberGenerator) -> void:
 	_put({kind = &"flat", pos = Vector3.ZERO, r = 150.0})
 	var z0 := RANGE_START.z
 	_put({kind = &"road", pos = Vector3(0, 0, z0), size = Vector3(44, 0, 6)})   # 射擊線
+	# 中間的靶道和 75 公尺那條橫路（以前是牧場十字路順便畫的，牧場改成彎曲小路後自己鋪）
+	_put({kind = &"road", pos = Vector3.ZERO, size = Vector3(8, 0, ARENA)})
+	_put({kind = &"road", pos = Vector3.ZERO, size = Vector3(ARENA, 0, 8)})
 	for d in range(10, 160, 10):
-		if d != 75:   # 75 公尺那條是場地本來的十字路
+		if d != 75:   # 75 公尺那條是上面的橫路
 			_put({kind = &"road", pos = Vector3(0, 0, z0 - d), size = Vector3(36, 0, 2)})
 	for side: float in [-1.0, 1.0]:
 		for k in 15:
@@ -1882,7 +1971,7 @@ func _generate_range(rng: RandomNumberGenerator) -> void:
 		if _free(p, 2) and _is_clear(Vector2(p.x, p.z), 2.0):
 			_gen_tree(p, rng, 0.3)
 
-## 四個區域（x、z 範圍）。十字路寬 8 公尺；西南那塊的東邊讓給沙盒靶場
+## 四個區域（x、z 範圍）。中間留 16 公尺寬的十字空帶（以前是十字路，現在是主路和空地）；西南那塊的東邊讓給沙盒靶場
 const ZONE_FARM := Rect2(-84, -84, 76, 76)
 const ZONE_TOWN := Rect2(8, -84, 76, 76)
 const ZONE_WHEAT := Rect2(-84, 8, 62, 76)
@@ -1962,8 +2051,9 @@ func _zone_forest(rng: RandomNumberGenerator) -> void:
 	while z < ZONE_FOREST.end.y - 2.0:
 		var x := ZONE_FOREST.position.x + 3.0
 		while x < ZONE_FOREST.end.x - 2.0:
-			var p := Vector3(x + rng.randf_range(-2, 2), 0, z + rng.randf_range(-2, 2))
-			if rng.randf() < 0.8 and _free(p, 2) and _is_clear(Vector2(p.x, p.z)) and _inside(p, 3.0):
+			var p := Vector3(x + rng.randf_range(-2.5, 2.5), 0, z + rng.randf_range(-2.5, 2.5))
+			# 植被密度低的地方是林間空地（不是一整片格子排的樹）；最稀也還有四成多，看起來還是森林
+			if rng.randf() < lerpf(0.45, 1.0, Terrain.vegetation(p.x, p.z)) and _free(p, 2) and _is_clear(Vector2(p.x, p.z)) and _inside(p, 3.0):
 				_gen_tree(p, rng, 0.35)
 			x += 6.5
 		z += 6.5
@@ -1996,15 +2086,9 @@ func _wheat(rec: Dictionary) -> void:
 static var _wheat_mesh: QuadMesh
 static func wheat_card() -> QuadMesh:
 	if _wheat_mesh == null:
-		var mat := StandardMaterial3D.new()
-		mat.albedo_texture = preload("res://assets/textures/wheat_card.png")
-		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
-		mat.alpha_scissor_threshold = 0.5
-		mat.billboard_mode = BaseMaterial3D.BILLBOARD_FIXED_Y   # 只繞垂直軸轉：從上往下看不會躺平
-		mat.billboard_keep_scale = true
-		mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-		mat.roughness = 0.5   # 描線跳過的記號（見 outline.gdshader），一根根麥稈描線會變成一片雜訊
-		mat.metallic_specular = 0.0
+		var mat := ShaderMaterial.new()   # 只繞垂直軸轉的看板、近處變少、穗尖壓暗（見 wheat.gdshader）
+		mat.shader = preload("res://wheat.gdshader")
+		mat.set_shader_parameter(&"card_tex", preload("res://assets/textures/wheat_card.png"))
 		_wheat_mesh = QuadMesh.new()
 		_wheat_mesh.size = Vector2(0.55, 1.1)   # 圖是 1:2，最高的穗大約 90 公分
 		_wheat_mesh.center_offset = Vector3(0, 0.55, 0)
@@ -2461,17 +2545,23 @@ func _build_exits() -> void:
 	for e: Vector2 in exit_spots():
 		var c := _on_ground(Vector3(e.x, 0, e.y))
 		_exits.append(c)
-		var mesh := BoxMesh.new()
-		mesh.size = Vector3(EXIT_RADIUS * 2.0, 0.3, EXIT_RADIUS * 2.0)
-		var mat := StandardMaterial3D.new()
-		mat.albedo_color = Color(0.95, 0.78, 0.4, 0.25)   # 半透明暖金：看得出來，又不像貼上去的藍色佔位片
-		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		mesh.material = mat
-		var mi := MeshInstance3D.new()
-		mi.mesh = mesh
-		mi.position = c + Vector3(0, 0.15, 0)
-		$Arena.add_child(mi)
-		_exit_pads.append(mi)
+		# 地面標示用貼花（Decal）從上往下投在地上：撤離區沒整平（高低差可到 10 公尺），平板會一半埋進坡裡、一半浮在空中。
+		# 圓形：裡面淡淡一層暖金，邊上一圈比較亮，站在圈外也看得出邊界
+		var g := Gradient.new()
+		g.offsets = PackedFloat32Array([0.0, 0.88, 0.95, 1.0])
+		g.colors = PackedColorArray([Color(1, 1, 1, 0.25), Color(1, 1, 1, 0.3), Color(1, 1, 1, 0.9), Color(1, 1, 1, 0)])
+		var tex := GradientTexture2D.new()
+		tex.gradient = g
+		tex.fill = GradientTexture2D.FILL_RADIAL
+		tex.fill_from = Vector2(0.5, 0.5)
+		tex.fill_to = Vector2(1.0, 0.5)
+		var d := Decal.new()
+		d.texture_albedo = tex
+		d.modulate = Color(0.95, 0.78, 0.4)   # 暖金：看得出來，又不像貼上去的藍色佔位片
+		d.size = Vector3(EXIT_RADIUS * 2.0, Terrain.AMP * 3.0, EXIT_RADIUS * 2.0)   # 上下各投 15 公尺，坡再陡也蓋得到
+		d.position = c
+		$Arena.add_child(d)
+		_exit_pads.append(d)
 		_exit_pipe(c)   # 旁邊的篷車和貨在擺設清單裡（_generate_level）
 
 ## 撤離點中間的綠色水管：遠遠就看得到撤離點在哪（0.8.1 回饋 U14）。

@@ -31,6 +31,7 @@ func _process(_delta: float) -> bool:
 		_case_offline_dino()
 		_case_cowboy()
 		_case_input_map()
+		_case_mouse_lock()
 		_case_hunt_weapons()
 		_case_sandbox()
 		_case_range()
@@ -48,6 +49,7 @@ func _process(_delta: float) -> bool:
 		_case_cover()
 		_case_trex_rig()
 		_case_trex_lean()
+		_case_trex_flinch()
 		_case_stamina()
 		_case_sprint_skill()
 		_case_egg()
@@ -56,6 +58,7 @@ func _process(_delta: float) -> bool:
 		_case_fireball()
 		_case_dino_attack_switch()
 		_case_ui()
+		_case_bug_report()
 		_case_stagger()
 		_case_arena_walls()
 		_case_boss()
@@ -113,7 +116,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與左輪扳擊錘換彈動作音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰一條體力、沙盒、鄉村柵欄灌木貼圖、著彈碎屑與煙囪煙、地形起伏、F 開門爬梯子、翻柵欄和窗台、手腳、只剩連線和沙盒、遊戲局控制、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、恐龍攻擊開關、介面（大廳存 IP、勝負畫面、倒數）、中彈踉蹌、恐龍 boss 行為樹（導演、三招預備動作、導航網格）、方位條、測試站自動開下一局都正常")
+		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與左輪扳擊錘換彈動作音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰一條體力、沙盒、鄉村柵欄灌木貼圖、著彈碎屑與煙囪煙、地形起伏、F 開門爬梯子、翻柵欄和窗台、手腳、只剩連線和沙盒、遊戲局控制、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、恐龍攻擊開關、介面（大廳存 IP、勝負畫面、倒數）、中彈踉蹌、恐龍 boss 行為樹（導演、三招預備動作、導航網格）、方位條、測試站自動開下一局、問題回報、滑鼠鎖定不凍視角都正常")
 	return true
 
 # --- 共用 ---
@@ -716,9 +719,10 @@ func _case_rural() -> void:
 	_ck(m._bushes.size() > m.ARENA * m.ARENA / 500.0, "要有灌木叢可以躲（現在 %d 叢）" % m._bushes.size())   # 每 500 平方公尺至少一叢
 	var bad := 0
 	for b: Vector3 in m._bushes:
-		if not m._is_clear(Vector2(b.x, b.z)) or absf(b.x) < 6.0 or absf(b.z) < 6.0:
+		if not m._is_clear(Vector2(b.x, b.z)) or Trails.edge(b.x, b.z) < 0.0:
 			bad += 1
 	_ck(bad == 0, "灌木不能長在建築裡或路上（%d 叢）" % bad)
+	_ck(Trails.ARENA == m.ARENA, "trails.gd 的 ARENA 要跟 main.gd 一樣")
 	# 穀倉後門：大穀倉站著走得過去，小棚子蹲著鑽得過去（0.8.1 回饋：門小到人過不去）
 	var backs := 0
 	for d in m.get_node(^"Arena").get_children():
@@ -841,7 +845,7 @@ func _case_terrain() -> void:
 			steep = maxf(steep, t.slope(ix, iz))
 	_ck(steep < 1.0 - cos(deg_to_rad(40.0)), "最陡的坡要在 40 度內（現在 %.0f 度）" % rad_to_deg(acos(1.0 - steep)))
 
-	# 穀倉底下、沙盒靶場要是平的
+	# 穀倉底下要是平的。沙盒靶場不整平了（以前的十字路改成有起伏的丘陵）；量距離準不準去靶場地圖（levels/range.tscn）
 	var b: Rect2 = m._blocked[0]
 	var c := b.get_center()
 	var spread := 0.0
@@ -849,9 +853,6 @@ func _case_terrain() -> void:
 		for dz in [-10.0, 0.0, 10.0]:
 			spread = maxf(spread, absf(t.height(c.x + dx, c.y + dz) - t.height(c.x, c.y)))
 	_ck(spread < 0.05, "穀倉底下要是平地（高低差 %.2f 公尺）" % spread)
-	var r: Rect2 = m.SANDBOX_RANGE
-	_ck(absf(t.height(r.position.x + 2, r.position.y + 2) - t.height(r.end.x - 2, r.end.y - 2)) < 0.05,
-		"沙盒靶場要是平地，靶的距離才準")
 
 	# 碰撞跟畫面同一份高度：往下打射線，打到的高度要等於 height()
 	var space: PhysicsDirectSpaceState3D = m.get_world_3d().direct_space_state
@@ -882,7 +883,8 @@ func _case_interact() -> void:
 	var blades := 0
 	for n in m.get_tree().get_nodes_in_group(&"grass"):
 		blades += n.multimesh.instance_count
-	_ck(blades > m.ARENA * m.ARENA * 2.0 and blades == spots.size(), "草地要長滿（現在 %d 叢）" % blades)
+	# 草照植被密度長（旱地剩三成），一片一片的，所以門檻是每平方公尺 1.5 叢不是 2
+	_ck(blades > m.ARENA * m.ARENA * 1.5 and blades == spots.size(), "草地要長滿（現在 %d 叢）" % blades)
 	_ck(inside == 0, "草叢不能長在建築裡（有 %d 叢）" % inside)
 	_ck(m._doors.size() >= 3, "每棟穀倉至少兩扇滑門＋後門（現在全場 %d 扇門）" % m._doors.size())
 	var d: Door = m._doors[0]   # 第一棟穀倉左邊那扇滑門
@@ -1129,6 +1131,22 @@ func _case_controller() -> void:
 	_end(m)
 
 ## 牛仔的操作都要有綁鍵，鍵盤和手把兩邊都要（FNE 的約定）
+## 滑鼠視角：鎖滑鼠全部走 Fighter.lock_mouse()，擋殘留位移的時間從「鎖定那一刻」算，不是從玩家第一次動滑鼠才算
+## （不然剛進遊戲、關 Esc 選單、重生，一動滑鼠就被凍住，2026-10-02 回報）
+func _case_mouse_lock() -> void:
+	var src := FileAccess.get_file_as_string("res://main.gd")
+	_ck(not src.contains("Input.mouse_mode = Input.MOUSE_MODE_CAPTURED"), "main.gd 鎖滑鼠要走 Fighter.lock_mouse()，不要直接設")
+	_ck(not FileAccess.get_file_as_string("res://fighter.gd").contains("var _settle_until"),
+		"擋殘留位移的時間不能記在各角色身上（重生的新角色會重新等）")
+	var t0 := Time.get_ticks_msec()
+	Fighter.lock_mouse()   # headless 鎖不住，所以每次都會走到「剛鎖定」那段
+	var wait := Fighter._look_from - t0
+	if OS.get_name() == "macOS":
+		_ck(wait > 0 and wait <= Fighter.LOOK_SETTLE_MS + 50, "macOS 鎖定後擋 %d 毫秒，從鎖定那一刻算（現在 %d）" % [Fighter.LOOK_SETTLE_MS, wait])
+	else:
+		_ck(wait <= 0, "macOS 以外鎖定後不擋滑鼠（現在擋 %d 毫秒）" % wait)
+	Fighter._look_from = 0
+
 func _case_input_map() -> void:
 	for a in ["move_forward", "move_back", "move_left", "move_right", "jump", "sprint",
 			"crouch", "crouch_toggle", "fire", "aim", "reload", "melee", "interact"]:
@@ -1215,6 +1233,7 @@ func _case_boss() -> void:
 	_ck(b.WALK < c.walk_speed and b.RUN > c.sprint_speed,
 		"boss 走路要比牛仔慢（%.1f vs %.1f）、跑步要比牛仔快（%.1f vs %.1f）" % [b.WALK, c.walk_speed, b.RUN, c.sprint_speed])
 	_ck(is_instance_valid(m._nav_region), "生 boss 要順便烘導航網格")
+	_ck(m.BOSS_ACTS.size() == b.ACT_SPOT + 1, "每個動作狀態都要有除錯名稱（BOSS_ACTS 有 %d 個）" % m.BOSS_ACTS.size())
 	# 視力：放在沙盒靶場那條路上（整平、沒蓋東西，視線不會被擋）
 	b.global_position = m._on_ground(Vector3(0, 4.2, 40))
 	b.rotation.y = 0.0   # 面向 -Z
@@ -1238,6 +1257,48 @@ func _case_boss() -> void:
 	b.hear(m._on_ground(Vector3(60, 1, -60)))
 	_ck(b._noise_left == 0.0, "放鬆的時候遠處的槍聲不理")
 	b.director.phase = Director.Phase.BUILD
+	# 聲音只聽得出大概在哪：遠的偏得多（但有上限），近的偏得少
+	var far_shot: Vector3 = m._on_ground(Vector3(60, 1, -60))
+	var max_off := 0.0
+	for i in 30:
+		b.hear(far_shot)
+		max_off = maxf(max_off, Vector2(b._noise.x - far_shot.x, b._noise.z - far_shot.z).length())
+	_ck(max_off > 3.0 and max_off <= b.NOISE_FUZZ_MAX + 1.0, "遠處槍聲的位置要有偏差、但不超過上限（最大偏 %.1f）" % max_off)
+	var near_shot := b.global_position + Vector3(0, 0, -15)
+	max_off = 0.0
+	for i in 30:
+		b._heard(near_shot)
+		max_off = maxf(max_off, Vector2(b._noise.x - near_shot.x, b._noise.z - near_shot.z).length())
+	_ck(max_off < 2.5, "15 公尺內的聲音要聽得滿準（最大偏 %.1f）" % max_off)
+	b._noise_left = 0.0
+	# 看到不等於確定：先停下來盯著，確定了吼一聲，吼完才追
+	c.global_position = m._on_ground(Vector3(0, 0.1, 26))   # 正前方 14 公尺
+	b.think(1.0 / 60.0)
+	_ck(b._sees_now == null and b._glimpse == c and b.mood == b.MOOD_SEARCH, "剛瞄到人還不能確定、要先盯著（心情要是「找」）")
+	var spot_frames := 0
+	while b.act != b.ACT_SPOT and spot_frames < 120:
+		b.think(1.0 / 60.0)
+		spot_frames += 1
+	_ck(spot_frames > 20 and b.act == b.ACT_SPOT, "盯一下才確定、確定了要吼一聲（%d 幀）" % spot_frames)
+	_ck(b.mood == b.MOOD_HUNT, "確定之後心情要是「追」")
+	for i in int(b.SPOT_TIME * 60) + 2:
+		b.think(1.0 / 60.0)
+	_ck(b.act != b.ACT_SPOT and b._sees_now == c, "吼完要開始追或出招（現在 act=%d）" % b.act)
+	b.act = b.ACT_NONE
+	b._pounce_cd = 0.0
+	# 還沒確定就躲起來：去他剛才在的地方找
+	b._seen_left = 0.0
+	b._suspect = 0.0
+	b._sees_now = null
+	b.think(1.0 / 60.0)
+	for i in 30:
+		b.think(1.0 / 60.0)
+	var was_at: Vector3 = c.global_position
+	c.global_position = Vector3(0, 500, 0)
+	b.think(1.0 / 60.0)
+	_ck(b._noise_left > 0.0 and b._noise.distance_to(was_at) < 0.5, "還沒確定人就躲了，要去他剛才在的地方找")
+	b._noise_left = 0.0
+	b._hint = Vector3.INF
 	# 跟蛋無關：有人拿著蛋也不會知道他在哪
 	m.egg.carrier = 3
 	other.global_position = m._on_ground(Vector3(15, 0.1, -20))
@@ -1319,6 +1380,7 @@ func _case_boss() -> void:
 	b.rotation.y = 0.0
 	c.global_position = m._on_ground(Vector3(0, 0.1, 44))   # 正前方 16 公尺
 	_ck(b.pounce_clear(c.global_position), "靶場那條路上撲過去的路線要是空的")
+	b._seen_left = b.MEMORY   # 已經在追他了（剛看丟又看到的人不用重新確定）
 	b.think(1.0 / 60.0)
 	_ck(b.act == b.ACT_POUNCE_WIND, "中距離正前方要撲（現在 act=%d）" % b.act)
 	for i in int(b.POUNCE_WIND * 60) + 2:
@@ -1353,22 +1415,22 @@ func _case_boss() -> void:
 func _case_trex_rig() -> void:
 	var m := _new_offline_game()
 	var t: Node = m.players.get_node(^"2").get_node(^"Trex")
-	_ck(t.skel.get_bone_count() == 18, "骨架應該有 18 根骨頭（現在 %d）" % t.skel.get_bone_count())
-	_ck(t.skel.find_bone("jaw") >= 0 and t.skel.find_bone("tail4") >= 0, "下巴和尾巴末端要在")
+	_ck(t.skel.get_bone_count() >= 40, "精細骨架應該有 40 根以上骨頭（現在 %d）" % t.skel.get_bone_count())
+	_ck(t.skel.find_bone("jaw") >= 0 and t.skel.find_bone("tail%d" % Trex.TAIL_N) >= 0, "下巴和尾巴末端要在")
 
 	for i in 6:  # 假裝以 18 m/s 在跑
 		t._last_pos = t.global_position + Vector3(0, 0, 0.3)
 		t._process(1.0 / 60.0)
-	var l: float = t.skel.get_bone_pose_rotation(t._idx["thigh_l"]).get_euler().x
-	var r: float = t.skel.get_bone_pose_rotation(t._idx["thigh_r"]).get_euler().x
+	var l: float = t.pose_rot("thigh_l").get_euler().x
+	var r: float = t.pose_rot("thigh_r").get_euler().x
 	_ck(absf(l) > 0.1 and l * r < 0.0, "跑步時兩隻大腿要反相擺動（左 %.2f 右 %.2f）" % [l, r])
 
-	var closed: float = t.skel.get_bone_pose_rotation(t._idx["jaw"]).get_euler().x
+	var closed: float = t.pose_rot("jaw").get_euler().x
 	t.bite()
 	var opened := closed
 	for i in 20:
 		t._process(1.0 / 60.0)
-		opened = minf(opened, t.skel.get_bone_pose_rotation(t._idx["jaw"]).get_euler().x)
+		opened = minf(opened, t.pose_rot("jaw").get_euler().x)
 	_ck(rad_to_deg(absf(opened - closed)) > 25.0,
 		"咬的時候嘴要張開超過 25 度（現在 %.0f）" % rad_to_deg(absf(opened - closed)))
 
@@ -1388,6 +1450,30 @@ func _case_trex_rig() -> void:
 	_ck(absf(t._tail_yaw[3]) < 0.05, "最後要收斂回中間，不能一直晃（現在 %.3f）" % t._tail_yaw[3])
 	_end(m)
 
+## 中彈晃一下：從左邊被打要往右倒、慢慢穩回來；頭被打中要甩頭
+func _case_trex_flinch() -> void:
+	var m := _new_offline_game()
+	var t: Node = m.players.get_node(^"2").get_node(^"Trex")
+	for i in 120:
+		t._process(1.0 / 60.0)
+	t.flinch(Vector3.RIGHT, 1.0, false)
+	var most := 0.0
+	for i in 20:
+		t._process(1.0 / 60.0)
+		most = minf(most, t.pose_rot("spine1").get_euler().z)
+	_ck(most < -0.05, "被往右推要往右倒（最多 %.3f，應為負）" % most)
+	for i in 300:
+		t._process(1.0 / 60.0)
+	_ck(absf(t.pose_rot("spine1").get_euler().z) < 0.02, "晃完要自己站穩")
+	var yaw0: float = t.pose_rot("head").get_euler().y
+	t.flinch(Vector3.ZERO, 0.0, true)
+	var swing := 0.0
+	for i in 15:
+		t._process(1.0 / 60.0)
+		swing = maxf(swing, absf(t.pose_rot("head").get_euler().y - yaw0))
+	_ck(swing > 0.2, "頭被打中要甩頭（甩了 %.2f）" % swing)
+	_end(m)
+
 ## 側傾與位移延遲：往旁邊移動時身體要往內倒、慢半拍才跟上，頭要保持水平
 func _case_trex_lean() -> void:
 	var m := _new_offline_game()
@@ -1399,17 +1485,17 @@ func _case_trex_lean() -> void:
 		t._last_pos = t.global_position - d.global_basis.x * (10.0 / 60.0)
 		t._process(1.0 / 60.0)
 		drag = maxf(drag, absf(t.skel.position.x))   # 只有加速那幾幀才拖得到
-	var roll: float = t.skel.get_bone_pose_rotation(t._idx["spine1"]).get_euler().z
+	var roll: float = t.pose_rot("spine1").get_euler().z
 	_ck(roll < -0.03, "往右移動時軀幹要往右倒（現在 %.3f，應為負）" % roll)
 
-	var head: float = t.skel.get_bone_pose_rotation(t._idx["head"]).get_euler().z
+	var head: float = t.pose_rot("head").get_euler().z
 	_ck(head * roll < 0.0, "頭要反向轉回來保持水平（軀幹 %.3f 頭 %.3f）" % [roll, head])
 	_ck(drag > 0.05, "起步那下身體要被拖著走，不是瞬間跟上（最大位移 %.3f）" % drag)
 
 	for i in 600:  # 停下來，側傾要收斂回去
 		t._last_pos = t.global_position
 		t._process(1.0 / 60.0)
-	_ck(absf(t.skel.get_bone_pose_rotation(t._idx["spine1"]).get_euler().z) < 0.03,
+	_ck(absf(t.pose_rot("spine1").get_euler().z) < 0.03,
 		"停下來要站回直的")
 	_end(m)
 
@@ -1606,6 +1692,37 @@ func _case_dino_attack_switch() -> void:
 	_end(m)
 
 ## 0.8.1 回饋的介面：大廳順序和存 IP、勝負畫面、重開一局、倒數、boss 體力條、右上角
+## 問題回報：錯誤會被記下來、警告不算，F8 存出來的檔有版本、遊戲狀況和錯誤內容
+func _case_bug_report() -> void:
+	var m := _new_offline_game()
+	var r := BugReport.instance
+	_ck(r != null, "開遊戲要掛上 bug 收集器")
+	r.take_new_error()
+	var before := r.error_count()
+	push_warning("bug 收集器測試：這是警告")
+	_ck(r.error_count() == before and not r.take_new_error(), "警告不算錯誤，不跳提示")
+	push_error("bug 收集器測試：這是錯誤")
+	push_error("bug 收集器測試：這是錯誤")
+	_ck(r.error_count() == before + 1 and r.take_new_error(), "錯誤要記下來、跳提示，同一個只記一次")
+	var path: String = m.report_bug()
+	_ck(path != "" and FileAccess.file_exists(path), "F8 要存出回報檔（%s）" % path)
+	var text := FileAccess.get_file_as_string(path)
+	_ck(text.contains("版本：0.8.5") or text.contains("版本：" + str(ProjectSettings.get_setting("application/config/version"))),
+		"回報要有版本")
+	_ck(text.contains("這是錯誤") and text.contains("共 2 次"), "回報要有錯誤內容和次數")
+	_ck(text.contains("遊戲：") and text.contains("當"), "回報要寫在玩什麼、當誰")
+	DirAccess.remove_absolute(path)
+	# 遊戲裡的版本要跟打包設定一樣（打包只改 export_presets.cfg 的話，回報的版本會是舊的）
+	var cfg := ConfigFile.new()
+	cfg.load("res://export_presets.cfg")
+	var ver := ""
+	for sec in cfg.get_sections():
+		if cfg.has_section_key(sec, "application/version"):
+			ver = cfg.get_value(sec, "application/version")
+	_ck(ver == ProjectSettings.get_setting("application/config/version"),
+		"project.godot 的 config/version（%s）要跟 export_presets.cfg 的版本（%s）一樣" % [ProjectSettings.get_setting("application/config/version"), ver])
+	_end(m)
+
 func _case_ui() -> void:
 	var m := _new_game()
 	var lobby: Node = m.lobby

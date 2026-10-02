@@ -41,6 +41,7 @@ func rebuild_terrain() -> void:
 			wheat.append(Rect2(p.x - it.amount * 0.5, p.z - it.amount * 0.5, it.amount, it.amount))
 		elif it.kind == "road":
 			roads.append(Rect2(p.x - it.size.x * 0.5, p.z - it.size.z * 0.5, it.size.x, it.size.z))
+	Trails.enabled = scene_file_path != Main.RANGE_LEVEL   # 彎曲小路只有牧場有
 	terrain = Main.make_terrain(flats)
 	var old := get_node_or_null(^"_terrain_preview")
 	if old:

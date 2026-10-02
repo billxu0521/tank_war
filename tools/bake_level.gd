@@ -3,6 +3,7 @@ extends SceneTree
 ## **會蓋掉手調過的結果**——只在第一次、或確定要從頭來的時候跑（舊版從 git 拿得回來）。
 ##   godot --headless --path . --script tools/bake_level.gd
 ##   godot --headless --path . --script tools/bake_level.gd -- --range    靶場（levels/range.tscn）
+## 牧場烘焙完要接著跑 tools/plant_flora.gd：新樹種、仙人掌、約書亞樹是它種進場景檔的，烘焙會把它們洗掉
 
 var OUT := "res://levels/ranch.tscn"
 # 分組（編輯器的場景樹比較好找）。建築那組要照原本的順序：門的名字 Door0、Door1… 照蓋的順序

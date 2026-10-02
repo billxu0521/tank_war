@@ -1,5 +1,6 @@
 """程式合成恐龍的叫聲（boss.gd 的預備動作用）：
-   growl 咬之前的低吼（0.7 秒）、roar 蓄力的長吼（1.6 秒）、snarl 撲擊前的短咆哮（0.5 秒）、yelp 被打斷的哀叫（0.6 秒）。
+   growl 咬之前的低吼（0.7 秒）、roar 蓄力的長吼（1.6 秒）、snarl 撲擊前的短咆哮（0.5 秒）、yelp 被打斷的哀叫（0.6 秒）、
+   bellow 發現人的吼叫（0.7 秒，往下掉的吼，跟長吼分得開）、sniff 找人時嗅兩下（只有氣息、沒有聲帶）。
 做法：低頻鋸齒波（聲帶）＋濾過的雜訊（氣息），音高照包絡滑動，再加 20~30Hz 的粗糙顫動（大隻動物的喉音），
 最後過幾個共振峰（嘴巴和胸腔）。體型大就把音高壓低（知識庫「生物音效設計」：體型決定音高和音量）。
    （要 numpy：用 Blender 附的 Python）
@@ -58,6 +59,18 @@ def creature(dur, pitch, env, rough=24.0, breath=0.5, formants=((220, 3.0), (520
     return y / (np.abs(y).max() + 1e-9) * 0.9
 
 
+def sniff():
+    """兩下短促的吸氣：濾過的雜訊，沒有聲帶（不像在叫，像在聞）"""
+    out = []
+    for dur in (0.14, 0.2):
+        n = int(dur * SR)
+        u = np.arange(n) / n
+        y = bandpass(rng.standard_normal(n), 900, 1.2) + bandpass(rng.standard_normal(n), 2200, 2.0) * 0.5
+        out += [y * np.sin(np.pi * u) ** 0.6, np.zeros(int(0.08 * SR))]
+    y = np.concatenate(out)
+    return y / (np.abs(y).max() + 1e-9) * 0.6
+
+
 def write(name, y):
     os.makedirs(OUT, exist_ok=True)
     pcm = (np.clip(y, -1, 1) * 32767).astype(np.int16)
@@ -81,3 +94,6 @@ if __name__ == '__main__':
     write('snarl', creature(0.5, lambda u: 70 + 30 * u, ad(0.1, 0.2), rough=31, breath=1.0))
     write('yelp', creature(0.6, lambda u: 140 - 70 * u, ad(0.05, 0.5), rough=18, breath=0.5,
                            formants=((380, 3.0), (900, 4.0), (1800, 5.0))))
+    write('bellow', creature(0.7, lambda u: 95 - 45 * u, ad(0.04, 0.35), rough=26, breath=0.7,
+                             formants=((240, 2.5), (560, 3.5), (1200, 4.5))))
+    write('sniff', sniff())

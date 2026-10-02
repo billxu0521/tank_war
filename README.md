@@ -199,6 +199,7 @@ godot --headless --quit --editor         # 新增 class_name 後重建型別快�
 | `dino.*` `trex.gd` `fireball.*` | 恐龍、骨架程式動畫（見 [程序化動畫筆記](docs/程序化動畫.md)）、火球 |
 | `assets/` | 從 FNE 搬來的音效、材質。授權見 `CREDITS.md` |
 | `levels/` | 場地的場景檔 `ranch.tscn`（在 Godot 編輯器裡拖曳調整，見 [場景編輯](docs/場景編輯.md)）、物件庫、擺設檢查 |
+| `bug_report.gd` | 問題回報：攔下錯誤，F8 存成報告並複製到剪貼簿（見 [問題回報](docs/問題回報.md)） |
 | `test_battle.gd` | 自我檢查 |
 
 坦克版的程式和模型在 git 歷史裡（`d59b432` 之前）。大廳的「檢視模型」可以單獨看牛仔、三把槍和暴龍。

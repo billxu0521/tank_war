@@ -88,6 +88,15 @@ Outlaws vs Dinosaurs 法外狂徒大戰恐龍（OvD）— 區網對戰原型
   死了不會出局，五秒後滿血重生，不設命數。
   打死恐龍不算贏，只是少一個威脅五秒。
 
+【遇到問題怎麼回報】
+  按 F8（或 Esc 選單的「回報問題」），遊戲會把版本、電腦、你在玩什麼、錯誤訊息整理成一份報告，
+  存成檔案，同時複製到剪貼簿。到 Discord 這一版的討論串直接貼上，再補一句「當時在做什麼」就好。
+  遊戲記到錯誤時，畫面上會跳提示叫你按 F8。
+  遊戲整個當掉、來不及按的話：報告的位置在
+    Windows：%APPDATA%\Godot\app_userdata\Outlaws vs Dinosaurs 法外狂徒大戰恐龍\
+    macOS：~/Library/Application Support/Godot/app_userdata/Outlaws vs Dinosaurs 法外狂徒大戰恐龍/
+  裡面 logs 資料夾的最新一個檔案就是當時的紀錄，把它傳到討論串。
+
 【想在同一台機器開兩個視窗試】
   OvD.exe -- --host
   OvD.exe -- --join 127.0.0.1

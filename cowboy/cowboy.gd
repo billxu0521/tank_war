@@ -168,6 +168,7 @@ func _ready() -> void:
 			leg.position.z -= LOCAL_LEG_FORWARD
 	if not is_local:
 		_become_remote()
+		Viewmodel.mark_meshes(self, Viewmodel.TARGET_MARK)   # 別人（和靶）是目標；自己的靴子不用
 		return
 	# 場景裡會有好幾台相機（每個玩家一台），不能靠 Godot 自動挑第一台——
 	# 那台可能是別人的。自己的一定要明講。

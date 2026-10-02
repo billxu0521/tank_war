@@ -73,7 +73,7 @@ static func puff(world: Node, at: Vector3, forward: Vector3, color: Color,
 
 ## 黑火藥的白煙，照 Hunt 分兩段。amount 是這把槍的煙量（Weapon.smoke，左輪 = 1）：
 ##   一、往前噴的一股：很快、半秒內停住
-##   二、停在槍口前面的一團：慢慢變大、順著風飄走，留好幾秒——遠處的人看得出「那邊有人開槍」
+##   二、停在槍口前面的一團：往外散開、順著風飄走，兩三秒散掉——遠處看得出「那邊有人開槍」，又不擋自己的準心
 static func gun_smoke(world: Node, at: Vector3, forward: Vector3, amount := 1.0) -> void:
 	var c := Color(0.8, 0.79, 0.76, 0.75)
 	var jet := _emitter(_card(0.17 * amount, c), 12, 0.6)
@@ -89,24 +89,26 @@ static func gun_smoke(world: Node, at: Vector3, forward: Vector3, amount := 1.0)
 	_spin(jet)
 	_once(world, jet, at)
 
-	var cloud := _emitter(_card(0.4 * amount, c), 20, (2.5 + amount) * 1.5 - 1.0)   # 左輪約 4 秒、散彈槍約 5 秒散掉
+	var cloud := _emitter(_card(0.4 * amount, c), 20, 1.4 + 0.8 * amount)   # 左輪約 2.2 秒、散彈槍約 2.7 秒散掉（太久會擋住準心）
 	# 不能設成小於 1（分批噴）：還沒輪到噴的煙片會被畫成黑色，開槍瞬間槍口前一團黑閃
 	cloud.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
 	cloud.emission_sphere_radius = 0.25 * amount
 	cloud.direction = forward
 	cloud.spread = 50.0
-	cloud.initial_velocity_min = 0.3
-	cloud.initial_velocity_max = 1.0 * amount
+	cloud.initial_velocity_min = 0.6
+	cloud.initial_velocity_max = 1.6 * amount
+	cloud.radial_accel_min = 1.5   # 煙片從團的中心往外推開，一團很快變稀，視線透得過去
+	cloud.radial_accel_max = 3.0
 	cloud.damping_min = 0.5
 	cloud.damping_max = 1.0
-	cloud.gravity = WIND
+	cloud.gravity = WIND * 2.5 + Vector3(0, 0.3, 0)   # 順風飄走、往上浮，離開槍口前面
 	cloud.scale_amount_min = 0.7
 	cloud.scale_amount_curve = _grow(0.5, 2.4)
 	# 一出來很快變濃，之後慢慢淡掉。點要一次整組給：新的 Gradient 自帶黑白兩點，
 	# 用 add_point 插進去順序會亂，前幾格取到黑色，煙團一出來整團是黑的
 	var g := Gradient.new()
-	g.offsets = PackedFloat32Array([0.0, 0.05, 0.5, 1.0])
-	g.colors = PackedColorArray([Color(1, 1, 1, 0), Color(1, 1, 1, 0.85), Color(1, 1, 1, 0.55), Color(1, 1, 1, 0)])
+	g.offsets = PackedFloat32Array([0.0, 0.05, 0.35, 1.0])
+	g.colors = PackedColorArray([Color(1, 1, 1, 0), Color(1, 1, 1, 0.6), Color(1, 1, 1, 0.25), Color(1, 1, 1, 0)])
 	cloud.color_ramp = g
 	_spin(cloud)
 	_once(world, cloud, at + forward * (0.5 + 0.3 * amount))
@@ -216,6 +218,7 @@ static func drift(parent: Node) -> Node3D:
 	leaves.emitting = true
 	bugs.emitting = true
 	return root
+
 
 
 # ---- 內部 ----

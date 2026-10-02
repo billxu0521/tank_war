@@ -1,6 +1,7 @@
 """畫地面的兩張灰階貼圖（跟頂點顏色相乘，所以只管明暗、不管顏色）：
   ground_detail.png  近看的紋理：碎石子、短草梗、小斑點。一張鋪 4 公尺
   ground_macro.png   遠看的深淺：一大塊一大塊的亮暗，打破整片同色。一張鋪 48 公尺
+  path_dirt.png      荒地小路：踩實的乾土，有龜裂、碎石比較多，沒有草梗。一張鋪 3 公尺（terrain.gdshader）
 兩張都是無縫的（左右、上下接得起來）。
    python3 tools/make_ground_tex.py
 """
@@ -55,4 +56,26 @@ img.convert('RGB').save('assets/textures/ground_detail.png')
 
 # 遠看：大塊亮暗
 blobs(256, 90, 10, 40, 195, 255, 14, 228).convert('RGB').save('assets/textures/ground_macro.png')
-print('-> assets/textures/ground_detail.png, ground_macro.png')
+
+# 荒地小路（放在最後：前兩張用的亂數順序不變，重跑也一模一樣）：底色比草地平、亮 → 乾裂的縫 → 碎石子
+img = blobs(S, 160, 14, 50, 215, 250, 14, 236)
+d = ImageDraw.Draw(img)
+for _ in range(70):   # 龜裂：一條條彎折的暗縫，走幾步轉個方向，偶爾分岔
+    x, y = rnd.uniform(0, S), rnd.uniform(0, S)
+    ang = rnd.uniform(0, 6.283)
+    for _ in range(rnd.randint(4, 9)):
+        import math
+        ang += rnd.uniform(-0.9, 0.9)
+        l = rnd.uniform(10, 30)
+        ex, ey = x + math.cos(ang) * l, y + math.sin(ang) * l
+        v, w = rnd.randint(140, 180), rnd.choice([1, 1, 2])
+        wrap(d, S, lambda d, dx, dy: d.line([x + dx, y + dy, ex + dx, ey + dy], fill=v, width=w))
+        x, y = ex, ey
+for _ in range(900):   # 碎石子：比草地多，大小不一
+    x, y, r = rnd.uniform(0, S), rnd.uniform(0, S), rnd.uniform(0.8, 4.0)
+    v = rnd.choice([rnd.randint(160, 195), rnd.randint(245, 255)])
+    wrap(d, S, lambda d, dx, dy: (d.ellipse([x + dx - r, y + dy - r + 1.4, x + dx + r, y + dy + r + 1.4], fill=145),
+                                  d.ellipse([x + dx - r, y + dy - r, x + dx + r, y + dy + r], fill=v)))
+img = tiled_blur(img, 0.7)
+img.convert('RGB').save('assets/textures/path_dirt.png')
+print('-> assets/textures/ground_detail.png, ground_macro.png, path_dirt.png')

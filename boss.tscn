@@ -36,6 +36,9 @@ properties/7/replication_mode = 2
 properties/8/path = NodePath(".:hp")
 properties/8/spawn = true
 properties/8/replication_mode = 2
+properties/9/path = NodePath(".:mood")
+properties/9/spawn = true
+properties/9/replication_mode = 2
 
 [node name="Boss" type="CharacterBody3D" groups=["dino", "boss"]]
 script = ExtResource("1")

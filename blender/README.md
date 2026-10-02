@@ -21,6 +21,10 @@
   自己看的靴子、第一人稱握槍的手（HandGrip / HandSupport，位置寫在各槍場景的 grip_hand / support_hand；
   右手的拇指 HandGripThumb、前臂 HandGripArm 分開，左輪扳擊錘和轉手臂用；HandLoad 是左輪換彈捏子彈的左手）
 - `trex.py` — 18 個部件，**名字和位置直接抄 trex.gd 的 `_rig()`**，所以程式動畫不用改
+- `trex_hd.py` — 精修暴龍（`docs/image/dinosaur.png`）：一整張連續的皮＋47 根骨頭蒙皮，匯出 `models/trex_hd.glb`。
+  骨頭名字沿用 trex.gd（`root`、`spine1`、`neck`、`head`、`jaw`、`tail1`~`tail8`、`thigh_l`…），遊戲裡 trex.gd 直接用它（約 1800 三角面）。
+  改完模型：`tools/trex_hd_iter.sh <版號>` → `godot --headless --import` → `tools/trex_shots.gd` 看遊戲內 → `test_battle.gd`。
+  一輪迭代 `tools/trex_hd_iter.sh <版號>`（對照圖＋輪廓疊圖），局部特寫 `tools/trex_hd_close.py`。做法和教訓見 [docs/程式建模迭代.md](../docs/程式建模迭代.md)
 
 ## 共用入口（pipeline.py）
 

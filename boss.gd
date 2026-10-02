@@ -6,15 +6,21 @@ extends "res://dino.gd"
 ##   1. 倒地中        → 等
 ##   2. 出招中        → 把這招做完（預備動作 → 出手 → 收招）
 ##   3. 導演叫牠退開  → 往離大家遠的地方跑
-##   4. 可以出招      → 咬／蓄力甩尾／撲擊
-##   5. 看得到人      → 追最近的
-##   6. 剛看丟了人    → 往最後看到的地方追
-##   7. 聽到聲音      → 過去查看（放鬆的時候只理近的）
-##   8. 導演給了方向  → 走過去、在附近繞著找
-##   9. 都沒有        → 隨便逛
+##   4. 剛確定看到人  → 停下來吼一聲（發現），之後才出招、追（太近的不吼，直接動手）
+##   5. 可以出招      → 咬／蓄力甩尾／撲擊
+##   6. 看得到人      → 追最近的
+##   7. 瞄到人還不確定 → 停下來盯著、慢慢轉過去（不確定感，ARC Raiders 的做法）
+##   8. 剛看丟了人    → 往最後看到的地方追
+##   9. 聽到聲音      → 走到那一帶，再在附近繞著找（放鬆的時候只理近的）
+##  10. 導演給了方向  → 走過去、在附近繞著找
+##  11. 都沒有        → 隨便逛
 ##
 ## 感官：視力差——近（SIGHT）、只看前方、要沒被擋住；蹲著要更近才看得到，蹲在灌木裡看不到。
+## 看到不等於確定：要盯著一下（越遠越久）才確定是人，這段時間躲回去，牠只會去你剛才在的地方找。
 ## 聽力好——整張地圖的槍聲都聽得到，附近有人跑步也聽得到（走路和蹲著走聽不到）。
+## 但聲音只聽得出大概在哪：越遠偏越多（NOISE_FUZZ）。
+##
+## 心情 mood（逛／找／追）同步給大家，各台照它擺頭的高低、出聲（trex.gd、_process）：玩家看得出牠現在在幹嘛。
 ## 導演（director.gd）知道大家在哪，但只給恐龍大概方向，不給準確位置。
 ##
 ## 三招都有預備動作和聲音，看得懂、聽得到才公平；收招有破綻（DOOM 的做法，知識庫敵人設計筆記）。
@@ -37,6 +43,15 @@ const HEAR_RUN := 20.0       # 有人在附近跑步
 const RUN_SPEED_HEARD := 6.5 # 水平速度超過這個算在跑（牛仔走 5、跑 8.5）
 const MEMORY := 6.0          # 看丟之後，往最後看到的位置追這麼久
 const NOISE_FORGET := 12.0   # 聽到的聲音記多久
+const NOISE_FUZZ := 0.12     # 聲音的位置偏差：距離的這麼多倍……
+const NOISE_FUZZ_MAX := 15.0 # ……最多偏這麼遠
+const NOISE_SEARCH := 5.0    # 走到聲音那一帶之後，在附近繞著找這麼久
+const SPOT_NEAR := 0.25      # 瞄到人到確定要多久：FEEL 那麼近要這麼久……
+const SPOT_FAR := 1.0        # ……SIGHT 那麼遠要這麼久
+const SPOT_FORGET := 0.5     # 沒瞄到時，確定的進度每秒退這麼多
+const SPOT_LEAD := 0.3       # 進度超過這麼多才看丟，才去你剛才在的地方找
+const LOOK_PAUSE := 1.2      # 繞著找的時候，每走到一點停下來張望這麼久
+const SNIFF_EVERY := Vector2(2.5, 4.5)   # 找人時多久嗅一次（秒）
 const SEARCH_TIME := 8.0     # 走到導演給的點之後，在附近繞著找這麼久
 const SEARCH_RADIUS := 10.0
 const KNOCK_TIME := 6.0
@@ -45,7 +60,9 @@ const ARRIVE := 2.5
 const RETREAT_DIST := 50.0   # 退開時往離最近的人這麼遠的地方跑
 
 # --- 三招（時間都是秒、距離是公尺）---
-enum { ACT_NONE, ACT_BITE_WIND, ACT_BITE, ACT_CHARGE_WIND, ACT_SWEEP, ACT_POUNCE_WIND, ACT_POUNCE, ACT_RECOVER, ACT_STUN }
+enum { ACT_NONE, ACT_BITE_WIND, ACT_BITE, ACT_CHARGE_WIND, ACT_SWEEP, ACT_POUNCE_WIND, ACT_POUNCE, ACT_RECOVER, ACT_STUN, ACT_SPOT }
+enum { MOOD_ROAM, MOOD_SEARCH, MOOD_HUNT }
+const SPOT_TIME := 0.7       # 發現人：停下來吼一聲這麼久，玩家還有這段時間跑
 const ATTACK_GAP := 1.2      # 收招之後至少隔這麼久才出下一招
 # 咬：近距離正前方。站定、頭往後仰、低吼，再咬下去
 const BITE_TRIGGER := 7.5    # 嘴巴到人這麼近開始預備
@@ -77,12 +94,16 @@ const SOUNDS := {
 	ACT_CHARGE_WIND: preload("res://assets/audio/dino/roar.wav"),
 	ACT_POUNCE_WIND: preload("res://assets/audio/dino/snarl.wav"),
 	ACT_STUN: preload("res://assets/audio/dino/yelp.wav"),
+	ACT_SPOT: preload("res://assets/audio/dino/bellow.wav"),
 }
+const YELP := preload("res://assets/audio/dino/yelp.wav")
+const SNIFF := preload("res://assets/audio/dino/sniff.wav")
 
 ## 這幾個同步出去（boss.tscn 的同步器），大家的 HUD、畫面和聲音都看得到
 @export var down_left := 0.0
 @export var running := false
 @export var act := ACT_NONE
+@export var mood := MOOD_ROAM
 
 var director := Director.new()
 var _tree: BT.Task
@@ -115,6 +136,12 @@ var _unstick_left := 0.0      # 脫困中：往後退、往旁邊繞
 var _unstick_dir := Vector3.ZERO
 var _shown_act := ACT_NONE    # 各台：上一次播過動作和叫聲的狀態
 var _was_down := false        # 各台：上一幀是不是倒地（倒地那一下揚土）
+var _sniff_in := 0.0          # 各台：再過多久嗅一次
+var _glimpse: Node3D = null   # 瞄到、但還沒確定的人
+var _glimpse_at := Vector3.INF
+var _suspect := 0.0           # 確定的進度 0~1
+var _spot_pending := false    # 剛確定看到人，這一幀要吼
+var _look_left := 0.0         # 繞著找時停下來張望還剩多久
 
 
 func _ready() -> void:
@@ -130,8 +157,10 @@ func _ready() -> void:
 		BT.Seq.new([BT.Cond.new(func() -> bool: return down_left > 0.0), BT.Act.new(_act_down)]),
 		BT.Seq.new([BT.Cond.new(func() -> bool: return act != ACT_NONE), BT.Act.new(_act_attack)]),
 		BT.Seq.new([BT.Cond.new(func() -> bool: return director.phase == Director.Phase.RETREAT), BT.Act.new(_act_retreat)]),
+		BT.Seq.new([BT.Cond.new(_start_spot), BT.Act.new(_act_attack)]),
 		BT.Seq.new([BT.Cond.new(_start_attack), BT.Act.new(_act_attack)]),
 		BT.Seq.new([BT.Cond.new(func() -> bool: return _sees_now != null), BT.Act.new(_act_chase)]),
+		BT.Seq.new([BT.Cond.new(func() -> bool: return _glimpse != null), BT.Act.new(_act_glimpse)]),
 		BT.Seq.new([BT.Cond.new(func() -> bool: return _seen_left > 0.0), BT.Act.new(_act_last_seen)]),
 		BT.Seq.new([BT.Cond.new(func() -> bool: return _noise_left > 0.0), BT.Act.new(_act_investigate)]),
 		BT.Seq.new([BT.Cond.new(func() -> bool: return _hint != Vector3.INF), BT.Act.new(_act_hint)]),
@@ -157,6 +186,20 @@ func _process(delta: float) -> void:
 			voice.play()
 		if act == ACT_BITE:
 			$Trex.bite()
+	$Trex.mood = mood
+	# 找人的時候不時嗅一下（嘴巴沒在叫的時候才嗅，不蓋掉出招的預告）
+	_sniff_in -= delta
+	if mood == MOOD_SEARCH and act == ACT_NONE and _sniff_in <= 0.0:
+		_sniff_in = randf_range(SNIFF_EVERY.x, SNIFF_EVERY.y)
+		_say(SNIFF)
+
+## 出聲，但不蓋掉正在叫的（出招的預告比較重要）
+func _say(s: AudioStream) -> void:
+	var voice: AudioStreamPlayer3D = $Voice
+	if voice.playing:
+		return
+	voice.stream = s
+	voice.play()
 
 
 func _physics_process(delta: float) -> void:
@@ -173,18 +216,52 @@ func think(delta: float) -> void:
 	_sweep_cd = maxf(_sweep_cd - delta, 0.0)
 	_pounce_cd = maxf(_pounce_cd - delta, 0.0)
 	_listen_steps(delta)
-	_sees_now = _nearest_seen()
-	if _sees_now:
-		_target = _sees_now
-		_last_seen = _sees_now.global_position
-		_seen_left = MEMORY
-		_hint = Vector3.INF
-	var hint := director.step(delta, _sees_now, _seen_left > 0.0 or _noise_left > 0.0, _cowboys(), _rng)
+	_look(delta)
+	var hint := director.step(delta, _sees_now, _seen_left > 0.0 or _noise_left > 0.0 or _glimpse != null, _cowboys(), _rng)
 	if hint != Vector3.INF:
 		_hint = hint
 		_search_left = SEARCH_TIME
 		_hint_reached = false
 	_tree.tick(delta)
+	mood = _mood()
+
+## 看：瞄到人要盯一下才確定（越遠越久）。已經在追的人（剛看丟沒多久）一瞄到就確定。
+## 確定之前人躲回去了，就去他剛才在的地方找（當成聽到聲音）
+func _look(delta: float) -> void:
+	var seen := _nearest_seen()
+	_sees_now = null
+	if seen:
+		var d := _flat_dist(seen.global_position)
+		if _seen_left > 0.0 or d < FEEL:
+			_suspect = 1.0
+		else:
+			var need := lerpf(SPOT_NEAR, SPOT_FAR, clampf((d - FEEL) / (SIGHT - FEEL), 0.0, 1.0))
+			_suspect = minf(_suspect + delta / need, 1.0)
+		_glimpse_at = seen.global_position
+	elif _glimpse != null and _suspect >= SPOT_LEAD and _suspect < 1.0 and director.phase != Director.Phase.RETREAT:
+		_noise = _glimpse_at
+		_noise_left = NOISE_FORGET
+		_suspect = 0.0
+	else:
+		_suspect = maxf(_suspect - SPOT_FORGET * delta, 0.0)
+	_glimpse = seen if seen and _suspect < 1.0 else null
+	if seen and _suspect >= 1.0:
+		# 剛確定（不是本來就在追）：這一幀吼一聲。太近（直接動手）、在出招、倒地、退開就不吼
+		if _seen_left <= 0.0 and _flat_dist(seen.global_position) >= FEEL and act == ACT_NONE and down_left <= 0.0 \
+				and director.phase != Director.Phase.RETREAT:
+			_spot_pending = true
+		_sees_now = seen
+		_target = seen
+		_last_seen = seen.global_position
+		_seen_left = MEMORY
+		_hint = Vector3.INF
+
+func _mood() -> int:
+	if act != ACT_NONE or _sees_now or _seen_left > 0.0:
+		return MOOD_HUNT
+	if _glimpse or _noise_left > 0.0 or (_hint != Vector3.INF and _hint_reached):
+		return MOOD_SEARCH
+	return MOOD_ROAM
 
 
 # --- 感官 ---
@@ -193,8 +270,17 @@ func think(delta: float) -> void:
 func hear(at: Vector3) -> void:
 	var reach := Director.RELAX_HEAR if director.phase == Director.Phase.RELAX else HEAR_GUN
 	if director.phase != Director.Phase.RETREAT and global_position.distance_to(at) <= reach:
-		_noise = at
-		_noise_left = NOISE_FORGET
+		_heard(at)
+
+## 聽到 at 那裡有聲音：只記得大概位置，越遠偏越多。偏到房子裡就拉回導航網格上（不然走不到）
+func _heard(at: Vector3) -> void:
+	var a := _rng.randf() * TAU
+	var r := _rng.randf() * minf(_flat_dist(at) * NOISE_FUZZ, NOISE_FUZZ_MAX)
+	_noise = at + Vector3(cos(a), 0, sin(a)) * r
+	var map := get_world_3d().navigation_map
+	if NavigationServer3D.map_get_iteration_id(map) > 0:
+		_noise = NavigationServer3D.map_get_closest_point(map, _noise)
+	_noise_left = NOISE_FORGET
 
 ## 附近有人跑步：主機只拿得到同步來的位置，用位置差算速度
 func _listen_steps(delta: float) -> void:
@@ -205,8 +291,7 @@ func _listen_steps(delta: float) -> void:
 		var speed := Vector2(now.x - before.x, now.z - before.z).length() / maxf(delta, 1e-4)
 		if speed > RUN_SPEED_HEARD and global_position.distance_to(now) < HEAR_RUN \
 				and director.phase != Director.Phase.RETREAT:
-			_noise = now
-			_noise_left = NOISE_FORGET
+			_heard(now)
 
 func can_see(p: Node3D) -> bool:
 	var to := p.global_position - global_position
@@ -294,8 +379,16 @@ func _begin(a: int, t: float) -> void:
 	act = a
 	_act_left = t
 	_hit_once.clear()
+	_spot_pending = false
 	if a in [ACT_BITE_WIND, ACT_CHARGE_WIND, ACT_POUNCE_WIND]:
 		director.attacked()
+
+## 剛確定看到人：停下來吼一聲（_act_attack 的 ACT_SPOT）
+func _start_spot() -> bool:
+	if not _spot_pending:
+		return false
+	_begin(ACT_SPOT, SPOT_TIME)
+	return true
 
 ## 撲擊的路線會不會撞到東西：在腳邊和身體兩個高度往目標各拉一條線（不算牛仔）
 func pounce_clear(to: Vector3) -> bool:
@@ -355,6 +448,12 @@ func _act_attack(delta: float) -> int:
 			if _act_left <= 0.0 or is_on_wall():
 				velocity = Vector3(0, velocity.y, 0)
 				_next(ACT_RECOVER, POUNCE_RECOVER)
+		ACT_SPOT:
+			_turn_to(_target, TURN, delta)
+			_move(Vector3.ZERO, false, delta)
+			if _act_left <= 0.0:
+				act = ACT_NONE
+				return BT.SUCCESS
 		ACT_RECOVER, ACT_STUN:
 			_move(Vector3.ZERO, false, delta)
 			if _act_left <= 0.0:
@@ -387,6 +486,22 @@ func _hit_around(at: Vector3, radius: float, damage: int) -> void:
 func head_hit() -> void:
 	if act == ACT_CHARGE_WIND:
 		_next(ACT_STUN, STUN_TIME)
+	_head_flinch.rpc()
+
+## 頭被打中：各台甩一下頭、短短哀一聲（主機在 take_damage 之前送，同一條可靠通道，順序不會亂）
+@rpc("authority", "call_local", "reliable")
+func _head_flinch() -> void:
+	$Trex.flinch(Vector3.ZERO, 0.0, true)
+	_say(YELP)
+
+## 中彈（fighter._sync_hp，每台都跑）：身體往子彈推的方向晃一下再穩住。只是表演
+func _on_hurt(amount: int, from: Vector3) -> void:
+	var push := Vector3.ZERO
+	if from != Vector3.INF:
+		push = global_basis.inverse() * (global_position - from)
+		push.y = 0.0
+		push = push.normalized()
+	$Trex.flinch(push, clampf(amount / 40.0, 0.3, 1.0), false)
 
 ## 頭的位置（牛仔的子彈判斷有沒有打中頭用，見 Bullet._impact）
 func head_position() -> Vector3:
@@ -403,6 +518,14 @@ func _act_down(delta: float) -> int:
 	_move(Vector3.ZERO, false, delta)
 	return BT.RUNNING
 
+## 瞄到人但還不確定：停下來盯著、慢慢轉過去
+func _act_glimpse(delta: float) -> int:
+	if not is_instance_valid(_glimpse):
+		return BT.FAILURE
+	_turn_to(_glimpse, TURN * 0.6, delta)
+	_move(Vector3.ZERO, false, delta)
+	return BT.RUNNING
+
 func _act_chase(delta: float) -> int:
 	if not is_instance_valid(_target):
 		return BT.FAILURE
@@ -414,9 +537,14 @@ func _act_last_seen(delta: float) -> int:
 		_seen_left = 0.0
 	return BT.RUNNING
 
+## 走到聲音那一帶，再在附近繞著找一陣子（跟導演的方向同一套：_act_hint）
 func _act_investigate(delta: float) -> int:
 	if _nav_go(_noise, true, delta):
 		_noise_left = 0.0
+		_hint = _noise
+		_hint_reached = true
+		_search_left = NOISE_SEARCH
+		_wander_to = Vector3.INF
 	return BT.RUNNING
 
 ## 走到導演給的點，再在附近繞著找一陣子（隨便挑點、會折返）
@@ -427,8 +555,17 @@ func _act_hint(delta: float) -> int:
 	_search_left -= delta
 	if _search_left <= 0.0:
 		_hint = Vector3.INF
+		_look_left = 0.0
 		return BT.SUCCESS
-	if _wander_to == Vector3.INF or _flat_dist(_wander_to) < ARRIVE or _hint.distance_to(_wander_to) > SEARCH_RADIUS:
+	if _look_left > 0.0:   # 停下來張望（頭左右掃是 trex.gd 照 mood 做的）
+		_look_left -= delta
+		_move(Vector3.ZERO, false, delta)
+		return BT.RUNNING
+	if _wander_to != Vector3.INF and _flat_dist(_wander_to) < ARRIVE:
+		_look_left = LOOK_PAUSE
+		_wander_to = Vector3.INF
+		return BT.RUNNING
+	if _wander_to == Vector3.INF or _hint.distance_to(_wander_to) > SEARCH_RADIUS:
 		var a := _rng.randf() * TAU
 		_wander_to = _hint + Vector3(cos(a), 0, sin(a)) * _rng.randf_range(3.0, SEARCH_RADIUS)
 	_nav_go(_wander_to, false, delta)
@@ -553,4 +690,6 @@ func _knock() -> void:
 	act = ACT_NONE
 	_target = null
 	_seen_left = 0.0
+	_suspect = 0.0
+	_spot_pending = false
 	director.peak()

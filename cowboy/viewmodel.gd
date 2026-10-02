@@ -145,16 +145,22 @@ func _ready() -> void:
 ## 貼近牆和木桶時它們也被當成槍、黑邊突然變粗；有些零件的粗糙度又剛好撞到草（0.5）和遠山（0.75）的記號。
 ## 材質複製一份再改，不動到別人（第三人稱、場景裡）共用的同一個材質
 const OUTLINE_MARK := 0.65
+## 目標（恐龍、別人的牛仔、靶）：outline.gdshader 不抹油畫、加輪廓光和較粗的線，遠處也認得出來（美術風格指南第 11 節）
+const TARGET_MARK := 0.87
 
 func _mark_for_outline() -> void:
-	for mi: MeshInstance3D in find_children("*", "MeshInstance3D", true, false):
+	mark_meshes(self, OUTLINE_MARK)
+
+## 把 root 底下所有不透明材質的粗糙度改成 mark，給 outline.gdshader 認
+static func mark_meshes(root: Node, mark: float) -> void:
+	for mi: MeshInstance3D in root.find_children("*", "MeshInstance3D", true, false):
 		if mi.mesh == null:
 			continue
 		for i in mi.mesh.get_surface_count():
 			var mat := mi.get_active_material(i) as BaseMaterial3D
 			if mat and mat.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED:   # 火光這類半透明的不寫粗糙度，不用改
 				mat = mat.duplicate()
-				mat.roughness = OUTLINE_MARK
+				mat.roughness = mark
 				mi.set_surface_override_material(i, mat)
 
 
