@@ -324,7 +324,7 @@ func _case_hunt_weapons() -> void:
 	var me: Node = m.players.get_node(^"1")
 	var vm: Node = me.viewmodel
 	var names: Array = vm._weapons.map(func(w: Node) -> String: return w.display_name)
-	_ck(names == ["左輪", "單管散彈", "槓桿步槍"], "1/2/3 要是左輪、單管散彈、槓桿步槍（現在 %s）" % [names])
+	_ck(names == ["左輪", "單管散彈", "槓桿步槍", "炸彈長矛"], "1/2/3/4 要是左輪、單管散彈、槓桿步槍、炸彈長矛（現在 %s）" % [names])
 	var revolver: Node = vm._weapons[0]
 	var shotgun: Node = vm._weapons[1]
 	var rifle: Node = vm._weapons[2]
@@ -415,7 +415,7 @@ func _case_hunt_weapons() -> void:
 		revolver.reload_start + revolver.capacity * revolver.reload_insert + revolver.reload_end), "逐發裝填總時間 = 準備 + 發數 × 每顆 + 收尾")
 	m._set_menu(true)
 	var info: GridContainer = m.menu.get_node(^"WeaponInfo")
-	_ck(info.visible and info.get_child_count() == (revolver.info_rows().size() + 1) * 4, "Esc 選單要有三把槍的武器介紹")
+	_ck(info.visible and info.get_child_count() == (revolver.info_rows().size() + 1) * (vm._weapons.size() + 1), "Esc 選單要有每把槍的武器介紹")
 	m._set_menu(false)
 
 	# 瞄準按住／切換：玩家的設定要存起來，下次開遊戲還在
@@ -531,6 +531,8 @@ func _case_hunt_weapons() -> void:
 
 	# 有效射程：射程內全額，超過遞減，射程盡頭剩一半；射程要照步槍 > 左輪 > 散彈排
 	for w in vm._weapons:
+		if w.harpoon:
+			continue   # 炸彈長矛的魚叉不分遠近都是 40，主要傷害是爆炸
 		_ck(is_equal_approx(w.damage_at(w.falloff_start * 0.5), w.damage), "%s 有效射程內要全額" % w.display_name)
 		_ck(w.damage_at(w.max_range) < w.damage * 0.6, "%s 射程盡頭傷害要打折" % w.display_name)
 	_ck(rifle.falloff_start > revolver.falloff_start and revolver.falloff_start > shotgun.falloff_start,
@@ -1149,7 +1151,7 @@ func _case_mouse_lock() -> void:
 
 func _case_input_map() -> void:
 	for a in ["move_forward", "move_back", "move_left", "move_right", "jump", "sprint",
-			"crouch", "crouch_toggle", "fire", "aim", "reload", "melee", "interact"]:
+			"crouch", "crouch_toggle", "fire", "aim", "reload", "melee", "interact", "throw"]:
 		_ck(InputMap.has_action(a), "少了按鍵動作 %s" % a)
 		if not InputMap.has_action(a):
 			continue

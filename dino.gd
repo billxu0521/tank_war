@@ -5,6 +5,8 @@ extends "res://fighter.gd"
 ## 滑鼠左右轉身、上下看（頭會跟著抬，相機繞著身體轉）。
 ## 衝刺、跳躍、攀爬都吃體力；體力見底會力竭，要回到 EXHAUSTED_UNTIL 才能再出力。
 
+## 爆炸算距離時從中心往外扣這麼多（Explosive.damage）：身體很長，炸到尾巴、頭也算
+var blast_reach := 2.5
 const SPEED := 9.0        # 只比牛仔跑步（8.5）快一點，牛仔拉得開一段、追得回來。比例有測試釘住
 const SPRINT_MULT := 1.3   # 技能制：按下去 3 秒內 1.3 倍速，不吃體力
 const SPRINT_TIME := 8.0

@@ -503,9 +503,7 @@ func _on_solo_dino_pressed() -> void:
 	_enter_game("單人打恐龍：接關無限、子彈無限，測恐龍行為用。Esc 回大廳")
 	var me := _add_player(COWBOY, 1)
 	me.global_position = _on_ground(SANDBOX_START)
-	for w in me.viewmodel._weapons:
-		w.reserve = -1
-	me.viewmodel._refresh_ammo()
+	me.viewmodel.set_infinite()
 	spawn_boss()
 
 ## 靶場：另一張平地地圖（levels/range.tscn），專門測手感。打中跳傷害數字，畫面上有準星距離。
@@ -533,9 +531,7 @@ func _start_practice(start: Vector3, dists: Array, xs: Array, dino_at: Vector3, 
 	_enter_game(msg)
 	var me := _add_player(COWBOY, 1)   # 編號 1 才操控得動
 	me.global_position = _on_ground(start)
-	for w in me.viewmodel._weapons:
-		w.reserve = -1
-	me.viewmodel._refresh_ammo()
+	me.viewmodel.set_infinite()
 	for i in dists.size():
 		var t := _add_player(COWBOY, 3 + i)
 		t.global_position = _on_ground(start + Vector3(xs[i], 0, -dists[i]))
@@ -972,8 +968,7 @@ func _respawn_step() -> void:
 			p.global_position = r["pos"] if id != 1 else _on_ground(SANDBOX_START)
 			p.rotation.y = r["yaw"]
 		if _sandbox and id == 1:
-			for w in p.viewmodel._weapons:
-				w.reserve = -1
+			p.viewmodel.set_infinite()
 
 
 ## 撤離是個人獲勝，所以每台機器顯示的字不一樣
@@ -2187,6 +2182,8 @@ func _kit(name: StringName, p: Vector3, yaw: float) -> Node3D:
 	body.rotation.y = yaw
 	if name == &"HayBlock":
 		body.add_to_group(&"soft")
+	elif name == &"Crate":
+		body.set_script(SupplyCrate)   # 木箱都是補給箱（F 補炸藥）
 	_prop(name, Vector3(0, -size.y * 0.5, 0), Vector3.ONE, body)
 	return body
 
@@ -2424,7 +2421,7 @@ const LEAVES_SHADER := preload("res://leaves.gdshader")
 const FLAT_MODELS := ["res://models/props.glb", "res://models/trees.glb", "res://models/rocks.glb", "res://models/houses.glb", "res://models/kits.glb", "res://models/towns.glb",
 	"res://models/groves.glb", "res://models/floras.glb",
 	"res://models/cowboy.glb", "res://models/trex_hd.glb", "res://models/revolver.glb",
-	"res://models/shotgun.glb", "res://models/rifle.glb"]
+	"res://models/shotgun.glb", "res://models/rifle.glb", "res://models/lance.glb"]
 static var _flat_keep: Array[PackedScene] = []
 static func _flatten_models() -> void:
 	if not _flat_keep.is_empty():

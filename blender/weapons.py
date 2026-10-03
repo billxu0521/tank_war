@@ -22,6 +22,7 @@ X90 = (math.pi / 2, 0, 0)   # 圓柱預設沿 Z，轉到沿 Y（槍管方向）
 Y90 = (0, math.pi / 2, 0)   # 沿 X（橫軸，鉸鏈和插銷）
 
 PIVOT = {
+    'LanceHarpoon':     (0, 0.50, 0.0),                 # 魚叉裝在管裡的位置＝管口（桿子插進去、炸藥包貼著管口、刀刃在上面）
     'RevolverCylinder': (0, 0.030, 0.035),
     'RevolverHammer':   (0, -0.012, 0.030),
     'RevolverGate':     (0.0205, 0.004, 0.0255),     # 裝填門的鉸鏈（下緣，軸沿槍管）
@@ -56,10 +57,10 @@ HULL2 = mat('hull2', (0.55, 0.42, 0.10), 0.7)
 LEAD  = mat('lead',  (0.45, 0.44, 0.42), 0.5, 0.3)
 
 
-def ring(R, r, loc, m=None):
-    """扳機護弓、拉桿環：軸沿 X 的圓環（環面在 Y-Z 平面）"""
-    bpy.ops.mesh.primitive_torus_add(major_radius=R, minor_radius=r, major_segments=20,
-                                     minor_segments=6, location=loc, rotation=Y90)
+def ring(R, r, loc, m=None, rot=Y90, seg=20, minor=6):
+    """扳機護弓、拉桿環：預設軸沿 X 的圓環（環面在 Y-Z 平面）；rot=X90 軸沿 Y（彈簧一圈一圈，段數給少一點）"""
+    bpy.ops.mesh.primitive_torus_add(major_radius=R, minor_radius=r, major_segments=seg,
+                                     minor_segments=minor, location=loc, rotation=rot)
     return _push(bpy.context.object, m)
 
 
@@ -357,8 +358,71 @@ sphere(0.0054, (0, 0.020, 0), 12, 6, m=LEAD)
 part('RifleRound', PIVOT['RifleRound'])
 
 
+# ================= 炸彈長矛（Hunt 的 Bomb Lance；規劃 docs/規劃/2026-10-04-炸藥與炸彈長矛.md） =================
+# 參考 docs/image/explosives/炸彈長矛_參考.png（docs/movie/bomb-lancer.mov）。由下往上：
+#   底部鐵筒（帶一個圓環）→ 布條纏的握把（右手握這裡，原點）→ 黑鐵機身（兩側各一根彈簧、幾顆滾輪）
+#   → 一側伸出的扇形打孔護板（兩頭往外勾）→ 管口 → 魚叉（另一個零件：細桿、寬扁的矛頭、幾對倒鉤）
+# 座標跟槍一樣：+Y 往前（矛尖）、Z 往上；遊戲裡腰射時整支豎起來拿（lance.tscn 的 hip_rotation）
+XN90 = (-math.pi / 2, 0, 0)   # 圓錐尖端朝 +Y（往前）
+IRON = mat('lance_iron', (0.045, 0.040, 0.034), 0.85)          # 暖一點的黑鐵：偏藍的話第一人稱會被環境光染成深藍
+IRON2 = mat('lance_iron2', (0.075, 0.068, 0.058), 0.8)       # 亮一點的鐵：護板、滾輪，跟機身分得開
+CLOTH = mat('lance_cloth', (0.30, 0.19, 0.08), 0.95)        # 纏布（黃褐麻布）。要夠亮：outline.gdshader 會把第一人稱槍的暗部降飽和，太暗會變灰白（第二輪審查）
+CLOTH2 = mat('lance_cloth2', (0.19, 0.11, 0.045), 0.95)
+# 底部鐵筒：粗一點、尾端一圈凸緣，側面一個圓環（參考圖「舉起來瞄」那張底下的圓環）
+cyl(0.034, 0.16, (0, -0.20, 0), X90, 12, m=IRON)
+cyl(0.039, 0.025, (0, -0.285, 0), X90, 12, m=IRON2)
+ring(0.018, 0.0045, (0.036, -0.20, 0), m=IRON2)
+for yy in (-0.15, -0.25):
+    cyl(0.036, 0.012, (0, yy, 0), X90, 12, m=IRON2)
+# 握把：纏布，一圈深一圈淺斜著纏
+cyl(0.024, 0.30, (0, 0.0, 0), X90, 10, m=CLOTH)
+for k in range(7):
+    cyl(0.0255, 0.016, (0, -0.12 + k * 0.040, 0), (math.pi / 2 + 0.25, 0, 0), 10, m=CLOTH2)
+# 機身：八角形斷面的鐵管，上面左右兩條軌道（審查第 14 條：方盒子看起來像箱子）
+cyl(0.028, 0.30, (0, 0.29, 0), X90, 8, m=IRON)
+for sx in (-1, 1):
+    box((0.008, 0.30, 0.010), (sx * 0.020, 0.29, 0.026), m=IRON2)
+# 彈簧：左右各一條露在外面（審查第 7 條：以前包在盒子裡只看得到斜線），7 圈、圈和圈之間空開，比機身亮一階
+for sx in (-1, 1):
+    for k in range(7):
+        ring(0.012, 0.0035, (sx * 0.046, 0.18 + k * 0.034, 0.0), m=IRON2, rot=X90, seg=8, minor=3)
+    cyl(0.004, 0.24, (sx * 0.046, 0.28, 0.0), X90, 6, m=IRON)          # 彈簧裡的導桿
+    for yy in (0.165, 0.405):
+        box((0.030, 0.010, 0.012), (sx * 0.034, yy, 0.0), m=IRON)       # 導桿兩頭的固定片
+    cyl(0.011, 0.022, (sx * 0.032, 0.14, -0.016), Y90, 10, m=IRON2)    # 滾輪：貼在側邊下方（審查第 14 條：以前在底下像腳）
+# 打孔護板：新月形，左右對稱、兩端往上翹，在管口下方（審查第 6 條）。板面跟長矛垂直，像一片擋手
+for k in range(-3, 4):
+    a = k * 0.32                                   # 沿著弧排開
+    x = 0.13 * math.sin(a)
+    z = 0.05 * (1 - math.cos(a)) * 2.2 - 0.02      # 兩端往上翹
+    box((0.044, 0.010, 0.040), (x, 0.43, z), (0, -a * 0.9, 0), m=IRON2)
+    cyl(0.009, 0.014, (x, 0.43, z), X90, 8, m=BORE)                    # 每一片一個大圓孔
+# 管口：一圈鐵箍
+tube(0.026, 0.012, 0.06, (0, 0.47, 0.0), X90, 12, m=IRON)
+cyl(0.029, 0.012, (0, 0.50, 0.0), X90, 12, m=IRON2)
+part('Lance', (0, 0, 0), bevel=0.0)   # 零件多，倒角會把面數乘好幾倍（2 萬）；看得到的邊靠描線
+
+# 魚叉：細桿＋寬扁的矛頭（菱形、兩面有刃）＋三對倒鉤＋綁在桿上的炸藥筒。原點在中間、沿 +Y。
+# 裝在管裡時桿子插進去、矛頭露在外面；射出去的、換彈時手上拿的都是這個
+# 直接建在管口的位置（HY）：part() 只搬原點不搬網格，建在 0 會整支躲進機身裡
+HY = PIVOT['LanceHarpoon'][1]
+cyl(0.0075, 0.30, (0, HY - 0.10, 0), X90, 8, m=IRON)                      # 叉桿（深色鐵，插進管裡那段看不到）
+cyl(0.024, 0.08, (0, HY + 0.05, 0), X90, 10, m=WOODR)                     # 炸藥包：管子 1.3 倍粗的短筒、深紅色，在刀刃正下方
+cyl(0.026, 0.010, (0, HY + 0.015, 0), X90, 10, m=BRASS)
+cyl(0.026, 0.010, (0, HY + 0.085, 0), X90, 10, m=BRASS)
+# 刀刃：寬扁的雙刃葉形（審查第 3 條：以前是細長菱形像箭頭）。長 0.40、最寬 0.18（管子的 3 倍），下段短上段長
+blade = cone(0.09, 0.0, 0.30, (0, HY + 0.32, 0), XN90, 4, m=STEEL)
+scale_verts(blade, lambda v: Vector((v.x * 0.14, v.y, v.z)))               # 壓扁成一片刃：扁面朝世界上下（Godot 的 Y），長矛豎起來拿時扁面朝鏡頭（第二輪審查）
+base = cone(0.09, 0.0, 0.08, (0, HY + 0.13, 0), (math.pi / 2, 0, 0), 4, m=STEEL)
+scale_verts(base, lambda v: Vector((v.x * 0.14, v.y, v.z)))
+cone(0.026, 0.012, 0.07, (0, HY + 0.12, 0), XN90, 8, m=IRON)               # 套座：刀刃底下接到炸藥包頂蓋，中間不留縫
+for sx in (-1, 1):
+    box((0.012, 0.07, 0.010), (0, HY + 0.15, sx * 0.05), (sx * 0.8, 0, 0), m=STEEL)    # 兩根往外張的倒鉤（跟刀面同一個平面，根部插進刀刃底下，不留縫）
+part('LanceHarpoon', PIVOT['LanceHarpoon'], bevel=0.0)
+
+
 # ================= 排版看圖、匯出 =================
-LAYOUT = {'Revolver': 0.0, 'Shotgun': -0.25, 'Rifle': -0.5}   # 只是讓三把在視窗裡不重疊
+LAYOUT = {'Revolver': 0.0, 'Shotgun': -0.25, 'Rifle': -0.5, 'Lance': -0.8}   # 只是讓幾把在視窗裡不重疊
 
 
 def group_of(name):
@@ -366,13 +430,14 @@ def group_of(name):
 
 
 def show_layout(only=None):
-    """從右側看時三把上下錯開；only 給名字就只顯示那一把"""
+    """從右側看時幾把上下錯開；only 給名字就只顯示那一把（環境變數 ONLY=Lance：預覽只拍那一把）"""
     for o in bpy.data.objects:
         if o.type == 'MESH':
             g = group_of(o.name)
             p = o['pivot']
             o.location = (p[0], p[1], p[2] + LAYOUT[g])
             o.hide_viewport = only is not None and g != only
+            o.hide_render = o.hide_viewport
 
 
 def side_view(center, dist):
@@ -408,5 +473,6 @@ def export(out_dir):
 
 if __name__ == '__main__':   # 背景跑：tools/model_iter.sh weapon <版號>（三把槍各一個 glb，放在 --out 的資料夾）
     pipeline.run(lambda: [o for o in bpy.data.objects if o.type == 'MESH'],
-                 lambda obs, path: (show_layout(), pipeline.scene_preview(obs, path, side=True)),
-                 budget=6000, export_fn=lambda obs, out: export(os.path.dirname(out) or '.'))
+                 lambda obs, path: (show_layout(os.environ.get('ONLY')),
+                                    pipeline.scene_preview([o for o in obs if not o.hide_render], path, side=True)),
+                 budget=8000, export_fn=lambda obs, out: export(os.path.dirname(out) or '.'))   # 照美術指南的第一人稱武器建議（tools/asset_budget.gd 也是 8000）

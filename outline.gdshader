@@ -263,7 +263,11 @@ void fragment() {
 		base = mix(base, tint, near ? 0.0 : shadow_tint_amount * dark);
 		if (near) {
 			// 槍的藍是中間調，上面的暗部處理碰不到，再降一次；只降深色的槍，手和袖子（亮的）不動，不然手變灰
-			base = mix(vec3(l), base, mix(gun_sat, 1.0, smoothstep(0.08, 0.25, l / (1.0 + l))));
+			// 只降「偏藍」的暗部（環境光把烤藍槍身染成深藍）：暖色（炸彈長矛的纏布、紅炸藥包、木頭）不動。
+			// 以前不分色相一律降，暖色中暗部被洗成灰白（審查第三輪）
+			// 偏藍（含中性灰）的像素照以前的算法降；暖色不動
+			float blue = smoothstep(-0.01, 0.02, base.b - base.r);
+			base = mix(base, mix(vec3(l), base, mix(gun_sat, 1.0, smoothstep(0.08, 0.25, l / (1.0 + l)))), blue);
 			base *= 1.0 + gun_lift * (1.0 - smoothstep(0.03, 0.2, l / (1.0 + l)));
 		}
 	}

@@ -90,6 +90,30 @@ var remote_shots := 0   # 收到別人這把槍開了幾槍（連線測試用來
 
 var weapon: Weapon
 var _weapons: Array[Weapon] = []
+
+# --- 炸藥（G）：按住點燃，放開丟出去。引信按著的時間也算，按太久在手上爆（規劃 docs/規劃/2026-10-04-炸藥與炸彈長矛.md） ---
+const DYNAMITE_MAX := 2
+const FUSE := 4.0
+const THROW_SPEED := 16.0
+const MAX_BLAST_DIST := 60.0   # 主機檢查：爆炸位置離丟的人不能更遠
+enum { KIND_DYNAMITE, KIND_HARPOON }
+## 每種爆炸 [半徑, 中心傷害]
+const BLASTS := [[6.0, 150], [2.0, 120]]
+var dynamite := DYNAMITE_MAX   # 身上還有幾根，-1 = 無限（沙盒、靶場）
+var _cook := -1.0              # 點燃後按著多久，-1 = 沒拿著
+var _hand_stick: Node3D       # 右手＋炸藥＋引信火花（點燃到丟出去）
+var _throw_t := -1.0          # 丟出去的手部動作進行到哪（秒），-1 = 沒在丟
+const THROW_ANIM := 0.45
+## 拿著點燃的炸藥：右手在右下，炸藥橫著（參考 docs/image/explosives/炸藥_參考.png「點燃」那張）。
+## 丟的時候手往前上方甩出去，放開後收回畫面外
+## 丟的三段（審查第 10 條）：0–0.1 秒手往上往後拉到耳朵旁、炸藥轉成豎的（預備）→ 0.1–0.25 秒從上面往前下甩出去 → 停一下再收回
+const STICK_HOLD := Vector3(0.17, -0.19, -0.36)
+const STICK_HOLD_ROT := Vector3(0.15, 0.35, 1.25)
+const STICK_WINDUP := Vector3(0.22, 0.02, -0.18)
+const STICK_WINDUP_ROT := Vector3(0.5, 0.2, 0.15)
+const STICK_THROW := Vector3(0.0, -0.05, -0.60)
+const STICK_THROW_ROT := Vector3(-1.45, 0.0, 0.4)   # 出手：手腕往下壓（甩完的收尾，第二輪審查：以前看起來像伸食指指東西）
+const STICK_AWAY := Vector3(0.22, -0.34, -0.30)
 var _index := 0
 ## 每把武器的腰射位置（場景檔的 position），ADS 過渡和切換時用。
 var _hip_positions: Array[Vector3] = []
@@ -136,6 +160,9 @@ func _ready() -> void:
 		w.visible = false
 	weapon = _weapons[_index]
 	weapon.visible = true
+	_hand_stick = _make_stick_hand()
+	_hand_stick.visible = false
+	add_child(_hand_stick)
 	_refresh_ammo()
 	weapon.play(&"idle", blend)
 	_mark_for_outline()
@@ -182,8 +209,8 @@ func _process(delta: float) -> void:
 		return
 	# 滑鼠放開（Esc）時不接受開火，不然在選單狀態亂點也會射。爬梯子兩手都在梯子上，也不能開槍
 	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not _player.is_climbing():
-		if _melee_held >= 0.0:
-			pass   # 蓄力近戰中：兩手都在揮槍托，不能開槍、換彈、換槍
+		if _melee_held >= 0.0 or _cook >= 0.0:
+			pass   # 蓄力近戰中、拿著點燃的炸藥：不能開槍、換彈、換槍
 		elif Input.is_action_just_pressed("fire"):
 			if _fire_cooldown > 0.0 and fire_buffer and not _reloading:
 				_fire_queued = true
@@ -202,8 +229,11 @@ func _process(delta: float) -> void:
 				if Input.is_action_just_pressed("weapon_%d" % (i + 1)):
 					switch_weapon(i)
 		_update_melee_input(delta)
-	# 翻越、爬梯子時槍放低（手去撐東西了）
-	weapon.lower = move_toward(weapon.lower, 1.0 if (_player.vaulting or _player.is_climbing()) else 0.0, delta * 6.0)
+		if _cook < 0.0 and _melee_held < 0.0 and dynamite != 0 and Input.is_action_just_pressed("throw"):
+			_light_dynamite()
+	_update_cook(delta)
+	# 翻越、爬梯子、拿著炸藥時槍放低（手去撐東西了）
+	weapon.lower = move_toward(weapon.lower, 1.0 if (_player.vaulting or _player.is_climbing() or _cook >= 0.0) else 0.0, delta * 6.0)
 	weapon.aim = ads
 	_fire_hold = _fire_hold + delta if Input.is_action_pressed("fire") else 0.0
 	var wants_aim := Input.is_action_pressed("aim")
@@ -425,6 +455,11 @@ func _alert_boss(at: Vector3) -> void:
 func _muzzle_flash(w: Weapon) -> void:
 	if not _fx:
 		return
+	if w.harpoon:   # 魚叉發射管不是火藥槍：沒有槍口火光，只冒一小股煙（火光貼在長矛頂端會整片白）
+		var at = w.muzzle_global()
+		if at != null:
+			Fx.puff(_arena(), at, -_camera.global_basis.z, Color(0.8, 0.79, 0.76, 0.5), 0.8, 0.08, 6)
+		return
 	var at = w.muzzle_global()
 	if at != null:
 		_fx.global_position = at
@@ -449,6 +484,12 @@ func _launch(index: int, from: Vector3, dirs: PackedVector3Array, visual_only: b
 		b.mask = hit_mask
 		b.visual_only = visual_only
 		b.sound = i == 0
+		if w.harpoon:   # 炸彈長矛：飛出去的是魚叉，打中就爆
+			var mi := MeshInstance3D.new()
+			mi.mesh = w.harpoon.mesh
+			b.model = mi
+			if not visual_only:
+				b.on_impact = func(at: Vector3) -> void: _explode.rpc(at, KIND_HARPOON)
 		world.add_child(b)
 
 
@@ -582,7 +623,157 @@ func _play_move(base: StringName) -> float:
 
 func _refresh_ammo() -> void:
 	if ammo_label:
-		ammo_label.text = "%s  %d | %s" % [
+		ammo_label.text = "%s  %d | %s    炸藥 %s" % [
 			weapon.display_name, weapon.mag,
 			"∞" if weapon.reserve < 0 else str(weapon.reserve),
+			"∞" if dynamite < 0 else str(dynamite),
 		]
+
+
+## 沙盒、靶場：子彈和炸藥都無限
+func set_infinite() -> void:
+	for w in _weapons:
+		w.reserve = -1
+	dynamite = -1
+	_refresh_ammo()
+
+
+## 補給箱：炸藥、長矛的魚叉補滿（一般子彈不補）。回傳有沒有補到東西
+func resupply() -> bool:
+	var got := false
+	if dynamite >= 0 and dynamite < DYNAMITE_MAX:
+		dynamite = DYNAMITE_MAX
+		got = true
+	for w in _weapons:
+		if w.harpoon and w.reserve >= 0 and w.reserve < w.starting_reserve:
+			w.reserve = w.starting_reserve
+			got = true
+	_refresh_ammo()
+	return got
+
+
+# --- 炸藥 ---
+
+## 右手握著炸藥（手是牛仔模型的握把手，炸藥沿手的握把方向插在掌心）、引信冒火花
+func _make_stick_hand() -> Node3D:
+	var holder := Node3D.new()
+	var arms := Weapon.ARMS.instantiate()
+	for part: StringName in [&"HandGrip", &"HandGripThumb", &"HandGripArm"]:
+		var src := arms.get_node_or_null(String(part)) as MeshInstance3D
+		if src:
+			var mi := MeshInstance3D.new()
+			mi.mesh = src.mesh
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			if part == &"HandGripArm":
+				mi.rotation = Vector3(0, 0.7, 0)   # 跟左輪一樣，前臂往右後方伸出畫面
+				mi.scale = Vector3(0.75, 1.0, 0.75)   # 細一點（審查第 11 條：像一根粗管子）
+			holder.add_child(mi)
+	arms.free()
+	var stick := Dynamite.stick_mesh()
+	stick.position = Vector3(0, 0.02, 0.0)
+	holder.add_child(stick)
+	var spark := Dynamite.spark()
+	spark.position = Vector3(0, 0.02 + Dynamite.LENGTH * 0.5 + Dynamite.WICK, 0)   # 引信尖端
+	holder.add_child(spark)
+	return holder
+
+
+func _light_dynamite() -> void:
+	cancel_reload()
+	_fire_queued = false
+	_cook = 0.0
+	_throw_t = -1.0
+	_hand_stick.visible = true
+	_hand_stick.position = STICK_AWAY
+
+
+## 手的動作：點燃時從畫面外抬到右下拿好；丟的時候往前上甩、放開後收回畫面外
+func _update_stick_hand(delta: float) -> void:
+	weapon.visible = _cook < 0.0 and _throw_t < 0.0   # 拿炸藥時槍收起來：不然畫面上同時有兩隻右手（審查第 8 條）
+	if _cook >= 0.0:
+		var k := minf(_cook / 0.1, 1.0)
+		_hand_stick.position = _hand_stick.position.lerp(STICK_HOLD, minf(delta * 14.0, 1.0)) if k >= 1.0 else STICK_AWAY.lerp(STICK_HOLD, smoothstep(0.0, 1.0, k))
+		_hand_stick.rotation = STICK_HOLD_ROT
+		return
+	if _throw_t < 0.0:
+		return
+	_throw_t += delta
+	var u := _throw_t / THROW_ANIM
+	if u >= 1.0:
+		_throw_t = -1.0
+		_hand_stick.visible = false
+		for c in _hand_stick.get_children():
+			c.visible = true   # 下次點燃時炸藥、火花都要在
+		return
+	var t := _throw_t
+	if t < 0.1:   # 預備：往上往後拉
+		var k := smoothstep(0.0, 0.1, t)
+		_hand_stick.position = STICK_HOLD.lerp(STICK_WINDUP, k)
+		_hand_stick.rotation = STICK_HOLD_ROT.lerp(STICK_WINDUP_ROT, k)
+	elif t < 0.25:   # 甩出去
+		var k := smoothstep(0.1, 0.25, t)
+		_hand_stick.position = STICK_WINDUP.lerp(STICK_THROW, k)
+		_hand_stick.rotation = STICK_WINDUP_ROT.lerp(STICK_THROW_ROT, k)
+	else:   # 停一下再收回畫面外
+		var k := smoothstep(0.32, THROW_ANIM, t)
+		_hand_stick.position = STICK_THROW.lerp(STICK_AWAY, k)
+		_hand_stick.rotation = STICK_THROW_ROT
+
+
+## 點燃之後：放開就丟，按太久在手上爆。不管滑鼠有沒有鎖住都要算（按 Esc 時引信照樣燒）
+func _update_cook(delta: float) -> void:
+	_update_stick_hand(delta)
+	if _cook < 0.0:
+		return
+	_cook += delta
+	if _cook >= FUSE:
+		_use_dynamite()
+		_throw_t = THROW_ANIM   # 在手上爆了：沒有丟的動作，手直接收掉（下一幀 _update_stick_hand 收尾）
+		_explode.rpc(_camera.global_position - _camera.global_basis.z * 0.4, KIND_DYNAMITE)
+	elif not Input.is_action_pressed("throw"):
+		var left := FUSE - _cook   # 先算：_use_dynamite 會把 _cook 歸成 -1
+		_use_dynamite()
+		# ponytail: 放開當下就丟出去（手的甩動是 0.1 秒後才到最前面）。引信、連線都照放開那一刻算，比較單純
+		var fwd := -_camera.global_basis.z
+		var from := _camera.global_position + fwd * 0.5 + _camera.global_basis.x * 0.15
+		_throw.rpc(from, fwd * THROW_SPEED + Vector3.UP * 2.5 + _player.velocity, left)
+
+
+func _use_dynamite() -> void:
+	_cook = -1.0
+	_throw_t = 0.0   # 手往前甩出去（_update_stick_hand），手上的炸藥在這一刻放開
+	_hand_stick.get_child(_hand_stick.get_child_count() - 2).visible = false   # 炸藥
+	_hand_stick.get_child(_hand_stick.get_child_count() - 1).visible = false   # 火花
+	if dynamite > 0:
+		dynamite -= 1
+	_refresh_ammo()
+
+
+## 每台都生一根往外飛的炸藥（外觀）；丟的人那台的引信燒完才廣播爆炸
+@rpc("authority", "call_local", "reliable")
+func _throw(from: Vector3, vel: Vector3, fuse: float) -> void:
+	var d := Dynamite.new()
+	d.vel = vel
+	d.fuse = fuse
+	d.ignore = [_player.get_rid()]
+	if is_multiplayer_authority():
+		d.on_explode = func(at: Vector3) -> void: _explode.rpc(at, KIND_DYNAMITE)
+	_arena().add_child(d)
+	d.global_position = from
+
+
+## 爆炸：每台播特效和聲音、引來恐龍；主機算範圍傷害（丟的人自己、隊友都會被炸）
+@rpc("authority", "call_local", "reliable")
+func _explode(at: Vector3, kind: int) -> void:
+	if kind < 0 or kind >= BLASTS.size():
+		return
+	var radius: float = BLASTS[kind][0]
+	Explosive.play(_arena(), at, radius)
+	_alert_boss(at)
+	if multiplayer.is_server() and at.distance_to(_player.global_position) <= MAX_BLAST_DIST:
+		Explosive.damage(_arena(), at, radius, BLASTS[kind][1], _player)
+
+
+func _arena() -> Node3D:
+	var world := get_tree().get_first_node_in_group(&"arena") as Node3D
+	return world if world else get_tree().current_scene as Node3D
