@@ -1,5 +1,5 @@
 extends SceneTree
-## 恐龍走路的自我檢查（trex.gd 的 _walk）：平地上走 6 秒 → 停 2 秒 → 跑 3 秒 → 原地轉身 2 秒，每一幀量腳。
+## 恐龍走路的自我檢查（trex.gd 的 _walk）：平地上走 6 秒 → 停 2 秒 → 跑 3 秒 → 原地轉身 2 秒 → 站著把每一招做一遍，每一幀量腳。
 ## 有畫面時另外從正側面拍走路的影格，跟參考動畫（docs/尼諾拉.md）並排存成 OUT 那張圖。
 ##   godot --headless --path . --script tools/trex_walk_check.gd                     只量數字（失敗回傳 1）
 ##   OUT=/tmp/walk.png godot --path . --resolution 1280x720 --script tools/trex_walk_check.gd   加拍影格
@@ -52,6 +52,15 @@ func _initialize() -> void:
 	cs.position.y = FLOOR_Y - 0.5
 	floor_body.add_child(cs)
 	root.add_child(floor_body)
+	# 斜坡：x = 200 那邊一塊 20 度的坡（往 -Z 上坡）
+	var ramp := StaticBody3D.new()
+	var rcs := CollisionShape3D.new()
+	var rbox := BoxShape3D.new()
+	rbox.size = Vector3(60, 1, 80)
+	rcs.shape = rbox
+	ramp.add_child(rcs)
+	ramp.transform = Transform3D(Basis(Vector3.RIGHT, deg_to_rad(RAMP_DEG)), Vector3(200, -0.5, -30))
+	root.add_child(ramp)
 	_rig = Node3D.new()   # 跟 boss.tscn 一樣：身體在 4.05，恐龍模型放大 1.5 往下放 4.05（腳底在地上）
 	_rig.position = Vector3(0, FLOOR_Y + 4.05, 0)
 	root.add_child(_rig)
@@ -87,7 +96,7 @@ func _process(delta: float) -> bool:
 	var walking := _t > 0.5 and _t < 6.5
 	var running := _t > 8.5 and _t < 11.5
 	# 先量再移動：恐龍這一幀是照移動前的位置擺腳的（遊戲裡身體在物理步先動、動畫後擺，沒有這個時間差）
-	if _t > 0.3:
+	if _t > 0.3 and _t < 14.5:   # 平地那段
 		_measure(walking, running)
 	_prev_rig = _rig.position
 	if walking:
@@ -102,10 +111,89 @@ func _process(delta: float) -> bool:
 		if walking and _t > 3.0 and _t >= _shoot_next and _frames.size() < 24:
 			_shoot_next = _t + 0.1
 			_frames.append(root.get_viewport().get_texture().get_image())
-	if _t > 14.5:
+	# 站著出招：每招 0.9 秒（boss.gd 的 ACT_*）
+	if _t > 15.0:
+		var k := int((_t - 15.0) / 0.9)
+		if k < ACTS.size():
+			_trex.act = ACTS[k][0]
+			_measure_act(ACTS[k][1])
+		else:
+			_trex.act = 0
+	# 斜坡：上坡走 4 秒、下坡走 4 秒、橫著走 4 秒（身體高度貼著坡面）
+	var t0 := 15.0 + ACTS.size() * 0.9 + 0.5
+	if _t > t0 and _t < t0 + 12.0:
+		var u := _t - t0
+		# 上坡 4 秒 → 原地轉身（boss 不會倒退走）→ 下坡 → 轉 90 度橫著走
+		var face := 0.0 if u < 4.0 else (PI if u < 8.5 else PI * 1.5)
+		var turning := absf(wrapf(_rig.rotation.y - face, -PI, PI)) > 0.05
+		var dir := Vector3.ZERO if turning else -Basis(Vector3.UP, face).z
+		if not _on_ramp:
+			_on_ramp = true
+			_rig.position = Vector3(200, 0, -36)   # 坡在 z < -30 那半邊高過平地（另外半邊被平地蓋住）
+			_rig.rotation.y = 0.0
+		else:   # 照 boss 的轉速（3 rad/s）轉
+			_rig.rotation.y += clampf(wrapf(face - _rig.rotation.y, -PI, PI), -3.0 * delta, 3.0 * delta)
+		_rig.position += dir * WALK * delta
+		_rig.position.y = _ramp_y(_rig.position) + 4.05
+		if u > 0.6:
+			_measure_ramp()
+	if _t > t0 + 12.0:
 		_report()
 		return true
 	return false
+
+const RAMP_DEG := 20.0
+var _on_ramp := false
+var _float := 0.0        # 坡上踩著的腳離地多高（懸空）
+var _float_at := ""
+var _ramp_sink := 0.0
+var _sink_at2 := ""
+
+func _ramp_y(p: Vector3) -> float:
+	return -(p.z + 30.0) * tan(deg_to_rad(RAMP_DEG)) - 0.5 + 0.5 / cos(deg_to_rad(RAMP_DEG))   # 坡往 -Z 上升（坡面中心在 z=-30）
+
+func _measure_ramp() -> void:
+	var foot_h: float = _trex._leg[0].neutral.y * 1.5
+	for i in 2:
+		var ball := _trex.bone_pos("toe2_1" + ("_l" if i == 0 else "_r"))
+		var gap := ball.y - (_ramp_y(ball) + foot_h)
+		if not _trex._swing[i] and gap > _float:
+			_float = gap
+			_float_at = "t=%.2f 腳%d" % [_t, i]
+		if -gap > _ramp_sink:
+			_ramp_sink = -gap
+			_sink_at2 = "t=%.2f 腳%d %s" % [_t, i, "擺動" if _trex._swing[i] else "支撐"]
+
+const ACTS := [[1, "咬預備"], [2, "咬"], [7, "收招"], [3, "蓄力長吼"], [5, "撲擊預備"], [6, "撲出去"], [8, "被打斷"], [9, "發現人"], [4, "甩尾"]]
+var _act_res := {}       # 招式名 -> [踩著的腳最多滑, 最深穿地, 關節一幀最多轉]
+var _act_from := [null, null]
+var _act_prev_q := {}
+
+var _act_last := ""
+func _measure_act(name: String) -> void:
+	if name != _act_last:   # 每招重新量
+		_act_from = [null, null]
+		_act_last = name
+	var r: Array = _act_res.get(name, [0.0, 0.0, 0.0])
+	var foot_h: float = _trex._leg[0].neutral.y * 1.5
+	for i in 2:
+		var s := "_l" if i == 0 else "_r"
+		var ball := _trex.bone_pos("toe2_1" + s)
+		r[1] = maxf(r[1], (FLOOR_Y + foot_h) - ball.y)
+		var planted: bool = not _trex._swing[i] and ball.y < FLOOR_Y + foot_h + 0.05   # 跺地抬起來的不算
+		if planted:
+			if _act_from[i] == null:
+				_act_from[i] = ball
+			var d: Vector3 = ball - _act_from[i]
+			r[0] = maxf(r[0], Vector2(d.x, d.z).length())
+		else:
+			_act_from[i] = null
+	for b in ["thigh_l", "shin_l", "foot_l", "thigh_r", "shin_r", "foot_r"]:
+		var q := _trex.skel.get_bone_pose_rotation(_trex._idx[b])
+		if _act_prev_q.has(b):
+			r[2] = maxf(r[2], rad_to_deg(q.angle_to(_act_prev_q[b])))
+		_act_prev_q[b] = q
+	_act_res[name] = r
 
 
 func _measure(walking: bool, running: bool) -> void:
@@ -219,6 +307,13 @@ func _report() -> void:
 	_ck(_knee_back == 0, "膝蓋朝前：往後彎 %d 幀（0）" % _knee_back)
 	_ck(_hip_h > 3.4 and _hip_h < 4.1, "髖關節高 %.2f 公尺（3.4～4.1，設定圖肩高 3.5～4.5）" % _hip_h)
 	_ck(_settled, "停下來 1 秒後兩腳都踩在地上")
+	_ck(_float < 0.10, "斜坡上踩著的腳不懸空：最多離地 %.3f 公尺（< 0.10）%s" % [_float, _float_at])
+	_ck(_ramp_sink < 0.15, "斜坡上不穿地：最深 %.3f 公尺（< 0.15）%s" % [_ramp_sink, _sink_at2])
+	for a in ACTS:
+		var ar: Array = _act_res.get(a[1], [0.0, 0.0, 0.0])
+		var slip_ok: bool = ar[0] < 0.08 or a[1] == "甩尾"   # 甩尾 0.4 秒整隻轉一圈，腳一定是踩著原地轉（不算滑）
+		_ck(slip_ok and ar[1] < 0.10 and ar[2] < 12.0,
+			"出招「%s」：踩著的腳滑 %.3f（< 0.08）、穿地 %.3f（< 0.10）、腿一幀轉 %.1f 度（< 12）" % [a[1], ar[0], ar[1], ar[2]])
 	if _frames.size() > 0:
 		_save_strip()
 	print("走路檢查：%d 項沒過" % _fail)

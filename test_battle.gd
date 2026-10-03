@@ -1418,12 +1418,33 @@ func _case_trex_rig() -> void:
 	_ck(t.skel.get_bone_count() >= 40, "精細骨架應該有 40 根以上骨頭（現在 %d）" % t.skel.get_bone_count())
 	_ck(t.skel.find_bone("jaw") >= 0 and t.skel.find_bone("tail%d" % Trex.TAIL_N) >= 0, "下巴和尾巴末端要在")
 
-	for i in 6:  # 假裝以 18 m/s 在跑
-		t._last_pos = t.global_position + Vector3(0, 0, 0.3)
+	# 以 11 m/s（boss 跑步）跑 1.5 秒。腳是真的踩地走（trex.gd 的 _walk），從站著起跑第一步要一點時間，
+	# 以前只跑 6 幀（腿是 sin 擺，一開始就反相）
+	# 整段看：兩隻大腿的擺動是反著的（相關係數為負）、而且真的有在擺。單看一幀不準（兩腳同時著地那一下角度會同號）
+	var ls := []
+	var rs := []
+	var body: Node3D = m.players.get_node(^"2")
+	for i in 90:   # 真的往前跑（腳踩在地上，身體不動的話踩著的腳也不會往後掃）
+		body.global_position += -body.global_basis.z * (11.0 / 60.0)
 		t._process(1.0 / 60.0)
-	var l: float = t.pose_rot("thigh_l").get_euler().x
-	var r: float = t.pose_rot("thigh_r").get_euler().x
-	_ck(absf(l) > 0.1 and l * r < 0.0, "跑步時兩隻大腿要反相擺動（左 %.2f 右 %.2f）" % [l, r])
+		if i >= 30:
+			ls.append(t.pose_rot("thigh_l").get_euler().x)
+			rs.append(t.pose_rot("thigh_r").get_euler().x)
+	var lm := 0.0
+	var rm := 0.0
+	for k in ls.size():
+		lm += ls[k] / ls.size()
+		rm += rs[k] / rs.size()
+	var cov := 0.0
+	var lv := 0.0
+	var rv := 0.0
+	for k in ls.size():
+		cov += (ls[k] - lm) * (rs[k] - rm)
+		lv += (ls[k] - lm) * (ls[k] - lm)
+		rv += (rs[k] - rm) * (rs[k] - rm)
+	var corr := cov / maxf(sqrt(lv * rv), 1e-6)
+	var amp := sqrt(lv / ls.size())
+	_ck(amp > 0.1 and corr < -0.3, "跑步時兩隻大腿要反相擺動（相關係數 %.2f，應為負；擺幅 %.2f）" % [corr, amp])
 
 	var closed: float = t.pose_rot("jaw").get_euler().x
 	t.bite()
@@ -1456,15 +1477,16 @@ func _case_trex_flinch() -> void:
 	var t: Node = m.players.get_node(^"2").get_node(^"Trex")
 	for i in 120:
 		t._process(1.0 / 60.0)
+	var rest: float = t.pose_rot("spine1").get_euler().z   # 站在坡上會往低的那隻腳斜一點（身體跟著腳的高度），晃完回到這裡
 	t.flinch(Vector3.RIGHT, 1.0, false)
 	var most := 0.0
 	for i in 20:
 		t._process(1.0 / 60.0)
-		most = minf(most, t.pose_rot("spine1").get_euler().z)
+		most = minf(most, t.pose_rot("spine1").get_euler().z - rest)
 	_ck(most < -0.05, "被往右推要往右倒（最多 %.3f，應為負）" % most)
 	for i in 300:
 		t._process(1.0 / 60.0)
-	_ck(absf(t.pose_rot("spine1").get_euler().z) < 0.02, "晃完要自己站穩")
+	_ck(absf(t.pose_rot("spine1").get_euler().z - rest) < 0.02, "晃完要自己站穩（回到晃之前的角度）")
 	var yaw0: float = t.pose_rot("head").get_euler().y
 	t.flinch(Vector3.ZERO, 0.0, true)
 	var swing := 0.0
@@ -1479,13 +1501,17 @@ func _case_trex_lean() -> void:
 	var m := _new_offline_game()
 	var t: Node = m.players.get_node(^"2").get_node(^"Trex")
 	var d: Node3D = m.players.get_node(^"2")
+	for i in 120:   # 先站穩，記下站著的側傾（坡上會往低的那隻腳斜一點，身體跟著腳的高度）
+		t._last_pos = t.global_position
+		t._process(1.0 / 60.0)
+	var rest: float = t.pose_rot("spine1").get_euler().z
 
 	var drag := 0.0
 	for i in 40:  # 假裝以 10 m/s 往右（本地 +X）平移
 		t._last_pos = t.global_position - d.global_basis.x * (10.0 / 60.0)
 		t._process(1.0 / 60.0)
 		drag = maxf(drag, absf(t.skel.position.x))   # 只有加速那幾幀才拖得到
-	var roll: float = t.pose_rot("spine1").get_euler().z
+	var roll: float = t.pose_rot("spine1").get_euler().z - rest
 	_ck(roll < -0.03, "往右移動時軀幹要往右倒（現在 %.3f，應為負）" % roll)
 
 	var head: float = t.pose_rot("head").get_euler().z
@@ -1495,8 +1521,9 @@ func _case_trex_lean() -> void:
 	for i in 600:  # 停下來，側傾要收斂回去
 		t._last_pos = t.global_position
 		t._process(1.0 / 60.0)
-	_ck(absf(t.pose_rot("spine1").get_euler().z) < 0.03,
-		"停下來要站回直的")
+	# 停下來：側傾回到「坡度該有的斜」（兩腳高低差帶來的那一點，trex.gd 的 _foot_tilt），不是一直倒著
+	_ck(absf(t._lean.x + t._foot_tilt * 0.5) < 0.03,
+		"停下來側傾要收回去（剩 %.3f）" % (t._lean.x + t._foot_tilt * 0.5))
 	_end(m)
 
 ## 體力：耗光會力竭，要回到門檻以上才能再衝刺／攀爬
