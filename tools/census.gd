@@ -1,6 +1,6 @@
 extends SceneTree
 ## 清點場上每種模型：開沙盒，照網格加總「數量 × 三角形」，排序印前 25 名，標出有沒有投影子（影）、遠處不畫的距離（遠N）。
-## 找誰最佔三角形用（docs/效能.md）。要有畫面才會長草：godot --path . --script tools/census.gd
+## 找誰最佔三角形用（docs/技術筆記/效能.md）。要有畫面才會長草：godot --path . --script tools/census.gd
 var _f := 0
 var _main: Node
 func _initialize() -> void:

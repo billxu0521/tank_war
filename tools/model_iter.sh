@@ -1,7 +1,7 @@
 #!/bin/sh
 # 模型的一輪迭代：背景跑 Blender 建模（直接輸出成遊戲用的 models/<名字>s.glb）＋渲染預覽，
 # 存到 docs/image/<名字>_iter/v<版號>.png，再跟參考圖 docs/image/<名字>.png 上下拼成 v<版號>_對照.png 給人看。
-# 用法：tools/model_iter.sh tree 25、tools/model_iter.sh rock 1（做法見 docs/程式建模迭代.md）
+# 用法：tools/model_iter.sh tree 25、tools/model_iter.sh rock 1（做法見 docs/素材流水線/程式建模迭代.md）
 # 參考圖不是 <名字>.png 時用 REF 指定：REF=docs/image/house.png tools/model_iter.sh kit 1
 # 沒有參考圖（weapons、props、cowboy、trex）就只出預覽圖。這幾支一次匯出好幾個 glb，放在 models/ 底下各自的檔名。
 # 送審前的自動檢查（blender/pipeline.py 的 check：面數預算、沒長出來的零件、葉片卡的貼圖座標、反面）沒過就停，

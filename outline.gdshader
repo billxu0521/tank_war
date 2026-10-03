@@ -24,7 +24,7 @@ uniform float paint_sharpen = 0.6;   // 抹完再銳化：色塊比周圍平均�
 uniform float paint_ground = 0.45;   // 朝上的面（地面、屋頂）和草：筆觸縮成這麼多倍。地面的紋理一抹就變一片糊
 uniform float paint_far_start = 30.0;   // 公尺：從這裡開始筆觸變小，到 far_end 剩一半——遠處的恐龍、人才看得清（射擊遊戲要顧可讀性）
 uniform float paint_far_end = 120.0;
-// 美術風格指南（docs/image/Low_Poly_西部奇幻FPS_美術風格指南.docx）第 7 節：陰影偏冷（main.tscn 環境光改藍紫）、面色差（這裡）。
+// 美術風格指南（docs/美術/Low_Poly_西部奇幻FPS_美術風格指南.docx）第 7 節：陰影偏冷（main.tscn 環境光改藍紫）、面色差（這裡）。
 // 「明暗分段」試過在這裡對整個畫面的亮度分段：場景亮度大多擠在同一段，結果整片洗平、沒了對比。
 // 要做得在每個材質的打光（light()）裡分，等共用的「Master Shader」真的要做再說
 uniform float face_var = 0.07;       // 每個面的明暗小偏移（指南 ±5～12%）：同一種材質朝不同方向的面，顏色不會一模一樣

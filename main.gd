@@ -114,7 +114,7 @@ var _exit_pads: Array[Node3D] = []   # 撤離區的地面標示：沒有蛋的�
 var _props := {}   # 物件名 -> Mesh，從 props.glb 拿出來共用
 var _terrain: Terrain
 var _level: Array[Dictionary] = []   # 擺設清單：場地上每樣東西一筆（見 _build_level）
-## 手調過的場景檔（在 Godot 編輯器裡改，見 docs/場景編輯.md）。烘焙工具設成空的：不讀場景檔，自動擺一份初稿
+## 手調過的場景檔（在 Godot 編輯器裡改，見 docs/素材流水線/場景編輯.md）。烘焙工具設成空的：不讀場景檔，自動擺一份初稿
 ## 目前的地圖：&"" 是牧場（連線、沙盒），&"range" 是靶場。靜態的：換地圖要重載整個場景，重載後還記得
 static var mode := &""
 const RANGE_LEVEL := "res://levels/range.tscn"
@@ -1298,7 +1298,7 @@ func _update_crosshair(me: Node) -> void:
 # --- 場地 ---
 
 func _build_arena() -> void:
-	# 擺設清單：有手調過的場景檔就照它，沒有就自動擺一份初稿（見 docs/場景編輯.md）
+	# 擺設清單：有手調過的場景檔就照它，沒有就自動擺一份初稿（見 docs/素材流水線/場景編輯.md）
 	Trails.enabled = mode != &"range"   # 自動擺設、地面上色、草都會查小路，最先設
 	if _level.is_empty():
 		_generate_level()
@@ -1332,7 +1332,7 @@ func _build_arena() -> void:
 	_lighten_small($Arena)
 
 ## 減輕負擔：小東西（桶子、箱子、乾草、草叢……最長邊不到 SMALL_SIZE）不投影子、太遠就不畫。
-## 影子要把場景再畫好幾遍，是最花的（docs/效能.md 量過：影子的繪製指令是畫面本身的兩倍多）；
+## 影子要把場景再畫好幾遍，是最花的（docs/技術筆記/效能.md 量過：影子的繪製指令是畫面本身的兩倍多）；
 ## 小東西的影子在夕陽下也很短，遠處的桶子只剩幾個像素，霧又把它蓋淡了
 const SMALL_SIZE := 2.0
 const SMALL_FAR := 90.0   # 公尺：小東西畫到這麼遠
@@ -1349,7 +1349,7 @@ static func _lighten_small(root: Node) -> void:
 		if g is MeshInstance3D and g.visibility_range_end == 0.0:
 			g.visibility_range_end = SMALL_FAR   # 直接消失不淡出：淡出那段要改用半透明畫，反而更貴；90 公尺外有霧，看不太出來
 
-# --- 擺設清單（場景編輯工具，見 docs/plans/2026-09-30-場景編輯工具.md） ---
+# --- 擺設清單（場景編輯工具，見 docs/規劃/2026-09-30-場景編輯工具.md） ---
 # 場地上每樣東西是一筆：{kind, pos（x, 離地高度, z）, yaw, ……}。先有清單（自動擺，或從場景檔讀），再照清單蓋。
 # 出生點避開建築（_blocked）、灌木藏人（_bushes）、麥田上色（_wheat_fields）這些「記下來的範圍」在加進清單時就算好（_reserve），
 # 所以自動擺的時候，後面的東西看得到前面擺了什麼
@@ -2508,7 +2508,7 @@ static func _to_facet(m: BaseMaterial3D) -> ShaderMaterial:
 
 ## 紋理：純色平面看起來像塑膠，在材質上疊一層淡淡的程式雜訊——木紋（橫向細條）、石斑、乾草絲、恐龍鱗片。
 ## 物件自己的座標三面投影（triplanar），不用 UV，會動的東西紋理也黏著走。
-## 只動明暗十幾趴：折面之間的明暗差（兩三成）還在，不會像照片貼圖把折面洗掉（見 docs/程式建模迭代.md）。
+## 只動明暗十幾趴：折面之間的明暗差（兩三成）還在，不會像照片貼圖把折面洗掉（見 docs/素材流水線/程式建模迭代.md）。
 ## 規則：材質名字含有前面那個字 -> [紋理種類, 三個軸的縮放（越大越密）]。第一個對到的算數；葉子、布、金屬不加
 const GRAIN_RULES := [
 	["leaf", null], ["pine", null], ["bush", null], ["lit", null], ["lamp", null], ["glass", null],

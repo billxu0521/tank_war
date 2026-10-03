@@ -12,6 +12,6 @@ for target in "Windows Desktop:build/windows/OvD.exe" "macOS:build/macos/OvD.zip
 	echo "== 匯出 $preset =="
 	mkdir -p "$(dirname "$out")"
 	godot --headless --export-release "$preset" "$out" >/dev/null
-	cp 說明.txt "$(dirname "$out")/"
+	cp docs/發布/說明.txt "$(dirname "$out")/"
 	ls -lh "$out"
 done

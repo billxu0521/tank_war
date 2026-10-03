@@ -3,7 +3,7 @@ class_name Cowboy
 ## 牛仔：第一人稱，操作照 Hunt: Showdown。從 FNE_project 的 player.gd 搬來，
 ## 血量、死亡、連線權限改吃 fighter.gd，跟恐龍同一套。
 ## 移動／蹲／翻越／體力是原本的。FNE 的互動系統（門、燈）這裡沒有；Q/E 探頭也拿掉了——
-## Hunt 刻意不做探頭（見 docs/Hunt操作機制分析.md），怕變成躲在看不到的角落對槍。
+## Hunt 刻意不做探頭（見 docs/企劃/Hunt操作機制分析.md），怕變成躲在看不到的角落對槍。
 
 @export_group("Movement")
 @export var walk_speed := 5.0

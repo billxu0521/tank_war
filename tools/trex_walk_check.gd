@@ -1,9 +1,9 @@
 extends SceneTree
 ## 恐龍走路的自我檢查（trex.gd 的 _walk）：平地上走 6 秒 → 停 2 秒 → 跑 3 秒 → 原地轉身 2 秒 → 站著把每一招做一遍，每一幀量腳。
-## 有畫面時另外從正側面拍走路的影格，跟參考動畫（docs/尼諾拉.md）並排存成 OUT 那張圖。
+## 有畫面時另外從正側面拍走路的影格，跟參考動畫（docs/企劃/尼諾拉.md）並排存成 OUT 那張圖。
 ##   godot --headless --path . --script tools/trex_walk_check.gd                     只量數字（失敗回傳 1）
 ##   OUT=/tmp/walk.png godot --path . --resolution 1280x720 --script tools/trex_walk_check.gd   加拍影格
-## 檢查項目和門檻寫在 _report()；docs/尼諾拉.md 有說明
+## 檢查項目和門檻寫在 _report()；docs/企劃/尼諾拉.md 有說明
 
 const WALK := 4.0    # boss.gd 的 WALK
 const RUN := 11.0    # boss.gd 的 RUN

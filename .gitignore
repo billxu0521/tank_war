@@ -14,3 +14,6 @@ docs/image/*_iter/
 # Blender 腳本互相 import 時產生的快取
 blender/__pycache__/
 __pycache__/
+
+# 對外用的沙盒截圖（每張 2MB），只留在本機
+docs/image/沙盒場景_*/

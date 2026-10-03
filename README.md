@@ -8,7 +8,7 @@
 牛仔的操作照 Hunt: Showdown，移動系統從 `~/project/FNE_project` 搬來（移動、蹲、
 翻越、體力）。牛仔、三把槍、恐龍和場景物件（穀倉、三種農舍、筒倉、柵欄、乾草捲、樹、麥田、篷車）的模型都是用 Blender 程式建的（`blender/`）。
 場景是黃昏的鄉村：穀倉、農舍、筒倉、果園、麥田、牧場柵欄。
-設計決定見 [docs/plans/2026-09-25-cowboy-vs-dino-design.md](docs/plans/2026-09-25-cowboy-vs-dino-design.md)。
+設計決定見 [docs/規劃/2026-09-25-cowboy-vs-dino-design.md](docs/規劃/2026-09-25-cowboy-vs-dino-design.md)。
 
 **流程玩法還沒定案**。下面的蛋、撤離、計時是坦克版留下來的，先沿用。
 
@@ -34,7 +34,7 @@
 子彈有限，Hunt 的節奏就是省著打。
 超過有效射程（衰減起始距離），打頭不再秒殺、傷害線性遞減，到衰減終止距離降到最低傷害。
 **所有數字在 `cowboy/weapons/weapons.csv`**（Excel 打得開，改完重開遊戲就生效）；Esc 選單右邊有三把槍的比較表。
-參數的意思照企劃的[槍枝參數規格](docs/discord/2026-09-30-槍枝參數規格.md)，這階段做 L0（[規劃](docs/plans/2026-09-30-槍枝-L0.md)）。
+參數的意思照企劃的[槍枝參數規格](docs/企劃/討論紀錄/2026-09-30-槍枝參數規格.md)，這階段做 L0（[規劃](docs/規劃/2026-09-30-槍枝-L0.md)）。
 **子彈會飛、會掉**：初速左輪 330、散彈 300、步槍 440 m/s，重力 9.8。從鏡頭中心出發，
 近距離打哪中哪，步槍打 150 公尺約掉 57 公分，遠距離要抬高一點。
 
@@ -101,7 +101,7 @@
 ### 恐龍 boss（`boss.gd`、導演 `director.gd`、行為樹 `bt.gd`）
 
 **連線模式開房就自動生一隻，跟蛋無關**：生在離大家最遠的地方，自己在地圖上找人、追人、咬人。電腦操控、打不死。
-完整說明（怎麼找人、三招怎麼躲、導演的節奏、要調數字去哪改）見 **`docs/恐龍行為.md`**；設計的來由見 `docs/plans/2026-10-01-恐龍行為.md`。
+完整說明（怎麼找人、三招怎麼躲、導演的節奏、要調數字去哪改）見 **`docs/企劃/恐龍行為.md`**；設計的來由見 `docs/規劃/2026-10-01-恐龍行為.md`。
 
 | | 規則 |
 |---|---|
@@ -196,15 +196,15 @@ godot --headless --quit --editor         # 新增 class_name 後重建型別快�
 | `fighter.gd` | 牛仔恐龍共用：血量、死亡、連線權限、中彈閃紅 |
 | `cowboy/` | 牛仔：`cowboy.gd` 移動與 bot、`viewmodel.gd` 開槍與 Hunt 規則、`weapon.gd` 槍的參數與程式動作、`weapons/*.tscn` 三把槍、`weapons/weapons.csv` 參數表 |
 | `models/*.glb` `blender/*.py` | 模型和產生它的 Blender 腳本（牛仔、槍、恐龍、場景物件），重建方式見 `blender/README.md` |
-| `dino.*` `trex.gd` `fireball.*` | 恐龍、骨架程式動畫（見 [程序化動畫筆記](docs/程序化動畫.md)）、火球 |
-| `assets/` | 從 FNE 搬來的音效、材質。授權見 `CREDITS.md` |
-| `levels/` | 場地的場景檔 `ranch.tscn`（在 Godot 編輯器裡拖曳調整，見 [場景編輯](docs/場景編輯.md)）、物件庫、擺設檢查 |
-| `bug_report.gd` | 問題回報：攔下錯誤，F8 存成報告並複製到剪貼簿（見 [問題回報](docs/問題回報.md)） |
+| `dino.*` `trex.gd` `fireball.*` | 恐龍、骨架程式動畫（見 [程序化動畫筆記](docs/技術筆記/程序化動畫.md)）、火球 |
+| `assets/` | 從 FNE 搬來的音效、材質。授權見 `docs/發布/CREDITS.md` |
+| `levels/` | 場地的場景檔 `ranch.tscn`（在 Godot 編輯器裡拖曳調整，見 [場景編輯](docs/素材流水線/場景編輯.md)）、物件庫、擺設檢查 |
+| `bug_report.gd` | 問題回報：攔下錯誤，F8 存成報告並複製到剪貼簿（見 [問題回報](docs/流程/問題回報.md)） |
 | `test_battle.gd` | 自我檢查 |
 
 坦克版的程式和模型在 git 歷史裡（`d59b432` 之前）。大廳的「檢視模型」可以單獨看牛仔、三把槍和暴龍。
 
-設計討論整理在 [docs/設計討論.md](docs/設計討論.md)，來源是 Discord 論壇 `#夢想之地`。
+程式碼以外的文件（企劃、美術、素材流水線、分工規則）都在 `docs/`，從 [docs/README.md](docs/README.md) 開始看。新加入先讀 [分工與合併請求](docs/流程/分工與合併請求.md)。
 
 ## 為什麼物理跑 120Hz
 

@@ -1,5 +1,5 @@
 """美術風格的畫面量測：遊戲截圖跟參考圖比幾個「量得出來」的指標（美術風格指南第 7、8、10 節）。
-門檻不是憑感覺訂的：同一套量法先量參考圖，截圖要達到參考圖的幾成才算過。檢驗流程見 docs/美術風格檢驗.md。
+門檻不是憑感覺訂的：同一套量法先量參考圖，截圖要達到參考圖的幾成才算過。檢驗流程見 docs/美術/美術風格檢驗.md。
 
   python3 tools/style_metrics.py <截圖資料夾或檔案...>
   python3 tools/style_metrics.py docs/image/style_iter/v3/        # style_shots.gd 拍的那組

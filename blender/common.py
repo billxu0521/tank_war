@@ -80,7 +80,7 @@ def finish(name, bevel=0.012, seg=2, smooth=False, smooth_mats=()):
     smooth=True 是生物：整顆平滑著色，不然球面一格一格像多面體。
     smooth_mats：硬表面物件裡要平滑的材質名（槍的木頭部分：金屬邊要利、木頭要圓）
     bevel=0 不加倒角。建築和場景小物件都是 0：一塊木板加一段倒角，三角形從 12 變 44，一棟房子 2 萬變 8 萬，
-    遠看又看不出差別（2026-10-03 量過，docs/效能.md）。只有拿在手上近看的槍、牛仔保留"""
+    遠看又看不出差別（2026-10-03 量過，docs/技術筆記/效能.md）。只有拿在手上近看的槍、牛仔保留"""
     parts = [p for p in _parts if p.name in bpy.data.objects]
     _parts.clear()   # 原地清空：import 這支工具的腳本拿的是同一份清單
     bpy.ops.object.select_all(action='DESELECT')

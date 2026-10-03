@@ -5,7 +5,7 @@
 - `common.py` — box / cyl / blob 這些小工具，最後 `finish()` 合併並加倒角
 - `weapons.py` — 牛仔的三把槍（左輪、單管散彈、槓桿步槍），各自匯出一個 `.glb`
 - `tree.py` — 闊葉樹大中小三棵（`TreeOak` / `TreeOakM` / `TreeOakS`），進 `trees.glb`。**不用開 Blender**，背景直接跑，
-  一輪迭代用 `tools/model_iter.sh tree <版號>`（做法和教訓見 [docs/程式建模迭代.md](../docs/程式建模迭代.md)）
+  一輪迭代用 `tools/model_iter.sh tree <版號>`（做法和教訓見 [docs/素材流水線/程式建模迭代.md](../docs/素材流水線/程式建模迭代.md)）
 - `house.py` — 農舍三種（`House1` 前廊農舍、`House2` 圓木小屋、`House3` 直板高屋），各帶碰撞 `House<N>Col`，門 `HouseDoor` 共用，進 `houses.glb`。
   跟 tree.py 一樣背景跑：`tools/model_iter.sh house <版號>`
 - `grove.py` — 五種新樹（`docs/image/tree_list.png`）：楓樹 `TreeMaple`、松樹 `TreePine2`、約書亞樹 `TreeJoshua`、枯樹 `TreeDead`、柳樹 `TreeWillow`，
@@ -24,7 +24,7 @@
 - `trex_hd.py` — 精修暴龍（`docs/image/dinosaur.png`）：一整張連續的皮＋47 根骨頭蒙皮，匯出 `models/trex_hd.glb`。
   骨頭名字沿用 trex.gd（`root`、`spine1`、`neck`、`head`、`jaw`、`tail1`~`tail8`、`thigh_l`…），遊戲裡 trex.gd 直接用它（約 1800 三角面）。
   改完模型：`tools/trex_hd_iter.sh <版號>` → `godot --headless --import` → `tools/trex_shots.gd` 看遊戲內 → `test_battle.gd`。
-  一輪迭代 `tools/trex_hd_iter.sh <版號>`（對照圖＋輪廓疊圖），局部特寫 `tools/trex_hd_close.py`。做法和教訓見 [docs/程式建模迭代.md](../docs/程式建模迭代.md)
+  一輪迭代 `tools/trex_hd_iter.sh <版號>`（對照圖＋輪廓疊圖），局部特寫 `tools/trex_hd_close.py`。做法和教訓見 [docs/素材流水線/程式建模迭代.md](../docs/素材流水線/程式建模迭代.md)
 
 ## 共用入口（pipeline.py）
 

@@ -12,7 +12,7 @@ class_name Weapon
 ## 支援的動作名。movement 類缺漏時退回 idle。
 const MOVEMENT_FALLBACK: Array[StringName] = [&"walk", &"run", &"jump_start", &"jump_fall", &"jump_end"]
 
-# 參數名字和分類照企劃的《槍枝參數規格》（docs/discord/2026-09-30-槍枝參數規格.md），
+# 參數名字和分類照企劃的《槍枝參數規格》（docs/企劃/討論紀錄/2026-09-30-槍枝參數規格.md），
 # 標 L1、L2 的是規格裡還沒排進這階段、但現在手感已經用到的（先留著，數字不動）。
 enum Reload { WHOLE, PER_ROUND }
 ## 射擊類型。BREAK（折開式散彈）是規格外的，規格只談左輪和手動步槍

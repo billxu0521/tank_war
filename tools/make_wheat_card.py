@@ -1,5 +1,5 @@
 """畫麥子的平面貼圖（billboard 用）：透明底，一叢五到七根麥稈，頂上一顆麥穗、中間幾片葉子。
-顏色照鎖定的色盤（docs/程式建模迭代.md）：麥稈偏黃綠、穗尖亮一點，根部暗。
+顏色照鎖定的色盤（docs/素材流水線/程式建模迭代.md）：麥稈偏黃綠、穗尖亮一點，根部暗。
    python3 tools/make_wheat_card.py   → assets/textures/wheat_card.png
 """
 import math

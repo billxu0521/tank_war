@@ -1,5 +1,5 @@
 shader_type spatial;
-// 共用材質（規格 docs/Western_Faceted_FPS_Shader_美術改善規格.docx 的「Western_Faceted_Master」）：
+// 共用材質（規格 docs/美術/Western_Faceted_FPS_Shader_美術改善規格.docx 的「Western_Faceted_Master」）：
 // 模型匯進來的標準材質，在 main.gd 的 _flatten_models 一律換成這個，參數照抄（顏色、紋理、粗糙度記號、自發光）。
 // 跟標準材質只差打光：照到多少光（受光角度 × 影子）不連續漸變，而是分成幾段固定亮度（規格第 4 節），
 // 低面數模型每一面朝的方向不同，就會落在不同段，一面一面看得出來。

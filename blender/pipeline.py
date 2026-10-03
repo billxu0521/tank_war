@@ -5,7 +5,7 @@
 #
 # build_all() 回傳要匯出的物件；preview(obs, path) 自己排版後呼叫 studio() 渲染（或直接用 scene_preview）。
 # 背景跑：Blender --background --factory-startup --python blender/<名字>.py -- --out x.glb --preview x.png
-# 自動檢查沒過會印「CHECK FAIL」、不匯出也不渲染，tools/model_iter.sh 看到就停，不送審（見 docs/程式建模迭代.md）。
+# 自動檢查沒過會印「CHECK FAIL」、不匯出也不渲染，tools/model_iter.sh 看到就停，不送審（見 docs/素材流水線/程式建模迭代.md）。
 import bpy, bmesh, math, os, sys
 from mathutils import Vector
 

@@ -1,6 +1,6 @@
 extends SceneTree
 ## 美術風格指南第 4、5 節的資產檢查：每個模型的三角面數有沒有超預算、貼圖有沒有超量。
-## 指南：docs/image/Low_Poly_西部奇幻FPS_美術風格指南.docx。檢驗流程見 docs/美術風格檢驗.md。
+## 指南：docs/美術/Low_Poly_西部奇幻FPS_美術風格指南.docx。檢驗流程見 docs/美術/美術風格檢驗.md。
 ##   godot --headless --path . --script tools/asset_budget.gd
 ## 超過「可提高到」的上限 → FAIL（回傳 1）；超過建議範圍但沒到上限 → 注意（只列出來）。
 
