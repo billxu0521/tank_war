@@ -180,7 +180,8 @@ func _measure_act(name: String) -> void:
 		var s := "_l" if i == 0 else "_r"
 		var ball := _trex.bone_pos("toe2_1" + s)
 		r[1] = maxf(r[1], (FLOOR_Y + foot_h) - ball.y)
-		var planted: bool = not _trex._swing[i] and ball.y < FLOOR_Y + foot_h + 0.05   # 跺地抬起來的不算
+		# 跺地抬起來的、撲出去騰空和落地那一下（_air_land）不算
+		var planted: bool = not _trex._swing[i] and ball.y < FLOOR_Y + foot_h + 0.05 and _trex.act != 6 and _trex._air_land <= 0.0
 		if planted:
 			if _act_from[i] == null:
 				_act_from[i] = ball

@@ -19,7 +19,7 @@ const PLAN := [
 	["face", PI, "坡上轉身向南"], ["go", "z", 4.0, true, "往南跑下坡"],
 	["face", PI / 2, "轉向西"], ["go", "x", 2.0, false, "往西走回中間"],
 	["face", 0.0, "轉向北"], ["go", "z", -33.0, false, "走上三階台階"], ["wait", 1.0, "台階上站著"],
-	["face", PI, "轉向南"], ["go", "z", 30.0, false, "往南走過石堆"], ["wait", 1.0, "停"],
+	["face", PI, "轉向南"], ["go", "z", 42.0, false, "往南走過石堆"], ["wait", 1.0, "停"],   # 走過石堆到空地上再出招（甩尾時腿是凍住的，旁邊有石頭會穿過去）
 	["tap", "Z", "咬"], ["wait", 2.0, ""], ["tap", "X", "長吼＋甩尾"], ["wait", 3.0, ""],
 	["tap", "V", "撲擊"], ["wait", 2.6, ""], ["tap", "B", "被打斷"], ["wait", 2.8, ""],
 	["tap", "G", "發現人"], ["wait", 1.0, ""], ["tap", "H", "中彈"], ["wait", 1.0, ""], ["tap", "J", "頭被打"], ["wait", 1.0, ""],
@@ -147,11 +147,12 @@ func _measure(_d: float) -> void:
 	for i in 2:
 		var ball := t.bone_pos("toe2_1" + ("_l" if i == 0 else "_r"))
 		var gap := ball.y - (_ground_y(ball) + foot_h)
-		var lifted: bool = t._swing[i] or (t.act == 3 and gap > 0.05) or t.act == 2   # 跺地、咬下去踏步是故意抬腳
+		# 跺地、咬下去踏步、撲出去（騰空）和落地那一下是故意抬腳
+		var lifted: bool = t._swing[i] or (t.act == 3 and gap > 0.05) or (t._snap_bite and t._snap > 0.0) or t.act == 6 or t._air_land > 0.0
 		if -gap > _sink:
 			_sink = -gap
 			_sink_at = "t=%.1f %s 腳%d" % [_t, _phase, i]
-		if not lifted and gap > _float:
+		if not lifted and not spin and gap > _float:   # 甩尾時腿凍住，可能有一隻正在跺地抬著
 			_float = gap
 			_float_at = "t=%.1f %s 腳%d" % [_t, _phase, i]
 		if lifted or spin:

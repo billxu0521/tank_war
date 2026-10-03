@@ -794,12 +794,22 @@ func _sign(pos: Vector3, text: String) -> void:
 func _on_viewer_pressed() -> void:
 	var v := ModelViewer.new()
 	v.use_theme($UI/Root.theme)
+	# 自己一個 3D 世界：遊戲場景只是藏起來，地形、建築的碰撞還在同一個世界裡，
+	# 恐龍的腳往下找地面會踩到看不見的地形（使用者看到「透明物件，走過去像踩高」）
+	var box := SubViewportContainer.new()
+	box.stretch = true
+	box.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var sv := SubViewport.new()
+	sv.own_world_3d = true
+	sv.handle_input_locally = true
+	box.add_child(sv)
+	sv.add_child(v)
 	v.closed.connect(func() -> void:
-		v.queue_free()
+		box.queue_free()
 		visible = true
 		$UI.visible = true
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE)
-	get_tree().root.add_child(v)
+	get_tree().root.add_child(box)
 	visible = false
 	$UI.visible = false
 

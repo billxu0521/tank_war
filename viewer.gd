@@ -123,6 +123,7 @@ func _ground() -> Node3D:
 	var rock := StandardMaterial3D.new()
 	rock.albedo_color = Color(0.32, 0.28, 0.24)
 	_solid(n, Vector3(24, 2.0, -6), Vector3(14, 1, 24), Basis(Vector3.RIGHT, deg_to_rad(20.0)), rock)
+	_solid(n, Vector3(24, 3.27, -22.3), Vector3(14, 6.54, 10), Basis(), rock)   # 坡頂的平台（不然坡頂是 6 公尺的斷崖）
 	for k in 3:   # 一階 0.3 公尺（約恐龍膝蓋的五分之一）
 		_solid(n, Vector3(0, 0.15 + k * 0.15, -22 - k * 4.0), Vector3(16, 0.3 + k * 0.3, 4), Basis(), rock)
 	var rr := RandomNumberGenerator.new()
