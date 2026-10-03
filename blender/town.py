@@ -257,7 +257,7 @@ def build_saloon():
     upper = [(0.0, 1.1, zb2 + 0.25, zb2 + 2.35), (-(W / 2 - 1.8), 1.1, zb2 + 0.9, zb2 + 2.1), (W / 2 - 1.8, 1.1, zb2 + 0.9, zb2 + 2.1)]
     storefront(W, D, H, H + 2.6, 'balcony', step=1.3, upper=upper, sign_w=0.8, sign_h=1.2, words=5)
     interior_saloon(W, D)
-    return [finish('Saloon', bevel=0.012, seg=1), make_col('SaloonCol')]
+    return [finish('Saloon', bevel=0.0, seg=1), make_col('SaloonCol')]
 
 
 def build_store():
@@ -273,7 +273,7 @@ def build_store():
         if z == 0.0:
             COL.append(((s, s, s), (x, y, F + s / 2), (0, 0, 0)))
     box((1.1, 0.55, 0.48), (-1.9, fy - 1.9, F + 0.24), (0, 0, 0.3), m=HAY_BALE)
-    return [finish('Store', bevel=0.012, seg=1), make_col('StoreCol')]
+    return [finish('Store', bevel=0.0, seg=1), make_col('StoreCol')]
 
 
 def build_sheriff():
@@ -289,7 +289,7 @@ def build_sheriff():
     for dx in (-0.8, 0.8):
         box((0.08, 0.35, 0.45), (2.2 + dx, fy - 0.5, F + 0.23), m=POST)
     interior_sheriff(W, D)
-    return [finish('Sheriff', bevel=0.012, seg=1), make_col('SheriffCol')]
+    return [finish('Sheriff', bevel=0.0, seg=1), make_col('SheriffCol')]
 
 
 def build_water_tower():
@@ -334,7 +334,7 @@ def build_water_tower():
         box((0.5, 0.05, 0.05), (0, -s(min(z, Hl)) - 0.15 if z < Hl else -R - 0.15, z), m=pick(WOOD))
     for sx in (-1, 1):
         box((0.06, 0.06, Hl + Ht), (sx * 0.25, -s(Hl / 2) - 0.15, (Hl + Ht) / 2), m=POST)
-    return [finish('WaterTower', bevel=0.01, seg=1), make_col('WaterTowerCol')]
+    return [finish('WaterTower', bevel=0.0, seg=1), make_col('WaterTowerCol')]
 
 
 def preview(obs, path):

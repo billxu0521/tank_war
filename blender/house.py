@@ -604,7 +604,7 @@ def build(name, v):
         for x, y in ((3.0, yw - 0.6), (3.6, yw - 0.5)):
             barrel(x, y)
     interior(h)
-    o = finish(name, bevel=0.012, seg=1)
+    o = finish(name, bevel=0.0, seg=1)
     c = make_col(name + 'Col')
     return [o, c]
 
@@ -622,7 +622,7 @@ def door():
     sphere(0.05, (w - 0.14, -0.1, 1.05), 8, 6, m=IRON)
     for z in (0.35, hh - 0.35):
         box((0.3, 0.02, 0.06), (0.15, -0.085, z), m=IRON)
-    return finish('HouseDoor', bevel=0.008, seg=1)
+    return finish('HouseDoor', bevel=0.0, seg=1)
 
 
 def settle(obs):

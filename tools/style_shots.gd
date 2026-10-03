@@ -2,12 +2,18 @@ extends SceneTree
 ## 風格檢查用的截圖：開沙盒，從幾個固定角度各拍一張（第一人稱、農莊、三種農舍、掩體石頭、往場外看遠景、恐龍近看、高處俯瞰），
 ## 存到 OUT 資料夾，給 tools/style_iter.sh 拼成一張給人和審查子代理看。
 ##   OUT=docs/image/style_iter/v1 godot --path . --resolution 1280x720 --script tools/style_shots.gd
+## 量效能：PERF=秒數，每個角度停這麼久（前 0.5 秒不算），關垂直同步、不限幀率，印出每個角度的幀時間、GPU、CPU、畫幾次（draw call）。不存圖
+##   PERF=3 godot --path . --resolution 1920x1080 --script tools/style_shots.gd
 
 var _f := 0
 var _main: Node
 var _cam: Camera3D
 var _views: Array = []
 var _i := 0
+var _perf := OS.get_environment("PERF").to_float()
+var _t := 0.0
+var _rec := {}   # 這個角度量到的每一幀
+var _last_us := 0
 
 func _initialize() -> void:
 	_main = load("res://main.tscn").instantiate()
@@ -15,6 +21,8 @@ func _initialize() -> void:
 
 func _process(_d: float) -> bool:
 	_f += 1
+	if _perf > 0.0:
+		return _perf_step(_d)
 	if _f == 5:
 		_main._on_sandbox_pressed()
 	if _f == 40:
@@ -23,6 +31,10 @@ func _process(_d: float) -> bool:
 		var mat: ShaderMaterial = (_main.get_node(^"Arena/Outline") as MeshInstance3D).mesh.material
 		for kv in OS.get_environment("SHADER").split(",", false):
 			mat.set_shader_parameter(kv.get_slice("=", 0), kv.get_slice("=", 1).to_float())
+		# FACET="ramp_steps=0"：共用材質（facet.gdshader）的參數，每個換過的材質都改
+		for f: ShaderMaterial in _main.get_script()._facet_of.values():
+			for kv in OS.get_environment("FACET").split(",", false):
+				f.set_shader_parameter(kv.get_slice("=", 0), kv.get_slice("=", 1).to_float())
 	if _f > 40 and (_f - 40) % 30 == 0:
 		_main.menu.visible = false
 		if _i > 0:
@@ -96,3 +108,70 @@ func _find(mesh_name: StringName) -> Node3D:
 		if (n as MeshInstance3D).mesh == mesh:
 			return n
 	return null
+
+
+## 效能模式：跟拍照同樣的角度，每個停 _perf 秒
+func _perf_step(d: float) -> bool:
+	if _f == 2:
+		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
+		Engine.max_fps = 0
+		RenderingServer.viewport_set_measure_render_time(root.get_viewport_rid(), true)
+	if _f == 5:
+		_main._on_sandbox_pressed()
+	if _f < 40:
+		return false
+	if _f == 40:
+		# SUN="directional_shadow_max_distance=60,directional_shadow_mode=1"：改太陽（影子）的設定比較
+		var sun := _main.get_node(^"Arena/Sun")
+		for kv in OS.get_environment("SUN").split(",", false):
+			sun.set(kv.get_slice("=", 0), str_to_var(kv.get_slice("=", 1)))
+		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)   # 遊戲開局時會套用玩家的畫面設定（main.gd），再關一次
+		Engine.max_fps = 0
+		_plan()
+		print("角度              平均ms  最慢1%%ms  最慢ms   GPU ms  CPU畫面ms  腳本ms  物理ms  draw  三角形(萬)")
+		_i = -1
+	_main.menu.visible = false
+	_t += d
+	if _i < 0 or _t >= _perf:
+		if _i >= 0:
+			_perf_report(_views[_i][0])
+		_i += 1
+		_t = 0.0
+		_rec = {"dt": [], "gpu": [], "cpu": [], "proc": [], "phys": [], "draw": [], "tri": []}
+		if _i >= _views.size():
+			return true
+		var v: Array = _views[_i]
+		if v[1] != null:   # 第一個是第一人稱（null），還沒換相機
+			_cam.current = true
+			_cam.look_at_from_position(v[1], v[2])
+		return false
+	var now := Time.get_ticks_usec()
+	var real_ms := (now - _last_us) / 1000.0   # 真的時鐘量兩幀之間（引擎給的 delta 有上下限，不準）
+	_last_us = now
+	if _t > 0.5:
+		var vp := root.get_viewport_rid()
+		_rec.dt.append(real_ms)
+		_rec.gpu.append(RenderingServer.viewport_get_measured_render_time_gpu(vp))
+		_rec.cpu.append(RenderingServer.viewport_get_measured_render_time_cpu(vp))
+		_rec.proc.append(Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0)
+		_rec.phys.append(Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0)
+		_rec.draw.append(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME))
+		_rec.tri.append(Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME))
+	return false
+
+func _perf_report(name: String) -> void:
+	var dt: Array = _rec.dt.duplicate()
+	if dt.is_empty():
+		return
+	dt.sort()
+	var avg := func(a: Array) -> float: return a.reduce(func(x, y): return x + y, 0.0) / maxf(a.size(), 1)
+	var p99: float = dt[int(dt.size() * 0.99)]
+	var vp := root.get_viewport_rid()
+	var info := func(t: int, k: int) -> int: return RenderingServer.viewport_get_render_info(vp, t, k)
+	print("%-16s 畫面 draw %d 三角形 %.0f 萬｜影子 draw %d 三角形 %.0f 萬" % [name,
+		info.call(RenderingServer.VIEWPORT_RENDER_INFO_TYPE_VISIBLE, RenderingServer.VIEWPORT_RENDER_INFO_DRAW_CALLS_IN_FRAME),
+		info.call(RenderingServer.VIEWPORT_RENDER_INFO_TYPE_VISIBLE, RenderingServer.VIEWPORT_RENDER_INFO_PRIMITIVES_IN_FRAME) / 10000.0,
+		info.call(RenderingServer.VIEWPORT_RENDER_INFO_TYPE_SHADOW, RenderingServer.VIEWPORT_RENDER_INFO_DRAW_CALLS_IN_FRAME),
+		info.call(RenderingServer.VIEWPORT_RENDER_INFO_TYPE_SHADOW, RenderingServer.VIEWPORT_RENDER_INFO_PRIMITIVES_IN_FRAME) / 10000.0])
+	print("%-16s %7.2f %9.2f %7.2f %8.2f %9.2f %7.2f %7.2f %5d %8.1f" % [name, avg.call(dt), p99, dt[-1],
+		avg.call(_rec.gpu), avg.call(_rec.cpu), avg.call(_rec.proc), avg.call(_rec.phys), int(avg.call(_rec.draw)), avg.call(_rec.tri) / 10000.0])

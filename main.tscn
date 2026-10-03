@@ -82,6 +82,7 @@ light_color = Color(1, 0.78, 0.52, 1)
 light_energy = 1.15
 shadow_enabled = true
 shadow_opacity = 0.85
+directional_shadow_max_distance = 70.0
 
 [node name="Egg" type="Node3D" parent="." unique_id=459102912]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)

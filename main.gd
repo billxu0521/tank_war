@@ -1329,6 +1329,25 @@ func _build_arena() -> void:
 		_grass_field()
 		_flora_field()
 		_drift = Fx.drift($Arena)
+	_lighten_small($Arena)
+
+## 減輕負擔：小東西（桶子、箱子、乾草、草叢……最長邊不到 SMALL_SIZE）不投影子、太遠就不畫。
+## 影子要把場景再畫好幾遍，是最花的（docs/效能.md 量過：影子的繪製指令是畫面本身的兩倍多）；
+## 小東西的影子在夕陽下也很短，遠處的桶子只剩幾個像素，霧又把它蓋淡了
+const SMALL_SIZE := 2.0
+const SMALL_FAR := 90.0   # 公尺：小東西畫到這麼遠
+static func _lighten_small(root: Node) -> void:
+	for g: GeometryInstance3D in root.find_children("*", "GeometryInstance3D", true, false):
+		var mesh: Mesh = g.mesh if g is MeshInstance3D else (g.multimesh.mesh if g is MultiMeshInstance3D and g.multimesh else null)
+		if mesh == null or g.is_in_group(&"ground"):
+			continue
+		var size := mesh.get_aabb().size * g.global_basis.get_scale()
+		if maxf(size.x, maxf(size.y, size.z)) >= SMALL_SIZE:
+			continue
+		g.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		# 撒滿全場的 MultiMesh 是一整個節點，遠近照整片的中心算，設了會整片消失，只關影子
+		if g is MeshInstance3D and g.visibility_range_end == 0.0:
+			g.visibility_range_end = SMALL_FAR   # 直接消失不淡出：淡出那段要改用半透明畫，反而更貴；90 公尺外有霧，看不太出來
 
 # --- 擺設清單（場景編輯工具，見 docs/plans/2026-09-30-場景編輯工具.md） ---
 # 場地上每樣東西是一筆：{kind, pos（x, 離地高度, z）, yaw, ……}。先有清單（自動擺，或從場景檔讀），再照清單蓋。
@@ -2359,17 +2378,7 @@ func _scatter(name: StringName, pts: Array[Transform3D], shadows := false) -> vo
 	_scatter_mesh(_props.get(name), pts, shadows)
 
 func _scatter_mesh(mesh: Mesh, pts: Array[Transform3D], shadows := false) -> void:
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.mesh = mesh
-	mm.instance_count = pts.size()
-	for i in pts.size():
-		mm.set_instance_transform(i, pts[i])
-	var mmi := MultiMeshInstance3D.new()
-	mmi.multimesh = mm
-	if not shadows:
-		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	$Arena.add_child(mmi)
+	$Arena.add_child(FarLand._scatter(mesh, pts, shadows))   # 整片一個 MultiMesh（試過分塊：影子少兩成三角形，繪製指令卻多一倍，不划算）
 
 ## 擺一個 Blender 建的場景物件（models/props.glb）。parent 預設是場地
 func _prop(name: StringName, pos: Vector3, scale := Vector3.ONE, parent: Node = null) -> MeshInstance3D:
@@ -2414,7 +2423,7 @@ static func meshes() -> Dictionary:
 const LEAVES_SHADER := preload("res://leaves.gdshader")
 const FLAT_MODELS := ["res://models/props.glb", "res://models/trees.glb", "res://models/rocks.glb", "res://models/houses.glb", "res://models/kits.glb", "res://models/towns.glb",
 	"res://models/groves.glb", "res://models/floras.glb",
-	"res://models/cowboy.glb", "res://models/trex.glb", "res://models/revolver.glb",
+	"res://models/cowboy.glb", "res://models/trex_hd.glb", "res://models/revolver.glb",
 	"res://models/shotgun.glb", "res://models/rifle.glb"]
 static var _flat_keep: Array[PackedScene] = []
 static func _flatten_models() -> void:
@@ -2440,7 +2449,62 @@ static func _flatten_models() -> void:
 						continue
 					if m.albedo_texture == null:   # 材質可能好幾個網格共用，只疊一次
 						_add_grain(m)
+					var f := _to_facet(m)
+					if f:
+						mi.mesh.surface_set_material(i, f)
 		inst.free()
+
+## 換成共用材質（facet.gdshader：打光分段，一面一面看得出來）。參數照抄；半透明、不受光、看板、
+## 自己有用頂點色以外的特殊設定的（目前沒有）留原本的標準材質。同一個材質換一次，各處共用
+const FACET_SHADER := preload("res://facet.gdshader")
+## 材質分色（Shader 美術改善規格第 14 節）：材質名字含有這些字 → 哪一類。第一個對到的算數；人物、恐龍不分（原色）
+const FACET_TYPES := [
+	[["blued", "bore", "gunmetal", "steel", "iron", "c_metal", "lead", "p_band", "brass", "hull"], &"metal"],
+	[["shing", "roof"], &"roof"],
+	[["stone", "rock", "mortar", "chink"], &"stone"],
+	[["leaf", "flora", "bush", "grass", "pine", "wheat", "scrub", "cactus"], &"plant"],
+	[["wood", "plank", "log", "trim", "post", "bark", "h_lap", "p_red", "p_silo", "shut", "k_floor", "k_lid", "t_board", "h_inner"], &"wood"],
+]
+## 類別 → [暗部色調, 受光色調, 明度]：木頭暗部紫棕、受光金棕；石頭冷灰／暖灰；植物冷綠／黃綠；金屬冷灰／暖灰白
+const FACET_TINTS := {
+	&"wood": [Vector3(0.96, 0.90, 1.06), Vector3(1.06, 0.98, 0.84), 1.0],
+	&"stone": [Vector3(0.92, 0.96, 1.06), Vector3(1.04, 1.0, 0.94), 1.0],
+	&"roof": [Vector3(0.92, 0.96, 1.06), Vector3(1.04, 1.0, 0.94), 0.85],   # 屋頂比牆暗一段
+	&"plant": [Vector3(0.90, 1.0, 0.98), Vector3(1.04, 1.06, 0.86), 1.0],
+	&"metal": [Vector3(0.92, 0.96, 1.06), Vector3(1.04, 1.02, 0.98), 1.0],
+}
+static var _facet_of := {}
+static func _to_facet(m: BaseMaterial3D) -> ShaderMaterial:
+	if _facet_of.has(m):
+		return _facet_of[m]
+	if m.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED or m.shading_mode != BaseMaterial3D.SHADING_MODE_PER_PIXEL \
+			or m.billboard_mode != BaseMaterial3D.BILLBOARD_DISABLED:
+		return null
+	var f := ShaderMaterial.new()
+	f.shader = FACET_SHADER
+	f.resource_name = m.resource_name   # 其他地方照名字認材質（_add_grain、葉片卡）
+	f.set_shader_parameter(&"albedo", m.albedo_color)
+	if m.albedo_texture:
+		f.set_shader_parameter(&"albedo_tex", m.albedo_texture)
+		f.set_shader_parameter(&"use_tex", true)
+		f.set_shader_parameter(&"use_triplanar", m.uv1_triplanar)
+	f.set_shader_parameter(&"use_vcol", m.vertex_color_use_as_albedo)
+	f.set_shader_parameter(&"uv_scale", m.uv1_scale)
+	f.set_shader_parameter(&"uv_offset", m.uv1_offset)
+	f.set_shader_parameter(&"roughness", m.roughness)
+	if m.emission_enabled:
+		f.set_shader_parameter(&"emission", m.emission)
+		f.set_shader_parameter(&"emission_energy", m.emission_energy_multiplier)
+	var name := String(m.resource_name)
+	for rule: Array in FACET_TYPES:
+		if (rule[0] as Array).any(func(k: String) -> bool: return name.contains(k)):
+			var t: Array = FACET_TINTS[rule[1]]
+			f.set_shader_parameter(&"shade_tint", t[0])
+			f.set_shader_parameter(&"lit_tint", t[1])
+			f.set_shader_parameter(&"value", t[2])
+			break
+	_facet_of[m] = f
+	return f
 
 ## 紋理：純色平面看起來像塑膠，在材質上疊一層淡淡的程式雜訊——木紋（橫向細條）、石斑、乾草絲、恐龍鱗片。
 ## 物件自己的座標三面投影（triplanar），不用 UV，會動的東西紋理也黏著走。

@@ -18,7 +18,7 @@ uniform float ridge_fade_start = 8.0;   // 稜線（板縫、環箍、切面）�
 uniform float ridge_fade_end = 20.0;
 uniform float gun_mark = 0.65;       // 第一人稱的槍和手：粗糙度 = 這個（viewmodel.gd 的 OUTLINE_MARK），另外一套描線（見 fragment）。
                                      // 以前用「離鏡頭 1.5 公尺內」認，貼近牆和木桶時它們也被當成槍描粗線
-uniform float paint_radius = 7.0;    // 油畫感（Kuwahara 濾鏡）的筆觸半徑，像素（照 1080p 算）；0 = 關（試作中，先預設開）。先抹色塊再描線，線才不會被抹糊
+uniform float paint_radius = 0.0;    // 油畫感（Kuwahara 濾鏡）的筆觸半徑，像素（照 1080p 算）；0 = 關。第 82 版起關掉：會把一面一面的邊抹糊（Shader 美術改善規格要的是面感）。以前 7。先抹色塊再描線，線才不會被抹糊
 uniform float paint_sharp = 8.0;     // 八塊區域按「顏色多亂」加權：越大越像只挑最平的那塊（色塊邊緣越銳利）
 uniform float paint_sharpen = 0.6;   // 抹完再銳化：色塊比周圍平均亮的再亮一點、暗的再暗一點，邊界更清楚（知識庫 Kuwahara 筆記：濾鏡後加銳化更像油畫）
 uniform float paint_ground = 0.45;   // 朝上的面（地面、屋頂）和草：筆觸縮成這麼多倍。地面的紋理一抹就變一片糊
@@ -34,6 +34,16 @@ uniform float style_far_end = 200.0;
 // 邊緣加夕陽色的輪廓光、線較粗較深、遠處也不淡掉——跟背景拉開（美術風格指南第 11 節：目標不能跟夕陽背景融在一起）
 uniform float target_mark = 0.87;
 // 前景壓暗：離鏡頭近的地方暗一點，跟參考圖一樣「前景暗、中景亮」（指南第 10 節）。目標和槍不壓
+// 距離分層（Shader 美術改善規格第 8 節）：越遠飽和度、對比越低，再交給霧。不能只靠霧把東西洗掉，中景要先退一層。
+// 對比只動亮度（往 dist_pivot 收），色相不變。目標、槍不動（遠處的恐龍要看得清楚）
+uniform float dist_start = 30.0;     // 公尺：近景到這裡都是原樣
+uniform float dist_end = 180.0;      // 公尺：到這裡降到最低
+uniform float dist_sat = 0.70;       // 最遠的飽和度倍數（規格：中景 80～90%、遠景 60～75%）
+uniform float dist_contrast = 0.60;  // 最遠的對比倍數（規格：中景 75～90%、遠景 50～70%）
+uniform float dist_pivot = 0.14;     // 對比往這個亮度收（線性亮度）。0.30 太亮：遠山被拉亮成粉灰
+uniform vec3 dist_haze : source_color = vec3(0.72, 0.44, 0.29);   // 降飽和不往灰收，往夕陽霧的色相收（main.tscn 的 fog_light_color）：灰會讓紅褐的山變成淡紫
+uniform float env_line = 0.45;       // 一般環境物件的線再淡這麼多倍（規格第 11 節：環境描線降 50～70%）；目標、槍不動
+uniform float gun_lift = 0.8;        // 第一人稱的槍暗部提亮（規格第 12 節：要有中間調，不要被夕陽壓成黑色剪影）
 uniform float near_dark = 0.75;          // 最近處的亮度倍數
 uniform float near_dark_start = 12.0;    // 公尺：這麼近以內最暗（站著平視，畫面最下緣的地面大約在 5～10 公尺外，起點太近等於沒壓到）
 uniform float near_dark_end = 35.0;      // 公尺：到這裡回到原本亮度
@@ -210,7 +220,7 @@ void fragment() {
 	// 目標的線也是純深色，但淡 40%（全不透明太搶，像貼紙）
 	bool solid_line = near || (target_edge && edge > 0.0);
 	vec3 line = solid_line ? line_color * 0.6 : mix(line_color, under * 0.35, 0.5);
-	a = near ? a : (solid_line ? a * target_line_alpha : a * 0.65);
+	a = near ? a : (solid_line ? a * target_line_alpha : a * 0.65 * env_line);
 	// 槍和手不做風格處理：第一人稱要乾淨（指南第 11 節）
 	vec3 base = under;
 	if (target) {
@@ -230,6 +240,14 @@ void fragment() {
 		}
 		float k = 1.0 - smoothstep(style_far_start, style_far_end, d);
 		base *= mix(near_dark, 1.0, smoothstep(near_dark_start, near_dark_end, d));
+		float far = smoothstep(dist_start, dist_end, d);
+		if (far > 0.0) {
+			float l0 = max(dot(base, vec3(0.2126, 0.7152, 0.0722)), 1e-4);
+			float l1 = dist_pivot + (l0 - dist_pivot) * mix(1.0, dist_contrast, far);
+			base *= max(l1, 0.0) / l0;
+			vec3 haze = dist_haze / dot(dist_haze, vec3(0.2126, 0.7152, 0.0722)) * max(l1, 0.0);
+			base = mix(haze, base, mix(1.0, dist_sat, far));
+		}
 		if (!grass) {
 			// 面色差：照世界座標的法線方向挑亂數。平面著色的面法線一樣 → 整面同一個偏移；法線先粗分，圓滑的面才不會變雜點
 			base *= 1.0 + (hash3(floor(wn * 3.0 + 0.5)) * 2.0 - 1.0) * face_var * k;
@@ -246,6 +264,7 @@ void fragment() {
 		if (near) {
 			// 槍的藍是中間調，上面的暗部處理碰不到，再降一次；只降深色的槍，手和袖子（亮的）不動，不然手變灰
 			base = mix(vec3(l), base, mix(gun_sat, 1.0, smoothstep(0.08, 0.25, l / (1.0 + l))));
+			base *= 1.0 + gun_lift * (1.0 - smoothstep(0.03, 0.2, l / (1.0 + l)));
 		}
 	}
 	// 抖色：每個像素亮度 ±1.5% 的固定雜訊，把天空漸層、太陽光暈的一圈圈色階打散（引擎的去色帶在這片方塊之前就做完了）

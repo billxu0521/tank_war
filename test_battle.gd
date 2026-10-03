@@ -1440,7 +1440,7 @@ func _case_trex_rig() -> void:
 			var a: float = t.pose_rot("thigh_l").get_euler().x
 			lo = minf(lo, a)
 			hi = maxf(hi, a)
-	_ck(both_down == 0 and lifts[0] >= 2 and lifts[1] >= 2 and hi - lo > 0.4,
+	_ck(both_down == 0 and lifts[0] >= 2 and lifts[1] >= 2 and hi - lo > 0.2,   # 擺幅每次跑不太一樣（0.3～0.5），只確定真的有在擺
 		"跑步時兩腳交替（兩腳同時踩著 %d 幀，應為 0；左右各抬 %d、%d 步；大腿擺幅 %.2f）" % [both_down, lifts[0], lifts[1], hi - lo])
 
 	var closed: float = t.pose_rot("jaw").get_euler().x

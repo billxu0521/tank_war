@@ -231,7 +231,7 @@ for sy in (-1, 1):
         box((W - 2 * T, 0.12, 0.18), (0, sy * (L / 2 - T - 0.06), z), m=WOOD_D)
 lantern((0.0, -0.3, LOFT - 1.0), hang=0.4)                                       # 閣樓下的提燈
 lantern((-W / 2 + T + 0.4, -3.5, 1.05))                                          # 工作台上的提燈
-barn = finish('Barn', bevel=0.02, seg=1)
+barn = finish('Barn', bevel=0.0, seg=1)
 barn_col = make_col('BarnCol')
 
 # 門（各自一個物件，遊戲裡會動）：原點在門的轉軸或底部中央
@@ -244,14 +244,14 @@ for z in (0.12, BARN_DOOR_H - 0.12):
 for sx in (-1, 1):
     box((0.22, 0.08, BARN_DOOR_H), (sx * (BARN_DOOR_W / 4 - 0.11), -0.1, BARN_DOOR_H / 2), m=TRIM)
 cyl(0.08, 0.1, (0, 0, BARN_DOOR_H + 0.2), (math.pi / 2, 0, 0), 10, m=BAND)      # 吊輪
-slide = finish('BarnDoorSlide', bevel=0.02, seg=1)
+slide = finish('BarnDoorSlide', bevel=0.0, seg=1)
 BW, BH = BARN_BACK_W, BARN_BACK_H
 box((BW, 0.08, BH), (BW / 2, 0, BH / 2), m=RED_D)                                # 後門：原點在門軸
 for z in (0.4, BH - 0.4):
     box((BW - 0.1, 0.1, 0.12), (BW / 2, 0, z), m=TRIM)
 box((math.hypot(BW - 0.1, BH - 0.8), 0.1, 0.1), (BW / 2, 0, BH / 2), (0, math.atan2(BH - 0.8, BW - 0.1), 0), m=TRIM)
 sphere(0.04, (BW - 0.15, -0.07, BH / 2), 8, 6, m=BAND)
-back_door = finish('BarnBackDoor', bevel=0.01, seg=1)
+back_door = finish('BarnBackDoor', bevel=0.0, seg=1)
 
 rise = gable_roof(W, L, BARN_PITCH, ROOF, rib=BAND)
 for sy in (-1, 1):                                                             # 山牆三角
@@ -276,7 +276,7 @@ for sx in (-1, 1):
 gable_roof(2.2, 2.0, 0.6, ROOF, overhang=0.2, thick=0.15)
 for o in _parts[-2:]:
     o.location.z += rise + 1.5
-roof = finish('BarnRoof', bevel=0.02, seg=1)
+roof = finish('BarnRoof', bevel=0.0, seg=1)
 
 # ================= 筒倉 =================
 # 功能零件：水泥底座、筒身、一圈圈的鐵箍、側面的爬梯（兩根扶手＋橫檔）、圓頂＋頂上的通風帽
@@ -290,14 +290,14 @@ for k in range(int((SILO_H - 1.0) / 0.4)):
     box((0.05, 0.5, 0.05), (SILO_R + 0.25, 0, 1.2 + k * 0.4), m=BAND)
 for k in range(int(SILO_H / 1.5)):                                             # 爬梯固定架
     box((0.3, 0.06, 0.06), (SILO_R + 0.12, 0, 1.5 + k * 1.5), m=BAND)
-silo = finish('SiloBody', bevel=0.02, seg=1)
+silo = finish('SiloBody', bevel=0.0, seg=1)
 
 sphere(SILO_R + 0.1, (0, 0, 0), 32, 12, m=SILO)
 for v in _parts[-1].data.vertices:                                             # 壓成扁圓頂、只留上半
     v.co.z = max(v.co.z, 0.0) * (1.6 / (SILO_R + 0.1))
 cyl(0.35, 0.5, (0, 0, 1.75), (0, 0, 0), 12, m=BAND)                            # 通風帽
 cone(0.55, 0.05, 0.35, (0, 0, 2.15), (0, 0, 0), 12, m=SILO)
-dome = finish('SiloDome', bevel=0.02, seg=1)
+dome = finish('SiloDome', bevel=0.0, seg=1)
 
 # 柵欄在 kit.py（跟 house.png 同一套：方木樁＋三條橫板）
 
@@ -410,7 +410,7 @@ for v in _parts[-1].data.vertices:
     v.co.z = max(v.co.z, 0.0) * 1.0
     v.co.y *= 2.2
 box((0.10, 2.2, 0.10), (0, -2.9, 0.55), (0.12, 0, 0), m=WOOD_D)  # 車轅
-wagon = finish('Wagon', bevel=0.01, seg=1, smooth_mats=('p_canvas',))
+wagon = finish('Wagon', bevel=0.0, seg=1, smooth_mats=('p_canvas',))
 
 # 每個物件的原點都在世界原點（上面就是照這樣建的），旋轉烘進網格
 for o in bpy.data.objects:

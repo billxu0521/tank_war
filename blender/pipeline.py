@@ -16,7 +16,13 @@ def args():
 
 
 def tris(o):
-    return sum(len(p.vertices) - 2 for p in o.data.polygons)
+    """匯出後真正的三角形數：修改器（倒角、減面……）套用之後算。只算原始網格會少算好幾倍——
+    以前房子印 2 萬、預算 2.5 萬照過，匯出加了倒角其實 8 萬（2026-10-03）"""
+    ev = o.evaluated_get(bpy.context.evaluated_depsgraph_get())
+    m = ev.to_mesh()
+    n = sum(len(p.vertices) - 2 for p in m.polygons)
+    ev.to_mesh_clear()
+    return n
 
 
 def export(obs, path):

@@ -64,7 +64,7 @@ def lantern_parts(x, y, z):
 
 def build_lantern():
     lantern_parts(0, 0, 0)
-    return finish('Lantern', bevel=0.004, seg=1)
+    return finish('Lantern', bevel=0.0, seg=1)
 
 
 # ---------------- 木桶 ----------------
@@ -114,7 +114,7 @@ def build_barrel(name='Barrel'):
     for f in (0.05, 0.3, 0.7, 0.95):                     # 四道鐵箍：貼著桶口桶底往內一點、30% 和 70%
         z = h * f
         cyl(rad(z) + 0.012, 0.05, (0, 0, z), (0, 0, math.pi / n), n, m=IRON)
-    return finish(name, bevel=0.005, seg=1)
+    return finish(name, bevel=0.0, seg=1)
 
 
 # ---------------- 木箱 ----------------
@@ -143,7 +143,7 @@ def build_crate(s=0.8):
                     box((0.04, L, 0.07), (sgn * (s / 2 + 0.01), 0, s / 2), (d * math.pi / 4, 0, 0), m=TRIM)
     for k in range(n):                                   # 蓋子
         board(((s - 0.1) / n - 0.015, s - 0.06, 0.03), (-s / 2 + 0.05 + (k + 0.5) * (s - 0.1) / n, 0, s - 0.015))
-    return finish('Crate', bevel=0.006, seg=1)
+    return finish('Crate', bevel=0.0, seg=1)
 
 
 # ---------------- 方草捆 ----------------
@@ -189,7 +189,7 @@ def hay_parts(x=0.0, y=0.0, z=0.0, along_y=False):
 
 def build_hay():
     hay_parts()
-    return finish('HayBlock', bevel=0.02, seg=1)
+    return finish('HayBlock', bevel=0.0, seg=1)
 
 
 # ---------------- 車輪 ----------------
@@ -202,7 +202,7 @@ def build_wheel(r=0.6):
         box((0.063, 0.063, r - 0.12), (0, (r / 2) * math.cos(a), (r / 2) * math.sin(a)), (a - math.pi / 2, 0, 0), m=pick(WOOD))
     cyl(0.12, rim + 2 * 1.5 * rim, (0, 0, 0), (0, math.pi / 2, 0), 12, m=pick(WOOD))  # 輪轂：往兩側凸出
     cyl(0.065, rim + 3.4 * rim, (0, 0, 0), (0, math.pi / 2, 0), 10, m=IRON)
-    return finish('Wheel', bevel=0.006, seg=1)
+    return finish('Wheel', bevel=0.0, seg=1)
 
 
 # ---------------- 柵欄 ----------------
@@ -224,9 +224,9 @@ def build_fence():
         box((FENCE_SEG + 0.02, 0.04, RAIL_H), (0, POST_W / 2 + 0.02, z), (rnd.uniform(-0.01, 0.01), 0, 0), m=pick(WOOD))
         for xx in (-FENCE_SEG / 2, FENCE_SEG / 2):
             box((0.02, 0.02, 0.02), (xx, POST_W / 2 + 0.045, z), m=IRON)
-    rail = finish('FenceRail', bevel=0.008, seg=1)
+    rail = finish('FenceRail', bevel=0.0, seg=1)
     fence_post(0.0, top)
-    post = finish('FencePost', bevel=0.008, seg=1)
+    post = finish('FencePost', bevel=0.0, seg=1)
     return [rail, post]
 
 
@@ -240,9 +240,9 @@ def build_gate(w=2.4, h=1.15):
     box((L, 0.05, 0.12), (w / 2, 0.05, 0.7), (0, -math.atan2(0.9, w - 0.2), 0), m=TRIM)
     for z in (0.25, 1.15):
         box((0.35, 0.02, 0.05), (0.17, -0.045, z), m=IRON)
-    gate = finish('FenceGate', bevel=0.008, seg=1)
+    gate = finish('FenceGate', bevel=0.0, seg=1)
     fence_post(0.0, 1.6, 0.22)                           # 門柱：比柵欄木樁高、粗
-    gp = finish('GatePost', bevel=0.008, seg=1)
+    gp = finish('GatePost', bevel=0.0, seg=1)
     return [gate, gp]
 
 
@@ -256,7 +256,7 @@ def build_hitch(w=3.2, h=2.5):
     box((w, 0.1, 0.1), (0, 0, 1.0), m=pick(WOOD))                         # 繫馬橫桿
     box((0.03, 0.03, 0.3), (0, 0, h - 0.15), m=IRON)                       # 吊燈的鉤子
     lantern_parts(0, 0, h - 0.3)
-    return finish('HitchRail', bevel=0.008, seg=1)
+    return finish('HitchRail', bevel=0.0, seg=1)
 
 
 # ---------------- 風車塔 ----------------
@@ -299,7 +299,7 @@ def build_windmill():
         z = 0.5 + k * 0.4
         r = leg_at(z)
         box((0.5, 0.04, 0.04), (0, -r - 0.02, z), m=pick(WOOD))
-    tower = finish('Windmill', bevel=0.006, seg=1)
+    tower = finish('Windmill', bevel=0.0, seg=1)
     # 葉輪：18 片斜斜的葉片夾在內外兩圈之間，原點在輪轂
     n = 18
     for k in range(n):
@@ -317,7 +317,7 @@ def build_windmill():
     for k in range(6):                                   # 輻條
         a = k * math.tau / 6
         strut((0, 0, 0), (math.sin(a) * 1.5, 0, math.cos(a) * 1.5), 0.03, IRON)
-    rotor = finish('WindmillRotor', bevel=0.004, seg=1)
+    rotor = finish('WindmillRotor', bevel=0.0, seg=1)
     return [tower, rotor]
 
 
@@ -372,7 +372,7 @@ def build_shed():
                                (-2.3, 1.8, 0, False), (-1.2, 1.8, 0, False), (2.4, 1.2, 0, True), (2.4, 1.2, 1, True), (-2.5, 0.2, 0, True)):
         hay_parts(x, y, z * Hh, along_y)
         COL.append(((Wd, L, Hh) if along_y else (L, Wd, Hh), (x, y, Hh / 2 + z * Hh), (0, 0, 0)))
-    shed = finish('HayShed', bevel=0.01, seg=1)
+    shed = finish('HayShed', bevel=0.0, seg=1)
     col = make_col('HayShedCol')
     return [shed, col]
 

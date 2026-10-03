@@ -3,7 +3,7 @@ shader_type spatial;
 // main.gd 的 _flatten_models 開場時把 leafcard 材質換成這個，貼圖沿用 glb 裡的。
 // 風跟草地（grass.gdshader）同一個方向、同一波：整棵樹冠跟著陣風慢慢晃，每片葉子再各自細細抖；
 // 越高晃越多（樹根附近不動），樹幹沒有晃，所以幅度要小，不然葉子會跟枝條脫開。
-render_mode cull_back, specular_disabled, shadows_disabled, world_vertex_coords, diffuse_lambert_wrap;   // 包覆打光：背光那半邊不會沉成一片深灰
+render_mode cull_back, specular_disabled, shadows_disabled, world_vertex_coords;
 
 uniform sampler2D leaf_tex : source_color, filter_linear_mipmap;
 uniform float sway = 0.18;      // 整棵樹冠晃動的幅度（公尺，樹頂那邊）
@@ -14,6 +14,22 @@ uniform float leaf_blur = 2.5;   // 顏色模糊幾級（每級解析度減半�
 // 當成一顆球，整個樹冠分成受光面、背光面兩三段大明暗（美術風格評估第 4 點）
 uniform float crown_height = 3.5;   // 樹冠中心離樹根幾公尺（照模型原本大小，會跟著樹的縮放）
 uniform float crown_round = 0.45;    // 球面法線佔幾成：1 = 完全當球，0 = 卡片原本的法線。0.85 時夕陽從樹後面來，朝鏡頭那半顆整片變暗變灰（第 76 版）
+
+// 樹冠分三段明暗（Shader 美術改善規格第 9 節：Light / Mid / Dark 大塊面）：太陽打光分段（包覆打光，背光那半邊不會沉成一片深灰），
+// 再加跟 facet.gdshader 一樣的天空光（樹冠朝天的半顆亮、底下暗），也分段。暗部偏冷綠、受光偏黃綠（main.gd 的 FACET_TINTS 植物）
+uniform float leaf_steps = 3.0;
+uniform float leaf_wrap = 0.5;
+uniform float leaf_fill = 0.35;
+uniform vec3 fill_dir = vec3(-0.45, 1.0, -0.21);
+uniform vec3 shade_tint = vec3(0.90, 1.0, 0.98);
+uniform vec3 lit_tint = vec3(1.04, 1.06, 0.86);
+uniform float sun_neutral = 0.3;
+
+float steps(float x, float n) {
+	float s = x * n;
+	float f = floor(s);
+	return (f + smoothstep(0.44, 0.56, s - f)) / n;
+}
 
 void vertex() {
 	vec3 root = MODEL_MATRIX[3].xyz;   // 樹根（world_vertex_coords 下 VERTEX 已是世界座標）
@@ -34,8 +50,16 @@ void fragment() {
 	vec4 c = texture(leaf_tex, UV);
 	// 顏色取貼圖模糊幾級的版本（mipmap 偏移）：葉片內部的迷彩斑點和零星亮點抹成整片，樹冠讀起來是大塊明暗。
 	// 輪廓（透明度）照原本清晰度挖：葉緣形狀不變（美術風格評估：樹冠內部太碎）
-	ALBEDO = texture(leaf_tex, UV, leaf_blur).rgb;
+	vec3 wn = normalize((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz);
+	float fill = steps(0.5 + 0.5 * dot(wn, normalize(fill_dir)), leaf_steps);
+	ALBEDO = texture(leaf_tex, UV, leaf_blur).rgb * (1.0 + leaf_fill * (fill - 0.6)) * shade_tint;
 	ALPHA = c.a;
 	ALPHA_SCISSOR_THRESHOLD = 0.5;
 	ROUGHNESS = 0.81;   // 記號：outline.gdshader 對葉子只畫跟天空交界的外輪廓，不畫每張卡片的邊（卡片邊緣一圈圈細黑線很吵）
+}
+
+void light() {
+	float x = clamp((dot(NORMAL, LIGHT) + leaf_wrap) / (1.0 + leaf_wrap), 0.0, 1.0) * ATTENUATION;
+	vec3 sun = mix(LIGHT_COLOR, vec3(dot(LIGHT_COLOR, vec3(0.2126, 0.7152, 0.0722))), sun_neutral);
+	DIFFUSE_LIGHT += steps(x, leaf_steps) * sun / PI * lit_tint / shade_tint;
 }
