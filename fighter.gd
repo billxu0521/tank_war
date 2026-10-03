@@ -13,7 +13,7 @@ extends CharacterBody3D
 signal died(killer: Node)
 
 const GRAVITY := 25.0
-const LOOK_SETTLE_MS := 1500  # 滑鼠鎖定後先忽略這麼久的位移
+const LOOK_SETTLE_MS := 1500  # macOS：滑鼠鎖定後先忽略這麼久的位移（從鎖定那一刻算）
 
 @export var max_hp := 100
 ## true = 電腦操控。不讀鍵盤，自己照優先序決策。
@@ -23,8 +23,25 @@ const LOOK_SETTLE_MS := 1500  # 滑鼠鎖定後先忽略這麼久的位移
 var hp := 0
 var hit_until := 0  # 自己的彈打中人，準心閃紅到這個時刻（毫秒）
 var _last_hit_by: Node = null  # 只有主機需要，用來記誰殺了誰
-var _was_captured := false
-var _settle_until := 0
+static var diag := {}       # 診斷（暫時，滑鼠視角卡住的 bug 修好就拿掉）：滑鼠事件走到哪一步，main.gd 每半秒印一次
+static var _look_from := 0   # 這個時刻（毫秒）之前的滑鼠位移不算。全部角色共用：重生的新角色不用重新等
+
+# --- 別人的角色：平滑顯示 ---
+# 同步器只同步 net_state = [送出時的時間, 位置, 朝向]。收到的先存起來，畫面刻意晚 NET_DELAY 毫秒，
+# 在前後兩筆之間補（跟 FPS 遊戲的「插值」同一招）：網路一時慢了、一次來兩包，看起來還是順的。
+# 只有客戶端這樣做。主機（含測試站）收到就直接套：恐龍咬人、boss 找人都在主機算，不能看慢了的位置。
+# 客戶端自己判定打中（Bullet），打的就是畫面上看到的位置，所以「看到哪、打哪」還是對得上。
+# 晚越多越順但越不準（躲到牆後還中彈）：同步器每秒送 40 次（cowboy.tscn、boss.tscn 的 replication_interval），
+# 晚 60ms 等於手上隨時有兩三筆可以補，晚一包也不會停住
+const NET_DELAY := 60.0
+const NET_KEEP := 1000.0   # 存最近這麼多毫秒
+var net_smooth := false     # _ready 決定；測試會直接打開
+var _snaps: Array = []      # [送出時間, 收到時間, 位置, 朝向]，照時間排
+var net_state: Array:
+	get:
+		return [Time.get_ticks_msec(), position, rotation]
+	set(v):
+		_net_push(v)
 
 
 ## 電腦（移動標靶、bot）用負數編號，由主機操控。
@@ -41,6 +58,55 @@ func _enter_tree() -> void:
 
 func _ready() -> void:
 	hp = max_hp
+	# 物理插值（project.godot 開著）：畫面在前後兩個物理步之間補，高刷新率螢幕才不會一頓一頓。
+	# 生出來之後呼叫的人才擺位置，等這一幀結束再重設，不然第一幀會從原點滑過去
+	reset_physics_interpolation.call_deferred()
+	net_smooth = not is_multiplayer_authority() and not multiplayer.is_server()
+	if net_smooth:
+		physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF   # 自己每幀補，不再經過物理插值
+
+
+func _net_push(v: Array) -> void:
+	if not net_smooth:
+		position = v[1]   # 主機、還沒進場景（生出來那一包）：直接套
+		rotation = v[2]
+		return
+	var now := float(Time.get_ticks_msec())
+	_snaps.append([float(v[0]), now, v[1], v[2]])
+	while _snaps.size() > 2 and _snaps[0][1] < now - NET_KEEP:
+		_snaps.pop_front()
+
+
+## 照畫面時間在兩筆之間補。對方的時鐘跟我們不一樣：用「收到 - 送出」最小的那筆當兩邊的時差
+## （最快到的那包最接近真正的時差），再往回退 NET_DELAY
+func net_step(now: float) -> void:
+	if _snaps.is_empty():
+		return
+	var off := INF
+	for s: Array in _snaps:
+		off = minf(off, s[1] - s[0])
+	var t := now - off - NET_DELAY
+	var last: Array = _snaps[-1]
+	if t >= last[0]:   # 新的還沒到：停在最後一筆，不亂猜
+		position = last[2]
+		rotation = last[3]
+		return
+	for i in range(_snaps.size() - 1, 0, -1):
+		var a: Array = _snaps[i - 1]
+		if a[0] <= t:
+			var b: Array = _snaps[i]
+			var k := clampf((t - a[0]) / maxf(b[0] - a[0], 0.001), 0.0, 1.0)
+			position = (a[2] as Vector3).lerp(b[2], k)
+			rotation = Quaternion.from_euler(a[3]).slerp(Quaternion.from_euler(b[3]), k).get_euler()
+			return
+	position = _snaps[0][2]
+	rotation = _snaps[0][3]
+
+
+func _notification(what: int) -> void:
+	# 牛仔、恐龍各有自己的 _process；這裡用通知，子類別不用記得呼叫
+	if what == NOTIFICATION_PROCESS and net_smooth:
+		net_step(float(Time.get_ticks_msec()))
 
 ## 自己射出去的彈打中有血的東西時呼叫。純本機回饋，不走網路。
 func on_hit() -> void:
@@ -56,34 +122,61 @@ func take_damage(amount: int, source: Node = null) -> void:
 		if g and not g.dino_attacks:
 			return
 	_last_hit_by = source
-	_sync_hp.rpc(hp - amount)
+	# 從哪裡打來的（給被打的人畫受傷方向）：恐龍是身體中心、牛仔是胸口；摔落沒有來源
+	var from := Vector3.INF
+	if is_instance_valid(source) and source is Node3D and source != self:
+		from = (source as Node3D).global_position + (Vector3.ZERO if source.is_in_group(&"dino") else Vector3.UP * 1.3)
+	_sync_hp.rpc(hp - amount, from)
 
-# ponytail: 主機算完傷害直接廣播結果，不驗證來源。原型不防作弊，要防再改成主機權威輸入。
+## 血量只有主機能改。annotation 寫 any_peer 是因為牛仔節點的 authority 是玩家本人（他自己控制移動），
+## 寫 authority 的話主機反而發不出來；所以收到時自己檢查是不是主機（編號 1）送的
 @rpc("any_peer", "call_local", "reliable")
-func _sync_hp(v: int) -> void:
+func _sync_hp(v: int, from := Vector3.INF) -> void:
+	if multiplayer.get_remote_sender_id() != 1:
+		return
 	if v < hp:
 		_flash_red()
+		_on_hurt(hp - v, from)
 	hp = v
 	if hp <= 0:
 		died.emit(_last_hit_by)
 		if multiplayer.is_server():
 			queue_free()  # MultiplayerSpawner 會同步移除其他人畫面上的它
 
-## 取滑鼠這一幀轉了多少。
+## 鎖住滑鼠（進遊戲、關選單、點畫面、系統放掉後鎖回來）都要走這裡。
 ## 滑鼠一被鎖定，macOS 會噴出一串「游標歸位」的殘留位移（實測從鎖定後 780ms 開始、
-## 衰減到 1200ms 才停），不擋掉的話砲塔一進遊戲就自己甩到隨機角度。
-## ponytail: 直接用固定時間窗擋掉，夠簡單也夠用。如果哪天在別的機器上還是會甩，
-## 就把 LOOK_SETTLE_MS 調大，或改成「等到位移出現一段空檔才開始吃輸入」。
+## 衰減到 1200ms 才停），不擋掉的話視角一進遊戲就自己甩到隨機角度。所以 macOS 鎖定後 LOOK_SETTLE_MS 內的位移不算。
+## 以前這段時間是在 mouse_look 收到「鎖定後第一個滑鼠事件」才開始算，等於玩家一動滑鼠就被凍 1.5 秒
+## （剛進遊戲、關 Esc 選單、每次重生都會，2026-10-02 回報「滑鼠動了鏡頭不動」）。現在從鎖定那一刻算、只有 macOS 擋。
+## ponytail: 固定時間窗。macOS 上鎖定後馬上動滑鼠還是會卡一下，嫌卡再改成「等殘留位移出現一段空檔就開始吃輸入」。
+static func lock_mouse() -> void:
+	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		return   # 已經鎖著（例如每幀的保險），不要重算
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	if OS.get_name() == "macOS":
+		_look_from = Time.get_ticks_msec() + LOOK_SETTLE_MS
+
+## 這個角色吃不吃這台電腦的滑鼠：要是自己操控的，而且不是電腦。
+## 電腦（boss、bot、移動標靶）也是主機在操控，authority 是主機——不擋的話主機玩家一動滑鼠，
+## 牠們的頭和身體也跟著轉（恐龍的頭跟主機玩家一起轉的 bug、0.8.1 回饋 B4）
+func takes_mouse() -> bool:
+	return is_multiplayer_authority() and not is_bot_id(name.to_int())
+
+## 取滑鼠這一幀轉了多少
 func mouse_look(e: InputEvent) -> Vector2:
-	var captured := Input.mouse_mode == Input.MOUSE_MODE_CAPTURED
-	if captured != _was_captured:
-		_was_captured = captured
-		_settle_until = Time.get_ticks_msec() + LOOK_SETTLE_MS
-	if not captured or not is_multiplayer_authority() or not (e is InputEventMouseMotion):
+	if e is InputEventMouseMotion and takes_mouse():
+		_diag("角色收到")
+		if Time.get_ticks_msec() < _look_from:
+			_diag("等待中擋掉")
+	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED or not takes_mouse() or not (e is InputEventMouseMotion):
 		return Vector2.ZERO
-	if Time.get_ticks_msec() < _settle_until:
+	if Time.get_ticks_msec() < _look_from:
 		return Vector2.ZERO
+	_diag("有轉")
 	return e.relative
+
+static func _diag(k: String) -> void:
+	diag[k] = diag.get(k, 0) + 1
 
 ## 水平速度用加速度逼近目標，不要瞬間到頂也不要瞬間停住。
 ## 煞車通常比加速快，放開按鍵才不會像在冰上滑。
@@ -102,6 +195,10 @@ func _apply_gravity(delta: float) -> void:
 
 ## 中彈閃一下紅。用 material_overlay 蓋在原本材質上，
 ## 每次都新建材質，才不會跟別台共用的材質互相干擾。
+## 被打了（每台都會呼叫）。牛仔在這裡做自己畫面上的受傷回饋（cowboy.gd）；from 是傷害來源，摔落是 INF
+func _on_hurt(_amount: int, _from: Vector3) -> void:
+	pass
+
 func _flash_red() -> void:
 	var mat := StandardMaterial3D.new()
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED

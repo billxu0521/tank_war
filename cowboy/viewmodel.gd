@@ -12,26 +12,27 @@ class_name Viewmodel
 @export_group("Aim")
 @export var hip_fov := 90.0
 @export var ads_fov := 55.0
-## 舉槍到定位要多久。過渡期間散布還是腰射值——「舉槍要時間」不用另外寫規則。
-@export var ads_time := 0.2
 @export var ads_speed_scale := 0.5
 
+@export_group("操作規則")
+## 三把槍一致的操作方式（企劃規格裡「待討論」的幾項，先做成開關）
+## 提早按開火要不要記住：扳擊錘、拉栓還沒做完就按，等槍好了自動射出。false = 要再按一次
+@export var fire_buffer := false
+## 逐發裝填中按開火：true = 停下裝填、馬上開槍；false = 只停下裝填，要再按一次才開（規格建議的做法）
+@export var reload_fire_shoots := true
+## 搧擊錘要持續按住開火鍵多久才算（秒）。快速連點每下都很短，不會被當成搧擊錘連發
+@export var fan_hold := 0.2
+## 瞄準按一下切換（true）或按住（false）。玩家自己的設定，Esc 選單裡改，存在 user://settings.cfg
+static var aim_toggle := false
+
 @export_group("Spread")
-## 散布半角，單位是度。
-@export var hip_spread := 4.0
-@export var ads_spread := 0.3
+## 舉槍時間、腰射／瞄準散布、後座力是每把槍自己的（weapon.gd）。
+## 這裡是三把共用的連射散布累積（規格 L1 的 bloom）：每發加多少、上限、每秒縮回多少，散布單位是度
 @export var spread_per_shot := 1.5
 var remote_shots := 0   # 收到別人這把槍開了幾槍（連線測試用來確認三人以上也看得到）
 @export var max_spread := 8.0
 @export var spread_recover := 6.0
 
-@export_group("Recoil")
-@export var recoil_up := 1.2
-@export var recoil_up_var := 0.4
-@export var recoil_side := 0.5
-## 只回復這個比例。回滿等於沒有後座力——連射到最後準心還在原地。
-@export var recoil_recover_ratio := 0.7
-@export var recoil_recover_time := 0.25
 
 @export_group("Sway")
 ## 視角轉動時武器的拖曳量（rad 對 rad），移動時的位移量（公尺）。
@@ -39,6 +40,15 @@ var remote_shots := 0   # 收到別人這把槍開了幾槍（連線測試用來
 @export var sway_amount := 0.0
 @export var move_sway := 0.0
 @export var sway_return_speed := 6.0
+
+@export_group("Run")
+## 跑步（衝刺）時槍放低、往內收、槍口朝下斜（公尺、弧度）。放下舉起各約 0.18 秒——看得出「現在在跑，不能馬上開槍」
+@export var sprint_pos := Vector3(0.02, -0.035, 0.03)
+@export var sprint_rot := Vector3(-0.1, 0.16, 0.18)
+@export var sprint_blend_time := 0.18
+## 手跟著腳步晃：走路小、跑步大（公尺）。一步晃一次，跟腳步聲同一個節奏（cowboy 的 step_*_interval）
+@export var bob_walk := 0.008
+@export var bob_sprint := 0.03
 
 @export_group("Breath")
 ## 舉槍時準心會慢慢飄（度）。Hunt 的遠距離要閉氣才打得準，就是這個
@@ -99,6 +109,11 @@ var _melee_cooldown := 0.0
 var _melee_held := -1.0
 ## 舉槍晃動：已經套到視角上的偏移（弧度），下一幀只補差值
 var _sway_applied := Vector2.ZERO
+var _sway_pos := Vector3.ZERO   # 轉視角、移動的拖曳（目前關著）
+var _sway_rot := Vector3.ZERO
+var sprint_k := 0.0             # 0 = 平常，1 = 完全是跑步姿勢
+var _bob_t := 0.0
+var _bob_amp := 0.0
 var _sway_t := 0.0
 ## 這一幀是不是在閉氣，給 HUD 和測試看
 var holding_breath := false
@@ -107,6 +122,9 @@ var _recoil_left := Vector2.ZERO
 var _recoil_time_left := 0.0
 ## 每開一輪裝填就 +1，讓上一輪的 await 醒來時知道自己已經過期
 var _reload_id := 0
+var _fire_queued := false   # 等槍好了自動射的那一發：裝填中按開火（槍回正後射），或 fire_buffer 開著時提早按的
+var _aim_latched := false   # aim_toggle 開著時：現在是不是舉著
+var _fire_hold := 0.0       # 開火鍵這一次已經按住多久
 
 
 func _ready() -> void:
@@ -120,10 +138,41 @@ func _ready() -> void:
 	weapon.visible = true
 	_refresh_ammo()
 	weapon.play(&"idle", blend)
+	_mark_for_outline()
+
+
+## 描線（outline.gdshader）認槍和手的記號：粗糙度剛好 OUTLINE_MARK。以前用「離鏡頭 1.5 公尺內」認，
+## 貼近牆和木桶時它們也被當成槍、黑邊突然變粗；有些零件的粗糙度又剛好撞到草（0.5）和遠山（0.75）的記號。
+## 材質複製一份再改，不動到別人（第三人稱、場景裡）共用的同一個材質
+const OUTLINE_MARK := 0.65
+## 目標（恐龍、別人的牛仔、靶）：outline.gdshader 不抹油畫、加輪廓光和較粗的線，遠處也認得出來（美術風格指南第 11 節）
+const TARGET_MARK := 0.87
+
+func _mark_for_outline() -> void:
+	mark_meshes(self, OUTLINE_MARK)
+
+## 把 root 底下所有不透明材質的粗糙度改成 mark，給 outline.gdshader 認
+static func mark_meshes(root: Node, mark: float) -> void:
+	for mi: MeshInstance3D in root.find_children("*", "MeshInstance3D", true, false):
+		if mi.mesh == null:
+			continue
+		for i in mi.mesh.get_surface_count():
+			var mat := mi.get_active_material(i)
+			if mat is ShaderMaterial and (mat as ShaderMaterial).shader == preload("res://facet.gdshader"):   # 共用材質（main.gd 的 _to_facet）
+				mat = mat.duplicate()
+				mat.set_shader_parameter(&"roughness", mark)
+				mi.set_surface_override_material(i, mat)
+			elif mat is BaseMaterial3D and mat.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED:   # 火光這類半透明的不寫粗糙度，不用改
+				mat = mat.duplicate()
+				mat.roughness = mark
+				mi.set_surface_override_material(i, mat)
 
 
 func _process(delta: float) -> void:
 	_fire_cooldown = maxf(_fire_cooldown - delta, 0.0)
+	if _fire_queued and _fire_cooldown <= 0.0:
+		_fire_queued = false
+		try_fire()
 	_melee_cooldown = maxf(_melee_cooldown - delta, 0.0)
 	_update_spread(delta)
 	_update_recoil(delta)
@@ -136,8 +185,11 @@ func _process(delta: float) -> void:
 		if _melee_held >= 0.0:
 			pass   # 蓄力近戰中：兩手都在揮槍托，不能開槍、換彈、換槍
 		elif Input.is_action_just_pressed("fire"):
-			try_fire()
-		elif weapon.fan_interval > 0.0 and ads < 0.5 and Input.is_action_pressed("fire"):
+			if _fire_cooldown > 0.0 and fire_buffer and not _reloading:
+				_fire_queued = true
+			else:
+				try_fire()
+		elif _wants_fan():
 			try_fire(true)   # 左輪腰射按住＝搧擊錘，快但散
 		elif Input.is_action_just_pressed("reload"):
 			try_reload()
@@ -153,7 +205,15 @@ func _process(delta: float) -> void:
 	# 翻越、爬梯子時槍放低（手去撐東西了）
 	weapon.lower = move_toward(weapon.lower, 1.0 if (_player.vaulting or _player.is_climbing()) else 0.0, delta * 6.0)
 	weapon.aim = ads
-	_update_ads(Input.is_action_pressed("aim") and _melee_held < 0.0, delta)
+	_fire_hold = _fire_hold + delta if Input.is_action_pressed("fire") else 0.0
+	var wants_aim := Input.is_action_pressed("aim")
+	if aim_toggle:
+		if Input.is_action_just_pressed("aim"):
+			_aim_latched = not _aim_latched
+		if _player.is_sprinting():
+			_aim_latched = false   # 衝刺會放下槍，切換模式也一樣
+		wants_aim = _aim_latched
+	_update_ads(wants_aim and _melee_held < 0.0, delta)
 	_update_breath(Input.is_action_pressed("sprint"), delta)
 	_update_sway(delta)
 	_update_anim(delta)
@@ -162,8 +222,9 @@ func _process(delta: float) -> void:
 func switch_weapon(index: int) -> void:
 	if index == _index or index < 0 or index >= _weapons.size():
 		return
-	# 換槍等於放棄這輪裝填
+	# 換槍等於放棄這輪裝填，排隊中的那一發也不射
 	cancel_reload()
+	_fire_queued = false
 	weapon.visible = false
 	_index = index
 	weapon = _weapons[index]
@@ -179,14 +240,15 @@ func switch_weapon(index: int) -> void:
 ## 舉槍／放下的過渡。衝刺會強制放下。
 func _update_ads(wants: bool, delta: float) -> void:
 	var aiming := wants and not _player.is_sprinting()
-	ads = clampf(ads + (delta / ads_time) * (1.0 if aiming else -1.0), 0.0, 1.0)
+	# 舉槍到定位要時間，過渡期間散布還是腰射值——「舉槍要時間」不用另外寫規則
+	ads = clampf(ads + (delta / weapon.ads_in if aiming else -delta / weapon.ads_out), 0.0, 1.0)
 	_camera.fov = lerpf(hip_fov, ads_fov, ads)
 	weapon.position = _hip_positions[_index].lerp(weapon.ads_position, ads)
 
 
 func _update_spread(delta: float) -> void:
 	# 舉滿了才吃 ADS 的精準值，過渡期間一律當腰射
-	var base := ads_spread if ads >= 1.0 else hip_spread
+	var base := weapon.spread_ads if ads >= 1.0 else weapon.spread_hip
 	spread = maxf(spread - spread_recover * delta, base)
 
 
@@ -210,8 +272,24 @@ func _update_sway(delta: float) -> void:
 	var target_rot := Vector3(-look.y, -look.x, 0.0) * sway_amount * 60.0 * strength
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var target_pos := Vector3(-input.x, 0.0, -input.y) * move_sway * strength
-	rotation = rotation.lerp(target_rot.limit_length(0.08), sway_return_speed * delta)
-	position = position.lerp(target_pos, sway_return_speed * delta)
+	_sway_rot = _sway_rot.lerp(target_rot.limit_length(0.08), sway_return_speed * delta)
+	_sway_pos = _sway_pos.lerp(target_pos, sway_return_speed * delta)
+
+	# 跑步姿勢和腳步晃動：直接疊上去，不走上面的 lerp（lerp 會把晃動磨平、慢半拍）
+	var speed := Vector2(_player.velocity.x, _player.velocity.z).length()
+	var moving := _player.is_on_floor() and speed > 0.5
+	var sprinting := moving and _player.is_sprinting()
+	sprint_k = move_toward(sprint_k, 1.0 if sprinting else 0.0, delta / sprint_blend_time)
+	var e := smoothstep(0.0, 1.0, sprint_k)
+	var interval: float = _player.step_sprint_interval if sprinting else _player.step_walk_interval
+	if moving:
+		_bob_t += delta * PI / interval   # 半圈一步
+	var want_amp := (lerpf(bob_walk, bob_sprint, e) if moving else 0.0) * (1.0 - ads)
+	_bob_amp = move_toward(_bob_amp, want_amp, delta * 0.2)   # 停下來慢慢收，不要一下子定住
+	# 左右各一步，上下每步沉一次（8 字）；跑步時再加一點側傾
+	var bob := Vector3(cos(_bob_t), -absf(sin(_bob_t)) * 0.8, 0.0) * _bob_amp
+	position = _sway_pos + sprint_pos * e + bob
+	rotation = _sway_rot + sprint_rot * e + Vector3(0.0, 0.0, cos(_bob_t) * _bob_amp * 2.0)
 
 
 ## 舉槍時準心沿一個慢慢的 8 字飄。直接轉視角，所以真的影響落點——
@@ -277,9 +355,14 @@ func try_fire(fanning := false) -> void:
 		return
 	if _reloading:
 		# 折開式換到一半槍是拆開的，打不了；逐發裝填則隨時可以中止開打
-		if weapon.reload_whole_mag:
+		if weapon.reload_type == Weapon.Reload.WHOLE:
 			return
 		cancel_reload()
+		# 槍還在裝填姿勢（裝填門開著、手在塞子彈）：先回正，回好了才射這一發，不在半路開槍
+		_fire_cooldown = maxf(_fire_cooldown, weapon.ready_after_reload())
+		if reload_fire_shoots:
+			_fire_queued = true
+		return
 	if weapon.mag == 0:
 		if weapon.reserve != 0:
 			try_reload()
@@ -289,13 +372,15 @@ func try_fire(fanning := false) -> void:
 
 	weapon.mag -= 1
 	_refresh_ammo()
-	_fire_cooldown = weapon.fan_interval if fanning else weapon.fire_interval
+	# 擊發間隔和扳擊錘／拉栓同時起算，兩個都結束才能開下一槍。搧擊錘是手掌拍擊錘，沒有另外的上膛動作
+	_fire_cooldown = weapon.fan_interval if fanning else maxf(weapon.fire_interval, weapon.cycle_time)
 	weapon.play_sound(&"Shoot")
 	# 最後一發用 _EMPTY 版本（手槍滑套後定）
 	var action := &"fire"
 	if weapon.mag == 0 and weapon.has_action(&"fire_EMPTY"):
 		action = &"fire_EMPTY"
-	_anim_lock = weapon.play(action, blend, _fire_cooldown)
+	# 畫面上的扳擊錘／拉栓照 cycle_time 做完：還沒拉好不會先看起來已經好了
+	_anim_lock = weapon.play(action, blend, weapon.cycle_time if weapon.cycle_time > 0.0 and not fanning else _fire_cooldown)
 
 	# 每顆彈丸一顆子彈，各自帶散布。霰彈的體感就是這裡來的：近距離全中、遠距離散光
 	var dirs := PackedVector3Array()
@@ -317,7 +402,8 @@ func try_fire(fanning := false) -> void:
 ## 扣血只在開槍的人那邊判定一次，再請主機執行（Cowboy.deal_damage）。
 ## 客戶端 A 開的槍，主機會轉發給客戶端 B（SceneMultiplayer 的 server_relay 預設開著）。
 ## 2026-09-29 用專用伺服器＋兩個客戶端實測過：B 收得到 A 的每一槍
-@rpc("authority", "call_remote", "unreliable")
+## 保證送到（reliable）：槍聲是情報，恐龍 boss 也靠它找人，掉一包就少聽到一槍。手動槍射速慢，多花的頻寬可以不計
+@rpc("authority", "call_remote", "reliable")
 func _remote_shot(index: int, from: Vector3, dirs: PackedVector3Array) -> void:
 	if index < 0 or index >= _weapons.size():
 		return
@@ -342,7 +428,7 @@ func _muzzle_flash(w: Weapon) -> void:
 	var at = w.muzzle_global()
 	if at != null:
 		_fx.global_position = at
-	_fx.flash()
+	_fx.flash(w.smoke)
 
 
 ## 生子彈。從鏡頭中心出發（所以瞄具不用歸零：近距離打哪中哪，遠了往下掉）。
@@ -368,19 +454,19 @@ func _launch(index: int, from: Vector3, dirs: PackedVector3Array, visual_only: b
 
 ## 逐發：一次壓一發，隨時可被開火中斷。整匣：播完 reload 一次補滿。
 func try_reload() -> void:
-	if _reloading or weapon.mag == weapon.mag_size or weapon.reserve == 0:
+	if _reloading or weapon.mag == weapon.capacity or weapon.reserve == 0:
 		return
 	_reload_id += 1
 	var id := _reload_id
 	_reloading = true
 	weapon.play_sound(&"Reload")
 
-	if weapon.reload_whole_mag:
+	if weapon.reload_type == Weapon.Reload.WHOLE:
 		weapon.play(&"reload", blend, weapon.reload_time)
 		await get_tree().create_timer(weapon.reload_time).timeout
 		if id != _reload_id:
 			return
-		var take := weapon.mag_size - weapon.mag
+		var take := weapon.capacity - weapon.mag
 		if weapon.reserve > 0:
 			take = mini(take, weapon.reserve)
 			weapon.reserve -= take
@@ -389,15 +475,15 @@ func try_reload() -> void:
 		_reloading = false
 		return
 
-	if weapon.has_action(&"reload_start"):
-		var lead := weapon.play(&"reload_start", blend)
-		await get_tree().create_timer(lead).timeout
+	if weapon.reload_start > 0.0:
+		weapon.play(&"reload_start", blend, weapon.reload_start)
+		await get_tree().create_timer(weapon.reload_start).timeout
 		if id != _reload_id:
 			return
-	while weapon.mag < weapon.mag_size and weapon.reserve != 0:
-		weapon.play(&"reload_round", blend, weapon.reload_time)
+	while weapon.mag < weapon.capacity and weapon.reserve != 0:
+		weapon.play(&"reload_round", blend, weapon.reload_insert)
 		# 用計時器而不是 animation_finished：不會被其他動作的 finished 訊號搶走
-		await get_tree().create_timer(weapon.reload_time).timeout
+		await get_tree().create_timer(weapon.reload_insert).timeout
 		# 序號對不上代表這輪已經被中止（或被新的一輪取代），直接收手。
 		# 只看 _reloading 旗標不夠：中止後馬上重按 R，舊迴圈會誤以為是自己還活著
 		if id != _reload_id:
@@ -406,8 +492,9 @@ func try_reload() -> void:
 		if weapon.reserve > 0:
 			weapon.reserve -= 1
 		_refresh_ammo()
-	if weapon.has_action(&"reload_end"):
-		_anim_lock = weapon.play(&"reload_end", blend)
+	if weapon.reload_end > 0.0:
+		_anim_lock = weapon.play(&"reload_end", blend, weapon.reload_end)
+		_fire_cooldown = maxf(_fire_cooldown, weapon.reload_end)   # 裝填門還沒關好不能開
 	_reloading = false
 
 
@@ -423,6 +510,8 @@ func _spread_direction(cam: Camera3D, extra := 0.0) -> Vector3:
 	var basis := cam.global_transform.basis
 	var forward := -basis.z
 	var total := spread + extra
+	if _first_shot_perfect():
+		total = extra   # 霰彈的彈丸還是各自散開
 	if total <= 0.0:
 		return forward
 	var angle := deg_to_rad(total) * sqrt(randf())
@@ -431,14 +520,27 @@ func _spread_direction(cam: Camera3D, extra := 0.0) -> Vector3:
 	return (forward + side * tan(angle)).normalized()
 
 
+## 搧擊錘：左輪腰射、開火鍵「持續」按住夠久。只看「現在按著」的話，快速連點時某一下剛好跨過冷卻結束，
+## 就會被當成搧擊錘，用 0.16 秒的間隔連發出去
+func _wants_fan() -> bool:
+	return weapon.fan_interval > 0.0 and ads < 0.5 and _fire_hold >= fan_hold
+
+
+## 瞄準後第一發完全準：舉滿瞄具、站著不動、沒有連射累積的散布
+func _first_shot_perfect() -> bool:
+	return weapon.ads_first_shot_perfect and ads >= 1.0 and spread <= weapon.spread_ads + 0.001 \
+		and Vector2(_player.velocity.x, _player.velocity.z).length() < 0.5
+
+
 ## 直接轉視角而不是只晃畫面，這樣它真的影響下一發落點。
+## 只回正一部分（recoil_return_ratio）：回滿等於沒有後座力——連射到最後準心還在原地
 func _apply_recoil() -> void:
-	var s := weapon.recoil_scale
-	var up := deg_to_rad(recoil_up + randf_range(-recoil_up_var, recoil_up_var)) * s
-	var side := deg_to_rad(randf_range(-recoil_side, recoil_side)) * s
+	var w := weapon
+	var up := deg_to_rad(w.recoil_pitch + randf_range(-w.recoil_pitch_random, w.recoil_pitch_random))
+	var side := deg_to_rad(randf_range(-w.recoil_yaw, w.recoil_yaw))
 	_player.rotate_view(Vector2(-side, -up))
-	_recoil_left += Vector2(up, side) * recoil_recover_ratio
-	_recoil_time_left = recoil_recover_time
+	_recoil_left += Vector2(up, side) * w.recoil_return_ratio
+	_recoil_time_left = w.recoil_return_time
 
 
 func _update_anim(delta: float) -> void:

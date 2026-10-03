@@ -12,36 +12,82 @@ class_name Weapon
 ## 支援的動作名。movement 類缺漏時退回 idle。
 const MOVEMENT_FALLBACK: Array[StringName] = [&"walk", &"run", &"jump_start", &"jump_fall", &"jump_end"]
 
-@export_group("Stats")
+# 參數名字和分類照企劃的《槍枝參數規格》（docs/企劃/討論紀錄/2026-09-30-槍枝參數規格.md），
+# 標 L1、L2 的是規格裡還沒排進這階段、但現在手感已經用到的（先留著，數字不動）。
+enum Reload { WHOLE, PER_ROUND }
+## 射擊類型。BREAK（折開式散彈）是規格外的，規格只談左輪和手動步槍
+enum Action { SINGLE_ACTION, DOUBLE_ACTION, BOLT, LEVER, BREAK }
+
+@export_group("基礎")
 @export var display_name := "武器"
-@export var mag_size := 12
+## 射擊類型：單動左輪每發前扳擊錘、雙動扣扳機就扳好、栓動拉栓、槓桿壓槓桿
+@export var action_type := Action.SINGLE_ACTION
 ## 每顆彈丸的傷害。總傷害 = damage × pellets 全中。
 @export var damage := 25.0
-## 一發射出幾顆彈丸。霰彈 > 1。
+## 彈藥容量：最多裝幾發（現在剩幾發是 mag）
+@export var capacity := 12
+## 起始備彈：一開始另外帶幾發。-1 = 無限（沙盒）。遊戲中剩多少是 reserve
+@export var starting_reserve := -1
+## L1 每發彈丸數：霰彈 > 1
 @export var pellets := 1
-## 彈丸各自的額外散布半角（度），疊在 host 的散布上。
+## L2 彈丸各自的額外散布半角（度），疊在散布上
 @export var pellet_spread := 0.0
+
+@export_group("動作時間")
+## 舉起瞄具、放下瞄具各要幾秒
+@export var ads_in := 0.2
+@export var ads_out := 0.2
+## 最短擊發間隔：開一槍後至少隔幾秒才能開下一槍
 @export var fire_interval := 0.22
-## true = 一次換整匣（sawnoff 折開式），false = 一發一發壓（手槍、泵動霰彈）。
-@export var reload_whole_mag := false
-## 逐發模式是每發秒數；整匣模式是總秒數。
-@export var reload_time := 0.45
-## host 的後座力乘上這個倍率。霰彈 > 1。
-@export var recoil_scale := 1.0
-## 彈匣外的備彈。-1 = 無限。
-@export var reserve := -1
-## 腰射按住扳機可以搧擊錘連發（左輪），這是連發間隔。0 = 不能搧。
+## 每發之間的操作時間：扳擊錘、拉栓、壓槓桿要幾秒。跟擊發間隔同時起算，兩個都結束才能開下一槍（不是相加）。
+## 畫面上的動作也照這個時間做完。0 = 沒有這個動作（折開式散彈）
+@export var cycle_time := 0.0
+## 裝填類型：WHOLE 整組換（折開式散彈），PER_ROUND 一顆一顆裝（左輪、步槍）
+@export var reload_type := Reload.PER_ROUND
+## 整組裝填時間（秒）
+@export var reload_time := 1.6
+## 逐發裝填：開始裝到放得進第一顆的準備時間（打開裝填門）、每顆子彈幾秒、
+## 裝完到能開槍的收尾時間（關上裝填門）。總時間 = 準備 + 發數 × 每顆 + 收尾
+@export var reload_start := 0.0
+@export var reload_insert := 0.45
+@export var reload_end := 0.0
+## 規格外：腰射按住扳機可以搧擊錘連發（左輪），這是連發間隔。0 = 不能搧
 @export var fan_interval := 0.0
-## 搧擊錘時每發額外的散布（度）。快但不準，只適合貼臉。
+## 規格外：搧擊錘時每發額外的散布（度）。快但不準，只適合貼臉
 @export var fan_spread := 6.0
-## 射程：子彈飛這麼遠就消失。散彈 30 公尺外彈丸就散光了，步槍打得到場地另一頭。
-@export var hit_range := 100.0
+
+@export_group("後座力")
+## 垂直後座力：每發往上抬幾度（先射出子彈才抬）
+@export var recoil_pitch := 1.2
+## L2 每發上抬的隨機範圍（±度）
+@export var recoil_pitch_random := 0.4
+## L1 水平後座力：每發往左右隨機偏幾度（±）
+@export var recoil_yaw := 0.5
+## 後座力回復時間：偏掉的準心幾秒內回正
+@export var recoil_return_time := 0.25
+## 回正多少（1 = 回滿；0.7 = 回七成，剩下的玩家自己壓）
+@export var recoil_return_ratio := 0.7
+
+@export_group("散布")
+## 腰射、瞄準的散布（度，中心到邊緣）。腰射也是基礎散布
+@export var spread_hip := 4.0
+@export var spread_ads := 0.3
+## 瞄準後第一發完全準：舉滿瞄具、站著不動、沒有連射累積的散布時，這發沒有隨機偏差（後座力照樣有）
+@export var ads_first_shot_perfect := false
+
+@export_group("彈道")
 ## 子彈初速（m/s）。重力是真實的 9.8，所以越慢掉越多：
 ## 左輪 330 打 50 公尺掉 11 公分，步槍 440 打 150 公尺掉 57 公分
 @export var muzzle_velocity := 330.0
-## 有效射程：這個距離內傷害全額、打頭一槍死；超過就遞減，到 hit_range 剩 falloff_min
-@export var effective_range := 25.0
-@export var falloff_min := 0.5
+## 衰減起始距離：這個距離內傷害全額、打頭一槍死；之後線性遞減，到衰減終止距離剩最低傷害，再遠都是最低傷害
+@export var falloff_start := 25.0
+@export var falloff_end := 100.0
+## 最低傷害（每顆，直接填傷害值）。不能高過基礎傷害；改基礎傷害時這個不會跟著變
+@export var minimum_damage := 12.5
+## 最大判定距離：子彈飛這麼遠就消失。散彈 30 公尺外彈丸就散光了，步槍打得到場地另一頭
+@export var max_range := 100.0
+## 槍口煙量：左輪 = 1，越大煙團越大、留越久（Fx.gun_smoke）
+@export var smoke := 1.0
 
 @export_group("Aim")
 ## 槍口在模型裡的位置（Godot 軸向）。火光和煙從這裡出去；零＝用 ShotFX 原本的位置
@@ -111,6 +157,7 @@ const MOVEMENT_FALLBACK: Array[StringName] = [&"walk", &"run", &"jump_start", &"
 @export var load_hand_rotation := Vector3(0.6, -0.5, -0.3)
 
 var mag: int
+var reserve := 0   # 遊戲中還剩幾發備彈，-1 = 無限
 var current_action := &""
 
 var _model: Node3D
@@ -153,7 +200,9 @@ const ARMS := preload("res://models/cowboy.glb")
 
 
 func _ready() -> void:
-	mag = mag_size
+	apply_table()
+	mag = capacity
+	reserve = starting_reserve
 	_add_hands()
 	_model = get_node_or_null(model_path)
 	if _model:
@@ -191,10 +240,104 @@ func _process(delta: float) -> void:
 			_seg_end = -1.0
 
 
-## 這個距離打中的傷害。有效射程內全額，之後線性遞減到射程盡頭剩 falloff_min。
+# --- 參數表（企劃改的表格，蓋過場景裡的數字） ---
+
+## 一列一個參數、一欄一把槍（欄名 = 場景檔名，例如 revolver）。Excel 打得開，改完重開遊戲就生效。
+## 場景裡的數字只是預設值；表格裡有的以表格為準
+const TABLE := "res://cowboy/weapons/weapons.csv"
+const ACTION_NAMES := ["單動左輪", "雙動左輪", "栓動步槍", "槓桿步槍", "折開式"]   # 跟 Action 同順序
+const RELOAD_NAMES := ["整組", "逐發"]                                                # 跟 Reload 同順序
+static var _table := {}   # 槍的 id -> {參數: 表格裡的文字}
+
+static func table() -> Dictionary:
+	if _table.is_empty():
+		var f := FileAccess.open(TABLE, FileAccess.READ)
+		if f == null:
+			return _table
+		var head := f.get_csv_line()
+		while not f.eof_reached():
+			var row := f.get_csv_line()
+			if row.size() < head.size() or row[0].strip_edges() == "":
+				continue
+			for c in range(3, head.size()):
+				var id := head[c].strip_edges()
+				if not _table.has(id):
+					_table[id] = {}
+				_table[id][row[0].strip_edges()] = row[c].strip_edges()
+	return _table
+
+
+## 把表格裡這把槍的數字套上來。文字照參數原本的型別轉：數字、是／否、選項（射擊類型、裝填類型）
+func apply_table() -> void:
+	var vals: Dictionary = table().get(scene_file_path.get_file().get_basename(), {})
+	for key: String in vals:
+		var txt: String = vals[key]
+		var cur: Variant = get(key)
+		if key == "action_type":
+			set(key, maxi(ACTION_NAMES.find(txt), 0))
+		elif key == "reload_type":
+			set(key, maxi(RELOAD_NAMES.find(txt), 0))
+		elif cur is bool:
+			set(key, txt in ["是", "true", "TRUE", "1"])
+		elif cur is int:
+			set(key, txt.to_int())
+		elif cur is float:
+			set(key, txt.to_float())
+		elif cur is String:
+			set(key, txt)
+		else:
+			push_warning("武器參數表：%s 不是槍的參數（打錯字？）" % key)
+
+
+# --- 武器介紹：從設定算出來，不另外填（算法照規格第 07 節） ---
+
+## 換彈姿勢收回來要多久（_procedural 裡每秒收 5 成 = 0.2 秒）
+const POSE_RETURN := 0.2
+
+## 裝填被開火打斷時，槍要多久才回正、能開：關上裝填門（收尾）和姿勢收回，取長的
+func ready_after_reload() -> float:
+	return maxf(reload_end, POSE_RETURN)
+
+
+## 兩槍之間實際要等多久：擊發間隔和上膛動作同時起算，取長的
+func shot_gap() -> float:
+	return maxf(fire_interval, cycle_time)
+
+
+## 打空到裝滿要幾秒。逐發 = 準備 + 容量 × 每顆 + 收尾
+func full_reload_time() -> float:
+	if reload_type == Reload.WHOLE:
+		return reload_time
+	return reload_start + capacity * reload_insert + reload_end
+
+
+## 每分鐘射速。with_reload = true 是持續平均：打完一輪（每發都算上膛）再裝滿，一分鐘平均幾發
+func rpm(with_reload := false) -> float:
+	if not with_reload:
+		return 60.0 / shot_gap()
+	return 60.0 * capacity / (capacity * shot_gap() + full_reload_time())
+
+
+## 武器介紹的每一列 [項目, 這把槍的值]
+func info_rows() -> Array:
+	var reserve_txt := "∞" if starting_reserve < 0 else str(starting_reserve)
+	var pellet_txt := "" if pellets <= 1 else "×%d" % pellets
+	return [
+		["傷害", "%d%s" % [damage, pellet_txt]],
+		["彈藥＋備彈", "%d＋%s" % [capacity, reserve_txt]],
+		["射速（發／分）", str(roundi(rpm()))],
+		["含裝填射速", str(roundi(rpm(true)))],
+		["打空裝滿（秒）", "%.1f" % full_reload_time()],
+		["初速（公尺／秒）", str(roundi(muzzle_velocity))],
+		["衰減（公尺→最低）", "%d–%d→%d" % [falloff_start, falloff_end, minimum_damage]],
+		["射程（公尺）", str(roundi(max_range))],
+	]
+
+
+## 這個距離打中的傷害（每顆）。超過最大判定距離子彈早就消失了（bullet.gd），這裡不管
 func damage_at(dist: float) -> float:
-	var t := inverse_lerp(effective_range, hit_range, dist)
-	return damage * lerpf(1.0, falloff_min, clampf(t, 0.0, 1.0))
+	var t := inverse_lerp(falloff_start, falloff_end, dist)
+	return lerpf(damage, minf(minimum_damage, damage), clampf(t, 0.0, 1.0))
 
 
 func _add_hands() -> void:
@@ -316,8 +459,9 @@ func _play_procedural(action: StringName, fitted: float) -> float:
 				_turns += 1        # 左輪的轉輪是扳擊錘時才轉（_procedural 裡）
 			return _cycle_time
 		&"reload_start":
-			_reload_left = 0.5
-			return 0.3
+			var t := fitted if fitted > 0.0 else 0.3
+			_reload_left = t + 0.2
+			return t
 		&"reload", &"reload_round":
 			var t := fitted if fitted > 0.0 else 0.5
 			# 多撐一點：逐發裝填每發之間姿勢不要彈回去又拉下來
@@ -327,7 +471,7 @@ func _play_procedural(action: StringName, fitted: float) -> float:
 			return t
 		&"reload_end":
 			_reload_left = 0.0
-			return 0.3
+			return fitted if fitted > 0.0 else 0.3
 		&"melee":
 			_melee = 1.0
 			return 0.35
@@ -341,7 +485,7 @@ func _procedural(delta: float) -> void:
 	_since_fire += delta
 	_melee = move_toward(_melee, 0.0, delta * 3.0)
 	_reload_left = maxf(_reload_left - delta, 0.0)
-	_reload_pose = move_toward(_reload_pose, 1.0 if _reload_left > 0.0 else 0.0, delta * 5.0)
+	_reload_pose = move_toward(_reload_pose, 1.0 if _reload_left > 0.0 else 0.0, delta / POSE_RETURN)
 	var cock := 0.0   # 拇指扳擊錘 0..1（只有左輪）
 
 	if _gate:

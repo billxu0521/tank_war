@@ -1,0 +1,9 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_item.gd" id="1_tgxbf"]
+
+[node name="石頭_Rock06" type="Node3D" unique_id=321310494]
+script = ExtResource("1_tgxbf")
+kind = "rock"
+variant = &"Rock06"
+flag = true

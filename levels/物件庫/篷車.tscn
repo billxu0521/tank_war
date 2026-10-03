@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_item.gd" id="1_n283e"]
+
+[node name="篷車" type="Node3D" unique_id=1578561818]
+script = ExtResource("1_n283e")
+kind = "prop"
+variant = &"Wagon"

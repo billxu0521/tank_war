@@ -221,8 +221,8 @@ func take_damage(amount: int, source: Node = null) -> void:
 	_stagger = STAGGER_TIME
 	super(amount, source)
 
-## 吐火球。從嘴巴前方射出，方向跟著上下視角走。
-@rpc("any_peer", "call_local", "reliable")
+## 吐火球。從嘴巴前方射出，方向跟著上下視角走。只有操控恐龍的那台（boss 是主機）能發
+@rpc("authority", "call_local", "reliable")
 func _spit() -> void:
 	var dir := _spit_dir()
 	var muzzle := _spit_muzzle()
@@ -268,8 +268,8 @@ func _blocked_by_wall(target: Node3D) -> bool:
 	return not get_world_3d().direct_space_state.intersect_ray(q).is_empty()
 
 
-## 示意動畫。要 rpc 才會在每個人畫面上都播。
-@rpc("any_peer", "call_local", "reliable")
+## 示意動畫。要 rpc 才會在每個人畫面上都播。只有操控恐龍的那台能發
+@rpc("authority", "call_local", "reliable")
 func _play_fx(jump: bool) -> void:
 	if jump:
 		# 起跳踢起一圈灰

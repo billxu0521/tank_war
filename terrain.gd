@@ -1,6 +1,8 @@
 class_name Terrain
 extends RefCounted
-## 起伏的地形：柏林雜訊的丘陵，加上幾塊整平的地（農莊、撤離區、沙盒靶場）。
+## 起伏的地形：Simplex 雜訊疊 fBm 的丘陵，加上幾塊整平的地（農莊、撤離區、沙盒靶場）。
+## fBm（碎形布朗運動）＝同一種雜訊疊好幾層，每層頻率翻倍（lacunarity）、高度減半（gain）：
+## 第一層是大丘陵，後面幾層是丘陵上的小起伏，地形才不會像一顆顆光滑的饅頭。
 ##
 ## 所有東西擺在地上都問 height(x, z)——建築、樹、柵欄、出生點、蛋。
 ## 畫面（ArrayMesh）和碰撞（HeightMapShape3D）用同一份高度格點，兩邊一定對得上。
@@ -11,7 +13,11 @@ extends RefCounted
 ## 要做河道、懸崖再加新的區塊種類。
 
 const AMP := 10.0         # 丘陵起伏正負這麼多公尺（最高到最低差 20）。圍牆 40 要高過「10 + 最高屋頂 22 + 恐龍跳 6.5」
-const FREQ := 0.012       # 越小丘陵越寬。0.012 ≈ 一座丘陵八十公尺寬；最陡的坡要在 40 度內（測試會量）
+const FREQ := 0.011       # 越小丘陵越寬。0.011 ≈ 一座丘陵九十公尺寬；最陡的坡要在 40 度內（測試會量，現在 38 度）
+const NOISE_SCALE := 1.2  # 雜訊放大幾倍：Simplex 比柏林雜訊起伏大（柏林大多落在 ±0.5，以前乘 2）；1.3 以上坡就超過 40 度
+## 以前十字路（x=0、z=0）的地方：起伏放大，那一帶的雜訊剛好比較平（±4 公尺），又以前整條壓平過，要看得出是丘陵
+const CROSS_BOOST := 0.3   # 放大幾成：0.4 坡就到 42 度（上限 40）
+const CROSS_HALF := 12.0   # 十字中線兩側幾公尺內放大，再往外 12 公尺漸漸收回
 const EDGE_FADE := 30.0   # 離圍牆這麼近開始降回 0，山崖底部才接得上
 ## 整平區邊緣接回丘陵的過渡寬度。smoothstep 最陡處的斜率是 1.5 × 高低差 / 寬度，
 ## 實測平地和旁邊丘陵最多差 10 公尺以上（靶場 -4.6、旁邊丘陵 5.9），要 30 公尺才壓得在 40 度內
@@ -31,14 +37,34 @@ var _n := 0
 func _init(arena_size: float, seed_value: int) -> void:
 	size = arena_size
 	_noise.seed = seed_value
-	_noise.noise_type = FastNoiseLite.TYPE_PERLIN
+	_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH   # 比柏林雜訊少了格子狀的痕跡（山脊不會一律沿著 45 度）
 	_noise.frequency = FREQ
-	_noise.fractal_octaves = 3
+	_noise.fractal_type = FastNoiseLite.FRACTAL_FBM
+	_noise.fractal_octaves = 4      # 第四層的波長約 10 公尺：腳下有小起伏，又不會陡到爬不上去（測試量 40 度）
+	_noise.fractal_lacunarity = 2.0
+	_noise.fractal_gain = 0.4       # 細節層壓低一點：0.5 的話第三、四層讓坡變陡（實測 0.45 就 43 度）
+
+
+## 植被密度 0～1：一樣是 Simplex + fBm，但頻率高一點（一片約 50 公尺）。
+## 高的地方是「濕地」：樹林、高草、灌木叢擠在一起；低的地方是「旱地」：裸土、石頭、仙人掌、矮灌木。
+## 樹、草、石頭都問這支，彼此才對得上（樹林底下草多、旱地上石頭多），不會各撒各的一片均勻。
+## 靜態的：場地自動擺設（main.gd _generate_level）在地形蓋好之前就要用
+static var _veg: FastNoiseLite
+static func vegetation(x: float, z: float) -> float:
+	if _veg == null:
+		_veg = FastNoiseLite.new()
+		_veg.seed = 4242
+		_veg.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+		_veg.frequency = 0.02
+		_veg.fractal_type = FastNoiseLite.FRACTAL_FBM
+		_veg.fractal_octaves = 3   # 第一層是一大片樹林／荒地，後兩層讓邊緣破碎、林子裡有空地
+	return smoothstep(-0.3, 0.3, _veg.get_noise_2d(x, z))
 
 
 ## 還沒整平的原始地形
 func raw(x: float, z: float) -> float:
-	var h := _noise.get_noise_2d(x, z) * AMP * 2.0   # 雜訊實際大多落在 ±0.5，放大到山頂和谷底常常碰到 ±AMP
+	var h := _noise.get_noise_2d(x, z) * AMP * NOISE_SCALE
+	h *= 1.0 + CROSS_BOOST * (1.0 - smoothstep(CROSS_HALF, CROSS_HALF * 2.0, minf(absf(x), absf(z))))
 	var to_edge := size * 0.5 - maxf(absf(x), absf(z))
 	return clampf(h, -AMP, AMP) * smoothstep(0.0, EDGE_FADE, to_edge)
 
@@ -197,10 +223,12 @@ func build(color_at: Callable) -> StaticBody3D:
 			st.add_index(i + n + 1)
 			st.add_index(i + n)
 	st.generate_normals()
-	var mat := StandardMaterial3D.new()
-	mat.vertex_color_use_as_albedo = true
-	mat.vertex_color_is_srgb = true   # 不設的話顏色被當成線性，整片地會被洗成淡土黃
-	mat.roughness = 0.95
+	# 地面紋理（tools/make_ground_tex.py）：灰階，跟頂點顏色相乘；頂點顏色的透明度是路的濃度（見 terrain.gdshader）
+	var mat := ShaderMaterial.new()
+	mat.shader = preload("res://terrain.gdshader")
+	mat.set_shader_parameter(&"detail_tex", preload("res://assets/textures/ground_detail.png"))
+	mat.set_shader_parameter(&"macro_tex", preload("res://assets/textures/ground_macro.png"))
+	mat.set_shader_parameter(&"path_tex", preload("res://assets/textures/path_dirt.png"))
 	st.set_material(mat)
 
 	var body := StaticBody3D.new()

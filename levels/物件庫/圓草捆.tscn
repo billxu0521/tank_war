@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_item.gd" id="1_jtvdu"]
+
+[node name="圓草捆" type="Node3D" unique_id=1050291271]
+script = ExtResource("1_jtvdu")
+kind = "hay_bale"
+flag = true

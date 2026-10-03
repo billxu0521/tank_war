@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_item.gd" id="1_liffr"]
+
+[node name="前廊農舍" type="Node3D" unique_id=2145228723]
+script = ExtResource("1_liffr")
+kind = "house"
+variant = &"House1"

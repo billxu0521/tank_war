@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_item.gd" id="1_b5jjb"]
+
+[node name="街道" type="Node3D" unique_id=2018444425]
+script = ExtResource("1_b5jjb")
+kind = "road"
+size = Vector3(40, 0, 8)

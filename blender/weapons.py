@@ -11,8 +11,11 @@
 # PIVOT 和 SIGHT 兩張表跟遊戲共用：改了要去 cowboy/weapon_model.gd 和武器場景對一下。
 #
 # 重建：Blender 裡 BASE = '<這個資料夾>'; exec(open(BASE + '/weapons.py').read())
-import bpy, bmesh, math, os
+import bpy, bmesh, math, os, sys
 from mathutils import Vector
+BASE = globals().get('BASE') or os.path.dirname(os.path.abspath(__file__))   # Blender 裡 exec 時自己給 BASE；背景跑時從檔案位置算
+sys.path.insert(0, BASE)
+import pipeline
 exec(open(BASE + '/common.py').read())
 
 X90 = (math.pi / 2, 0, 0)   # 圓柱預設沿 Z，轉到沿 Y（槍管方向）
@@ -401,3 +404,9 @@ def export(out_dir):
         bpy.ops.export_scene.gltf(filepath=path, export_format='GLB', use_selection=True,
                                   export_apply=True, export_yup=True)
         print('exported ->', path)
+
+
+if __name__ == '__main__':   # 背景跑：tools/model_iter.sh weapon <版號>（三把槍各一個 glb，放在 --out 的資料夾）
+    pipeline.run(lambda: [o for o in bpy.data.objects if o.type == 'MESH'],
+                 lambda obs, path: (show_layout(), pipeline.scene_preview(obs, path, side=True)),
+                 budget=6000, export_fn=lambda obs, out: export(os.path.dirname(out) or '.'))

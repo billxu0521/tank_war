@@ -5,8 +5,6 @@ class_name ShotFX
 
 @export_group("Muzzle")
 @export var flash_time := 0.05
-@export var smoke_lifetime := 1.2
-@export var smoke_size := 0.2
 
 @export_group("Holes")
 ## 打在牆上的彈孔。可破壞物（會動、會消失）不留孔。
@@ -50,15 +48,15 @@ func _process(delta: float) -> void:
 			_flash.visible = false
 
 
-## 槍口火光。子彈本身（曳光、飛行）在 Bullet。
-func flash() -> void:
+## 槍口火光和煙。子彈本身（曳光、飛行）在 Bullet。smoke = 這把槍的煙量（Weapon.smoke）
+func flash(smoke := 1.0) -> void:
 	_light.visible = true
 	if _flash:
 		_flash.visible = true
 		# 每發轉一個隨機角度，連射看起來才不像同一張貼圖閃爍
 		_flash.rotation.z = randf() * TAU
 	_flash_left = flash_time
-	Fx.gun_smoke(_world, global_position, -global_basis.z, smoke_lifetime, smoke_size)
+	Fx.gun_smoke(_world, global_position, -global_basis.z, smoke)
 
 
 ## 子彈打到東西：照材質噴碎屑（Fx.SURFACES）；打到不會動的世界（不是血肉）留彈孔；

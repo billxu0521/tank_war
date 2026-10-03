@@ -31,19 +31,25 @@ func _process(_delta: float) -> bool:
 		_case_offline_dino()
 		_case_cowboy()
 		_case_input_map()
+		_case_mouse_lock()
 		_case_hunt_weapons()
 		_case_sandbox()
+		_case_range()
+		_case_net_smooth()
 		_case_rural()
 		_case_fx_and_ambience()
 		_case_terrain()
 		_case_interact()
 		_case_vault()
 		_case_modes()
+		_case_match_rules()
+		_case_solo_dino()
 		_case_controller()
 		_case_back_to_lobby()
 		_case_cover()
 		_case_trex_rig()
 		_case_trex_lean()
+		_case_trex_flinch()
 		_case_stamina()
 		_case_sprint_skill()
 		_case_egg()
@@ -52,6 +58,7 @@ func _process(_delta: float) -> bool:
 		_case_fireball()
 		_case_dino_attack_switch()
 		_case_ui()
+		_case_bug_report()
 		_case_stagger()
 		_case_arena_walls()
 		_case_boss()
@@ -109,7 +116,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與左輪扳擊錘換彈動作音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰一條體力、沙盒、鄉村柵欄灌木貼圖、著彈碎屑與環境聲、地形起伏、F 開門爬梯子、翻柵欄和窗台、手腳、只剩連線和沙盒、遊戲局控制、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、恐龍攻擊開關、介面（大廳存 IP、勝負畫面、倒數）、中彈踉蹌、恐龍 boss 行為樹、方位條、測試站自動開下一局都正常")
+		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與左輪扳擊錘換彈動作音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰一條體力、沙盒、鄉村柵欄灌木貼圖、著彈碎屑與煙囪煙、地形起伏、F 開門爬梯子、翻柵欄和窗台、手腳、只剩連線和沙盒、遊戲局控制、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、恐龍攻擊開關、介面（大廳存 IP、勝負畫面、倒數）、中彈踉蹌、恐龍 boss 行為樹（導演、三招預備動作、導航網格）、方位條、測試站自動開下一局、問題回報、滑鼠鎖定不凍視角都正常")
 	return true
 
 # --- 共用 ---
@@ -188,8 +195,8 @@ func _case_dino_death() -> void:
 	var dino: Node = m.players.get_node(^"1")
 	# 左輪的持續輸出 = 一輪的傷害 / (打完一輪 + 逐發換彈)
 	var gun: Node = m.players.get_node(^"2").viewmodel._weapons[0]
-	var cycle: float = gun.mag_size * (gun.fire_interval + gun.reload_time)
-	var dps: float = gun.mag_size * gun.damage / cycle
+	var cycle: float = gun.capacity * (gun.fire_interval + gun.reload_insert)
+	var dps: float = gun.capacity * gun.damage / cycle
 	var secs: float = dino.max_hp / (3.0 * dps)
 	_ck(secs > 8.0 and secs < 20.0, "平衡目標：3 個牛仔用左輪 8~20 秒打死恐龍（現在 %.1f 秒）" % secs)
 
@@ -274,6 +281,23 @@ func _case_cowboy() -> void:
 	c.deal_damage(victim, 30)
 	_ck(victim.hp == victim.max_hp - 30, "主機上打中要直接扣血（現在 %d）" % victim.hp)
 	_ck(victim._last_hit_by == c, "要記得是誰打的，擊殺播報才對得上")
+	# 客戶端請主機扣血（Main.request_damage）：主機要檢查合不合理
+	var eye: Vector3 = c.global_position + Vector3.UP * 1.6
+	_ck(m.apply_damage_request(2, victim, 30, eye) and victim.hp == victim.max_hp - 60, "合理的一發要扣")
+	_ck(not m.apply_damage_request(2, victim, 100, eye), "一發超過最大傷害（又不是打頭秒殺）不能扣")
+	_ck(not m.apply_damage_request(2, victim, 30, eye + Vector3(100, 0, 0)), "開槍位置離開槍者太遠不能扣")
+	var hp_c: int = c.hp
+	_ck(m.apply_damage_request(2, victim, victim.max_hp, eye) and victim.hp <= 0, "打頭秒殺（傷害＝滿血）要扣")
+	# 同時開槍：3 號剛被打死（主機上已經刪掉），他死前打出的那發在寬限時間內還是要算——同歸於盡
+	var eye3: Vector3 = victim.global_position + Vector3.UP * 1.6
+	victim.get_parent().remove_child(victim)
+	_ck(m.apply_damage_request(3, c, 30, eye3) and c.hp == hp_c - 30, "剛死的人打出的子彈要算（同歸於盡）")
+	m._died_at[3][0] = int(m._died_at[3][0]) - m.DEATH_GRACE_MS - 100
+	_ck(not m.apply_damage_request(3, c, 30, eye3), "死了超過寬限時間就不算")
+	# 最大傷害要跟著槍的數字走：改了槍的傷害、忘了改 MAX_HIT，主機會把正常的一發擋掉
+	for w: Node in c.viewmodel._weapons:
+		_ck(w.damage <= m.MAX_HIT, "%s 單發 %d 超過 Main.MAX_HIT" % [w.name, w.damage])
+	_ck(c.viewmodel.heavy_damage <= m.MAX_HIT and c.viewmodel.melee_damage <= m.MAX_HIT, "槍托傷害超過 Main.MAX_HIT")
 	_end(m)
 
 	m = _new_offline_game()
@@ -306,9 +330,112 @@ func _case_hunt_weapons() -> void:
 	var rifle: Node = vm._weapons[2]
 	_ck(revolver.fan_interval > 0.0 and revolver.fan_interval < revolver.fire_interval,
 		"左輪要能搧擊錘，而且比正常扳擊錘快")
-	_ck(shotgun.mag_size == 1 and shotgun.reload_whole_mag, "單管散彈一次一發、折開整個換")
-	_ck(rifle.hit_range > revolver.hit_range and revolver.hit_range > shotgun.hit_range,
+	_ck(shotgun.capacity == 1 and shotgun.reload_type == Weapon.Reload.WHOLE, "單管散彈一次一發、折開整個換")
+	_ck(rifle.max_range > revolver.max_range and revolver.max_range > shotgun.max_range,
 		"射程要是步槍 > 左輪 > 散彈")
+	# 散布、舉槍時間、後座力是每把槍自己的：換到步槍就用步槍的數字
+	vm.switch_weapon(2)
+	rifle.spread_hip = 2.0
+	vm.spread = 0.0
+	vm.ads = 0.0
+	vm._update_spread(0.1)
+	_ck(is_equal_approx(vm.spread, 2.0), "腰射散布要用手上那把槍自己的（現在 %.1f）" % vm.spread)
+	rifle.spread_hip = 4.0
+
+	# 拉栓（cycle_time）比擊發間隔長時，要等拉栓做完才能開，兩段同時起算不相加
+	var old_interval: float = rifle.fire_interval
+	var old_cycle: float = rifle.cycle_time
+	rifle.fire_interval = 0.3
+	rifle.cycle_time = 1.0
+	rifle.mag = rifle.capacity
+	vm._fire_cooldown = 0.0
+	vm.try_fire()
+	vm._process(0.5)
+	vm.try_fire()
+	_ck(rifle.mag == rifle.capacity - 1, "拉栓還沒做完不能開下一槍")
+	vm._process(0.55)
+	vm.try_fire()
+	_ck(rifle.mag == rifle.capacity - 2, "拉栓做完（1 秒，不是 1.3 秒）就能開")
+	rifle.fire_interval = old_interval
+	rifle.cycle_time = old_cycle
+	vm.switch_weapon(0)
+
+	# 傷害衰減：起點前全額、終點剩最低傷害、再遠也是最低傷害
+	_ck(is_equal_approx(revolver.damage_at(revolver.falloff_end), revolver.minimum_damage)
+		and is_equal_approx(revolver.damage_at(revolver.falloff_end * 2.0), revolver.minimum_damage)
+		and is_equal_approx(revolver.damage_at((revolver.falloff_start + revolver.falloff_end) * 0.5),
+			(revolver.damage + revolver.minimum_damage) * 0.5),
+		"傷害衰減要是：起點全額、中間一半、終點以後都是最低傷害")
+
+	# 瞄準後第一發完全準（開關打開時）：舉滿、站著、沒有累積散布 -> 正正打在準心
+	revolver.ads_first_shot_perfect = true
+	vm.ads = 1.0
+	vm.spread = revolver.spread_ads
+	me.velocity = Vector3.ZERO
+	var eye: Camera3D = vm._camera
+	_ck(vm._spread_direction(eye).is_equal_approx(-eye.global_transform.basis.z), "瞄準第一發要完全準")
+	revolver.ads_first_shot_perfect = false
+	vm.ads = 0.0
+
+	# 逐發裝填中按開火：reload_fire_shoots 關掉時只停止裝填，不開槍
+	vm.reload_fire_shoots = false
+	revolver.mag = 3
+	vm._fire_cooldown = 0.0
+	vm.try_reload()
+	vm.try_fire()
+	_ck(revolver.mag == 3 and not vm._reloading, "裝填中按開火（只停不開）：停下裝填、不開槍")
+	vm.reload_fire_shoots = true
+	revolver.mag = revolver.capacity
+
+	# 參數表（cowboy/weapons/weapons.csv）：每一列都要是真的參數、三把槍都有欄、選項翻得回來、改了會生效
+	var table: Dictionary = Weapon.table()
+	_ck(table.has("revolver") and table.has("shotgun") and table.has("rifle"), "參數表要有三把槍的欄")
+	for key: String in table.get("revolver", {}):
+		_ck(revolver.get(key) != null, "參數表的 %s 不是槍的參數（打錯字？）" % key)
+	_ck(revolver.action_type == Weapon.Action.SINGLE_ACTION and shotgun.reload_type == Weapon.Reload.WHOLE
+		and revolver.ads_first_shot_perfect == false, "參數表的選項（射擊類型、裝填類型、是／否）要翻對")
+	var old_dmg: String = table["rifle"]["damage"]
+	table["rifle"]["damage"] = "77"
+	rifle.apply_table()
+	_ck(is_equal_approx(rifle.damage, 77.0), "改參數表要生效")
+	table["rifle"]["damage"] = old_dmg
+	rifle.apply_table()
+
+	# 武器介紹的射速：用規格第 07 節的例子——裝 3 發、每發拉栓 2 秒、整組裝填 9 秒 -> 不含裝填 30、含裝填 12 發／分
+	var ex: Weapon = Weapon.new()
+	ex.capacity = 3
+	ex.fire_interval = 0.5
+	ex.cycle_time = 2.0
+	ex.reload_type = Weapon.Reload.WHOLE
+	ex.reload_time = 9.0
+	_ck(is_equal_approx(ex.rpm(), 30.0) and is_equal_approx(ex.rpm(true), 12.0),
+		"射速算法要跟規格的例子一樣（現在 %.1f / %.1f）" % [ex.rpm(), ex.rpm(true)])
+	ex.free()
+	_ck(is_equal_approx(revolver.full_reload_time(),
+		revolver.reload_start + revolver.capacity * revolver.reload_insert + revolver.reload_end), "逐發裝填總時間 = 準備 + 發數 × 每顆 + 收尾")
+	m._set_menu(true)
+	var info: GridContainer = m.menu.get_node(^"WeaponInfo")
+	_ck(info.visible and info.get_child_count() == (revolver.info_rows().size() + 1) * 4, "Esc 選單要有三把槍的武器介紹")
+	m._set_menu(false)
+
+	# 瞄準按住／切換：玩家的設定要存起來，下次開遊戲還在
+	m.settings_path = "user://test_settings.cfg"
+	m._on_aim_toggle_toggled(true)
+	Viewmodel.aim_toggle = false
+	m._load_settings()
+	_ck(Viewmodel.aim_toggle, "瞄準切換的設定要存起來")
+	m._on_fps_cap_selected(2)
+	_ck(Engine.max_fps == m._refresh_hz() / 2, "幀率上限選「螢幕的一半」要鎖在刷新率一半（現在 %d）" % Engine.max_fps)
+	m._on_vsync_toggled(false)
+	m.fps_cap = 0
+	m.vsync = true
+	m._load_settings()
+	_ck(m.fps_cap == 2 and not m.vsync and Engine.max_fps == m._refresh_hz() / 2, "畫面設定要存起來，重開照樣套用")
+	m._on_fps_cap_selected(0)
+	m._on_vsync_toggled(true)
+	_ck(Engine.max_fps == 0, "選「不限」要拿掉上限")
+	m._on_aim_toggle_toggled(false)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(m.settings_path))
 	for w in vm._weapons:
 		_ck(w.reserve > 0, "%s 的備彈要有限（Hunt 的子彈要省著用）" % w.display_name)
 		_ck(w.get_node_or_null(^"Model") != null, "%s 要有 Blender 建的模型" % w.display_name)
@@ -404,9 +531,9 @@ func _case_hunt_weapons() -> void:
 
 	# 有效射程：射程內全額，超過遞減，射程盡頭剩一半；射程要照步槍 > 左輪 > 散彈排
 	for w in vm._weapons:
-		_ck(is_equal_approx(w.damage_at(w.effective_range * 0.5), w.damage), "%s 有效射程內要全額" % w.display_name)
-		_ck(w.damage_at(w.hit_range) < w.damage * 0.6, "%s 射程盡頭傷害要打折" % w.display_name)
-	_ck(rifle.effective_range > revolver.effective_range and revolver.effective_range > shotgun.effective_range,
+		_ck(is_equal_approx(w.damage_at(w.falloff_start * 0.5), w.damage), "%s 有效射程內要全額" % w.display_name)
+		_ck(w.damage_at(w.max_range) < w.damage * 0.6, "%s 射程盡頭傷害要打折" % w.display_name)
+	_ck(rifle.falloff_start > revolver.falloff_start and revolver.falloff_start > shotgun.falloff_start,
 		"有效射程要是步槍 > 左輪 > 散彈")
 
 	# 爆頭一槍死：打到頭的高度才算，打身體不算
@@ -509,6 +636,50 @@ func _sound_lead(stream: AudioStream) -> float:
 			return float(i / 2 / ch) / wav.mix_rate
 	return 99.0
 
+## 別人的角色平滑顯示（Fighter.net_step）：畫面晚 NET_DELAY 毫秒，在前後兩筆之間補；
+## 封包晚到不影響（用送出時間算），新的還沒到就停在最後一筆
+func _case_net_smooth() -> void:
+	var m := _offline_match()
+	var c: Node3D = m._add_player(m.COWBOY, 5)
+	_ck(not c.net_smooth, "主機（離線也算）上不做平滑：咬人、找人要看即時位置")
+	c.net_state = [0, Vector3(3, 0, 0), Vector3.ZERO]
+	_ck(c.position.x == 3.0, "主機收到位置要直接套")
+	c.net_smooth = true
+	var r := Vector3(0, 1.0, 0)
+	c._snaps = [[0.0, 1000.0, Vector3.ZERO, Vector3.ZERO], [50.0, 1090.0, Vector3(5, 0, 0), r * 0.5],   # 第二包晚到 40 毫秒
+		[100.0, 1100.0, Vector3(10, 0, 0), r]]
+	var d: float = c.NET_DELAY
+	c.net_step(1075.0 + d)   # 畫面時間 = 1075 + 延遲 - 時差 1000 - 延遲 = 75
+	_ck(absf(c.position.x - 7.5) < 0.01 and absf(c.rotation.y - 0.75) < 0.01, "要在兩筆之間補（現在 x=%.2f、朝向 %.2f）" % [c.position.x, c.rotation.y])
+	c.net_step(1050.0 + d)
+	_ck(absf(c.position.x - 5.0) < 0.01, "晚到的那包不影響位置（現在 x=%.2f）" % c.position.x)
+	c.net_step(1300.0 + d)
+	_ck(c.position.x == 10.0, "新的還沒到就停在最後一筆，不要亂猜")
+	_end(m)
+
+## 靶場：另一張地圖，靶照距離站好、擺設乾淨，打中跳字，回大廳就切回牧場
+func _case_range() -> void:
+	var Main: GDScript = load("res://main.gd")
+	Main.mode = &"range"
+	var m: Node = load("res://main.tscn").instantiate()
+	root.add_child(m)
+	m._start_range()
+	_ck(m.level_path == Main.RANGE_LEVEL and ResourceLoader.exists(m.level_path), "靶場要讀自己的場景檔")
+	_ck(m.players.get_child_count() == 2 + m.RANGE_TARGETS.size(), "要有自己、恐龍靶和 %d 個牛仔靶" % m.RANGE_TARGETS.size())
+	var me: Node3D = m.players.get_node(^"1")
+	var far: Node3D = m.players.get_node(NodePath(str(2 + m.RANGE_TARGETS.size())))
+	_ck(absf(-(far.global_position - me.global_position).z - 150.0) < 1.0, "最遠的靶在 150 公尺")
+	var probs := LevelCheck.run(m._level, false)
+	_ck(probs.is_empty(), "靶場擺設檢查有問題：%s" % [probs.slice(0, 5)])
+	var before: int = m.get_node(^"Arena").get_child_count()
+	m.hit_popup(far.global_position, 42, 150.0, false)
+	_ck(m.get_node(^"Arena").get_child_count() == before + 1 and m._last_hit.contains("42"), "打中要跳傷害數字")
+	m._process(0.016)
+	_ck(m.hud.text.contains("準星距離"), "畫面上要有準星距離")
+	m._to_lobby("")
+	_ck(Main.mode == &"", "離開靶場要切回牧場")
+	_end(m)
+
 ## 沙盒：靶站好、沒有時間限制、子彈無限、靶打死生回原地
 func _case_sandbox() -> void:
 	var m: Node = load("res://main.tscn").instantiate()
@@ -548,9 +719,10 @@ func _case_rural() -> void:
 	_ck(m._bushes.size() > m.ARENA * m.ARENA / 500.0, "要有灌木叢可以躲（現在 %d 叢）" % m._bushes.size())   # 每 500 平方公尺至少一叢
 	var bad := 0
 	for b: Vector3 in m._bushes:
-		if not m._is_clear(Vector2(b.x, b.z)) or absf(b.x) < 6.0 or absf(b.z) < 6.0:
+		if not m._is_clear(Vector2(b.x, b.z)) or Trails.edge(b.x, b.z) < 0.0:
 			bad += 1
 	_ck(bad == 0, "灌木不能長在建築裡或路上（%d 叢）" % bad)
+	_ck(Trails.ARENA == m.ARENA, "trails.gd 的 ARENA 要跟 main.gd 一樣")
 	# 穀倉後門：大穀倉站著走得過去，小棚子蹲著鑽得過去（0.8.1 回饋：門小到人過不去）
 	var backs := 0
 	for d in m.get_node(^"Arena").get_children():
@@ -584,13 +756,53 @@ func _case_rural() -> void:
 			fences += 1
 	_ck(fences > 20, "鄉村要有柵欄（現在 %d 段）" % fences)
 	# 場景物件的模型都要載得到，名字對不上的話會變成看不見的空氣牆
-	for n in [&"Barn", &"BarnRoof", &"House", &"SiloBody", &"SiloDome", &"FenceRail",
-			&"FencePost", &"HayBale", &"TreeOak", &"TreeOakM", &"TreeOakS", &"TreePine", &"Bush", &"Cliff", &"WheatTuft", &"GrassClump",
-			&"Egg", &"Wagon", &"Rock01", &"Rock16"]:
-		_ck(m._props.get(n) is Mesh, "props.glb / trees.glb / rocks.glb 裡要有 %s" % n)
+	for n in [&"Barn", &"BarnRoof", &"House1", &"House2", &"House3", &"House1Col", &"HouseDoor", &"SiloBody", &"SiloDome", &"FenceRail",
+			&"FencePost", &"HayBale", &"TreeOak", &"TreeOakM", &"TreeOakS", &"TreePine", &"Bush", &"WheatTuft", &"GrassClump",
+			&"Egg", &"Wagon", &"Rock01", &"Rock16", &"Lantern", &"Barrel", &"Crate", &"HayBlock", &"Wheel",
+			&"FenceGate", &"GatePost", &"HitchRail", &"Windmill", &"WindmillRotor", &"HayShed", &"HayShedCol",
+			&"Saloon", &"SaloonCol", &"Store", &"StoreCol", &"Sheriff", &"SheriffCol", &"WaterTower", &"WaterTowerCol",
+			&"TreeMaple", &"TreePine2", &"TreeJoshua", &"TreeDead", &"TreeWillow", &"Saguaro", &"SaguaroS", &"BarrelCactus",
+			&"PricklyPear", &"GrassTall", &"GrassDense", &"GrassSmall", &"DesertBush", &"ScrubBush"]:
+		_ck(m._props.get(n) is Mesh, "模型檔（props、trees、rocks、houses、kits、towns、groves、floras）裡要有 %s" % n)
+	# 場景小物件要貼著地面：不能浮在半空、也不能埋進地裡（車輪是輪軸中心，另外算）
+	var floating := []
+	for mi: MeshInstance3D in m.find_children("*", "MeshInstance3D", true, false):
+		for kind: StringName in [&"Barrel", &"Crate", &"HitchRail", &"GatePost", &"FenceGate", &"Windmill", &"HayShed", &"Wheel"]:
+			if mi.mesh == m._props.get(kind):
+				var p := mi.global_position
+				var above: float = p.y - m._terrain.height(p.x, p.z) - (0.6 if kind == &"Wheel" else 0.0)
+				if absf(above) > 0.35:
+					floating.append("%s %.1f" % [kind, above])
+	_ck(floating.is_empty(), "場景小物件要貼地（離地多少公尺：%s）" % [floating])
+	# 擺設檢查（編輯器的「檢查擺設」按鈕跑的同一支）：場景檔要乾淨；檢查本身要抓得到重疊
+	var probs := LevelCheck.run(m._level)
+	_ck(probs.is_empty(), "擺設檢查有問題：%s" % [probs.slice(0, 5)])
+	_ck(not LevelCheck.run([{kind = &"kit", name = &"Crate", pos = Vector3(3, 0, 40), yaw = 0.0},
+		{kind = &"fence", pos = Vector3(3, 0, 40), length = 10.0, yaw = 0.3}]).is_empty(), "擺設檢查要抓得到木箱卡在柵欄裡")
+	_ck(not LevelCheck.run([{kind = &"fence", pos = Vector3(3, 0, 40), length = 10.0, yaw = 0.0},
+		{kind = &"fence", pos = Vector3(3, 0, 40), length = 10.0, yaw = -PI * 0.5}]).is_empty(), "擺設檢查要抓得到兩道柵欄交叉")
+	_ck(LevelCheck.run([{kind = &"fence", pos = Vector3(60, 0, 40), length = 10.0, yaw = 0.0},   # 離開沙盒靶場
+		{kind = &"fence", pos = Vector3(65, 0, 45), length = 10.0, yaw = -PI * 0.5},
+		{kind = &"kit", name = &"HayBlock", pos = Vector3(63, 0, 30), yaw = 0.0},
+		{kind = &"kit", name = &"HayBlock", pos = Vector3(63, m.HAY_BLOCK.y, 30), yaw = 0.0}]).is_empty(), "柵欄在轉角接起來、草捆疊高不算重疊")
+	_ck(m.level_path != "" and ResourceLoader.exists(m.level_path), "場地要照場景檔 levels/ranch.tscn 蓋")
+	# 柵欄不能穿過農舍（牧場的房子以前跨到隔壁格，隔壁農莊的圍欄從房子中間穿過去）
+	var houses: Array[Vector3] = []
+	var rails: Array[Vector3] = []
+	for mi: MeshInstance3D in m.find_children("*", "MeshInstance3D", true, false):
+		if mi.mesh in [m._props.get(&"House1"), m._props.get(&"House2"), m._props.get(&"House3")]:
+			houses.append(mi.global_position)
+		elif mi.mesh == m._props.get(&"FenceRail"):
+			rails.append(mi.global_position)
+	var through := 0
+	for h in houses:
+		for r in rails:
+			if absf(r.x - h.x) < 5.2 and absf(r.z - h.z) < 4.2:
+				through += 1
+	_ck(houses.size() >= 3 and through == 0, "柵欄不能穿過農舍（%d 段穿過）" % through)
 	_end(m)
 
-## 著彈照材質噴不同碎屑；煙囪冒煙、果園鳥叫、全場背景聲都有擺上去
+## 著彈照材質噴不同碎屑；煙囪冒煙
 func _case_fx_and_ambience() -> void:
 	var m := _new_game()
 	var arena: Node = m.get_node(^"Arena")
@@ -606,18 +818,10 @@ func _case_fx_and_ambience() -> void:
 		Fx.hit(arena, Vector3(0, 1, 0), Vector3.UP, surface)
 	_ck(arena.get_child_count() > before + Fx.SURFACES.size() - 1, "每種著彈都要生出粒子")
 	var smoke := 0
-	var sounds := 0
-	var bg := false
 	for n in arena.get_children():
 		if n is CPUParticles3D and not n.one_shot:
 			smoke += 1
-		if n is AudioStreamPlayer3D and n.stream == m.BIRDS:
-			sounds += 1
-		if n is AudioStreamPlayer and n.stream == m.AMBIENT:
-			bg = n.autoplay and n.stream.loop
 	_ck(smoke > 0, "房子的煙囪要冒煙")
-	_ck(sounds > 0 and m.BIRDS.loop, "果園要有循環的鳥叫")
-	_ck(bg, "全場要有循環的背景聲")
 	_end(m)
 
 ## 地形：有起伏、該平的地方平、碰撞跟畫面對得上
@@ -641,7 +845,7 @@ func _case_terrain() -> void:
 			steep = maxf(steep, t.slope(ix, iz))
 	_ck(steep < 1.0 - cos(deg_to_rad(40.0)), "最陡的坡要在 40 度內（現在 %.0f 度）" % rad_to_deg(acos(1.0 - steep)))
 
-	# 穀倉底下、沙盒靶場要是平的
+	# 穀倉底下要是平的。沙盒靶場不整平了（以前的十字路改成有起伏的丘陵）；量距離準不準去靶場地圖（levels/range.tscn）
 	var b: Rect2 = m._blocked[0]
 	var c := b.get_center()
 	var spread := 0.0
@@ -649,9 +853,6 @@ func _case_terrain() -> void:
 		for dz in [-10.0, 0.0, 10.0]:
 			spread = maxf(spread, absf(t.height(c.x + dx, c.y + dz) - t.height(c.x, c.y)))
 	_ck(spread < 0.05, "穀倉底下要是平地（高低差 %.2f 公尺）" % spread)
-	var r: Rect2 = m.SANDBOX_RANGE
-	_ck(absf(t.height(r.position.x + 2, r.position.y + 2) - t.height(r.end.x - 2, r.end.y - 2)) < 0.05,
-		"沙盒靶場要是平地，靶的距離才準")
 
 	# 碰撞跟畫面同一份高度：往下打射線，打到的高度要等於 height()
 	var space: PhysicsDirectSpaceState3D = m.get_world_3d().direct_space_state
@@ -682,7 +883,8 @@ func _case_interact() -> void:
 	var blades := 0
 	for n in m.get_tree().get_nodes_in_group(&"grass"):
 		blades += n.multimesh.instance_count
-	_ck(blades > 100000 and blades == spots.size(), "草地要長滿（現在 %d 叢）" % blades)
+	# 草照植被密度長（旱地剩三成），一片一片的，所以門檻是每平方公尺 1.5 叢不是 2
+	_ck(blades > m.ARENA * m.ARENA * 1.5 and blades == spots.size(), "草地要長滿（現在 %d 叢）" % blades)
 	_ck(inside == 0, "草叢不能長在建築裡（有 %d 叢）" % inside)
 	_ck(m._doors.size() >= 3, "每棟穀倉至少兩扇滑門＋後門（現在全場 %d 扇門）" % m._doors.size())
 	var d: Door = m._doors[0]   # 第一棟穀倉左邊那扇滑門
@@ -758,14 +960,14 @@ func _case_vault() -> void:
 		_ck(me.try_vault(true), "體力見底也要翻得過去（體力只影響移動速度）")
 		me.vaulting = false
 
-	# 農舍的窗：窗台 1 公尺，從窗外翻進屋裡
+	# 農舍的窗：窗台離地 1 公尺，從窗外翻進屋裡（用左側牆的窗：正面有前廊擋著）
 	var house := Vector3.ZERO
 	for n in m.get_node(^"Arena").get_children():
-		if n is MeshInstance3D and n.mesh == m._props[&"House"]:
+		if n is MeshInstance3D and n.mesh == m._props[&"House1"]:
 			house = n.global_position
 			break
-	me.global_position = m._on_ground(Vector3(house.x + 3.0, 0, house.z + 4.0 + 0.7))
-	me.rotation = Vector3.ZERO   # 面向 -Z，對著前牆的右窗
+	me.global_position = m._on_ground(Vector3(house.x - 5.0 - 0.7, 0, house.z))
+	me.rotation = Vector3(0, -PI * 0.5, 0)   # 面向 +X，對著左牆的窗
 	me.stamina = me.max_stamina
 	_ck(me.try_vault(true), "站在窗外要能從窗戶翻進去")
 	me.vaulting = false
@@ -801,6 +1003,90 @@ func _case_modes() -> void:
 	m._spawn(251338328)
 	var guest: Node = m.players.get_node(^"251338328")
 	_ck(guest.get_multiplayer_authority() == 251338328, "加入的人要自己操控自己的牛仔")
+	_end(m)
+
+## 大廳的對局模式：搶蛋、死鬥（重生 3 次、剩一人贏）、恐龍決鬥（重生 5 次、打死恐龍大家贏）
+func _case_match_rules() -> void:
+	var m := _offline_match()
+	_ck(m.mode_pick.item_count == 3, "大廳要能選三種模式（現在 %d）" % m.mode_pick.item_count)
+	# 死鬥：沒有蛋，每人重生 3 次，用完出局，剩一個人贏
+	m._on_mode_picked(m.RULES.keys().find(&"deathmatch"))
+	m._apply_rules()
+	_ck(m.rules == &"deathmatch" and not m.egg.visible, "死鬥沒有蛋")
+	for id in [1, 2, 3]:
+		m._add_player(m.COWBOY, id)
+	_ck(m._lives.size() == 3 and int(m._lives[2]) == 3, "死鬥每人可以重生 3 次")
+	m.players.get_node(^"2").take_damage(9999)
+	_ck(int(m._lives[2]) == 2 and m._respawn_queue.size() == 1, "死一次扣一次重生、排進重生佇列")
+	m._respawn_queue.clear()
+	m.players.remove_child(m.players.get_node(^"2"))   # 死掉的那個還在等刪除，先拿掉才不會撞名
+	m._add_player(m.COWBOY, 2)   # 當作重生回來
+	m._lives[2] = 0
+	m.players.get_node(^"2").take_damage(9999)
+	_ck(m._out.has(2) and m._respawn_queue.is_empty(), "重生用完再死就出局、不排重生")
+	_ck(not m._over, "還有兩個人，不會結束")
+	m._lives[3] = 0
+	m.players.get_node(^"3").take_damage(9999)
+	_ck(m._over and m.result.visible and m.get_node(^"UI/Root/Result/Box/Text").text.contains("獲勝"),
+		"只剩一個人就結束，他獲勝（現在：%s）" % m.get_node(^"UI/Root/Result/Box/Text").text)
+	_end(m)
+	# 恐龍決鬥：每人重生 5 次，恐龍打得死，打死大家贏
+	m = _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"dino_duel"))
+	m._apply_rules()
+	m._add_player(m.COWBOY, 1)
+	m._add_player(m.COWBOY, 2)
+	var b: Node = m.spawn_boss()
+	_ck(int(m._lives[1]) == 5, "恐龍決鬥每人可以重生 5 次")
+	_ck(b.max_hp == m.DUEL_BOSS_HP and b.hp == m.DUEL_BOSS_HP, "決鬥的恐龍血量 %d" % m.DUEL_BOSS_HP)
+	var c2: Node = m.players.get_node(^"2")
+	c2.take_damage(30, m.players.get_node(^"1"))
+	_ck(c2.hp == c2.max_hp - 30, "隊友火力：打到隊友會扣血")
+	b.take_damage(b.max_hp + 10)
+	_ck(m._over and m.get_node(^"UI/Root/Result/Box/Text").text.contains("所有牛仔獲勝"), "恐龍死了大家贏")
+	_end(m)
+	m = _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"dino_duel"))
+	m._apply_rules()
+	m._add_player(m.COWBOY, 1)
+	m._add_player(m.COWBOY, 2)
+	m.spawn_boss()
+	for id in [1, 2]:
+		m._lives[id] = 0
+		m.players.get_node(NodePath(str(id))).take_damage(9999)
+	_ck(m._over and m.get_node(^"UI/Root/Result/Box/Text").text.contains("恐龍獲勝"), "牛仔全部出局就是恐龍贏")
+	# 重開一局：重生次數補滿、出局的人回來、恐龍回場
+	m._new_round()
+	_ck(not m._over and int(m._lives.get(1, -1)) == 5 and m.players.has_node(^"1") and m.players.has_node(^"2"),
+		"重開一局：出局的人回來、重生次數補滿")
+	_ck(m.players.has_node(NodePath(str(m.BOSS_ID))), "重開一局恐龍要在")
+	_end(m)
+	# 搶蛋（原本的模式）：不限重生
+	m = _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"egg"))
+	m._apply_rules()
+	m._add_player(m.COWBOY, 1)
+	_ck(m.egg.visible and m._lives.is_empty(), "搶蛋模式有蛋、不限重生")
+	_end(m)
+
+## 單人打恐龍：沙盒的場地、只有自己和恐龍 boss、子彈無限、接關無限
+func _case_solo_dino() -> void:
+	var m: Node = load("res://main.tscn").instantiate()
+	root.add_child(m)
+	_ck(m.has_node(^"UI/Root/Lobby/SoloDinoBtn"), "大廳要有單人打恐龍")
+	m._on_solo_dino_pressed()
+	var me: Node3D = m.players.get_node_or_null(^"1")
+	var b: Node3D = m.players.get_node_or_null(NodePath(str(m.BOSS_ID)))
+	_ck(me != null and b != null and m.players.get_child_count() == 2, "只有自己和恐龍 boss（現在 %d 個）" % m.players.get_child_count())
+	_ck(me.global_position.distance_to(b.global_position) > 60.0, "恐龍要生在遠處，靠導演給的方向找過來")
+	_ck(me.viewmodel._weapons.all(func(w: Node) -> bool: return w.reserve == -1), "子彈無限")
+	for i in 3:   # 死三次都要接得回來
+		m.players.get_node(^"1").take_damage(9999)
+		m.players.remove_child(m.players.get_node(^"1"))
+		m._time_left -= m.RESPAWN_DELAY + 1.0
+		m._respawn_step()
+	_ck(m.players.has_node(^"1") and m._continues == 3 and not m._over, "接關無限：死了一直回來（接關 %d 次）" % m._continues)
+	_ck(m._boss_debug().begins_with("恐龍："), "畫面要顯示恐龍在做什麼")
 	_end(m)
 
 ## 遊戲局控制：移動標靶來回走、不開槍、死了照樣生回標靶；bot 在沙盒找玩家；清除清乾淨
@@ -845,6 +1131,22 @@ func _case_controller() -> void:
 	_end(m)
 
 ## 牛仔的操作都要有綁鍵，鍵盤和手把兩邊都要（FNE 的約定）
+## 滑鼠視角：鎖滑鼠全部走 Fighter.lock_mouse()，擋殘留位移的時間從「鎖定那一刻」算，不是從玩家第一次動滑鼠才算
+## （不然剛進遊戲、關 Esc 選單、重生，一動滑鼠就被凍住，2026-10-02 回報）
+func _case_mouse_lock() -> void:
+	var src := FileAccess.get_file_as_string("res://main.gd")
+	_ck(not src.contains("Input.mouse_mode = Input.MOUSE_MODE_CAPTURED"), "main.gd 鎖滑鼠要走 Fighter.lock_mouse()，不要直接設")
+	_ck(not FileAccess.get_file_as_string("res://fighter.gd").contains("var _settle_until"),
+		"擋殘留位移的時間不能記在各角色身上（重生的新角色會重新等）")
+	var t0 := Time.get_ticks_msec()
+	Fighter.lock_mouse()   # headless 鎖不住，所以每次都會走到「剛鎖定」那段
+	var wait := Fighter._look_from - t0
+	if OS.get_name() == "macOS":
+		_ck(wait > 0 and wait <= Fighter.LOOK_SETTLE_MS + 50, "macOS 鎖定後擋 %d 毫秒，從鎖定那一刻算（現在 %d）" % [Fighter.LOOK_SETTLE_MS, wait])
+	else:
+		_ck(wait <= 0, "macOS 以外鎖定後不擋滑鼠（現在擋 %d 毫秒）" % wait)
+	Fighter._look_from = 0
+
 func _case_input_map() -> void:
 	for a in ["move_forward", "move_back", "move_left", "move_right", "jump", "sprint",
 			"crouch", "crouch_toggle", "fire", "aim", "reload", "melee", "interact"]:
@@ -919,18 +1221,20 @@ func _case_compass() -> void:
 	_ck(is_equal_approx(Compass.bearing(Vector3.ZERO, Vector3(0, 0, 10)), 180.0), "正南（+Z）是 180 度")
 	_ck(is_equal_approx(Compass.bearing(Vector3.ZERO, Vector3(-10, 0, 0)), 270.0), "正西（-X）是 270 度")
 
-## 恐龍 boss：視力差、聽力好、優先追持蛋者、自己的體力、走慢跑快、打不死
+## 恐龍 boss：視力差、聽力好、跟蛋無關、導演只給大概方向、追太久會退開、三招都有預備動作、自己的體力、打不死
 func _case_boss() -> void:
 	var m := _offline_match()
 	var c: Node3D = m._add_player(m.COWBOY, 2)
-	var carrier: Node3D = m._add_player(m.COWBOY, 3)
+	var other: Node3D = m._add_player(m.COWBOY, 3)
+	other.global_position = Vector3(0, 500, 0)
 	var b: Node3D = m.spawn_boss()
 	_ck(b != null and b.is_in_group(&"boss"), "要生得出恐龍 boss")
 	_ck(m.spawn_boss() == null, "boss 場上最多一隻")
 	_ck(b.WALK < c.walk_speed and b.RUN > c.sprint_speed,
 		"boss 走路要比牛仔慢（%.1f vs %.1f）、跑步要比牛仔快（%.1f vs %.1f）" % [b.WALK, c.walk_speed, b.RUN, c.sprint_speed])
+	_ck(is_instance_valid(m._nav_region), "生 boss 要順便烘導航網格")
+	_ck(m.BOSS_ACTS.size() == b.ACT_SPOT + 1, "每個動作狀態都要有除錯名稱（BOSS_ACTS 有 %d 個）" % m.BOSS_ACTS.size())
 	# 視力：放在沙盒靶場那條路上（整平、沒蓋東西，視線不會被擋）
-	carrier.global_position = Vector3(0, 500, 0)
 	b.global_position = m._on_ground(Vector3(0, 4.2, 40))
 	b.rotation.y = 0.0   # 面向 -Z
 	c.global_position = m._on_ground(Vector3(0, 0.1, 10))
@@ -944,30 +1248,165 @@ func _case_boss() -> void:
 	_ck(not b.can_see(c), "背後 12 公尺看不到")
 	c.global_position = m._on_ground(Vector3(0, 0.1, 43))
 	_ck(b.can_see(c), "背後 3 公尺（太近）也會發現")
-	# 聽力：遠處的槍聲聽得到
+	# 聽力：遠處的槍聲聽得到；放鬆的時候只理近的
 	c.global_position = Vector3(0, 500, 0)
 	b.hear(m._on_ground(Vector3(60, 1, -60)))
 	_ck(b._noise_left > 0.0, "100 公尺外的槍聲要聽得到")
-	# 優先追持蛋者：眼前有別人也一樣
-	c.global_position = m._on_ground(Vector3(0, 0.1, 28))
-	carrier.global_position = m._on_ground(Vector3(15, 0.1, -20))
-	m.egg.carrier = 3
+	b._noise_left = 0.0
+	b.director.phase = Director.Phase.RELAX
+	b.hear(m._on_ground(Vector3(60, 1, -60)))
+	_ck(b._noise_left == 0.0, "放鬆的時候遠處的槍聲不理")
+	b.director.phase = Director.Phase.BUILD
+	# 聲音只聽得出大概在哪：遠的偏得多（但有上限），近的偏得少
+	var far_shot: Vector3 = m._on_ground(Vector3(60, 1, -60))
+	var max_off := 0.0
+	for i in 30:
+		b.hear(far_shot)
+		max_off = maxf(max_off, Vector2(b._noise.x - far_shot.x, b._noise.z - far_shot.z).length())
+	_ck(max_off > 3.0 and max_off <= b.NOISE_FUZZ_MAX + 1.0, "遠處槍聲的位置要有偏差、但不超過上限（最大偏 %.1f）" % max_off)
+	var near_shot := b.global_position + Vector3(0, 0, -15)
+	max_off = 0.0
+	for i in 30:
+		b._heard(near_shot)
+		max_off = maxf(max_off, Vector2(b._noise.x - near_shot.x, b._noise.z - near_shot.z).length())
+	_ck(max_off < 2.5, "15 公尺內的聲音要聽得滿準（最大偏 %.1f）" % max_off)
+	b._noise_left = 0.0
+	# 看到不等於確定：先停下來盯著，確定了吼一聲，吼完才追
+	c.global_position = m._on_ground(Vector3(0, 0.1, 26))   # 正前方 14 公尺
 	b.think(1.0 / 60.0)
-	_ck(b._target == carrier, "有人拿著蛋就優先追持蛋者")
+	_ck(b._sees_now == null and b._glimpse == c and b.mood == b.MOOD_SEARCH, "剛瞄到人還不能確定、要先盯著（心情要是「找」）")
+	var spot_frames := 0
+	while b.act != b.ACT_SPOT and spot_frames < 120:
+		b.think(1.0 / 60.0)
+		spot_frames += 1
+	_ck(spot_frames > 20 and b.act == b.ACT_SPOT, "盯一下才確定、確定了要吼一聲（%d 幀）" % spot_frames)
+	_ck(b.mood == b.MOOD_HUNT, "確定之後心情要是「追」")
+	for i in int(b.SPOT_TIME * 60) + 2:
+		b.think(1.0 / 60.0)
+	_ck(b.act != b.ACT_SPOT and b._sees_now == c, "吼完要開始追或出招（現在 act=%d）" % b.act)
+	b.act = b.ACT_NONE
+	b._pounce_cd = 0.0
+	# 還沒確定就躲起來：去他剛才在的地方找
+	b._seen_left = 0.0
+	b._suspect = 0.0
+	b._sees_now = null
+	b.think(1.0 / 60.0)
+	for i in 30:
+		b.think(1.0 / 60.0)
+	var was_at: Vector3 = c.global_position
+	c.global_position = Vector3(0, 500, 0)
+	b.think(1.0 / 60.0)
+	_ck(b._noise_left > 0.0 and b._noise.distance_to(was_at) < 0.5, "還沒確定人就躲了，要去他剛才在的地方找")
+	b._noise_left = 0.0
+	b._hint = Vector3.INF
+	# 跟蛋無關：有人拿著蛋也不會知道他在哪
+	m.egg.carrier = 3
+	other.global_position = m._on_ground(Vector3(15, 0.1, -20))
+	b.think(1.0 / 60.0)
+	_ck(b._target != other, "有人拿蛋恐龍也不知道他在哪（不再追持蛋者）")
 	m.egg.carrier = 0
+	other.global_position = Vector3(0, 500, 0)
+	# 導演：閒著太久給一個大概方向，不是那個人的位置
+	var rng := RandomNumberGenerator.new()
+	var hint: Vector3 = b.director.hint_for(c, rng)
+	var off := Vector2(hint.x - c.global_position.x, hint.z - c.global_position.z).length()
+	_ck(off >= Director.HINT_FUZZ.x - 0.01 and off <= Director.HINT_FUZZ.y + 0.01, "提示點要離那個人 12~20 公尺（現在 %.1f）" % off)
+	var d := Director.new()
+	var got := Vector3.INF
+	for i in int(Director.HINT_IDLE * 60) + 2:
+		var h := d.step(1.0 / 60.0, null, false, [c], rng)
+		if h != Vector3.INF:
+			got = h
+	_ck(got != Vector3.INF, "恐龍閒著 %d 秒，導演要給一次方向" % Director.HINT_IDLE)
+	# 威脅滿了就退開，退完放鬆，放鬆完回到醞釀
+	d = Director.new()
+	for i in int(Director.MENACE_MAX / Director.MENACE_SEE * 60) + 5:
+		d.step(1.0 / 60.0, c, false, [c], rng)
+	_ck(d.phase == Director.Phase.RETREAT, "一直看到人，威脅滿了要退開")
+	for i in int((Director.RETREAT_TIME + Director.RELAX_TIME) * 60) + 5:
+		d.step(1.0 / 60.0, c, false, [c], rng)
+	_ck(d.phase == Director.Phase.BUILD and d.menace < 5.0, "退開、放鬆完回到醞釀，威脅從頭累積")
+	# 咬：有預備動作，預備時不扣血，時間到才咬下去
+	b.director = Director.new()
+	b.global_position = m._on_ground(Vector3(0, 4.2, 40))
+	b.rotation.y = 0.0
+	c.global_position = m._on_ground(Vector3(0, 0.1, 34))   # 嘴巴正前方
+	var hp0: int = c.hp
+	b._attack_gap = 0.0
+	b.think(1.0 / 60.0)
+	_ck(b.act == b.ACT_BITE_WIND, "嘴邊有人要先預備（現在 act=%d）" % b.act)
+	for i in int(b.BITE_WIND * 60) - 3:
+		b.think(1.0 / 60.0)
+	_ck(c.hp == hp0, "預備動作時還不能扣血")
+	for i in 6:
+		b.think(1.0 / 60.0)
+	_ck(c.hp == hp0 - b.BITE_DAMAGE, "預備完要咬下去（%d → %d）" % [hp0, c.hp])
+	# 預備時往旁邊閃開就咬不到
+	c.hp = c.max_hp
+	b.act = b.ACT_NONE
+	b._attack_gap = 0.0
+	b.think(1.0 / 60.0)
+	c.global_position = m._on_ground(Vector3(9, 0.1, 34))
+	for i in int(b.BITE_WIND * 60) + 3:
+		b.think(1.0 / 60.0)
+	_ck(c.hp == c.max_hp, "預備時往旁邊閃開要咬不到")
+	# 蓄力甩尾：人在背後就蓄力；打中頭打斷，暈一陣子、不會掃出去
+	b.act = b.ACT_NONE
+	b._attack_gap = 0.0
+	b._sweep_cd = 0.0
+	c.global_position = m._on_ground(Vector3(0, 0.1, 46))   # 背後 6 公尺
+	b.think(1.0 / 60.0)
+	_ck(b.act == b.ACT_CHARGE_WIND, "人在背後要蓄力甩尾（現在 act=%d）" % b.act)
+	b.head_hit()
+	_ck(b.act == b.ACT_STUN, "蓄力時打中頭要打斷")
+	for i in int(b.CHARGE_WIND * 60) + 3:
+		b.think(1.0 / 60.0)
+	_ck(c.hp == c.max_hp, "被打斷就不會掃出去")
+	# 沒打斷就整圈掃開
+	b.act = b.ACT_NONE
+	b._attack_gap = 0.0
+	b._sweep_cd = 0.0
+	b.think(1.0 / 60.0)
+	for i in int(b.CHARGE_WIND * 60) + 3:
+		b.think(1.0 / 60.0)
+	_ck(c.hp == c.max_hp - b.SWEEP_DAMAGE, "蓄力完要掃到背後的人")
+	# 撲擊：起跳那一刻方向鎖死，之後閃開就撲不到
+	c.hp = c.max_hp
+	b.act = b.ACT_NONE
+	b._attack_gap = 0.0
+	b._sweep_cd = 99.0
+	b._pounce_cd = 0.0
+	b.global_position = m._on_ground(Vector3(0, 4.2, 60))
+	b.rotation.y = 0.0
+	c.global_position = m._on_ground(Vector3(0, 0.1, 44))   # 正前方 16 公尺
+	_ck(b.pounce_clear(c.global_position), "靶場那條路上撲過去的路線要是空的")
+	b._seen_left = b.MEMORY   # 已經在追他了（剛看丟又看到的人不用重新確定）
+	b.think(1.0 / 60.0)
+	_ck(b.act == b.ACT_POUNCE_WIND, "中距離正前方要撲（現在 act=%d）" % b.act)
+	for i in int(b.POUNCE_WIND * 60) + 2:
+		b.think(1.0 / 60.0)
+	c.global_position = m._on_ground(Vector3(8, 0.1, 44))   # 起跳之後往旁邊閃
+	for i in 70:
+		b.think(1.0 / 60.0)
+	_ck(c.hp == c.max_hp, "起跳後方向鎖死，往旁邊閃要撲不到（%d）" % c.hp)
 	# 自己的體力：一直跑會見底，見底只能走，回到一定量才能再跑
 	c.global_position = Vector3(0, 500, 0)
+	b.act = b.ACT_NONE
 	for i in 600:
 		b._move(-b.global_basis.z, true, 1.0 / 60.0)
 	_ck(b.exhausted and not b.running, "一直跑體力會見底，見底只能走")
 	for i in 30:
 		b._move(-b.global_basis.z, true, 1.0 / 60.0)
 	_ck(not b.running, "剛見底回一點點還不能跑")
-	# 打不死：血打光倒地、血補滿；倒地時打不動
+	# 打不死：血打光倒地、血補滿、起來先退開；倒地時打不動
 	b.take_damage(b.max_hp + 100, c)
 	_ck(is_instance_valid(b) and b.down_left > 0.0 and b.hp == b.max_hp, "boss 打不死：血打光要倒地、血補滿")
+	_ck(b.director.phase == Director.Phase.RETREAT, "被打倒之後要退開")
 	b.take_damage(100, c)
 	_ck(b.hp == b.max_hp, "倒地時打不動")
+	# 主機玩家動滑鼠，boss 的頭和身體不能跟著轉（boss 的 authority 也是主機）
+	_ck(not b.takes_mouse(), "boss 不能吃主機的滑鼠（不然頭會跟著主機玩家轉）")
+	_ck(not m.add_bot().takes_mouse(), "牛仔 bot 也不能吃主機的滑鼠")
 	m.clear_bots()
 	_ck(m.players.has_node(NodePath(str(m.BOSS_ID))), "清除 bot 不會把 boss 清掉")
 	_end(m)
@@ -976,22 +1415,40 @@ func _case_boss() -> void:
 func _case_trex_rig() -> void:
 	var m := _new_offline_game()
 	var t: Node = m.players.get_node(^"2").get_node(^"Trex")
-	_ck(t.skel.get_bone_count() == 18, "骨架應該有 18 根骨頭（現在 %d）" % t.skel.get_bone_count())
-	_ck(t.skel.find_bone("jaw") >= 0 and t.skel.find_bone("tail4") >= 0, "下巴和尾巴末端要在")
+	_ck(t.skel.get_bone_count() >= 40, "精細骨架應該有 40 根以上骨頭（現在 %d）" % t.skel.get_bone_count())
+	_ck(t.skel.find_bone("jaw") >= 0 and t.skel.find_bone("tail%d" % Trex.TAIL_N) >= 0, "下巴和尾巴末端要在")
 
-	for i in 6:  # 假裝以 18 m/s 在跑
-		t._last_pos = t.global_position + Vector3(0, 0, 0.3)
+	# 以 11 m/s（boss 跑步）跑 2.5 秒。腳是真的踩地走（trex.gd 的 _walk），從站著起跑第一步要一點時間。
+	# 看兩腳交替：跑步一隻腳只踩四成時間，兩腳不會同時踩著；兩隻腳都要真的抬起來換過好幾步、大腿真的有在擺。
+	# 以前用兩條大腿角度的相關係數，但踩地跑的大腿曲線不是 sin（擺得快、踩得慢），係數在 0 附近亂跳
+	var body: Node3D = m.players.get_node(^"2")
+	var both_down := 0
+	var lifts := [0, 0]
+	var was := [false, false]
+	var lo := INF
+	var hi := -INF
+	for i in 150:   # 真的往前跑（腳踩在地上，身體不動的話踩著的腳也不會往後掃）
+		body.global_position += -body.global_basis.z * (11.0 / 60.0)
 		t._process(1.0 / 60.0)
-	var l: float = t.skel.get_bone_pose_rotation(t._idx["thigh_l"]).get_euler().x
-	var r: float = t.skel.get_bone_pose_rotation(t._idx["thigh_r"]).get_euler().x
-	_ck(absf(l) > 0.1 and l * r < 0.0, "跑步時兩隻大腿要反相擺動（左 %.2f 右 %.2f）" % [l, r])
+		if i >= 30:
+			if not t._swing[0] and not t._swing[1]:
+				both_down += 1
+			for k in 2:
+				if t._swing[k] and not was[k]:
+					lifts[k] += 1
+				was[k] = t._swing[k]
+			var a: float = t.pose_rot("thigh_l").get_euler().x
+			lo = minf(lo, a)
+			hi = maxf(hi, a)
+	_ck(both_down == 0 and lifts[0] >= 2 and lifts[1] >= 2 and hi - lo > 0.2,   # 擺幅每次跑不太一樣（0.3～0.5），只確定真的有在擺
+		"跑步時兩腳交替（兩腳同時踩著 %d 幀，應為 0；左右各抬 %d、%d 步；大腿擺幅 %.2f）" % [both_down, lifts[0], lifts[1], hi - lo])
 
-	var closed: float = t.skel.get_bone_pose_rotation(t._idx["jaw"]).get_euler().x
+	var closed: float = t.pose_rot("jaw").get_euler().x
 	t.bite()
 	var opened := closed
 	for i in 20:
 		t._process(1.0 / 60.0)
-		opened = minf(opened, t.skel.get_bone_pose_rotation(t._idx["jaw"]).get_euler().x)
+		opened = minf(opened, t.pose_rot("jaw").get_euler().x)
 	_ck(rad_to_deg(absf(opened - closed)) > 25.0,
 		"咬的時候嘴要張開超過 25 度（現在 %.0f）" % rad_to_deg(absf(opened - closed)))
 
@@ -1011,29 +1468,59 @@ func _case_trex_rig() -> void:
 	_ck(absf(t._tail_yaw[3]) < 0.05, "最後要收斂回中間，不能一直晃（現在 %.3f）" % t._tail_yaw[3])
 	_end(m)
 
+## 中彈晃一下：從左邊被打要往右倒、慢慢穩回來；頭被打中要甩頭
+func _case_trex_flinch() -> void:
+	var m := _new_offline_game()
+	var t: Node = m.players.get_node(^"2").get_node(^"Trex")
+	for i in 120:
+		t._process(1.0 / 60.0)
+	var rest: float = t.pose_rot("spine1").get_euler().z   # 站在坡上會往低的那隻腳斜一點（身體跟著腳的高度），晃完回到這裡
+	t.flinch(Vector3.RIGHT, 1.0, false)
+	var most := 0.0
+	for i in 20:
+		t._process(1.0 / 60.0)
+		most = minf(most, t.pose_rot("spine1").get_euler().z - rest)
+	_ck(most < -0.05, "被往右推要往右倒（最多 %.3f，應為負）" % most)
+	for i in 300:
+		t._process(1.0 / 60.0)
+	_ck(absf(t.pose_rot("spine1").get_euler().z - rest) < 0.02, "晃完要自己站穩（回到晃之前的角度）")
+	var yaw0: float = t.pose_rot("head").get_euler().y
+	t.flinch(Vector3.ZERO, 0.0, true)
+	var swing := 0.0
+	for i in 15:
+		t._process(1.0 / 60.0)
+		swing = maxf(swing, absf(t.pose_rot("head").get_euler().y - yaw0))
+	_ck(swing > 0.2, "頭被打中要甩頭（甩了 %.2f）" % swing)
+	_end(m)
+
 ## 側傾與位移延遲：往旁邊移動時身體要往內倒、慢半拍才跟上，頭要保持水平
 func _case_trex_lean() -> void:
 	var m := _new_offline_game()
 	var t: Node = m.players.get_node(^"2").get_node(^"Trex")
 	var d: Node3D = m.players.get_node(^"2")
+	for i in 120:   # 先站穩，記下站著的側傾（坡上會往低的那隻腳斜一點，身體跟著腳的高度）
+		t._last_pos = t.global_position
+		t._process(1.0 / 60.0)
+	var rest: float = t.pose_rot("spine1").get_euler().z
 
 	var drag := 0.0
 	for i in 40:  # 假裝以 10 m/s 往右（本地 +X）平移
 		t._last_pos = t.global_position - d.global_basis.x * (10.0 / 60.0)
 		t._process(1.0 / 60.0)
 		drag = maxf(drag, absf(t.skel.position.x))   # 只有加速那幾幀才拖得到
-	var roll: float = t.skel.get_bone_pose_rotation(t._idx["spine1"]).get_euler().z
+	var roll: float = t.pose_rot("spine1").get_euler().z - rest
 	_ck(roll < -0.03, "往右移動時軀幹要往右倒（現在 %.3f，應為負）" % roll)
 
-	var head: float = t.skel.get_bone_pose_rotation(t._idx["head"]).get_euler().z
+	var head: float = t.pose_rot("head").get_euler().z
 	_ck(head * roll < 0.0, "頭要反向轉回來保持水平（軀幹 %.3f 頭 %.3f）" % [roll, head])
 	_ck(drag > 0.05, "起步那下身體要被拖著走，不是瞬間跟上（最大位移 %.3f）" % drag)
 
 	for i in 600:  # 停下來，側傾要收斂回去
 		t._last_pos = t.global_position
 		t._process(1.0 / 60.0)
-	_ck(absf(t.skel.get_bone_pose_rotation(t._idx["spine1"]).get_euler().z) < 0.03,
-		"停下來要站回直的")
+	# 停下來：側傾回到「坡度該有的斜」（兩腳高低差帶來的那一點，trex.gd 的 _foot_tilt），不是一直倒著
+	_ck(absf(t._lean.x + t._foot_tilt * 0.5) < 0.03,
+		"停下來側傾要收回去（剩 %.3f）" % (t._lean.x + t._foot_tilt * 0.5))
 	_end(m)
 
 ## 體力：耗光會力竭，要回到門檻以上才能再衝刺／攀爬
@@ -1229,6 +1716,37 @@ func _case_dino_attack_switch() -> void:
 	_end(m)
 
 ## 0.8.1 回饋的介面：大廳順序和存 IP、勝負畫面、重開一局、倒數、boss 體力條、右上角
+## 問題回報：錯誤會被記下來、警告不算，F8 存出來的檔有版本、遊戲狀況和錯誤內容
+func _case_bug_report() -> void:
+	var m := _new_offline_game()
+	var r := BugReport.instance
+	_ck(r != null, "開遊戲要掛上 bug 收集器")
+	r.take_new_error()
+	var before := r.error_count()
+	push_warning("bug 收集器測試：這是警告")
+	_ck(r.error_count() == before and not r.take_new_error(), "警告不算錯誤，不跳提示")
+	push_error("bug 收集器測試：這是錯誤")
+	push_error("bug 收集器測試：這是錯誤")
+	_ck(r.error_count() == before + 1 and r.take_new_error(), "錯誤要記下來、跳提示，同一個只記一次")
+	var path: String = m.report_bug()
+	_ck(path != "" and FileAccess.file_exists(path), "F8 要存出回報檔（%s）" % path)
+	var text := FileAccess.get_file_as_string(path)
+	_ck(text.contains("版本：0.8.5") or text.contains("版本：" + str(ProjectSettings.get_setting("application/config/version"))),
+		"回報要有版本")
+	_ck(text.contains("這是錯誤") and text.contains("共 2 次"), "回報要有錯誤內容和次數")
+	_ck(text.contains("遊戲：") and text.contains("當"), "回報要寫在玩什麼、當誰")
+	DirAccess.remove_absolute(path)
+	# 遊戲裡的版本要跟打包設定一樣（打包只改 export_presets.cfg 的話，回報的版本會是舊的）
+	var cfg := ConfigFile.new()
+	cfg.load("res://export_presets.cfg")
+	var ver := ""
+	for sec in cfg.get_sections():
+		if cfg.has_section_key(sec, "application/version"):
+			ver = cfg.get_value(sec, "application/version")
+	_ck(ver == ProjectSettings.get_setting("application/config/version"),
+		"project.godot 的 config/version（%s）要跟 export_presets.cfg 的版本（%s）一樣" % [ProjectSettings.get_setting("application/config/version"), ver])
+	_end(m)
+
 func _case_ui() -> void:
 	var m := _new_game()
 	var lobby: Node = m.lobby
@@ -1326,7 +1844,7 @@ func _case_arena_walls() -> void:
 	# 建築不能蓋超過上限，不然上面那條就白算了
 	var tallest := 0.0
 	for c in m.get_node(^"Arena").get_children():
-		if c.is_in_group(&"arena_wall"):
+		if c.is_in_group(&"arena_wall") or c.name == &"FarLand":   # 遠景在牆外、沒有碰撞，不是建築
 			continue
 		for mi in c.get_children():
 			if mi is MeshInstance3D:

@@ -6,12 +6,12 @@ cd "$(dirname "$0")"
 echo "== 先跑自我檢查 =="
 godot --headless --script test_battle.gd
 
-for target in "Windows Desktop:build/windows/TankWar.exe" "macOS:build/macos/TankWar.zip"; do
+for target in "Windows Desktop:build/windows/OvD.exe" "macOS:build/macos/OvD.zip"; do
 	preset="${target%%:*}"
 	out="${target#*:}"
 	echo "== 匯出 $preset =="
 	mkdir -p "$(dirname "$out")"
 	godot --headless --export-release "$preset" "$out" >/dev/null
-	cp 說明.txt "$(dirname "$out")/"
+	cp docs/發布/說明.txt "$(dirname "$out")/"
 	ls -lh "$out"
 done

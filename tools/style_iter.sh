@@ -1,5 +1,5 @@
 #!/bin/sh
-# 全場景風格檢查的一輪：從固定角度拍遊戲畫面（tools/style_shots.gd），拼成 docs/image/style_iter/v<版號>.png，
+# 全場景風格檢查的一輪（流程見 docs/美術/美術風格檢驗.md）：從固定角度拍遊戲畫面（tools/style_shots.gd），拼成 docs/image/style_iter/v<版號>.png，
 # 左上角標名字，給人和審查子代理看。用法：tools/style_iter.sh 1
 set -e
 cd "$(dirname "$0")/.."
@@ -10,3 +10,8 @@ mkdir -p $OUT
 OUT=$OUT godot --path . --resolution 1280x720 --script tools/style_shots.gd >/dev/null 2>&1
 magick montage $OUT/*.png -tile 3x -geometry 960x540+4+4 -font "$FONT" -pointsize 22 -title "第 $N 版" docs/image/style_iter/v$N.png
 echo "-> docs/image/style_iter/v$N.png"
+# 自動檢查（docs/美術/美術風格檢驗.md）：畫面量測跟參考圖比、資產面數和貼圖預算。結果存一份，跟對照圖一起給審查看
+{
+	python3 tools/style_metrics.py $OUT
+	godot --headless --path . --script tools/asset_budget.gd 2>/dev/null | grep -E "FAIL|注意|資產檢查"
+} | tee docs/image/style_iter/v$N.txt

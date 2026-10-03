@@ -13,7 +13,10 @@
 # EYE 跟 cowboy.tscn 的 Head 高度共用，改了要一起改。爆頭判定也是從 Head 往下算的。
 #
 # 重建：Blender 裡 BASE = '<這個資料夾>'; exec(open(BASE + '/cowboy.py').read()); export('<專案>/models')
-import bpy, bmesh, math, os
+import bpy, bmesh, math, os, sys
+BASE = globals().get('BASE') or os.path.dirname(os.path.abspath(__file__))   # Blender 裡 exec 時自己給 BASE；背景跑時從檔案位置算
+sys.path.insert(0, BASE)
+import pipeline
 exec(open(BASE + '/common.py').read())
 
 EYE = 1.6
@@ -273,3 +276,8 @@ def export(out_dir):
     bpy.ops.export_scene.gltf(filepath=path, export_format='GLB', use_selection=True,
                               export_apply=True, export_yup=True)
     print('exported ->', path)
+
+
+if __name__ == '__main__':   # 背景跑：tools/model_iter.sh cowboy <版號>（輸出 --out 資料夾裡的 cowboy.glb）
+    pipeline.run(lambda: [o for o in bpy.data.objects if o.type == 'MESH'], None,
+                 budget=8000, export_fn=lambda obs, out: export(os.path.dirname(out) or '.'))

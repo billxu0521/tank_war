@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_item.gd" id="1_1ivs7"]
+
+[node name="麥田" type="Node3D" unique_id=1072342922]
+script = ExtResource("1_1ivs7")
+kind = "wheat"
+amount = 40.0

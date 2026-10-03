@@ -4,12 +4,15 @@
 # 不用開 Blender 視窗、不用 MCP，直接在背景跑：
 #   /Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup \
 #       --python blender/rock.py -- --out models/rocks.glb --preview /tmp/rock.png
-# 反覆修改時用 tools/model_iter.sh rock <版號>（做法見 docs/程式建模迭代.md）
+# 反覆修改時用 tools/model_iter.sh rock <版號>（做法見 docs/素材流水線/程式建模迭代.md）
 #
 # 造型：在橢球上撒十幾個點取凸包（convex hull），點少面就大；底部壓平坐在地上；
 # 再把轉折大的稜邊切一小刀（bevel），就是參考圖邊緣那種小缺角。
 import bpy, bmesh, math, os, random, sys
 from mathutils import Vector
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import pipeline
 
 SEED = 11
 PX = 0.01            # 參考圖一像素 = 1 公分：預覽跟參考圖同尺寸同構圖，上下對照對得齊
@@ -76,15 +79,6 @@ def profile(f, curve):
 
 
 rng = random.Random(SEED)
-
-
-def args():
-    a = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
-    out = {'--out': None, '--preview': None}
-    for k in out:
-        if k in a:
-            out[k] = a[a.index(k) + 1]
-    return out
 
 
 def material(name, rgb):
@@ -274,15 +268,6 @@ def build(i, parts, mat):
     return ob
 
 
-def export(obs, path):
-    for o in bpy.context.scene.objects:
-        o.select_set(o in obs)
-    bpy.context.view_layer.objects.active = obs[0]
-    bpy.ops.export_scene.gltf(filepath=path, export_format='GLB', use_selection=True,
-                              export_apply=True, export_yup=True)
-    print('exported ->', path)
-
-
 def preview(obs, path):
     """照參考圖一模一樣的構圖：每顆擺到參考圖上的位置，正交相機、同解析度，上下對照對得齊"""
     sc = bpy.context.scene
@@ -352,12 +337,12 @@ def preview(obs, path):
     print('preview ->', path)
 
 
-a = args()
-bpy.ops.wm.read_factory_settings(use_empty=True)
-MAT = material('rock_stone', (0.32, 0.17, 0.08))   # 線性值。比參考圖定案時略亮、紅綠比低一點：遊戲的光比預覽暗又暖，固有色往反方向補
-rocks = [build(i, parts, MAT) for i, (cx, by, parts) in enumerate(ROCKS)]
-print('rocks:', len(rocks), 'tris:', sum(sum(len(p.vertices) - 2 for p in r.data.polygons) for r in rocks))
-if a['--out']:
-    export(rocks, a['--out'])
-if a['--preview']:
-    preview(rocks, a['--preview'])
+def build_all():
+    global MAT
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    MAT = material('rock_stone', (0.153, 0.083, 0.039))   # 線性值。比參考圖定案時略亮、紅綠比低一點：遊戲的光比預覽暗又暖，固有色往反方向補
+    return [build(i, parts, MAT) for i, (cx, by, parts) in enumerate(ROCKS)]
+
+
+if __name__ == '__main__':
+    pipeline.run(build_all, preview, budget=2500)

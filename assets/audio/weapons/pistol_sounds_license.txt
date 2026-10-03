@@ -17,4 +17,4 @@ pistol_reload.mp3
   備註：取自 freesound 的 HQ mp3 預覽檔。
 
 本資料夾其餘音檔（shotgun_*、no_ammo、bullet_hole）來自 fps-character-asset
-素材包，記錄見 CREDITS.md。
+素材包，記錄見 docs/發布/CREDITS.md。

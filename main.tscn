@@ -18,15 +18,24 @@ background_energy_multiplier = 0.75
 sky = SubResource("sky")
 ambient_light_source = 3
 ambient_light_sky_contribution = 0.3
-ambient_light_energy = 1.2
-ambient_light_color = Color(0.5, 0.5, 0.56, 1)
+ambient_light_energy = 1.1
+ambient_light_color = Color(0.55, 0.52, 0.68, 1)
 tonemap_mode = 2
-tonemap_exposure = 1.35
+tonemap_exposure = 1.1
 fog_enabled = true
-fog_light_color = Color(0.84, 0.64, 0.5, 1)
-fog_sun_scatter = 0.1
-fog_density = 0.001
-fog_sky_affect = 0.3
+fog_light_color = Color(0.72, 0.44, 0.29, 1)
+fog_sun_scatter = 0.3
+fog_density = 0.002
+fog_sky_affect = 0.1
+glow_enabled = true
+glow_intensity = 0.45
+glow_bloom = 0.05
+glow_hdr_threshold = 0.95
+glow_levels/1 = 0.0
+glow_levels/2 = 1.0
+glow_levels/3 = 1.0
+glow_levels/4 = 1.0
+glow_levels/5 = 0.0
 adjustment_enabled = true
 adjustment_contrast = 1.05
 adjustment_saturation = 1.0
@@ -69,9 +78,11 @@ environment = SubResource("env")
 
 [node name="Sun" type="DirectionalLight3D" parent="Arena" unique_id=1519473230]
 transform = Transform3D(-0.439, -0.187, 0.88, 0, 0.98, 0.208, -0.899, 0.0913, -0.43, 0, 20, 0)
-light_color = Color(1, 0.74, 0.5, 1)
-light_energy = 2.4
+light_color = Color(1, 0.78, 0.52, 1)
+light_energy = 1.15
 shadow_enabled = true
+shadow_opacity = 0.85
+directional_shadow_max_distance = 70.0
 
 [node name="Egg" type="Node3D" parent="." unique_id=459102912]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0)
@@ -102,29 +113,50 @@ mouse_filter = 2
 layout_mode = 0
 offset_left = 24.0
 offset_top = 24.0
-offset_right = 340.0
+offset_right = 484.0
 offset_bottom = 320.0
 theme_override_constants/separation = 8
 
 [node name="Title" type="Label" parent="UI/Root/Lobby" unique_id=826925584]
 layout_mode = 2
-text = "西部牛仔打恐龍"
+text = "Outlaws vs Dinosaurs
+法外狂徒大戰恐龍"
 
 [node name="Hint" type="Label" parent="UI/Root/Lobby" unique_id=156416433]
 layout_mode = 2
-text = "兩個模式：連線模式（大家都是牛仔，開房的人把 IP 給朋友）、沙盒模式（一個人練槍）。
-WASD 移動，滑鼠瞄準，左鍵開槍，右鍵舉槍，Esc 開選單（主機可以在選單加移動標靶、牛仔 bot）。
+autowrap_mode = 3
+text = "WASD 移動，滑鼠瞄準，左鍵開槍，右鍵舉槍，Esc 開選單（開房的人可以在選單加 bot）。
 1 左輪 2 單管散彈 3 槓桿步槍。舉槍時 Shift 閉氣，R 換彈，V 槍托（按住蓄力＝重擊），F 開門／爬梯子，
-Shift 跑，C 切換蹲／Ctrl 按住蹲，靠近矮牆按住往前＋Space 翻越。左輪腰射按住左鍵＝搧擊錘。打頭一槍死。
-連線模式一局四分鐘，先把蛋帶進撤離區的人贏；死了五秒後重生。"
+Shift 跑，C 切換蹲／Ctrl 按住蹲，靠近矮牆按住往前＋Space 翻越。左輪腰射按住左鍵＝搧擊錘。打頭一槍死。"
+
+[node name="OnlineLabel" type="Label" parent="UI/Root/Lobby" unique_id=1500016901]
+layout_mode = 2
+text = "── 連線對戰 ──"
+
+[node name="ModeRow" type="HBoxContainer" parent="UI/Root/Lobby" unique_id=1500016902]
+layout_mode = 2
+
+[node name="ModeLabel" type="Label" parent="UI/Root/Lobby/ModeRow" unique_id=1500016903]
+layout_mode = 2
+text = "模式"
+
+[node name="ModePick" type="OptionButton" parent="UI/Root/Lobby/ModeRow" unique_id=1500016904]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ModeDesc" type="Label" parent="UI/Root/Lobby" unique_id=1500016905]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+autowrap_mode = 3
+modulate = Color(1, 0.88, 0.65, 1)
 
 [node name="HostBtn" type="Button" parent="UI/Root/Lobby" unique_id=1944247746]
 layout_mode = 2
-text = "開房（連線模式）"
+text = "開房（用上面選的模式）"
 
 [node name="JoinBtn" type="Button" parent="UI/Root/Lobby" unique_id=315188606]
 layout_mode = 2
-text = "加入（連線模式）"
+text = "加入（模式照開房的人）"
 
 [node name="IPRow" type="HBoxContainer" parent="UI/Root/Lobby" unique_id=1514768845]
 layout_mode = 2
@@ -150,9 +182,21 @@ flat = false
 layout_mode = 2
 text = "連到測試站"
 
+[node name="PracticeLabel" type="Label" parent="UI/Root/Lobby" unique_id=1500016906]
+layout_mode = 2
+text = "── 一個人練習 ──"
+
 [node name="SandboxBtn" type="Button" parent="UI/Root/Lobby" unique_id=1799944929]
 layout_mode = 2
 text = "沙盒模式（牛仔練習場，打靶、練翻越）"
+
+[node name="SoloDinoBtn" type="Button" parent="UI/Root/Lobby" unique_id=1799944932]
+layout_mode = 2
+text = "單人打恐龍（測恐龍行為，接關無限）"
+
+[node name="RangeBtn" type="Button" parent="UI/Root/Lobby" unique_id=1799944931]
+layout_mode = 2
+text = "靶場模式（測手感：跳傷害、顯示距離）"
 
 [node name="ViewerBtn" type="Button" parent="UI/Root/Lobby" unique_id=1105424422]
 layout_mode = 2
@@ -190,6 +234,17 @@ horizontal_alignment = 1
 [node name="ResumeBtn" type="Button" parent="UI/Root/Menu/Box" unique_id=1215004260]
 layout_mode = 2
 text = "繼續遊戲"
+
+[node name="AimToggleBtn" type="CheckButton" parent="UI/Root/Menu/Box" unique_id=1964021260]
+layout_mode = 2
+text = "瞄準：按一下切換（關＝按住右鍵）"
+
+[node name="VsyncBtn" type="CheckButton" parent="UI/Root/Menu/Box" unique_id=1964021261]
+layout_mode = 2
+text = "垂直同步（關掉畫面可能撕裂，延遲稍低）"
+
+[node name="FpsCapBtn" type="OptionButton" parent="UI/Root/Menu/Box" unique_id=1964021262]
+layout_mode = 2
 
 [node name="LeaveBtn" type="Button" parent="UI/Root/Menu/Box" unique_id=1356984258]
 layout_mode = 2
@@ -351,15 +406,21 @@ show_percentage = false
 [connection signal="pressed" from="UI/Root/Result/Box/RestartBtn" to="." method="_on_restart_pressed"]
 [connection signal="pressed" from="UI/Root/Result/Box/LobbyBtn" to="." method="_on_leave_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/HostBtn" to="." method="_on_host_pressed"]
+[connection signal="item_selected" from="UI/Root/Lobby/ModeRow/ModePick" to="." method="_on_mode_picked"]
 [connection signal="pressed" from="UI/Root/Lobby/JoinBtn" to="." method="_on_join_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/TestServerBtn" to="." method="_on_test_server_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/SandboxBtn" to="." method="_on_sandbox_pressed"]
+[connection signal="pressed" from="UI/Root/Lobby/RangeBtn" to="." method="_on_range_pressed"]
+[connection signal="pressed" from="UI/Root/Lobby/SoloDinoBtn" to="." method="_on_solo_dino_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/ViewerBtn" to="." method="_on_viewer_pressed"]
 [connection signal="pressed" from="UI/Root/Menu/Box/ResumeBtn" to="." method="_on_resume_pressed"]
+[connection signal="toggled" from="UI/Root/Menu/Box/VsyncBtn" to="." method="_on_vsync_toggled"]
+[connection signal="item_selected" from="UI/Root/Menu/Box/FpsCapBtn" to="." method="_on_fps_cap_selected"]
 [connection signal="pressed" from="UI/Root/Menu/Box/LeaveBtn" to="." method="_on_leave_pressed"]
 [connection signal="pressed" from="UI/Root/Menu/Box/QuitBtn" to="." method="_on_quit_pressed"]
 [connection signal="pressed" from="UI/Root/Menu/Box/Controller/WalkerBtn" to="." method="_on_add_walker_pressed"]
 [connection signal="pressed" from="UI/Root/Menu/Box/Controller/BotBtn" to="." method="_on_add_bot_pressed"]
 [connection signal="pressed" from="UI/Root/Menu/Box/Controller/ClearBotsBtn" to="." method="_on_clear_bots_pressed"]
 [connection signal="toggled" from="UI/Root/Menu/Box/Controller/DinoAttackBtn" to="." method="_on_dino_attack_toggled"]
+[connection signal="toggled" from="UI/Root/Menu/Box/AimToggleBtn" to="." method="_on_aim_toggle_toggled"]
 [connection signal="pressed" from="UI/Root/Menu/Box/Controller/BossBtn" to="." method="_on_add_boss_pressed"]

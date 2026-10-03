@@ -3,7 +3,7 @@ class_name Cowboy
 ## 牛仔：第一人稱，操作照 Hunt: Showdown。從 FNE_project 的 player.gd 搬來，
 ## 血量、死亡、連線權限改吃 fighter.gd，跟恐龍同一套。
 ## 移動／蹲／翻越／體力是原本的。FNE 的互動系統（門、燈）這裡沒有；Q/E 探頭也拿掉了——
-## Hunt 刻意不做探頭（見 docs/Hunt操作機制分析.md），怕變成躲在看不到的角落對槍。
+## Hunt 刻意不做探頭（見 docs/企劃/Hunt操作機制分析.md），怕變成躲在看不到的角落對槍。
 
 @export_group("Movement")
 @export var walk_speed := 5.0
@@ -168,10 +168,51 @@ func _ready() -> void:
 			leg.position.z -= LOCAL_LEG_FORWARD
 	if not is_local:
 		_become_remote()
+		Viewmodel.mark_meshes(self, Viewmodel.TARGET_MARK)   # 別人（和靶）是目標；自己的靴子不用
 		return
 	# 場景裡會有好幾台相機（每個玩家一台），不能靠 Godot 自動挑第一台——
 	# 那台可能是別人的。自己的一定要明講。
 	_camera.current = true
+	# 相機不走物理插值（見 _process）：轉視角是滑鼠事件，補間會讓轉頭慢半拍。槍和手跟著相機
+	_camera.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	_hurt_hud = HurtHud.new(_camera)
+	$HUD.add_child(_hurt_hud)
+	$HUD.move_child(_hurt_hud, 0)   # 墊在血條、彈藥這些下面
+	# 血條掉血殘影：掉的那段先變淺色，等一下才縮回去，看得出這一下掉了多少
+	_hp_lost = ColorRect.new()
+	_hp_lost.color = Color(1.0, 0.85, 0.6, 0.9)
+	_hp_lost.size = _hp_fill.size
+	_hp_fill.get_parent().add_child(_hp_lost)
+	_hp_fill.get_parent().move_child(_hp_lost, 0)
+
+
+# --- 被打的回饋（只有自己的牛仔）---
+var _hurt_hud: HurtHud
+var _hp_lost: ColorRect
+var _hp_lag := -1.0          # 殘影現在畫到的血量
+var _hp_lag_wait := 0.0      # 掉血後殘影先停這麼久才開始縮
+var _kick := Vector2.ZERO    # 鏡頭被打歪多少（弧度：x 上下、y 左右），每幀彈回來
+
+## 被打了：畫面四周閃紅、準心外圍標出打你的方向、鏡頭抖一下（傷越重抖越大）
+func _on_hurt(amount: int, from: Vector3) -> void:
+	if not is_local or _hurt_hud == null:
+		return
+	var frac := float(amount) / max_hp
+	_hurt_hud.hurt(frac, from)
+	_kick += Vector2(randf_range(0.03, 0.06), randf_range(-0.05, 0.05)) * (0.5 + frac * 3.0)
+	_hp_lag_wait = 0.4
+
+func _update_hurt(delta: float) -> void:
+	if _hurt_hud == null:
+		return
+	_hurt_hud.low = clampf((HurtHud.LOW_HP - float(hp) / max_hp) / HurtHud.LOW_HP, 0.0, 1.0)
+	_kick = _kick.lerp(Vector2.ZERO, 1.0 - exp(-12.0 * delta))
+	if _hp_lag < hp:
+		_hp_lag = hp
+	_hp_lag_wait -= delta
+	if _hp_lag_wait <= 0.0:
+		_hp_lag = move_toward(_hp_lag, hp, max_hp * 0.8 * delta)
+	_hp_lost.size = Vector2((_hp_fill.get_parent() as Control).size.x * clampf(_hp_lag / max_hp, 0.0, 1.0), _hp_fill.size.y)
 
 
 ## 走路時兩條腿繞髖關節前後擺，擺幅跟速度走。速度用位置差算：
@@ -223,7 +264,12 @@ func _process(delta: float) -> void:
 		return
 	# 翻越：鏡頭往下點頭、往側邊歪一下，看得出自己撐過去了
 	var v := sin(PI * vault_t)
-	_camera.rotation = Vector3(-0.22 * v, 0.0, 0.12 * v)
+	_update_hurt(delta)
+	_camera.rotation = Vector3(-0.22 * v + _kick.x, _kick.y, 0.12 * v + _kick.y * 0.5)
+	# 相機位置用補間後的（移動不抖），朝向用現在的（轉頭零延遲）：
+	# 相機掛在頭底下，差多少就往回挪多少。瞬移後補間會重設，這個差就是 0
+	var lag := head.get_global_transform_interpolated().origin - head.global_position
+	_camera.position = head.global_basis.inverse() * lag
 	# 沒有準心（跟 Hunt 一樣靠槍身瞄）。打中人時畫面中間閃一下紅 +：
 	# 遠距離看不出血條掉，這是唯一的命中確認
 	_crosshair.visible = hit_until > Time.get_ticks_msec()
@@ -355,7 +401,7 @@ func _hurt_self(amount: int) -> void:
 	if multiplayer.is_server():
 		take_damage(amount, null)
 	else:
-		_request_damage.rpc_id(1, get_path(), amount)
+		_match().request_damage.rpc_id(1, name.to_int(), get_path(), amount, _camera.global_position)
 
 
 # --- bot ---
@@ -490,24 +536,21 @@ func _bot_shoot(threat: Node3D) -> void:
 # --- 開槍打中：走主機 ---
 
 ## viewmodel 打中東西時呼叫。扣血只有主機能做（fighter.take_damage），
-## 客戶端要請主機代打。
-## ponytail: 主機不驗證命中，跟原本一樣不防作弊。要防再改成主機自己重算射線。
-func deal_damage(target: Node, amount: int) -> void:
+## 客戶端要請主機代打：請求送到 Main（Main.request_damage）不送到自己這個節點——
+## 同時開槍時自己可能已經在主機上被打死刪掉了，送到自己會找不到節點，同歸於盡就不成立
+## head：打中恐龍的頭（可以打斷蓄力，見 boss.gd 的 head_hit）
+func deal_damage(target: Node, amount: int, head := false) -> void:
 	on_hit()
 	if multiplayer.is_server():
+		if head and target.has_method(&"head_hit"):
+			target.head_hit()
 		target.take_damage(amount, self)
 	else:
-		_request_damage.rpc_id(1, target.get_path(), amount)
+		_match().request_damage.rpc_id(1, name.to_int(), target.get_path(), amount, _camera.global_position, head)
 
 
-@rpc("any_peer", "call_remote", "reliable")
-func _request_damage(target_path: NodePath, amount: int) -> void:
-	# 只收這個牛仔本人送來的，別人不能假冒他開槍
-	if multiplayer.get_remote_sender_id() != get_multiplayer_authority():
-		return
-	var target := get_node_or_null(target_path)
-	if target and target.has_method(&"take_damage"):
-		target.take_damage(amount, self)
+func _match() -> Node:
+	return get_tree().get_first_node_in_group(&"match")
 
 
 # --- 互動：門、梯子 ---

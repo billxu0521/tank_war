@@ -5,21 +5,55 @@
 - `common.py` — box / cyl / blob 這些小工具，最後 `finish()` 合併並加倒角
 - `weapons.py` — 牛仔的三把槍（左輪、單管散彈、槓桿步槍），各自匯出一個 `.glb`
 - `tree.py` — 闊葉樹大中小三棵（`TreeOak` / `TreeOakM` / `TreeOakS`），進 `trees.glb`。**不用開 Blender**，背景直接跑，
-  一輪迭代用 `tools/model_iter.sh tree <版號>`（做法和教訓見 [docs/程式建模迭代.md](../docs/程式建模迭代.md)）
-- `props.py` — 場景物件：穀倉（牆身＋屋頂分開，照實際大小縮放）、農舍、筒倉、柵欄、乾草捲、松樹、
-  山崖（圍牆的外觀）、麥子、草叢、恐龍蛋、篷車（撤離點），全部進 `props.glb`
+  一輪迭代用 `tools/model_iter.sh tree <版號>`（做法和教訓見 [docs/素材流水線/程式建模迭代.md](../docs/素材流水線/程式建模迭代.md)）
+- `house.py` — 農舍三種（`House1` 前廊農舍、`House2` 圓木小屋、`House3` 直板高屋），各帶碰撞 `House<N>Col`，門 `HouseDoor` 共用，進 `houses.glb`。
+  跟 tree.py 一樣背景跑：`tools/model_iter.sh house <版號>`
+- `grove.py` — 五種新樹（`docs/image/tree_list.png`）：楓樹 `TreeMaple`、松樹 `TreePine2`、約書亞樹 `TreeJoshua`、枯樹 `TreeDead`、柳樹 `TreeWillow`，
+  進 `groves.glb`。借用 tree.py 的工具。`REF=docs/image/tree_list.png tools/model_iter.sh grove <版號>`
+- `flora.py` — 荒野矮植物（`docs/image/plante.png` 左邊兩區）：柱狀仙人掌大小 `Saguaro` / `SaguaroS`（有碰撞，當樹擺）、
+  球形仙人掌 `BarrelCactus`、仙人掌片 `PricklyPear`、草叢 `GrassTall` / `GrassDense` / `GrassSmall`、灌木 `DesertBush` / `ScrubBush`，
+  進 `floras.glb`。沒碰撞的遊戲開場用 MultiMesh 撒（main.gd `_flora_field`）。`REF=docs/image/flora.png tools/model_iter.sh flora <版號>`
+- `kit.py` — 場景小物件（`docs/image/house.png` 裡房子以外的）：吊燈、木桶、木箱、方草捆、車輪、柵欄、圍欄門、繫柱架、風車、倉庫，進 `kits.glb`。
+  借用 house.py 的材質和工具（`from house import *`）。`REF=docs/image/house.png tools/model_iter.sh kit <版號>`
+- `props.py` — 場景物件：穀倉（牆身＋屋頂分開，照實際大小縮放）、筒倉、柵欄、乾草捲、松樹、
+  麥子、草叢、恐龍蛋、篷車（撤離點），全部進 `props.glb`
 - `cowboy.py` — 牛仔：身體（原點在腳底）、頭（原點在眼睛 1.6 公尺，跟著上下看轉）、兩條腿（原點在髖關節，走路擺動）、
   自己看的靴子、第一人稱握槍的手（HandGrip / HandSupport，位置寫在各槍場景的 grip_hand / support_hand；
   右手的拇指 HandGripThumb、前臂 HandGripArm 分開，左輪扳擊錘和轉手臂用；HandLoad 是左輪換彈捏子彈的左手）
 - `trex.py` — 18 個部件，**名字和位置直接抄 trex.gd 的 `_rig()`**，所以程式動畫不用改
+- `trex_hd.py` — 精修暴龍（`docs/image/dinosaur.png`）：一整張連續的皮＋47 根骨頭蒙皮，匯出 `models/trex_hd.glb`。
+  骨頭名字沿用 trex.gd（`root`、`spine1`、`neck`、`head`、`jaw`、`tail1`~`tail8`、`thigh_l`…），遊戲裡 trex.gd 直接用它（約 1800 三角面）。
+  改完模型：`tools/trex_hd_iter.sh <版號>` → `godot --headless --import` → `tools/trex_shots.gd` 看遊戲內 → `test_battle.gd`。
+  一輪迭代 `tools/trex_hd_iter.sh <版號>`（對照圖＋輪廓疊圖），局部特寫 `tools/trex_hd_close.py`。做法和教訓見 [docs/素材流水線/程式建模迭代.md](../docs/素材流水線/程式建模迭代.md)
+
+## 共用入口（pipeline.py）
+
+每支腳本最後都是 `pipeline.run(build_all, preview, budget=…)`：讀 `--out` / `--preview` 參數、印面數、
+**送審前自動檢查**、匯出、渲染預覽。所以每支都能用 `tools/model_iter.sh <名字> <版號>` 背景跑一輪
+（weapons、props、cowboy、trex 沒有參考圖，只出預覽；它們一次匯出好幾個 glb，放在 models/ 各自的檔名）。
+
+自動檢查（`pipeline.check`）沒過會印 `CHECK FAIL`，model_iter.sh 就停，不匯出、不出對照圖、不送審：
+- 面數超過預算（每支腳本在 `run` 的 `budget` 寫）
+- 有材質但沒有任何面用它：該長的零件沒長出來
+- 葉片卡沒有渲染用的貼圖座標：葉子會整片消失
+- 封閉零件是反面
+
+檢查本身的測試：`Blender --background --factory-startup --python tools/test_pipeline_check.py`
+
+**共用工具用 import**：grove.py `from tree import *`、flora.py `from grove import *`、kit.py / town.py `from house import *`。
+被 import 的腳本主程式寫在 `if __name__ == '__main__':` 底下，import 時不會跑。注意兩件事：
+- 下游改到共用的全域變數要改在來源模組上，例如 kit.py 的 `house.rnd = …`、grove.py 的 `tree.MATS = …`（只在自己這邊重新指定，來源的函式看不到）
+- 底線開頭的名字 `import *` 不會帶進來，要另外寫（kit.py 的 `from house import _parts, _push`）
+
+改共用工具之後，用 `tools/glb_signature.py` 比對下游模型的幾何有沒有變（glb 檔的位元組每次匯出都可能不同，比幾何才準）。
 
 ## 怎麼重建
 
-不用開 Blender 也可以，背景跑（`tree.py` 就是這樣做的）：
+不用開 Blender，背景跑一輪（每支都可以）：`tools/model_iter.sh props 1`。只要匯出不要預覽：
 
 ```sh
 /Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup \
-    --python-expr "BASE='$PWD/blender'; exec(open(BASE+'/props.py').read()); export('$PWD/models')"
+    --python blender/props.py -- --out models/props.glb
 ```
 
 或者 Blender 開著、BlenderMCP 連上之後，在 Blender 裡執行：
@@ -79,15 +113,14 @@ export('<專案>/models')                                   # 三個 .glb
 所以改模型不會動到翻越高度、掩蔽、恐龍爬牆。要對齊的數字：
 - 穀倉基準 14 × 20 × 8、屋頂斜度 0.55 ＝ main.gd 的 `BARN_BASE`、`BARN_PITCH`
 - 屋頂斜板的擺法（`gable_roof()`）照抄 main.gd 的 `_roof()`，碰撞就是那樣算的
-- 農舍 10 × 8 × 5、斜度 0.5、煙囪位置 ＝ main.gd 的 `_house()`
-- 筒倉基準高 15、柵欄一段 2.5 公尺、樹幹基準高 5 ＝ `SILO_BASE_H`、`FENCE_SEG`、`TREE_BASE_TRUNK`
-- 山崖一段寬 40（`CLIFF_W`）；岩塊只能往牆外（Blender +Y）長，凸進場地會變成看得到摸不到
+- 農舍在 house.py：主屋牆 10 × 8、地板高 0.45（`HOUSE_FLOOR`）、煙囪頂（`HOUSE_KINDS`）跟 main.gd 共用
+- 筒倉基準高 15、樹幹基準高 5；柵欄一段 2.5 公尺（在 kit.py） ＝ `SILO_BASE_H`、`FENCE_SEG`、`TREE_BASE_TRUNK`
 - 麥子、草叢沒有碰撞，遊戲裡用 MultiMesh 撒幾千叢，模型要保持在幾十個三角形以內
 
 ## 空心建築（穀倉、農舍）
 
 蓋牆用 `wall()`（自動在門窗開口處切開）、要擋人的家具用 `solid()`：兩個都會順便記一份碰撞方塊，
-最後 `make_col()` 合成 `BarnCol` / `HouseCol`，遊戲拿來當碰撞形狀（看不見）。
+最後 `make_col()` 合成 `BarnCol` / `House<N>Col`（這幾個函式在 common.py，house.py 也用），遊戲拿來當碰撞形狀（看不見）。
 畫面和碰撞只在這裡定義一次。門是另外的物件（`BarnDoorSlide`、`BarnBackDoor`、`HouseDoor`），
 原點在門軸或底部中央，遊戲裡會動。門和梯子的位置常數（`BARN_DOOR_*`、`BARN_BACK_X`、
 `BARN_LOFT`、`BARN_LADDER_X`）跟 main.gd 共用。
