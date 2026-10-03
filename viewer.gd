@@ -1,6 +1,7 @@
 class_name ModelViewer
 extends Node3D
 ## 模型檢視模式：把牛仔（連三把槍）和暴龍單獨擺出來繞著看。
+## C 切到「操控恐龍」：WASD 自己開、一鍵出招、換心情、慢動作、顯示腳踩的點，旁邊有斜坡和台階看腳怎麼踩（docs/尼諾拉.md）。
 ##
 ## 存在的理由是「改完模型要有地方看」。Blender 裡看不到 Godot 的材質、
 ## 也看不到程式動畫，所以這裡要能讓暴龍真的走起來——它的步態是從實際位移
@@ -33,6 +34,26 @@ var _pitch := 0.32
 var _dist := 13.0
 var _focus := Vector3(0, 1.8, 0)
 var _dragging := false
+var _drive := false        # C：自己操控恐龍
+var _speed := 0.0          # 操控時現在的速度（加速、減速有個過程，boss 也是）
+var _acts := []            # 排隊中的出招：[act, 秒數, 往前的速度]
+var _act_left := 0.0
+var _act_push := 0.0
+var _mood := -1
+var _slow := 3             # Engine.time_scale 的檔位，見 SLOW
+const SLOW := [0.1, 0.25, 0.5, 1.0]
+var _markers := false      # K：顯示腳踩的點
+var _marks: Array[MeshInstance3D] = []
+# 出招的順序和時間照 boss.gd（ACT_*、*_WIND、*_RECOVER）
+const MOVES := {
+	KEY_Z: [[1, 0.7, 0.0], [2, 0.15, 0.0], [7, 0.8, 0.0]],                  # 咬：預備 → 咬 → 收招
+	KEY_X: [[3, 1.6, 0.0], [4, 0.4, 0.0], [7, 0.6, 0.0]],                   # 蓄力長吼 → 甩尾 → 收招
+	KEY_V: [[5, 0.5, 0.0], [6, 0.6, 24.0], [7, 1.2, 0.0]],                  # 撲擊：蹲 → 撲出去 → 收招
+	KEY_B: [[8, 2.5, 0.0]],                                                 # 被打斷（暈）
+	KEY_G: [[9, 0.7, 0.0]],                                                 # 發現人
+}
+const MOVE_NAMES := {1: "咬預備", 2: "咬", 3: "蓄力長吼", 4: "甩尾", 5: "撲擊預備", 6: "撲出去", 7: "收招", 8: "被打斷", 9: "發現人"}
+const MOOD_NAMES := {-1: "不套心情", 0: "逛", 1: "找", 2: "追"}
 
 ## 離開時呼叫，讓叫我的人把自己收回去
 signal closed
@@ -92,10 +113,24 @@ func _ground() -> Node3D:
 	mat.albedo_color = Color(0.13, 0.14, 0.16)
 	var plane := MeshInstance3D.new()
 	var pm := PlaneMesh.new()
-	pm.size = Vector2(40, 40)
+	pm.size = Vector2(120, 120)
 	pm.material = mat
 	plane.mesh = pm
 	n.add_child(plane)
+	# 碰撞：恐龍的腳是往下打射線找地面踩（trex.gd 的 _ground），沒有碰撞就只會踩在固定高度
+	_solid(n, Vector3(0, -0.5, 0), Vector3(120, 1, 120), Basis(), mat)
+	# 操控模式看腳怎麼踩：東邊一道 20 度的坡（往北上去）、北邊三階台階、南邊一片小石堆
+	var rock := StandardMaterial3D.new()
+	rock.albedo_color = Color(0.32, 0.28, 0.24)
+	_solid(n, Vector3(24, 2.0, -6), Vector3(14, 1, 24), Basis(Vector3.RIGHT, deg_to_rad(20.0)), rock)
+	for k in 3:   # 一階 0.3 公尺（約恐龍膝蓋的五分之一）
+		_solid(n, Vector3(0, 0.15 + k * 0.15, -22 - k * 4.0), Vector3(16, 0.3 + k * 0.3, 4), Basis(), rock)
+	var rr := RandomNumberGenerator.new()
+	rr.seed = 5
+	for k in 14:
+		var sz := rr.randf_range(0.6, 1.6)
+		_solid(n, Vector3(rr.randf_range(-8, 8), sz * 0.25, rr.randf_range(18, 30)), Vector3(sz, sz * 0.5, sz),
+			Basis(Vector3.UP, rr.randf() * TAU), rock)
 
 	var line := StandardMaterial3D.new()
 	line.albedo_color = Color(0.24, 0.26, 0.30)
@@ -109,6 +144,22 @@ func _ground() -> Node3D:
 			bar.position = Vector3(i, 0.01, 0) if axis == 0 else Vector3(0, 0.01, i)
 			n.add_child(bar)
 	return n
+
+func _solid(parent: Node, pos: Vector3, size: Vector3, basis: Basis, mat: Material) -> void:
+	var body := StaticBody3D.new()
+	var cs := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	box.size = size
+	cs.shape = box
+	body.add_child(cs)
+	var mi := MeshInstance3D.new()
+	var bm := BoxMesh.new()
+	bm.size = size
+	bm.material = mat
+	mi.mesh = bm
+	body.add_child(mi)
+	body.transform = Transform3D(basis, pos)
+	parent.add_child(body)
 
 ## 用 cowboy.tscn 一樣的節點位置把牛仔組起來（那邊是 CharacterBody3D，搬進來會拖一堆遊戲邏輯）。
 ## 頭掛在 1.6 公尺的樞紐上，會慢慢上下看——遊戲裡別人就是這樣看出你在看哪。
@@ -133,6 +184,8 @@ func _build_cowboy() -> Node3D:
 
 ## 8 字路徑。單純繞圓只會一直往同一邊傾，看不出換邊
 const TREX_WALK := 4.0   # boss.gd 的 WALK
+const TREX_RUN := 11.0   # boss.gd 的 RUN
+const TREX_TURN := 3.0   # boss.gd 的 TURN
 
 func _lemniscate(a: float, r: float) -> Vector3:
 	return Vector3(sin(a) * r * 1.5, 0, sin(a) * cos(a) * r * 2.0)
@@ -158,9 +211,34 @@ func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventKey and e.pressed and not e.echo:
 		match e.keycode:
 			KEY_ESCAPE:
+				Engine.time_scale = 1.0
 				closed.emit()
 			KEY_SPACE:
 				_moving = not _moving
+			KEY_C:   # 操控恐龍
+				_drive = not _drive
+				_speed = 0.0
+				if _drive:
+					_select("trex")
+					_moving = false
+					_trex.global_position = Vector3.ZERO   # 從中間、面朝北開始（斜坡在東、台階在北、石堆在南）
+					_trex.rotation.y = 0.0
+			KEY_M:
+				_mood = (_mood + 2) % 4 - 1   # -1 → 0 → 1 → 2 → -1
+				_trex.mood = _mood
+			KEY_BRACKETLEFT:
+				_slow = maxi(_slow - 1, 0)
+				Engine.time_scale = SLOW[_slow]
+			KEY_BRACKETRIGHT:
+				_slow = mini(_slow + 1, SLOW.size() - 1)
+				Engine.time_scale = SLOW[_slow]
+			KEY_K:
+				_markers = not _markers
+			KEY_H:   # 中彈：從隨機一邊推一下
+				var a := randf() * TAU
+				_trex.flinch(Vector3(cos(a), 0, sin(a)), 1.0, false)
+			KEY_J:   # 頭被打中
+				_trex.flinch(Vector3.RIGHT, 1.0, true)
 			KEY_F:
 				_trex.bite()
 			KEY_TAB:
@@ -168,7 +246,9 @@ func _unhandled_input(e: InputEvent) -> void:
 				get_viewport().debug_draw = (Viewport.DEBUG_DRAW_WIREFRAME if _wire
 					else Viewport.DEBUG_DRAW_DISABLED)
 			_:
-				if KEYS.has(e.keycode):
+				if MOVES.has(e.keycode) and _acts.is_empty() and _act_left <= 0.0:
+					_acts = (MOVES[e.keycode] as Array).duplicate(true)
+				elif KEYS.has(e.keycode):
 					_select(KEYS[e.keycode])
 	elif e is InputEventMouseButton:
 		if e.button_index == MOUSE_BUTTON_LEFT:
@@ -181,8 +261,15 @@ func _unhandled_input(e: InputEvent) -> void:
 		_yaw -= e.relative.x * 0.008
 		_pitch = clampf(_pitch + e.relative.y * 0.006, 0.02, 1.35)
 
+func _exit_tree() -> void:
+	Engine.time_scale = 1.0
+
 func _process(delta: float) -> void:
-	if _moving:
+	_run_acts(delta)
+	_update_markers()
+	if _drive:
+		_drive_trex(delta)
+	elif _moving:
 		_t += delta
 		# 繞圈跑。暴龍的步態和尾巴慣性是從實際位移算的，所以一定要真的移動
 		var both := _subject == "both"
@@ -219,8 +306,76 @@ func _process(delta: float) -> void:
 		_dist * cos(_pitch) * cos(_yaw))
 	_cam.look_at(_focus, Vector3.UP)
 
-	_label.text = "模型檢視　[%s]\n1 牛仔和槍　2 恐龍　3 兩個\n空白鍵 %s　F 咬一口　Tab %s\n左鍵拖曳轉視角　滾輪縮放　Esc 回大廳" % [
-		{"cowboy": "牛仔和槍", "trex": "恐龍", "both": "兩個"}[_subject],
-		"停下" if _moving else "動起來",
-		"關線框" if _wire else "開線框",
-	]
+	if _drive:
+		_label.text = ("操控恐龍　速度 %.1f m/s　%s　心情：%s　時間 ×%s\n" % [_speed, MOVE_NAMES.get(_trex.act, "—"), MOOD_NAMES[_mood], SLOW[_slow]]
+			+ "W 走　Shift+W 跑　A/D 轉身　S 停\n"
+			+ "Z 咬　X 長吼＋甩尾　V 撲擊　B 被打斷　G 發現人　H 中彈　J 頭被打\n"
+			+ "M 換心情　[ ] 慢動作　K 腳踩的點（綠＝踩著、橘＝抬起、紅＝要落的地方）　Tab 線框\n"
+			+ "東邊斜坡、北邊台階、南邊石堆　C 回到自動　左鍵拖曳轉視角　滾輪縮放　Esc 回大廳")
+	else:
+		_label.text = "模型檢視　[%s]\n1 牛仔和槍　2 恐龍　3 兩個\n空白鍵 %s　F 咬一口　Tab %s　C 操控恐龍\n左鍵拖曳轉視角　滾輪縮放　Esc 回大廳" % [
+			{"cowboy": "牛仔和槍", "trex": "恐龍", "both": "兩個"}[_subject],
+			"停下" if _moving else "動起來",
+			"關線框" if _wire else "開線框",
+		]
+
+
+## 操控恐龍：W 走（boss 的走路速度）、Shift 跑、A/D 照 boss 的轉速轉身。出招時站定（撲出去會往前衝）。
+## 高度貼著地面（往下打射線）：走上斜坡、台階，看腳和身體怎麼跟
+func _drive_trex(delta: float) -> void:
+	var want := 0.0
+	if _act_left <= 0.0 and _acts.is_empty():
+		if Input.is_key_pressed(KEY_W):
+			want = TREX_RUN if Input.is_key_pressed(KEY_SHIFT) else TREX_WALK
+		var turn := float(Input.is_key_pressed(KEY_A)) - float(Input.is_key_pressed(KEY_D))
+		_trex.rotation.y += turn * TREX_TURN * delta
+	_speed = move_toward(_speed, want, 14.0 * delta)   # 起步、煞車約 0.3～0.8 秒
+	var v := _speed + _act_push
+	var p := _trex.global_position - _trex.global_basis.z.normalized() * v * delta
+	var space := get_world_3d().direct_space_state
+	var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(p + Vector3.UP * 4.0, p + Vector3.DOWN * 10.0))
+	if hit:   # 高度平順地跟（像角色控制器上台階）：一幀跳一整階，腳和身體都會被扯一下
+		p.y = move_toward(_trex.global_position.y, hit.position.y, 6.0 * delta)
+	_trex.global_position = p
+	_focus = _focus.lerp(_trex.global_position + Vector3(0, 3.0, 0), 1.0 - exp(-3.0 * delta))
+
+## 排隊的出招一個一個放（自動模式也可以按，站著做）
+func _run_acts(delta: float) -> void:
+	if _act_left > 0.0:
+		_act_left -= delta
+		if _act_left > 0.0:
+			return
+	_act_push = 0.0
+	if _acts.is_empty():
+		_trex.act = 0
+		return
+	var a: Array = _acts.pop_front()
+	_trex.act = a[0]
+	_act_left = a[1]
+	_act_push = a[2]
+
+## 腳踩的點：綠＝踩著、橘＝抬起來、紅＝這一步要落的地方
+func _update_markers() -> void:
+	if _marks.is_empty():
+		for k in 4:
+			var mi := MeshInstance3D.new()
+			var sm := SphereMesh.new()
+			sm.radius = 0.25
+			sm.height = 0.5
+			var mat := StandardMaterial3D.new()
+			mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+			mat.no_depth_test = true   # 被腳擋住也看得到
+			sm.material = mat
+			mi.mesh = sm
+			add_child(mi)
+			_marks.append(mi)
+	for k in 4:
+		_marks[k].visible = _markers and _trex.visible and _trex._walk_ready
+	if not _marks[0].visible:
+		return
+	for i in 2:
+		_marks[i].global_position = _trex._plant[i]
+		(_marks[i].mesh.material as StandardMaterial3D).albedo_color = Color(1, 0.55, 0.1) if _trex._swing[i] else Color(0.2, 1, 0.3)
+		_marks[2 + i].visible = _trex._swing[i]
+		_marks[2 + i].global_position = _trex._land[i]
+		(_marks[2 + i].mesh.material as StandardMaterial3D).albedo_color = Color(1, 0.15, 0.15)

@@ -165,7 +165,10 @@ func _ground(p: Vector3) -> Vector3:
 	var w := get_world_3d()
 	if w == null:
 		return Vector3(p.x, rest_y, p.z)
-	var q := PhysicsRayQueryParameters3D.create(p + Vector3.UP * 6.0, p + Vector3.DOWN * 8.0)
+	# 從恐龍自己的高度往上 6 公尺開始打，不是從估計的腳點：估計的點偏低時（陡坡、身體高度還在追），
+	# 起點會在坡面底下，打穿到下面的地板（操控檢查在 20 度坡上量到腳點低了 1.9 公尺）
+	var top := maxf(p.y, global_position.y) + 6.0
+	var q := PhysicsRayQueryParameters3D.create(Vector3(p.x, top, p.z), Vector3(p.x, minf(p.y, global_position.y) - 8.0, p.z))
 	var body := get_parent() as CollisionObject3D
 	if body:
 		q.exclude = [body.get_rid()]
