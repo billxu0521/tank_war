@@ -1418,33 +1418,30 @@ func _case_trex_rig() -> void:
 	_ck(t.skel.get_bone_count() >= 40, "精細骨架應該有 40 根以上骨頭（現在 %d）" % t.skel.get_bone_count())
 	_ck(t.skel.find_bone("jaw") >= 0 and t.skel.find_bone("tail%d" % Trex.TAIL_N) >= 0, "下巴和尾巴末端要在")
 
-	# 以 11 m/s（boss 跑步）跑 1.5 秒。腳是真的踩地走（trex.gd 的 _walk），從站著起跑第一步要一點時間，
-	# 以前只跑 6 幀（腿是 sin 擺，一開始就反相）
-	# 整段看：兩隻大腿的擺動是反著的（相關係數為負）、而且真的有在擺。單看一幀不準（兩腳同時著地那一下角度會同號）
-	var ls := []
-	var rs := []
+	# 以 11 m/s（boss 跑步）跑 2.5 秒。腳是真的踩地走（trex.gd 的 _walk），從站著起跑第一步要一點時間。
+	# 看兩腳交替：跑步一隻腳只踩四成時間，兩腳不會同時踩著；兩隻腳都要真的抬起來換過好幾步、大腿真的有在擺。
+	# 以前用兩條大腿角度的相關係數，但踩地跑的大腿曲線不是 sin（擺得快、踩得慢），係數在 0 附近亂跳
 	var body: Node3D = m.players.get_node(^"2")
-	for i in 90:   # 真的往前跑（腳踩在地上，身體不動的話踩著的腳也不會往後掃）
+	var both_down := 0
+	var lifts := [0, 0]
+	var was := [false, false]
+	var lo := INF
+	var hi := -INF
+	for i in 150:   # 真的往前跑（腳踩在地上，身體不動的話踩著的腳也不會往後掃）
 		body.global_position += -body.global_basis.z * (11.0 / 60.0)
 		t._process(1.0 / 60.0)
 		if i >= 30:
-			ls.append(t.pose_rot("thigh_l").get_euler().x)
-			rs.append(t.pose_rot("thigh_r").get_euler().x)
-	var lm := 0.0
-	var rm := 0.0
-	for k in ls.size():
-		lm += ls[k] / ls.size()
-		rm += rs[k] / rs.size()
-	var cov := 0.0
-	var lv := 0.0
-	var rv := 0.0
-	for k in ls.size():
-		cov += (ls[k] - lm) * (rs[k] - rm)
-		lv += (ls[k] - lm) * (ls[k] - lm)
-		rv += (rs[k] - rm) * (rs[k] - rm)
-	var corr := cov / maxf(sqrt(lv * rv), 1e-6)
-	var amp := sqrt(lv / ls.size())
-	_ck(amp > 0.1 and corr < -0.3, "跑步時兩隻大腿要反相擺動（相關係數 %.2f，應為負；擺幅 %.2f）" % [corr, amp])
+			if not t._swing[0] and not t._swing[1]:
+				both_down += 1
+			for k in 2:
+				if t._swing[k] and not was[k]:
+					lifts[k] += 1
+				was[k] = t._swing[k]
+			var a: float = t.pose_rot("thigh_l").get_euler().x
+			lo = minf(lo, a)
+			hi = maxf(hi, a)
+	_ck(both_down == 0 and lifts[0] >= 2 and lifts[1] >= 2 and hi - lo > 0.4,
+		"跑步時兩腳交替（兩腳同時踩著 %d 幀，應為 0；左右各抬 %d、%d 步；大腿擺幅 %.2f）" % [both_down, lifts[0], lifts[1], hi - lo])
 
 	var closed: float = t.pose_rot("jaw").get_euler().x
 	t.bite()

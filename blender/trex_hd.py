@@ -17,11 +17,11 @@ import pipeline
 exec(open(BASE + '/common.py').read())
 
 K = 8.8 / 914          # 參考圖側面 1 px = K 單位
-CHISEL = 0.040         # 刀削感：頂點沿法線亂推的幅度（單位）。0 = 圓滑
+CHISEL = 0.065         # 刀削感：頂點沿法線亂推的幅度（單位）。0 = 圓滑。使用者要銳利一點（第 38 版 0.040）
 HIP_PX, GROUND_PX = 650, 432
 # 腿加長（docs/尼諾拉.md 骨架規格）：參考設定圖肩高 3.5～4.5 公尺，原本髖關節只有 2.6 公尺。
 # 腳以上整隻（軀幹、頭、尾巴、手）往上抬 LEG_EXTRA，腿從腳掌往上拉長補滿。遊戲裡放大 1.5 倍：0.75 → 髖約 3.7 公尺
-LEG_EXTRA = 0.75
+LEG_EXTRA = 0.0   # 2026-10-03 撤回：設定圖的「肩高 3.5～4.5 公尺」是背頂，不是髖；原本比例（髖 ÷ 全長 0.18）就對得上設定圖（0.19）
 
 def B(g):              # Godot(x, y上, z後) -> Blender(x, y前, z上)
     return Vector((g[0], -g[2], g[1]))
@@ -51,41 +51,48 @@ MI = {m: i for i, m in enumerate(MATS)}
 # ---- 軀幹斷面：(參考圖 x, 背線 y, 腹線 y, 半寬單位, 截面形狀指數) ----
 # 頭只做上半部（上顎、頭殼），下顎另外一塊，張嘴才乾淨
 TRUNK = [
-    (318, 109, 130, 0.08, 2.6),     # 吻部前端是鈍頭，上緣斜切一點（不是直角磚塊）
-    (324, 100, 134, 0.15, 2.5),     # 頭的斷面指數 2.3~2.5：正面看頭頂是中間高的山形，不是平頂
-    (345,  94, 138, 0.22, 2.4),
-    (372,  90, 143, 0.27, 2.3),
-    (398,  79, 148, 0.31, 2.3),     # 眉骨：眼睛正上方隆起約 0.1
-    (428,  87, 158, 0.36, 2.3),     # 眉骨後面後腦往下降
-    (452,  93, 186, 0.40, 2.5),
-    (472,  98, 208, 0.44, 2.4),
-    (500, 107, 270, 0.48, 2.5),
-    (540, 121, 320, 0.56, 2.5),
-    (580, 137, 318, 0.60, 2.6),
-    (620, 154, 298, 0.63, 2.6),
-    (660, 171, 302, 0.63, 2.6),
-    (700, 189, 318, 0.60, 2.6),
-    (760, 207, 334, 0.54, 2.5),
-    (830, 225, 338, 0.47, 2.4),
-    (900, 237, 334, 0.41, 2.3),
-    (970, 246, 326, 0.34, 2.2),
-    (1040, 252, 308, 0.26, 2.2),
-    (1110, 255, 288, 0.18, 2.2),
-    (1170, 253, 270, 0.11, 2.2),
-    (1210, 250, 258, 0.055, 2.2),
-    (1236, 247, 249, 0.01, 2.0),
+    # 2026-10-03 照 NIBA 設定圖：方塊頭——閉嘴時頭高約頭長的 0.45（以前 0.3，像鱷魚），吻端鈍、方，眉骨隆起，頰部寬
+    (318, 100, 136, 0.13, 2.8),     # 吻部前端：鈍、方
+    (324,  91, 141, 0.21, 2.7),
+    (345,  85, 147, 0.28, 2.6),
+    (372,  81, 152, 0.33, 2.5),
+    (398,  68, 158, 0.38, 2.5),     # 眉骨：眼睛正上方隆起
+    (428,  78, 168, 0.46, 2.5),     # 頰部（咬合肌）寬
+    (452,  88, 222, 0.50, 2.7),     # 脖子粗（NIBA 頭和身體之間沒有腰身），喉嚨往下垂
+    (472,  94, 250, 0.56, 2.7),     # 脖子要比頭細
+    # 2026-10-03 照 NIBA 設定圖（docs/image/ninola/設定圖_調整後設計.jpg 側面，換算到這張表的像素座標）重量：
+    # 背在髖上面比較高、比較平（以前太早往尾巴斜下去），肚子深一截，尾巴後段往下垂（尾尖低 70 像素）
+    # 寬：上視最寬處約全長 20%（以前 12%，像梭子），胸到髖是肥的橄欖形，斷面方一點（肩膀、腰側飽滿）
+    # 胸口（前肢那一段）的腹線往下接到肚子；尾巴中後段粗一點，最後 10% 才收尖
+    # 第 3 輪後：斷面指數 3.0 太方，上側邊角在側面變成一條稜、從胸到髖像背了一塊鞍；改回 2.5、加寬也放緩
+    # 使用者（第 38 版）：有點太胖——胸到尾根的寬度約 ×0.85；第 40 版再瘦一點：再 ×0.88
+    (500, 107, 300, 0.49, 2.5),
+    (540, 113, 326, 0.57, 2.5),
+    (580, 124, 330, 0.62, 2.5),
+    (620, 137, 330, 0.62, 2.5),     # 髖部窄一點，大腿才凸得出身體輪廓（審查第 2 輪）
+    (660, 151, 328, 0.60, 2.5),
+    (700, 163, 322, 0.58, 2.5),
+    (760, 180, 302, 0.70, 2.8),     # 尾根很粗（設定圖「非常粗壯的尾根」，背面看填滿兩條大腿之間）     # 大腿後面腹線往上收（以前一路平拉到尾巴中段，像蠑螈）
+    (830, 202, 298, 0.62, 2.6),     # 背線平順往下（以前 760→830 一下掉 34 像素，尾巴根部看得到一個台階）
+    (900, 224, 318, 0.48, 2.5),
+    (970, 242, 344, 0.48, 2.4),
+    (1040, 258, 336, 0.38, 2.3),
+    (1110, 270, 322, 0.27, 2.2),
+    (1170, 286, 312, 0.15, 2.2),
+    (1210, 304, 320, 0.07, 2.2),
+    (1236, 323, 325, 0.01, 2.0),
 ]
 # 下顎（閉嘴）：上緣貼著上顎下緣，後端是顎關節
 JAW = [
-    (346, 135, 145, 0.09, 2.6),     # 下巴往前收尖、比上顎短一截，前段細、往後才變厚
-    (352, 136, 155, 0.20, 3.0),
-    (362, 138, 164, 0.24, 2.8),
-    (396, 145, 182, 0.29, 2.6),
-    (430, 154, 202, 0.33, 2.5),
-    (458, 166, 208, 0.34, 2.4),
+    (346, 141, 154, 0.12, 2.6),     # 下巴往前收、比上顎短一截；跟著頭變高變寬（NIBA 下顎很厚，淺色區往下垂接脖子）
+    (352, 142, 171, 0.27, 3.0),
+    (362, 145, 185, 0.32, 2.8),
+    (396, 152, 207, 0.39, 2.6),
+    (430, 162, 229, 0.45, 2.5),
+    (458, 172, 235, 0.46, 2.4),
 ]
 # 頭的大小（使用者：頭小一些）。以脖子接頭處 (x=470, y=140) 為中心縮放頭的斷面、下顎、眼睛、牙
-HEAD_K = 0.88
+HEAD_K = 1.15   # NIBA 的頭比舊參考圖大：頭高約全長 15%、正面頭寬約身體寬 60%（審查第 2 輪：0.95 時頭像小頭針）
 HEAD_X, HEAD_Y = 470, 140
 def hx(x):
     return HEAD_X - (HEAD_X - x) * HEAD_K if x < HEAD_X else x
@@ -104,14 +111,23 @@ def head_g(gz, gy):
     zn, yn = px(HEAD_X, HEAD_Y)
     return zn + (gz - zn) * HEAD_K, yn + (gy - yn) * HEAD_K
 
-def section(c, a, b, n, ring, flat=0.0):
+def smoothstep(e0, e1, v):
+    t = max(0.0, min(1.0, (v - e0) / (e1 - e0)))
+    return t * t * (3 - 2 * t)
+
+def section(c, a, b, n, ring, flat=0.0, keel=False):
     """以 c 為中心的超橢圓斷面（Godot 座標），a 半寬、b 半高；flat > 0 把下半部壓平（肚子）"""
     pts = []
     for i in range(ring):
         t = 2 * math.pi * i / ring
         ct, st = math.cos(t), math.sin(t)
-        x = a * math.copysign(abs(ct) ** (2 / n), ct)
-        y = b * math.copysign(abs(st) ** (2 / n), st)
+        if keel and st < 0:
+            # 軀幹下半部：指數 2（圓）、越往下越窄，正面看最寬在肩和大腿那帶、往下收成 V 字腹甲（審查第 2 輪：以前最寬在肚子底，像水袋）
+            x = a * math.copysign(abs(ct), ct) * (1.0 - 0.22 * smoothstep(0.0, 1.0, -st))   # 第 3 輪：從 0.4 才開始收、收到 0.7 會在側面折出一條硬線
+            y = b * st
+        else:
+            x = a * math.copysign(abs(ct) ** (2 / n), ct)
+            y = b * math.copysign(abs(st) ** (2 / n), st)
         if y < 0 and flat:
             y *= 1 - flat
         pts.append(Vector((c[0] + x, c[1] + y, c[2])))
@@ -141,7 +157,7 @@ def loft_table(table, name, ring=20, flat=0.0):
     for x, top, bot, hw, n in table:
         z, _ = px(x, 0)
         yt, yb = px(0, top)[1], px(0, bot)[1]
-        rings.append(section((0, (yt + yb) / 2, z), hw, (yt - yb) / 2, n, ring, flat))
+        rings.append(section((0, (yt + yb) / 2, z), hw, (yt - yb) / 2, n, ring, flat, keel=500 <= x <= 830))
     return loft_table_smooth(rings, name)
 
 def loft_table_smooth(rings, name, sub=3):
@@ -157,6 +173,10 @@ def loft_table_smooth(rings, name, sub=3):
     out.append(rings[-1])
     return loft_rings(out, name)
 
+# 腿的粗細（2026-10-03 照 NIBA 設定圖：重型暴龍——大腿是側面最搶眼的大橢圓，小腿、腳踝像柱子；以前像鳥腿）
+# (左右, 前後) 兩個方向分開：大腿前後也乘 1.6 的話會從脖子後面一路長到髖（全長 31%，設定圖約 17%），側面像背了一塊鞍
+LIMB_K = {'thigh': (0.75, 1.25), 'shin': (1.7, 1.7), 'meta': (1.6, 1.6), 'toe': (1.3, 1.3), 'dew': (1.2, 1.2)}
+
 def limb(points, name, ring=14):
     """四肢：沿一串 (位置, 半徑) 做圓管，半徑可以是 (左右, 上下)"""
     rings = []
@@ -170,24 +190,28 @@ def limb(points, name, ring=14):
         u = (u - d * u.dot(d)).normalized()
         v = d.cross(u).normalized()
         rx, ry = (r, r) if not isinstance(r, tuple) else r
+        kx, ky = LIMB_K.get(name, (1.0, 1.0))
+        rx *= kx
+        ry *= ky
         rings.append([p + u * (rx * math.cos(2 * math.pi * k / ring)) + v * (ry * math.sin(2 * math.pi * k / ring))
                       for k in range(ring)])
     return loft_table_smooth(rings, name, sub=2)
 
 # ---- 關節（Godot 座標，左邊 x>0；右邊鏡像）----
-BALL  = Vector((0.82, 0.10, -0.10))
+BALL  = Vector((0.68, 0.10, -0.10))   # 使用者（第 41 版）：正面收窄——兩腳站近一點（以前 0.82）
 # 腿：舊比例的關節從腳掌往上等比拉長，髖抬到原本高度 + LEG_EXTRA（膝、踝的角度不變，只是變長）
 _LEG_K = (1.62 + LEG_EXTRA - BALL.y) / (1.62 - BALL.y)
 def _leg(v):
     return BALL + (v - BALL) * _LEG_K
 HIP   = Vector((0.54, 1.62 + LEG_EXTRA, 0.02))
-KNEE  = _leg(Vector((0.68, 0.98, -0.42)))
-ANKLE = _leg(Vector((0.78, 0.40, 0.18)))
+KNEE  = _leg(Vector((0.62, 0.98, -0.42)))
+ANKLE = _leg(Vector((0.66, 0.40, 0.18)))
 _UP = Vector((0, LEG_EXTRA, 0))
-SHOULDER = Vector((0.48, 1.94, -1.30)) + _UP
-ELBOW    = Vector((0.56, 1.66, -1.36)) + _UP
-WRIST    = Vector((0.52, 1.82, -1.62)) + _UP   # 手縮在胸前
-TOES = ((-24, 0.50), (0, 0.62), (24, 0.50))   # (張開角度, 長度)：三根前趾
+# 胸口加寬之後（斷面半寬 0.70～0.84）手往外移，不然整隻手埋進胸裡看不到
+SHOULDER = Vector((0.57, 1.90, -1.30)) + _UP
+ELBOW    = Vector((0.68, 1.60, -1.42)) + _UP
+WRIST    = Vector((0.62, 1.58, -1.72)) + _UP   # 手往前下垂、兩指收在胸前（審查第 2 輪：往外戳像鰭）
+TOES = ((-26, 0.62), (0, 0.78), (26, 0.62))   # (張開角度, 長度)：三根前趾（第 4 輪：設定圖腳掌大、三趾張開）
 
 def mirror(v, s):
     return Vector((v.x * s, v.y, v.z))
@@ -197,9 +221,13 @@ def legs():
     for s in (1, -1):
         H, Kn, A, F = (mirror(v, s) for v in (HIP, KNEE, ANKLE, BALL))
         # 大腿是一大塊肌肉：從骨盆上緣長出來，膝蓋收細
-        out.append(limb([(H + Vector((-0.12 * s, 0.40, 0.20)), (0.30, 0.30)),
-                         (H + Vector((0, 0.0, -0.18)), (0.45, 0.86)),
-                         ((H * 0.5 + Kn * 0.5) + Vector((0, 0, -0.16)), (0.43, 0.72)),
+        # 大腿肉往外、往上鼓（審查第 2 輪：大腿被身體吃掉看不出來）。關節位置不動，只動外形
+        # 第 4 輪：大腿中心在全長約 41%（關節不動，肉往後 0.26）、往外只多 0.10（0.18 背面像鞍袋）、往上 0.20
+        TO = Vector((-0.12 * s, 0.20, 0.26))   # 第 39 版：身體變瘦後大腿往外 0.10 太凸，正面看比身體還寬
+        # 上端橢圓收頭（前後 1 : 上下 1.3），頂端只到髖上面一點：設定圖大腿頂約在背高的 65～70%，以前頂到背線像一塊鞍
+        out.append(limb([(H + TO + Vector((-0.22 * s, 0.10, 0.20)), (0.26, 0.34)),   # 上端往身體裡多埋一點：交界是凹弧，不是一圈邊
+                         (H + TO + Vector((0, 0.0, -0.18)), (0.45, 0.86)),
+                         ((H * 0.5 + Kn * 0.5) + TO * 0.5 + Vector((0, 0, -0.16)), (0.43, 0.72)),
                          (Kn + Vector((0, 0.14, 0.04)), (0.34, 0.34)),
                          (Kn, (0.29, 0.29))], 'thigh'))
         # 小腿：後面有小腿肚，往踝收細
@@ -270,14 +298,27 @@ def merge_skin(parts, name, voxel, faces):
     bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-5)
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
     bm.to_mesh(o.data); bm.free()
-    r = bpy.ops.object.quadriflow_remesh(target_faces=faces // 2, seed=7, use_mesh_symmetry=False,
-                                         use_preserve_sharp=False, use_preserve_boundary=False)
+    # 2026-10-03 不用 QuadriFlow 了：身體照 NIBA 加粗後，它會把細的尾巴壓成一片緞帶（量過：體素重建後尾巴好好的，
+    # QuadriFlow 後尾巴中段高度 0；換三個亂數種子都壞在不同地方）。改用 Decimate 減面
+    r = {'CANCELLED'}
     o = bpy.context.object
     if 'FINISHED' not in r:
         print('quadriflow failed, fallback decimate')
         md = o.modifiers.new('dc', 'DECIMATE'); md.ratio = min(1.0, faces / max(1, 2 * len(o.data.polygons)))
         bpy.ops.object.modifier_apply(modifier='dc')
     random_triangulate(o)
+    # 美化三角面（細長的薄片翻成接近正三角形）＋頂點沿表面亂推一點，打散 loft 一圈圈的環（第 3 輪：有「電腦減面」的味道）
+    bm = bmesh.new(); bm.from_mesh(o.data)
+    bmesh.ops.beautify_fill(bm, faces=bm.faces, edges=bm.edges)
+    rnd = random.Random(11)
+    bm.verts.ensure_lookup_table()
+    for v in bm.verts:
+        if not v.link_edges:
+            continue
+        L = sum(e.calc_length() for e in v.link_edges) / len(v.link_edges)
+        jt = Vector((rnd.uniform(-1, 1), rnd.uniform(-1, 1), rnd.uniform(-1, 1))) * L * 0.18
+        v.co += jt - v.normal * jt.dot(v.normal)   # 只沿表面推，不改外形
+    bm.to_mesh(o.data); bm.free()
     return o
 
 def random_triangulate(o):
@@ -411,8 +452,9 @@ def spine_center(gz):
 
 def spike_height(gz):
     """背棘高度（Godot 單位）沿身體的分布：肩上最高，頭和尾巴尖小"""
-    keys = [(-3.0, 0.08), (-2.0, 0.12), (-1.75, 0.15), (-1.4, 0.24), (-1.0, 0.33), (-0.3, 0.34),
-            (0.3, 0.36), (0.8, 0.32), (1.5, 0.22), (2.6, 0.13), (4.0, 0.07), (4.8, 0.04), (5.3, 0.0)]
+    # NIBA 設定圖：小而密，肩到髖最高約全長 3%、頭頂約 2%、尾尖約 0.8%（全長 8.8 單位）
+    keys = [(-3.0, 0.18), (-2.0, 0.22), (-1.4, 0.26), (-0.6, 0.31), (0.6, 0.31), (1.5, 0.25),
+            (3.0, 0.17), (4.5, 0.11), (5.3, 0.08), (5.6, 0.0)]   # 第 3 輪：正中一排 ×1.2，肩到髖約全長 3.5%
     for (z0, h0), (z1, h1) in zip(keys, keys[1:]):
         if z0 <= gz <= z1:
             return h0 + (h1 - h0) * (gz - z0) / (z1 - z0)
@@ -425,8 +467,9 @@ def add_spikes(bits, skin, rnd):
     # 每一排：(繞身體的角度, 高度倍數, 間距, 起點 z, 終點 z)
     # 中間一排大的（背面看是一條深色脊）、兩側越外面越稀越矮，只是零星的突起
     # 俐落（使用者）：主排從頸後 0.6 開始，頭和背刺之間留一段乾淨的脖子；側排只留肩到髖、每側約 6 根
-    rows = [(0, 1.0, 0.28, -1.75, 5.2),
-            (20, 0.50, 0.30, -1.36, 0.6), (-20, 0.50, 0.30, -1.36, 0.6)]
+    # NIBA 設定圖：正中一排約 55 根（間距約全長 1.8%）從眉骨排到尾尖；兩側各一排從脖子根到全長 75%，矮一半、錯開半個間距
+    rows = [(0, 1.0, 0.16, -2.9, 5.4),
+            (24, 0.55, 0.30, -1.30, 3.4), (-24, 0.55, 0.30, -1.15, 3.4)]
     for ang, mul, step, z0, z1 in rows:
         z = z0 + rnd.uniform(0, step * 0.3)
         while z < z1:
@@ -438,12 +481,11 @@ def add_spikes(bits, skin, rnd):
                 d = Vector((math.sin(a), 0, math.cos(a)))
                 p, n = surface(bvh, center + d * 3.0, center)
                 if p is not None:
-                    h = spike_height(z) * mul * rnd.uniform(0.7, 1.3)
-                    if ang == 0 and rnd.random() < 0.15:
-                        h *= 1.25                              # 主排偶爾一根特別大，輪廓才亂
+                    h = spike_height(z) * mul * rnd.uniform(0.8, 1.2)
                     if h > 0.025:
-                        dirv = (n * 0.85 + back * (0.35 if ang == 0 else 0.5)).normalized()   # 主排幾乎立著，側面輪廓才看得到高度
-                        bits.cone(p - n * 0.03, dirv, h * 0.45, h, RIDGE if ang == 0 else SPIKE, sides=4,
+                        dirv = (n * 0.87 + back * 0.5).normalized()   # 往後倒約 30 度
+                        # 寬底三角板（底長約等於高度），不是細針（第 3 輪：底寬只有高度 30%，遠看像毛）
+                        bits.cone(p - n * 0.03, dirv, min(h * 0.5, step * 0.45), h, RIDGE if ang == 0 else SPIKE, sides=4,
                                   twist=rnd.uniform(0, 6.28))
             z += step * rnd.uniform(0.75, 1.25)
     # 頭的兩側、後腦：一圈短角（正面看得到的那排）
@@ -575,7 +617,7 @@ def build():
     rnd = random.Random(7)
     trunk = loft_table(TRUNK, 'trunk', ring=22, flat=0.18)
     parts = [trunk] + legs() + arms()
-    skin = merge_skin(parts, "TrexSkin", 0.035, 1100)   # 使用者：減少多邊形、更俐落
+    skin = merge_skin(parts, "TrexSkin", 0.07, 2000)   # 使用者：銳利一點——面少一點、每面大一點，折面才清楚（第 38 版 8000 → 第 40 版 3500 → 2000）
     paint_skin(skin, random.Random(3))
     chisel(skin, CHISEL, 1)          # 先照原本的朝向上色，再削：顏色才不會被亂推的法線打散
     jaw = merge_skin([loft_table(JAW, 'jaw', ring=16, flat=0.3)], 'TrexJaw', 0.03, 240)
@@ -817,6 +859,8 @@ def preview(obs, path):
             pose_stride(arm)
         _render(f'{base}_{name}.png', rot, loc, int(w), int(h))
     pose_reset(arm)
+    # 站著不擺姿勢的側面：比例跟設定圖比用（上面那張是吼叫＋跨步的姿勢，上半身是仰的）
+    _render(f'{base}_neutral.png', (90, 0, -90), (-30, -1.2, cy), int(9.6 * PPU), int(hh * PPU))
     print('preview views ->', base + '_*.png')
 
 def export(obs, out):
