@@ -49,6 +49,7 @@ func _ready() -> void:
 	add_child(_ground())
 
 	_trex = Trex.new()
+	_trex.scale = Vector3.ONE * 1.5   # 跟遊戲裡一樣大（boss.tscn）
 	add_child(_trex)
 
 	_cowboy = _build_cowboy()
@@ -131,6 +132,8 @@ func _build_cowboy() -> Node3D:
 	return root
 
 ## 8 字路徑。單純繞圓只會一直往同一邊傾，看不出換邊
+const TREX_WALK := 4.0   # boss.gd 的 WALK
+
 func _lemniscate(a: float, r: float) -> Vector3:
 	return Vector3(sin(a) * r * 1.5, 0, sin(a) * cos(a) * r * 2.0)
 
@@ -148,8 +151,8 @@ func _select(which: String) -> void:
 	_cowboy.visible = which != "trex"
 	match which:
 		"cowboy": _focus = Vector3(0.2, 1.1, 0); _dist = 4.5
-		"trex": _focus = Vector3(0, 2.0, 0); _dist = 12.0
-		_:      _focus = Vector3(0, 1.7, 0); _dist = 15.0
+		"trex": _focus = Vector3(0, 3.0, 0); _dist = 22.0
+		_:      _focus = Vector3(0, 3.0, 0); _dist = 26.0
 
 func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventKey and e.pressed and not e.echo:
@@ -183,17 +186,20 @@ func _process(delta: float) -> void:
 		_t += delta
 		# 繞圈跑。暴龍的步態和尾巴慣性是從實際位移算的，所以一定要真的移動
 		var both := _subject == "both"
-		var r := 2.6 if both else 4.0
-		var a := _t * 0.55
-		var tc := Vector3(-3.6, 0, 0) if both else Vector3.ZERO   # 兩個一起看就各站一邊
-		var kc := Vector3(3.6, 0, 0) if both else Vector3.ZERO
-		# 恐龍走 8 字：左右彎都吃得到，才看得出側傾會換邊。
-		# 朝向再加一點偏差，讓它有側移（不是只有轉彎）
+		# 恐龍照遊戲裡的樣子走：boss 的走路速度（4 m/s）、8 字夠寬（彎的半徑比腿長大，遊戲裡也轉不了更急）。
+		# 以前半徑 2.6 公尺、還故意斜著走 26 度，比身體還小的圈，腳一定會在地上被拖（使用者看到「奇怪的動態」）
+		var r := 9.0
+		var a := _t * TREX_WALK / (2.5 * r)
+		var tc := Vector3.ZERO
+		var kc := Vector3(0, 0, 13) if both else Vector3.ZERO   # 牛仔站在 8 字外面
+		# 恐龍走 8 字：左右彎都吃得到，才看得出側傾會換邊。朝向加一點點偏差，有一點側移
 		var p0 := _lemniscate(a, r)
 		var p1 := _lemniscate(a + 0.02, r)
 		_trex.global_position = tc + p0
 		var head := (p1 - p0)
-		_trex.rotation.y = atan2(-head.x, -head.z) + sin(a * 2.0) * 0.45
+		_trex.rotation.y = atan2(-head.x, -head.z) + sin(a * 2.0) * 0.12
+		if _subject != "cowboy":   # 鏡頭跟著恐龍
+			_focus = _focus.lerp(_trex.global_position + Vector3(0, 3.0, 0), 1.0 - exp(-3.0 * delta))
 		# 牛仔原地慢慢轉身、上下看，繞一圈看得到前後
 		_cowboy.global_position = kc
 		_cowboy.rotation.y = _t * 0.5
@@ -201,7 +207,7 @@ func _process(delta: float) -> void:
 	else:
 		# 停下來時擺回原位，方便正面看細節
 		var both := _subject == "both"
-		_trex.global_position = Vector3(-3.6 if both else 0.0, 0, 0)
+		_trex.global_position = Vector3(-5.0 if both else 0.0, 0, 0)   # 恐龍是遊戲裡的大小，離牛仔遠一點
 		_trex.rotation.y = PI
 		_cowboy.global_position = Vector3(3.6 if both else 0.0, 0, 0)
 		_cowboy.rotation.y = 0.0

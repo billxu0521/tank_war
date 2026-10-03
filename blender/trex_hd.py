@@ -19,12 +19,15 @@ exec(open(BASE + '/common.py').read())
 K = 8.8 / 914          # 參考圖側面 1 px = K 單位
 CHISEL = 0.040         # 刀削感：頂點沿法線亂推的幅度（單位）。0 = 圓滑
 HIP_PX, GROUND_PX = 650, 432
+# 腿加長（docs/尼諾拉.md 骨架規格）：參考設定圖肩高 3.5～4.5 公尺，原本髖關節只有 2.6 公尺。
+# 腳以上整隻（軀幹、頭、尾巴、手）往上抬 LEG_EXTRA，腿從腳掌往上拉長補滿。遊戲裡放大 1.5 倍：0.75 → 髖約 3.7 公尺
+LEG_EXTRA = 0.75
 
 def B(g):              # Godot(x, y上, z後) -> Blender(x, y前, z上)
     return Vector((g[0], -g[2], g[1]))
 
-def px(x, y):          # 參考圖側面像素 -> Godot (z, y)
-    return (x - HIP_PX) * K, (GROUND_PX - y) * K
+def px(x, y):          # 參考圖側面像素 -> Godot (z, y)；腿加長後腳以上整隻往上抬
+    return (x - HIP_PX) * K, (GROUND_PX - y) * K + LEG_EXTRA
 
 # ---- 材質（線性值）----
 wipe()   # 要在建材質之前清：wipe 會刪掉沒人用的材質
@@ -172,13 +175,18 @@ def limb(points, name, ring=14):
     return loft_table_smooth(rings, name, sub=2)
 
 # ---- 關節（Godot 座標，左邊 x>0；右邊鏡像）----
-HIP   = Vector((0.54, 1.62, 0.02))
-KNEE  = Vector((0.68, 0.98, -0.42))
-ANKLE = Vector((0.78, 0.40, 0.18))
 BALL  = Vector((0.82, 0.10, -0.10))
-SHOULDER = Vector((0.48, 1.94, -1.30))
-ELBOW    = Vector((0.56, 1.66, -1.36))
-WRIST    = Vector((0.52, 1.82, -1.62))   # 手縮在胸前（參考圖手腕高約 1.7、爪尖約 1.45）
+# 腿：舊比例的關節從腳掌往上等比拉長，髖抬到原本高度 + LEG_EXTRA（膝、踝的角度不變，只是變長）
+_LEG_K = (1.62 + LEG_EXTRA - BALL.y) / (1.62 - BALL.y)
+def _leg(v):
+    return BALL + (v - BALL) * _LEG_K
+HIP   = Vector((0.54, 1.62 + LEG_EXTRA, 0.02))
+KNEE  = _leg(Vector((0.68, 0.98, -0.42)))
+ANKLE = _leg(Vector((0.78, 0.40, 0.18)))
+_UP = Vector((0, LEG_EXTRA, 0))
+SHOULDER = Vector((0.48, 1.94, -1.30)) + _UP
+ELBOW    = Vector((0.56, 1.66, -1.36)) + _UP
+WRIST    = Vector((0.52, 1.82, -1.62)) + _UP   # 手縮在胸前
 TOES = ((-24, 0.50), (0, 0.62), (24, 0.50))   # (張開角度, 長度)：三根前趾
 
 def mirror(v, s):
@@ -218,7 +226,7 @@ def arms():
         S_, E, W = (mirror(v, s) for v in (SHOULDER, ELBOW, WRIST))
         out.append(limb([(S_ + Vector((-0.10 * s, 0.10, 0.05)), (0.20, 0.20)), (S_, (0.17, 0.18)),
                          (E, (0.13, 0.13)), (W, (0.10, 0.10)), (W + Vector((0, -0.05, -0.10)), (0.10, 0.08))], 'arm', ring=10))
-        for base, tip in fingers(s):     # 三根手指往前下彎，爪子在 add_claws 接在指尖
+        for base, tip in fingers(s):     # 兩根手指往前下彎，爪子在 add_claws 接在指尖
             out.append(limb([(base, (0.045, 0.045)), (base * 0.5 + tip * 0.5 + Vector((0, 0, -0.02)), (0.04, 0.04)),
                              (tip, (0.03, 0.03))], 'finger', ring=8))
     return out
@@ -227,7 +235,8 @@ def fingers(s):
     """(指根, 指尖)，Godot 座標"""
     W = mirror(WRIST, s)
     hand = W + Vector((0, -0.05, -0.10))
-    return [(hand + Vector((dx * s, 0, -0.02)), hand + Vector((dx * s * 1.6, -0.09, -0.07))) for dx in (-0.055, 0.0, 0.055)]
+    # 兩指（設定圖：暴龍類二指前肢）
+    return [(hand + Vector((dx * s, 0, -0.02)), hand + Vector((dx * s * 1.6, -0.09, -0.07))) for dx in (-0.04, 0.04)]
 
 def chisel(o, amp, seed):
     """刀削感：每個頂點沿法線隨機推進推出（±amp），相鄰三角面的折角變大，稜線才利。
@@ -506,7 +515,7 @@ def add_claws(bits, rnd):
             tip = F + d * L + Vector((0, -0.04, 0))
             bits.cone(B(tip - d * 0.05), B(d) + Vector((0, 0, -0.55)), 0.085, 0.30, CLAW, 4)
         bits.cone(B(F + Vector((-0.04 * s, 0.02, 0.30))), Vector((0, -0.6, -0.8)), 0.045, 0.15, CLAW, 4)
-        # 手：三根指爪，往下彎
+        # 手：兩根指爪，往下彎
         for base, tip in fingers(s):
             d = (tip - base).normalized()
             d = (d + Vector((0, -0.6, 0))).normalized()          # 爪子比手指再往下勾一點
@@ -792,11 +801,12 @@ def setup_studio():
 def preview(obs, path):
     setup_studio()
     base = path[:-4]
-    cy = 1.75   # 畫面中心高度（Blender z）
+    cy = 1.75 + LEG_EXTRA * 0.5   # 畫面中心高度（Blender z）；腿加長後整隻變高
+    hh = 3.7 + LEG_EXTRA
     views = [
-        ('front', (90, 0, 180), (0, 30, cy), 2.9 * PPU, 3.7 * PPU),
-        ('side',  (90, 0, -90), (-30, -1.2, cy), 9.6 * PPU, 3.7 * PPU),
-        ('back',  (90, 0, 0),   (0, -30, cy), 2.9 * PPU, 3.7 * PPU),
+        ('front', (90, 0, 180), (0, 30, cy), 2.9 * PPU, hh * PPU),
+        ('side',  (90, 0, -90), (-30, -1.2, cy), 9.6 * PPU, hh * PPU),
+        ('back',  (90, 0, 0),   (0, -30, cy), 2.9 * PPU, hh * PPU),
         ('top',   (0, 0, -90),  (0, -1.2, 30), 9.6 * PPU, 2.6 * PPU),
         ('bottom', (180, 0, -90), (0, -1.2, -30), 9.6 * PPU, 2.6 * PPU),
     ]
