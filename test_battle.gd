@@ -443,13 +443,14 @@ func _case_hunt_weapons() -> void:
 	_ck(revolver.get_node_or_null(revolver.cylinder_path) != null, "左輪的轉輪要找得到")
 	_ck(shotgun.get_node_or_null(shotgun.barrel_path) != null, "散彈的槍管要找得到，換彈才折得開")
 
-	# 腰射時槍管要跟視線平行：從玩家眼睛看，槍管才會指向準心
+	# 腰射時槍管要對準準心：槍管往前 30 m 那一點要落在準心附近（照 Hunt 影片 pax.mov：槍口在準心右邊一點，槍管指向準心）
 	revolver._since_fire = 9.0
 	revolver._procedural(0.016)
 	var cam: Camera3D = me.get_node(^"Head/Camera3D")
-	var bore: Vector3 = -revolver.get_node(^"Model").global_basis.z
-	var off := rad_to_deg(bore.angle_to(-cam.global_basis.z))
-	_ck(off < 1.0, "腰射時左輪槍管要朝正前方（現在偏 %.1f 度）" % off)
+	var model: Node3D = revolver.get_node(^"Model")
+	var far: Vector3 = revolver.muzzle_global() - model.global_basis.z * 30.0
+	var off := rad_to_deg((far - cam.global_position).angle_to(-cam.global_basis.z))
+	_ck(off < 2.0, "腰射時左輪槍管要對準準心（現在偏 %.1f 度）" % off)
 
 	# 開槍：程式動作要動起來。Pax：槍口大翻、拇指上去扳擊錘，扳到一半轉輪轉一格
 	var turns: int = revolver._turns

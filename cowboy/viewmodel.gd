@@ -10,8 +10,8 @@ class_name Viewmodel
 @export var weapon_scenes: Array[PackedScene] = []
 
 @export_group("Aim")
-@export var hip_fov := 90.0
-@export var ads_fov := 55.0
+@export var hip_fov := 70.0   # 照 Hunt 參考影片（docs/movie/pax.mov 等）：槍的擺位是在這個視角下對的，改了要重跑 tools/viewmodel_fit.gd
+@export var ads_fov := 43.0
 @export var ads_speed_scale := 0.5
 
 @export_group("操作規則")
@@ -666,7 +666,6 @@ func _make_stick_hand() -> Node3D:
 			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			if part == &"HandGripArm":
 				mi.rotation = Vector3(0, 0.7, 0)   # 跟左輪一樣，前臂往右後方伸出畫面
-				mi.scale = Vector3(0.75, 1.0, 0.75)   # 細一點（審查第 11 條：像一根粗管子）
 			holder.add_child(mi)
 	arms.free()
 	var stick := Dynamite.stick_mesh()
