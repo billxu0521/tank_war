@@ -9,7 +9,7 @@
 ; 槓桿步槍：每發要拉一次桿（fire_interval），從側面裝填口一發一發壓。遠距離主力，
 ; 舉槍晃動要閉氣（Shift）才打得準。沒有專屬槍聲，先借手槍聲壓低音高。
 [node name="Rifle" type="Node3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.13, -0.15, -0.22)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.106, -0.072, -0.188)
 script = ExtResource("1_weapon")
 display_name = "槓桿步槍"
 capacity = 10
@@ -27,20 +27,28 @@ starting_reserve = 20
 max_range = 250.0
 muzzle_velocity = 440.0
 falloff_start = 60.0
-ads_position = Vector3(0, -0.058, -0.2)
+ads_position = Vector3(0, -0.071, -0.180)
+pinch_rotation = Vector3(0.8, 0, 1.2)
+reload_support_turn = -1.6
+ads_support_rot = Vector3(0, 0, 0)
+ads_support_shift = Vector3(0, 0, 0.06)
+ads_support_turn = 0.5
+reload_hand_turn = Vector3(0.582, 2.265, 2.671)
+ads_rotation = Vector3(0.02, 0, 0)
+hip_rotation = Vector3(0.01, 0.01, -0.23)
 muzzle = Vector3(0, 0.034, -0.695)
 grip_parent = NodePath("Model/RifleLever")
-grip_hand = Transform3D(1, 0, 0, 0, 0.8525, 0.5227, 0, -0.5227, 0.8525, 0.0000, -0.0010, 0.1350)
+grip_hand = Transform3D(1, 0, 0, 0, 0.8525, 0.5227, 0, -0.5227, 0.8525, 0.0, -0.075, 0.20)
 support_parent = NodePath("Model")
-support_hand = Transform3D(1, 0, 0, 0, 1.0000, -0.0000, 0, 0.0000, 1.0000, 0.0000, 0.0120, -0.2200)
+support_hand = Transform3D(0.9553, -0.2955, 0, 0.2955, 0.9553, 0, 0, 0, 1, 0, 0.012, -0.16)
 hammer_path = NodePath("Model/RifleHammer")
 lever_path = NodePath("Model/RifleLever")
 hand_round_path = NodePath("Model/RifleRound")
 load_out = Vector3(0.032, 0.01, -0.035)
 load_in = Vector3(0.016, 0.01, -0.085)
-load_hand_offset = Vector3(0.012, -0.015, 0.04)
-reload_offset = Vector3(-0.07, 0.06, 0.0)
-reload_rotation = Vector3(0.1, 0.15, 0.9)
+load_hand_offset = Vector3(0.0, -0.01, 0.06)
+reload_offset = Vector3(-0.098, -0.013, 0.022)
+reload_rotation = Vector3(0.222, 1.057, 1.900)
 
 [node name="Model" parent="." instance=ExtResource("2_model")]
 

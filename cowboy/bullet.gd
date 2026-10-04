@@ -24,6 +24,10 @@ var mask := 1
 var visual_only := false
 ## 霰彈十顆同時打到，著彈聲只要第一顆出聲
 var sound := true
+## 炸彈長矛的魚叉：開槍那台打到任何東西時呼叫（位置），用來引爆。其他台的只有外觀
+var on_impact := Callable()
+## 飛出去的樣子（魚叉）。有的話一出槍口就看得到，不畫曳光
+var model: Node3D
 
 var _traveled := 0.0
 var _streak: MeshInstance3D
@@ -31,7 +35,11 @@ var _streak: MeshInstance3D
 
 func _ready() -> void:
 	global_position = origin
-	if fx and fx.tracer_material:
+	if model:
+		add_child(model)
+		model.visible = false   # 從鏡頭中心出發：前一公尺不畫，不然整支魚叉貼在臉上（一團黑）
+		look_at(origin + vel)
+	elif fx and fx.tracer_material:
 		var mesh := BoxMesh.new()
 		mesh.size = Vector3(fx.tracer_width, fx.tracer_width, STREAK_LENGTH)
 		mesh.material = fx.tracer_material
@@ -67,9 +75,11 @@ func advance(delta: float) -> void:
 			return
 		if _streak:
 			_streak.visible = _traveled > SHOW_AFTER
-			# 曳光沿著飛行方向，看得出子彈往下彎
-			if not vel.normalized().is_equal_approx(Vector3.UP):
-				look_at(to + vel)
+		if model:
+			model.visible = _traveled > 1.0
+		# 曳光、魚叉沿著飛行方向，看得出往下彎
+		if (_streak or model) and not vel.normalized().is_equal_approx(Vector3.UP):
+			look_at(to + vel)
 		return
 	_traveled += from.distance_to(hit["position"])
 	_impact(hit)
@@ -93,6 +103,8 @@ func _impact(hit: Dictionary) -> void:
 	var flesh: bool = target.has_method(&"take_damage")
 	if is_instance_valid(fx):
 		fx.impact(hit["position"], hit["normal"], surface_of(target), sound)
+	if on_impact.is_valid() and not visual_only:
+		on_impact.call(hit["position"] + hit["normal"] * 0.15)
 	if visual_only or not flesh or not is_instance_valid(shooter):
 		return
 	var dmg := weapon.damage_at(_traveled)

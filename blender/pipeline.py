@@ -146,6 +146,7 @@ def studio(path, ortho, loc, res=(1680, 940), side=False):
 
 def scene_preview(obs, path, res=(1680, 940), side=False):
     """沒有自己排版的腳本用這個：物件照現在的位置，相機從正面（side=True 從右側）框住全部"""
+    bpy.context.view_layer.update()   # 剛搬過位置的物件（weapons.py 的 show_layout），matrix_world 要更新才框得對
     pts = [o.matrix_world @ Vector(c) for o in obs if o.type == 'MESH' for c in o.bound_box]
     lo = Vector([min(p[i] for p in pts) for i in range(3)])
     hi = Vector([max(p[i] for p in pts) for i in range(3)])

@@ -1,0 +1,54 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://cowboy/weapon.gd" id="1_weapon"]
+[ext_resource type="PackedScene" path="res://models/lance.glb" id="2_model"]
+[ext_resource type="AudioStream" path="res://assets/audio/weapons/launch.wav" id="3_shoot"]
+[ext_resource type="AudioStream" path="res://assets/audio/weapons/shotgun_reload.wav" id="4_reload"]
+[ext_resource type="AudioStream" path="res://assets/audio/weapons/no_ammo.wav" id="5_empty"]
+
+; 炸彈長矛（4 號）：左鍵把綁炸藥的魚叉射出去，打中東西就爆（Viewmodel.KIND_HARPOON），V 整支揮。
+; 一次裝一支（R），另外帶 3 支，補給箱補。數字在 weapons.csv 的 lance 欄。規劃 docs/規劃/2026-10-04-炸藥與炸彈長矛.md
+[node name="Lance" type="Node3D"]
+transform = Transform3D(0.5817, 0.8134, 0, -0.8134, 0.5817, 0, 0, 0, 1, 0.07, -0.40, -0.34)
+script = ExtResource("1_weapon")
+display_name = "炸彈長矛"
+action_type = 5
+capacity = 1
+damage = 40.0
+starting_reserve = 3
+reload_type = 0
+reload_time = 2.2
+muzzle_velocity = 45.0
+max_range = 120.0
+falloff_start = 0.0
+falloff_end = 1.0
+minimum_damage = 40.0
+smoke = 0.25
+ads_position = Vector3(0.10, -0.17, -0.28)
+hip_rotation = Vector3(0.95, 0.0, -0.22)
+ads_rotation = Vector3(0.35, 0.0, 0.0)
+muzzle = Vector3(0, 0, -0.62)
+grip_parent = NodePath("Model/Lance")
+grip_hand = Transform3D(1, 0, 0, 0, 0.8525, 0.5227, 0, -0.5227, 0.8525, 0, -0.005, 0.02)
+support_parent = NodePath(".")
+support_hand = Transform3D(0.7317, -0.6816, 0.0000, 0.5213, 0.5596, -0.6442, 0.4391, 0.4714, 0.7648, 0.453, -1.000, -0.050)
+reload_with_support = true
+fetch_pocket = Vector3(-0.30, -0.25, 0.10)
+load_in = Vector3(0, 0, -0.50)
+load_out = Vector3(0, 0, -0.86)
+load_hand_offset = Vector3(0, -0.03, 0.05)
+harpoon_path = NodePath("Model/LanceHarpoon")
+reload_offset = Vector3(-0.05, 0.02, 0.0)
+reload_rotation = Vector3(0.35, 0.05, 0.3)
+
+[node name="Model" parent="." instance=ExtResource("2_model")]
+transform = Transform3D(1, 0, 0, 0, 0.8776, 0.4794, 0, -0.4794, 0.8776, 0, 0, 0)
+
+[node name="ShootSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("3_shoot")
+
+[node name="ReloadSound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("4_reload")
+
+[node name="EmptySound" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("5_empty")

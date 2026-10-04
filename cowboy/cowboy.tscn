@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3]
+[gd_scene load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://cowboy/cowboy.gd" id="1_player"]
 [ext_resource type="Script" path="res://cowboy/viewmodel.gd" id="2_viewmodel"]
@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://cowboy/weapons/revolver.tscn" id="6_pistol"]
 [ext_resource type="PackedScene" path="res://cowboy/weapons/shotgun.tscn" id="7_sawnoff"]
 [ext_resource type="PackedScene" path="res://cowboy/weapons/rifle.tscn" id="8_shotgun"]
+[ext_resource type="PackedScene" path="res://cowboy/weapons/lance.tscn" id="9_lance"]
 [ext_resource type="Material" path="res://assets/materials/muzzle_flash.tres" id="9_flash"]
 [ext_resource type="Material" path="res://assets/materials/bullet_hole.tres" id="10_hole"]
 [ext_resource type="AudioStream" path="res://assets/audio/weapons/bullet_hole.wav" id="11_impact"]
@@ -69,7 +70,7 @@ fov = 90.0
 ; 武器場景在 _ready 時全部生出來掛在這底下，切換只切 visible。
 [node name="Viewmodel" type="Node3D" parent="Head/Camera3D"]
 script = ExtResource("2_viewmodel")
-weapon_scenes = Array[PackedScene]([ExtResource("6_pistol"), ExtResource("7_sawnoff"), ExtResource("8_shotgun")])
+weapon_scenes = Array[PackedScene]([ExtResource("6_pistol"), ExtResource("7_sawnoff"), ExtResource("8_shotgun"), ExtResource("9_lance")])
 ammo_label_path = NodePath("../../../HUD/AmmoLabel")
 
 ; 這個節點的位置就是槍口，曳光和火光從這裡出去。位置是目測調的，不對就調 transform。

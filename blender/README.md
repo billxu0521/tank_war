@@ -3,7 +3,7 @@
 跟 trex.gd 一樣的路線：模型不用手捏，用 Blender Python 建，改數字就重跑。
 
 - `common.py` — box / cyl / blob 這些小工具，最後 `finish()` 合併並加倒角
-- `weapons.py` — 牛仔的三把槍（左輪、單管散彈、槓桿步槍），各自匯出一個 `.glb`
+- `weapons.py` — 牛仔的四把武器（左輪、單管散彈、槓桿步槍、炸彈長矛），各自匯出一個 `.glb`
 - `tree.py` — 闊葉樹大中小三棵（`TreeOak` / `TreeOakM` / `TreeOakS`），進 `trees.glb`。**不用開 Blender**，背景直接跑，
   一輪迭代用 `tools/model_iter.sh tree <版號>`（做法和教訓見 [docs/素材流水線/程式建模迭代.md](../docs/素材流水線/程式建模迭代.md)）
 - `house.py` — 農舍三種（`House1` 前廊農舍、`House2` 圓木小屋、`House3` 直板高屋），各帶碰撞 `House<N>Col`，門 `HouseDoor` 共用，進 `houses.glb`。
@@ -20,6 +20,10 @@
 - `cowboy.py` — 牛仔：身體（原點在腳底）、頭（原點在眼睛 1.6 公尺，跟著上下看轉）、兩條腿（原點在髖關節，走路擺動）、
   自己看的靴子、第一人稱握槍的手（HandGrip / HandSupport，位置寫在各槍場景的 grip_hand / support_hand；
   右手的拇指 HandGripThumb、前臂 HandGripArm 分開，左輪扳擊錘和轉手臂用；HandLoad 是左輪換彈捏子彈的左手）
+- `hands.py` — 上面那五個第一人稱的手（cowboy.py 會 import 它）：一整張連續的手套皮＋手指骨架（照 FNE_project 那隻手的骨頭），
+  手指自動彎到碰到握把為止，再烘成固定網格。`tools/model_iter.sh hands <版號>` 出六格預覽，跟 `docs/image/hand.png`
+  （`tools/hand_ref.py` 渲染的參考）對照；兩邊共用 `hand_views.py` 的鏡頭
+  玩家視角用 `tools/hands_game_iter.sh <版號>`（遊戲相機實拍三把槍）；關節有沒有壓扁用 `tools/hand_joint_check.py` 量
 - `trex.py` — 18 個部件，**名字和位置直接抄 trex.gd 的 `_rig()`**，所以程式動畫不用改
 - `trex_hd.py` — 精修暴龍（`docs/image/dinosaur.png`）：一整張連續的皮＋47 根骨頭蒙皮，匯出 `models/trex_hd.glb`。
   骨頭名字沿用 trex.gd（`root`、`spine1`、`neck`、`head`、`jaw`、`tail1`~`tail8`、`thigh_l`…），遊戲裡 trex.gd 直接用它（約 1800 三角面）。

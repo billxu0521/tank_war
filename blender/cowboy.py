@@ -4,10 +4,7 @@
 # 兩個物件：
 #   CowboyBody  原點在腳底，掛在 cowboy.tscn 的 Body 節點（蹲下時整個沿 Y 壓扁）
 #   CowboyLegL/R 兩條腿，原點在髖關節（±0.10, 0.88），遊戲裡走路時前後擺
-#   HandGrip / HandSupport 第一人稱握槍的右手、托護木的左手，原點在握的那一點（槍的場景裡擺位置）
-#   HandGripArm 右手前臂和袖子（原點在手腕）
-#   HandGripThumb 右手拇指（原點在拇指根部，節點位置就是它在 HandGrip 裡的位置）
-#   HandLoad 左輪換彈時捏子彈的左手（原點在捏住的那一點）
+#   HandGrip / HandGripThumb / HandGripArm / HandSupport / HandLoad 第一人稱的手：見 hands.py
 #   CowboyHead  原點在眼睛高度（1.6，= Head 節點的位置），掛在 Head/Face——
 #               頭跟著上下看的角度轉，別人才看得出你在看哪裡
 # EYE 跟 cowboy.tscn 的 Head 高度共用，改了要一起改。爆頭判定也是從 Head 往下算的。
@@ -26,11 +23,12 @@ for _o in list(bpy.data.objects):
     bpy.data.objects.remove(_o)
 wipe()
 SKIN   = mat('c_skin',   (0.72, 0.52, 0.40), 0.7)
-GLOVE  = mat('c_glove',  (0.20, 0.13, 0.08), 0.75)   # 深色皮手套：第一人稱的手不會被夕陽照成一片白
+GLOVE  = mat('c_glove',  (0.075, 0.045, 0.028), 0.75)   # 深色皮手套（線性值；0.2 進遊戲是淺褐，被夕陽照成一片粉白）
 HAT    = mat('c_hat',    (0.22, 0.16, 0.11), 0.8)
 BAND   = mat('c_band',   (0.10, 0.08, 0.07), 0.6)
-DUSTER = mat('c_duster', (0.46, 0.36, 0.24), 0.85)   # 長風衣，沙塵色
+DUSTER = mat('c_duster', (0.11, 0.08, 0.05), 0.85)   # 深褐長風衣（第一人稱的袖子被夕陽照到的那面，淺色會比地面還亮、一片白）
 VEST   = mat('c_vest',   (0.20, 0.17, 0.15), 0.8)
+HAND   = mat('c_hand',   (0.22, 0.12, 0.06), 0.7)   # 第一人稱的裸手（線性值；影片受光的皮膚約 sRGB (0.70, 0.60, 0.57)）
 SHIRT  = mat('c_shirt',  (0.70, 0.66, 0.58), 0.8)
 DENIM  = mat('c_denim',  (0.20, 0.24, 0.32), 0.85)
 LEATHER= mat('c_leather',(0.30, 0.18, 0.10), 0.6)
@@ -135,104 +133,12 @@ for sx, name in ((-1, 'CowboyLegL'), (1, 'CowboyLegR')):
     cyl(0.062, 0.26, (x, 0.0, 0.20), (0, 0, 0), 14, m=BOOT)
     legs[name.replace('Leg', 'Shin')] = finish(name.replace('Leg', 'Shin'), bevel=0.006, seg=1, smooth_mats=('c_denim',))
 
-# ================= 第一人稱的手（原點在握的那一點） =================
-# 握槍的右手：槍把沿 Z（直的），手掌貼在槍把右側（+X），四根手指一節一節繞過槍把前面（+Y）
-# 到左邊，拇指從上面扣過去；後面接前臂和風衣袖子，往右後下方伸出畫面
-from mathutils import Vector
+# ================= 第一人稱的手 =================
+# HandGrip / HandGripThumb / HandGripArm / HandSupport / HandLoad 由 hands.py 建：
+# 一整張連續的手套皮＋手指骨架，擺好握姿再烘成網格，原點已經放好
+import hands
+hands.build([HAND, SHIRT])   # 裸手、捲起的襯衫袖子（照 Hunt 影片）
 
-
-def limb(r, length, start, direction, m, v=10):
-    """從 start 往 direction 長一截圓柱（前臂、袖子）"""
-    d = Vector(direction).normalized()
-    c = Vector(start) + d * (length / 2)
-    rot = d.to_track_quat('Z', 'Y').to_euler()
-    return cyl(r, length, tuple(c), tuple(rot), v, m=m)
-
-
-def finger(center, axis, r, angles, z, m, seg=(0.018, 0.024, 0.017)):
-    """一根手指：沿著繞某軸的圓弧排三節。axis='z' 繞直的槍把、'y' 繞橫的護木"""
-    for a in angles:
-        a = math.radians(a)
-        if axis == 'z':
-            loc = (center[0] + r * math.cos(a), center[1] + r * math.sin(a), z)
-            rbox(seg, loc, (0, 0, a), m=m)
-        else:
-            loc = (center[0] + r * math.cos(a), z, center[2] + r * math.sin(a))
-            rbox((seg[0], seg[2], seg[1]), loc, (0, -a, 0), m=m)
-
-
-def bone(p0, p1, r, m, v=10):
-    """一節手指：兩端圓頭的膠囊。方塊疊的手指一看就是積木"""
-    p0, p1 = Vector(p0), Vector(p1)
-    d = p1 - p0
-    rot = d.to_track_quat('Z', 'Y').to_euler()
-    cyl(r, d.length, tuple((p0 + p1) / 2), tuple(rot), v, m=m)
-    sphere(r, tuple(p1), v, 6, m=m)
-    sphere(r * 1.02, tuple(p0), v, 6, m=m)
-
-
-def curl(r_arc, angles, z, rad, m):
-    """繞著直的槍把（Z 軸）一節一節彎過去的手指"""
-    pts = [(r_arc * math.cos(math.radians(a)), r_arc * math.sin(math.radians(a)), z) for a in angles]
-    for k in range(len(pts) - 1):
-        bone(pts[k], pts[k + 1], rad * (1 - 0.1 * k), m)
-
-
-# 手掌＋手背：圓角的一塊，手背朝右（+X）、手腕在後面
-vloft([(-0.044, 0.010, 0.030), (-0.020, 0.013, 0.036), (0.010, 0.013, 0.037), (0.036, 0.011, 0.032)],
-      m=GLOVE, e=0.6)
-_parts[-1].location = (0.024, -0.010, 0.0)
-for k, (z, r) in enumerate(((0.029, 0.0098), (0.009, 0.0102), (-0.011, 0.0096), (-0.029, 0.0085))):
-    curl(0.027, (28, 72, 118, 150) if k < 3 else (30, 72, 112), z, r, GLOVE)   # 四根手指，小指短
-    sphere(r * 0.95, (0.027, 0.012, z), 10, 6, m=GLOVE)                       # 指節（太凸會像一串葡萄）
-# 前臂往下斜得多：長槍舉起來時握把就在鏡頭正下方，往後平伸的手臂會擋掉半個畫面
-ARM_R = (0.22, -0.55, -0.80)
-sphere(0.026, (0.026, -0.040, -0.012), 12, 8, m=GLOVE)                     # 手腕跟手掌接起來
-grip = finish('HandGrip', bevel=0.002, seg=1, smooth_mats=('c_glove', 'c_duster', 'c_shirt'))
-# 前臂＋袖子另外一個物件，原點在手腕：左輪的手包住握把背面時，手臂要另外轉回右下方，
-# 不然會直直朝著鏡頭
-WRIST_R = (0.030, -0.036, -0.02)
-limb(0.030, 0.10, WRIST_R, ARM_R, GLOVE)                                   # 手腕
-limb(0.031, 0.012, (0.052, -0.090, -0.10), ARM_R, SHIRT)                  # 襯衫袖口
-limb(0.042, 0.36, (0.055, -0.095, -0.105), ARM_R, DUSTER, 12)             # 風衣袖子
-grip_arm = finish('HandGripArm', bevel=0.002, seg=1, smooth_mats=('c_glove', 'c_duster', 'c_shirt'))
-
-# 右手拇指：原點在拇指根部（虎口）。平常貼在槍把左上、指向前方；
-# 左輪開完槍要扳擊錘時，遊戲裡轉這個節點把指尖勾到擊錘上
-THUMB_BASE = (0.010, -0.022, 0.036)
-bone(THUMB_BASE, (-0.010, -0.002, 0.044), 0.0115, GLOVE)
-bone((-0.010, -0.002, 0.044), (-0.022, 0.022, 0.046), 0.0105, GLOVE)
-thumb = finish('HandGripThumb', bevel=0.002, seg=1, smooth_mats=('c_glove',))
-
-# 塞子彈的左手：原點在拇指和食指捏住的那一點，子彈沿 +Y 塞進裝填門。
-# 手從左後下方伸過來，拇指食指捏著彈底，其他三指收在掌心
-vloft([(-0.030, 0.014, 0.024), (-0.005, 0.018, 0.030), (0.020, 0.016, 0.027)], m=GLOVE, e=0.6)
-_parts[-1].rotation_euler = (math.radians(-60), 0, math.radians(-20))
-_parts[-1].location = (-0.030, -0.040, -0.032)
-bone((-0.020, -0.018, -0.018), (-0.014, -0.004, -0.004), 0.0095, GLOVE)    # 食指
-bone((-0.014, -0.004, -0.004), (-0.004, 0.002, 0.004), 0.0085, GLOVE)
-bone((-0.004, -0.050, -0.040), (0.006, -0.022, -0.014), 0.0110, GLOVE)     # 拇指
-bone((0.006, -0.022, -0.014), (0.006, -0.004, 0.002), 0.0100, GLOVE)
-for k in range(3):                                                        # 中指到小指收起來
-    dz = -0.012 * k
-    bone((-0.034 + dz * 0.3, -0.016, -0.030 + dz), (-0.026 + dz * 0.3, -0.004, -0.040 + dz), 0.0095, GLOVE)
-    bone((-0.026 + dz * 0.3, -0.004, -0.040 + dz), (-0.020 + dz * 0.3, -0.020, -0.048 + dz), 0.0085, GLOVE)
-ARM_L = (-0.30, -0.60, -0.70)
-limb(0.028, 0.10, (-0.040, -0.070, -0.050), ARM_L, GLOVE)
-limb(0.029, 0.012, (-0.070, -0.125, -0.115), ARM_L, SHIRT)
-limb(0.040, 0.36, (-0.073, -0.130, -0.120), ARM_L, DUSTER, 12)
-load = finish('HandLoad', bevel=0.002, seg=1, smooth_mats=('c_glove', 'c_duster', 'c_shirt'))
-
-# 托護木的左手：護木沿 Y（橫的），掌心朝上托在下面，手指從右側（+X）往上包，拇指在左側
-rbox((0.07, 0.09, 0.022), (0.0, 0.0, -0.033), m=GLOVE)                    # 手掌
-for k, y in enumerate((-0.03, -0.01, 0.01, 0.03)):
-    finger((0, 0, 0), 'y', 0.032, (-40, 5, 45) if k < 3 else (-40, 5), y, GLOVE)
-rbox((0.02, 0.05, 0.02), (-0.034, 0.02, -0.01), (0, 0, 0.3), m=GLOVE)      # 拇指
-ARM_L = (-0.30, -0.60, -0.70)
-limb(0.028, 0.10, (-0.01, -0.035, -0.04), ARM_L, GLOVE)
-limb(0.029, 0.012, (-0.04, -0.095, -0.11), ARM_L, SHIRT)
-limb(0.040, 0.36, (-0.043, -0.10, -0.115), ARM_L, DUSTER, 12)
-support = finish('HandSupport', bevel=0.004, seg=1, smooth_mats=('c_skin', 'c_duster'))
 
 # ================= 頭（原點在眼睛高度） =================
 # 功能零件：頭、鼻子、眼睛、耳朵、八字鬍、帽子（帽頂中間壓凹、帽帶、往上捲的寬帽簷）
@@ -255,8 +161,7 @@ head = finish('CowboyHead', bevel=0.004, seg=1, smooth_mats=('c_skin', 'c_hat'))
 # 旋轉先烘進網格，再把原點搬到該在的地方：身體在腳底中央、頭在眼睛
 for o, anchor in ((body, (0, 0, 0)), (head, (0, 0, EYE)), (legs['CowboyLegL'], (-0.10, 0, HIP)),
                   (legs['CowboyLegR'], (0.10, 0, HIP)), (legs['CowboyShinL'], (-0.10, 0, HIP)),
-                  (legs['CowboyShinR'], (0.10, 0, HIP)), (grip, (0, 0, 0)), (support, (0, 0, 0)),
-                  (thumb, THUMB_BASE), (grip_arm, WRIST_R), (load, (0, 0, 0))):
+                  (legs['CowboyShinR'], (0.10, 0, HIP))):
     bpy.ops.object.select_all(action='DESELECT')
     o.select_set(True)
     bpy.context.view_layer.objects.active = o

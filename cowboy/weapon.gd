@@ -16,7 +16,7 @@ const MOVEMENT_FALLBACK: Array[StringName] = [&"walk", &"run", &"jump_start", &"
 # 標 L1、L2 的是規格裡還沒排進這階段、但現在手感已經用到的（先留著，數字不動）。
 enum Reload { WHOLE, PER_ROUND }
 ## 射擊類型。BREAK（折開式散彈）是規格外的，規格只談左輪和手動步槍
-enum Action { SINGLE_ACTION, DOUBLE_ACTION, BOLT, LEVER, BREAK }
+enum Action { SINGLE_ACTION, DOUBLE_ACTION, BOLT, LEVER, BREAK, HARPOON }
 
 @export_group("基礎")
 @export var display_name := "武器"
@@ -96,6 +96,8 @@ enum Action { SINGLE_ACTION, DOUBLE_ACTION, BOLT, LEVER, BREAK }
 @export var ads_position := Vector3.ZERO
 ## 腰射時槍多轉這麼多（弧度），舉槍時轉回正。Pax 腰射是往內斜、槍口朝準心
 @export var hip_rotation := Vector3.ZERO
+## 舉槍瞄準時多轉的角度（瞄準 0→1 漸變）：炸彈長矛瞄準時槍頭往玩家這邊仰，刀刃才高過護板看得到
+@export var ads_rotation := Vector3.ZERO
 
 @export_group("Anim")
 ## 動作名 -> String（clip 名）或 Vector2(start, end)（分段）。
@@ -115,6 +117,29 @@ enum Action { SINGLE_ACTION, DOUBLE_ACTION, BOLT, LEVER, BREAK }
 ## 空的＝單手拿（左輪）
 @export var support_parent: NodePath
 @export var support_hand := Transform3D()
+
+@export_group("魚叉")
+## 炸彈長矛：射出去的不是子彈，是這個節點的樣子（魚叉），打中東西就爆（Viewmodel.KIND_HARPOON）。
+## 有裝填時它插在發射管裡看得到，射掉了就藏起來
+@export var harpoon_path: NodePath
+## 換彈用左手（HandSupport）去拿、塞，右手一直握著（炸彈長矛：平常只有右手拿，左手放在畫面外，換彈才伸進來）
+@export var reload_with_support := false
+## 換彈時手去哪拿子彈（槍模型座標）。預設是右手的畫面外右下（HAND_POCKET）；炸彈長矛的左手從左下拿
+@export var fetch_pocket := Vector3(0.14, -0.26, 0.16)
+## 換彈時手在鏡頭裡再轉多少（弧度）：手保持腰射時的朝向，再加這個；讓前臂從畫面右下伸進來，不要橫過畫面
+@export var reload_hand_turn := Vector3.ZERO
+## 捏子彈的手繞子彈再轉多少（弧度，子彈座標）：讓手從畫面外側伸進來
+@export var pinch_rotation := Vector3.ZERO
+## 舉槍時左手繞槍管再轉多少（弧度，乘舉槍程度）
+@export var ads_support_turn := 0.0
+## 左手只在舉槍時出現（左輪：腰射單手、舉槍雙手）
+@export var support_only_ads := false
+## 舉槍時左手再移多少（父節點座標，乘舉槍程度）：影片舉槍時左手看起來很近很大
+@export var ads_support_shift := Vector3.ZERO
+## 舉槍時左手再整個轉多少（弧度，父節點座標，乘舉槍程度）：讓前臂往左下出畫面
+@export var ads_support_rot := Vector3.ZERO
+## 換彈時左手繞槍管轉多少（弧度）：槍翻過來時左手改從下面托（影片步槍換彈）
+@export var reload_support_turn := 0.0
 
 @export_group("Procedural")
 ## 沒有 AnimationPlayer 時用這些零件做動作。路徑相對於武器根節點，沒有就留空。
@@ -157,6 +182,7 @@ enum Action { SINGLE_ACTION, DOUBLE_ACTION, BOLT, LEVER, BREAK }
 @export var load_hand_rotation := Vector3(0.6, -0.5, -0.3)
 
 var mag: int
+var harpoon: MeshInstance3D   # 炸彈長矛管裡那支魚叉（沒有就是一般的槍）
 var reserve := 0   # 遊戲中還剩幾發備彈，-1 = 無限
 var current_action := &""
 
@@ -181,9 +207,12 @@ var _round_t := 1.0       # 這一發塞彈進行到哪 0..1，1 = 沒在塞
 var _round_dur := 0.55
 var _thumb: Node3D
 var _load_hand: Node3D
+var _pinch_mesh: Mesh   # 長槍換彈時拿子彈的手（HandLoad）
+var _hold_mesh: Mesh    # 換彈那隻手原本的網格
 var _round: Node3D
 var _gate: Node3D
 var _grip: Node3D           # 右手，長槍換彈時會離開握把
+var _support: Node3D        # 左手
 var _hand_round: Node3D
 var _ejector: Node3D
 var _ejector_rest := Vector3.ZERO
@@ -212,6 +241,12 @@ func _ready() -> void:
 	_ejector = get_node_or_null(ejector_path)
 	if _ejector:
 		_ejector_rest = _ejector.position
+	harpoon = get_node_or_null(harpoon_path) as MeshInstance3D
+	if harpoon and hand_round_path.is_empty():   # 換彈時手上拿的那支：跟管裡的同一個樣子
+		var copy := MeshInstance3D.new()
+		copy.mesh = harpoon.mesh
+		(_model if _model else self).add_child(copy)
+		hand_round_path = get_path_to(copy)
 	_round = get_node_or_null(round_path)
 	if _round:
 		_round.visible = false
@@ -226,6 +261,8 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if harpoon:
+		harpoon.visible = mag > 0 or (_round_t >= (0.62 if reload_with_support else 0.72) and _round_t < 1.0)   # 塞進去那一刻就看得到（彈數要等換彈計時結束才加）
 	if not _anim:
 		_procedural(delta)
 		return
@@ -245,7 +282,7 @@ func _process(delta: float) -> void:
 ## 一列一個參數、一欄一把槍（欄名 = 場景檔名，例如 revolver）。Excel 打得開，改完重開遊戲就生效。
 ## 場景裡的數字只是預設值；表格裡有的以表格為準
 const TABLE := "res://cowboy/weapons/weapons.csv"
-const ACTION_NAMES := ["單動左輪", "雙動左輪", "栓動步槍", "槓桿步槍", "折開式"]   # 跟 Action 同順序
+const ACTION_NAMES := ["單動左輪", "雙動左輪", "栓動步槍", "槓桿步槍", "折開式", "魚叉發射管"]   # 跟 Action 同順序
 const RELOAD_NAMES := ["整組", "逐發"]                                                # 跟 Reload 同順序
 static var _table := {}   # 槍的 id -> {參數: 表格裡的文字}
 
@@ -352,12 +389,19 @@ func _add_hands() -> void:
 			mi.transform = h[2]
 			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF   # 視角模型貼著鏡頭，影子會怪
 			parent.add_child(mi)
+			if h[0] == &"HandSupport":
+				_support = mi
 			if h[0] == &"HandGrip":
 				_grip = mi
 				_thumb = _copy_mesh(src, &"HandGripThumb", mi)
 				var arm := _copy_mesh(src, &"HandGripArm", mi)
 				if arm:
 					arm.rotation = grip_arm_rotation
+	var pinch := src.get_node_or_null(^"HandLoad") as MeshInstance3D
+	var reloader := _support if reload_with_support else _grip
+	if pinch and reloader is MeshInstance3D and gate_path.is_empty() and harpoon_path.is_empty():
+		_pinch_mesh = pinch.mesh
+		_hold_mesh = (reloader as MeshInstance3D).mesh
 	if not gate_path.is_empty():
 		_load_hand = _copy_mesh(src, &"HandLoad", get_node(model_path))
 		_load_hand.visible = false
@@ -510,8 +554,16 @@ func _procedural(delta: float) -> void:
 		var rp := smoothstep(0.0, 1.0, _reload_pose)
 		_model.position = _rest_pos + reload_offset * rp + Vector3(0.12 * lower, -0.22 * lower,
 			0.06 * _kick - 0.18 * thrust + 0.12 * windup + 0.05 * lower)
-		_model.rotation = _rest_rot + hip_rotation * (1.0 - aim) * (1.0 - rp) + reload_rotation * rp \
+		_model.rotation = _rest_rot + hip_rotation * (1.0 - aim) * (1.0 - rp) + ads_rotation * aim * (1.0 - rp) + reload_rotation * rp \
 			+ Vector3(0.22 * _kick - 0.3 * thrust - 0.8 * lower, 0.0, 0.4 * windup + 0.5 * lower)
+	if _support and support_only_ads:   # 左輪：舉槍時才用左手托住右手（雙手握，照影片）
+		_support.visible = aim > 0.3 and _reload_pose < 0.1
+	if _support and not reload_with_support:
+		# 舉槍時左手繞槍管轉回來：腰射槍往左傾、手設成從左側托；舉槍槍是正的，不轉回來前臂會橫過畫面
+		_support.basis = Basis.from_euler(ads_support_rot * aim) * Basis(Vector3.BACK, ads_support_turn * aim + reload_support_turn * smoothstep(0.0, 1.0, _reload_pose)) \
+			* support_hand.basis.orthonormalized()
+		if _reload_left <= 0.0:
+			_support.position = support_hand.origin + Vector3(ads_support_shift.x, ads_support_shift.y, ads_support_shift.z) * aim
 	if not _gate:
 		_hand_reload(delta)
 
@@ -540,23 +592,34 @@ const HAND_POCKET := Vector3(0.14, -0.26, 0.16)   # 右手去拿子彈的地方�
 ## 長槍換一發（_round_t 0→1）：右手離開握把→畫面外拿子彈→對準入口→塞進去→回來握好。
 ## 散彈折開的前段先把空殼往後上彈出來
 func _hand_reload(delta: float) -> void:
-	if not _grip or not _hand_round or not _model:
+	var hand_node := _support if reload_with_support else _grip
+	if not hand_node or not _hand_round or not _model:
 		return
 	if _round_t < 1.0:
 		_round_t = minf(_round_t + delta / _round_dur, 1.0)
 	var t := _round_t
 	var space := get_node(load_space_path) as Node3D
-	var parent := _grip.get_parent() as Node3D
+	var parent := hand_node.get_parent() as Node3D
 	var to_parent := parent.global_transform.affine_inverse()
-	var rest := grip_hand.origin
-	var pocket := to_parent * _model.to_global(HAND_POCKET)
+	var rest := support_hand.origin if reload_with_support else grip_hand.origin
+	var pocket := to_parent * to_global(fetch_pocket)   # 拿子彈的地方以鏡頭（武器節點）為準：換彈時槍翻很大，跟著槍會跑到鏡頭前
 	var out := to_parent * space.to_global(load_out + load_hand_offset)
 	var inn := to_parent * space.to_global(load_in + load_hand_offset)
 	var round_on := false
 	var round_at := Vector3.ZERO    # load_space 座標
 	if t < 1.0:
 		var hand := rest
-		if t < 0.25:
+		if reload_with_support:
+			# 左手送魚叉：拿到（0–0.25）→ 對準管口（–0.45）→ 插進去（–0.62）→ 直接往左下退出畫面（審查：插好之後畫面上不要再有左手）
+			if t < 0.25:
+				hand = rest.lerp(pocket, smoothstep(0.0, 0.25, t))
+			elif t < 0.45:
+				hand = pocket.lerp(out, smoothstep(0.25, 0.45, t))
+			elif t < 0.62:
+				hand = out.lerp(inn, smoothstep(0.45, 0.62, t))
+			else:
+				hand = inn.lerp(pocket, smoothstep(0.62, 0.8, t)).lerp(rest, smoothstep(0.8, 1.0, t))
+		elif t < 0.25:
 			hand = rest.lerp(pocket, smoothstep(0.0, 0.25, t))
 		elif t < 0.5:
 			hand = pocket.lerp(out, smoothstep(0.25, 0.5, t))
@@ -564,8 +627,8 @@ func _hand_reload(delta: float) -> void:
 			hand = out.lerp(inn, smoothstep(0.5, 0.72, t))
 		else:
 			hand = inn.lerp(rest, smoothstep(0.72, 1.0, t))
-		_grip.position = hand
-		if t >= 0.3 and t < 0.72:
+		hand_node.position = hand
+		if t >= (0.1 if reload_with_support else 0.3) and t < (0.62 if reload_with_support else 0.72):   # 左手送魚叉：一伸進畫面手上就要拿著（第二輪審查）
 			round_on = true
 			round_at = space.to_local(parent.to_global(hand)) - load_hand_offset
 		elif load_eject and t > 0.03 and t < 0.3:
@@ -574,7 +637,24 @@ func _hand_reload(delta: float) -> void:
 			round_on = true
 	else:
 		# 沒在換（或被打斷）：手滑回握把，不要瞬間跳回去
-		_grip.position = _grip.position.lerp(rest, minf(delta * 12.0, 1.0))
+		hand_node.position = hand_node.position.lerp(rest, minf(delta * 12.0, 1.0))
+	# 手的朝向：換彈時槍翻轉很大（照影片：步槍把右側裝填口翻上來），手跟著翻的話整條前臂會橫過畫面。
+	# 換彈姿勢越到位，手越保持腰射時在鏡頭裡的朝向
+	var rest_basis := (support_hand.basis if reload_with_support else grip_hand.basis).orthonormalized()   # 場景裡存的有捨入誤差，slerp 要正規化過的
+	var keep := global_basis * Basis.from_euler(reload_hand_turn) * Basis.from_euler(hip_rotation) * rest_basis
+	var k := smoothstep(0.0, 1.0, _reload_pose)
+	hand_node.basis = rest_basis.slerp((parent.global_basis.inverse() * keep).orthonormalized(), k)
+	# 拿著子彈的那段換成捏子彈的手（HandLoad，原點在捏住那一點）：握槍的拳頭拿子彈，手指是對著空氣彎的
+	if _pinch_mesh and hand_node is MeshInstance3D:
+		var mi := hand_node as MeshInstance3D
+		mi.mesh = _pinch_mesh if round_on else _hold_mesh
+		if round_on:
+			# 捏的那一點（HandLoad 原點）放在子彈底部、手的方向跟子彈一致（子彈沿 -Z 塞進去）
+			var flip := Basis.IDENTITY if reload_with_support else Basis.from_scale(Vector3(-1, 1, 1))   # HandLoad 是左手，右手用要鏡射
+			mi.global_transform = Transform3D(space.global_basis * Basis.from_euler(pinch_rotation) * flip,
+				space.to_global(round_at + Vector3(0, 0, 0.016)))
+		for c in mi.get_children():   # 拇指、前臂是握槍姿勢的，捏的時候藏起來
+			(c as Node3D).visible = not round_on
 	_hand_round.visible = round_on
 	if round_on:
 		_hand_round.global_transform = Transform3D(space.global_basis, space.to_global(round_at))
@@ -582,8 +662,11 @@ func _hand_reload(delta: float) -> void:
 
 # 塞彈的關鍵位置（槍模型座標，Godot 軸向）。捏的那一點＝彈底
 const LOAD_AWAY := Vector3(-0.10, -0.20, 0.20)       # 手在畫面外左下
+const LOAD_AWAY_VIEW := Vector3(0.10, -0.30, 0.05)  # 換彈時手在畫面外右下（武器節點座標＝鏡頭附近）
+const LOAD_FETCH_VIEW := Vector3(0.10, -0.16, -0.05) # 伸去拿子彈（畫面右下邊緣）
 const LOAD_FETCH := Vector3(-0.04, -0.08, 0.09)      # 伸去拿子彈
 const LOAD_KNOB := Vector3(0.016, 0.036, -0.162)     # 退殼桿推鈕前面
+const LOAD_WAIT := Vector3(0.03, -0.01, 0.05)       # 推退殼桿時手在裝填門下方等
 const LOAD_PUSHED := Vector3(0.016, 0.036, -0.130)
 const LOAD_OUT := Vector3(0.0108, 0.0288, 0.035)     # 對準裝填門後面
 const LOAD_IN := Vector3(0.0108, 0.0288, -0.006)     # 子彈塞進去了
@@ -599,25 +682,30 @@ func _revolver_reload(delta: float, rp: float) -> void:
 	if _round_t < 1.0:
 		_round_t = minf(_round_t + delta / _round_dur, 1.0)
 	var t := _round_t
-	var hand := LOAD_AWAY
+	# 手的起點、拿子彈的地方照鏡頭定（畫面右下方外面）：照槍定的話，換彈時槍翻過來，手會從左上方伸過來
+	var to_model := _model.transform.affine_inverse() if _model else Transform3D.IDENTITY
+	var away: Vector3 = to_model * LOAD_AWAY_VIEW
+	var fetch: Vector3 = to_model * LOAD_FETCH_VIEW
+	var hand := away
 	var push := 0.0
 	var round_at := Vector3.ZERO
 	var round_on := false
 	if t < 1.0:
+		# 手不去槍口推退殼桿（伸到畫面正中間會擋住視線，影片也沒有）：先到裝填門下方等，退殼桿自己推出空殼
 		if t < 0.15:
-			hand = LOAD_AWAY.lerp(LOAD_KNOB, smoothstep(0.0, 0.15, t))
+			hand = away.lerp(LOAD_WAIT, smoothstep(0.0, 0.15, t))
 		elif t < 0.3:
 			push = smoothstep(0.15, 0.28, t)
-			hand = LOAD_KNOB.lerp(LOAD_PUSHED, push)
+			hand = LOAD_WAIT
 		elif t < 0.48:
 			push = 1.0 - smoothstep(0.3, 0.4, t)
-			hand = LOAD_PUSHED.lerp(LOAD_FETCH, smoothstep(0.3, 0.48, t))
+			hand = LOAD_WAIT.lerp(fetch, smoothstep(0.3, 0.48, t))
 		elif t < 0.66:
-			hand = LOAD_FETCH.lerp(LOAD_OUT, smoothstep(0.48, 0.66, t))
+			hand = fetch.lerp(LOAD_OUT, smoothstep(0.48, 0.66, t))
 		elif t < 0.82:
 			hand = LOAD_OUT.lerp(LOAD_IN, smoothstep(0.66, 0.82, t))
 		else:
-			hand = LOAD_IN.lerp(LOAD_AWAY, smoothstep(0.82, 1.0, t))
+			hand = LOAD_IN.lerp(away, smoothstep(0.82, 1.0, t))
 		# 空殼：推退殼桿時從裝填門往後彈出、往下掉
 		if t > 0.2 and t < 0.45:
 			var k := t - 0.2
@@ -632,10 +720,10 @@ func _revolver_reload(delta: float, rp: float) -> void:
 		_ejector.position = _ejector_rest + Vector3(0.0, 0.0, 0.032 * push)
 	if _load_hand:
 		# 沒在塞的時候手慢慢退到畫面外；退到了就藏起來
-		_load_hand.position = hand if t < 1.0 else _load_hand.position.lerp(LOAD_AWAY, minf(delta * 10.0, 1.0))
+		_load_hand.position = hand if t < 1.0 else _load_hand.position.lerp(away, minf(delta * 10.0, 1.0))
 		if _model:
 			_load_hand.basis = _model.basis.inverse() * Basis.from_euler(load_hand_rotation)
-		_load_hand.visible = rp > 0.05 and (t < 1.0 or _load_hand.position.distance_to(LOAD_AWAY) > 0.01)
+		_load_hand.visible = rp > 0.05 and (t < 1.0 or _load_hand.position.distance_to(away) > 0.01)
 	if _round:
 		_round.visible = round_on
 		_round.position = round_at

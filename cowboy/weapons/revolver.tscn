@@ -10,7 +10,7 @@
 ; 三發身體打死一個牛仔，打頭一發。ads_position 的 y = -準星高度（blender/weapons.py 的 SIGHT）
 ; 動作照 Hunt 的 Pax：腰射往內斜（hip_rotation）、開槍大翻、拇指扳擊錘、換彈開裝填門一顆一顆塞
 [node name="Revolver" type="Node3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.05, -0.075, -0.17)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.047, -0.075, -0.150)
 script = ExtResource("1_weapon")
 display_name = "左輪"
 capacity = 6
@@ -32,14 +32,15 @@ fan_spread = 6.0
 max_range = 80.0
 muzzle_velocity = 330.0
 falloff_start = 25.0
-ads_position = Vector3(0, -0.0655, -0.17)
+ads_position = Vector3(0, -0.0655, -0.22)
+load_hand_rotation = Vector3(0.673, 0.552, 0.037)
 muzzle = Vector3(0, 0.0475, -0.212)
-hip_rotation = Vector3(0, 0, 0.30)
-reload_offset = Vector3(0.03, 0.0, 0.03)
-reload_rotation = Vector3(0.45, 1.2, 0.1)
+hip_rotation = Vector3(0.02, 0.0, 0.0)
+reload_offset = Vector3(0.173, -0.014, -0.047)
+reload_rotation = Vector3(1.012, 0.852, 2.270)
 grip_arm_rotation = Vector3(0, 0.7, 0)
 thumb_cock = Vector3(0.77, -1.0, -1.49)
-grip_hand = Transform3D(0.7648, 0, -0.6442, 0.1904, 0.9553, 0.2260, 0.6154, -0.2955, 0.7307, 0, -0.030, 0.031)
+grip_hand = Transform3D(0.7648, 0, -0.6442, 0.1904, 0.9553, 0.2260, 0.6154, -0.2955, 0.7307, 0, -0.018, 0.024)
 cylinder_path = NodePath("Model/RevolverCylinder")
 hammer_path = NodePath("Model/RevolverHammer")
 gate_path = NodePath("Model/RevolverGate")

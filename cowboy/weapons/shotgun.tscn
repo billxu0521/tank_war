@@ -8,7 +8,7 @@
 
 ; 單管折開式散彈：一發就要折開換，貼臉全中 10×14 = 140（差一點秒殺），30 公尺外就散光。
 [node name="Shotgun" type="Node3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.13, -0.16, -0.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.096, -0.112, -0.203)
 script = ExtResource("1_weapon")
 display_name = "單管散彈"
 capacity = 1
@@ -28,11 +28,17 @@ starting_reserve = 10
 max_range = 35.0
 muzzle_velocity = 300.0
 falloff_start = 8.0
-ads_position = Vector3(0, -0.061, -0.26)
+ads_position = Vector3(0, -0.071, -0.162)
+pinch_rotation = Vector3(0, 0, -0.6)
+ads_support_rot = Vector3(0, 0, 0)
+ads_support_shift = Vector3(0, 0, 0.05)
+ads_support_turn = 0.5
+ads_rotation = Vector3(0.01, 0, 0)
+hip_rotation = Vector3(0, 0.01, -0.22)
 muzzle = Vector3(0, 0.046, -0.786)
-grip_hand = Transform3D(1, 0, 0, 0, 0.8525, 0.5227, 0, -0.5227, 0.8525, 0.0000, 0.0030, 0.0800)
+grip_hand = Transform3D(1, 0, 0, 0, 0.8525, 0.5227, 0, -0.5227, 0.8525, 0.0, -0.025, 0.11)
 support_parent = NodePath("Model/ShotgunBarrel")
-support_hand = Transform3D(1, 0, 0, 0, 1.0000, -0.0000, 0, 0.0000, 1.0000, 0.0000, 0.0100, -0.1340)
+support_hand = Transform3D(1.0000, 0.0000, 0, -0.0000, 1.0000, 0, 0, 0, 1, 0, 0.010, -0.07)
 hammer_path = NodePath("Model/ShotgunHammer")
 barrel_path = NodePath("Model/ShotgunBarrel")
 hand_round_path = NodePath("Model/ShotgunShell")
@@ -40,8 +46,8 @@ load_space_path = NodePath("Model/ShotgunBarrel")
 load_out = Vector3(0, 0.03, 0.06)
 load_in = Vector3(0, 0.03, -0.03)
 load_eject = true
-reload_offset = Vector3(-0.07, 0.03, 0.0)
-reload_rotation = Vector3(0.2, 0.05, 0.35)
+reload_offset = Vector3(-0.024, -0.014, 0.042)
+reload_rotation = Vector3(0.039, 1.200, 0.337)
 
 [node name="Model" parent="." instance=ExtResource("2_model")]
 
