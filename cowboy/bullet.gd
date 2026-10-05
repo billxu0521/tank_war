@@ -103,6 +103,8 @@ func _impact(hit: Dictionary) -> void:
 	var flesh: bool = target.has_method(&"take_damage")
 	if is_instance_valid(fx):
 		fx.impact(hit["position"], hit["normal"], surface_of(target), sound)
+	if target.has_method(&"on_shot"):   # 油燈：每台電腦的子彈都會打到，各自破、各自燒（含 visual_only）
+		target.on_shot(hit["position"], shooter, vel.normalized())
 	if on_impact.is_valid() and not visual_only:
 		on_impact.call(hit["position"] + hit["normal"] * 0.15)
 	if visual_only or not flesh or not is_instance_valid(shooter):

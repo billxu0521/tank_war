@@ -489,6 +489,9 @@ func _on_sandbox_pressed() -> void:
 			_hay_bale(SANDBOX_START + Vector3(9, -0.1, -6), 0.0),
 			_hay_bale(SANDBOX_START + Vector3(9, -0.1, -9), 0.0)]:
 		prop.add_to_group(&"sandbox_prop")
+	# 油燈練習：乾草捲旁邊地上兩盞、柵欄邊一盞，射它會潑油燒起來（燒到旁邊的燈會連鎖）
+	for off: Vector3 in [Vector3(7, 0, -7.5), Vector3(7.4, 0, -8.2), Vector3(-9, 0, -2.5)]:
+		OilLantern.place($Arena, _props.get(&"Lantern"), _on_ground(SANDBOX_START + off), false).add_to_group(&"sandbox_prop")
 
 ## 單人打恐龍：測恐龍行為用。場地跟沙盒一樣，只有自己和一隻恐龍 boss（導演、三招、找路都照連線模式），
 ## 子彈無限、接關無限：死了五秒後在地圖上隨機一個地方回來。恐龍生在離你最遠的地方，要靠導演給的方向找過來。
@@ -2242,7 +2245,7 @@ func _hay_shed(p: Vector3) -> void:
 	p = _on_ground(p)
 	_solid_mesh(p, _props.get(&"HayShedCol"), Vector3.ONE)
 	_prop(&"HayShed", p)
-	_prop(&"Lantern", p + SHED_LANTERN)
+	OilLantern.place($Arena, _props.get(&"Lantern"), p + SHED_LANTERN)   # 打得破的油燈：射它會潑油燒起來
 
 func _silo(p: Vector3, h: float) -> void:
 	p = _on_ground(p)
