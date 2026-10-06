@@ -42,6 +42,7 @@ uniform float dist_sat = 0.70;       // 最遠的飽和度倍數（規格：中�
 uniform float dist_contrast = 0.60;  // 最遠的對比倍數（規格：中景 75～90%、遠景 50～70%）
 uniform float dist_pivot = 0.14;     // 對比往這個亮度收（線性亮度）。0.30 太亮：遠山被拉亮成粉灰
 uniform vec3 dist_haze : source_color = vec3(0.72, 0.44, 0.29);   // 降飽和不往灰收，往夕陽霧的色相收（main.tscn 的 fog_light_color）：灰會讓紅褐的山變成淡紫
+uniform float gun_ridge = 1.0;       // 槍和手零件交界線的濃度。像素風（pixel_style.gd）調低：低解析度下一條線就是一整格，槍會被線塗黑
 uniform float env_line = 0.45;       // 一般環境物件的線再淡這麼多倍（規格第 11 節：環境描線降 50～70%）；目標、槍不動
 uniform float gun_lift = 0.8;        // 第一人稱的槍暗部提亮（規格第 12 節：要有中間調，不要被夕陽壓成黑色剪影）
 uniform float near_dark = 0.75;          // 最近處的亮度倍數
@@ -205,7 +206,7 @@ void fragment() {
 			edge = 2.0;
 		}
 		if (d < 500.0 && !lf && dot(n, nrm(u)) < 1.0 - (near ? 0.45 : normal_edge)) {
-			ridge = near ? 1.0 : 0.5;   // 槍和手的零件交界要清楚（原本近處不畫稜線，槍和手糊成一團）
+			ridge = near ? gun_ridge : 0.5;   // 槍和手的零件交界要清楚（原本近處不畫稜線，槍和手糊成一團）
 		}
 	}
 	if (grass) {
