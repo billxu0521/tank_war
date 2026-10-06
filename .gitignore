@@ -17,3 +17,6 @@ __pycache__/
 
 # 對外用的沙盒截圖（每張 2MB），只留在本機
 docs/image/沙盒場景_*/
+
+# 每個人自己的 Claude 設定，不進版本控制
+CLAUDE.md
