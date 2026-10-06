@@ -178,6 +178,11 @@ func _ready() -> void:
 	_hurt_hud = HurtHud.new(_camera)
 	$HUD.add_child(_hurt_hud)
 	$HUD.move_child(_hurt_hud, 0)   # 墊在血條、彈藥這些下面
+	_spread_marks = Control.new()
+	_spread_marks.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_spread_marks.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_spread_marks.draw.connect(_draw_spread_marks)
+	$HUD.add_child(_spread_marks)
 	# 血條掉血殘影：掉的那段先變淺色，等一下才縮回去，看得出這一下掉了多少
 	_hp_lost = ColorRect.new()
 	_hp_lost.color = Color(1.0, 0.85, 0.6, 0.9)
@@ -273,7 +278,30 @@ func _process(delta: float) -> void:
 	# 沒有準心（跟 Hunt 一樣靠槍身瞄）。打中人時畫面中間閃一下紅 +：
 	# 遠距離看不出血條掉，這是唯一的命中確認
 	_crosshair.visible = hit_until > Time.get_ticks_msec()
+	if _spread_marks:
+		_spread_marks.queue_redraw()
 	_hp_fill.size.x = (_hp_fill.get_parent() as Control).size.x * clampf(float(hp) / max_hp, 0.0, 1.0)
+
+
+## 腰射的散布範圍：畫面中間左右兩條短線「-   -」，間距＝子彈可能飛出去的最大角度。
+## 不是十字準心，只告訴你「子彈會落在這兩條線之間」。舉槍瞄準、槍放低時不畫（靠槍身瞄）
+var _spread_marks: Control
+
+func _draw_spread_marks() -> void:
+	var vm := viewmodel
+	if vm.ads > 0.5 or vm.weapon.lower > 0.5 or is_sprinting():
+		return
+	var deg: float = vm.spread + vm.weapon.pellet_spread + (vm.weapon.fan_spread if vm._wants_fan() else 0.0)
+	var size := _spread_marks.size
+	# 角度換成像素：鏡頭的 fov 是垂直視角，tan 比例對到半個畫面高
+	var gap := tan(deg_to_rad(deg)) / tan(deg_to_rad(_camera.fov * 0.5)) * size.y * 0.5
+	gap = maxf(gap, 4.0)
+	var mid := size * 0.5
+	for side in [-1.0, 1.0]:
+		var a := mid + Vector2(side * gap, 0)
+		var b := mid + Vector2(side * (gap + 10.0), 0)
+		_spread_marks.draw_line(a + Vector2(0, 1), b + Vector2(0, 1), Color(0, 0, 0, 0.5), 2.0)   # 陰影，亮的地方也看得到
+		_spread_marks.draw_line(a, b, Color(1, 1, 1, 0.85), 2.0)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -530,7 +558,10 @@ func _bot_shoot(threat: Node3D) -> void:
 	head.rotation.x = atan2(to.y, flat)
 	# 換彈中不扣扳機：try_fire 會中止逐發裝填，每幀都按的話永遠換不完
 	if flat < bot_fire_range and not viewmodel._reloading:
-		viewmodel.try_fire()
+		if viewmodel.weapon.mag == 0:
+			viewmodel.try_reload()   # 打空不會自動換彈（硬派規則），bot 要自己按
+		else:
+			viewmodel.try_fire()
 
 
 # --- 開槍打中：走主機 ---

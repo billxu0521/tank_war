@@ -394,10 +394,7 @@ func try_fire(fanning := false) -> void:
 			_fire_queued = true
 		return
 	if weapon.mag == 0:
-		if weapon.reserve != 0:
-			try_reload()
-		else:
-			weapon.play_sound(&"Empty")
+		weapon.play_sound(&"Empty")   # 硬派：打空不自動換彈，自己按 R
 		return
 
 	weapon.mag -= 1
