@@ -14,12 +14,18 @@ const COWBOY_GLB := preload("res://models/cowboy.glb")
 const GUNS := [preload("res://models/revolver.glb"), preload("res://models/shotgun.glb"),
 	preload("res://models/rifle.glb")]
 
+## 生存物資（blender/survival.py）：實際大小排兩排，近看用
+const SURVIVAL_GLB := preload("res://models/survivals.glb")
+const SURVIVAL_ROWS := [["Campfire", "Lantern", "Backpack", "SnowRock", "Antler"],
+	["Rifle", "Axe", "StewCan", "Mug", "Matchbox"]]
+
 const KEYS := {
-	KEY_1: "cowboy", KEY_2: "trex", KEY_3: "both",
+	KEY_1: "cowboy", KEY_2: "trex", KEY_3: "both", KEY_4: "survival",
 }
 
 var _trex: Trex
 var _cowboy: Node3D
+var _survival: Node3D
 var _head: Node3D
 var _cam: Camera3D
 var _label: Label
@@ -75,6 +81,9 @@ func _ready() -> void:
 
 	_cowboy = _build_cowboy()
 	add_child(_cowboy)
+
+	_survival = _build_survival()
+	add_child(_survival)
 
 	_cam = Camera3D.new()
 	_cam.fov = 50
@@ -183,6 +192,26 @@ func _build_cowboy() -> Node3D:
 		root.add_child(gun)
 	return root
 
+## 一樣一樣排開：每排從左到右，間隔 0.3 公尺；第二排在前面（+Z）
+func _build_survival() -> Node3D:
+	var root := Node3D.new()
+	var src := SURVIVAL_GLB.instantiate()
+	for r in SURVIVAL_ROWS.size():
+		var x := 0.0
+		var row: Array[MeshInstance3D] = []
+		for part: String in SURVIVAL_ROWS[r]:
+			var mi := _mesh_of(src, part, Vector3.ZERO)
+			var w := mi.get_aabb().size.x if mi.mesh else 0.3
+			mi.position = Vector3(x + w * 0.5, 0, r * 1.0)
+			x += w + 0.3
+			row.append(mi)
+			root.add_child(mi)
+		for mi in row:   # 整排置中
+			mi.position.x -= (x - 0.3) * 0.5
+	src.free()
+	root.visible = false
+	return root
+
 ## 8 字路徑。單純繞圓只會一直往同一邊傾，看不出換邊
 const TREX_WALK := 4.0   # boss.gd 的 WALK
 const TREX_RUN := 11.0   # boss.gd 的 RUN
@@ -201,9 +230,11 @@ func _mesh_of(src: Node, part: String, pos: Vector3) -> MeshInstance3D:
 
 func _select(which: String) -> void:
 	_subject = which
-	_trex.visible = which != "cowboy"
-	_cowboy.visible = which != "trex"
+	_trex.visible = which in ["trex", "both"]
+	_cowboy.visible = which in ["cowboy", "both"]
+	_survival.visible = which == "survival"
 	match which:
+		"survival": _focus = Vector3(0, 0.25, 0.5); _dist = 3.5
 		"cowboy": _focus = Vector3(0.2, 1.1, 0); _dist = 4.5
 		"trex": _focus = Vector3(0, 3.0, 0); _dist = 22.0
 		_:      _focus = Vector3(0, 3.0, 0); _dist = 26.0
@@ -255,7 +286,7 @@ func _unhandled_input(e: InputEvent) -> void:
 		if e.button_index == MOUSE_BUTTON_LEFT:
 			_dragging = e.pressed
 		elif e.button_index == MOUSE_BUTTON_WHEEL_UP:
-			_dist = maxf(_dist * 0.9, 2.0)
+			_dist = maxf(_dist * 0.9, 0.6)
 		elif e.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			_dist = minf(_dist * 1.1, 45.0)
 	elif e is InputEventMouseMotion and _dragging:
@@ -286,7 +317,7 @@ func _process(delta: float) -> void:
 		_trex.global_position = tc + p0
 		var head := (p1 - p0)
 		_trex.rotation.y = atan2(-head.x, -head.z) + sin(a * 2.0) * 0.12
-		if _subject != "cowboy":   # 鏡頭跟著恐龍
+		if _subject in ["trex", "both"]:   # 鏡頭跟著恐龍
 			_focus = _focus.lerp(_trex.global_position + Vector3(0, 3.0, 0), 1.0 - exp(-3.0 * delta))
 		# 牛仔原地慢慢轉身、上下看，繞一圈看得到前後
 		_cowboy.global_position = kc
@@ -314,8 +345,8 @@ func _process(delta: float) -> void:
 			+ "M 換心情　[ ] 慢動作　K 腳踩的點（綠＝踩著、橘＝抬起、紅＝要落的地方）　Tab 線框\n"
 			+ "東邊斜坡、北邊台階、南邊石堆　C 回到自動　左鍵拖曳轉視角　滾輪縮放　Esc 回大廳")
 	else:
-		_label.text = "模型檢視　[%s]\n1 牛仔和槍　2 恐龍　3 兩個\n空白鍵 %s　F 咬一口　Tab %s　C 操控恐龍\n左鍵拖曳轉視角　滾輪縮放　Esc 回大廳" % [
-			{"cowboy": "牛仔和槍", "trex": "恐龍", "both": "兩個"}[_subject],
+		_label.text = "模型檢視　[%s]\n1 牛仔和槍　2 恐龍　3 兩個　4 生存物資\n空白鍵 %s　F 咬一口　Tab %s　C 操控恐龍\n左鍵拖曳轉視角　滾輪縮放　Esc 回大廳" % [
+			{"cowboy": "牛仔和槍", "trex": "恐龍", "both": "兩個", "survival": "生存物資"}[_subject],
 			"停下" if _moving else "動起來",
 			"關線框" if _wire else "開線框",
 		]

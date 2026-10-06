@@ -33,6 +33,9 @@ static func play(world: Node3D, at: Vector3, radius: float) -> void:
 		var rise := Vector3(randf_range(-0.4, 0.4), randf_range(3.6, 5.0), randf_range(-0.4, 0.4))
 		var r := radius * randf_range(0.12, 0.18)
 		_blob(world, at + up * 0.8 + off, smoke[k % 2], false, r * 0.5, r * 1.5, rise, 3.0, 0.8)
+	for l: Node in world.get_tree().get_nodes_in_group(&"oil_lantern"):   # 爆炸範圍裡的油燈一起破（各端各自）
+		if (l as Node3D).global_position.distance_to(at) < radius:
+			l.on_shot((l as Node3D).global_position, null, ((l as Node3D).global_position - at).normalized())
 	Fx.hit(world, at, up, &"dirt")
 	Fx.hit(world, at + up * 0.3, up, &"dirt")
 	_ground_ring(world, at, radius)

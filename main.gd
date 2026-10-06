@@ -156,6 +156,7 @@ func _ready() -> void:
 	_on_mode_picked(0)
 	_use_sky()
 	_use_outline()
+	add_child(preload("res://pixel_style.gd").new())   # 像素風＋夕陽調色，F9 開關（pixel_style.gd）
 	_load_props()
 	_skin_egg()
 	_load_level()
@@ -489,6 +490,9 @@ func _on_sandbox_pressed() -> void:
 			_hay_bale(SANDBOX_START + Vector3(9, -0.1, -6), 0.0),
 			_hay_bale(SANDBOX_START + Vector3(9, -0.1, -9), 0.0)]:
 		prop.add_to_group(&"sandbox_prop")
+	# 油燈練習：乾草捲旁邊地上兩盞、柵欄邊一盞，射它會潑油燒起來（燒到旁邊的燈會連鎖）
+	for off: Vector3 in [Vector3(7, 0, -7.5), Vector3(7.4, 0, -8.2), Vector3(-9, 0, -2.5)]:
+		OilLantern.place($Arena, _props.get(&"Lantern"), _on_ground(SANDBOX_START + off), false).add_to_group(&"sandbox_prop")
 
 ## 單人打恐龍：測恐龍行為用。場地跟沙盒一樣，只有自己和一隻恐龍 boss（導演、三招、找路都照連線模式），
 ## 子彈無限、接關無限：死了五秒後在地圖上隨機一個地方回來。恐龍生在離你最遠的地方，要靠導演給的方向找過來。
@@ -1799,6 +1803,7 @@ func _flora_field() -> void:
 		_scatter(name, pts, name in [&"BarrelCactus", &"PricklyPear", &"DesertBush"])
 
 const GRASS_CHUNK := 16.0
+const GRASS_SIZE := 1.2     # 整片草的大小倍數（2026-10-06 使用者：草放大兩成）
 const GRASS_PER_M2 := 6.0   # 效能旋鈕：電腦跑不動就調低（3 看得出一叢一叢的空隙）
 const GRASS_SHADER := preload("res://grass.gdshader")
 
@@ -1830,7 +1835,7 @@ func _grass_field(spots: Variant = null) -> void:
 				var x := o.x + gr.randf_range(-half, half)
 				var z := o.z + gr.randf_range(-half, half)
 				var a := gr.randf() * TAU
-				var s := gr.randf_range(0.7, 1.3)
+				var s := gr.randf_range(0.7, 1.3) * GRASS_SIZE
 				if Trails.edge(x, z) < 0.3:   # 路邊一點點草探進路面，比切齊的邊自然
 					continue
 				# 植被密度：濕地長滿，旱地剩三成——一片一片的草地和裸土，不是整片均勻的地毯
@@ -2242,7 +2247,7 @@ func _hay_shed(p: Vector3) -> void:
 	p = _on_ground(p)
 	_solid_mesh(p, _props.get(&"HayShedCol"), Vector3.ONE)
 	_prop(&"HayShed", p)
-	_prop(&"Lantern", p + SHED_LANTERN)
+	OilLantern.place($Arena, _props.get(&"Lantern"), p + SHED_LANTERN)   # 打得破的油燈：射它會潑油燒起來
 
 func _silo(p: Vector3, h: float) -> void:
 	p = _on_ground(p)

@@ -145,7 +145,8 @@ weapon_4={
 }
 throw={
 "deadzone": 0.2,
-"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":71,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null), Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"button_index":12,"pressure":0.0,"pressed":true,"script":null)
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":71,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+, Object(InputEventJoypadButton,"resource_local_to_scene":false,"resource_name":"","device":-1,"button_index":12,"pressure":0.0,"pressed":true,"script":null)
 ]
 }
 weapon_next={
@@ -164,11 +165,11 @@ weapon_prev={
 [physics]
 
 common/physics_ticks_per_second=120
-common/physics_interpolation=true
 3d/physics_engine="Jolt Physics"
+common/physics_interpolation=true
 
 [rendering]
 
 rendering_device/driver.windows="d3d12"
-anti_aliasing/quality/use_debanding=true
 textures/vram_compression/import_etc2_astc=true
+anti_aliasing/quality/use_debanding=true

@@ -166,6 +166,8 @@ func _ready() -> void:
 	_refresh_ammo()
 	weapon.play(&"idle", blend)
 	_mark_for_outline()
+	add_to_group(&"viewmodel")
+	apply_brightness()
 
 
 ## 描線（outline.gdshader）認槍和手的記號：粗糙度剛好 OUTLINE_MARK。以前用「離鏡頭 1.5 公尺內」認，
@@ -177,6 +179,33 @@ const TARGET_MARK := 0.87
 
 func _mark_for_outline() -> void:
 	mark_meshes(self, OUTLINE_MARK)
+
+
+## 手上的槍和手整體亮度：顏色 × brightness + lift。像素風（pixel_style.gd）壓暗了全畫面的影子，槍會變成一團黑看不出零件，
+## 開著時把這裡調高抵消；改了之後對 "viewmodel" 群組呼叫 apply_brightness()。材質是 mark_meshes 複製過的，不影響別人
+static var brightness := 1.0
+## 再加上的底亮（0..1）：槍的鐵件接近全黑，只乘倍數還是黑的，要加一點才看得出零件
+static var lift := 0.0
+
+func apply_brightness() -> void:
+	for mi: MeshInstance3D in find_children("*", "MeshInstance3D", true, false):
+		if mi.mesh == null:
+			continue
+		for i in mi.mesh.get_surface_count():
+			var mat := mi.get_surface_override_material(i)
+			if mat is ShaderMaterial:
+				if not mat.has_meta(&"base_value"):
+					mat.set_meta(&"base_value", mat.get_shader_parameter(&"value") if mat.get_shader_parameter(&"value") != null else 1.0)
+				mat.set_shader_parameter(&"value", mat.get_meta(&"base_value") * brightness)
+				if not mat.has_meta(&"base_albedo"):
+					mat.set_meta(&"base_albedo", mat.get_shader_parameter(&"albedo") if mat.get_shader_parameter(&"albedo") != null else Color.WHITE)
+				var a: Color = mat.get_meta(&"base_albedo")
+				mat.set_shader_parameter(&"albedo", Color(a.r + lift, a.g + lift, a.b + lift * 1.3, a.a))   # 底亮帶一點藍：參考圖的槍是灰藍
+			elif mat is BaseMaterial3D:
+				if not mat.has_meta(&"base_albedo"):
+					mat.set_meta(&"base_albedo", mat.albedo_color)
+				var c: Color = mat.get_meta(&"base_albedo")
+				mat.albedo_color = Color(c.r * brightness + lift, c.g * brightness + lift, c.b * brightness + lift * 1.3, c.a)
 
 ## 把 root 底下所有不透明材質的粗糙度改成 mark，給 outline.gdshader 認
 static func mark_meshes(root: Node, mark: float) -> void:
@@ -394,10 +423,7 @@ func try_fire(fanning := false) -> void:
 			_fire_queued = true
 		return
 	if weapon.mag == 0:
-		if weapon.reserve != 0:
-			try_reload()
-		else:
-			weapon.play_sound(&"Empty")
+		weapon.play_sound(&"Empty")   # 硬派：打空不自動換彈，自己按 R
 		return
 
 	weapon.mag -= 1
