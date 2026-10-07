@@ -20,8 +20,16 @@ const SURVIVAL_ROWS := [["Campfire", "Lantern", "Backpack", "SnowRock", "Antler"
 	["Rifle", "Axe", "StewCan", "Mug", "Matchbox"]]
 
 const KEYS := {
-	KEY_1: "cowboy", KEY_2: "trex", KEY_3: "both", KEY_4: "survival",
+	KEY_1: "cowboy", KEY_2: "trex", KEY_3: "both", KEY_4: "survival", KEY_5: "library",
 }
+
+## 素材庫（5）：models/ 底下每個 .glb 都自動列進來，素材成員丟檔案進去就能看，不用改這支程式。
+## ← → 換檔、L 切「整包看 / 一件一件排開」（一個 glb 裝很多樣東西時用，例如 rocks.glb）
+const LIBRARY_DIR := "res://models/"
+var _lib_files: PackedStringArray
+var _lib_i := 0
+var _lib_spread := false
+var _lib: Node3D           # 現在擺出來的那個 glb
 
 var _trex: Trex
 var _cowboy: Node3D
@@ -84,6 +92,11 @@ func _ready() -> void:
 
 	_survival = _build_survival()
 	add_child(_survival)
+
+	# list_directory 匯出後也拿得到原檔名（DirAccess 只會看到 .import）
+	for f in ResourceLoader.list_directory(LIBRARY_DIR):
+		if f.get_extension() == "glb":
+			_lib_files.append(f)
 
 	_cam = Camera3D.new()
 	_cam.fov = 50
@@ -233,7 +246,13 @@ func _select(which: String) -> void:
 	_trex.visible = which in ["trex", "both"]
 	_cowboy.visible = which in ["cowboy", "both"]
 	_survival.visible = which == "survival"
+	if which == "library":
+		_show_lib()
+	elif _lib:
+		_lib.queue_free()
+		_lib = null
 	match which:
+		"library": pass   # _show_lib 已經依大小對好鏡頭
 		"survival": _focus = Vector3(0, 0.25, 0.5); _dist = 3.5
 		"cowboy": _focus = Vector3(0.2, 1.1, 0); _dist = 4.5
 		"trex": _focus = Vector3(0, 3.0, 0); _dist = 22.0
@@ -273,6 +292,14 @@ func _unhandled_input(e: InputEvent) -> void:
 				_trex.flinch(Vector3.RIGHT, 1.0, true)
 			KEY_F:
 				_trex.bite()
+			KEY_LEFT, KEY_RIGHT:
+				if _subject == "library" and not _lib_files.is_empty():
+					_lib_i = posmod(_lib_i + (1 if e.keycode == KEY_RIGHT else -1), _lib_files.size())
+					_show_lib()
+			KEY_L:
+				if _subject == "library":
+					_lib_spread = not _lib_spread
+					_show_lib()
 			KEY_TAB:
 				_wire = not _wire
 				get_viewport().debug_draw = (Viewport.DEBUG_DRAW_WIREFRAME if _wire
@@ -323,6 +350,8 @@ func _process(delta: float) -> void:
 		_cowboy.global_position = kc
 		_cowboy.rotation.y = _t * 0.5
 		_head.rotation.x = sin(_t * 1.1) * 0.35
+		if _lib:
+			_lib.rotation.y = _t * 0.5
 	else:
 		# 停下來時擺回原位，方便正面看細節
 		var both := _subject == "both"
@@ -331,6 +360,8 @@ func _process(delta: float) -> void:
 		_cowboy.global_position = Vector3(3.6 if both else 0.0, 0, 0)
 		_cowboy.rotation.y = 0.0
 		_head.rotation.x = 0.0
+		if _lib:
+			_lib.rotation.y = 0.0
 
 	_cam.position = _focus + Vector3(
 		_dist * cos(_pitch) * sin(_yaw),
@@ -344,8 +375,16 @@ func _process(delta: float) -> void:
 			+ "Z 咬　X 長吼＋甩尾　V 撲擊　B 被打斷　G 發現人　H 中彈　J 頭被打\n"
 			+ "M 換心情　[ ] 慢動作　K 腳踩的點（綠＝踩著、橘＝抬起、紅＝要落的地方）　Tab 線框\n"
 			+ "東邊斜坡、北邊台階、南邊石堆　C 回到自動　左鍵拖曳轉視角　滾輪縮放　Esc 回大廳")
+	elif _subject == "library":
+		_label.text = "素材庫　%s　（%d / %d）\n← → 換檔　L %s　空白鍵 %s　Tab %s\n1～4 回其他模式　左鍵拖曳轉視角　滾輪縮放　Esc 回大廳" % [
+			_lib_files[_lib_i].get_file() if not _lib_files.is_empty() else "models/ 裡沒有 .glb",
+			_lib_i + 1, _lib_files.size(),
+			"整包看" if _lib_spread else "一件一件排開",
+			"停下" if _moving else "轉起來",
+			"關線框" if _wire else "開線框",
+		]
 	else:
-		_label.text = "模型檢視　[%s]\n1 牛仔和槍　2 恐龍　3 兩個　4 生存物資\n空白鍵 %s　F 咬一口　Tab %s　C 操控恐龍\n左鍵拖曳轉視角　滾輪縮放　Esc 回大廳" % [
+		_label.text = "模型檢視　[%s]\n1 牛仔和槍　2 恐龍　3 兩個　4 生存物資　5 素材庫\n空白鍵 %s　F 咬一口　Tab %s　C 操控恐龍\n左鍵拖曳轉視角　滾輪縮放　Esc 回大廳" % [
 			{"cowboy": "牛仔和槍", "trex": "恐龍", "both": "兩個", "survival": "生存物資"}[_subject],
 			"停下" if _moving else "動起來",
 			"關線框" if _wire else "開線框",
@@ -411,3 +450,46 @@ func _update_markers() -> void:
 		_marks[2 + i].visible = _trex._swing[i]
 		_marks[2 + i].global_position = _trex._land[i]
 		(_marks[2 + i].mesh.material as StandardMaterial3D).albedo_color = Color(1, 0.15, 0.15)
+
+
+## 把現在選的 glb 擺到地板正中間（底部貼地），鏡頭依大小拉遠拉近。
+## 排開時把最上層的每個子節點當一樣東西，排成方陣、間隔是最寬那樣的兩成
+func _show_lib() -> void:
+	if _lib:
+		_lib.queue_free()
+		_lib = null
+	if _lib_files.is_empty():
+		return
+	var scene := load(LIBRARY_DIR + _lib_files[_lib_i]) as PackedScene
+	if scene == null:
+		return
+	_lib = Node3D.new()
+	add_child(_lib)
+	var inst := scene.instantiate()
+	_lib.add_child(inst)
+	if _lib_spread and inst.get_child_count() > 1:
+		var parts := inst.get_children().filter(func(c: Node) -> bool: return c is Node3D)
+		var boxes := parts.map(func(c: Node3D) -> AABB: return _bounds(c))
+		var cell := 0.0
+		for b: AABB in boxes:
+			cell = maxf(cell, maxf(b.size.x, b.size.z))
+		cell *= 1.2
+		var cols := ceili(sqrt(parts.size()))
+		for k in parts.size():
+			var b: AABB = boxes[k]
+			var c := b.get_center()
+			(parts[k] as Node3D).position += Vector3(k % cols * cell - c.x, -b.position.y, k / cols * cell - c.z)
+	var box := _bounds(_lib)
+	inst.position -= Vector3(box.get_center().x, box.position.y, box.get_center().z)
+	_focus = Vector3(0, box.size.y * 0.5, 0)
+	_dist = clampf(box.get_longest_axis_size() * 1.8, 0.6, 45.0)
+
+## 底下所有網格合起來的外框（世界座標；_lib 擺在原點所以等於相對座標）
+func _bounds(n: Node3D) -> AABB:
+	var out := AABB()
+	var first := true
+	for mi: MeshInstance3D in n.find_children("*", "MeshInstance3D", true, false) + ([n] if n is MeshInstance3D else []):
+		var b := mi.global_transform * mi.get_aabb()
+		out = b if first else out.merge(b)
+		first = false
+	return out
