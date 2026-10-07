@@ -20,8 +20,16 @@ const SURVIVAL_ROWS := [["Campfire", "Lantern", "Backpack", "SnowRock", "Antler"
 	["Rifle", "Axe", "StewCan", "Mug", "Matchbox"]]
 
 const KEYS := {
-	KEY_1: "cowboy", KEY_2: "trex", KEY_3: "both", KEY_4: "survival",
+	KEY_1: "cowboy", KEY_2: "trex", KEY_3: "both", KEY_4: "survival", KEY_5: "library",
 }
+
+## 素材庫（5）：models/ 底下每個 .glb 都自動列進來，素材成員丟檔案進去就能看，不用改這支程式。
+## ← → 換檔、L 切「整包看 / 一件一件排開」（一個 glb 裝很多樣東西時用，例如 rocks.glb）
+const LIBRARY_DIR := "res://models/"
+var _lib_files: PackedStringArray
+var _lib_i := 0
+var _lib_spread := false
+var _lib: Node3D           # 現在擺出來的那個 glb
 
 var _trex: Trex
 var _cowboy: Node3D
@@ -30,6 +38,10 @@ var _head: Node3D
 var _cam: Camera3D
 var _label: Label
 var _ui: CanvasLayer
+var _theme: Theme
+var _help: PanelContainer   # 操作說明：右上角「？」點開
+var _help_text: Label
+var _help_btn: Button
 
 var _subject := "both"
 var _moving := true
@@ -85,6 +97,11 @@ func _ready() -> void:
 	_survival = _build_survival()
 	add_child(_survival)
 
+	# list_directory 匯出後也拿得到原檔名（DirAccess 只會看到 .import）
+	for f in ResourceLoader.list_directory(LIBRARY_DIR):
+		if f.get_extension() == "glb":
+			_lib_files.append(f)
+
 	_cam = Camera3D.new()
 	_cam.fov = 50
 	# 環境掛在相機上而不是 WorldEnvironment：主場景那顆還在樹上，會搶過去
@@ -100,20 +117,46 @@ func _ready() -> void:
 	_cam.current = true
 
 	_ui = CanvasLayer.new()
+	var hud := Control.new()
+	hud.set_anchors_preset(Control.PRESET_FULL_RECT)
+	hud.mouse_filter = Control.MOUSE_FILTER_IGNORE   # 空白處的點擊、拖曳要留給轉視角
+	hud.theme = _theme
+	_ui.add_child(hud)
 	_label = Label.new()
 	_label.position = Vector2(24, 20)
 	_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
 	_label.add_theme_constant_override("shadow_offset_y", 2)
-	_ui.add_child(_label)
+	hud.add_child(_label)
+
+	_help_btn = Button.new()
+	_help_btn.focus_mode = Control.FOCUS_NONE   # 不然點過之後空白鍵會變成再按一次這顆鈕
+	_help_btn.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 20)
+	_help_btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_help_btn.pressed.connect(func() -> void: _help.visible = not _help.visible)
+	hud.add_child(_help_btn)
+
+	_help = PanelContainer.new()
+	_help.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 20)
+	_help.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_help.position.y += 52
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.05, 0.06, 0.08, 0.88)
+	sb.set_corner_radius_all(8)
+	sb.set_content_margin_all(18)
+	_help.add_theme_stylebox_override("panel", sb)
+	_help_text = Label.new()
+	_help.add_child(_help_text)
+	_help.visible = false
+	hud.add_child(_help)
 	add_child(_ui)
 
 	_select(_subject)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
-## 主場景把大廳的中文字型傳進來，不然 Label 會變成豆腐字
+## 主場景把大廳的中文字型傳進來，不然 Label 會變成豆腐字。
+## 在加進場景樹之前叫的（_ready 還沒跑），所以先存起來，_ready 建介面時再套
 func use_theme(th: Theme) -> void:
-	if is_instance_valid(_label):
-		_label.theme = th
+	_theme = th
 
 ## 地板：一片深色方格，才看得出模型多大、有沒有浮在空中
 func _ground() -> Node3D:
@@ -233,7 +276,13 @@ func _select(which: String) -> void:
 	_trex.visible = which in ["trex", "both"]
 	_cowboy.visible = which in ["cowboy", "both"]
 	_survival.visible = which == "survival"
+	if which == "library":
+		_show_lib()
+	elif _lib:
+		_lib.queue_free()
+		_lib = null
 	match which:
+		"library": pass   # _show_lib 已經依大小對好鏡頭
 		"survival": _focus = Vector3(0, 0.25, 0.5); _dist = 3.5
 		"cowboy": _focus = Vector3(0.2, 1.1, 0); _dist = 4.5
 		"trex": _focus = Vector3(0, 3.0, 0); _dist = 22.0
@@ -273,6 +322,14 @@ func _unhandled_input(e: InputEvent) -> void:
 				_trex.flinch(Vector3.RIGHT, 1.0, true)
 			KEY_F:
 				_trex.bite()
+			KEY_LEFT, KEY_RIGHT:
+				if _subject == "library" and not _lib_files.is_empty():
+					_lib_i = posmod(_lib_i + (1 if e.keycode == KEY_RIGHT else -1), _lib_files.size())
+					_show_lib()
+			KEY_L:
+				if _subject == "library":
+					_lib_spread = not _lib_spread
+					_show_lib()
 			KEY_TAB:
 				_wire = not _wire
 				get_viewport().debug_draw = (Viewport.DEBUG_DRAW_WIREFRAME if _wire
@@ -323,6 +380,8 @@ func _process(delta: float) -> void:
 		_cowboy.global_position = kc
 		_cowboy.rotation.y = _t * 0.5
 		_head.rotation.x = sin(_t * 1.1) * 0.35
+		if _lib:
+			_lib.rotation.y = _t * 0.5
 	else:
 		# 停下來時擺回原位，方便正面看細節
 		var both := _subject == "both"
@@ -331,6 +390,8 @@ func _process(delta: float) -> void:
 		_cowboy.global_position = Vector3(3.6 if both else 0.0, 0, 0)
 		_cowboy.rotation.y = 0.0
 		_head.rotation.x = 0.0
+		if _lib:
+			_lib.rotation.y = 0.0
 
 	_cam.position = _focus + Vector3(
 		_dist * cos(_pitch) * sin(_yaw),
@@ -338,19 +399,38 @@ func _process(delta: float) -> void:
 		_dist * cos(_pitch) * cos(_yaw))
 	_cam.look_at(_focus, Vector3.UP)
 
-	if _drive:
-		_label.text = ("操控恐龍　速度 %.1f m/s　%s　心情：%s　時間 ×%s\n" % [_speed, MOVE_NAMES.get(_trex.act, "—"), MOOD_NAMES[_mood], SLOW[_slow]]
-			+ "W 走　Shift+W 跑　A/D 轉身　S 停\n"
-			+ "Z 咬　X 長吼＋甩尾　V 撲擊　B 被打斷　G 發現人　H 中彈　J 頭被打\n"
-			+ "M 換心情　[ ] 慢動作　K 腳踩的點（綠＝踩著、橘＝抬起、紅＝要落的地方）　Tab 線框\n"
-			+ "東邊斜坡、北邊台階、南邊石堆　C 回到自動　左鍵拖曳轉視角　滾輪縮放　Esc 回大廳")
-	else:
-		_label.text = "模型檢視　[%s]\n1 牛仔和槍　2 恐龍　3 兩個　4 生存物資\n空白鍵 %s　F 咬一口　Tab %s　C 操控恐龍\n左鍵拖曳轉視角　滾輪縮放　Esc 回大廳" % [
-			{"cowboy": "牛仔和槍", "trex": "恐龍", "both": "兩個", "survival": "生存物資"}[_subject],
-			"停下" if _moving else "動起來",
-			"關線框" if _wire else "開線框",
-		]
+	_label.text = _status() + "\n右上角「？」看操作說明"
+	_help_btn.text = "✕ 關閉說明" if _help.visible else "？ 操作說明"
+	if _help.visible:
+		_help_text.text = _guide()
 
+## 左上角只放現在的狀態，按鍵全部收進說明面板
+func _status() -> String:
+	if _drive:
+		return "操控恐龍　速度 %.1f m/s　%s　心情：%s　時間 ×%s" % [_speed, MOVE_NAMES.get(_trex.act, "—"), MOOD_NAMES[_mood], SLOW[_slow]]
+	if _subject == "library":
+		if _lib_files.is_empty():
+			return "素材庫　models/ 裡沒有 .glb"
+		return "素材庫　%s　（%d / %d）%s" % [_lib_files[_lib_i].get_file(), _lib_i + 1, _lib_files.size(),
+			"　排開" if _lib_spread else ""]
+	return "模型檢視　[%s]" % {"cowboy": "牛仔和槍", "trex": "恐龍", "both": "兩個", "survival": "生存物資"}[_subject]
+
+## 說明面板：共用的操作＋現在這個模式自己的按鍵
+func _guide() -> String:
+	var t := "【看模型】\n左鍵拖曳　轉視角\n滾輪　拉近拉遠\n空白鍵　%s\nTab　%s\nEsc　回大廳\n\n" % [
+		"停下" if _moving else "動起來", "關線框" if _wire else "開線框（看面數）"]
+	t += "【換模式】\n1 牛仔和槍　2 恐龍　3 兩個\n4 生存物資　5 素材庫\nC 自己操控恐龍\n\n"
+	if _drive:
+		t += ("【操控恐龍】\nW 走　Shift+W 跑　A / D 轉身　S 停\n"
+			+ "Z 咬　X 長吼＋甩尾　V 撲擊\nB 被打斷　G 發現人　H 中彈　J 頭被打\n"
+			+ "M 換心情　[ ] 慢動作\nK 腳踩的點（綠＝踩著、橘＝抬起、紅＝要落的地方）\n"
+			+ "東邊斜坡、北邊台階、南邊石堆\nC 回到自動")
+	elif _subject == "library":
+		t += ("【素材庫】\n← →　換上一個 / 下一個檔案\nL　%s\n\n" % ("整包看" if _lib_spread else "一件一件排開（一個檔裝很多樣東西時用）")
+			+ "【放新素材進來】\n1. 把 .glb 放進專案的 models/ 資料夾\n2. 用 Godot 編輯器打開專案一次（讓它匯入）\n3. 回到這裡按 5，用 ← → 找到它")
+	elif _subject in ["trex", "both"]:
+		t += "【恐龍】\nF 咬一口　Z 咬（整套）　X 長吼＋甩尾\nV 撲擊　B 被打斷　G 發現人\nH 中彈　J 頭被打　M 換心情　[ ] 慢動作"
+	return t
 
 ## 操控恐龍：W 走（boss 的走路速度）、Shift 跑、A/D 照 boss 的轉速轉身。出招時站定（撲出去會往前衝）。
 ## 高度貼著地面（往下打射線）：走上斜坡、台階，看腳和身體怎麼跟
@@ -411,3 +491,46 @@ func _update_markers() -> void:
 		_marks[2 + i].visible = _trex._swing[i]
 		_marks[2 + i].global_position = _trex._land[i]
 		(_marks[2 + i].mesh.material as StandardMaterial3D).albedo_color = Color(1, 0.15, 0.15)
+
+
+## 把現在選的 glb 擺到地板正中間（底部貼地），鏡頭依大小拉遠拉近。
+## 排開時把最上層的每個子節點當一樣東西，排成方陣、間隔是最寬那樣的兩成
+func _show_lib() -> void:
+	if _lib:
+		_lib.queue_free()
+		_lib = null
+	if _lib_files.is_empty():
+		return
+	var scene := load(LIBRARY_DIR + _lib_files[_lib_i]) as PackedScene
+	if scene == null:
+		return
+	_lib = Node3D.new()
+	add_child(_lib)
+	var inst := scene.instantiate()
+	_lib.add_child(inst)
+	if _lib_spread and inst.get_child_count() > 1:
+		var parts := inst.get_children().filter(func(c: Node) -> bool: return c is Node3D)
+		var boxes := parts.map(func(c: Node3D) -> AABB: return _bounds(c))
+		var cell := 0.0
+		for b: AABB in boxes:
+			cell = maxf(cell, maxf(b.size.x, b.size.z))
+		cell *= 1.2
+		var cols := ceili(sqrt(parts.size()))
+		for k in parts.size():
+			var b: AABB = boxes[k]
+			var c := b.get_center()
+			(parts[k] as Node3D).position += Vector3(k % cols * cell - c.x, -b.position.y, k / cols * cell - c.z)
+	var box := _bounds(_lib)
+	inst.position -= Vector3(box.get_center().x, box.position.y, box.get_center().z)
+	_focus = Vector3(0, box.size.y * 0.5, 0)
+	_dist = clampf(box.get_longest_axis_size() * 1.8, 0.6, 45.0)
+
+## 底下所有網格合起來的外框（世界座標；_lib 擺在原點所以等於相對座標）
+func _bounds(n: Node3D) -> AABB:
+	var out := AABB()
+	var first := true
+	for mi: MeshInstance3D in n.find_children("*", "MeshInstance3D", true, false) + ([n] if n is MeshInstance3D else []):
+		var b := mi.global_transform * mi.get_aabb()
+		out = b if first else out.merge(b)
+		first = false
+	return out

@@ -192,7 +192,10 @@ func _rapid_clicks_no_fan() -> void:
 	vm._fire_hold = 0.05          # 一下點擊只按住幾十毫秒
 	_ck(not vm._wants_fan(), "快速連點（每下很短）不能算搧擊錘")
 	vm._fire_hold = vm.fan_hold + 0.01
-	_ck(vm._wants_fan(), "持續按住夠久才是搧擊錘")
+	_ck(not vm._wants_fan(), "搧擊錘關著（還沒技能）：按住不連射")
+	vm.fan_enabled = true
+	_ck(vm._wants_fan(), "搧擊錘打開後，持續按住夠久才是搧擊錘")
+	vm.fan_enabled = false
 	vm._fire_hold = 0.0
 
 
