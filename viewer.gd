@@ -38,6 +38,10 @@ var _head: Node3D
 var _cam: Camera3D
 var _label: Label
 var _ui: CanvasLayer
+var _theme: Theme
+var _help: PanelContainer   # 操作說明：右上角「？」點開
+var _help_text: Label
+var _help_btn: Button
 
 var _subject := "both"
 var _moving := true
@@ -113,20 +117,46 @@ func _ready() -> void:
 	_cam.current = true
 
 	_ui = CanvasLayer.new()
+	var hud := Control.new()
+	hud.set_anchors_preset(Control.PRESET_FULL_RECT)
+	hud.mouse_filter = Control.MOUSE_FILTER_IGNORE   # 空白處的點擊、拖曳要留給轉視角
+	hud.theme = _theme
+	_ui.add_child(hud)
 	_label = Label.new()
 	_label.position = Vector2(24, 20)
 	_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
 	_label.add_theme_constant_override("shadow_offset_y", 2)
-	_ui.add_child(_label)
+	hud.add_child(_label)
+
+	_help_btn = Button.new()
+	_help_btn.focus_mode = Control.FOCUS_NONE   # 不然點過之後空白鍵會變成再按一次這顆鈕
+	_help_btn.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 20)
+	_help_btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_help_btn.pressed.connect(func() -> void: _help.visible = not _help.visible)
+	hud.add_child(_help_btn)
+
+	_help = PanelContainer.new()
+	_help.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT, Control.PRESET_MODE_MINSIZE, 20)
+	_help.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_help.position.y += 52
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.05, 0.06, 0.08, 0.88)
+	sb.set_corner_radius_all(8)
+	sb.set_content_margin_all(18)
+	_help.add_theme_stylebox_override("panel", sb)
+	_help_text = Label.new()
+	_help.add_child(_help_text)
+	_help.visible = false
+	hud.add_child(_help)
 	add_child(_ui)
 
 	_select(_subject)
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
-## 主場景把大廳的中文字型傳進來，不然 Label 會變成豆腐字
+## 主場景把大廳的中文字型傳進來，不然 Label 會變成豆腐字。
+## 在加進場景樹之前叫的（_ready 還沒跑），所以先存起來，_ready 建介面時再套
 func use_theme(th: Theme) -> void:
-	if is_instance_valid(_label):
-		_label.theme = th
+	_theme = th
 
 ## 地板：一片深色方格，才看得出模型多大、有沒有浮在空中
 func _ground() -> Node3D:
@@ -369,27 +399,38 @@ func _process(delta: float) -> void:
 		_dist * cos(_pitch) * cos(_yaw))
 	_cam.look_at(_focus, Vector3.UP)
 
-	if _drive:
-		_label.text = ("操控恐龍　速度 %.1f m/s　%s　心情：%s　時間 ×%s\n" % [_speed, MOVE_NAMES.get(_trex.act, "—"), MOOD_NAMES[_mood], SLOW[_slow]]
-			+ "W 走　Shift+W 跑　A/D 轉身　S 停\n"
-			+ "Z 咬　X 長吼＋甩尾　V 撲擊　B 被打斷　G 發現人　H 中彈　J 頭被打\n"
-			+ "M 換心情　[ ] 慢動作　K 腳踩的點（綠＝踩著、橘＝抬起、紅＝要落的地方）　Tab 線框\n"
-			+ "東邊斜坡、北邊台階、南邊石堆　C 回到自動　左鍵拖曳轉視角　滾輪縮放　Esc 回大廳")
-	elif _subject == "library":
-		_label.text = "素材庫　%s　（%d / %d）\n← → 換檔　L %s　空白鍵 %s　Tab %s\n1～4 回其他模式　左鍵拖曳轉視角　滾輪縮放　Esc 回大廳" % [
-			_lib_files[_lib_i].get_file() if not _lib_files.is_empty() else "models/ 裡沒有 .glb",
-			_lib_i + 1, _lib_files.size(),
-			"整包看" if _lib_spread else "一件一件排開",
-			"停下" if _moving else "轉起來",
-			"關線框" if _wire else "開線框",
-		]
-	else:
-		_label.text = "模型檢視　[%s]\n1 牛仔和槍　2 恐龍　3 兩個　4 生存物資　5 素材庫\n空白鍵 %s　F 咬一口　Tab %s　C 操控恐龍\n左鍵拖曳轉視角　滾輪縮放　Esc 回大廳" % [
-			{"cowboy": "牛仔和槍", "trex": "恐龍", "both": "兩個", "survival": "生存物資"}[_subject],
-			"停下" if _moving else "動起來",
-			"關線框" if _wire else "開線框",
-		]
+	_label.text = _status() + "\n右上角「？」看操作說明"
+	_help_btn.text = "✕ 關閉說明" if _help.visible else "？ 操作說明"
+	if _help.visible:
+		_help_text.text = _guide()
 
+## 左上角只放現在的狀態，按鍵全部收進說明面板
+func _status() -> String:
+	if _drive:
+		return "操控恐龍　速度 %.1f m/s　%s　心情：%s　時間 ×%s" % [_speed, MOVE_NAMES.get(_trex.act, "—"), MOOD_NAMES[_mood], SLOW[_slow]]
+	if _subject == "library":
+		if _lib_files.is_empty():
+			return "素材庫　models/ 裡沒有 .glb"
+		return "素材庫　%s　（%d / %d）%s" % [_lib_files[_lib_i].get_file(), _lib_i + 1, _lib_files.size(),
+			"　排開" if _lib_spread else ""]
+	return "模型檢視　[%s]" % {"cowboy": "牛仔和槍", "trex": "恐龍", "both": "兩個", "survival": "生存物資"}[_subject]
+
+## 說明面板：共用的操作＋現在這個模式自己的按鍵
+func _guide() -> String:
+	var t := "【看模型】\n左鍵拖曳　轉視角\n滾輪　拉近拉遠\n空白鍵　%s\nTab　%s\nEsc　回大廳\n\n" % [
+		"停下" if _moving else "動起來", "關線框" if _wire else "開線框（看面數）"]
+	t += "【換模式】\n1 牛仔和槍　2 恐龍　3 兩個\n4 生存物資　5 素材庫\nC 自己操控恐龍\n\n"
+	if _drive:
+		t += ("【操控恐龍】\nW 走　Shift+W 跑　A / D 轉身　S 停\n"
+			+ "Z 咬　X 長吼＋甩尾　V 撲擊\nB 被打斷　G 發現人　H 中彈　J 頭被打\n"
+			+ "M 換心情　[ ] 慢動作\nK 腳踩的點（綠＝踩著、橘＝抬起、紅＝要落的地方）\n"
+			+ "東邊斜坡、北邊台階、南邊石堆\nC 回到自動")
+	elif _subject == "library":
+		t += ("【素材庫】\n← →　換上一個 / 下一個檔案\nL　%s\n\n" % ("整包看" if _lib_spread else "一件一件排開（一個檔裝很多樣東西時用）")
+			+ "【放新素材進來】\n1. 把 .glb 放進專案的 models/ 資料夾\n2. 用 Godot 編輯器打開專案一次（讓它匯入）\n3. 回到這裡按 5，用 ← → 找到它")
+	elif _subject in ["trex", "both"]:
+		t += "【恐龍】\nF 咬一口　Z 咬（整套）　X 長吼＋甩尾\nV 撲擊　B 被打斷　G 發現人\nH 中彈　J 頭被打　M 換心情　[ ] 慢動作"
+	return t
 
 ## 操控恐龍：W 走（boss 的走路速度）、Shift 跑、A/D 照 boss 的轉速轉身。出招時站定（撲出去會往前衝）。
 ## 高度貼著地面（往下打射線）：走上斜坡、台階，看腳和身體怎麼跟

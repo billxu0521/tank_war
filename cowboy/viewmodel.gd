@@ -22,6 +22,8 @@ class_name Viewmodel
 @export var reload_fire_shoots := true
 ## 搧擊錘要持續按住開火鍵多久才算（秒）。快速連點每下都很短，不會被當成搧擊錘連發
 @export var fan_hold := 0.2
+## 搧擊錘開關。先關著（按住左鍵只射一發），之後可能做成技能解鎖再打開
+@export var fan_enabled := false
 ## 瞄準按一下切換（true）或按住（false）。玩家自己的設定，Esc 選單裡改，存在 user://settings.cfg
 static var aim_toggle := false
 
@@ -590,7 +592,7 @@ func _spread_direction(cam: Camera3D, extra := 0.0) -> Vector3:
 ## 搧擊錘：左輪腰射、開火鍵「持續」按住夠久。只看「現在按著」的話，快速連點時某一下剛好跨過冷卻結束，
 ## 就會被當成搧擊錘，用 0.16 秒的間隔連發出去
 func _wants_fan() -> bool:
-	return weapon.fan_interval > 0.0 and ads < 0.5 and _fire_hold >= fan_hold
+	return fan_enabled and weapon.fan_interval > 0.0 and ads < 0.5 and _fire_hold >= fan_hold
 
 
 ## 瞄準後第一發完全準：舉滿瞄具、站著不動、沒有連射累積的散布
