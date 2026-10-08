@@ -71,6 +71,8 @@ func advance(delta: float) -> void:
 		_traveled += from.distance_to(to)
 		global_position = to
 		if _traveled > weapon.max_range:
+			if on_impact.is_valid() and not visual_only:   # 魚叉飛到射程盡頭沒打到東西：在空中炸（不要憑空消失）
+				on_impact.call(global_position)
 			queue_free()
 			return
 		if _streak:

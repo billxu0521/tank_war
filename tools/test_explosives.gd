@@ -53,9 +53,11 @@ func _run() -> void:
 	await _blast_falloff(near, far)
 	await _wall_blocks(near)
 	await _thrown_lands()
+	await _arc_matches()
 	await _cook_counts()
 	await _cooked_in_hand()
 	await _lance(near)
+	await _lance_range()
 	_crate()
 	_resupply()
 	print("炸藥、長矛檢查：" + ("通過" if _fails == 0 else "有 %d 項沒過" % _fails))
@@ -103,6 +105,40 @@ func _thrown_lands() -> void:
 	_ck(is_instance_valid(dyn) and dyn.global_position.y < start.y - 0.5, "炸藥要落下來")
 	await create_timer(0.7).timeout
 	_ck(hits.size() == 1, "引信燒完爆一次（爆了 %d 次）" % hits.size())
+
+
+## 拿著點燃的炸藥時畫的拋物線：預測的落點要跟真的丟出去第一次碰到東西的地方一樣
+func _arc_matches() -> void:
+	vm.dynamite = Viewmodel.DYNAMITE_MAX
+	me.global_position = _at
+	await _frames_pass()
+	Input.action_press("throw")
+	vm._light_dynamite()
+	vm._update_cook(0.1)
+	var predicted := vm.arc_land
+	_ck(vm._arc != null and vm._arc.visible and predicted != Vector3.INF, "拿著點燃的炸藥要畫拋物線和落點")
+	Input.action_release("throw")
+	vm._update_cook(0.0)
+	_ck(not vm._arc.visible, "丟出去之後拋物線要收掉")
+	var thrown: Dynamite = null
+	for c in m.get_node(^"Arena").get_children():
+		if c is Dynamite and not c.is_queued_for_deletion():
+			thrown = c
+	if thrown == null or predicted == Vector3.INF:
+		_ck(false, "沒丟出去或沒有落點")
+		return
+	thrown.on_explode = Callable()
+	var first := Vector3.INF
+	for i in 300:   # 等它第一次碰到東西（速度往上彈或停下）
+		var vy := thrown.vel.y
+		await physics_frame
+		if not is_instance_valid(thrown) or thrown.vel.y > vy or thrown.vel == Vector3.ZERO:
+			first = thrown.global_position if is_instance_valid(thrown) else Vector3.INF
+			break
+	_ck(first != Vector3.INF and first.distance_to(predicted) < 0.6, "落點預測 %s、實際 %s" % [predicted, first])
+	if is_instance_valid(thrown):
+		thrown.queue_free()
+	await _frames_pass(1)
 
 
 ## 按著 1.5 秒才放開：丟出去的引信只剩 2.5 秒（按著的時間要扣掉）
@@ -161,6 +197,22 @@ func _lance(target: Node3D) -> void:
 	_ck(vm.resupply() and w.reserve == w.starting_reserve, "補給箱也補魚叉")
 	vm.switch_weapon(0)
 	await create_timer(0.6).timeout
+
+
+## 魚叉最遠 25 公尺：沒打到東西就在射程盡頭空炸
+func _lance_range() -> void:
+	var w: Weapon = vm._weapons[3]
+	_ck(is_equal_approx(w.max_range, 25.0), "炸彈長矛射程 25 公尺（現在 %s）" % w.max_range)
+	var at := []
+	var b := Bullet.new()
+	b.origin = _at + Vector3(0, 40, 0)   # 往天上射：一定打不到東西
+	b.vel = Vector3.UP * w.muzzle_velocity
+	b.weapon = w
+	b.on_impact = func(p: Vector3) -> void: at.append(p)
+	m.get_node(^"Arena").add_child(b)
+	await create_timer(1.5).timeout
+	_ck(at.size() == 1 and absf(at[0].distance_to(b.origin if is_instance_valid(b) else _at + Vector3(0, 40, 0)) - 25.0) < 2.0,
+		"魚叉飛 25 公尺空炸一次（%s）" % [at])
 
 
 ## 場上的木箱都是補給箱：F 補滿，同一個箱子要等冷卻

@@ -377,6 +377,17 @@ func _case_hunt_weapons() -> void:
 	revolver.ads_first_shot_perfect = false
 	vm.ads = 0.0
 
+	# 換彈會放下槍回腰射：舉滿時按 R，按著右鍵也舉不起來；換完才舉回去
+	revolver.mag = 3
+	vm.ads = 1.0
+	vm.try_reload()
+	vm._update_ads(true, 1.0)
+	_ck(vm.ads == 0.0, "換彈時要回到腰射（ads %.2f）" % vm.ads)
+	vm.cancel_reload()
+	vm._update_ads(true, 1.0)
+	_ck(vm.ads > 0.0, "換彈結束還按著右鍵要舉回去")
+	vm.ads = 0.0
+
 	# 逐發裝填中按開火：reload_fire_shoots 關掉時只停止裝填，不開槍
 	vm.reload_fire_shoots = false
 	revolver.mag = 3
