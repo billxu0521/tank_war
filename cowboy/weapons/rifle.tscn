@@ -28,11 +28,15 @@ max_range = 250.0
 muzzle_velocity = 440.0
 falloff_start = 60.0
 ads_position = Vector3(0, -0.071, -0.180)
-pinch_rotation = Vector3(0.8, 0, 1.2)
+pinch_rotation = Vector3(0, 0, -1.6)
 reload_support_turn = -1.6
 ads_support_rot = Vector3(0, 0, 0)
 ads_support_shift = Vector3(0, 0, 0.06)
 ads_support_turn = 0.5
+hip_support_turn = 0.524
+support_wrist_ext = 45.0
+support_thumb = Vector2(0.017, 0.055)
+support_finger_curl = 0.0
 reload_hand_turn = Vector3(0.582, 2.265, 2.671)
 ads_rotation = Vector3(0.02, 0, 0)
 hip_rotation = Vector3(0.01, 0.01, -0.23)
@@ -49,6 +53,7 @@ load_in = Vector3(0.016, 0.01, -0.085)
 load_hand_offset = Vector3(0.0, -0.01, 0.06)
 reload_offset = Vector3(-0.098, -0.013, 0.022)
 reload_rotation = Vector3(0.222, 1.057, 1.900)
+use_rig = true
 
 [node name="Model" parent="." instance=ExtResource("2_model")]
 

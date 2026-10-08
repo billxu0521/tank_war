@@ -1,0 +1,78 @@
+{
+ "Thumb_Proximal": [
+  0.7703,
+  0.2961,
+  -0.5648
+ ],
+ "Thumb_Intermediate": [
+  0.8529,
+  0.3134,
+  -0.4176
+ ],
+ "Thumb_Distal": [
+  0.936,
+  0.215,
+  -0.2788
+ ],
+ "Index_Proximal": [
+  0.9791,
+  -0.0259,
+  -0.2016
+ ],
+ "Index_Intermediate": [
+  0.8464,
+  0.0546,
+  -0.5297
+ ],
+ "Index_Distal": [
+  0.813,
+  0.0859,
+  -0.5759
+ ],
+ "Middle_Proximal": [
+  0.6167,
+  0.0305,
+  -0.7866
+ ],
+ "Middle_Intermediate": [
+  -0.3203,
+  -0.0102,
+  -0.9472
+ ],
+ "Middle_Distal": [
+  -0.3118,
+  -0.2192,
+  -0.9245
+ ],
+ "Ring_Proximal": [
+  0.3309,
+  -0.0023,
+  -0.9437
+ ],
+ "Ring_Intermediate": [
+  -0.3527,
+  -0.0179,
+  -0.9356
+ ],
+ "Ring_Distal": [
+  -0.5569,
+  -0.0059,
+  -0.8305
+ ],
+ "Little_Proximal": [
+  0.5045,
+  0.0132,
+  -0.8633
+ ],
+ "Little_Intermediate": [
+  -0.1066,
+  0.1283,
+  -0.986
+ ],
+ "Little_Distal": [
+  -0.7426,
+  0.2272,
+  -0.6301
+ ],
+ "_source": "docs/movie/pax.mov 第 40～52 格（10 fps 抽格編號，偶數格），tools/hand_skeleton.py 抓的左輪握槍右手"
+}

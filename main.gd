@@ -142,6 +142,12 @@ var _solo_dino := false   # 單人打恐龍（測恐龍行為用）：沙盒的�
 var _continues := 0       # 單人打恐龍：接關了幾次
 
 func _ready() -> void:
+	# 視窗開最大（填滿螢幕）。只在還是預設大小時才放大：截圖工具用 --resolution 指定了別的大小，照它的，不然裁切位置會跑掉
+	# （--resolution 是引擎吃掉的參數，OS.get_cmdline_args 看不到，只能看視窗大小）
+	var base := Vector2i(ProjectSettings.get_setting("display/window/size/viewport_width"),
+		ProjectSettings.get_setting("display/window/size/viewport_height"))
+	if DisplayServer.get_name() != "headless" and get_window().size == base:
+		get_window().mode = Window.MODE_MAXIMIZED
 	BugReport.install()
 	_add_report_button()
 	_flatten_models()
@@ -220,9 +226,9 @@ func _diag_print(delta: float) -> void:
 		return
 	_diag_t = 0.0
 	var hov := get_viewport().gui_get_hovered_control()
-	print("[滑鼠診斷] %s　鎖定=%s　視窗焦點=%s　選單=%s　還要等=%dms　滑鼠下的介面=%s" % [
+	print("[滑鼠診斷] %s　鎖定=%s　視窗焦點=%s　選單=%s　滑鼠下的介面=%s" % [
 		Fighter.diag, Input.mouse_mode == Input.MOUSE_MODE_CAPTURED, get_window().has_focus(), menu.visible,
-		maxi(Fighter._look_from - Time.get_ticks_msec(), 0), hov.get_path() if hov else "無"])
+		hov.get_path() if hov else "無"])
 	Fighter.diag.clear()
 
 func _unhandled_input(e: InputEvent) -> void:
@@ -1103,6 +1109,7 @@ func _egg_step(delta: float) -> void:
 		egg.extract = 0.0
 
 func _process(delta: float) -> void:
+	Fighter._frame_ms = Time.get_ticks_msec()   # 給 Fighter.after_hitch 判斷卡頓
 	_track_frame_time(delta)
 	_diag_print(delta)
 	if BugReport.instance.take_new_error():

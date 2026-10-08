@@ -175,7 +175,7 @@ bpy.ops.object.select_all(action='DESELECT')
 def export(out_dir):
     """一個 cowboy.glb。遊戲只拿 mesh 不拿節點位置，原點都已經搬到該轉的地方"""
     for o in bpy.data.objects:
-        if o.type == 'MESH':
+        if o.type in ('MESH', 'ARMATURE'):   # 骨架：左輪用會動的手（hands.py 的 RigGrip 等）
             o.select_set(True)
     path = os.path.join(out_dir, 'cowboy.glb')
     bpy.ops.export_scene.gltf(filepath=path, export_format='GLB', use_selection=True,

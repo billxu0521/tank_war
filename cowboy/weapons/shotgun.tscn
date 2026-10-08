@@ -29,10 +29,14 @@ max_range = 35.0
 muzzle_velocity = 300.0
 falloff_start = 8.0
 ads_position = Vector3(0, -0.071, -0.162)
-pinch_rotation = Vector3(0, 0, -0.6)
+pinch_rotation = Vector3(0, 0, -1.6)
 ads_support_rot = Vector3(0, 0, 0)
 ads_support_shift = Vector3(0, 0, 0.05)
 ads_support_turn = 0.5
+hip_support_turn = 0.873
+support_wrist_ext = 45.0
+support_thumb = Vector2(0.017, 0.055)
+support_finger_curl = 0.0
 ads_rotation = Vector3(0.01, 0, 0)
 hip_rotation = Vector3(0, 0.01, -0.22)
 muzzle = Vector3(0, 0.046, -0.786)
@@ -43,11 +47,13 @@ hammer_path = NodePath("Model/ShotgunHammer")
 barrel_path = NodePath("Model/ShotgunBarrel")
 hand_round_path = NodePath("Model/ShotgunShell")
 load_space_path = NodePath("Model/ShotgunBarrel")
-load_out = Vector3(0, 0.03, 0.06)
+load_out = Vector3(0, 0.07, 0.0)
+fetch_pocket = Vector3(0.25, 0.0, 0.05)
 load_in = Vector3(0, 0.03, -0.03)
 load_eject = true
 reload_offset = Vector3(-0.024, -0.014, 0.042)
 reload_rotation = Vector3(0.039, 1.200, 0.337)
+use_rig = true
 
 [node name="Model" parent="." instance=ExtResource("2_model")]
 
