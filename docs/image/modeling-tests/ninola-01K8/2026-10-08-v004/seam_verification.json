@@ -1,0 +1,6 @@
+{
+  "shared_geometric_seam_edges": 168,
+  "seam_winding_conflicts": 0,
+  "seam_non_two_face_edges": 0,
+  "scope": "quantized geometric seam only, not full manifold or self-intersection certification; read-only Blender inspection"
+}

@@ -1,0 +1,157 @@
+{
+  "source": {
+    "path": "blender/ninola/working/01R1/2026-10-09-v011/ninola_01R1_posterior_junction.blend",
+    "sha256": "55fc4e50b9f279eaa4a1662187199e347c18d1d25772746e466908a261614f79"
+  },
+  "output": {
+    "path": "blender/ninola/working/01R2/2026-10-09-v004/ninola_01R2_gold_slit_eye.blend",
+    "sha256": "6ef84c05ea4c62a135a8adf91dba1b89bd79101ba43270122bdc62062474d770"
+  },
+  "files": [
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/REPORT.md",
+      "sha256": "4c0eed58a941ffffc8d135e5abe2f81926142156d96825bcba7745e5ac93ae9f",
+      "bytes": 1524
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/before_eye_forward.png",
+      "sha256": "5c4254921c95e2a39bcf4b5f534316611d5d429490a7ca255de86af12cf3759a",
+      "bytes": 658973
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/before_eye_oblique.png",
+      "sha256": "1e2f14f467e6a2ce3845b7d94a4874d8eaa78a625e79aad6289b9a998790ff9f",
+      "bytes": 656483
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/before_head_front.png",
+      "sha256": "bcfcd6bedb91fb7aaabd2244ddab2665823ce1a0413dc45f6ba8bb0561fc7b7c",
+      "bytes": 747898
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/before_head_side.png",
+      "sha256": "574b27cc767db5a1082f8a8eb52cc7f735ed9dc0445dfba208acccbc96b28b1c",
+      "bytes": 697478
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/before_head_threequarter.png",
+      "sha256": "16a4d16328cde4fad93a9784a2bf823c0613f6526a1c6e929f53da9815646b31",
+      "bytes": 717244
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/before_installed_close.png",
+      "sha256": "bbb2d52ea821ae4cbd13ecef163218eea85242072adab9619f185ef481cb4fa3",
+      "bytes": 632096
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/before_installed_front.png",
+      "sha256": "e9426501f1c1324d51c986e0cac8a31e899e543f9f0cd6239c0aa4b7eb62fe6d",
+      "bytes": 630655
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/before_installed_other_side.png",
+      "sha256": "83db3ecef67091d7854f3d92add1d69ae9dfabf450f58eb587eea1403847b62b",
+      "bytes": 629523
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/before_installed_side.png",
+      "sha256": "1852813f7c501d9fae798f44fa1d1f6e810c9511198e3da61682ef7bb63dc0a6",
+      "bytes": 647081
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/build_eye.py",
+      "sha256": "7d0a440290abfc69f27cfb18469948e31197cadfe28587905c1fd06693aa6f1c",
+      "bytes": 6326
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/build_record.json",
+      "sha256": "011b1900cb2fc7d0989eedff7405bf1aa3e1a1cae507b96cb6ee875a74427bc5",
+      "bytes": 13173
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/comparison.png",
+      "sha256": "fcd43aa1acac6a93d626ae193b5262102fc7d7797f10be0eeb0dd1f9a56e7eba",
+      "bytes": 376568
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/comparison_provenance.json",
+      "sha256": "de89f86c6375bf4c10fd365ac40157f2c45a2b335c8116179bcacbe35a91e5ab",
+      "bytes": 669
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/independent_review.txt",
+      "sha256": "60aa5d4b827f59efabe3ca8bc39a29f9d840b5ecf589bfa05525604aac21829e",
+      "bytes": 257
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/index.html",
+      "sha256": "a6ca58e1f70d7d4364534bc9c43e9f374edf1898c598095eeb453866a8fe12a2",
+      "bytes": 1524
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/package_review.py",
+      "sha256": "b8184197717416f2ba1dbb201ce8bbc53cdc0e4adc4c35c04260a36d653223ec",
+      "bytes": 6195
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/render_comparison.py",
+      "sha256": "d765e2bc078cc2b8064a16650f3b8ca1d9a2f46b4a5c66ed91ff0f60a344e15a",
+      "bytes": 3351
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/trial_eye_forward.png",
+      "sha256": "b05a15799947841d573fae2c267b706c2708201d6a65f145479d6e2dae6ba336",
+      "bytes": 657543
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/trial_eye_oblique.png",
+      "sha256": "acfe02242504b458c291a0dbbad5a7ad29060a4fbd13bfa6fca36aa8e0028507",
+      "bytes": 657026
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/trial_head_front.png",
+      "sha256": "2745bc58edacc37478c3dfc45c209ded0aa2664297743332d0271105b08b9246",
+      "bytes": 747826
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/trial_head_side.png",
+      "sha256": "9b9041c072d122058b71d6701dabcd894acd47694fb2828616cd191f082daf2c",
+      "bytes": 697488
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/trial_head_threequarter.png",
+      "sha256": "334b563b15ea209bb60fa98d06f1284caf36e15d174c54f27e70fc8a27536ab2",
+      "bytes": 717250
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/trial_installed_close.png",
+      "sha256": "4ea91f54878717b338bd38bf2a79e31046ac2f43fee66c11c96a5e34ee76d1f0",
+      "bytes": 632166
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/trial_installed_front.png",
+      "sha256": "3b7db4f5cb749fd11fb33d11e3b2c4d3eda457f4458e689e7d711a472882eb86",
+      "bytes": 631582
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/trial_installed_other_side.png",
+      "sha256": "48375faf1aa35bb46c1d2058d26911214a610c7731bb63c583e21de0b6945d62",
+      "bytes": 629079
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/trial_installed_side.png",
+      "sha256": "16fdfefbbe04935d83e653619781fc4518c8f8f7721aeed96c5d91fd0111bc11",
+      "bytes": 647196
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/verification.json",
+      "sha256": "18afb6d1050304383553dcdd9ab7e42d2dbc6b1ab045f3d655e0596ea76ad852",
+      "bytes": 983
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v004/verify_eye.py",
+      "sha256": "0af509f105b5dbd15cae612c2e6f249fdcd39e1c4fa97698533e0e8207e39a6b",
+      "bytes": 3484
+    }
+  ]
+}

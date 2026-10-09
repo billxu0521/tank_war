@@ -1,0 +1,14 @@
+{
+  "archive": "docs/image/modeling-tests/ninola-01O/2026-10-09-closeout-v001/Ninola_01O_Closeout_2026-10-09.zip",
+  "sha256": "3cad070f58d45bb5b3410911d414ddf0dafd36119670623571d3f6b0ec0d5482",
+  "bytes": 15659693,
+  "allowlisted_files": 33,
+  "packed_models": 5,
+  "crc_test": true,
+  "all_packed_sha256_match": true,
+  "historical_state_snapshot_outside_zip": {
+    "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-closeout-v001/STATE_BEFORE_CLOSEOUT.md",
+    "sha256": "668981e26b9835393c65512f990e0f1f3abb9e84fceb8328bc3cfbcc00bd2f4a",
+    "immutable_history_not_current_state": true
+  }
+}

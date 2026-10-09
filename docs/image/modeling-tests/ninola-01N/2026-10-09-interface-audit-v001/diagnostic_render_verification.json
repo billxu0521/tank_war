@@ -1,0 +1,26 @@
+{
+  "source_sha256": "29c0ce14748c7953a071f5efe7635ec851816b6ffdef0cae041decb24138bb84",
+  "source_unchanged": true,
+  "source_pose_restored": true,
+  "prototype_mesh_not_edited": true,
+  "rig_not_edited": true,
+  "hypothesis_only_changes_temporary_display_face_order": true,
+  "poses": "previous recorded Godot M7 poses; not a fresh game test",
+  "samples": {
+    "original": {
+      "same_evaluated_coordinates_in_both": true,
+      "faces_reversed_in_display_only": 12,
+      "variant_is_not_saved_model": true
+    },
+    "bite026": {
+      "same_evaluated_coordinates_in_both": true,
+      "faces_reversed_in_display_only": 12,
+      "variant_is_not_saved_model": true
+    },
+    "sweep003": {
+      "same_evaluated_coordinates_in_both": true,
+      "faces_reversed_in_display_only": 12,
+      "variant_is_not_saved_model": true
+    }
+  }
+}

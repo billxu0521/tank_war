@@ -1,0 +1,11 @@
+{
+  "original_scene_restored": true,
+  "original_active_restored": "01L3_Three_Toe_Volume_Reconstruction",
+  "original_selection_restored_empty": true,
+  "original_dirty_before": true,
+  "original_dirty_after": true,
+  "temporary_scene_objects_mesh_armature_unused_materials_removed": true,
+  "original_file_not_saved": true,
+  "candidate_v004_viewed_front_and_threequarter": true,
+  "cleanup_note": "MCP namespace is per call; recovered original scene by verified name and removed only temporary object dependencies with zero users"
+}

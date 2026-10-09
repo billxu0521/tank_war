@@ -1,0 +1,23 @@
+{
+  "references": [
+    {
+      "path": "/Users/ChenPo-Yun/Documents/GameDev/worktrees/ninola/docs/image/modeling-tests/ninola-01K8/2026-10-08-v001/references/user_reference_5.png",
+      "sha256": "8c72643d581c3b0512a96bf8be321af9705fcd7ef95c18f2e3bdb619313672c0"
+    },
+    {
+      "path": "/Users/ChenPo-Yun/Documents/GameDev/worktrees/ninola/docs/image/modeling-tests/ninola-01K8/2026-10-08-v001/references/user_reference_2.png",
+      "sha256": "a70be48c16460866b0ef2849dc87592386eb8b43b8cf8cc0e0e8e58a16f2b0f7"
+    },
+    {
+      "path": "/Users/ChenPo-Yun/Documents/GameDev/Library/Modeling/Anatomy/Ninola_Cranial_Anatomy_and_Morphology_Research_2026-10-09.md",
+      "sha256": "20c7eccb93b12f7fc3372298a2979ff1633ec69fd31d4354b711a6c07e124c0c"
+    },
+    {
+      "path": "/Users/ChenPo-Yun/Documents/GameDev/Library/Modeling/Ninola_Stylized_Theropod_LowPoly_Visual_Abstraction_Research_2026-10-09.md",
+      "sha256": "634d644b113ef8087bd6f50dea084716e17e6e2699f643d6ab7e88ce22c2ad76"
+    }
+  ],
+  "historical_jaw_pass": "docs/image/modeling-tests/ninola-01M/2026-10-08-pass-v001/RESULT.md",
+  "base": "01M8 v001",
+  "reference_limits": "AI concepts are design intent, not anatomical measurements. Library head research primarily addresses upper skull/eyes, not a complete mandibular reconstruction specification."
+}

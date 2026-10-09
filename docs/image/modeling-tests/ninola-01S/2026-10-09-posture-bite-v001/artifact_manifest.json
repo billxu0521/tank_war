@@ -1,0 +1,175 @@
+{
+  "source_sha256": "363eb15913ff2b7ee528a67163aa86805126e56a64514e07001cddc0ff305929",
+  "files": [
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/REPORT.md",
+      "sha256": "74ac96a2fe411aeb239985933f67677f17d7b09e4e85e83ab4dab4f351479f9d",
+      "bytes": 3174
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/bite_1.5_000.png",
+      "sha256": "a661cf48f71f0408c41040a7a71897828e0719f190a47dc1a313434e8705d6a4",
+      "bytes": 826993
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/bite_1.5_012.png",
+      "sha256": "9a246a6212ebd531aaeb1bcec631e2b36e3a4a402f89b95ac4f52d55f5c7d35c",
+      "bytes": 823359
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/bite_1.5_029.png",
+      "sha256": "d7ec1e54a3636396ab4b9672785d30d742d321682b353c5aae9b626bba1d59a0",
+      "bytes": 812585
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/bite_1.5_030.png",
+      "sha256": "157510207dadec851195cf82ac9570ef0e3a1b672140ef760fdee0107037f33e",
+      "bytes": 839673
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/bite_1.5_031.png",
+      "sha256": "201696ec1ee8f0d3f6213e390b327b91657d3dddb9c18a89e30c13e2ced264ee",
+      "bytes": 844999
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/bite_1.5_032.png",
+      "sha256": "0776bca0ec7c0655a7787b1fec7176cb647b855850a8b71e23c7016d21755c83",
+      "bytes": 848174
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/bite_1.5_034.png",
+      "sha256": "405d15fa26bfca9f61f0bd02b5228c9616509276eeb6a3ecdd9f1bb692f6ede3",
+      "bytes": 848623
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/bite_1.5_045.png",
+      "sha256": "5d43a0738c1a290a3d3e7806f35360a11b7aa5082693365c8909b306cc03cf3c",
+      "bytes": 830439
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/bite_1.5_060.png",
+      "sha256": "70bb92edb652ca28d8d4235a2ec9063b00de8bc5916727c1e88d1e24b732da42",
+      "bytes": 828046
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/bite_1.5_090.png",
+      "sha256": "df137c242e7a8171d85107a97936abbac049898556be36c714a7fa2f4449e312",
+      "bytes": 828827
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/bite_1.5_119.png",
+      "sha256": "182cb90b3453d56a1d0173d77b4d15a83c63a6c7407e5f57c7d08696c36c541c",
+      "bytes": 827673
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/bite_1_5_selected_frames.gif",
+      "sha256": "03f6574162001d16029624e1bae5728a04ef8b80fbfe1bedd7d4d6e1c669e26d",
+      "bytes": 2319551
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/bite_metrics.json",
+      "sha256": "1c59363dcda5f345c6ae8b87deaf9b7c5a71d9e6d0cd462839e3e5b7f8b77fa4",
+      "bytes": 117280
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/bite_samples.json",
+      "sha256": "7411af73d9467e3d501f8a69b089741ec46d42f91860549a830d2e4c8938fca3",
+      "bytes": 7720155
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/bite_sweep_001.png",
+      "sha256": "40de2a0ed1aa54988613ec2399d5a617c81bf1d5a4c57620cbae7993efb6e528",
+      "bytes": 827390
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/bite_sweep_003.png",
+      "sha256": "54bf838b0e19fccd7dba4af7b91485e6182262d8d8aceb6df18994619fb33286",
+      "bytes": 827686
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/bite_sweep_005.png",
+      "sha256": "e8a13ef82d542fb5cd41af8847b7d8695d54ceb67988d00b7fe9a93dad804282",
+      "bytes": 827687
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/bite_sweep_006.png",
+      "sha256": "0678228123994577252b5cde27102fd7a2ac669c5162ad6099c6b1d4034f82b5",
+      "bytes": 827883
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/independent_review.txt",
+      "sha256": "7c67ed026a3029f736c5f891d1cf5ff595253ad019ea5bb9260b6c1756c74584",
+      "bytes": 547
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/index.html",
+      "sha256": "03fd696f1607403deec051db883e3520e4b1877e6c4e86aed6aaaca1ae1f11aa",
+      "bytes": 1729
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/package.py",
+      "sha256": "8813266b83c334cf19c5fea903cf865e34e0c9011cd5c8e4a8ce7c13692e6c00",
+      "bytes": 8358
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/posture.py",
+      "sha256": "67005897b0c3cc73736e08e9abcad95eaac60ebb3418368051aee47a295f3a54",
+      "bytes": 3364
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/posture_A_oblique.png",
+      "sha256": "5551dcdcb8e5d6425490a50743a4538e7b4fe33d99e254ca40e5cb01a6bdebd4",
+      "bytes": 1009350
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/posture_A_side.png",
+      "sha256": "2a7613e95a679011a96c433f0f7275d25ae717e93543631e787ccd29c648a823",
+      "bytes": 1010737
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/posture_B_oblique.png",
+      "sha256": "ba15fc9af59af6ed7ad281f74edadb74561dc2e228d21eaa9ce404eb1782833b",
+      "bytes": 1009392
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/posture_B_side.png",
+      "sha256": "8d5536d8bf55da3b4d2556f3a190a5e2b8fc9b11b703455b84825410431ab3fd",
+      "bytes": 1010312
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/posture_baseline_oblique.png",
+      "sha256": "2ef00d43f962fbf4b2a41fe9df199ae50af0b9f2d40ad0be62e2fca8a40bff2c",
+      "bytes": 1008473
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/posture_baseline_side.png",
+      "sha256": "a15b319479a5d2a78d3b08d0526938aa68212192a34f9491b16cc47654666623",
+      "bytes": 1011330
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/posture_comparison.png",
+      "sha256": "deddba5e796a886f385e0bc14d1b7f6830fd9c0bb50f67c6b267b301b3e82663",
+      "bytes": 636213
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/posture_record.json",
+      "sha256": "c99758f65ec9ad18e9d22a0c17b70fed0fcdecadec8f15f0f4f627b4fb3c4195",
+      "bytes": 1385
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/test_bite.py",
+      "sha256": "5fa39d318b705a37c0bb8bdab76b9746db1d50666e5e724e85fea4c4d0059d9d",
+      "bytes": 5464
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/test-project/bite_candidate.gd",
+      "sha256": "cf35f3c117efc0068a3631526e644b1d027882f390ac3e67576ee619242b00f8",
+      "bytes": 312
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/test-project/bite_candidates.gd",
+      "sha256": "d9ff99bdcda180901ab4173d5fbb0ddf3a04b64a8ffae4af78a5fc15596c8045",
+      "bytes": 2214
+    }
+  ]
+}

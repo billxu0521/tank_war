@@ -1,0 +1,1 @@
+Initial socket patch did not fit selected deformed triangle; build stopped before saving any model. Corrected selection to follow barycentric position of original eye on source skull face. Initial capture consequently had no source; no images produced.

@@ -1,0 +1,31 @@
+"""Read-only archive viewer capture; does not save blend or change pose/key coordinates/values."""
+import bpy,json,argparse,sys
+from pathlib import Path
+from mathutils import Vector
+root=Path(__file__).resolve().parents[5]
+a=argparse.ArgumentParser();a.add_argument('--model',choices=['01O2'],required=True);a.add_argument('--views',default='side,silhouette,full_body_side');a.add_argument('--output',required=True)
+opts=a.parse_args(sys.argv[sys.argv.index('--')+1:]);keys=json.loads((root/'docs/image/modeling-tests/ninola-workflow/asset-index.json').read_text())['assets'];item={'local_path':'blender/ninola/working/01O2/2026-10-09-v003/ninola_01O2_ventral_belly_tuck.blend','object':'01O2_Ventral_Belly_Tuck'};assert item.get('local_path'), 'Archive-only asset has no local working path';out=Path(opts.output);out.mkdir(parents=True,exist_ok=True)
+bpy.ops.wm.open_mainfile(filepath=str(root/item['local_path']));obj=bpy.data.objects[item['object']];bpy.context.view_layer.update();ev=obj.evaluated_get(bpy.context.evaluated_depsgraph_get());c=[list(obj.matrix_world@v.co) for v in ev.data.vertices];f=[list(p.vertices) for p in ev.data.polygons]
+cy=(min(p[1] for p in c)+max(p[1] for p in c))/2;cz=(min(p[2] for p in c)+max(p[2] for p in c))/2;body=max(max(p[1] for p in c)-min(p[1] for p in c),max(p[2] for p in c)-min(p[2] for p in c))*1.12
+print('INSPECTION',json.dumps({'object':obj.name,'editable_local':obj.library is None and obj.data.library is None,'vertices':len(obj.data.vertices),'evaluated_vertices':len(c),'bones':len(bpy.data.objects['TrexRig'].data.bones),'libraries':[l.filepath for l in bpy.data.libraries],'external_images':[i.filepath for i in bpy.data.images if i.source in {'FILE','MOVIE','SEQUENCE'} and not i.packed_file]}))
+sc=bpy.data.scenes.new('Temporary_Closeout_ReadOnly_Capture');sc.world=bpy.data.worlds.new('Temporary_Background');sc.world.color=(.075,.085,.1);sc.render.engine='BLENDER_WORKBENCH';sc.render.resolution_x=sc.render.resolution_y=1100;sc.render.resolution_percentage=100;sc.view_settings.view_transform='Standard';sh=sc.display.shading;sh.color_type='SINGLE';sh.single_color=(.6,.64,.68);sh.light='STUDIO';sh.show_shadows=False;sh.show_cavity=True
+cd=bpy.data.cameras.new('Temporary_Camera');cam=bpy.data.objects.new('Temporary_Camera',cd);sc.collection.objects.link(cam);sc.camera=cam;me=bpy.data.meshes.new('Temporary_Evaluated_Display');ob=bpy.data.objects.new('Temporary_Evaluated_Display',me);sc.collection.objects.link(ob)
+views={'head_side':((-1,0,0),(0,2.45,2.45),3.65),'head_silhouette':((-1,0,0),(0,2.45,2.45),3.65),'head_front':((0,1,0),(0,2.5,2.4),2.65),'head_top':((0,0,1),(0,2.45,2.5),3.65),'head_bottom':((0,0,-1),(0,2.45,2.5),3.65),'head_threequarter':((-1,1,.25),(0,2.5,2.4),3.1),'head_rear_threequarter':((-1,-1,.35),(0,2.3,2.4),3.8),'full_body_side':((-1,0,0),(0,cy,cz),body)}
+views['head_threequarter_color']=views['head_threequarter'];views['head_front_color']=views['head_front'];views['head_side_color']=views['head_side']
+views['head_right_threequarter']=((1,1,.25),(0,2.5,2.4),3.1)
+views['head_right_threequarter_color']=views['head_right_threequarter']
+views.update({'full_body_front':((0,1,.08),(0,.2,1.55),4.5),'full_body_top':((0,0,1),(0,cy,1.9),body),'full_body_threequarter':((-1,1,.25),(0,-.6,1.7),body*.85),'full_body_right_threequarter':((1,1,.25),(0,-.6,1.7),body*.85),'torso_side':((-1,0,0),(0,.85,2.0),5.6),'torso_top':((0,0,1),(0,.85,2.0),5.6),'torso_front':((0,1,.05),(0,.85,2.0),4.2),'torso_threequarter':((-1,1,.25),(0,.85,2.0),5.2),'torso_right_threequarter':((1,1,.25),(0,.85,2.0),5.2),'torso_rear_threequarter':((-1,-1,.25),(0,.85,2.0),5.2)})
+for mat in obj.data.materials:me.materials.append(mat)
+rig=bpy.data.objects['TrexRig'];tr=bpy.data.objects['Trex']
+inspection={'source':item,'bones':{b.name:{'head_world':list(rig.matrix_world@b.head),'tail_world':list(rig.matrix_world@b.tail),'matrix_basis':[list(row) for row in b.matrix_basis]} for b in rig.pose.bones},'Trex_keys':{k.name:k.value for k in tr.data.shape_keys.key_blocks},'prototype_shape_keys':obj.data.shape_keys is not None,'prototype_vertex_groups':[g.name for g in obj.vertex_groups],'materials':[m.name if m else None for m in obj.data.materials]}
+(out/'inspection.json').write_text(json.dumps(inspection,indent=2))
+record={}
+for view in opts.views.split(','):
+ di,center,scale=views[view];full=True;ff=f
+ me.clear_geometry();me.from_pydata(c,[],ff);me.update()
+ for poly,orig in zip(me.polygons,obj.data.polygons):poly.material_index=orig.material_index
+ sh.color_type='SINGLE'
+ di=Vector(di).normalized();cd.type='ORTHO';cd.ortho_scale=scale;cam.location=Vector(center)+di*20;cam.rotation_euler=(-di).to_track_quat('-Z','Y').to_euler()
+ if 'threequarter' in view:cd.type='PERSP';cd.lens=70;cam.location=Vector(center)+di*(scale*70/36*1.18)
+ sh.single_color=(0,0,0) if view in ['silhouette','foot_silhouette','head_silhouette'] else (.6,.64,.68);sh.light='FLAT' if view in ['silhouette','foot_silhouette','head_silhouette'] else 'STUDIO';sh.show_cavity=view not in ['silhouette','foot_silhouette','head_silhouette'];sc.world.color=(1,1,1) if view in ['silhouette','foot_silhouette','head_silhouette'] else (.075,.085,.1);sc.view_layers[0].update();dest=out/f'{view}_{opts.model}.png';assert not dest.exists(),'Avoid overwriting a capture';sc.render.filepath=str(dest);bpy.ops.render.render(write_still=True,scene=sc.name);record[view]={'model':opts.model,'object':obj.name,'matrix':[list(row) for row in cam.matrix_world],'scale':scale,'camera_type':cd.type,'lens':cd.lens,'resolution':[1100,1100],'lighting':'Workbench STUDIO / silhouette FLAT','display_face_count':len(ff),'display_mask':'full model' if full else 'Same-sided leg faces |X|>.35, Z<.70 for foot views (1.35 for leg); Side shows X<0 leg. Upper cut edges are display artifacts; not model modification.'}
+(out/f'capture_settings_{opts.model}.json').write_text(json.dumps(record,indent=2))

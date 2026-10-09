@@ -1,0 +1,42 @@
+[
+  {
+    "region": "posterior",
+    "y": 2.35,
+    "design_halfwidth": 0.52,
+    "design_top": 2.68,
+    "design_lower_envelope": 2.06,
+    "source_samples": 0
+  },
+  {
+    "region": "orbit",
+    "y": 2.92,
+    "design_halfwidth": 0.45,
+    "design_top": 2.61,
+    "design_lower_envelope": 2.045,
+    "source_samples": 22
+  },
+  {
+    "region": "preorbital",
+    "y": 3.2,
+    "design_halfwidth": 0.38,
+    "design_top": 2.53,
+    "design_lower_envelope": 2.035,
+    "source_samples": 10
+  },
+  {
+    "region": "anterior",
+    "y": 3.46,
+    "design_halfwidth": 0.31,
+    "design_top": 2.44,
+    "design_lower_envelope": 2.045,
+    "source_samples": 13
+  },
+  {
+    "region": "muzzle",
+    "y": 3.75,
+    "design_halfwidth": 0.17,
+    "design_top": 2.25,
+    "design_lower_envelope": 2.095,
+    "source_samples": 1
+  }
+]

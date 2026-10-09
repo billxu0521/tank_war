@@ -1,0 +1,59 @@
+{
+  "path": "blender/ninola/working/01R1/2026-10-09-v011/ninola_01R1_posterior_junction.blend",
+  "sha256": "55fc4e50b9f279eaa4a1662187199e347c18d1d25772746e466908a261614f79",
+  "object": "01R1_Posterior_Junction",
+  "eye_materials": {
+    "d_pupil": {
+      "diffuse_color": [
+        0.019999999552965164,
+        0.014999999664723873,
+        0.014999999664723873,
+        1.0
+      ],
+      "nodes": [
+        {
+          "Base Color": [
+            0.019999999552965164,
+            0.014999999664723873,
+            0.014999999664723873,
+            1.0
+          ],
+          "Roughness": 0.25,
+          "Metallic": 0.0
+        }
+      ],
+      "faces": 240,
+      "triangles": 240,
+      "image_textures": []
+    },
+    "Ninola_Iris_Gold_M6": {
+      "diffuse_color": [
+        0.7200000286102295,
+        0.38999998569488525,
+        0.054999999701976776,
+        1.0
+      ],
+      "nodes": [
+        {
+          "Base Color": [
+            0.7200000286102295,
+            0.38999998569488525,
+            0.054999999701976776,
+            1.0
+          ],
+          "Roughness": 0.7799999713897705,
+          "Metallic": 0.0
+        }
+      ],
+      "faces": 48,
+      "triangles": 48,
+      "image_textures": []
+    }
+  },
+  "eye_vertex_count": 148,
+  "bone_weight_sum": {
+    "head": 148.0
+  },
+  "independent_eye_objects_visible_in_target": false,
+  "no_model_edit": true
+}

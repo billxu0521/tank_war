@@ -1,0 +1,16 @@
+{
+  "mesh": "one actual evaluated eyeball isolated, original unchanged",
+  "vertices": 74,
+  "triangles": 144,
+  "center": [
+    0.35213610529899597,
+    2.9847309589385986,
+    2.4349992275238037
+  ],
+  "gaze_axis": [
+    -0.046496063470840454,
+    0.9989184737205505,
+    0.0
+  ],
+  "render": "Workbench Standard studio, not game/PBR verification"
+}

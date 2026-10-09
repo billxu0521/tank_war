@@ -1,0 +1,12 @@
+{
+  "Rig_Trex_keys_pose_signature_exact": true,
+  "all_M8_original_coords_weights_exact": true,
+  "outside_jaw_faces_materials_exact": true,
+  "retained_face_count": 6709,
+  "new_vertices_only_existing_jaw_bone_weight_one": true,
+  "prototype_has_shape_keys": false,
+  "bones": 45,
+  "M8_sha256": "85c4698b0dbccc116257c73bf23219ac347507e4167881cc994ba0d5390d9d40",
+  "N1_sha256": "8e2a7a6a74084e1e7a30feb56e694b1034af60216541008171ba0bb0554f7198",
+  "production_integration": false
+}

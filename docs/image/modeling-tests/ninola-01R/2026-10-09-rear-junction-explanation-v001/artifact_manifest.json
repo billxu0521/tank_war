@@ -1,0 +1,45 @@
+{
+  "algorithm": "SHA-256",
+  "files": [
+    {
+      "path": "ANNOTATION_REVIEW.md",
+      "bytes": 274,
+      "sha256": "5910458a76876440a4f3a70578c45836b26a127382117ff21741062454aaff06"
+    },
+    {
+      "path": "README.md",
+      "bytes": 962,
+      "sha256": "f71aa168ce840db4c225c7a5f36e459190c1f2a4c06852ecd70e39d1e572680e"
+    },
+    {
+      "path": "build_diagram.py",
+      "bytes": 4129,
+      "sha256": "71b55668b4e5e40a16f3e43085033a10115de5f4e186553ac1bfb620a71b664e"
+    },
+    {
+      "path": "index.html",
+      "bytes": 1057,
+      "sha256": "46a048f288aa62b31577bf0bbc6918aa97bdc6ad1dd69e7cd8326f7e6a517031"
+    },
+    {
+      "path": "rear_junction_explanation.png",
+      "bytes": 632470,
+      "sha256": "56ff668445c760010f9105ea41c6b24f859c1efd6e184ad95a7967dd34653e93"
+    },
+    {
+      "path": "rear_junction_explanation.svg",
+      "bytes": 3675587,
+      "sha256": "2030605d5ff7e1a8396fefb7843fe4d33ea783c7f4afc92f20587215b63cd427"
+    },
+    {
+      "path": "rear_junction_explanation.svg.png",
+      "bytes": 806544,
+      "sha256": "890d4ca5c0b065c791afc75b4b62957090c052bfac2465759be39bce23ba1ac5"
+    },
+    {
+      "path": "source_manifest.json",
+      "bytes": 764,
+      "sha256": "5035b1a0f8440bd666c4f8b2b09c252b42461bdac185ac2e8ca0d27cc862e924"
+    }
+  ]
+}

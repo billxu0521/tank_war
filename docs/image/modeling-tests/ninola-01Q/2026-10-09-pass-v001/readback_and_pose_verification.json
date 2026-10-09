@@ -1,0 +1,37 @@
+{
+  "readback_coordinates_outside_edit_exact": true,
+  "readback_topology_material_weights_Rig_keys_pose_exact": true,
+  "source_hash_unchanged": true,
+  "trial_hash_unchanged": true,
+  "checks": [
+    {
+      "test": "tail3_yaw_plus12",
+      "bone": "tail3",
+      "axis": "local Z",
+      "angle_degrees": 12,
+      "protected_vertices_max_delta": 0.0,
+      "new_degenerate_faces": [],
+      "normal_reversals_against_same_pose_source": []
+    },
+    {
+      "test": "tail3_yaw_minus12",
+      "bone": "tail3",
+      "axis": "local Z",
+      "angle_degrees": -12,
+      "protected_vertices_max_delta": 0.0,
+      "new_degenerate_faces": [],
+      "normal_reversals_against_same_pose_source": []
+    },
+    {
+      "test": "tail4_pitch_plus8",
+      "bone": "tail4",
+      "axis": "local X",
+      "angle_degrees": 8,
+      "protected_vertices_max_delta": 0.0,
+      "new_degenerate_faces": [],
+      "normal_reversals_against_same_pose_source": []
+    }
+  ],
+  "real_game_tested": false,
+  "full_tail_motion_collision_self_intersection_verified": false
+}

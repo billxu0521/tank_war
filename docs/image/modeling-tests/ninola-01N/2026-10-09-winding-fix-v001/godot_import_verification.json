@@ -1,0 +1,8 @@
+{
+  "bone_count": 45,
+  "godot_import_pass": true,
+  "real_game_input_test": false,
+  "runtime_skeleton_rest_and_bounds_exact": true,
+  "scope": "isolated import only; compatibility renderer, not Forward Plus visual test",
+  "triangles": 6906
+}

@@ -1,0 +1,140 @@
+{
+  "algorithm": "SHA-256",
+  "files": [
+    {
+      "path": "DESIGN.md",
+      "bytes": 3255,
+      "sha256": "d83dead6f441cd411e23bf1525742f73205219305d48633b76da67f50656e6ad"
+    },
+    {
+      "path": "INDEPENDENT_REVIEW.md",
+      "bytes": 944,
+      "sha256": "2ed46838dea76b683947e4b92ee76299e94b7b9fabc049184aa27f84e59ef7d5"
+    },
+    {
+      "path": "build_report.py",
+      "bytes": 6231,
+      "sha256": "bcbc55cb02ddd2df62d128376624d8f9d0d460a962abac18f1f5f508cc78c446"
+    },
+    {
+      "path": "captures/full_left_oblique_grouping.png",
+      "bytes": 1279583,
+      "sha256": "5f3a6e764c9fe444903cdee9f9b47be79314b8cb2109eeb8514396f678acd985"
+    },
+    {
+      "path": "captures/full_left_oblique_source.png",
+      "bytes": 1278868,
+      "sha256": "2bb42b199302377984e9055d0eae9b746102396b96eb93ae1affe9575608771b"
+    },
+    {
+      "path": "captures/head_body_context_grouping.png",
+      "bytes": 1386625,
+      "sha256": "285c639c17e9f23b338e4aeb0e1d5166ec5587793f66e13e74d6e3bbe1f2b003"
+    },
+    {
+      "path": "captures/head_body_context_source.png",
+      "bytes": 1385427,
+      "sha256": "075b0d01ac32f9b9e0573dcee67c681288c35ae4a03007596b2e3c099ece35a7"
+    },
+    {
+      "path": "captures/head_front_grouping.png",
+      "bytes": 1465361,
+      "sha256": "e675a012b9b4c75b25b571c0b4fcd5c1ef72bf4b5c568f5f74d2f28f02b27d7b"
+    },
+    {
+      "path": "captures/head_front_source.png",
+      "bytes": 1463914,
+      "sha256": "557a7d1e101785f40b0445e53f77b42ce9a807cc0dd89dcfc8484766a5eede52"
+    },
+    {
+      "path": "captures/head_side_grouping.png",
+      "bytes": 1332702,
+      "sha256": "cd4a033075efcc25a8befcfccd793463e621472b0505dd6019b242165f02af46"
+    },
+    {
+      "path": "captures/head_side_source.png",
+      "bytes": 1328135,
+      "sha256": "3ef3bba4e1ec6178321c7e0802ecbedbf1cc2ba661a18a34a9b3fdcbf12eb5b4"
+    },
+    {
+      "path": "captures/head_threequarter_grouping.png",
+      "bytes": 1398402,
+      "sha256": "99e5cccbc022795d38be0604070f4fec528f91643ab0ef99c70fe4582d766ee5"
+    },
+    {
+      "path": "captures/head_threequarter_source.png",
+      "bytes": 1394462,
+      "sha256": "8cb8d8acff8ad22a8b8f186779402f6fe01561c8100e5f6ad191af6000be00ab"
+    },
+    {
+      "path": "captures/head_top_grouping.png",
+      "bytes": 1287742,
+      "sha256": "6e7d98702a27dd24a3781211833daabc81cbed99755aa23dd5844ddc6b520334"
+    },
+    {
+      "path": "captures/head_top_source.png",
+      "bytes": 1280904,
+      "sha256": "6aae4237aab7c9050ef6960c73bd1c0373a190fa4782eb6b9ae417782eab23ec"
+    },
+    {
+      "path": "full_left_oblique_comparison.png",
+      "bytes": 562738,
+      "sha256": "d2868d4e3186c88035df30b9d199157bbbcbee4a527c76ea07a37dc09c2b9a19"
+    },
+    {
+      "path": "grouping_spec.json",
+      "bytes": 9523,
+      "sha256": "7b86a0692ecd79c9b8ae53a4edb9c3e1a279953658f7f56aa1b137da22c4287c"
+    },
+    {
+      "path": "head_body_context_comparison.png",
+      "bytes": 652860,
+      "sha256": "c9ff3f2d72924f5c6d96bde2f7961d82e950d71587ba731b5477d01b6d193985"
+    },
+    {
+      "path": "head_front_comparison.png",
+      "bytes": 739975,
+      "sha256": "275d482f32c9d4223300dec52ed66d852913058401846af7ecd2d1eeb582d04a"
+    },
+    {
+      "path": "head_side_comparison.png",
+      "bytes": 657261,
+      "sha256": "a8c4f6e43ca89213ee61f63d3012ecafe21b0eee444ebe7776a9e3f157f8f333"
+    },
+    {
+      "path": "head_threequarter_comparison.png",
+      "bytes": 715694,
+      "sha256": "4b6eed6ce3f660144d84f82abd115cb5a920561aa29f0746ca784f503956660a"
+    },
+    {
+      "path": "head_top_comparison.png",
+      "bytes": 614639,
+      "sha256": "a6bbc8694286e6c2f0c91daebb074cac46391752a092a0371a2940b36cfa3336"
+    },
+    {
+      "path": "index.html",
+      "bytes": 1403,
+      "sha256": "c937b23948c7c086dab045d5e2ed30be29e67c571202a0815e247c3cd2b82fb3"
+    },
+    {
+      "path": "render_groups.py",
+      "bytes": 3437,
+      "sha256": "78c67e0bd91cbf0a2cf64214cbc10a0b14b3a6b58306468bb407ce75a006cb11"
+    },
+    {
+      "path": "source_hash_verification.json",
+      "bytes": 316,
+      "sha256": "77717efc3d36410975b8d5c33911a742b2419d567e81d2e1bbb1863e2e1a903e"
+    },
+    {
+      "path": "spine_inspection.json",
+      "bytes": 59830,
+      "sha256": "b5be4fd54531a4be9190624155eee7f0ec6c6cd855dadc87f6541bbd9bf398b1"
+    },
+    {
+      "path": "spine_style_plan.png",
+      "bytes": 804455,
+      "sha256": "e708569d688033c4d3907c4e907e45b6b4b0654807d3e134b6d0f9ab3164c27a"
+    }
+  ]
+}

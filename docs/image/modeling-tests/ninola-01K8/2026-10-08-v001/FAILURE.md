@@ -1,0 +1,1 @@
+v001模型已另存，但reopen驗證引用舊Blender Object導致ReferenceError，未完成驗證；不作目前工作結果。v002修正驗證腳本，從未改動K6重建相同調整，保留v001不覆寫。

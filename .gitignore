@@ -20,3 +20,10 @@ docs/image/沙盒場景_*/
 
 # 每個人自己的 Claude 設定，不進版本控制
 CLAUDE.md
+
+# 使用者指定的本地協作規範，不納入 commit / PR
+/AGENTS.md
+
+# Isolated full-game copy; keep evidence and setup script, not duplicated runtime assets.
+/docs/image/modeling-tests/ninola-01M/2026-10-09-game-review-v001/test-project/
+/docs/image/modeling-tests/ninola-01N/2026-10-09-winding-fix-v001/test-project/

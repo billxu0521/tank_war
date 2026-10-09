@@ -1,0 +1,33 @@
+{
+  "source_path": "blender/ninola/working/01R1/2026-10-09-v010/ninola_01R1_old_panel_head_transfer.blend",
+  "source_sha256": "a83fd2fa0a3bc0c1d35fdce72a7c56f1b74cd733770d237670550e1a223ab3e6",
+  "output_path": "blender/ninola/working/01R1/2026-10-09-v011/ninola_01R1_posterior_junction.blend",
+  "sha256": "55fc4e50b9f279eaa4a1662187199e347c18d1d25772746e466908a261614f79",
+  "object": "01R1_Posterior_Junction",
+  "vertices": 9301,
+  "source_triangles": 6714,
+  "triangles": 6719,
+  "changed_vertices": [
+    8472,
+    8474,
+    8476,
+    8480,
+    8481,
+    8484
+  ],
+  "newly_shared_seam_vertices": 6,
+  "endpoint_joins": 1,
+  "subdivided_donor_faces": [
+    6642,
+    6649
+  ],
+  "max_vertex_delta": 0.11943549226590616,
+  "all_other_vertex_coordinates_exact": true,
+  "all_vertex_weights_exact": true,
+  "material_palette_assignments_preserved": true,
+  "original_shading_flags_preserved": true,
+  "accepted_nose_eye_spine_vertex_positions_exact": true,
+  "rig_edited": false,
+  "pipeline_issues": [],
+  "production_ready": false
+}

@@ -1,0 +1,150 @@
+{
+  "source_sha256": "363eb15913ff2b7ee528a67163aa86805126e56a64514e07001cddc0ff305929",
+  "files": [
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/REPORT.md",
+      "sha256": "50e683dab09c301021dde0b62343c8386c602528ebfa862105abe3ea6c4fbbf6",
+      "bytes": 3890
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/bite_026_head_context.png",
+      "sha256": "f0a8ebdb40ce86428de42f234c29d71a03ae4a1903b1d030c4d793a063c6e009",
+      "bytes": 894406
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/bite_026_mouth_only.png",
+      "sha256": "e496b0e10e72f46be8e5007400a2fe8f2ca3904f2a6699289e332ee082deeac6",
+      "bytes": 803134
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/bite_026_teeth_only.png",
+      "sha256": "6e81b1357ff10438624ce96dccb94d2c5b447ac99f786043d42bc78452770da8",
+      "bytes": 732312
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/bite_040_head_context.png",
+      "sha256": "04a0ef32a31993218243492343cbbf78a97b23aae58ac0123fcf7f5ef184fdcb",
+      "bytes": 848232
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/bite_040_mouth_only.png",
+      "sha256": "49526a5e4342d13d5c603d9ab6a4a4fcd48fecf66f6fd72b8b5e81811526eeb4",
+      "bytes": 775467
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/bite_040_teeth_only.png",
+      "sha256": "1d047b56a6f802f7e55ecea4e3aa1939b47ece219437aeda054e45a1dac9175f",
+      "bytes": 731149
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/closure_002_head_context.png",
+      "sha256": "96de8a2dcd7c9c4cce7cef1abf391a97f6c84f8e3bbd59aa39f690c13f4e601d",
+      "bytes": 858468
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/closure_002_mouth_only.png",
+      "sha256": "82139f73842a761a2e08fcf63f980ffc19831f99108c5d73334db482574d80da",
+      "bytes": 780267
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/closure_002_teeth_only.png",
+      "sha256": "60e48e6e0b9e03911abea574a50f7d79d01b85603021b4999a3bf2655d8229c7",
+      "bytes": 731976
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/closure_004_head_context.png",
+      "sha256": "bbf91deff152f2fd1381b85b5fb44cb5eb2e6b7819a34fcca6be9d86422f0483",
+      "bytes": 859532
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/closure_004_mouth_only.png",
+      "sha256": "bfb6679df9c553d466467fcf0735e805a989d089875131387465ac6a3b2fba63",
+      "bytes": 779125
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/closure_004_teeth_only.png",
+      "sha256": "c22fb99a90a52eea6d59c12bd1760809e44dc185eb0f18b6be4abb1ae4cac9ff",
+      "bytes": 732665
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/closure_006_head_context.png",
+      "sha256": "71866249b5045c2cc9a924986f61ea16a24b083b88ac96917732223065e74072",
+      "bytes": 859000
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/closure_006_mouth_only.png",
+      "sha256": "88d612f43cb08fadec53b88dbaa090b74bdb22895d857b8b7dec1192e69a9650",
+      "bytes": 777046
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/closure_006_teeth_only.png",
+      "sha256": "a798a2714ee0f6dd957e62fa93b3377ef9c78831021a2bddd8b39d6b009d131c",
+      "bytes": 733085
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/closure_details.json",
+      "sha256": "873e67b180194d072a5207b603a3ef7e50f25a54af49acf6d15478ebb7d77796",
+      "bytes": 64500
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/closure_samples.json",
+      "sha256": "8fe9375ff27f1bb7fbdd0774dd80e244b023909a54df65c7459f4019569295b7",
+      "bytes": 156356
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/closure_test.py",
+      "sha256": "0397a1568a4b53bcf0e58744466a2b528077fe3f98699a796cee57ae06b95469",
+      "bytes": 5794
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/comparison.png",
+      "sha256": "a7bcf6b7b91ba33cc298cc4bf78c2fdfb85f4ca2632f693dc3f6f7d1ba79f71e",
+      "bytes": 238076
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/contact_details.json",
+      "sha256": "19352c97b6d1aa68839cb5a75e81aae3df887c016674134f52580c30d62800d6",
+      "bytes": 53837
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/diagnose.py",
+      "sha256": "6e2d8b0e6c854be6cd36d708f6b6473a9326c51f07429dd6e33ba7e886e49372",
+      "bytes": 5793
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/independent_review.txt",
+      "sha256": "b4e90bc3e6b12d1eccf466392adb410758fbc997bb6ac0ff9e4c9b3688ec21fd",
+      "bytes": 435
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/index.html",
+      "sha256": "b19870d476558fd03b1ab727331a8f03434c6b81d7cbc903260e3aca3f1234aa",
+      "bytes": 1562
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/jaw_sweep_000_head_context.png",
+      "sha256": "810cd89d11e46e44d7e83785f59fbcd35a060ebfa2009839a051cd1c44e064ea",
+      "bytes": 858954
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/jaw_sweep_000_mouth_only.png",
+      "sha256": "996dbfa02c5283492531539f7e1d90bfb32979b7c2ac7fb6aaebc7d4e420bef3",
+      "bytes": 781195
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/jaw_sweep_000_teeth_only.png",
+      "sha256": "bb482be42524054ee2f9f0de590d65f608336d3958271f74d31fea70d65ebb6b",
+      "bytes": 732000
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/package.py",
+      "sha256": "601cfea7081495413ef1d907a5a266c715156a6c778975e20de5933f175c90b7",
+      "bytes": 9583
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/test-project/occlusion_sweep.gd",
+      "sha256": "147ad54813382a931296dfb4336248231e4751da52c32be1279b84c4f58301f7",
+      "bytes": 1667
+    }
+  ]
+}

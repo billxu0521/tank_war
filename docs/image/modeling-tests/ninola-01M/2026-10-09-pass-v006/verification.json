@@ -1,0 +1,23 @@
+{
+  "existing_indexed_assets_hash_unchanged": true,
+  "changed_assets": [],
+  "checked_assets": [
+    "01J",
+    "01K6",
+    "01K8",
+    "01L1",
+    "01L2",
+    "01L3",
+    "01M1",
+    "01M2",
+    "01M3",
+    "01M4",
+    "01M5B"
+  ],
+  "evaluation_glb_meshes": 1,
+  "evaluation_glb_skins": 1,
+  "evaluation_glb_joints": [
+    45
+  ],
+  "latest_model_sha256": "c80991fbb57f514fae7c7a94c8abec20394440de5457d65a5144d1822c42c28c"
+}

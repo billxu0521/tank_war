@@ -1,0 +1,27 @@
+{
+  "source_hash_unchanged": true,
+  "readback_original_vertex_count": 11136,
+  "original_coordinates_retained": true,
+  "checks": [
+    {
+      "test": "hand_plus15",
+      "original_vertex_max_delta": 0.0,
+      "claw_root_coordinate_and_weights_exact": true,
+      "scope": "artificial local pose, not game animation"
+    },
+    {
+      "test": "hand_minus15",
+      "original_vertex_max_delta": 0.0,
+      "claw_root_coordinate_and_weights_exact": true,
+      "scope": "artificial local pose, not game animation"
+    },
+    {
+      "test": "finger1_plus15",
+      "original_vertex_max_delta": 0.0,
+      "claw_root_coordinate_and_weights_exact": true,
+      "scope": "artificial local pose, not game animation"
+    }
+  ],
+  "real_game_tested": false,
+  "full_grasp_animation_verified": false
+}

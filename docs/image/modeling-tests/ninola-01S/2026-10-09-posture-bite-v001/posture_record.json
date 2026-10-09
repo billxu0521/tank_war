@@ -1,0 +1,45 @@
+{
+  "source": "blender/ninola/working/01R2/2026-10-09-v005/ninola_01R2_gold_slit_eye.blend",
+  "source_sha256": "363eb15913ff2b7ee528a67163aa86805126e56a64514e07001cddc0ff305929",
+  "rest_mesh_weights_source_exact": true,
+  "pose_restored": true,
+  "candidates": [
+    {
+      "label": "baseline",
+      "neck_world_pitch_delta_degrees": 0,
+      "head_world_pitch_delta_degrees": 0,
+      "spine_delta": 0,
+      "head_origin_world": [
+        3.4668457137725962e-15,
+        2.3274035453796387,
+        2.188072919845581
+      ],
+      "pose_scope": "temporary evaluation only, source saved rest/current pose unchanged"
+    },
+    {
+      "label": "A",
+      "neck_world_pitch_delta_degrees": 6,
+      "head_world_pitch_delta_degrees": -2,
+      "spine_delta": 0,
+      "head_origin_world": [
+        7.835102407705561e-16,
+        2.295278549194336,
+        2.285609245300293
+      ],
+      "pose_scope": "temporary evaluation only, source saved rest/current pose unchanged"
+    },
+    {
+      "label": "B",
+      "neck_world_pitch_delta_degrees": 12,
+      "head_world_pitch_delta_degrees": -4,
+      "spine_delta": 0,
+      "head_origin_world": [
+        -3.604475015174264e-15,
+        2.253133773803711,
+        2.379253387451172
+      ],
+      "pose_scope": "temporary evaluation only, source saved rest/current pose unchanged"
+    }
+  ],
+  "not_game_motion_validation": true
+}

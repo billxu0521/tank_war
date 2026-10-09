@@ -1,0 +1,513 @@
+{
+  "source_path": "blender/ninola/working/01Q1/2026-10-09-v002/ninola_01Q1_tail_taper.blend",
+  "source_sha256": "89feeb79f1849b590476715f1db34779d27e6dfa5d918e9ef68bc217280919ae",
+  "output_path": "blender/ninola/working/01R-spine/2026-10-09-v001/ninola_Q1_approved_spine_palette.blend",
+  "sha256": "5ea751f097f0332b26eaa8abaa21ea3610e7cea3d230a02451f81f98a537909b",
+  "object": "01Q1_Approved_Spine_Palette",
+  "geometry_exact": true,
+  "rig_edited": false,
+  "source_unchanged": true,
+  "status": "user_approved_spine_face_palette_only; Q1_geometry_preserved",
+  "material_assignments": [
+    {
+      "source_face": 6564,
+      "old": "d_spike",
+      "new": "d_spike_lit"
+    },
+    {
+      "source_face": 6567,
+      "old": "d_spike_lit",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6569,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6570,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6571,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6572,
+      "old": "d_spike",
+      "new": "d_spike_lit"
+    },
+    {
+      "source_face": 6574,
+      "old": "d_spike",
+      "new": "d_spike_lit"
+    },
+    {
+      "source_face": 6575,
+      "old": "d_spike_lit",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6576,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6577,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6578,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6579,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6580,
+      "old": "d_spike",
+      "new": "d_spike_lit"
+    },
+    {
+      "source_face": 6583,
+      "old": "d_spike_lit",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6585,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6586,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6587,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6588,
+      "old": "d_spike",
+      "new": "d_spike_lit"
+    },
+    {
+      "source_face": 6590,
+      "old": "d_spike",
+      "new": "d_spike_lit"
+    },
+    {
+      "source_face": 6591,
+      "old": "d_spike_lit",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6592,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6593,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6594,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6595,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6596,
+      "old": "d_spike",
+      "new": "d_spike_lit"
+    },
+    {
+      "source_face": 6599,
+      "old": "d_spike_lit",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6601,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6602,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6603,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6604,
+      "old": "d_spike",
+      "new": "d_spike_lit"
+    },
+    {
+      "source_face": 6606,
+      "old": "d_spike",
+      "new": "d_spike_lit"
+    },
+    {
+      "source_face": 6607,
+      "old": "d_spike_lit",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6608,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6609,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6610,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6611,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6612,
+      "old": "d_spike",
+      "new": "d_spike_lit"
+    },
+    {
+      "source_face": 6615,
+      "old": "d_spike_lit",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6616,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6617,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6618,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6619,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6620,
+      "old": "d_spike",
+      "new": "d_spike_lit"
+    },
+    {
+      "source_face": 6623,
+      "old": "d_spike_lit",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6624,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6625,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6626,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6627,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6628,
+      "old": "d_spike",
+      "new": "d_spike_lit"
+    },
+    {
+      "source_face": 6631,
+      "old": "d_spike_lit",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6632,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6633,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6634,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6635,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6636,
+      "old": "d_spike",
+      "new": "d_spike_lit"
+    },
+    {
+      "source_face": 6639,
+      "old": "d_spike_lit",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6640,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6641,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6642,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6643,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6644,
+      "old": "d_spike",
+      "new": "d_spike_lit"
+    },
+    {
+      "source_face": 6645,
+      "old": "d_spike",
+      "new": "d_spike_lit"
+    },
+    {
+      "source_face": 6646,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6647,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6649,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6650,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6651,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6653,
+      "old": "d_spike",
+      "new": "d_spike_lit"
+    },
+    {
+      "source_face": 6654,
+      "old": "d_spike",
+      "new": "d_spike_lit"
+    },
+    {
+      "source_face": 6655,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6656,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6657,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6658,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6659,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6660,
+      "old": "d_spike",
+      "new": "d_spike_lit"
+    },
+    {
+      "source_face": 6661,
+      "old": "d_spike",
+      "new": "d_spike_lit"
+    },
+    {
+      "source_face": 6662,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6663,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6665,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6666,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6667,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6669,
+      "old": "d_spike",
+      "new": "d_spike_lit"
+    },
+    {
+      "source_face": 6671,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6672,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6673,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6674,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6675,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6676,
+      "old": "d_spike",
+      "new": "d_spike_lit"
+    },
+    {
+      "source_face": 6677,
+      "old": "d_spike",
+      "new": "d_spike_lit"
+    },
+    {
+      "source_face": 6678,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6679,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6681,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6682,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6683,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6685,
+      "old": "d_spike",
+      "new": "d_spike_lit"
+    },
+    {
+      "source_face": 6687,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6688,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6689,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6690,
+      "old": "d_spike",
+      "new": "d_ridge"
+    },
+    {
+      "source_face": 6691,
+      "old": "d_spike",
+      "new": "d_ridge"
+    }
+  ]
+}

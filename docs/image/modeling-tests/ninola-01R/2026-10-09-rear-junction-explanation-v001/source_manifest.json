@@ -1,0 +1,26 @@
+{
+  "sources": [
+    {
+      "path": "/Users/ChenPo-Yun/Documents/GameDev/worktrees/ninola/docs/image/modeling-tests/ninola-01R/2026-10-09-pass-v003/baseline-captures/head_threequarter.png",
+      "sha256": "d69bf1581927e9bfef4397751378d99e94c236a51f00a1a0b403681c6124de66"
+    },
+    {
+      "path": "/Users/ChenPo-Yun/Documents/GameDev/worktrees/ninola/docs/image/modeling-tests/ninola-01R/2026-10-09-pass-v003/captures/head_threequarter.png",
+      "sha256": "96a266f887b963e650940fa3dfe4b8b5c11aedcedbedec428489699e5fb8779e"
+    }
+  ],
+  "crop_viewbox": [
+    350,
+    390,
+    230,
+    270
+  ],
+  "highlight_current_pixels": [
+    404,
+    463,
+    50,
+    131
+  ],
+  "annotation_method": "SVG overlay on unchanged original renders",
+  "model_edited": false
+}

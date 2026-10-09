@@ -1,0 +1,115 @@
+{
+  "recorded_pose_source": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/godot_pose_samples.json",
+  "new_game_input_test": false,
+  "new_GLb_export_test": false,
+  "source_rig_pose_restored_and_files_unchanged": true,
+  "overlap_count_changes": [
+    {
+      "sequence": "sweep",
+      "frame": 0,
+      "M8": 21,
+      "N1": 22
+    }
+  ],
+  "M8_sweep": [
+    {
+      "sequence": "sweep",
+      "frame": 0,
+      "jaw_parent_world_quat": [
+        0.0,
+        0.0,
+        4.44089209850063e-16,
+        1.0
+      ],
+      "jaw_head_soft_surface_triangle_overlaps": 21,
+      "note": "surface intersection flag, not tooth clearance nor closed-volume penetration certification"
+    },
+    {
+      "sequence": "sweep",
+      "frame": 1,
+      "jaw_parent_world_quat": [
+        -0.161785796284676,
+        -3.77123850448767e-17,
+        -4.56200669265056e-16,
+        0.986825883388519
+      ],
+      "jaw_head_soft_surface_triangle_overlaps": 0,
+      "note": "surface intersection flag, not tooth clearance nor closed-volume penetration certification"
+    },
+    {
+      "sequence": "sweep",
+      "frame": 2,
+      "jaw_parent_world_quat": [
+        -0.319308817386627,
+        -5.58079674578435e-16,
+        -1.12528602328442e-15,
+        0.947650671005249
+      ],
+      "jaw_head_soft_surface_triangle_overlaps": 0,
+      "note": "surface intersection flag, not tooth clearance nor closed-volume penetration certification"
+    },
+    {
+      "sequence": "sweep",
+      "frame": 3,
+      "jaw_parent_world_quat": [
+        -0.457338482141495,
+        -5.98024424881968e-16,
+        1.91826241310591e-16,
+        0.88929271697998
+      ],
+      "jaw_head_soft_surface_triangle_overlaps": 0,
+      "note": "surface intersection flag, not tooth clearance nor closed-volume penetration certification"
+    }
+  ],
+  "N1_sweep": [
+    {
+      "sequence": "sweep",
+      "frame": 0,
+      "jaw_parent_world_quat": [
+        0.0,
+        0.0,
+        4.44089209850063e-16,
+        1.0
+      ],
+      "jaw_head_soft_surface_triangle_overlaps": 22,
+      "note": "surface intersection flag, not tooth clearance nor closed-volume penetration certification"
+    },
+    {
+      "sequence": "sweep",
+      "frame": 1,
+      "jaw_parent_world_quat": [
+        -0.161785796284676,
+        -3.77123850448767e-17,
+        -4.56200669265056e-16,
+        0.986825883388519
+      ],
+      "jaw_head_soft_surface_triangle_overlaps": 0,
+      "note": "surface intersection flag, not tooth clearance nor closed-volume penetration certification"
+    },
+    {
+      "sequence": "sweep",
+      "frame": 2,
+      "jaw_parent_world_quat": [
+        -0.319308817386627,
+        -5.58079674578435e-16,
+        -1.12528602328442e-15,
+        0.947650671005249
+      ],
+      "jaw_head_soft_surface_triangle_overlaps": 0,
+      "note": "surface intersection flag, not tooth clearance nor closed-volume penetration certification"
+    },
+    {
+      "sequence": "sweep",
+      "frame": 3,
+      "jaw_parent_world_quat": [
+        -0.457338482141495,
+        -5.98024424881968e-16,
+        1.91826241310591e-16,
+        0.88929271697998
+      ],
+      "jaw_head_soft_surface_triangle_overlaps": 0,
+      "note": "surface intersection flag, not tooth clearance nor closed-volume penetration certification"
+    }
+  ],
+  "note": "Triangle intersection flags only; original protected mouth overlaps remain, not full collision or tooth clearance acceptance."
+}

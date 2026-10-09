@@ -1,0 +1,10 @@
+{
+  "source_hashes_match": {
+    "01M3": "53709e152c66e05a7c5d6224eae1b3f727f52cce839a7410e912c75bb2038de7",
+    "01M4": "6716d0d2389ed582479d92a6a68675b41832f0e48e84ff433fd16b11cbe93bcf",
+    "01J": "b8b7e5c11f9a7c6f80901086e3d03d609f6ec732a1d888b0fdd66a61eba613b3"
+  },
+  "model_edited": false,
+  "shared_3D_schematic_projection": true,
+  "not_mesh_or_deformation_validation": true
+}

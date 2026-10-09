@@ -1,0 +1,18 @@
+{
+  "01J": "HASH MATCH",
+  "01K6": "HASH MATCH",
+  "01L3": "HASH MATCH",
+  "01M1": "HASH MATCH",
+  "01M2": "HASH MATCH",
+  "01M3": "HASH MATCH",
+  "bite_comparison.gif": {
+    "frames": 36,
+    "milliseconds": 3000
+  },
+  "roar_comparison.gif": {
+    "frames": 24,
+    "milliseconds": 2000
+  },
+  "original_game_GLB_and_driver_unchanged": true,
+  "all_review_links_exist": true
+}

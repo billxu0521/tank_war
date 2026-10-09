@@ -1,0 +1,1373 @@
+{
+  "rest_mapping_max_error": 3.4570693969726562e-06,
+  "pose_replay_max_error": 2.3096799850463867e-06,
+  "bones": 45,
+  "rest_and_mesh_restored_exact": true,
+  "source_sha256_unchanged": "9e6f3b0e2647226cc296564cfef31f93c4337635df695de636885e379d5bf627",
+  "captures": {
+    "captures-reframed/M3/roar/000_side.png": {
+      "sequence": "roar",
+      "frame": 0,
+      "sample_label": "roar",
+      "time": 0.0,
+      "view": "side",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          2.5999999046325684
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/000_threequarter.png": {
+      "sequence": "roar",
+      "frame": 0,
+      "sample_label": "roar",
+      "time": 0.0,
+      "view": "threequarter",
+      "matrix": [
+        [
+          -0.7071067690849304,
+          0.14673484861850739,
+          -0.6917144656181335,
+          -13.83428955078125
+        ],
+        [
+          -0.7071067690849304,
+          -0.1467347890138626,
+          0.6917144656181335,
+          15.634289741516113
+        ],
+        [
+          4.7772601874385145e-08,
+          0.9782319664955139,
+          0.20751436054706573,
+          6.75028657913208
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/000_body.png": {
+      "sequence": "roar",
+      "frame": 0,
+      "sample_label": "roar",
+      "time": 0.0,
+      "view": "body",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          -0.8500000238418579
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 11.2,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/002_side.png": {
+      "sequence": "roar",
+      "frame": 2,
+      "sample_label": "roar",
+      "time": 0.0833333333333333,
+      "view": "side",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          2.5999999046325684
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/004_side.png": {
+      "sequence": "roar",
+      "frame": 4,
+      "sample_label": "roar",
+      "time": 0.166666666666667,
+      "view": "side",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          2.5999999046325684
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/006_side.png": {
+      "sequence": "roar",
+      "frame": 6,
+      "sample_label": "roar",
+      "time": 0.25,
+      "view": "side",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          2.5999999046325684
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/008_side.png": {
+      "sequence": "roar",
+      "frame": 8,
+      "sample_label": "roar",
+      "time": 0.333333333333333,
+      "view": "side",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          2.5999999046325684
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/010_side.png": {
+      "sequence": "roar",
+      "frame": 10,
+      "sample_label": "roar",
+      "time": 0.416666666666667,
+      "view": "side",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          2.5999999046325684
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/012_side.png": {
+      "sequence": "roar",
+      "frame": 12,
+      "sample_label": "roar",
+      "time": 0.5,
+      "view": "side",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          2.5999999046325684
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/014_side.png": {
+      "sequence": "roar",
+      "frame": 14,
+      "sample_label": "roar",
+      "time": 0.583333333333333,
+      "view": "side",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          2.5999999046325684
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/016_side.png": {
+      "sequence": "roar",
+      "frame": 16,
+      "sample_label": "roar",
+      "time": 0.666666666666667,
+      "view": "side",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          2.5999999046325684
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/018_side.png": {
+      "sequence": "roar",
+      "frame": 18,
+      "sample_label": "roar",
+      "time": 0.75,
+      "view": "side",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          2.5999999046325684
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/020_side.png": {
+      "sequence": "roar",
+      "frame": 20,
+      "sample_label": "roar",
+      "time": 0.833333333333333,
+      "view": "side",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          2.5999999046325684
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/020_threequarter.png": {
+      "sequence": "roar",
+      "frame": 20,
+      "sample_label": "roar",
+      "time": 0.833333333333333,
+      "view": "threequarter",
+      "matrix": [
+        [
+          -0.7071067690849304,
+          0.14673484861850739,
+          -0.6917144656181335,
+          -13.83428955078125
+        ],
+        [
+          -0.7071067690849304,
+          -0.1467347890138626,
+          0.6917144656181335,
+          15.634289741516113
+        ],
+        [
+          4.7772601874385145e-08,
+          0.9782319664955139,
+          0.20751436054706573,
+          6.75028657913208
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/022_side.png": {
+      "sequence": "roar",
+      "frame": 22,
+      "sample_label": "roar",
+      "time": 0.916666666666667,
+      "view": "side",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          2.5999999046325684
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/024_side.png": {
+      "sequence": "roar",
+      "frame": 24,
+      "sample_label": "roar",
+      "time": 1.0,
+      "view": "side",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          2.5999999046325684
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/026_side.png": {
+      "sequence": "roar",
+      "frame": 26,
+      "sample_label": "roar",
+      "time": 1.08333333333333,
+      "view": "side",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          2.5999999046325684
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/028_side.png": {
+      "sequence": "roar",
+      "frame": 28,
+      "sample_label": "roar",
+      "time": 1.16666666666667,
+      "view": "side",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          2.5999999046325684
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/028_threequarter.png": {
+      "sequence": "roar",
+      "frame": 28,
+      "sample_label": "roar",
+      "time": 1.16666666666667,
+      "view": "threequarter",
+      "matrix": [
+        [
+          -0.7071067690849304,
+          0.14673484861850739,
+          -0.6917144656181335,
+          -13.83428955078125
+        ],
+        [
+          -0.7071067690849304,
+          -0.1467347890138626,
+          0.6917144656181335,
+          15.634289741516113
+        ],
+        [
+          4.7772601874385145e-08,
+          0.9782319664955139,
+          0.20751436054706573,
+          6.75028657913208
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/028_body.png": {
+      "sequence": "roar",
+      "frame": 28,
+      "sample_label": "roar",
+      "time": 1.16666666666667,
+      "view": "body",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          -0.8500000238418579
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 11.2,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/030_side.png": {
+      "sequence": "roar",
+      "frame": 30,
+      "sample_label": "roar",
+      "time": 1.25,
+      "view": "side",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          2.5999999046325684
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/032_side.png": {
+      "sequence": "roar",
+      "frame": 32,
+      "sample_label": "roar",
+      "time": 1.33333333333333,
+      "view": "side",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          2.5999999046325684
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/034_side.png": {
+      "sequence": "roar",
+      "frame": 34,
+      "sample_label": "roar",
+      "time": 1.41666666666667,
+      "view": "side",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          2.5999999046325684
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/036_side.png": {
+      "sequence": "roar",
+      "frame": 36,
+      "sample_label": "roar",
+      "time": 1.5,
+      "view": "side",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          2.5999999046325684
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/038_side.png": {
+      "sequence": "roar",
+      "frame": 38,
+      "sample_label": "roar",
+      "time": 1.58333333333333,
+      "view": "side",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          2.5999999046325684
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/040_side.png": {
+      "sequence": "roar",
+      "frame": 40,
+      "sample_label": "roar",
+      "time": 1.66666666666667,
+      "view": "side",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          2.5999999046325684
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/042_side.png": {
+      "sequence": "roar",
+      "frame": 42,
+      "sample_label": "roar",
+      "time": 1.75,
+      "view": "side",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          2.5999999046325684
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/044_side.png": {
+      "sequence": "roar",
+      "frame": 44,
+      "sample_label": "roar",
+      "time": 1.83333333333333,
+      "view": "side",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          2.5999999046325684
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/046_side.png": {
+      "sequence": "roar",
+      "frame": 46,
+      "sample_label": "roar",
+      "time": 1.91666666666667,
+      "view": "side",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          2.5999999046325684
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/046_threequarter.png": {
+      "sequence": "roar",
+      "frame": 46,
+      "sample_label": "roar",
+      "time": 1.91666666666667,
+      "view": "threequarter",
+      "matrix": [
+        [
+          -0.7071067690849304,
+          0.14673484861850739,
+          -0.6917144656181335,
+          -13.83428955078125
+        ],
+        [
+          -0.7071067690849304,
+          -0.1467347890138626,
+          0.6917144656181335,
+          15.634289741516113
+        ],
+        [
+          4.7772601874385145e-08,
+          0.9782319664955139,
+          0.20751436054706573,
+          6.75028657913208
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 6.6,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    },
+    "captures-reframed/M3/roar/046_body.png": {
+      "sequence": "roar",
+      "frame": 46,
+      "sample_label": "roar",
+      "time": 1.91666666666667,
+      "view": "body",
+      "matrix": [
+        [
+          -4.371138828673793e-08,
+          -4.371138828673793e-08,
+          -1.0,
+          -20.0
+        ],
+        [
+          -1.0,
+          1.910685676922942e-15,
+          4.371138828673793e-08,
+          -0.8500000238418579
+        ],
+        [
+          0.0,
+          1.0,
+          -4.371138828673793e-08,
+          1.7999999523162842
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "scale": 11.2,
+      "resolution": [
+        900,
+        700
+      ],
+      "display_mask": "full model; evaluated skin from actual 45-bone rig",
+      "source": "actual Godot procedural pose; Blender replay with verified rest mapping"
+    }
+  },
+  "metrics": [
+    {
+      "sequence": "roar",
+      "frame": 0,
+      "jaw_head_soft_surface_triangle_overlaps": 1
+    },
+    {
+      "sequence": "roar",
+      "frame": 2,
+      "jaw_head_soft_surface_triangle_overlaps": 1
+    },
+    {
+      "sequence": "roar",
+      "frame": 4,
+      "jaw_head_soft_surface_triangle_overlaps": 1
+    },
+    {
+      "sequence": "roar",
+      "frame": 6,
+      "jaw_head_soft_surface_triangle_overlaps": 1
+    },
+    {
+      "sequence": "roar",
+      "frame": 8,
+      "jaw_head_soft_surface_triangle_overlaps": 0
+    },
+    {
+      "sequence": "roar",
+      "frame": 10,
+      "jaw_head_soft_surface_triangle_overlaps": 0
+    },
+    {
+      "sequence": "roar",
+      "frame": 12,
+      "jaw_head_soft_surface_triangle_overlaps": 0
+    },
+    {
+      "sequence": "roar",
+      "frame": 14,
+      "jaw_head_soft_surface_triangle_overlaps": 0
+    },
+    {
+      "sequence": "roar",
+      "frame": 16,
+      "jaw_head_soft_surface_triangle_overlaps": 0
+    },
+    {
+      "sequence": "roar",
+      "frame": 18,
+      "jaw_head_soft_surface_triangle_overlaps": 0
+    },
+    {
+      "sequence": "roar",
+      "frame": 20,
+      "jaw_head_soft_surface_triangle_overlaps": 0
+    },
+    {
+      "sequence": "roar",
+      "frame": 22,
+      "jaw_head_soft_surface_triangle_overlaps": 0
+    },
+    {
+      "sequence": "roar",
+      "frame": 24,
+      "jaw_head_soft_surface_triangle_overlaps": 0
+    },
+    {
+      "sequence": "roar",
+      "frame": 26,
+      "jaw_head_soft_surface_triangle_overlaps": 0
+    },
+    {
+      "sequence": "roar",
+      "frame": 28,
+      "jaw_head_soft_surface_triangle_overlaps": 0
+    },
+    {
+      "sequence": "roar",
+      "frame": 30,
+      "jaw_head_soft_surface_triangle_overlaps": 0
+    },
+    {
+      "sequence": "roar",
+      "frame": 32,
+      "jaw_head_soft_surface_triangle_overlaps": 0
+    },
+    {
+      "sequence": "roar",
+      "frame": 34,
+      "jaw_head_soft_surface_triangle_overlaps": 0
+    },
+    {
+      "sequence": "roar",
+      "frame": 36,
+      "jaw_head_soft_surface_triangle_overlaps": 0
+    },
+    {
+      "sequence": "roar",
+      "frame": 38,
+      "jaw_head_soft_surface_triangle_overlaps": 0
+    },
+    {
+      "sequence": "roar",
+      "frame": 40,
+      "jaw_head_soft_surface_triangle_overlaps": 0
+    },
+    {
+      "sequence": "roar",
+      "frame": 42,
+      "jaw_head_soft_surface_triangle_overlaps": 0
+    },
+    {
+      "sequence": "roar",
+      "frame": 44,
+      "jaw_head_soft_surface_triangle_overlaps": 0
+    },
+    {
+      "sequence": "roar",
+      "frame": 46,
+      "jaw_head_soft_surface_triangle_overlaps": 0
+    }
+  ],
+  "jaw_skin_face_count": 238,
+  "head_skin_face_count": 236
+}

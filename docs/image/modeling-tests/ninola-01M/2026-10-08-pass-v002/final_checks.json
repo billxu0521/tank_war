@@ -1,0 +1,11 @@
+{
+  "01J": "SHA-256 MATCH",
+  "01K6": "SHA-256 MATCH",
+  "01L3": "SHA-256 MATCH",
+  "01M1": "SHA-256 MATCH",
+  "01M2": "SHA-256 MATCH",
+  "formal_game_GLB_matches_original": true,
+  "actual_trex_driver_byte_exact": true,
+  "review_local_links_exist": true,
+  "existing_M1simutest_not_modified_by_this_pass": true
+}

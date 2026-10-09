@@ -1,0 +1,254 @@
+[
+  {
+    "archive_path": "assets/repository/docs/image/modeling-tests/ninola-global-mass-01J/2026-10-07-v004/ninola_global_mass_01J_approved.blend",
+    "local_path": "blender/ninola/checkpoints/01J/ninola_global_mass_01J_approved.blend"
+  },
+  {
+    "archive_path": "assets/repository/docs/image/modeling-tests/ninola-global-mass-01K6-pedal-mass-reconstruction/2026-10-08-v003/ninola_01K6_pedal_mass_reconstruction.blend",
+    "local_path": "blender/ninola/candidates/01K6/ninola_01K6_pedal_mass_reconstruction.blend"
+  },
+  {
+    "archive_path": "ASSET_MANIFEST.csv",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/ASSET_MANIFEST.csv"
+  },
+  {
+    "archive_path": "ASSET_MANIFEST.md",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/ASSET_MANIFEST.md"
+  },
+  {
+    "archive_path": "HANDOFF.md",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/HANDOFF.md"
+  },
+  {
+    "archive_path": "OPEN_ISSUES.md",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/OPEN_ISSUES.md"
+  },
+  {
+    "archive_path": "PASS_HISTORY.md",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/PASS_HISTORY.md"
+  },
+  {
+    "archive_path": "REOPEN_INSTRUCTIONS.md",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/REOPEN_INSTRUCTIONS.md"
+  },
+  {
+    "archive_path": "SHA256SUMS.txt",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/SHA256SUMS.txt"
+  },
+  {
+    "archive_path": "docs/key_assets.json",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/key_assets.json"
+  },
+  {
+    "archive_path": "docs/workflow-snapshot/WORKFLOW.md",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/WORKFLOW.md"
+  },
+  {
+    "archive_path": "docs/workflow-snapshot/history/audit-pedal-anatomy-v1/capture_settings.json",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/history/audit-pedal-anatomy-v1/capture_settings.json"
+  },
+  {
+    "archive_path": "docs/workflow-snapshot/history/audit-pedal-anatomy-v1/handoff_summary.md",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/history/audit-pedal-anatomy-v1/handoff_summary.md"
+  },
+  {
+    "archive_path": "docs/workflow-snapshot/history/audit-pedal-anatomy-v1/manifest.json",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/history/audit-pedal-anatomy-v1/manifest.json"
+  },
+  {
+    "archive_path": "docs/workflow-snapshot/history/audit-pedal-anatomy-v1/package_validation.json",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/history/audit-pedal-anatomy-v1/package_validation.json"
+  },
+  {
+    "archive_path": "docs/workflow-snapshot/history/audit-pedal-anatomy-v1/pedal_analysis.json",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/history/audit-pedal-anatomy-v1/pedal_analysis.json"
+  },
+  {
+    "archive_path": "docs/workflow-snapshot/history/audit-pedal-anatomy-v1/pedal_anatomy_audit_v1.md",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/history/audit-pedal-anatomy-v1/pedal_anatomy_audit_v1.md"
+  },
+  {
+    "archive_path": "docs/workflow-snapshot/history/audit-pedal-anatomy-v1/pedal_region_map_v2.json",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/history/audit-pedal-anatomy-v1/pedal_region_map_v2.json"
+  },
+  {
+    "archive_path": "docs/workflow-snapshot/history/audit-pedal-anatomy-v1/pedal_structure_summary.json",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/history/audit-pedal-anatomy-v1/pedal_structure_summary.json"
+  },
+  {
+    "archive_path": "docs/workflow-snapshot/history/audit-pedal-anatomy-v1/side_envelope_profile.json",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/history/audit-pedal-anatomy-v1/side_envelope_profile.json"
+  },
+  {
+    "archive_path": "docs/workflow-snapshot/history/audit-pedal-anatomy-v1/validation.json",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/history/audit-pedal-anatomy-v1/validation.json"
+  },
+  {
+    "archive_path": "docs/workflow-snapshot/history/audit-pedal-anatomy-v1/visible_region_anchors.json",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/history/audit-pedal-anatomy-v1/visible_region_anchors.json"
+  },
+  {
+    "archive_path": "docs/workflow-snapshot/revisit-register.md",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/revisit-register.md"
+  },
+  {
+    "archive_path": "references/README.md",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/README.md"
+  },
+  {
+    "archive_path": "references/extracted-views/concept_front.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/extracted-views/concept_front.png"
+  },
+  {
+    "archive_path": "references/extracted-views/concept_rear.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/extracted-views/concept_rear.png"
+  },
+  {
+    "archive_path": "references/extracted-views/concept_side.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/extracted-views/concept_side.png"
+  },
+  {
+    "archive_path": "references/original-concept/original_side.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/original-concept/original_side.png"
+  },
+  {
+    "archive_path": "references/original-concept/reference_1.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/original-concept/reference_1.png"
+  },
+  {
+    "archive_path": "references/original-concept/reference_2.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/original-concept/reference_2.png"
+  },
+  {
+    "archive_path": "references/original-concept/reference_3.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/original-concept/reference_3.png"
+  },
+  {
+    "archive_path": "references/original-concept/reference_4.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/original-concept/reference_4.png"
+  },
+  {
+    "archive_path": "references/original-concept/reference_5.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/original-concept/reference_5.png"
+  },
+  {
+    "archive_path": "references/original-user-concept/ChatGPT 圖像 2026年10月7日 上午07_27_39-3.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/original-user-concept/ChatGPT 圖像 2026年10月7日 上午07_27_39-3.png"
+  },
+  {
+    "archive_path": "references/original-user-concept/ChatGPT 圖像 2026年10月7日 上午07_27_41-4.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/original-user-concept/ChatGPT 圖像 2026年10月7日 上午07_27_41-4.png"
+  },
+  {
+    "archive_path": "references/user-annotations/download-10.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/user-annotations/download-10.png"
+  },
+  {
+    "archive_path": "references/user-annotations/download-13.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/user-annotations/download-13.png"
+  },
+  {
+    "archive_path": "references/user-annotations/download-15.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/user-annotations/download-15.png"
+  },
+  {
+    "archive_path": "reports/VALIDATION.md",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/reports/VALIDATION.md"
+  },
+  {
+    "archive_path": "reports/closeout_verification.json",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/reports/closeout_verification.json"
+  },
+  {
+    "archive_path": "review/01K7/ankle_pedal_threequarter_before_after.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/01K7/ankle_pedal_threequarter_before_after.png"
+  },
+  {
+    "archive_path": "review/01K7/concept_K6_K7_full_hindlimb_side.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/01K7/concept_K6_K7_full_hindlimb_side.png"
+  },
+  {
+    "archive_path": "review/01K7/concept_K6_K7_side_silhouette.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/01K7/concept_K6_K7_side_silhouette.png"
+  },
+  {
+    "archive_path": "review/context/audit-pedal-anatomy-v1/pedal_bottom_region_map.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/context/audit-pedal-anatomy-v1/pedal_bottom_region_map.png"
+  },
+  {
+    "archive_path": "review/context/audit-pedal-anatomy-v1/pedal_front_region_joint_overlay.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/context/audit-pedal-anatomy-v1/pedal_front_region_joint_overlay.png"
+  },
+  {
+    "archive_path": "review/context/audit-pedal-anatomy-v1/pedal_side_envelope_analysis.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/context/audit-pedal-anatomy-v1/pedal_side_envelope_analysis.png"
+  },
+  {
+    "archive_path": "review/context/audit-pedal-anatomy-v1/pedal_side_region_joint_overlay.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/context/audit-pedal-anatomy-v1/pedal_side_region_joint_overlay.png"
+  },
+  {
+    "archive_path": "review/context/audit-pedal-anatomy-v1/pedal_top_region_joint_overlay.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/context/audit-pedal-anatomy-v1/pedal_top_region_joint_overlay.png"
+  },
+  {
+    "archive_path": "review/context/audit-pedal-anatomy-v1/rear_digit_candidate_analysis.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/context/audit-pedal-anatomy-v1/rear_digit_candidate_analysis.png"
+  },
+  {
+    "archive_path": "review/context/audit-pedal-anatomy-v1/toe_claw_morphology_audit.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/context/audit-pedal-anatomy-v1/toe_claw_morphology_audit.png"
+  },
+  {
+    "archive_path": "review/key-captures/01K6/front_K6.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/key-captures/01K6/front_K6.png"
+  },
+  {
+    "archive_path": "review/key-captures/01K6/front_threequarter_closeup_K6.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/key-captures/01K6/front_threequarter_closeup_K6.png"
+  },
+  {
+    "archive_path": "review/key-captures/01K6/full_body_side_K6.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/key-captures/01K6/full_body_side_K6.png"
+  },
+  {
+    "archive_path": "review/key-captures/01K6/rear_K6.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/key-captures/01K6/rear_K6.png"
+  },
+  {
+    "archive_path": "review/key-captures/01K6/rear_threequarter_closeup_K6.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/key-captures/01K6/rear_threequarter_closeup_K6.png"
+  },
+  {
+    "archive_path": "review/key-captures/01K6/side_K6.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/key-captures/01K6/side_K6.png"
+  },
+  {
+    "archive_path": "review/key-captures/01K6/silhouette_K6.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/key-captures/01K6/silhouette_K6.png"
+  },
+  {
+    "archive_path": "review/key-captures/01K6/top_K6.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/key-captures/01K6/top_K6.png"
+  },
+  {
+    "archive_path": "review/region-map-v1/front_region_map.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/region-map-v1/front_region_map.png"
+  },
+  {
+    "archive_path": "review/region-map-v1/hind_limb_closeup_region_map.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/region-map-v1/hind_limb_closeup_region_map.png"
+  },
+  {
+    "archive_path": "review/region-map-v1/rear_region_map.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/region-map-v1/rear_region_map.png"
+  },
+  {
+    "archive_path": "review/region-map-v1/right_side_region_map.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/region-map-v1/right_side_region_map.png"
+  },
+  {
+    "archive_path": "review/region-map-v1/top_region_map.png",
+    "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/region-map-v1/top_region_map.png"
+  }
+]

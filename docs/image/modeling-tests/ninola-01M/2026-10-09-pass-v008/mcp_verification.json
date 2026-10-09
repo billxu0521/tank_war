@@ -1,0 +1,13 @@
+{
+  "temporary_only": true,
+  "original_scene_restored": true,
+  "original_active_restored": true,
+  "original_selection_restored": true,
+  "original_dirty_before": true,
+  "original_dirty_after": true,
+  "source_saved": false,
+  "observations": [
+    "spines visibly present, no new eye occlusion in inspected views",
+    "original head/mouth interfaces remain unresolved, not modified"
+  ]
+}

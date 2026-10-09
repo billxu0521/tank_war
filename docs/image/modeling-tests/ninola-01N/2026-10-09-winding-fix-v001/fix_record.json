@@ -1,0 +1,32 @@
+{
+  "source_path": "blender/ninola/working/01N1/2026-10-09-v003/ninola_01N1_jaw_volume_reconstruction.blend",
+  "source_sha256": "29c0ce14748c7953a071f5efe7635ec851816b6ffdef0cae041decb24138bb84",
+  "output_path": "blender/ninola/working/01N1/2026-10-09-v004/ninola_01N1_jaw_volume_reconstruction.blend",
+  "output_sha256": "aa6fe9e30596855215b3db8c93a8b9c4da12639cc8d9ce897f7f3e7b350a04a9",
+  "object": "01N1_Jaw_Volume_Reconstruction",
+  "changed_face_indices": [
+    6723,
+    6724,
+    6727,
+    6728,
+    6743,
+    6744,
+    6750,
+    6765,
+    6777,
+    6781,
+    6785,
+    6797
+  ],
+  "changed_face_count": 12,
+  "vertices": 11136,
+  "triangles": 6906,
+  "coords_weights_materials_matrix_exact": true,
+  "evaluated_world_coords_exact": true,
+  "Rig_Trex_keys_pose_exact": true,
+  "new_patch_inconsistent_winding_edges_before": 21,
+  "new_patch_inconsistent_winding_edges_after": 0,
+  "pipeline_check": "CHECK OK budget=None",
+  "scope": "12 face winding only, no geometry/style changes",
+  "production_integration": false
+}

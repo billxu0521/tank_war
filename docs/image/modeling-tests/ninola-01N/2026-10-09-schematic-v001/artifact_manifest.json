@@ -1,0 +1,68 @@
+{
+  "files": [
+    {
+      "path": "DESIGN.md",
+      "sha256": "17a51ef93b4e5d133befc88d436dafa2dd0a40c5d88d488357a696d5ed91f8e0"
+    },
+    {
+      "path": "INDEPENDENT_REVIEW.md",
+      "sha256": "c1af49624196e8ccafbd40b8c4bb437f924aef8f87cfc02fbc56b4267a4d1ab0"
+    },
+    {
+      "path": "build_schematic.py",
+      "sha256": "e88994ae897b6ab44ad6d58f85725a0bfc7b224beef50167c0ffec11e2f4b1c4"
+    },
+    {
+      "path": "concept_basis.png",
+      "sha256": "3097305671ad18db374051fd42703461ed9add8c4639dd76b03a6031375da437"
+    },
+    {
+      "path": "constraint_inspection.json",
+      "sha256": "941af939c094fd4549db0d9dce9e40519fdafc37e3763fabfac76cc432b9fbbf"
+    },
+    {
+      "path": "head_bottom_schematic.png",
+      "sha256": "6d1dfac04a43467f6094867be3e1d6bde1ae29d2da2c6abc12d995399b04068b"
+    },
+    {
+      "path": "head_front_color_schematic.png",
+      "sha256": "45b798e6b94dc9b003498b059705f07493f112b3175a5badc4f7e2433e381866"
+    },
+    {
+      "path": "head_side_color_schematic.png",
+      "sha256": "4eee084bb066b0811946de48e5cbca8398bf6ce17716b5b87c665e8355654577"
+    },
+    {
+      "path": "head_threequarter_color_schematic.png",
+      "sha256": "3b63489d2c9929c8e6d9ab71e8d69dd6d48a9e6fa38d86ba5ef7b0dee8d4eca5"
+    },
+    {
+      "path": "index.html",
+      "sha256": "6f413107e0c68ed96109c9e20c019a11dc9b0357ceff1b2bcf71fa7f9c6c01e8"
+    },
+    {
+      "path": "inspect_constraints.py",
+      "sha256": "b9125c563f8c1bf2c0efa0ffce8c466af1b58923eb81a2b0897bbd5ea59076f6"
+    },
+    {
+      "path": "reference_provenance.json",
+      "sha256": "da53c6644cb8e5098c0aa64aba6e9503d2940c31fa18e8e24a906b164ed4c40e"
+    },
+    {
+      "path": "references/user_annotated_jaw_concept.png",
+      "sha256": "3e35659bb9a34ff3fd8156dc3473d15ba0f4a69eb4bf9e694e6c0532d8a29475"
+    },
+    {
+      "path": "schematic_geometry.json",
+      "sha256": "2667436775eb05e5a00c3a1c84f2e33b66030638483f6e546d6a8334bb858191"
+    },
+    {
+      "path": "sections.png",
+      "sha256": "c471b7cbb898dc61085b817e416f71c38e11727aa644c0512aa701a147ed8ce7"
+    },
+    {
+      "path": "source_geometry.json",
+      "sha256": "96986493858c43e15f3c3233f4cbd2004147002428bf8323eb0fd513d05b2ccd"
+    }
+  ]
+}

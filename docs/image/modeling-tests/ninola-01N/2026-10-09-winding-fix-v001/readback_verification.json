@@ -1,0 +1,23 @@
+{
+  "saved_file_readback_pass": true,
+  "coordinates_weights_materials_Rig_Trex_keys_pose_exact": true,
+  "only_face_order_changed": [
+    6723,
+    6724,
+    6727,
+    6728,
+    6743,
+    6744,
+    6750,
+    6765,
+    6777,
+    6781,
+    6785,
+    6797
+  ],
+  "bones": 45,
+  "prototype_shape_keys": false,
+  "v003_sha256": "29c0ce14748c7953a071f5efe7635ec851816b6ffdef0cae041decb24138bb84",
+  "v004_sha256": "aa6fe9e30596855215b3db8c93a8b9c4da12639cc8d9ce897f7f3e7b350a04a9",
+  "production_integration": false
+}

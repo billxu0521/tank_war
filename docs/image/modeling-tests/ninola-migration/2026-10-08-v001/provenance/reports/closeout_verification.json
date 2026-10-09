@@ -1,0 +1,43 @@
+{
+  "archive_ready": "YES",
+  "decision": "01J production; 01K6 selected morphology candidate; 01K7 rejected experiment",
+  "workflow_paused": true,
+  "production_approved_values_verified": true,
+  "primary_rig_rest_pose_hierarchy_joint_data_identical": true,
+  "Blender": "5.2.2 LTS",
+  "models_reopened": 73,
+  "failed_reopens": [],
+  "primary_dependency_missing": [],
+  "external_dependencies_all_models": [],
+  "RVI_states": {
+    "RVI-001": "OPEN",
+    "RVI-002": "OPEN",
+    "RVI-003": "OPEN"
+  },
+  "unverified": [
+    "Actual different computer / OS open",
+    "Motion / animation / production-ready weight deformation",
+    "Collision-free status / full bone containment",
+    "Historical builder scripts reexecution on destination",
+    "Original concept generation prompts/seeds"
+  ],
+  "missing_required_assets": [],
+  "caveats": [
+    "K6 viewport includes overlapping historical meshes; isolate named candidate",
+    "Prototype shape keys not migrated; retained Trex has original approved keys",
+    "Historical reports/scripts contain original-machine paths; use portable active key index",
+    "Git HEAD alone does not include untracked morphology assets"
+  ],
+  "original_source_files_compared_SHA256": 1258,
+  "copied_source_checksum_match": true,
+  "all_original_ninola_tree_files_metadata_unchanged": true,
+  "original_tree_file_count": 3492,
+  "PNG_decoding_verified": 134,
+  "JSON_syntax_verified": true,
+  "current_review_zip_unchanged": "size and mtime match initial tree snapshot; file never opened for writing",
+  "Git_HEAD_branch_worktree_preserved": true,
+  "common_camera_comparisons_verified": true,
+  "no_source_files_modified": true,
+  "no_blend_save": true,
+  "no_symbolic_links": true
+}

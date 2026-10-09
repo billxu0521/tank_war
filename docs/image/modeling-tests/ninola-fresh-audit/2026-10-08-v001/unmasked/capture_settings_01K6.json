@@ -1,0 +1,82 @@
+{
+  "front_threequarter_closeup": {
+    "model": "01K6",
+    "object": "01K6_Pedal_Segment_Mass_Reconstruction",
+    "matrix": [
+      [
+        -0.7071067690849304,
+        0.16987472772598267,
+        -0.6863982677459717,
+        -4.5672173500061035
+      ],
+      [
+        -0.7071067690849304,
+        -0.16987471282482147,
+        0.6863982677459717,
+        4.867217540740967
+      ],
+      [
+        9.654121946311989e-09,
+        0.97071373462677,
+        0.24023914337158203,
+        2.0985260009765625
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 2.9,
+    "camera_type": "PERSP",
+    "lens": 70.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 5158,
+    "display_mask": "full model"
+  },
+  "rear_threequarter_closeup": {
+    "model": "01K6",
+    "object": "01K6_Pedal_Segment_Mass_Reconstruction",
+    "matrix": [
+      [
+        0.7071067690849304,
+        0.16987493634223938,
+        -0.6863982081413269,
+        -4.5672173500061035
+      ],
+      [
+        -0.7071067690849304,
+        0.1698746681213379,
+        -0.6863982677459717,
+        -4.26721715927124
+      ],
+      [
+        -1.889349476869029e-07,
+        0.97071373462677,
+        0.24023926258087158,
+        2.0985260009765625
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 2.9,
+    "camera_type": "PERSP",
+    "lens": 70.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 5158,
+    "display_mask": "full model"
+  }
+}

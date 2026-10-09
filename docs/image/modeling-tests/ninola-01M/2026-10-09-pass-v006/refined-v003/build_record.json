@@ -1,0 +1,120 @@
+{
+  "base_path": "blender/ninola/working/01M3/2026-10-09-v006/ninola_01M3_concept_head_reconstruction.blend",
+  "base_sha256": "53709e152c66e05a7c5d6224eae1b3f727f52cce839a7410e912c75bb2038de7",
+  "output_path": "blender/ninola/working/01M6/2026-10-09-v003/ninola_01M6_whole_cranial_blockout.blend",
+  "output_sha256": "15d83983ce7ae29dd6ca91a9da2608794fbb4adbea5661c838ea340c870766a1",
+  "object": "01M6_Whole_Cranial_Blockout",
+  "vertices": 11065,
+  "triangles": 6994,
+  "moved_source_vertices": 0,
+  "added_vertices": 504,
+  "new_faces": 638,
+  "removed_eye_patch_faces": 34,
+  "spines": [],
+  "eyes": [
+    {
+      "side": -1,
+      "source_patch_faces": [
+        6101,
+        6102,
+        6103,
+        6104,
+        6105,
+        6128,
+        6129,
+        6130,
+        6131,
+        6132,
+        6133,
+        6155,
+        6156,
+        6157,
+        6158,
+        6159,
+        6160
+      ],
+      "sphere_center": [
+        -0.34215596318244934,
+        2.9800000190734863,
+        2.434999942779541
+      ],
+      "sphere_radius": 0.054,
+      "gaze_target": [
+        0.0,
+        10.550000190734863,
+        2.434999942779541
+      ],
+      "gaze_axis": [
+        0.04515283927321434,
+        0.9989801049232483,
+        0.0
+      ],
+      "opening_normal": [
+        -0.5599966049194336,
+        0.8284949064254761,
+        0.0
+      ],
+      "opening_radii": [
+        0.066,
+        0.043
+      ],
+      "bone": "head"
+    },
+    {
+      "side": 1,
+      "source_patch_faces": [
+        6088,
+        6089,
+        6090,
+        6091,
+        6092,
+        6116,
+        6117,
+        6118,
+        6119,
+        6120,
+        6121,
+        6145,
+        6146,
+        6147,
+        6148,
+        6149,
+        6150
+      ],
+      "sphere_center": [
+        0.34215596318244934,
+        2.9800000190734863,
+        2.434999942779541
+      ],
+      "sphere_radius": 0.054,
+      "gaze_target": [
+        0.0,
+        10.550000190734863,
+        2.434999942779541
+      ],
+      "gaze_axis": [
+        -0.04515283927321434,
+        0.9989801049232483,
+        0.0
+      ],
+      "opening_normal": [
+        0.5599966049194336,
+        0.8284949064254761,
+        0.0
+      ],
+      "opening_radii": [
+        0.066,
+        0.043
+      ],
+      "bone": "head"
+    }
+  ],
+  "Rig_Trex_keys_pose_exact": true,
+  "outside_mask_rest_coords_exact": true,
+  "source_weights_exact": true,
+  "construction": "longitudinal structural section grid with local eye transition; preserved original boundary",
+  "new_faces_near_degenerate": [],
+  "inverse_bind_error": 5.331201499700045e-07,
+  "pipeline_check": "CHECK OK budget=None",
+  "status": "pending_visual_review"
+}

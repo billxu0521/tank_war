@@ -1,0 +1,32 @@
+{
+  "saved_file_readback": true,
+  "source_hash_unchanged": true,
+  "non_eye_geometry_material_weights_smoothing_exact": true,
+  "Rig_Trex_keys_pose_exact": true,
+  "bones": 45,
+  "eyes": [
+    {
+      "side": -1,
+      "measured_forward_angle_degrees": 20.00001137101689,
+      "axis_error": 4.4167678287711265e-06,
+      "radius_error": 4.6533987276692335e-07,
+      "closed_edges_two_faces": true,
+      "minimum_triangle_area": 8.732172896980787e-06,
+      "all_outward": true,
+      "head_weight_1": true
+    },
+    {
+      "side": 1,
+      "measured_forward_angle_degrees": 20.00001137101689,
+      "axis_error": 4.4167678287711265e-06,
+      "radius_error": 4.0985553862588064e-07,
+      "closed_edges_two_faces": true,
+      "minimum_triangle_area": 8.732173222905465e-06,
+      "all_outward": true,
+      "head_weight_1": true
+    }
+  ],
+  "no_external_image_texture_added": true,
+  "desktop_MCP": "unavailable: Broken pipe / Not connected",
+  "game_PBR_validation": false
+}

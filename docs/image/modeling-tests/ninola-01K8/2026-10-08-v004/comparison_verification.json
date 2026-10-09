@@ -1,0 +1,42 @@
+{
+  "side": {
+    "camera_matrix_same": true,
+    "scale_same": true,
+    "mask_same": true
+  },
+  "silhouette": {
+    "camera_matrix_same": true,
+    "scale_same": true,
+    "mask_same": true
+  },
+  "full_body_side": {
+    "camera_matrix_same": true,
+    "scale_same": true,
+    "mask_same": true
+  },
+  "front": {
+    "camera_matrix_same": true,
+    "scale_same": true,
+    "mask_same": true
+  },
+  "rear": {
+    "camera_matrix_same": true,
+    "scale_same": true,
+    "mask_same": true
+  },
+  "top": {
+    "camera_matrix_same": true,
+    "scale_same": true,
+    "mask_same": true
+  },
+  "front_threequarter_closeup": {
+    "camera_matrix_same": true,
+    "scale_same": true,
+    "mask_same": true
+  },
+  "rear_threequarter_closeup": {
+    "camera_matrix_same": true,
+    "scale_same": true,
+    "mask_same": true
+  }
+}

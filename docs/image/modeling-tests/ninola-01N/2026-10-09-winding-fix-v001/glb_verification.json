@@ -1,0 +1,15 @@
+{
+  "glb_binary_readable": true,
+  "exported_triangles": 6906,
+  "bone_count": 45,
+  "names_hierarchy_transforms_inverse_bind_exact": true,
+  "unordered_triangle_positions_and_material_names_match_5_decimals": true,
+  "position_influence_signatures_match_5_decimals": true,
+  "geometry_weight_signature_comparison_decimals": 5,
+  "material_signature_scope": "names only",
+  "all_positions_normals_finite": true,
+  "weight_sum_max_error": 1.398148015141487e-07,
+  "v003_glb_sha256": "5efc335092aca773ec66e362ebdc1ae4b195214f9707e812eda7f194cc6031c3",
+  "v004_glb_sha256": "240b91115b24788014d6d52568886618907d825ef36c6ff76c60ecfc8e7d84fa",
+  "production_integration": false
+}

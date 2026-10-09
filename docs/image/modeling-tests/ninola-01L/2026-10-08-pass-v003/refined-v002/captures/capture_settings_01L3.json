@@ -1,0 +1,322 @@
+{
+  "foot_side": {
+    "model": "01L3",
+    "object": "01L3_Three_Toe_Volume_Reconstruction",
+    "matrix": [
+      [
+        -4.371138828673793e-08,
+        -4.371138828673793e-08,
+        -1.0,
+        -20.649999618530273
+      ],
+      [
+        -1.0,
+        1.910685676922942e-15,
+        4.371138828673793e-08,
+        0.44999998807907104
+      ],
+      [
+        0.0,
+        1.0,
+        -4.371138828673793e-08,
+        0.25
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 2.1,
+    "camera_type": "ORTHO",
+    "lens": 50.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 1498,
+    "display_mask": "Same-sided leg faces |X|>.35, Z<.70 for foot views (1.35 for leg); Side shows X<0 leg. Upper cut edges are display artifacts; not model modification."
+  },
+  "foot_silhouette": {
+    "model": "01L3",
+    "object": "01L3_Three_Toe_Volume_Reconstruction",
+    "matrix": [
+      [
+        -4.371138828673793e-08,
+        -4.371138828673793e-08,
+        -1.0,
+        -20.649999618530273
+      ],
+      [
+        -1.0,
+        1.910685676922942e-15,
+        4.371138828673793e-08,
+        0.44999998807907104
+      ],
+      [
+        0.0,
+        1.0,
+        -4.371138828673793e-08,
+        0.25
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 2.1,
+    "camera_type": "ORTHO",
+    "lens": 50.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 1498,
+    "display_mask": "Same-sided leg faces |X|>.35, Z<.70 for foot views (1.35 for leg); Side shows X<0 leg. Upper cut edges are display artifacts; not model modification."
+  },
+  "foot_front": {
+    "model": "01L3",
+    "object": "01L3_Three_Toe_Volume_Reconstruction",
+    "matrix": [
+      [
+        -1.0,
+        -1.509957598955225e-07,
+        1.5099581673894136e-07,
+        0.0
+      ],
+      [
+        1.5099580252808664e-07,
+        1.6292069915380125e-07,
+        1.0,
+        20.360000610351562
+      ],
+      [
+        -1.5099578831723193e-07,
+        1.0,
+        -1.6292068494294654e-07,
+        0.2199999988079071
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 2.35,
+    "camera_type": "ORTHO",
+    "lens": 50.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 2976,
+    "display_mask": "Same-sided leg faces |X|>.35, Z<.70 for foot views (1.35 for leg); Side shows X<0 leg. Upper cut edges are display artifacts; not model modification."
+  },
+  "foot_rear": {
+    "model": "01L3",
+    "object": "01L3_Three_Toe_Volume_Reconstruction",
+    "matrix": [
+      [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        -1.6292068494294654e-07,
+        -1.0,
+        -19.639999389648438
+      ],
+      [
+        0.0,
+        1.0,
+        -1.6292068494294654e-07,
+        0.2199999988079071
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 2.35,
+    "camera_type": "ORTHO",
+    "lens": 50.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 2976,
+    "display_mask": "Same-sided leg faces |X|>.35, Z<.70 for foot views (1.35 for leg); Side shows X<0 leg. Upper cut edges are display artifacts; not model modification."
+  },
+  "foot_top": {
+    "model": "01L3",
+    "object": "01L3_Three_Toe_Volume_Reconstruction",
+    "matrix": [
+      [
+        -1.0,
+        -1.5099580252808664e-07,
+        0.0,
+        0.0
+      ],
+      [
+        1.5099580252808664e-07,
+        -1.0,
+        0.0,
+        0.36000001430511475
+      ],
+      [
+        0.0,
+        0.0,
+        1.0,
+        20.219999313354492
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 2.35,
+    "camera_type": "ORTHO",
+    "lens": 50.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 2976,
+    "display_mask": "Same-sided leg faces |X|>.35, Z<.70 for foot views (1.35 for leg); Side shows X<0 leg. Upper cut edges are display artifacts; not model modification."
+  },
+  "foot_front_threequarter": {
+    "model": "01L3",
+    "object": "01L3_Three_Toe_Volume_Reconstruction",
+    "matrix": [
+      [
+        -0.7071067690849304,
+        0.33129456639289856,
+        -0.6246950626373291,
+        -3.1583242416381836
+      ],
+      [
+        -0.7071067690849304,
+        -0.33129459619522095,
+        0.6246950626373291,
+        2.8683242797851562
+      ],
+      [
+        -3.422321981361165e-08,
+        0.8834521770477295,
+        0.4685212969779968,
+        2.101243257522583
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 1.75,
+    "camera_type": "PERSP",
+    "lens": 70.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 6308,
+    "display_mask": "full model"
+  },
+  "foot_rear_threequarter": {
+    "model": "01L3",
+    "object": "01L3_Three_Toe_Volume_Reconstruction",
+    "matrix": [
+      [
+        0.7071066498756409,
+        0.29530200362205505,
+        -0.6424927711486816,
+        -3.2297863960266113
+      ],
+      [
+        -0.7071069478988647,
+        0.2953018248081207,
+        -0.6424925327301025,
+        -2.2197861671447754
+      ],
+      [
+        -4.125905661567231e-08,
+        0.9086217880249023,
+        0.4176199734210968,
+        1.8968610763549805
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 1.75,
+    "camera_type": "PERSP",
+    "lens": 70.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 6308,
+    "display_mask": "full model"
+  },
+  "full_body_side": {
+    "model": "01L3",
+    "object": "01L3_Three_Toe_Volume_Reconstruction",
+    "matrix": [
+      [
+        -4.371138828673793e-08,
+        -4.371138828673793e-08,
+        -1.0,
+        -20.0
+      ],
+      [
+        -1.0,
+        1.910685676922942e-15,
+        4.371138828673793e-08,
+        -0.9526101350784302
+      ],
+      [
+        0.0,
+        1.0,
+        -4.371138828673793e-08,
+        1.6843751668930054
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 10.552172889709473,
+    "camera_type": "ORTHO",
+    "lens": 70.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 6308,
+    "display_mask": "full model"
+  }
+}

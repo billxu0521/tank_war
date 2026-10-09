@@ -1,0 +1,29 @@
+{
+  "source_files": [
+    {
+      "source": "/Users/ChenPo-Yun/Documents/GameDev/worktrees/ninola/viewer.gd",
+      "sha256": "ee562fda3565247df747888ac29a069ad8a0be0be5f783f15f29bc7a4cf5edfa"
+    },
+    {
+      "source": "/Users/ChenPo-Yun/Documents/GameDev/worktrees/ninola/trex.gd",
+      "sha256": "2421f15edcdfad584470cf2239d822e916e6fbeefa14edf6cd4c96ac55c55cb8"
+    },
+    {
+      "source": "/Users/ChenPo-Yun/Documents/GameDev/worktrees/ninola/fx.gd",
+      "sha256": "040aa9af3da36adeb0cb440b59bafd260ddef3d0825bd0b2b9eb6d42c6c27136"
+    },
+    {
+      "source": "/Users/ChenPo-Yun/Documents/GameDev/worktrees/ninola/facet.gdshader",
+      "sha256": "8154911f5422037452d858797648b273ceb1d79e94b8332485889e8266480617"
+    }
+  ],
+  "evaluation_glb_sha256": "3569eeb2b68bf1c33c4ade619513fb68fa6ad4f8560907db5d8e8fd16dc9efe1",
+  "asset": "01R2 v005",
+  "isolated_changes": [
+    "Trex MODEL path only",
+    "viewer starts dinosaur paused",
+    "standalone original ModelViewer scene with Chinese SystemFont",
+    "own test project and user config"
+  ],
+  "formal_model_changed": false
+}

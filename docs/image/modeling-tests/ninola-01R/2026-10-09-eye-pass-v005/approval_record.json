@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-09",
+  "user_instruction": "決行此版",
+  "approved_asset": "01R2 v005",
+  "path": "blender/ninola/working/01R2/2026-10-09-v005/ninola_01R2_gold_slit_eye.blend",
+  "sha256": "363eb15913ff2b7ee528a67163aa86805126e56a64514e07001cddc0ff305929",
+  "role": "approved_working_checkpoint_prototype",
+  "scope": "gold slit-pupil eyes, lateral installation rotated forward 30 degrees total",
+  "production_integration": false,
+  "game_PBR_dynamic_validation": false,
+  "previous_checkpoint_retained": "01R1 v011"
+}

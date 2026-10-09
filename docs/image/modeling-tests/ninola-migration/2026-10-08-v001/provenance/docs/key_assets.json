@@ -1,0 +1,32 @@
+{
+  "01J": {
+    "source_repo_path": "docs/image/modeling-tests/ninola-global-mass-01J/2026-10-07-v004/ninola_global_mass_01J_approved.blend",
+    "archive_path": "assets/repository/docs/image/modeling-tests/ninola-global-mass-01J/2026-10-07-v004/ninola_global_mass_01J_approved.blend",
+    "object": "Trex",
+    "sha256": "b8b7e5c11f9a7c6f80901086e3d03d609f6ec732a1d888b0fdd66a61eba613b3"
+  },
+  "01K6": {
+    "source_repo_path": "docs/image/modeling-tests/ninola-global-mass-01K6-pedal-mass-reconstruction/2026-10-08-v003/ninola_01K6_pedal_mass_reconstruction.blend",
+    "archive_path": "assets/repository/docs/image/modeling-tests/ninola-global-mass-01K6-pedal-mass-reconstruction/2026-10-08-v003/ninola_01K6_pedal_mass_reconstruction.blend",
+    "object": "01K6_Pedal_Segment_Mass_Reconstruction",
+    "sha256": "6be6642d8ed8cb2b48a31bd2649cf94457be6073daa59ac6653197dd222f18ca"
+  },
+  "01K7": {
+    "source_repo_path": "docs/image/modeling-tests/ninola-global-mass-01K7-anatomical-integration/2026-10-08-v006/ninola_01K7_anatomical_integration.blend",
+    "archive_path": "assets/repository/docs/image/modeling-tests/ninola-global-mass-01K7-anatomical-integration/2026-10-08-v006/ninola_01K7_anatomical_integration.blend",
+    "object": "01K7_Anatomical_Transition_Integration",
+    "sha256": "3bd8a3b4132b4418868a40b341175c7ac0f7687f9785c3e8b5341c4a5685947d"
+  },
+  "01K4_A": {
+    "source_repo_path": "docs/image/modeling-tests/ninola-global-mass-01K4-blockout/2026-10-08-v003/A/ninola_01K4_A_blockout.blend",
+    "archive_path": "assets/repository/docs/image/modeling-tests/ninola-global-mass-01K4-blockout/2026-10-08-v003/A/ninola_01K4_A_blockout.blend",
+    "object": "Ninola_01K4_A",
+    "sha256": "710e3ed2fe4b848734dbf4a3fbf82853a95281bfa3f0356abc2c1f2620be17a7"
+  },
+  "01K5": {
+    "source_repo_path": "docs/image/modeling-tests/ninola-global-mass-01K5-multiview-revision/2026-10-08-v002/ninola_01K5_multiview_morphology_revision.blend",
+    "archive_path": "assets/repository/docs/image/modeling-tests/ninola-global-mass-01K5-multiview-revision/2026-10-08-v002/ninola_01K5_multiview_morphology_revision.blend",
+    "object": "01K5_MultiView_Morphology_Revision",
+    "sha256": "1ec7633ace3e05e98c244f1af689883dcb00e1b24af9b568d3fbfd2165a1fb34"
+  }
+}

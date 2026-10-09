@@ -1,0 +1,68 @@
+{
+  "source": "blender/ninola/working/01M8/2026-10-09-v001/ninola_01M8_cranial_identity.blend",
+  "sha256": "85c4698b0dbccc116257c73bf23219ac347507e4167881cc994ba0d5390d9d40",
+  "object": "01M8_Cranial_Identity",
+  "bones": 45,
+  "prototype_has_shape_keys": false,
+  "jaw_bone": {
+    "head_world": [
+      3.5435068541803203e-15,
+      2.1563267707824707,
+      1.836735486984253
+    ],
+    "tail_world": [
+      2.9523896653458562e-15,
+      2.5458576679229736,
+      1.8055788278579712
+    ],
+    "pose_basis": [
+      [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        1.0,
+        0.0,
+        -1.478938003174335e-07
+      ],
+      [
+        0.0,
+        0.0,
+        1.0,
+        -2.688389031391125e-07
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ]
+  },
+  "candidate_skin_materials": [
+    "d_tan",
+    "d_belly"
+  ],
+  "candidate_jaw1_skin_vertex_count": 609,
+  "candidate_skin_face_count": 203,
+  "candidate_skin_bounds_xyz": [
+    [
+      -0.49986183643341064,
+      0.5121413469314575
+    ],
+    [
+      2.0086429119110107,
+      3.3791277408599854
+    ],
+    [
+      1.3881900310516357,
+      1.8844811916351318
+    ]
+  ],
+  "mask_is_not_authorized_edit_mask": true,
+  "source_unchanged": true,
+  "bones_mesh_pose_modified": false
+}

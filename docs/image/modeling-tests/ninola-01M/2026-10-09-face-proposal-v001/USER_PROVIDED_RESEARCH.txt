@@ -1,0 +1,562 @@
+## Ninola 頭部重塑：眼神、眼眶與吻部的設計研究
+
+我對照了你提供的 Concept 標註、01M.4 的造型比較及目前上色模型，也查閱了獸腳類頭骨、視野與眼眶構造的相關研究。
+
+我的主要判斷是：
+
+**現在 Ninola 的問題，不只是眼睛沒有看向前方，而是眼睛、眉骨、鼻樑及吻部沒有共同構成一張具有明確視覺重心的掠食者面孔。**
+
+如果只把瞳孔轉向前方，或把眼睛改成細長的凶眼，很可能會產生另一張奇怪的臉。
+
+我建議把這次修正定位成 **Craniofacial Mass & Gaze Reconstruction（頭面部量體與視線重建）**，而不是單純的 Eye Shape Fix。
+
+### 一、從 Concept 與目前模型看到的差異
+
+| 區域 | Concept 的特徵 | 目前模型的問題 | 優先度 |
+|---|---|---|---|
+| 眼神 | 小而銳利，視線明確，藏於厚重眼眶中 | 眼睛像貼在頭側的細小裝飾，缺乏注視感 | 極高 |
+| 眼眶 | 眉骨、前眼眶與顴部形成完整立體結構 | 眼球周圍缺乏足夠清楚的凹凸層次 | 極高 |
+| 眉骨 | 厚重、向眼球施加遮蔽，帶有壓迫感 | 沒有充分利用上眼眶控制神情 | 高 |
+| 鼻樑 | 從兩眼之間延伸至吻端，有可辨識的中央量體 | 鼻樑與吻部混成大片連續斜面 | 高 |
+| 吻端 | 寬厚、具有立體轉折，與上顎形成整體 | 太方正、太平，缺少鼻背至上顎的結構變化 | 高 |
+| 鼻孔 | 應是吻部結構的一部分，而非孤立裝飾 | 目前圖像中辨識度不足 | 中 |
+
+從你第二張上色模型尤其明顯：現在的 Ninola 有厚重的頭顱、牙齒與骨刺，但臉部缺少能讓觀者感受到「牠正在盯著某個目標」的視覺關係。
+
+這也是為什麼它雖然已具有怪獸的外部特徵，表情卻沒有 Concept 那種威嚴。
+
+### 二、首先需要修正的觀念：眼睛朝前，不等於兩眼必須正面朝前
+
+古生物研究對這件事有直接參考價值。
+
+Stevens（2006）研究不同獸腳類的雙眼視野，估計暴龍等部分虛骨龍類具有約 **45°–60° 的雙眼視野重疊**；其他獸腳類則可能只有約 20°。這意味著某些大型獸腳類即使眼睛位於頭部兩側，也能具有相當可觀的前方立體視覺。:chatgpt-content-reference{index="0"}
+
+美國自然史博物館對暴龍頭骨的解說，也強調了牠的眼睛位置與前方重疊視野的關係。:chatgpt-content-reference{index="1"}
+
+因此，我不建議為 Ninola 做以下事情：
+
+- 將兩顆眼球直接移到臉部正前方。
+- 讓兩個眼眶像人類或貓頭鷹一樣正面排列。
+- 只為了產生凶狠感，把眼睛壓成極細的一條線。
+
+**更適合 Ninola 的方向，是保留大型獸腳類偏側向的眼眶配置，但讓瞳孔、眼球可視面及前眼眶形態共同支持向前注視。**
+
+這樣才能保留 Concept 的動物性，而不是把它改成人類式的憤怒表情。
+
+### 三、研究後，我認為最重要的是眼眶，而不是眼球本身
+
+獸腳類頭骨研究提供了一個適合 Ninola 的方向：**眼睛周圍的骨性結構，可以成為整張臉的主要造型支架。**
+
+例如，暴龍類具有相當發達的淚骨（Lacrimal）及眶後骨（Postorbital）區域；部分物種的眼眶上緣還具有明顯的骨性隆起、稜脊或角狀結構。這些結構的位置與形態，能提供我們設計厚重眉骨的解剖依據。:chatgpt-content-reference{index="2"}
+
+但要區分：**骨骼研究支持這些部位的構造與位置，不代表古生物學已經證明牠們會呈現某種「憤怒表情」。** 以下的神情設計，是我依照 Ninola Concept 所做的藝術轉譯。
+
+#### 1. 重建眼眶的三層構造
+
+我希望 Codex 將眼睛重新整理為三個層次：
+
+**第一層：厚重的上眼眶／眉骨（Brow Hood）**
+
+這應該是最重要的部分。
+
+讓眉骨從前眼眶的鼻側開始，向眼球上方延伸，再自然接入後方顱部。
+
+眉骨應形成真正的三維遮蔽，讓眼睛藏在它下面，而不只是眼球上方多一條凸線。
+
+**第二層：內凹的眼窩（Orbital Recess）**
+
+目前模型的眼睛看起來太貼近頭骨表面。
+
+建議在眼球周圍建立有厚度的眼眶，讓眼球稍微內嵌。上緣明確，下緣則相對柔和，與臉頰量體連接。
+
+這能使眼睛成為頭部的一部分，而不是另外安裝的裝飾物。
+
+**第三層：可辨識視線方向的眼球**
+
+Concept 的眼睛本身並不大。
+
+因此我不主張把 Ninola 的眼睛大幅放大。
+
+反而應該保持小型、深嵌、清楚的虹膜與瞳孔，再讓兩眼的注視方向具有共同焦點。
+
+我會希望呈現：
+
+**厚重眉骨下的一雙掠食者眼睛，正安靜地注視前方。**
+
+不是誇張的憤怒表情，也不是眼睛瞪大的狂暴表情。
+
+#### 2. 眼神如何真正產生焦點？
+
+目前模型有一個必須先查明的技術問題：
+
+**它究竟是瞳孔方向不正確，還是眼球所在的眼眶本身使它無法有效朝前注視？**
+
+這兩者的解決方式不同。
+
+| 問題來源 | 修正方向 |
+|---|---|
+| 虹膜／瞳孔朝向不一致 | 調整視線，使雙眼指向共同前方目標 |
+| 眼球朝向合理，但被吻部遮住 | 修改前眼眶及鼻樑附近的外部量體 |
+| 眼睛過度平貼表面 | 重建眼球、眼窩與眼瞼的深度關係 |
+| 眼睛過細或形狀不規則 | 重新設計眼瞼開口，而非直接放大眼球 |
+| 眉骨無法形成陰影 | 重建上眼眶遮蔽與周圍三維結構 |
+
+我尤其建議 Codex 做一個測試：
+
+**在頭部正前方設置共同的 Gaze Target，觀察左右眼的可見瞳孔是否能自然指向它。**
+
+這不是要求兩顆眼球永久向內鬥雞眼，而是讓我們確認：
+
+當 Ninola 準備注視正前方的獵物時，現在的眼球與眼眶配置能不能實現。
+
+可以使用暫時的視線參考物進行測試，但不需要新增或修改正式 Rig Bones。
+
+如果只是瞳孔位置不合理，就先處理眼球。
+
+如果眼眶不允許這種視線成立，才進一步調整周圍的外部頭骨形態。
+
+---
+
+### 四、鼻樑與吻部：我認為這是另一個主要造型問題
+
+這部分需要與眼睛一起修改，而不是留到最後才處理。
+
+你的 Concept 並不是簡單的長方形暴龍頭。
+
+從 Front、Side 與 Top 的組合來看，它具有三個相互連接的量體：
+
+**中央鼻背 → 兩側吻部／上顎 → 後方眼眶與顱部。**
+
+目前 01M.4 模型的吻部則偏向一整塊大型、平坦、前端截斷的幾何量體。
+
+它雖然厚重，卻缺少 Concept 中的結構轉折。
+
+#### 1. 中央鼻樑應有自己的量體
+
+你的 Front 標註中，綠線所強調的中央區域，以及 Top 標註的中線附近，讓我認為我們應該更重視鼻背的三維起伏。
+
+但這些手繪線不是校準後的解剖界線，不應直接當成精確骨骼位置。
+
+從暴龍類頭骨研究來看，鼻骨具有隆起、收束及表面粗糙度的變化；頭骨也不是從眼眶到吻端的一張單純平板。:chatgpt-content-reference{index="3"}
+
+對 Ninola，我建議：
+
+從雙眼前方開始建立有厚度的中央鼻背，使其向吻端延伸，並逐漸與左右上顎量體融合。
+
+這不應做成一條尖銳的鳥喙式隆脊。
+
+我希望它更接近：
+
+**中央寬厚的骨性隆起，兩側逐漸轉入上顎與吻部。**
+
+#### 2. 鼻樑與眼眶應該相互影響
+
+這是非常關鍵的一點。
+
+如果眉骨做得很兇，但鼻樑仍是完全獨立的平面，最後就會得到一雙「貼了憤怒眉毛的恐龍眼睛」。
+
+反過來，如果我們重新建立：
+
+**鼻背 → 前眼眶隆起 → 上眼眶遮蔽**
+
+之間的連續體積，就能讓凶狠感來自整體頭骨，而不是人類表情符號。
+
+#### 3. 吻端不應只靠縮小或削尖解決
+
+我不建議直接把目前方正的吻端縮窄。
+
+Concept 的吻部依然寬厚，具有很強的咬合力量感。
+
+因此應優先調整它的**截面形狀**：
+
+- 上方保留中央鼻背量體。
+- 左右具有明確的斜面轉折。
+- 前端保留寬厚感，但減少完全垂直、平整的截斷感。
+- 上顎兩側形成自然的體積擴張，與眼眶下方銜接。
+
+鼻孔也是如此。暴龍類的外鼻孔位於吻端前部的背側至側背側結構，其周圍涉及前上頜骨及鼻骨。這可以作為 Ninola 鼻孔位置與周圍量體的參考，但不需要機械式複製化石開口。:chatgpt-content-reference{index="4"}
+
+目前我會先確認鼻孔的實際位置與形態，再決定是否需要重建。
+
+---
+
+## 五、我會怎麼安排下一輪修改？
+
+**我的建議不是立刻開始雕刻新眉毛，而是先做一次頭部的三維構造診斷，再直接進行較大幅度的頭面部 Blockout。**
+
+這也符合我們在 01K 階段確立的新工作原則。
+
+先明確找出：
+
+1. 眼球與視線本身是否有問題。
+2. 眼眶是否缺乏足夠的立體支架。
+3. 鼻背與吻部的量體是否造成眼睛無法有效朝前。
+4. 目前 01M.3 已接受的主頭型，哪些部分應保留、哪些部分仍可改進。
+
+最後一點尤其重要。
+
+你提供的比較圖標示 **M3 已接受主頭型，M4 正在處理鼻背、眉眶與棘刺**。
+
+因此我們應該保留 M3 已接受的頭部整體比例、下顎結構與主要特徵，但不應因為已選定主頭型，就禁止重新分布眉骨、鼻樑和吻端的局部量體。
+
+### 我建議製作兩種有明確差異的方向
+
+| 方案 | 主要設計方向 | 想確認的事情 |
+|---|---|---|
+| **A：Anatomical Predator** | 強化可信的眼眶與鼻骨量體，眉骨厚重但不過度誇張 | 是否不必大幅改造頭型，就能建立自然的掠食者威嚴 |
+| **B：Concept-Forward** | 更積極重建前眼眶、鼻樑、吻部截面與上眼眶遮蔽 | 能否更明顯重現 Concept 中的凶狠與壓迫感 |
+
+這次不要只是 A 有 10% 眉骨、B 有 20% 眉骨。
+
+兩個方案應該有不同的**頭面部量體組織方式**。
+
+我會傾向先讓 Codex 提出這兩種完整方向，經你同意後再實作。
+
+而且兩版都必須在無色 Clay Render 下成立，不能依賴眼睛顏色、陰影或貼圖來掩蓋形體問題。
+
+---
+
+## 六、給 Codex 的研究與修改提案指令
+
+這份指令是提供給你現在負責 Ninola 建模的 Codex 視窗。
+
+**請將本次的兩張圖片一起附給 Codex。**
+
+現階段先讓它進行 Inspection 和 Proposal，不直接修改模型。
+
+```text
+# Ninola Head / Face
+# Craniofacial Mass & Gaze Reconstruction
+# Research-based Morphology Proposal
+
+## 0. Task
+
+目前 Ninola 正在進行頭部造型調整。
+
+本次要研究並規劃三項相互關聯的問題：
+
+1. Eye Gaze 缺乏前方注視感
+2. Eye / Orbital Shape 不自然
+3. Nasal Bridge / Snout Mass 不符合 Concept
+
+最終視覺目標：
+
+建立具有大型獸腳類生物可信度，
+且更接近原始 Concept 的凶狠、威嚴、
+冷靜而具壓迫感的掠食者頭部。
+
+本次先做：
+
+Inspect → Analyze → Proposal
+
+完成提案後等待使用者批准。
+
+不要立即修改模型。
+
+## 1. Current References
+
+使用本次附上的：
+
+- concept_comparison.png
+- head_threequarter_color_01M4.png
+
+並重新讀取 Worktree 內現有的：
+- Ninola Concept References
+- Current State
+- Design Constraints
+- Current Head Morphology Pass Records
+
+確認目前真正的工作模型、
+01M.3 主頭型核准狀態，以及 01M.4 的修改內容。
+
+不要僅依圖片標題推定全部技術狀態。
+
+Concept 圖上的紅、綠、藍線為使用者
+理解面部輪廓與量體的輔助標註。
+
+這些線條不是精確的 Bone Trace，
+也不是要求逐像素描繪的輪廓。
+
+先對照 Front / Side / Top，
+建立各線條可能對應的三維結構，
+並指出仍有歧義的部分。
+
+## 2. Hard Constraints
+
+現階段不得修改：
+
+- Armature
+- Bone Positions
+- Joint Centers
+- Bone Lengths
+- Bone Hierarchy
+- Rest Pose
+
+保留使用者已接受的主頭型比例。
+
+下顎與現有 Jaw Structure 原則上保持不動。
+
+不得擅自修改張嘴姿態、下顎骨架
+或牙齒整體配置。
+
+可提議修改上顎與眼眶周圍的外部 Mesh，
+但需先明確定義修改範圍。
+
+Production Assets 保全。
+
+## 3. Diagnostic A：Eyes and Gaze
+
+檢查：
+
+- 左右眼球實際中心
+- 左右眼球朝向
+- Iris / Pupil 實際位置與方向
+- Eye Opening Shape
+- Upper / Lower Orbital Rim
+- 眼球與眼眶的深度關係
+- 眼球是否被鼻樑、眉骨或面部遮蔽
+- 從 Front / 3-Quarter 是否能辨識瞳孔
+
+請在頭部正前方建立暫時的
+Common Gaze Target 作為診斷。
+
+檢查目前左右眼的可見瞳孔
+能否自然支持前方注視。
+
+不要求將眼睛改成人類式正面配置。
+
+優先保留可信的 Theropod Eye Placement。
+
+如果問題只在 Iris / Pupil Orientation，
+應指出最小必要修改。
+
+如果眼眶形態本身不允許視線成立，
+應提出 Orbital Reconstruction 方案。
+
+## 4. Diagnostic B：Orbital Morphology
+
+評估：
+
+- Brow Hood
+- Lacrimal / Preorbital Region
+- Upper Orbital Rim
+- Lower Orbital Transition
+- Eye Recess
+- Postorbital Mass
+- Orbit-to-Cheek Transition
+
+希望建立：
+
+thick cranial brow
+→ recessed eye
+→ focused pupil
+→ continuous facial mass
+
+避免：
+
+- Human angry eyebrows
+- Cartoon squint
+- Surface-mounted decorative eyeballs
+- Uniform circular eye socket
+- Excessively large iris
+- Eye fully hidden by brow
+
+眉骨應具有真正三維體積，
+不能只是貼在眼睛上方的裝飾稜線。
+
+## 5. Diagnostic C：Nasal / Snout Morphology
+
+從 Front / Side / Top 同時比較：
+
+- Nasal Dorsal Vault
+- Central Nasal Ridge / Bridge
+- Lateral Snout Planes
+- Preorbital-to-Nasal Transition
+- Snout Cross-section
+- Muzzle Width Distribution
+- Premaxillary Region
+- Naris Placement
+- Maxillary Mass
+
+特別評估目前吻端是否：
+
+- 過度方正
+- 過於平坦
+- 缺少中央鼻背量體
+- 與兩側上顎缺少清楚結構轉折
+- 與眼眶的量體銜接不自然
+
+目標不是直接削尖鼻子，
+而是重建可信的骨性與軟組織量體。
+
+保留大型生物的吻部厚度及咬合力量感。
+
+## 6. Anatomy Principles
+
+參考大型獸腳類的：
+
+- Lacrimal and Postorbital Structures
+- Orbital Position
+- Nasal Bones
+- Snout Cross-sectional Morphology
+- Binocular Vision
+- Skull Mass Distribution
+
+可以參考：
+
+Kent A. Stevens (2006)
+Binocular vision in theropod dinosaurs
+
+以及 Tyrannosaurid Cranial Anatomy 相關研究。
+
+但請區分：
+
+Anatomical Evidence
+與
+Artistic Interpretation。
+
+Ninola 不是嚴格古生物復原模型。
+
+目標是可信的 Theropod-inspired Creature，
+而非照搬單一物種的頭骨。
+
+## 7. Proposal Variants
+
+請提出兩個明確不同的方向。
+
+### A. Anatomical Predator
+
+以可信的眼眶、鼻背、
+吻部與視線結構為主。
+
+著重：
+
+- 眼球自然朝向
+- 厚重眉骨
+- 內凹眼窩
+- 自然鼻背
+- 生物性量體連續
+
+### B. Concept-Forward
+
+更積極逼近 Concept 的兇狠與威嚴。
+
+允許：
+
+- 更明確的 Brow Hood
+- 更具方向性的眼眶
+- 更立體的鼻樑
+- 更積極的 Snout Plane Redistribution
+
+但不得破壞既有主頭型比例，
+也不得修改 Bones / Rig。
+
+兩版不可只有微小數值差異。
+
+## 8. Suggested Review Views
+
+提出後續實作時需要的比較圖。
+
+至少包括：
+
+- Front Neutral
+- Front Roar
+- Side Neutral
+- Side Roar
+- Front 3/4
+- Top
+- Eye Close-up
+- Nasal / Snout Close-up
+
+必須包含：
+
+Clay / Neutral Material
+以及
+Current Color Material
+
+不依賴上色來掩蓋造型問題。
+
+各版本比較需使用一致的
+Camera / Pose / Scale / Lighting。
+
+Concept 未校準，不進行強制 Warp。
+
+## 9. Proposal Output
+
+請先回報：
+
+A. Current Model Diagnosis
+
+眼神、眼眶、鼻樑與吻部
+各自的問題是什麼。
+
+B. Structural Causes
+
+哪些問題可能來自眼球方向，
+哪些來自 Orbital / Cranial Morphology。
+
+C. Proposed A / B Directions
+
+清楚說明預期的三維形態變化。
+
+D. Edit Scope
+
+哪些 Mesh / Objects 可以修改，
+哪些必須保護。
+
+E. Risks
+
+包含：
+
+- Gaze / Eye Occlusion
+- Unnatural Eyebrow
+- Loss of Snout Mass
+- Multi-view Collapse
+- Rig Compatibility
+- Jaw Interference
+
+F. Expected Review
+
+提出能真正檢驗
+「Focused / Threatening / Majestic」
+的比較方式。
+
+完成後停止。
+
+等待使用者批准，
+再執行 Morphology Blockout。
+```
+
+---
+
+## 七、我會怎麼判斷修改是否成功？
+
+這次我不會只看眼睛是否變得更細，或鼻樑是否更接近你畫的紅線。
+
+我希望最終通過三個測試。
+
+**測試一：拿掉眼球顏色，只看頭骨外部形態。**
+
+如果眼眶、鼻樑與吻部已建立良好的量體關係，即使沒有黃色虹膜，也應該呈現沉重、危險的掠食者頭部。
+
+**測試二：保留眼球顏色，但去掉多餘的表情裝飾。**
+
+眼睛應能在正面和 3/4 視角提供清楚的注視方向，而不是只能在 Side 看起來漂亮。
+
+**測試三：把頭部放回完整 Ninola。**
+
+從普通遊戲鏡頭距離觀察，牠應該依然具有辨識度與威嚴，而不是只有放大特寫才能看到眉骨與瞳孔。
+
+### 我的設計傾向
+
+對 Ninola，我不希望我們做出一張永遠在「生氣」的臉。
+
+**我更希望牠有一張不需要表現憤怒，就已經讓人感受到危險的臉。**
+
+這符合你之前確立的目標：以壓迫與恐懼為主，而不是依賴噁心、異形化或過度誇張的表情。
+
+因此我的優先順序會是：
+
+**眼眶立體結構 → 視線焦點 → 鼻背與吻部的連續量體 → 最後才是小型表情細節。**
+
+這次讓 Codex 先做結構診斷、提出兩個完整方向，會比直接讓它放大眼球、加粗眉毛、縮窄鼻子，更有機會一次接近 Concept 的真正特徵。

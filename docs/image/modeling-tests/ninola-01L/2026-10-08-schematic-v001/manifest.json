@@ -1,0 +1,49 @@
+{
+  "base": "01K6 v003",
+  "base_sha256": "6be6642d8ed8cb2b48a31bd2649cf94457be6073daa59ac6653197dd222f18ca",
+  "source_capture": "docs/image/modeling-tests/ninola-01L/2026-10-08-review-v001/captures/foot_top_01K6.png",
+  "method": "read-only Blender projection of actual pose bones/claw tips/ground anchor samples; deterministic SVG overlays; PNG rendered by local sharp SVG renderer",
+  "planned_contours": "illustrative paths, not modified mesh or validated edit mask",
+  "model_changes": false,
+  "unchanged_models": [
+    {
+      "asset": "01J",
+      "sha256": "b8b7e5c11f9a7c6f80901086e3d03d609f6ec732a1d888b0fdd66a61eba613b3",
+      "unchanged": true
+    },
+    {
+      "asset": "01K6",
+      "sha256": "6be6642d8ed8cb2b48a31bd2649cf94457be6073daa59ac6653197dd222f18ca",
+      "unchanged": true
+    },
+    {
+      "asset": "01K8",
+      "sha256": "d157deaadc78216d39f8265340c7e742416742391899a602c3fc685875d778f9",
+      "unchanged": true
+    },
+    {
+      "asset": "01L1",
+      "sha256": "7e4792bf471dd6a76b4e44a7ed983e70bc036723b28f266577b4727df48fefd7",
+      "unchanged": true
+    },
+    {
+      "asset": "01L2",
+      "sha256": "ba36ca8176957bd8dea0d9fa5d68ec7c719297c2897a0b00c800eef2a46ca2f2",
+      "unchanged": true
+    }
+  ],
+  "outputs": [
+    {
+      "path": "docs/image/modeling-tests/ninola-01L/2026-10-08-schematic-v001/toe_rebuild_scope.svg",
+      "sha256": "3a156fcd29bc629a9ccfc3c1412294c8ee34c7651f26551382d4f083b042882a"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01L/2026-10-08-schematic-v001/toe_rebuild_scope.png",
+      "sha256": "47a63841329c17827a0b58fcb07f1e039f81224548edf4a5b6f44f9f96a54cc2"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01L/2026-10-08-schematic-v001/landmarks.json",
+      "sha256": "1c0f4130a6eb1e2b4636f8b88bca2d72ca6e4331ac2c381dcded69d1280b7f5e"
+    }
+  ]
+}

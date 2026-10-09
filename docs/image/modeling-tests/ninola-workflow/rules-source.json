@@ -1,0 +1,13 @@
+{
+  "source_path": "/Users/ChenPo-Yun/Documents/Codex/2026-10-06/https-github-com-billxu0521-tank-war/tank_war/AGENTS.md",
+  "source_sha256": "1dc15ec751f28a94bfde06d37166465af45826bbe3facdb44b9f167fbd632a87",
+  "synced_on": "2026-10-08",
+  "priority": "original_rules_first_with_explicit_user_2026_10_08_exceptions",
+  "local_path": "AGENTS.md",
+  "commit_allowed": false,
+  "worktree_location": "confirmed_with_project_owner_by_user",
+  "pending_reconfirmation": [
+    "Production integration and full original pipeline acceptance remain separately authorized"
+  ],
+  "current_stage": "01M6_design_package_complete_pending_blockout_approval"
+}

@@ -1,0 +1,49 @@
+{
+  "base_path": "blender/ninola/working/01M1/2026-10-08-v002/ninola_01M1_jaw_mass_blockout.blend",
+  "base_sha256": "97b38435343c4312e16f5bf3f81e3ee892158f1ce201a1716f75ba43c1e96674",
+  "output_path": "blender/ninola/working/01M2/2026-10-08-v001/ninola_01M2_head_identity_blockout.blend",
+  "output_sha256": "e270858ef2bc18e6a68b68ace8846a27b869e042404121a00c54de23aad9cb95",
+  "object": "01M2_Head_Identity_Blockout",
+  "original_vertices": 10444,
+  "vertices": 10552,
+  "triangles": 6380,
+  "changed_original_vertices": 1139,
+  "added_vertices": 108,
+  "removed_eye_faces": 104,
+  "socket_records": [
+    {
+      "side": -1,
+      "replaced_source_face": 2217,
+      "center_yz": [
+        2.9800000000000004,
+        2.6193530608799653
+      ],
+      "radius_yz": [
+        0.08748,
+        0.056700000000000014
+      ],
+      "weight": "head 1.0",
+      "actual_recess_depth": 0.05
+    },
+    {
+      "side": 1,
+      "replaced_source_face": 1210,
+      "center_yz": [
+        2.98,
+        2.625720658365023
+      ],
+      "radius_yz": [
+        0.08748,
+        0.056700000000000014
+      ],
+      "weight": "head 1.0",
+      "actual_recess_depth": 0.05
+    }
+  ],
+  "inverse_bind_error": 7.539457464619588e-07,
+  "Rig_Trex_keys_pose_exact": true,
+  "outside_mask_rest_coords_exact": true,
+  "teeth_tongue_inner_mouth_exact": true,
+  "pipeline_check": "CHECK OK budget=None",
+  "status": "pending_visual_review"
+}

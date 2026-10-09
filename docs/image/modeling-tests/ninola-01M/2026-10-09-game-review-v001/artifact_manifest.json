@@ -1,0 +1,64 @@
+{
+  "files": [
+    {
+      "path": "COVERAGE_AND_NEXT.md",
+      "sha256": "0c9a4ce499dc3db42b756c41596cd211a01ad9e4f7f74283ab3d31c2db5469eb"
+    },
+    {
+      "path": "INDEPENDENT_REVIEW.md",
+      "sha256": "6978f3271d6b519273e9033412b03c61512f7e67d27f292083e80129f5fc83b3"
+    },
+    {
+      "path": "REPRODUCE.md",
+      "sha256": "776ad9d0479f3770effcc9255c2e8171deeafdc68e39fcf53d3ae09422184dda"
+    },
+    {
+      "path": "RESULT.md",
+      "sha256": "50ab5d6bb4e42a0123cc0914f27e1b072f1b0f260fa7ae5ee98ef7a17ef0568c"
+    },
+    {
+      "path": "index.html",
+      "sha256": "864057049e66560c2840ddcccfcaab5bb5501464aea2dbb47abd514509642011"
+    },
+    {
+      "path": "initialization-trial/live_01_view1.png",
+      "sha256": "e762cbc35f351aa0a638b1e759ffcddfc130e9eb0e00075ed1fd250c63e96bcc"
+    },
+    {
+      "path": "input_test_summary.json",
+      "sha256": "6c830b3964a802cd9d009ea547ba7cbbbfa402f856d2618ecb219900597a3ff9"
+    },
+    {
+      "path": "live_01_view1.png",
+      "sha256": "3d5afb65a505fb5c308d4cd783444fb100fc164b97e202e06754f74c099978f9"
+    },
+    {
+      "path": "live_02_view1.png",
+      "sha256": "0b90a53c2507892c3a2619d8fd33472ae9d97354d285c57eaa48708cdbfbe567"
+    },
+    {
+      "path": "live_03_view2.png",
+      "sha256": "fcb4c7b87fe409f503000dcb7d59de51c28497d9808c2d95a64a37a563fe9af4"
+    },
+    {
+      "path": "setup_game_review.py",
+      "sha256": "aea663e9c0e1b3d648197d20abaf078aa6b67351d83e7542e52df87e4aa2db9a"
+    },
+    {
+      "path": "source_integrity.json",
+      "sha256": "cad8b578475cf8758a2a7507e5eb56199bf914676d82c7dcd03751e3f88ee16c"
+    },
+    {
+      "path": "source_manifest.json",
+      "sha256": "ef0dcc40f9ccf9b0c6e8ad478a5a633b843b8e3600a591b20ce0705cef61e14d"
+    },
+    {
+      "path": "telemetry_snapshot.json",
+      "sha256": "ac8a45a1e55ec4a7f7f48552c54680f3931fea02bb3642856824496f5380daf2"
+    },
+    {
+      "path": "test-support/review_probe.gd",
+      "sha256": "df1757190969b1a4b9c58e05efbc9ed5e4ae71b504e6b7f5b2fd5d42dbe4bdb8"
+    }
+  ]
+}

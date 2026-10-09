@@ -1,0 +1,51 @@
+[
+  {
+    "version": "v001",
+    "path": "blender/ninola/working/01M5B/2026-10-09-v001/ninola_01M5B_face_mass_gaze.blend",
+    "sha256": "f408bcc2a90a167addfe2ca7fdab85a8b9ae696272872a36011fc9497b1eb1e6",
+    "reason": "露球過多，正面偏瞪眼",
+    "role": "unadopted_trial"
+  },
+  {
+    "version": "v002",
+    "path": "blender/ninola/working/01M5B/2026-10-09-v002/ninola_01M5B_face_mass_gaze.blend",
+    "sha256": "29658a46efa0633e7206fbcdd3b7797029d1f7d1a8483bbed2ea2014e074521f",
+    "reason": "獨立審查否決：放射長三角眶區／驚訝感",
+    "role": "unadopted_trial"
+  },
+  {
+    "version": "v003",
+    "path": "blender/ninola/working/01M5B/2026-10-09-v003/ninola_01M5B_face_mass_gaze.blend",
+    "sha256": "24dc72becccb92d3ae1f0df40df6a3fb69a3283ecd4c2da8249149adc06d7a5a",
+    "reason": "對應環過渡仍有尖折",
+    "role": "unadopted_trial"
+  },
+  {
+    "version": "v004",
+    "path": "blender/ninola/working/01M5B/2026-10-09-v004/ninola_01M5B_face_mass_gaze.blend",
+    "sha256": "5125daa583d9e98c1d7755fc3d1d05e2a65ff73cb139e0e6831a0c3744343937",
+    "reason": "星芒減少但球面成為側面裝飾，眉遮不足",
+    "role": "unadopted_trial"
+  },
+  {
+    "version": "v005",
+    "path": "blender/ninola/working/01M5B/2026-10-09-v005/ninola_01M5B_face_mass_gaze.blend",
+    "sha256": "24e231efc147af9024a37a85c6d9c229cfd3d5042d74bb020b027349d5a8a715",
+    "reason": "更深眼位導致虹膜被遮",
+    "role": "unadopted_trial"
+  },
+  {
+    "version": "v006",
+    "path": "blender/ninola/working/01M5B/2026-10-09-v006/ninola_01M5B_face_mass_gaze.blend",
+    "sha256": "ecb06cd6403cf7b4ce14c736e2f56a2c5c8e4a64f7558c44d7dc45f0520f8948",
+    "reason": "後移眼位仍未解決可讀性",
+    "role": "unadopted_trial"
+  },
+  {
+    "version": "v007",
+    "path": "blender/ninola/working/01M5B/2026-10-09-v007/ninola_01M5B_face_mass_gaze.blend",
+    "sha256": "8bbd3030004528102b176204cdd2da0fb5c88b5edee326d2bc3356c114f08e4a",
+    "reason": "最終討論試作：眼眶未達B，整版不承接",
+    "role": "unadopted_trial"
+  }
+]

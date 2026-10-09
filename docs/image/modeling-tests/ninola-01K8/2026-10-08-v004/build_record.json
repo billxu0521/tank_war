@@ -1,0 +1,22 @@
+{
+  "base_sha256": "6be6642d8ed8cb2b48a31bd2649cf94457be6073daa59ac6653197dd222f18ca",
+  "output_path": "blender/ninola/working/01K8/2026-10-08-v004/ninola_01K8_hock_mass_continuity.blend",
+  "object": "01K8_Hock_Mass_Continuity",
+  "vertices": 10054,
+  "triangles": 5410,
+  "removed_faces": 492,
+  "new_faces": 744,
+  "new_vertices": 288,
+  "original_vertex_positions_max_displacement": 0.0,
+  "protected_max_displacement": 0.0,
+  "rig_Trex_keys_weights_geometry_exact": true,
+  "topology_changed": true,
+  "weight_method": "provisional source boundary weight interpolation on new shell only; retained weights exact",
+  "inverse_binding_error": 1.5269146510898468e-07,
+  "new_shell_near_degenerate": 0,
+  "new_shell_edge_winding_conflicts": 0,
+  "status": "pending_user_review",
+  "unused_old_transition_vertices_retained_for_provenance": true,
+  "reopen_locked_data_exact": true,
+  "output_sha256": "d157deaadc78216d39f8265340c7e742416742391899a602c3fc685875d778f9"
+}
