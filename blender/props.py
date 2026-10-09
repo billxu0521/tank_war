@@ -320,27 +320,46 @@ for k in range(4):
     cone(r, 0.05, 2.8, (0, 0, 3.2 + k * 1.5), (0, 0, k * 0.4), 10, m=PINE)
 pine = finish('TreePine', bevel=0.0, seg=1)
 
-# 灌木叢：九團壓扁的葉團疊成一叢，約 2.2 寬、1.5 高——站著露出頭、蹲下整個藏住。
-# 沒有碰撞（跟 Hunt 一樣只擋視線、不擋子彈，人也走得進去）
-BUSH_DARK = mat('p_bush', (0.058, 0.068, 0.016), 0.9)
-for (x, y, z, r, sz, m) in ((0, 0, 0.75, 0.80, 0.85, LEAF1), (0.65, 0.25, 0.55, 0.62, 0.8, LEAF2),
-                            (-0.60, 0.30, 0.58, 0.65, 0.8, BUSH_DARK), (0.15, -0.60, 0.52, 0.60, 0.8, LEAF2),
-                            (-0.25, 0.65, 0.50, 0.55, 0.8, LEAF1), (0.55, -0.35, 0.95, 0.48, 0.9, LEAF1),
-                            (-0.45, -0.40, 0.90, 0.50, 0.9, BUSH_DARK), (0.10, 0.20, 1.15, 0.50, 0.85, LEAF2),
-                            (0.85, 0.55, 0.35, 0.42, 0.75, BUSH_DARK)):
-    o = sphere(r, (x, y, z), 9, 6, m=m)
-    o.scale = (1.0, 1.0, sz)
+# 灌木叢：十九團葉子疊成一叢，約 2.2 寬、1.5 高——站著露出頭、蹲下整個藏住。
+# 沒有碰撞（跟 Hunt 一樣只擋視線、不擋子彈，人也走得進去）。
+# 葉子用樹的做法（tree.py 的 core／on_core）：每團一顆暗色的芯，表面撒葉片卡（透明底的一簇葉子圖，往外翻開），
+# 輪廓是一片片葉子的鋸齒。以前是一團團純色的球（使用者 2026-10-09：一個色塊，改成跟樹葉一樣）
 import random
+from tree import core as _core, on_core as _on_core, card_material as _card_material, apply_card_normals as _card_normals
+BUSH_DARK = mat('p_bush', (0.13, 0.15, 0.03), 0.9)   # 芯：接近葉子的中間色（樹的芯也是）；太暗的話卡片之間看進去是一顆顆黑石頭
+BUSH_CARD = _card_material('p_bush_leafcard', 'leaf_oak.png')   # 名字有 leafcard：main.gd 換成會隨風擺的葉子材質
 _br = random.Random(11)
+_lumps = [(0, 0, 0.75, 0.80, 0.85), (0.65, 0.25, 0.55, 0.62, 0.8), (-0.60, 0.30, 0.58, 0.65, 0.8), (0.15, -0.60, 0.52, 0.60, 0.8),
+          (-0.25, 0.65, 0.50, 0.55, 0.8), (0.55, -0.35, 0.95, 0.48, 0.9), (-0.45, -0.40, 0.90, 0.50, 0.9), (0.10, 0.20, 1.15, 0.50, 0.85),
+          (0.85, 0.55, 0.35, 0.42, 0.75)]
 for k in range(10):                                   # 外圍再補十團小的，輪廓才毛毛的
     a = k * math.tau / 10 + _br.uniform(-0.2, 0.2)
     rr = _br.uniform(0.75, 1.05)
-    sphere(_br.uniform(0.28, 0.40), (rr * math.cos(a), rr * math.sin(a), _br.uniform(0.35, 1.0)), 7, 5,
-           m=(LEAF1, LEAF2, BUSH_DARK)[k % 3])
-bush = finish('Bush', bevel=0.0, seg=1)
-# 每個頂點隨機推進推出：一團團圓球看起來像葡萄，推亂了才像葉子
-for v in bush.data.vertices:
-    v.co += Vector((_br.uniform(-1, 1), _br.uniform(-1, 1), _br.uniform(-1, 1))) * 0.07
+    _lumps.append((rr * math.cos(a), rr * math.sin(a), _br.uniform(0.35, 1.0), _br.uniform(0.28, 0.40), 1.0))
+_bm = bmesh.new()
+# 底下一圈貼地的團（裙邊）：葉子只撒在上面的話，下三分之一透得過去，蹲著藏不住人，看起來也像浮在草上（審查）
+for k in range(8):
+    a = k * math.tau / 8 + _br.uniform(-0.2, 0.2)
+    rr = _br.uniform(0.55, 0.85)
+    _lumps.append((rr * math.cos(a), rr * math.sin(a), 0.25, _br.uniform(0.38, 0.48), 0.8))
+for (x, y, z, r, sz) in _lumps:
+    c = Vector((x, y, z))
+    _core(_bm, c, r * 0.5, 0, sq=(1, 1, sz), subdiv=1)
+    _on_core(_bm, c, r * 0.8, max(10, int(34 * r)), r * 0.95, 1, _br, sq=(1, 1, sz), spread=0.2, push=0.0, cross=False, fan=35, bottom=0.6,
+             top=0.6 if z > 0.45 else 0.35)   # 低的團多撒在下半球，底下才密   # 卡片太大、翻太開整叢會長到 2.5 公尺高，蹲下藏不住
+# 整叢縮到約 2.6 寬、1.6 高（跟以前一樣：站著露出頭、蹲下藏住），葉片卡往外翻會把大小撐大，最後統一縮
+_lo = Vector([min(v.co[i] for v in _bm.verts) for i in range(3)])
+_hi = Vector([max(v.co[i] for v in _bm.verts) for i in range(3)])
+_k = 2.6 / max(_hi.x - _lo.x, _hi.y - _lo.y)
+bmesh.ops.scale(_bm, vec=(_k, _k, 1.6 / (_hi.z - max(_lo.z, 0.0))), verts=_bm.verts)
+_me = bpy.data.meshes.new('Bush')
+_bm.to_mesh(_me)
+_bm.free()
+_me.materials.append(BUSH_DARK)
+_me.materials.append(BUSH_CARD)
+bush = bpy.data.objects.new('Bush', _me)
+bpy.context.scene.collection.objects.link(bush)
+_card_normals(bush)
 
 # ================= 麥子、草叢（沒有碰撞，遊戲裡用 MultiMesh 撒幾千叢） =================
 # 三片交叉的葉片＋穗，三十幾個三角形。一叢一叢的輪廓比一塊平板像田

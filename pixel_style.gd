@@ -7,7 +7,8 @@ extends Node
 ##   天空另外換一組顏色（SKY），描線的槍身稜線關掉（gun_ridge）。
 ## 改參數後呼叫 apply() 重算。tools/pixel_style_shots.gd 用環境變數 PIXEL="pixel=4,gamma=0.9" 改來比對。
 
-@export var pixel := 4.0          # 一個像素方塊是幾個螢幕像素（照 720p 算，畫面大方塊跟著大，看起來一樣粗）
+## 一個像素方塊是幾個螢幕像素（照 720p 算）。1 = 不切方塊：2026-10-09 起像素感改由場景材質提供（tools/make_pixel_tex.py），畫面全解析度
+@export var pixel := 1.0
 @export var levels := 8.0         # palette_mix = 0 時才用：每個顏色通道分幾階；0 = 不分
 @export var contrast := 1.3      # 以 0.45 為中心拉開
 @export var saturation := 1.0
@@ -87,32 +88,32 @@ func apply() -> void:
 	var vp := get_viewport()
 	for k: String in SKY:
 		_env.sky.sky_material.set_shader_parameter(k, SKY[k] if on else _sky_before[k])
-	_env.glow_intensity = _glow_before["intensity"] * (glow_scale if on else 1.0)
+	var low := on and pixel > 1.0   # 有切方塊才要壓泛光（低解析度算的泛光放大後太大）
+	_env.glow_intensity = _glow_before["intensity"] * (glow_scale if low else 1.0)
 	for k: String in FOG:
 		_env.set(k, FOG[k] if on else _fog_before[k])
 	Viewmodel.brightness = gun_brightness if on else 1.0
 	Viewmodel.lift = gun_lift if on else 0.0
 	get_tree().call_group(&"viewmodel", &"apply_brightness")
 	for i in GLOW_LEVELS.size():
-		_env.set_glow_level(i, GLOW_LEVELS[i] if on else _glow_before[i])
+		_env.set_glow_level(i, GLOW_LEVELS[i] if low else _glow_before[i])
 	var outline: Node = get_parent().get_node_or_null(^"Arena/Outline")
 	if outline:
 		outline.mesh.material.set_shader_parameter(&"gun_ridge", gun_ridge if on else 1.0)
+	vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_NEAREST if low else Viewport.SCALING_3D_MODE_BILINEAR
+	vp.scaling_3d_scale = 1.0
+	_rescale()
 	if on:
-		vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_NEAREST
-		_rescale()
 		_env.adjustment_enabled = true
 		_env.adjustment_color_correction = _make_lut()
 	else:
-		vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_BILINEAR
-		vp.scaling_3d_scale = 1.0
 		_env.adjustment_enabled = _adj_before
 		_env.adjustment_color_correction = _cc_before
 
 
 func _rescale() -> void:
 	var vp := get_viewport()
-	if on:
+	if on and pixel > 1.0:
 		vp.scaling_3d_scale = clampf(1.0 / (pixel * vp.get_visible_rect().size.y / 720.0), 0.05, 1.0)
 
 

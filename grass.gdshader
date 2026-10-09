@@ -13,7 +13,9 @@ uniform float near_thin = 0.4;        // 近處藏掉幾成
 uniform float near_thin_dist = 14.0;  // 公尺：這麼近以內藏（往外 3 公尺內慢慢長出來）
 
 varying float tip;
+varying float across;   // 0～1：葉子的左到右
 varying vec3 ground;
+
 
 vec3 to_linear(vec3 c) { // instance color 是 sRGB（跟地形的 vertex_color_is_srgb 一致）
 	return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c));
@@ -21,6 +23,7 @@ vec3 to_linear(vec3 c) { // instance color 是 sRGB（跟地形的 vertex_color_
 
 void vertex() {
 	tip = UV.y;
+	across = UV.x;
 	vec3 root = MODEL_MATRIX[3].xyz;   // 這一叢的根（world_vertex_coords 下 VERTEX 已是世界座標）
 	vec2 dir = normalize(wind_dir);
 	float gust = sin(dot(root.xz, dir) * 0.12 - TIME * 1.6) * 0.5 + 0.5;   // 一波一波掃過草原
@@ -37,15 +40,24 @@ void vertex() {
 	if (fract(sin(dot(root.xz, vec2(12.9898, 78.233))) * 43758.5453) < near_thin) {
 		keep *= smoothstep(near_thin_dist - 3.0, near_thin_dist, near_d);
 	}
+	keep *= smoothstep(0.5, 1.5, near_d);   // 貼臉的草壓矮：離鏡頭一公尺內的葉子透視放大，像一根根扁平的蘆葦桿（審查）
 	VERTEX.y = mix(root.y, VERTEX.y, keep);                                  // 遠處壓進地面
 	NORMAL = vec3(0.0, 1.0, 0.0);                                            // 跟地面同光照
 	ground = to_linear(COLOR.rgb);
 }
 
 void fragment() {
-	vec3 base = mix(ground, to_linear(dry_tint), 0.4) * 0.7;   // 根部暗一點（原本 0.55，尖端亮點太跳）
-	vec3 top = mix(ground, to_linear(dry_tint), 0.7);
-	ALBEDO = mix(base, top, tip);
+	// 像素草：葉子下面四分之三同寬，最上面兩階收尖（寬 1 → 1/2 → 1/4），邊緣一階一階。
+	// 顏色三段：根部短短一段稍暗、中段主色、尖端偏亮偏黃（像素重點）。從根部一路分段收窄、三段明暗差大的話像竹筍（第五輪審查）
+	float w = tip < 0.75 ? 1.0 : (tip < 0.88 ? 0.5 : 0.25);
+	if (abs(across - 0.5) * 2.0 > w) {
+		discard;
+	}
+	vec3 dry = to_linear(dry_tint);
+	vec3 mid = mix(ground, dry, 0.55) * 0.8;          // 往乾黃橄欖偏：跟褐色地面拉開
+	float far = smoothstep(15.0, 20.0, length(VERTEX));   // 遠處的亮尖淡回主色：只留剪影，一格一格的黃點移動時會爬動閃爍
+	vec3 col = tip < 0.2 ? mid * 0.9 : (tip < 0.75 ? mid : mix(mix(ground, dry, 0.9) * 1.4, mid, far));
+	ALBEDO = col;
 	ROUGHNESS = 0.5;   // 記號：描線（outline.gdshader）看到 0.5 就跳過，草葉一根根描線會變成一片雜訊。反光關了，粗糙度不影響外觀
-	BACKLIGHT = vec3(0.3) * tip;   // 逆光的草尖透光
+	BACKLIGHT = vec3(tip < 0.75 ? 0.15 : mix(0.6, 0.15, far));   // 逆光的草尖透光：只有尖端那一段亮（像素重點），逆光時整叢才不會一片暗褐
 }

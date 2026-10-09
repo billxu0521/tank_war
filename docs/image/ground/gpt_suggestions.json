@@ -1,0 +1,57 @@
+{
+  "ground_materials": [
+    {
+      "name": "gravel",
+      "where": "along well-traveled paths, around farm and town buildings, and as patches on slopes (>15 degrees), blended via noise mask",
+      "why": "adds realism around human areas and wears on trails, plus erosion on slopes",
+      "image_prompt": "seamless top-down 16px texture, scattered round gray and brown stones over tan packed dirt, low contrast, faceted pixel look"
+    },
+    {
+      "name": "cracked_clay",
+      "where": "in dry valleys and flat low spots below elevation 0 (valley mask), with higher density near desert vegetation",
+      "why": "highlights aridness of lowlands, visual break from simple grass, sells climate",
+      "image_prompt": "seamless top-down 16px texture, irregular light tan clay cracks, wide dry gaps, faceted shading, some darker shadows in cracks"
+    },
+    {
+      "name": "muddy_soil",
+      "where": "along rivers or where trails cross valleys, especially in shade and around forest edge (valley AND forest zone flags)",
+      "why": "shows vegetation-linked moisture and trail wear in forest/valley edges",
+      "image_prompt": "seamless top-down 16px texture, mottled dark brown wet soil with darker puddles, soft pixel transitions, occasional gray leaf"
+    },
+    {
+      "name": "rocky_outcrop",
+      "where": "on exposed hilltops and ridges above elevation 8m (height AND slope >10°), using a spotty noise mask",
+      "why": "creates topographical variety, aids navigation, realistic for arid hills",
+      "image_prompt": "seamless top-down 16px texture, clusters of rough angular gray rocks, with orange lichen patches, surrounded by bare light dirt"
+    }
+  ],  
+  "grass_types": [
+    {
+      "name": "wildflower_patch",
+      "color": "mixed goldenrod yellow, faded orange, and pale pink petals with olive-green stalks",
+      "height_m": 0.22,
+      "per_m2": 1.3,
+      "where": "random patches (low-frequency noise mask) in valleys and near wheat field edges",
+      "why": "adds color and variety, shows seasonal wild growth",
+      "image_prompt": "overhead cluster of low wildflowers, each with 3-4 bright pixel petals, tiny stems on olive ground, pixel-art style"
+    },
+    {
+      "name": "sage_clump",
+      "color": "muted gray-green leaves, hint of blue tint, pale tan woody stems",
+      "height_m": 0.28,
+      "per_m2": 0.5,
+      "where": "on rocky or gravelly terrain (matches gravel/rocky_outcrop materials), blended via noise",
+      "why": "matches arid, exposed areas; regional realism",
+      "image_prompt": "small mound of sagebrush, oval pixel leaves, blue-gray clusters, rough tan sticks, viewed top-down low-res"
+    },
+    {
+      "name": "low_crawling_vines",
+      "color": "deep green leaves with dark red berry dots",
+      "height_m": 0.08,
+      "per_m2": 2.8,
+      "where": "dense under forest trees and near muddy_soil, high moisture (forest AND valley zones, noise mask)",
+      "why": "fills forest floor, visual richness, different biome flavor",
+      "image_prompt": "interwoven pixel vines, dense dark green with scattered red berries, flat to ground, top-down pixel art"
+    }
+  ]
+}

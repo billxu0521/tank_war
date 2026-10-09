@@ -35,6 +35,7 @@ const TREE_KINDS := {&"TreeOakS": [0.17, 1.4], &"TreeOakM": [0.41, 1.8], &"TreeO
 	&"TreeWillow": [0.42, 3.0], &"Saguaro": [0.46, 5.0], &"SaguaroS": [0.28, 2.6]}
 const GROVES := preload("res://models/groves.glb")
 const FLORAS := preload("res://models/floras.glb")
+const CLUTTERS := preload("res://models/clutters.glb")   # 環境小物件（blender/clutter.py，_clutter_field 撒）
 # 石頭（blender/rock.py → rocks.glb）：Rock01..16，尺寸是實際公尺、原點在底部中央。
 # 01~04 大石（最大那顆 6 公尺寬，縮小一點當掩體）、05~11 單顆、12~16 石頭堆
 const ROCKS := preload("res://models/rocks.glb")
@@ -1311,7 +1312,7 @@ func _build_arena() -> void:
 	# 地形要在擺任何東西之前定案：整平區（農莊、倉庫、牧場的房子……）在清單裡
 	_terrain = make_terrain(_level.filter(func(r: Dictionary) -> bool: return r.kind == &"flat") \
 		.map(func(r: Dictionary) -> Array: return [Vector2(r.pos.x, r.pos.z), r.r]))
-	var ground := _terrain.build(_ground_color)
+	var ground := _terrain.build(_ground_color, _ground_mix)
 	ground.add_to_group(&"ground")   # 子彈打到噴土（Bullet.surface_of）
 	$Arena.add_child(ground)
 
@@ -1329,10 +1330,12 @@ func _build_arena() -> void:
 		_props[&"FenceRail"], FENCE_SEG))
 
 	_build_level()
+	_clutter_field()   # 有碰撞：伺服器也要擺，固定種子每台一樣
 
 	# 草地：畫面用的，伺服器沒畫面就不長（測試會直接呼叫 _grass_field 檢查）
 	if DisplayServer.get_name() != "headless":
 		_grass_field()
+		_groundcover_field()
 		_flora_field()
 		_drift = Fx.drift($Arena)
 	_lighten_small($Arena)
@@ -1809,6 +1812,172 @@ func _flora_field() -> void:
 				placed += 1
 		_scatter(name, pts, name in [&"BarrelCactus", &"PricklyPear", &"DesertBush"])
 
+## 環境小物件（blender/clutter.py；清單和參考圖是 GPT 建議的，docs/image/clutter/）。
+## 照雜訊撒：每種一張自己的低頻雜訊（不同種子），雜訊高的地方才放，同種東西會聚成幾群、群和群之間是空地，
+## 不是均勻灑胡椒；同種之間再隔 spacing 公尺。where 決定候選點從哪來（要有故事：飲水槽靠柵欄、柴堆靠房子、礦車靠石頭）：
+##   fence 柵欄外側 1 公尺、順著柵欄｜house 房子、店旁邊 2～4 公尺｜rock 大石頭旁邊｜trail 小路邊 1.5～3 公尺
+##   desert 荒地（植被稀、離房子 20 公尺以上）｜settle 農莊、城鎮裡
+## [名字, 數量, 碰撞大小（Godot 的 x 寬、y 高、z 深）, 同種間距, 雜訊門檻, where]
+const CLUTTER := [
+	[&"WaterTrough", 6, Vector3(2.0, 0.5, 0.7), 12.0, 0.0, &"fence"],
+	[&"Outhouse", 3, Vector3(1.2, 2.2, 1.2), 25.0, 0.0, &"house"],
+	[&"LogPile", 6, Vector3(2.0, 1.0, 1.6), 10.0, 0.0, &"house"],
+	[&"SignPost", 6, Vector3(0.2, 2.5, 0.2), 18.0, -0.2, &"trail"],
+	[&"CollapsedShed", 2, Vector3(3.2, 1.6, 2.3), 45.0, 0.0, &"desert"],
+	[&"DinoSkull", 3, Vector3(3.0, 1.2, 1.6), 18.0, -0.2, &"desert"],   # 荒野只有區域之間那幾條帶子，間距大了放不滿
+	[&"MineCart", 1, Vector3(1.2, 0.9, 0.75), 30.0, -1.0, &"rock"],   # 區域外夠大的石頭只有一兩顆
+]
+const BUILDING_KINDS := [&"barn", &"house", &"shop", &"silo", &"hay_shed", &"water_tower", &"windmill"]
+
+## 一個候選點 [位置, 朝向]；沒找到回傳空陣列
+func _clutter_candidate(where: StringName, cr: RandomNumberGenerator, half: float) -> Array:
+	var anchors: Array = []
+	match where:
+		&"fence": anchors = _level.filter(func(r: Dictionary) -> bool: return r.kind == &"fence")
+		&"house": anchors = _level.filter(func(r: Dictionary) -> bool: return r.kind in BUILDING_KINDS)
+		&"rock": anchors = _level.filter(func(r: Dictionary) -> bool: return r.kind == &"rock" and r.solid and _big_rock(r) \
+				and not _in_zones(Vector2(r.pos.x, r.pos.z)) and _building_gap(Vector2(r.pos.x, r.pos.z)) >= 15.0)   # 礦場在荒野的大石頭旁（直立的小圓石像墓碑）；沒有就不放，不要放進人家院子
+	if where in [&"fence", &"house", &"rock"]:
+		if anchors.is_empty():
+			return []
+		var rec: Dictionary = anchors[cr.randi() % anchors.size()]
+		var c := Vector2(rec.pos.x, rec.pos.z)
+		match where:
+			&"fence":   # 柵欄上隨便一點，往外推 1 公尺，槽順著柵欄
+				var yaw: float = rec.yaw
+				var d := Vector2(cos(yaw), -sin(yaw))
+				var n := Vector2(-d.y, d.x) * (1.0 if cr.randf() < 0.5 else -1.0)
+				return [c + d * cr.randf_range(-0.4, 0.4) * rec.length + n * 1.4, yaw, rec]
+			&"house":   # 房子外緣再出去 2～4 公尺，背靠房子
+				var h := footprint_half(rec)
+				var a := cr.randf() * TAU
+				var dir := Vector2(cos(a), sin(a))
+				var p := c + dir * (maxf(h.x, h.y) + cr.randf_range(3.0, 5.0))   # 屋簷比牆身寬，2 公尺時廁所的屋頂插進牆
+				return [p, atan2(dir.x, dir.y), rec]
+			&"rock":
+				var r: float = (meshes()[rec.mesh].get_aabb().size * rec.s).length() * 0.35
+				var a := cr.randf() * TAU
+				return [c + Vector2(cos(a), sin(a)) * (r + 2.5), a, rec]
+	var p := Vector2(cr.randf_range(-half, half), cr.randf_range(-half, half))
+	var veg := Terrain.vegetation(p.x, p.y)
+	match where:
+		&"trail":
+			var e := Trails.edge(p.x, p.y)
+			if e < 1.5 or e > 3.0:
+				return []
+			return [p, cr.randi_range(0, 3) * PI * 0.5]
+		&"desert":
+			if veg > 0.3 or not _wild(p):
+				return []
+			return [p, cr.randf() * TAU]
+	return [p, cr.randf() * TAU]
+
+## 荒野：四個區域（農莊、城鎮、麥田、森林）以外，離房子 20 公尺、離樹 6 公尺以上（頭骨、廢屋、礦車不在林邊住家旁）
+func _in_zones(p: Vector2) -> bool:   # 區域外擴 2 公尺（再大的話區域之間的空地就沒了；離房子遠近另外用 _building_gap 管）
+	for z: Rect2 in [ZONE_TOWN, ZONE_FARM, ZONE_WHEAT, ZONE_FOREST]:
+		if z.grow(2.0).has_point(p):
+			return true
+	return false
+
+## 離最近的建築外緣多遠（中心距離扣掉建築的半寬：大穀倉 20 公尺寬，只量中心會放進院子裡）
+func _building_gap(p: Vector2) -> float:
+	var best := INF
+	for rec: Dictionary in _level:
+		if rec.kind in BUILDING_KINDS:
+			var h := footprint_half(rec)
+			best = minf(best, Vector2(rec.pos.x, rec.pos.z).distance_to(p) - maxf(h.x, h.y))
+	return best
+
+func _wild(p: Vector2) -> bool:
+	if _in_zones(p):
+		return false
+	for rec: Dictionary in _level:
+		var d := Vector2(rec.pos.x, rec.pos.z).distance_to(p)
+		if rec.kind == &"tree" and d < 6.0:
+			return false
+	return _building_gap(p) >= 15.0
+
+## 大石頭：至少 1.5 公尺高、寬比高大
+func _big_rock(rec: Dictionary) -> bool:
+	var sz: Vector3 = meshes()[rec.mesh].get_aabb().size * rec.s
+	return sz.y >= 1.5 and maxf(sz.x, sz.z) > sz.y
+
+## 離柵欄多近（點到每段柵欄線段的最短距離）
+func _fence_dist(p: Vector2) -> float:
+	var best := INF
+	for rec: Dictionary in _level:
+		if rec.kind != &"fence":
+			continue
+		var d: Vector2 = Vector2(cos(rec.yaw), -sin(rec.yaw)) * float(rec.length) * 0.5
+		var a: Vector2 = Vector2(rec.pos.x, rec.pos.z) - d
+		var ab: Vector2 = d * 2.0
+		var t := clampf((p - a).dot(ab) / ab.length_squared(), 0.0, 1.0)
+		best = minf(best, p.distance_to(a + ab * t))
+	return best
+
+## 離場上已經擺的東西（石頭、樹、房子、箱子……）太近：石頭、樹不一定在 _blocked 裡，戶外廁所會插進大石頭（第一輪截圖）
+func _near_level(p: Vector2, r: float, skip: Variant = null) -> bool:
+	for rec: Dictionary in _level:
+		if rec.kind in [&"fence", &"road", &"wheat"] or is_same(rec, skip):
+			continue
+		var h := footprint_half(rec)
+		var reach := maxf(maxf(h.x, h.y), 1.5 if rec.kind == &"tree" else 0.5)
+		if Vector2(rec.pos.x, rec.pos.z).distance_to(p) < r + reach:
+			return true
+	return false
+
+## 記下擺好的位置（測試、截圖工具用）
+var clutter_spots: Array = []
+
+func _clutter_field() -> void:
+	var cr := RandomNumberGenerator.new()
+	cr.seed = 1009
+	var half := ARENA * 0.5 - 4.0
+	for k in CLUTTER.size():
+		var row: Array = CLUTTER[k]
+		var noise := FastNoiseLite.new()
+		noise.seed = 700 + k
+		noise.frequency = 0.035   # 一群約 15～30 公尺
+		var size: Vector3 = row[2]
+		var placed: Array[Vector2] = []
+		var why := {}   # 為什麼放不下（除錯：CLUTTER_DEBUG=1 印出來）
+		for i in 4000:
+			if placed.size() >= row[1]:
+				break
+			var cand := _clutter_candidate(row[5], cr, half)
+			if cand.is_empty():
+				continue
+			var p: Vector2 = cand[0]
+			var anchor: Variant = cand[2] if cand.size() > 2 else null
+			# 靠著東西擺的（飲水槽靠柵欄、柴堆靠房子、礦車靠石頭）只用窄邊的半寬檢查、不算自己靠的那個，不然永遠擠不進去
+			var r := minf(size.x, size.z) * 0.5 if anchor != null else maxf(size.x, size.z) * 0.5
+			if absf(p.x) > half or absf(p.y) > half or noise.get_noise_2d(p.x, p.y) < row[4]:
+				continue
+			var fail := ""
+			if placed.any(func(q: Vector2) -> bool: return q.distance_to(p) < row[3]): fail = "spacing"
+			elif clutter_spots.any(func(c: Array) -> bool: return Vector2(c[1].x, c[1].z).distance_to(p) < 8.0): fail = "other"
+			elif SANDBOX_RANGE.grow(2.0).has_point(p): fail = "sandbox"
+			elif _near_level(p, r + 0.5, anchor): fail = "level"
+			elif anchor == null and not _is_clear(p, r + 0.5): fail = "blocked"
+			elif row[5] != &"fence" and _fence_dist(p) < maxf(size.x, size.z) * 0.5 + 1.0: fail = "fence"   # 柴堆貼著柵欄會穿模
+			elif not _free(Vector3(p.x, 0, p.y), r + 0.5): fail = "reserved"
+			elif _in_wheat(Vector3(p.x, 0, p.y)): fail = "wheat"
+			elif Trails.edge(p.x, p.y) < 1.0 or _roads.any(func(q: Rect2) -> bool: return q.grow(r).has_point(p)): fail = "road"
+			if fail != "":
+				why[fail] = why.get(fail, 0) + 1
+				continue
+			var at := _on_ground(Vector3(p.x, 0, p.y)) + Vector3.DOWN * 0.08   # 埋一點：坡地下坡那側才不會浮起來
+			var body := _solid_box(at + Vector3(0, size.y * 0.5, 0), size)
+			body.rotation.y = cand[1]
+			_prop(row[0], Vector3(0, -size.y * 0.5, 0), Vector3.ONE, body)
+			# 草、灌木、出生點避開（範圍是正的長方形，不跟著轉：取最長邊的正方形）。礦車連 4 公尺鐵軌，不然草蓋住鐵軌
+			var foot := 4.3 if row[0] == &"MineCart" else maxf(size.x, size.z) * 1.2
+			_block(Vector3(p.x, 0, p.y), Vector2(foot, foot), 0.5)
+			placed.append(p)
+			clutter_spots.append([row[0], at, cand[1]])
+		if OS.get_environment("CLUTTER_DEBUG") != "":
+			print("clutter ", row[0], " ", placed.size(), "/", row[1], " ", why)
+
 const GRASS_CHUNK := 16.0
 const GRASS_SIZE := 1.2     # 整片草的大小倍數（2026-10-06 使用者：草放大兩成）
 const GRASS_PER_M2 := 6.0   # 效能旋鈕：電腦跑不動就調低（3 看得出一叢一叢的空隙）
@@ -1883,6 +2052,163 @@ func _grass_field(spots: Variant = null) -> void:
 			mmi.add_to_group(&"grass")
 			$Arena.add_child(mmi)
 
+## 地被三種（GPT 建議，docs/image/ground/gpt_suggestions.json、ref_*.png）：荒地乾穗草（原本是野花，太繽紛換掉）、鼠尾草叢、匍匐藤。
+## 都是小網格（頂點色上色），16 公尺一塊的 MultiMesh、34 公尺外不畫、不投影子；groundcover.gdshader。
+## 哪裡長照雜訊和地面材質（_ground_mix）：一片一片的，不是到處都有
+const GROUNDCOVER_SHADER := preload("res://groundcover.gdshader")
+## 荒地植物的穗頭顏色：乾草、鏽紅、灰褐、暗赭（2026-10-09 使用者：野花太繽紛，跟遊戲調性不合，改成荒地植物）
+const FLOWER_COLORS := [Color("a08a5a"), Color("8a5a3a"), Color("857262"), Color("9a7a40")]
+
+## 一個小方塊（地被的葉子、花頭用）：c 是頂點色，透明度 1 = 用每叢自己的顏色
+static func _gc_box(st: SurfaceTool, at: Vector3, size: Vector3, c: Color, yaw := 0.0) -> void:
+	var b := Basis(Vector3.UP, yaw)
+	var h := size * 0.5
+	var faces := [[Vector3.UP, Vector3.RIGHT, Vector3.BACK], [Vector3.RIGHT, Vector3.BACK, Vector3.UP], [Vector3.BACK, Vector3.UP, Vector3.RIGHT],
+		[Vector3.DOWN, Vector3.BACK, Vector3.RIGHT], [Vector3.LEFT, Vector3.UP, Vector3.BACK], [Vector3.FORWARD, Vector3.RIGHT, Vector3.UP]]
+	for f: Array in faces:
+		var n: Vector3 = f[0]
+		var u: Vector3 = f[1]
+		var v: Vector3 = f[2]
+		var cen := n * h
+		var du := u * h
+		var dv := v * h
+		var q := [cen - du - dv, cen + du - dv, cen + du + dv, cen - du + dv]
+		var lin := Color(c.srgb_to_linear(), c.a)   # 上面寫的是 sRGB 顏色；shader 直接當 ALBEDO（線性）用，不換的話全部偏白
+		for i: int in [0, 2, 1, 0, 3, 2]:
+			st.set_color(lin)
+			st.set_normal(b * n)
+			st.add_vertex(at + b * (q[i] as Vector3))
+
+## 一片平的葉子（只有朝上那面，兩個三角形）：貼地的藤用方塊的話一叢上千個三角形，全場幾十萬（審查：幀數掉）
+static func _gc_leaf(st: SurfaceTool, at: Vector3, size: Vector2, c: Color, yaw: float) -> void:
+	var b := Basis(Vector3.UP, yaw)
+	var q := [Vector3(-size.x, 0, -size.y), Vector3(size.x, 0, -size.y), Vector3(size.x, 0, size.y), Vector3(-size.x, 0, size.y)]
+	var lin := Color(c.srgb_to_linear(), c.a)
+	for i: int in [0, 1, 2, 0, 2, 3]:
+		st.set_color(lin)
+		st.set_normal(Vector3.UP)
+		st.add_vertex(at + b * ((q[i] as Vector3) * 0.5))
+
+static func _groundcover_mesh(kind: int) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var r := RandomNumberGenerator.new()
+	r.seed = 40 + kind
+	match kind:
+		0:   # 荒地乾穗草（原本是野花）：一叢細莖斜著散開，頂上一節細長的乾穗（穗色每叢不同，都是乾草、鏽紅那類暗色）
+			for k in 7:
+				var a := r.randf() * TAU
+				var tilt := r.randf_range(0.05, 0.4)
+				var h := r.randf_range(0.22, 0.42)
+				var dir := Vector3(sin(tilt) * cos(a), cos(tilt), sin(tilt) * sin(a))
+				for j in 3:   # 莖：三小段
+					_gc_box(st, dir * h * (j + 0.5) / 3.0, Vector3(0.01, h / 3.0 + 0.01, 0.01), Color(0.42, 0.36, 0.22, 0.0), a)
+				# 乾穗：細（1.8 公分）、上面一節收尖；一半往外彎下去（每根都挺直的話像香蒲，審查）
+				var tip := dir
+				if k % 2 == 0:
+					tip = (dir + Vector3(cos(a), -0.6, sin(a)) * 0.8).normalized()
+				var base := dir * h
+				_gc_box(st, base + tip * 0.035, Vector3(0.018, 0.07, 0.018), Color(1, 1, 1, 1.0), a)
+				_gc_box(st, base + tip * 0.085, Vector3(0.009, 0.035, 0.009), Color(1, 1, 1, 1.0), a)
+		1:   # 鼠尾草叢（照參考圖）：一團蓬鬆的圓球，很多 5 公分的灰綠小方塊（#8A9A82 上下），底下幾根短細枝，寬約高的 1.2 倍。
+			# 上一版枝頭放大扁方塊，像蘑菇、灰色小傘（審查）
+			for k in 4:
+				var a := k * TAU / 4.0 + r.randf_range(-0.3, 0.3)
+				_gc_box(st, Vector3(cos(a) * 0.05, 0.08, sin(a) * 0.05), Vector3(0.012, 0.16, 0.012), Color(0.3, 0.22, 0.15, 0.0), a)
+			for k in 36:
+				var d := Vector3(r.randf_range(-1, 1), r.randf_range(-0.2, 1), r.randf_range(-1, 1)).normalized() * sqrt(r.randf())
+				var sz := r.randf_range(0.04, 0.06)
+				_gc_box(st, Vector3(d.x * 0.24, 0.2 + d.y * 0.16, d.z * 0.24), Vector3(sz, sz, sz),
+					Color(Color("7f9070"), 0.0).lerp(Color(Color("6c8260"), 0.0), r.randf()), r.randf() * TAU)   # 透明度 0：不是花頭（1 會被換成花色）
+		2:   # 匍匐藤（照參考圖）：貼地一整片連起來的深綠葉（平的四邊形，只有上面），紅果只點綴兩顆
+			for k in 40:
+				var a := r.randf() * TAU
+				var d := sqrt(r.randf()) * 0.45
+				_gc_leaf(st, Vector3(cos(a) * d, r.randf_range(0.01, 0.06), sin(a) * d), Vector2(0.12, 0.09),
+					Color(0.16, 0.28, 0.12, 0.0).lerp(Color(0.22, 0.36, 0.16, 0.0), r.randf()), r.randf() * TAU)
+			# 果實：透明度 1 = 顏色用每叢自己的（_groundcover_field 只給三分之一的藤紅色，其他給葉子的綠，
+			# 每片都有紅果的話遠看像撒了一地紅點，審查）
+			for k in 2:
+				var a := r.randf() * TAU
+				_gc_box(st, Vector3(cos(a) * 0.2, 0.07, sin(a) * 0.2), Vector3(0.03, 0.03, 0.03), Color(1, 1, 1, 1.0))
+	return st.commit()
+
+func _groundcover_field() -> void:
+	if OS.get_environment("GROUND_OFF") != "":
+		return
+	var mat := ShaderMaterial.new()
+	mat.shader = GROUNDCOVER_SHADER
+	var meshes_gc: Array[ArrayMesh] = [_groundcover_mesh(0), _groundcover_mesh(1), _groundcover_mesh(2)]
+	var patch := FastNoiseLite.new()   # 野花一片一片
+	patch.seed = 77
+	patch.frequency = 0.035
+	var gr := RandomNumberGenerator.new()
+	gr.seed = 13
+	var per := [2.6, 0.45, 2.4]   # 每平方公尺試幾次（條件過了才長）。2026-10-09 使用者：密一點、一眼看出豐富
+	var cells := int(ARENA / GRASS_CHUNK)
+	var half := GRASS_CHUNK * 0.5
+	for cx in cells:
+		for cz in cells:
+			var o := Vector3((cx + 0.5) * GRASS_CHUNK - ARENA * 0.5, 0, (cz + 0.5) * GRASS_CHUNK - ARENA * 0.5)
+			var area := Rect2(o.x - half, o.z - half, GRASS_CHUNK, GRASS_CHUNK)
+			var near: Array[Rect2] = []
+			for r: Rect2 in _blocked + _roads:
+				if r.intersects(area):
+					near.append(r)
+			for kind in 3:
+				var xf: Array[Transform3D] = []
+				var cus: Array[Color] = []
+				for i in int(GRASS_CHUNK * GRASS_CHUNK * per[kind]):
+					var x := o.x + gr.randf_range(-half, half)
+					var z := o.z + gr.randf_range(-half, half)
+					if Trails.edge(x, z) < 0.5 or near.any(func(r: Rect2) -> bool: return r.has_point(Vector2(x, z))):
+						continue
+					var h := _terrain.fast_height(x, z)
+					var ok := false
+					match kind:
+						0:   # 荒地乾穗草：雜訊高的一片片，在谷地或麥田邊
+							ok = patch.get_noise_2d(x, z) > 0.05 and (h < 2.0 or _in_wheat(Vector3(x, 0, z))) and not _in_wheat_core(x, z)
+						1:   # 鼠尾草：碎石、岩盤上
+							var w := _ground_mix(x, z, h)
+							ok = maxf(w.r, w.a) > 0.3 and patch.get_noise_2d(x * 1.7, z * 1.7) > 0.1   # 一叢叢聚著，不要平均撒滿中景
+						2:   # 匍匐藤：濕泥、森林裡植被濃的地方
+							var w := _ground_mix(x, z, h)
+							ok = w.b > 0.3 or (ZONE_FOREST.has_point(Vector2(x, z)) and Terrain.vegetation(x, z) > 0.5 and patch.get_noise_2d(z, x) > 0.0)
+					if not ok:
+						continue
+					xf.append(Transform3D(Basis(Vector3.UP, gr.randf() * TAU).scaled(Vector3.ONE * gr.randf_range(0.8, 1.25)),
+						Vector3(x - o.x, h - 0.02, z - o.z)))
+					if kind == 2:
+						cus.append((Color(0.45, 0.1, 0.07) if gr.randf() < 0.33 else Color(0.18, 0.31, 0.13)).srgb_to_linear())
+					else:
+						cus.append((FLOWER_COLORS[gr.randi() % FLOWER_COLORS.size()] as Color).srgb_to_linear())
+				if xf.is_empty():
+					continue
+				var mm := MultiMesh.new()
+				mm.transform_format = MultiMesh.TRANSFORM_3D
+				mm.use_custom_data = true   # 一定要在 instance_count 之前設
+				mm.mesh = meshes_gc[kind]
+				mm.instance_count = xf.size()
+				for i in xf.size():
+					mm.set_instance_transform(i, xf[i])
+					mm.set_instance_custom_data(i, cus[i])
+				var mmi := MultiMeshInstance3D.new()
+				mmi.name = "Groundcover"
+				mmi.multimesh = mm
+				mmi.material_override = mat
+				mmi.position = Vector3(o.x, 0, o.z)
+				mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+				mmi.visibility_range_end = 30.0
+				mmi.extra_cull_margin = 0.5
+				$Arena.add_child(mmi)
+
+## 麥田裡面（離邊 4 公尺以上）：野花只長在麥田邊，裡面看不到
+func _in_wheat_core(x: float, z: float) -> bool:
+	for f: Rect2 in _wheat_fields:
+		if f.grow(-4.0).has_point(Vector2(x, z)):
+			return true
+	return false
+
 ## 一叢七片葉子，每片兩段（根部四邊形＋尖端三角形）。UV.y＝離地高度比例，shader 靠它做漸層和擺動
 func _grass_mesh() -> ArrayMesh:
 	var st := SurfaceTool.new()
@@ -1893,14 +2219,16 @@ func _grass_mesh() -> ArrayMesh:
 		var a := r.randf() * TAU
 		var h := r.randf_range(0.3, 0.55)
 		var lean := Vector3(cos(a), 0, sin(a)) * r.randf_range(0.05, 0.2)
-		var side := Vector3(-sin(a), 0, cos(a)) * 0.035
+		var side := Vector3(-sin(a), 0, cos(a)) * 0.018   # 像素版：直的長方形葉子，0.035 寬的話分段收尖像竹筍（第五輪審查）
 		var at := Vector3(r.randf_range(-0.12, 0.12), 0, r.randf_range(-0.12, 0.12))
 		var mid := at + lean * 0.4 + Vector3(0, h * 0.5, 0)
 		var tip := at + lean + Vector3(0, h, 0)
-		for p: Vector3 in [at - side, at + side, mid + side * 0.7, at - side, mid + side * 0.7, mid - side * 0.7,
-				mid - side * 0.7, mid + side * 0.7, tip]:
+		# 兩段長方形（不收尖）：葉子變細是 grass.gdshader 照高度分段挖掉兩側，邊緣是一階一階的（像素風）
+		for q: Array in [[at - side, 0.0], [at + side, 1.0], [mid + side, 1.0], [at - side, 0.0], [mid + side, 1.0], [mid - side, 0.0],
+				[mid - side, 0.0], [mid + side, 1.0], [tip + side, 1.0], [mid - side, 0.0], [tip + side, 1.0], [tip - side, 0.0]]:
+			var p: Vector3 = q[0]
 			st.set_normal(Vector3.UP)
-			st.set_uv(Vector2(0, p.y / h))
+			st.set_uv(Vector2(q[1], p.y / h))
 			st.add_vertex(p)
 	return st.commit()
 
@@ -1925,6 +2253,36 @@ static func ground_color(t: Terrain, wheat: Array[Rect2], roads: Array[Rect2], x
 	c = c.lerp(PATH, w)
 	c.a = w
 	return c
+
+## 四種地面材質的權重（terrain.gdshader 的 CUSTOM0；GPT 建議的規則，docs/image/ground/gpt_suggestions.json）：
+##   r 碎石：陡坡、房子和小路周圍，雜訊一塊一塊｜g 乾裂土：低窪又乾的地方｜b 濕泥：森林裡的低處、植被濃｜a 岩盤：高處的稜線
+## 每種再乘一張自己的雜訊，同一種條件下也是一塊有、一塊沒有（不會整片同一種）。路、麥田不疊
+static var _mix_noise: Array[FastNoiseLite] = []
+func _ground_mix(x: float, z: float, h: float) -> Color:
+	if OS.get_environment("GROUND_OFF") != "":   # 對照用：關掉地面材質和地被
+		return Color(0, 0, 0, 0)
+	if _roads.any(func(r: Rect2) -> bool: return r.has_point(Vector2(x, z))) or _in_wheat(Vector3(x, 0, z)):
+		return Color(0, 0, 0, 0)
+	if _mix_noise.is_empty():
+		for k in 4:
+			var n := FastNoiseLite.new()
+			n.seed = 900 + k
+			n.frequency = 0.035   # 一片一片大一點（0.06 時太碎，一般視角看不出來）
+			n.fractal_octaves = 2
+			_mix_noise.append(n)
+	var slope := _terrain.slope(x, z)
+	var veg := Terrain.vegetation(x, z)
+	var hn := h / Terrain.AMP   # -1 谷底 ～ 1 山頂
+	var trail := Trails.weight(x, z)
+	var p := Vector2(x, z)
+	var near_town := ZONE_TOWN.grow(4.0).has_point(p) or ZONE_FARM.grow(4.0).has_point(p)
+	var gravel: float = maxf(smoothstep(0.1, 0.3, slope), maxf(trail, 0.6 if near_town else 0.48)) * (0.55 + 0.45 * smoothstep(-0.2, 0.3, _mix_noise[0].get_noise_2d(z * 0.5, x * 0.5)))   # 底子：大片一點、再被第二層雜訊挖洞，院子裡還看得到一塊塊的土 * smoothstep(-0.35, 0.05, _mix_noise[0].get_noise_2d(x, z))
+	var clay: float = smoothstep(0.25, -0.1, hn) * smoothstep(0.8, 0.4, veg) * (0.0 if ZONE_FOREST.grow(8.0).has_point(p) else 1.0)   # 林邊不要乾裂土（審查：林邊一片磚紋） * smoothstep(-0.35, 0.05, _mix_noise[1].get_noise_2d(x, z))
+	var mud: float = smoothstep(0.35, 0.0, hn) * smoothstep(0.35, 0.6, veg) * (1.0 if ZONE_FOREST.grow(6.0).has_point(p) else 0.4) * smoothstep(-0.35, 0.05, _mix_noise[2].get_noise_2d(x, z))
+	var rock: float = smoothstep(0.05, 0.3, hn) * (0.6 + 0.4 * smoothstep(0.03, 0.1, slope)) * smoothstep(-0.35, 0.05, _mix_noise[3].get_noise_2d(x, z))
+	var c := Color(gravel, clay, mud, rock)
+	var sum := c.r + c.g + c.b + c.a
+	return c / sum if sum > 1.0 else c
 
 ## 把「離地多高」換成實際位置：v.y 當作離地面的高度
 func _on_ground(v: Vector3) -> Vector3:
@@ -2106,29 +2464,47 @@ func _wheat(rec: Dictionary) -> void:
 	var wr := RandomNumberGenerator.new()
 	wr.seed = int(c.x * 7919.0 + c.z)
 	var pts: Array[Transform3D] = []
-	var n := int(rec.size / 1.1)   # 一公尺多一叢
+	const STEP := 0.8   # 每叢間距（一叢三張卡片）：要擋得住視線（使用者 2026-10-09）；以前 1.1 一叢一張
+	var n := int(rec.size / STEP)
 	var start: float = -rec.size * 0.5 + 0.5
 	for gx in n:
 		for gz in n:
-			var at := _on_ground(c + Vector3(start + gx * 1.1 + wr.randf_range(-0.4, 0.4), 0,
-				start + gz * 1.1 + wr.randf_range(-0.4, 0.4)))
+			var at := _on_ground(c + Vector3(start + gx * STEP + wr.randf_range(-0.3, 0.3), 0,
+				start + gz * STEP + wr.randf_range(-0.3, 0.3)))
 			if sheds.any(func(r: Rect2) -> bool: return r.has_point(Vector2(at.x, at.z))):
 				continue
-			pts.append(Transform3D(Basis(Vector3.UP, wr.randf() * TAU).scaled(Vector3.ONE * wr.randf_range(0.8, 1.2)), at))
+			pts.append(Transform3D(Basis(Vector3.UP, wr.randf() * TAU).scaled(Vector3.ONE * wr.randf_range(0.9, 1.1)), at))
 	_scatter_mesh(wheat_card(), pts)
 
-## 麥子：一張只會水平轉向鏡頭的平面（billboard），貼上麥穗的透明圖（tools/make_wheat_card.py 畫的）。
-## 幾千叢立體模型換成每叢兩個三角形，遠看一樣是一片麥浪
-static var _wheat_mesh: QuadMesh
-static func wheat_card() -> QuadMesh:
+## 麥子：只會水平轉向鏡頭的看板（billboard），貼上麥穗的透明圖（tools/make_wheat_card.py 畫的）。
+## 一叢是三張卡片（左、中、右前後錯開、高矮不同、左右翻面），轉向鏡頭時三張有前後層次，比一張平面密、擋得住視線。
+## 圖是 1:2，最高的穗在卡片高度約 82%。2026-10-09 使用者：麥子要比人高（牛仔 1.8、眼睛 1.6）、要有遮蔽效果：
+## 卡片 2.6 高，最高的穗約 2.1 公尺；隨機縮放 0.9～1.1 → 1.9～2.35
+static var _wheat_mesh: ArrayMesh
+const WHEAT_CARDS := [[-0.35, 0.15, 0.95, false], [0.0, -0.1, 1.0, true], [0.35, 0.2, 0.9, false]]   # [左右, 前後, 高度倍數, 翻面]
+static func wheat_card() -> Mesh:
 	if _wheat_mesh == null:
 		var mat := ShaderMaterial.new()   # 只繞垂直軸轉的看板、近處變少、穗尖壓暗（見 wheat.gdshader）
 		mat.shader = preload("res://wheat.gdshader")
 		mat.set_shader_parameter(&"card_tex", preload("res://assets/textures/wheat_card.png"))
-		_wheat_mesh = QuadMesh.new()
-		_wheat_mesh.size = Vector2(0.55, 1.1)   # 圖是 1:2，最高的穗大約 90 公分
-		_wheat_mesh.center_offset = Vector3(0, 0.55, 0)
-		_wheat_mesh.material = mat
+		mat.set_shader_parameter(&"near_thin", 0.0)   # 要擋視線：近處不藏
+		var st := SurfaceTool.new()
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		st.set_normal(Vector3.BACK)
+		for c: Array in WHEAT_CARDS:
+			var w := 0.65
+			var h := 2.6 * float(c[2])
+			var x: float = c[0]
+			var z: float = c[1]
+			var u0 := 1.0 if c[3] else 0.0
+			var u1 := 1.0 - u0
+			var q := [[Vector3(x - w, 0, z), Vector2(u0, 1)], [Vector3(x + w, 0, z), Vector2(u1, 1)],
+				[Vector3(x + w, h, z), Vector2(u1, 0)], [Vector3(x - w, h, z), Vector2(u0, 0)]]
+			for i: int in [0, 2, 1, 0, 3, 2]:   # Godot 正面是順時針：反過來的話是背面，打光整片暗
+				st.set_uv(q[i][1])
+				st.add_vertex(q[i][0])
+		_wheat_mesh = st.commit()
+		_wheat_mesh.surface_set_material(0, mat)
 	return _wheat_mesh
 
 ## 倉庫連門口那塊地（不長麥子、不放圓捆）
@@ -2416,7 +2792,7 @@ func _load_props() -> void:
 static var _mesh_table := {}
 static func meshes() -> Dictionary:
 	if _mesh_table.is_empty():
-		for glb: PackedScene in [PROPS, TREES, ROCKS, HOUSES, KIT, TOWNS, GROVES, FLORAS]:
+		for glb: PackedScene in [PROPS, TREES, ROCKS, HOUSES, KIT, TOWNS, GROVES, FLORAS, CLUTTERS]:
 			var src := glb.instantiate()
 			for c in src.get_children():
 				if c is MeshInstance3D:
@@ -2431,7 +2807,7 @@ static func meshes() -> Dictionary:
 ## 網格被資源快取住，改一次之後各處 instantiate 出來的都是改好的那份（glb 要留著，快取才不會被丟掉）
 const LEAVES_SHADER := preload("res://leaves.gdshader")
 const FLAT_MODELS := ["res://models/props.glb", "res://models/trees.glb", "res://models/rocks.glb", "res://models/houses.glb", "res://models/kits.glb", "res://models/towns.glb",
-	"res://models/groves.glb", "res://models/floras.glb",
+	"res://models/groves.glb", "res://models/floras.glb", "res://models/clutters.glb",
 	"res://models/cowboy.glb", "res://models/trex_hd.glb", "res://models/revolver.glb",
 	"res://models/shotgun.glb", "res://models/rifle.glb", "res://models/lance.glb"]
 static var _flat_keep: Array[PackedScene] = []
@@ -2454,12 +2830,20 @@ static func _flatten_models() -> void:
 						var leaf := ShaderMaterial.new()          # （透明底挖空、不接收影子，見 leaves.gdshader）
 						leaf.shader = LEAVES_SHADER
 						leaf.set_shader_parameter(&"leaf_tex", m.albedo_texture)
+						if m.resource_name.contains("yucca") or m.resource_name.contains("pine") or m.resource_name.contains("willow"):
+							leaf.set_shader_parameter(&"leaf_px", 0.0)   # 細長尖葉切格後尖端剩碎方塊，放射狀形狀也沒了（收尾審查）
+						if m.resource_name.begins_with("p_bush"):   # 灌木叢（props.py）：只有 1.6 公尺高，樹冠中心照樹的 3.5 公尺算的話整叢的法線朝下、一片暗
+							leaf.set_shader_parameter(&"crown_height", 0.8)
+							leaf.set_shader_parameter(&"tint", 0.85)   # 朝陽面的黃綠比樹亮半階，往橄欖綠壓
 						mi.mesh.surface_set_material(i, leaf)   # 網格是共用的：場上每棵、遠景的樹都跟著換
 						continue
-					if m.albedo_texture == null:   # 材質可能好幾個網格共用，只疊一次
+					var px := _pixel_kind(m) if m.albedo_texture == null else &""
+					if m.albedo_texture == null and px == &"":   # 材質可能好幾個網格共用，只疊一次
 						_add_grain(m)
 					var f := _to_facet(m)
 					if f:
+						if px != &"":
+							_add_pixel(f, px)
 						mi.mesh.surface_set_material(i, f)
 		inst.free()
 
@@ -2514,6 +2898,59 @@ static func _to_facet(m: BaseMaterial3D) -> ShaderMaterial:
 			break
 	_facet_of[m] = f
 	return f
+
+## 像素材質（tools/make_pixel_tex.py，16×16 一張鋪 1 公尺 = 16 格／公尺）：材質名字含有前面那個字 → 哪一張。
+## 第一個對到的算數；對到的就不疊下面的程式雜訊。只做場景，人物、恐龍、手上的槍不加
+const PIXEL_RULES := [
+	# 樹冠、灌木的芯：近看會從葉片卡之間露出一顆平滑的多面體（橡樹審查），貼葉叢圖
+	["leaf_core", &"foliage"], ["maple_core", &"foliage"], ["tree_pine_leaf", &"foliage"], ["tree_leaf_willow", &"foliage"],
+	["yucca_dead", &"foliage"], ["p_bush", &"foliage"],
+	["leaf", &""], ["pine", &""], ["bush", &""], ["lit", &""], ["lamp", &""], ["glass", &""],
+	["bark", &"bark"],
+	["mortar", &"plaster"], ["chink", &"plaster"],
+	["rock_", &""],   # 天然大石頭：砌石牆的圖貼上去像馬賽克（第二輪審查），維持原本的程式雜訊
+	["stone", &"stone"],
+	["shing", &"roof"], ["roof", &"roof"],
+	["hay", &"hay"],
+	["flora_grass", &"blades"], ["p_grass", &"blades"],   # 草叢（樹葉、灌木葉子不加）
+	["iron", &"metal"], ["p_band", &"metal"],
+	# 房子外牆板（h_wood、搭接板 h_lap、收邊條 trim）：模型自己做了板條，橫板、直板兩種房子共用同一個材質，
+	# 貼有板縫的木板圖會跟模型的板條交叉成格子布（第二輪審查）。改貼沒有方向的舊木頭斑駁（weathered），不畫板縫
+	["h_wood", &"weathered"], ["h_lap", &"weathered"], ["trim", &"weathered"],
+	["post", &"wood_v"],   # 直立的柱子：直紋（橫紋像纏膠帶）
+	["p_red", &"wood_v"], ["p_silo", &"wood_v"],   # 直條板
+	["wood", &"wood_h"], ["plank", &"wood_h"], ["log", &"wood_h"],
+	["shut", &"wood_h"], ["p_white", &"wood_h"], ["h_inner", &"wood_h"], ["k_floor", &"wood_h"],
+	["t_board", &"wood_h"],
+]
+static var _pixel_tex := {}
+
+static func _pixel_kind(m: BaseMaterial3D) -> StringName:
+	var name := String(m.resource_name)
+	if name in ["wood", "wood2", "wood_red"]:
+		return &""   # 槍的木頭
+	for rule: Array in PIXEL_RULES:
+		if name.contains(rule[0]):
+			var kind: StringName = rule[1]
+			return kind if kind != &"" and ResourceLoader.exists("res://assets/textures/pixel/%s.png" % kind) else &""
+	return &""
+
+static func _add_pixel(f: ShaderMaterial, kind: StringName) -> void:
+	if not _pixel_tex.has(kind):
+		var img := (load("res://assets/textures/pixel/%s.png" % kind) as Texture2D).get_image()
+		img.decompress()
+		var sum := 0.0
+		for y in img.get_height():
+			for x in img.get_width():
+				sum += pow(img.get_pixel(x, y).r, 2.2)   # png 是 sRGB，平均要用線性的
+		img.generate_mipmaps()   # 遠處用小一級的圖（最近點），不然整片閃
+		_pixel_tex[kind] = [ImageTexture.create_from_image(img), sum / (img.get_width() * img.get_height())]
+	f.set_shader_parameter(&"pixel_tex", _pixel_tex[kind][0])
+	f.set_shader_parameter(&"pixel_mean", _pixel_tex[kind][1])
+	if kind == &"foliage":
+		f.set_shader_parameter(&"pixel_scale", 0.5)   # 芯的大面上一公尺 16 格看起來像棋盤，放大一倍
+	if f.shader == FACET_SHADER:
+		f.set_shader_parameter(&"use_pixel", true)
 
 ## 紋理：純色平面看起來像塑膠，在材質上疊一層淡淡的程式雜訊——木紋（橫向細條）、石斑、乾草絲、恐龍鱗片。
 ## 物件自己的座標三面投影（triplanar），不用 UV，會動的東西紋理也黏著走。

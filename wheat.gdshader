@@ -3,7 +3,7 @@ shader_type spatial;
 // 美術風格評估：麥田近景一根根亮黃色的穗尖跟暗地面明度差太大，整片變成細雜訊
 render_mode cull_disabled, specular_disabled;
 
-uniform sampler2D card_tex : source_color, filter_linear_mipmap;
+uniform sampler2D card_tex : source_color, filter_nearest_mipmap;   // 最近點：像素風（2026-10-09）
 uniform float near_thin = 0.4;        // 近處藏掉幾成（跟 grass.gdshader 一樣）
 uniform float near_thin_dist = 14.0;  // 公尺
 uniform float tip_dim = 0.75;         // 穗尖亮度倍數
@@ -18,6 +18,8 @@ void vertex() {
 	MODELVIEW_NORMAL_MATRIX = mat3(MODELVIEW_MATRIX);
 	// 近處藏掉一部分：照根的位置固定挑（同一株一直是同一種，不會閃），縮成一點
 	vec3 root = MODEL_MATRIX[3].xyz;
+	// 貼臉的那叢縮掉（1.5 公尺內）：一張 1.3 公尺寬的卡片貼在鏡頭前是一整片平的黃色色塊
+	VERTEX *= smoothstep(0.6, 1.5, distance(root.xz, CAMERA_POSITION_WORLD.xz));
 	if (fract(sin(dot(root.xz, vec2(12.9898, 78.233))) * 43758.5453) < near_thin) {
 		VERTEX *= smoothstep(near_thin_dist - 3.0, near_thin_dist, distance(root.xz, CAMERA_POSITION_WORLD.xz));
 	}
