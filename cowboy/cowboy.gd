@@ -305,7 +305,7 @@ func _draw_spread_marks() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	# mouse_look 擋掉 macOS 鎖滑鼠後那串殘留位移（見 fighter.gd）
+	# mouse_look 擋掉卡頓時累積湧進來的位移（見 fighter.gd 的 after_hitch）
 	var rel := mouse_look(event) * mouse_sensitivity
 	if rel != Vector2.ZERO:
 		rotate_view(rel)

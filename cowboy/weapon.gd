@@ -132,6 +132,14 @@ enum Action { SINGLE_ACTION, DOUBLE_ACTION, BOLT, LEVER, BREAK, HARPOON }
 @export var pinch_rotation := Vector3.ZERO
 ## 舉槍時左手繞槍管再轉多少（弧度，乘舉槍程度）
 @export var ads_support_turn := 0.0
+## 腰射時左手繞槍管再轉多少（弧度，乘 1 - 舉槍程度）：讓護木躺在掌心、拇指在左、四指從下面繞到右邊（影片的握法）
+@export var hip_support_turn := 0.0
+## 會動的手：腰射時左手手腕往手背方向折幾度，前臂順著伸出去（負的＝照 glb 烘好的方向）
+@export var support_wrist_ext := -1.0
+## 會動的手：腰射時左手拇指尖要去的地方——離護木軸多遠（往鏡頭左邊）、沿護木往槍口多遠（公尺）。零＝不動
+@export var support_thumb := Vector2.ZERO
+## 會動的手：腰射時左手四指第二、三節再往掌心彎多少（度）
+@export var support_finger_curl := 0.0
 ## 左手只在舉槍時出現（左輪：腰射單手、舉槍雙手）
 @export var support_only_ads := false
 ## 舉槍時左手再移多少（父節點座標，乘舉槍程度）：影片舉槍時左手看起來很近很大
@@ -178,8 +186,26 @@ enum Action { SINGLE_ACTION, DOUBLE_ACTION, BOLT, LEVER, BREAK, HARPOON }
 @export var round_path: NodePath
 ## 扳擊錘時拇指轉多少（弧度）：從貼在槍把左邊轉上去勾住扳手
 @export var thumb_cock := Vector3.ZERO
-## 塞彈的左手在鏡頭座標裡的朝向：從左下方伸過來、指尖朝右上（不跟著槍轉，不然手臂會直直立起來）
-@export var load_hand_rotation := Vector3(0.6, -0.5, -0.3)
+## 塞彈的左手繞子彈轉多少（弧度，子彈座標）：手跟著子彈（拇指頂彈底），前臂另外用 pinch_arm_dir 轉出畫面
+@export var load_hand_rotation := Vector3.ZERO
+
+@export_group("Rig")
+## 用會動的手（models/cowboy.glb 的 RigGrip / RigSupport / RigLoad：帶骨架，靜止姿勢＝握姿）。
+## 開槍食指扣扳機；左輪拇指扳擊錘是一節一節彎；長槍換彈捏子彈的手塞完會張開放手（_rig_pose）。炸彈長矛還是固定網格
+@export var use_rig := false
+## 扳擊錘時拇指最後一節再往下勾多少（度）：勾住擊錘往後拉（影片 7.5、15.5 秒）
+@export var thumb_cock_curl := 35.0
+## 開槍時食指往掌心扣多少（度，第二、三節各一半）
+@export var trigger_pull := 25.0
+## 扳擊錘時拇指指尖要去的地方（擊錘自己的座標）：擊錘尾端上緣，指腹壓在上面往後拉
+@export var hammer_spur := Vector3(0.0, 0.031, 0.027)
+## 長槍換彈塞完子彈放手時，手指張開多少（度）
+@export var release_open := 70.0
+## 長槍換彈拿子彈到入口那段，從槍上方繞多高（公尺）
+@export var approach_lift := 0.04
+## 長槍換彈捏子彈時前臂往哪伸（鏡頭座標）：影片步槍、散彈都是從畫面右邊橫著伸進來。
+## 零＝不轉（照 glb 裡烘好的方向，會直直朝鏡頭、蓋住半個畫面）
+@export var pinch_arm_dir := Vector3(0.35, -1.0, 0.0)   # 往下、偏右伸出畫面（審查：往右橫著伸手臂太高、蓋住右半畫面；往鏡頭後伸手肘貼著鏡頭）
 
 var mag: int
 var harpoon: MeshInstance3D   # 炸彈長矛管裡那支魚叉（沒有就是一般的槍）
@@ -214,8 +240,19 @@ var _gate: Node3D
 var _grip: Node3D           # 右手，長槍換彈時會離開握把
 var _support: Node3D        # 左手
 var _hand_round: Node3D
+const HAND_SHELL_HALF := 0.0325   # 拿子彈的手（HandLoad）照多長的子彈擺：blender/hands.py 的 SHELL_LEN 一半（散彈）
+var _pinch_shift := 0.0          # 手裡的子彈比散彈短多少的一半：手往子彈前面（-Z）挪這麼多
 var _ejector: Node3D
 var _ejector_rest := Vector3.ZERO
+# 會動的手（use_rig）：每隻手的骨架，和骨架空間 ← 外層節點（原本固定網格的座標）的轉換
+var _grip_sk: Skeleton3D
+var _grip_sk_basis := Basis.IDENTITY
+var _load_sk: Skeleton3D
+var _support_sk: Skeleton3D
+var _pinch_rig: Node3D   # 長槍換彈：握槍那隻手裡另一副捏子彈的手（跟握槍的手切換顯示）
+var _pinch_sk: Skeleton3D
+var _release := 0.0      # 長槍換彈塞完放手 0..1（手指張開）
+const THUMB_TIP := 0.026   # 拇指最後一節從關節到指尖多長（glb 不存骨頭尾端，照 hands.py 的 THUMB_LEN）
 
 @onready var _anim: AnimationPlayer = find_child("AnimationPlayer", true, false)
 
@@ -253,6 +290,8 @@ func _ready() -> void:
 	_hand_round = get_node_or_null(hand_round_path)
 	if _hand_round:
 		_hand_round.visible = false
+		if _hand_round is MeshInstance3D:   # 拿子彈的手是照散彈擺的：短的子彈手要往前挪，拇指才頂得到它的底
+			_pinch_shift = HAND_SHELL_HALF - (_hand_round as MeshInstance3D).get_aabb().size.z * 0.5
 	# GLTF 匯進來每個 clip 都不循環，把 looping 名單（含 _EMPTY 變體）改掉
 	for action in looping:
 		for n in [anim_map.get(action), anim_map.get(action + "_EMPTY")]:
@@ -379,6 +418,10 @@ func damage_at(dist: float) -> float:
 
 func _add_hands() -> void:
 	var src := ARMS.instantiate()
+	if use_rig:
+		_add_rig_hands(src)
+		src.free()
+		return
 	for h: Array in [[&"HandGrip", grip_parent, grip_hand], [&"HandSupport", support_parent, support_hand]]:
 		var parent := get_node_or_null(h[1] as NodePath) if h[1] != NodePath() else null
 		var from := src.get_node_or_null(String(h[0])) as MeshInstance3D
@@ -406,6 +449,209 @@ func _add_hands() -> void:
 		_load_hand = _copy_mesh(src, &"HandLoad", get_node(model_path))
 		_load_hand.visible = false
 	src.free()
+
+
+## 會動的手：外層一個空節點（名字、位置跟原本的固定網格一樣，所以擺手的程式不用改），
+## 裡面放 glb 的骨架組（RigGrip 等，自己的節點位置就是原本烘進網格的那個轉換）
+func _add_rig_hands(src: Node) -> void:
+	for h: Array in [[&"HandGrip", &"RigGrip", grip_parent, grip_hand], [&"HandSupport", &"RigSupport", support_parent, support_hand]]:
+		var parent := get_node_or_null(h[2] as NodePath) if h[2] != NodePath() else null
+		if parent == null:
+			continue
+		var holder := _rig_holder(src, h[0], h[1], parent)
+		if holder == null:
+			continue
+		holder.transform = h[3]
+		if h[0] == &"HandGrip":
+			_grip = holder
+			_grip_sk = holder.find_children("*", "Skeleton3D", true, false)[0]
+			_grip_sk_basis = (holder.get_child(0) as Node3D).basis   # 骨架空間 → 外層節點空間
+		else:
+			_support = holder
+			_support_sk = holder.find_children("*", "Skeleton3D", true, false)[0]
+	# 長槍換彈：握槍的手裡多放一副捏子彈的手，拿子彈那段切過去（以前是換網格）
+	var reloader := _support if reload_with_support else _grip
+	if reloader and gate_path.is_empty() and harpoon_path.is_empty():
+		var rig := src.get_node_or_null(^"RigLoad") as Node3D
+		if rig:
+			_pinch_rig = rig.duplicate() as Node3D
+			for mi: MeshInstance3D in _pinch_rig.find_children("*", "MeshInstance3D", true, false):
+				mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			_pinch_rig.visible = false
+			reloader.add_child(_pinch_rig)
+			_pinch_sk = _pinch_rig.find_children("*", "Skeleton3D", true, false)[0]
+	if not gate_path.is_empty():
+		_load_hand = _rig_holder(src, &"HandLoad", &"RigLoad", get_node(model_path))
+		if _load_hand:
+			_load_hand.visible = false
+			_load_sk = _load_hand.find_children("*", "Skeleton3D", true, false)[0]
+
+
+func _rig_holder(src: Node, holder_name: StringName, rig_name: StringName, parent: Node) -> Node3D:
+	var rig := src.get_node_or_null(String(rig_name)) as Node3D
+	if rig == null:
+		return null
+	var holder := Node3D.new()
+	holder.name = String(holder_name)
+	var copy := rig.duplicate() as Node3D
+	holder.add_child(copy)
+	for mi: MeshInstance3D in copy.find_children("*", "MeshInstance3D", true, false):
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF   # 視角模型貼著鏡頭，影子會怪
+	parent.add_child(holder)
+	return holder
+
+
+## 每幀從靜止姿勢（＝握姿）重擺：前臂轉回來、拇指扳擊錘、食指扣扳機
+func _rig_pose(cock: float) -> void:
+	if _grip_sk:
+		var sk := _grip_sk
+		sk.reset_bone_poses()
+		# 前臂繞手腕轉（原本 HandGripArm 的 rotation，外層座標 → 骨架座標）
+		_rotate_bone_global(sk, "LowerArm", Basis.from_euler(grip_arm_rotation))
+		# 長槍換彈：手翻來翻去，前臂常常正對鏡頭、手肘的袖子變成一個圓盤擋在手旁邊；照換彈姿勢的程度把前臂轉往畫面外
+		var cam := get_viewport().get_camera_3d()
+		if not _gate and cam and pinch_arm_dir != Vector3.ZERO and _reload_pose > 0.0:
+			var i := sk.find_bone("LowerArm")
+			var cur := (sk.global_basis * sk.get_bone_global_pose(i).basis.y).normalized()
+			var want := cam.global_basis * pinch_arm_dir.normalized()
+			_aim_bone(sk, "LowerArm", cur.slerp(want, smoothstep(0.0, 1.0, _reload_pose)))
+		# 拇指：指尖自己找擊錘（審查：固定角度轉，舉槍時拇指從左邊橫掃過槍頂、腰射壓在槍背中段碰不到擊錘）。
+		# 最後一節先往下勾，再讓掌骨和中間那節把指尖帶到擊錘尾端，最後照扳擊錘進度從握姿漸變過去
+		var hammer := get_node_or_null(hammer_path) as Node3D
+		if cock > 0.0 and hammer:
+			_bend(sk, "Thumb_Distal", thumb_cock_curl)
+			var target := sk.global_transform.affine_inverse() * hammer.to_global(hammer_spur)
+			_reach(sk, ["Thumb_Distal", "Thumb_Intermediate", "Thumb_Proximal"], "Thumb_Distal", target, cock)
+		# 食指扣扳機：開槍那一下（0.12 秒內扣下再放開）
+		var pull := clampf(1.0 - absf(_since_fire - 0.04) / 0.08, 0.0, 1.0)
+		if pull > 0.0:
+			_bend(sk, "Index_Intermediate", trigger_pull * 0.5 * pull)
+			_bend(sk, "Index_Distal", trigger_pull * 0.5 * pull)
+	if _support_sk:
+		_support_sk.reset_bone_poses()
+		var cam2 := get_viewport().get_camera_3d()
+		if cam2 and support_wrist_ext >= 0.0 and aim < 1.0:
+			# 先擺好手（掌心朝上托護木），前臂順著手腕伸出去：手腕只往手背方向折（托東西時真人可以折 70 度），
+			# 不往側邊歪。不要先定前臂再扳手腕（使用者：左手扭曲很嚴重；掌心朝下蓋在護木上是反握）
+			var i := _support_sk.find_bone("LowerArm")
+			var cur := (_support_sk.global_basis * _support_sk.get_bone_global_pose(i).basis.y).normalized()
+			var hand_y := (_support_sk.global_basis * _support_sk.get_bone_global_pose(_support_sk.find_bone("Hand")).basis.y).normalized()
+			var palm := palm_dir(_support_sk)
+			var e := deg_to_rad(support_wrist_ext)
+			_aim_bone(_support_sk, "LowerArm", cur.slerp((-hand_y * cos(e) - palm * sin(e)).normalized(), 1.0 - aim))
+		if cam2 and support_thumb != Vector2.ZERO and aim < 1.0:
+			# 拇指貼在護木靠鏡頭左邊那側、往槍口方向（影片的握法）；不然轉過來之後拇指懸在半空
+			var ax := _support.global_basis.z.normalized()        # 護木的軸（HandSupport 的 +Z）
+			var mz: Variant = muzzle_global()
+			if mz != null and ax.dot((mz as Vector3) - _support.global_position) > 0.0:
+				ax = -ax   # 讓 -ax 指向槍口（support_thumb.y 是往槍口多遠）
+			var left := -cam2.global_basis.x
+			left = (left - ax * left.dot(ax)).normalized()
+			var p := _support.global_position - ax * support_thumb.y + left * support_thumb.x
+			# 只動掌骨和中間那節，最後一節伸直：三節一起反算會把末節勾下去、再拉回來，拇指變成一個鉤子（審查第三輪）
+			# （烘好的握姿拇指本來就是彎的，所以最後一節要對齊中間那節，才是真的伸直）
+			var mid := _support_sk.find_bone("Thumb_Intermediate")
+			_aim_bone(_support_sk, "Thumb_Distal", _support_sk.global_basis * _support_sk.get_bone_global_pose(mid).basis.y)
+			_bend(_support_sk, "Thumb_Distal", 10.0)   # 留一點彎：完全對齊時兩節交界的皮會翻出一片三角（審查第四輪）
+			_reach(_support_sk, ["Thumb_Intermediate", "Thumb_Proximal"], "Thumb_Distal",
+				_support_sk.global_transform.affine_inverse() * p, 1.0 - aim)
+		if support_finger_curl != 0.0 and aim < 1.0:
+			# 四指多包一點：腰射時指尖從護木右側翻上來看得到（只彎手指，整隻手往上轉會變回反握）
+			# 正數＝多彎、負數＝打開（四指握成拳包進護木裡時用負的，讓指尖從護木右側伸出來）
+			for f in ["Index", "Middle", "Ring", "Little"]:
+				_bend(_support_sk, f + "_Proximal", support_finger_curl * 0.6 * (1.0 - aim))
+				_bend(_support_sk, f + "_Intermediate", support_finger_curl * (1.0 - aim))
+				_bend(_support_sk, f + "_Distal", support_finger_curl * 0.8 * (1.0 - aim))
+	if _pinch_sk and _pinch_rig.visible:
+		# 塞完放手：拇指、食指往外張開（影片散彈 9、26.5 秒，塞完手是張開退出去的）
+		_pinch_sk.reset_bone_poses()
+		var o := release_open * _release
+		_bend(_pinch_sk, "Index_Proximal", -o * 0.5)
+		_bend(_pinch_sk, "Index_Intermediate", -o * 0.4)
+		_bend(_pinch_sk, "Index_Distal", -o * 0.2)
+		_bend(_pinch_sk, "Thumb_Intermediate", -o * 0.5)
+		_bend(_pinch_sk, "Thumb_Distal", -o * 0.3)
+		var cam := get_viewport().get_camera_3d()
+		if cam and pinch_arm_dir != Vector3.ZERO:
+			_aim_bone(_pinch_sk, "LowerArm", cam.global_basis * pinch_arm_dir.normalized())
+
+
+## 讓 tip 骨頭的指尖碰到 target（骨架座標）：鏈上的骨頭從末端往根部輪流轉向目標，幾輪就收斂（CCD）。
+## 算完再照 weight 從原本的姿勢漸變過去（指尖沿弧線過去，不會直線穿過槍）
+func _reach(sk: Skeleton3D, chain: Array, tip: String, target: Vector3, weight: float) -> void:
+	var ids := chain.map(func(n: String) -> int: return sk.find_bone(n))
+	var t := sk.find_bone(tip)
+	if t < 0 or ids.has(-1):
+		return
+	var before := ids.map(func(i: int) -> Quaternion: return sk.get_bone_pose_rotation(i))
+	for _it in 8:
+		for i: int in ids:
+			var g := sk.get_bone_global_pose(i)
+			var tg := sk.get_bone_global_pose(t)
+			var tip_at := tg.origin + tg.basis.y.normalized() * THUMB_TIP
+			var a := (tip_at - g.origin).normalized()
+			var b := (target - g.origin).normalized()
+			if a.dot(b) > 0.99999:
+				continue
+			var q := Quaternion(a, b)
+			sk.set_bone_global_pose(i, Transform3D(Basis(q) * g.basis, g.origin))
+	for k in ids.size():
+		var i: int = ids[k]
+		sk.set_bone_pose_rotation(i, (before[k] as Quaternion).slerp(sk.get_bone_pose_rotation(i), weight))
+
+
+## 骨頭（連子骨頭）繞根部轉，讓骨頭的方向（+Y，根部→尾端）指向世界座標的 dir。
+## 骨架可能是鏡射過的（左手的 glb 拿來當右手用），轉動先換到骨架座標
+func _aim_bone(sk: Skeleton3D, bone_name: String, dir: Vector3) -> void:
+	var i := sk.find_bone(bone_name)
+	if i < 0:
+		return
+	var to_world := sk.global_basis
+	var g := sk.get_bone_global_pose(i)
+	var cur := (to_world * g.basis.y).normalized()
+	var want := dir.normalized()
+	if cur.dot(want) > 0.9999:
+		return
+	var r := Basis(Quaternion(cur, want))
+	var rs := to_world.inverse() * r * to_world
+	sk.set_bone_global_pose(i, Transform3D(rs * g.basis, g.origin))
+
+
+## 掌心朝哪（世界座標）：手指往掌心彎，中指從指根到指尖、扣掉手的方向，就是掌心那一面。骨架鏡射過也對
+func palm_dir(sk: Skeleton3D) -> Vector3:
+	var h := (sk.global_basis * sk.get_bone_global_pose(sk.find_bone("Hand")).basis.y).normalized()
+	var a := sk.global_transform * sk.get_bone_global_pose(sk.find_bone("Middle_Proximal")).origin
+	var b := sk.global_transform * sk.get_bone_global_pose(sk.find_bone("Middle_Distal")).origin
+	var v := b - a
+	return (v - h * v.dot(h)).normalized()
+
+
+## 手腕彎幾度（手的方向和前臂反方向的夾角，伸直＝0）、往側邊歪幾度。檢查用
+func wrist_angles(sk: Skeleton3D) -> Vector2:
+	var h := sk.get_bone_global_pose(sk.find_bone("Hand")).basis
+	var a := sk.get_bone_global_pose(sk.find_bone("LowerArm")).basis.y.normalized()
+	var back := -a
+	var bend := rad_to_deg(back.angle_to(h.y.normalized()))
+	var side := rad_to_deg(asin(clampf(back.dot(h.x.normalized()), -1.0, 1.0)))
+	return Vector2(bend, side)
+
+
+## 骨頭往掌心彎 deg 度（骨頭自己的 X 軸是彎曲軸，hands.py 的 bend 一樣是繞 X 轉負角）
+func _bend(sk: Skeleton3D, bone_name: String, deg: float) -> void:
+	var i := sk.find_bone(bone_name)
+	if i < 0:
+		return
+	sk.set_bone_pose_rotation(i, sk.get_bone_pose_rotation(i) * Quaternion(Vector3.RIGHT, deg_to_rad(-deg)))
+
+
+## 骨頭（連子骨頭）繞自己的根部轉 r：r 是外層節點座標（原本固定網格的座標）裡的轉動
+func _rotate_bone_global(sk: Skeleton3D, bone_name: String, r: Basis) -> void:
+	var i := sk.find_bone(bone_name)
+	if i < 0:
+		return
+	var rs := _grip_sk_basis.inverse() * r * _grip_sk_basis
+	var g := sk.get_bone_global_pose(i)
+	sk.set_bone_global_pose(i, Transform3D(rs * g.basis, g.origin))
 
 
 ## 從 cowboy.glb 拿一個網格掛到 parent 底下，位置用它在 glb 裡的節點位置
@@ -560,7 +806,7 @@ func _procedural(delta: float) -> void:
 		_support.visible = aim > 0.3 and _reload_pose < 0.1
 	if _support and not reload_with_support:
 		# 舉槍時左手繞槍管轉回來：腰射槍往左傾、手設成從左側托；舉槍槍是正的，不轉回來前臂會橫過畫面
-		_support.basis = Basis.from_euler(ads_support_rot * aim) * Basis(Vector3.BACK, ads_support_turn * aim + reload_support_turn * smoothstep(0.0, 1.0, _reload_pose)) \
+		_support.basis = Basis.from_euler(ads_support_rot * aim) * Basis(Vector3.BACK, ads_support_turn * aim + hip_support_turn * (1.0 - aim) + reload_support_turn * smoothstep(0.0, 1.0, _reload_pose)) \
 			* support_hand.basis.orthonormalized()
 		if _reload_left <= 0.0:
 			_support.position = support_hand.origin + Vector3(ads_support_shift.x, ads_support_shift.y, ads_support_shift.z) * aim
@@ -574,6 +820,8 @@ func _procedural(delta: float) -> void:
 		hammer.rotation.x = -0.55 * (1.0 - back)
 	if _thumb and _gate:
 		_thumb.rotation = thumb_cock * cock
+	if use_rig:
+		_rig_pose(cock)
 	var cyl := get_node_or_null(cylinder_path) as Node3D
 	if cyl:
 		cyl.rotation.z = rotate_toward(cyl.rotation.z, wrapf(_turns * TAU / 6.0, -PI, PI), delta * 12.0)
@@ -586,7 +834,8 @@ func _procedural(delta: float) -> void:
 		barrel.rotation.x = -0.6 * _reload_pose
 
 
-const HAND_POCKET := Vector3(0.14, -0.26, 0.16)   # 右手去拿子彈的地方（畫面外右下）
+const HAND_POCKET := Vector3(0.14, -0.26, 0.16)
+const RELEASE_END := 0.84   # 長槍會動的手：塞完（0.72）到這裡停在入口放手   # 右手去拿子彈的地方（畫面外右下）
 
 
 ## 長槍換一發（_round_t 0→1）：右手離開握把→畫面外拿子彈→對準入口→塞進去→回來握好。
@@ -607,6 +856,8 @@ func _hand_reload(delta: float) -> void:
 	var inn := to_parent * space.to_global(load_in + load_hand_offset)
 	var round_on := false
 	var round_at := Vector3.ZERO    # load_space 座標
+	var pinching := false           # 會動的手：這幀用捏子彈的手
+	var pinch_at := Vector3.ZERO
 	if t < 1.0:
 		var hand := rest
 		if reload_with_support:
@@ -622,15 +873,25 @@ func _hand_reload(delta: float) -> void:
 		elif t < 0.25:
 			hand = rest.lerp(pocket, smoothstep(0.0, 0.25, t))
 		elif t < 0.5:
-			hand = pocket.lerp(out, smoothstep(0.25, 0.5, t))
+			# 從槍的上方繞一個小弧線到入口（審查：直線過去散彈的彈殼會先切進機匣）
+			var k := smoothstep(0.25, 0.5, t)
+			hand = pocket.lerp(out, k) + to_parent.basis * space.global_basis.y.normalized() * (approach_lift * sin(PI * k))
 		elif t < 0.72:
 			hand = out.lerp(inn, smoothstep(0.5, 0.72, t))
+		elif _pinch_rig and t < RELEASE_END:
+			hand = inn   # 會動的手：塞完先停在入口張開手指放手，再換回握槍的手往回走（邊退邊轉會擦過鏡頭前）
 		else:
-			hand = inn.lerp(rest, smoothstep(0.72, 1.0, t))
+			hand = inn.lerp(rest, smoothstep(RELEASE_END if _pinch_rig else 0.72, 1.0, t))
 		hand_node.position = hand
-		if t >= (0.1 if reload_with_support else 0.3) and t < (0.62 if reload_with_support else 0.72):   # 左手送魚叉：一伸進畫面手上就要拿著（第二輪審查）
+		var put := 0.62 if reload_with_support else 0.72   # 塞進去的那一刻
+		if t >= (0.1 if reload_with_support else 0.3) and t < put:   # 左手送魚叉：一伸進畫面手上就要拿著（第二輪審查）
 			round_on = true
 			round_at = space.to_local(parent.to_global(hand)) - load_hand_offset
+		# 會動的手：捏子彈的手塞完不馬上變回握槍的拳頭，先張開放手、退一段才換回去
+		if _pinch_rig and t >= 0.3 and t < RELEASE_END:
+			pinching = true
+			pinch_at = space.to_local(parent.to_global(hand)) - load_hand_offset
+			_release = smoothstep(put, RELEASE_END - 0.02, t)
 		elif load_eject and t > 0.03 and t < 0.3:
 			var k := t / 0.3
 			round_at = load_in + Vector3(0.05 * k, 0.06 * k - 0.4 * k * k, 0.08 * k)   # 往後彈出一點、掉下去
@@ -644,36 +905,40 @@ func _hand_reload(delta: float) -> void:
 	var keep := global_basis * Basis.from_euler(reload_hand_turn) * Basis.from_euler(hip_rotation) * rest_basis
 	var k := smoothstep(0.0, 1.0, _reload_pose)
 	hand_node.basis = rest_basis.slerp((parent.global_basis.inverse() * keep).orthonormalized(), k)
-	# 拿著子彈的那段換成捏子彈的手（HandLoad，原點在捏住那一點）：握槍的拳頭拿子彈，手指是對著空氣彎的
+	# 拿著子彈的那段換成拿子彈的手（HandLoad，原點在子彈中心）：握槍的拳頭拿子彈，手指是對著空氣彎的
 	if _pinch_mesh and hand_node is MeshInstance3D:
 		var mi := hand_node as MeshInstance3D
 		mi.mesh = _pinch_mesh if round_on else _hold_mesh
 		if round_on:
-			# 捏的那一點（HandLoad 原點）放在子彈底部、手的方向跟子彈一致（子彈沿 -Z 塞進去）
+			# HandLoad 原點在子彈中心、子彈沿 -Z（拇指頂彈底、食指搭在彈殼上），直接疊在子彈上
 			var flip := Basis.IDENTITY if reload_with_support else Basis.from_scale(Vector3(-1, 1, 1))   # HandLoad 是左手，右手用要鏡射
 			mi.global_transform = Transform3D(space.global_basis * Basis.from_euler(pinch_rotation) * flip,
-				space.to_global(round_at + Vector3(0, 0, 0.016)))
+				space.to_global(round_at + Vector3(0, 0, -_pinch_shift)))
 		for c in mi.get_children():   # 拇指、前臂是握槍姿勢的，捏的時候藏起來
 			(c as Node3D).visible = not round_on
+	elif _pinch_rig:
+		# 會動的手：握槍的那副和捏子彈的那副切換顯示；捏的時候整個外層節點擺到子彈那裡（跟以前換網格一樣的擺法）
+		for c in hand_node.get_children():
+			(c as Node3D).visible = (c == _pinch_rig) == pinching
+		if pinching:
+			var flip := Basis.IDENTITY if reload_with_support else Basis.from_scale(Vector3(-1, 1, 1))   # 捏子彈的手是左手，右手用要鏡射
+			hand_node.global_transform = Transform3D(space.global_basis * Basis.from_euler(pinch_rotation) * flip,
+				space.to_global(pinch_at + Vector3(0, 0, -_pinch_shift)))
 	_hand_round.visible = round_on
 	if round_on:
 		_hand_round.global_transform = Transform3D(space.global_basis, space.to_global(round_at))
 
 
 # 塞彈的關鍵位置（槍模型座標，Godot 軸向）。捏的那一點＝彈底
-const LOAD_AWAY := Vector3(-0.10, -0.20, 0.20)       # 手在畫面外左下
-const LOAD_AWAY_VIEW := Vector3(0.10, -0.30, 0.05)  # 換彈時手在畫面外右下（武器節點座標＝鏡頭附近）
-const LOAD_FETCH_VIEW := Vector3(0.10, -0.16, -0.05) # 伸去拿子彈（畫面右下邊緣）
-const LOAD_FETCH := Vector3(-0.04, -0.08, 0.09)      # 伸去拿子彈
-const LOAD_KNOB := Vector3(0.016, 0.036, -0.162)     # 退殼桿推鈕前面
-const LOAD_WAIT := Vector3(0.03, -0.01, 0.05)       # 推退殼桿時手在裝填門下方等
-const LOAD_PUSHED := Vector3(0.016, 0.036, -0.130)
+# 照影片 20～25 秒：每一發手從畫面左下捏著子彈伸進來、塞進裝填門、往右下角收出畫面（武器節點座標＝鏡頭附近）
+const LOAD_ENTER_VIEW := Vector3(0.0, -0.30, 0.05)
+const LOAD_AWAY_VIEW := Vector3(0.16, -0.30, 0.05)
 const LOAD_OUT := Vector3(0.0108, 0.0288, 0.035)     # 對準裝填門後面
 const LOAD_IN := Vector3(0.0108, 0.0288, -0.006)     # 子彈塞進去了
 const ROUND_HALF := 0.0148                           # 子彈原點到彈底
 
 
-## 一發的流程（_round_t 0→1）：伸手→推退殼桿把空殼頂出來→拿子彈→對準裝填門塞進去→放手。
+## 一發的流程（_round_t 0→1）：退殼桿把空殼頂出來、手捏著子彈從左下伸進來→對準裝填門塞進去→往右下收手。
 ## 轉輪在塞完之後轉一格，下一發對到裝填門
 func _revolver_reload(delta: float, rp: float) -> void:
 	if _gate:
@@ -685,33 +950,26 @@ func _revolver_reload(delta: float, rp: float) -> void:
 	# 手的起點、拿子彈的地方照鏡頭定（畫面右下方外面）：照槍定的話，換彈時槍翻過來，手會從左上方伸過來
 	var to_model := _model.transform.affine_inverse() if _model else Transform3D.IDENTITY
 	var away: Vector3 = to_model * LOAD_AWAY_VIEW
-	var fetch: Vector3 = to_model * LOAD_FETCH_VIEW
+	var enter: Vector3 = to_model * LOAD_ENTER_VIEW
 	var hand := away
 	var push := 0.0
 	var round_at := Vector3.ZERO
 	var round_on := false
 	if t < 1.0:
-		# 手不去槍口推退殼桿（伸到畫面正中間會擋住視線，影片也沒有）：先到裝填門下方等，退殼桿自己推出空殼
-		if t < 0.15:
-			hand = away.lerp(LOAD_WAIT, smoothstep(0.0, 0.15, t))
-		elif t < 0.3:
-			push = smoothstep(0.15, 0.28, t)
-			hand = LOAD_WAIT
-		elif t < 0.48:
-			push = 1.0 - smoothstep(0.3, 0.4, t)
-			hand = LOAD_WAIT.lerp(fetch, smoothstep(0.3, 0.48, t))
-		elif t < 0.66:
-			hand = fetch.lerp(LOAD_OUT, smoothstep(0.48, 0.66, t))
-		elif t < 0.82:
-			hand = LOAD_OUT.lerp(LOAD_IN, smoothstep(0.66, 0.82, t))
+		# 手不去槍口推退殼桿（伸到畫面正中間會擋住視線，影片也沒有）：退殼桿自己推出空殼，手同時從左下伸進來
+		push = smoothstep(0.0, 0.12, t) - smoothstep(0.2, 0.3, t)
+		if t < 0.45:
+			hand = enter.lerp(LOAD_OUT, smoothstep(0.0, 0.45, t))
+		elif t < 0.65:
+			hand = LOAD_OUT.lerp(LOAD_IN, smoothstep(0.45, 0.65, t))
 		else:
-			hand = LOAD_IN.lerp(away, smoothstep(0.82, 1.0, t))
-		# 空殼：推退殼桿時從裝填門往後彈出、往下掉
-		if t > 0.2 and t < 0.45:
-			var k := t - 0.2
+			hand = LOAD_IN.lerp(away, smoothstep(0.65, 1.0, t))
+		# 空殼從裝填門往後彈出、往下掉；新的那顆捏在手上直到塞進去
+		if t > 0.05 and t < 0.3:
+			var k := t - 0.05
 			round_at = LOAD_IN + Vector3(0.0, 0.0, -ROUND_HALF) + Vector3(0.05 * k, -1.2 * k * k, 0.35 * k)
 			round_on = true
-		elif t >= 0.45 and t < 0.82:
+		elif t >= 0.3 and t < 0.65:
 			round_at = hand + Vector3(0.0, 0.0, -ROUND_HALF)
 			round_on = true
 		if was < 0.85 and t >= 0.85:
@@ -720,9 +978,14 @@ func _revolver_reload(delta: float, rp: float) -> void:
 		_ejector.position = _ejector_rest + Vector3(0.0, 0.0, 0.032 * push)
 	if _load_hand:
 		# 沒在塞的時候手慢慢退到畫面外；退到了就藏起來
-		_load_hand.position = hand if t < 1.0 else _load_hand.position.lerp(away, minf(delta * 10.0, 1.0))
-		if _model:
-			_load_hand.basis = _model.basis.inverse() * Basis.from_euler(load_hand_rotation)
+		# hand 是彈底那一點；HandLoad 是照散彈擺的（原點在散彈中心、拇指頂彈底），往子彈那邊挪半顆散彈，拇指就頂在這顆的底
+		var at := hand + Vector3(0.0, 0.0, -HAND_SHELL_HALF)
+		_load_hand.position = at if t < 1.0 else _load_hand.position.lerp(away, minf(delta * 10.0, 1.0))
+		_load_hand.basis = Basis.from_euler(load_hand_rotation)   # 外層是槍模型，子彈在模型裡沿 -Z
+		var cam := get_viewport().get_camera_3d()
+		if _load_sk and cam and pinch_arm_dir != Vector3.ZERO:   # 手跟著子彈斜，前臂不轉出去會直直立起來
+			_load_sk.reset_bone_poses()
+			_aim_bone(_load_sk, "LowerArm", cam.global_basis * pinch_arm_dir.normalized())
 		_load_hand.visible = rp > 0.05 and (t < 1.0 or _load_hand.position.distance_to(away) > 0.01)
 	if _round:
 		_round.visible = round_on

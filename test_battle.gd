@@ -377,6 +377,17 @@ func _case_hunt_weapons() -> void:
 	revolver.ads_first_shot_perfect = false
 	vm.ads = 0.0
 
+	# 換彈會放下槍回腰射：舉滿時按 R，按著右鍵也舉不起來；換完才舉回去
+	revolver.mag = 3
+	vm.ads = 1.0
+	vm.try_reload()
+	vm._update_ads(true, 1.0)
+	_ck(vm.ads == 0.0, "換彈時要回到腰射（ads %.2f）" % vm.ads)
+	vm.cancel_reload()
+	vm._update_ads(true, 1.0)
+	_ck(vm.ads > 0.0, "換彈結束還按著右鍵要舉回去")
+	vm.ads = 0.0
+
 	# 逐發裝填中按開火：reload_fire_shoots 關掉時只停止裝填，不開槍
 	vm.reload_fire_shoots = false
 	revolver.mag = 3
@@ -456,13 +467,20 @@ func _case_hunt_weapons() -> void:
 	var turns: int = revolver._turns
 	revolver.play(&"fire", 0.1, 0.45)
 	_ck(revolver._kick > 0.0, "開槍要有後座")
-	var thumb_max := 0.0
+	# 左輪的手帶骨架（weapon.gd 的 use_rig）：量拇指指尖離擊錘尾端多近
+	var hammer: Node3D = revolver.get_node(revolver.hammer_path)
+	var sk: Skeleton3D = revolver._grip_sk
+	var tip_gap := func() -> float:
+		var g := sk.global_transform * sk.get_bone_global_pose(sk.find_bone("Thumb_Distal"))
+		return (g.origin + g.basis.y.normalized() * Weapon.THUMB_TIP).distance_to(hammer.to_global(revolver.hammer_spur))
+	var rest_gap: float = tip_gap.call()
+	var near := 1e9
 	for i in 60:
 		revolver._procedural(0.45 / 50.0)
-		thumb_max = maxf(thumb_max, revolver._thumb.rotation.length())
+		near = minf(near, tip_gap.call())
 	_ck(revolver._turns == turns + 1, "扳完擊錘轉輪要轉一格")
-	_ck(thumb_max > 1.0 and revolver._thumb.rotation.length() < 0.05, "拇指要伸上去扳擊錘、再放回來")
-	var hammer: Node3D = revolver.get_node(revolver.hammer_path)
+	_ck(near < 0.01 and near < rest_gap * 0.5, "拇指指尖要伸到擊錘上（最近 %.1f mm，握著時 %.1f mm）" % [near * 1000.0, rest_gap * 1000.0])
+	_ck(absf(tip_gap.call() - rest_gap) < 0.002, "扳完拇指要放回握把")
 	_ck(absf(hammer.rotation.x) < 0.01, "扳完擊錘要停在扳起來的位置")
 	_ck(revolver.muzzle_global() != null, "左輪要設槍口位置，火光和煙才對得上")
 	# 瞄準高度要等於準星頂（＝槍身最高點）。改了模型沒跟著改，舉槍就會對歪
@@ -1134,21 +1152,17 @@ func _case_controller() -> void:
 	_end(m)
 
 ## 牛仔的操作都要有綁鍵，鍵盤和手把兩邊都要（FNE 的約定）
-## 滑鼠視角：鎖滑鼠全部走 Fighter.lock_mouse()，擋殘留位移的時間從「鎖定那一刻」算，不是從玩家第一次動滑鼠才算
-## （不然剛進遊戲、關 Esc 選單、重生，一動滑鼠就被凍住，2026-10-02 回報）
+## 滑鼠視角：鎖滑鼠全部走 Fighter.lock_mouse()；只丟卡頓那一下湧進來的位移，其他立刻算
+## （以前鎖定後一律擋 1.5 秒，進遊戲、關 Esc 選單、重生都會凍住，2026-10-02、10-07 回報）
 func _case_mouse_lock() -> void:
 	var src := FileAccess.get_file_as_string("res://main.gd")
 	_ck(not src.contains("Input.mouse_mode = Input.MOUSE_MODE_CAPTURED"), "main.gd 鎖滑鼠要走 Fighter.lock_mouse()，不要直接設")
-	_ck(not FileAccess.get_file_as_string("res://fighter.gd").contains("var _settle_until"),
-		"擋殘留位移的時間不能記在各角色身上（重生的新角色會重新等）")
-	var t0 := Time.get_ticks_msec()
-	Fighter.lock_mouse()   # headless 鎖不住，所以每次都會走到「剛鎖定」那段
-	var wait := Fighter._look_from - t0
-	if OS.get_name() == "macOS":
-		_ck(wait > 0 and wait <= Fighter.LOOK_SETTLE_MS + 50, "macOS 鎖定後擋 %d 毫秒，從鎖定那一刻算（現在 %d）" % [Fighter.LOOK_SETTLE_MS, wait])
-	else:
-		_ck(wait <= 0, "macOS 以外鎖定後不擋滑鼠（現在擋 %d 毫秒）" % wait)
-	Fighter._look_from = 0
+	var keep := Fighter._frame_ms
+	Fighter._frame_ms = Time.get_ticks_msec()
+	_ck(not Fighter.after_hitch(), "沒卡頓時滑鼠立刻算（2026-10-07 回報進遊戲、關 Esc 後卡 1 秒）")
+	Fighter._frame_ms = Time.get_ticks_msec() - Fighter.HITCH_MS - 100
+	_ck(Fighter.after_hitch(), "卡頓後湧進來的位移要擋")
+	Fighter._frame_ms = keep
 
 func _case_input_map() -> void:
 	for a in ["move_forward", "move_back", "move_left", "move_right", "jump", "sprint",

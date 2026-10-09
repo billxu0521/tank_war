@@ -96,7 +96,7 @@ var _weapons: Array[Weapon] = []
 # --- 炸藥（G）：按住點燃，放開丟出去。引信按著的時間也算，按太久在手上爆（規劃 docs/規劃/2026-10-04-炸藥與炸彈長矛.md） ---
 const DYNAMITE_MAX := 2
 const FUSE := 4.0
-const THROW_SPEED := 16.0
+const THROW_SPEED := 18.3   # 平地最遠丟 30 公尺（出手高 1.5、另外往上 2.5、炸藥重力 14 反算；落地後還會彈、滾一點）
 const MAX_BLAST_DIST := 60.0   # 主機檢查：爆炸位置離丟的人不能更遠
 enum { KIND_DYNAMITE, KIND_HARPOON }
 ## 每種爆炸 [半徑, 中心傷害]
@@ -105,6 +105,8 @@ var dynamite := DYNAMITE_MAX   # 身上還有幾根，-1 = 無限（沙盒、靶
 var _cook := -1.0              # 點燃後按著多久，-1 = 沒拿著
 var _hand_stick: Node3D       # 右手＋炸藥＋引信火花（點燃到丟出去）
 var _throw_t := -1.0          # 丟出去的手部動作進行到哪（秒），-1 = 沒在丟
+var _arc: MeshInstance3D      # 拿著點燃的炸藥時，預測的拋物線和落點（只有自己看得到）
+var arc_land := Vector3.INF   # 預測的落點（碰不到東西是 INF），測試用
 const THROW_ANIM := 0.45
 ## 拿著點燃的炸藥：右手在右下，炸藥橫著（參考 docs/image/explosives/炸藥_參考.png「點燃」那張）。
 ## 丟的時候手往前上方甩出去，放開後收回畫面外
@@ -298,9 +300,9 @@ func switch_weapon(index: int) -> void:
 	_fire_cooldown = maxf(t, 0.2)
 
 
-## 舉槍／放下的過渡。衝刺會強制放下。
+## 舉槍／放下的過渡。衝刺、換彈會強制放下（換彈完還按著右鍵就自己舉回去）。
 func _update_ads(wants: bool, delta: float) -> void:
-	var aiming := wants and not _player.is_sprinting()
+	var aiming := wants and not _player.is_sprinting() and not _reloading
 	# 舉槍到定位要時間，過渡期間散布還是腰射值——「舉槍要時間」不用另外寫規則
 	ads = clampf(ads + (delta / weapon.ads_in if aiming else -delta / weapon.ads_out), 0.0, 1.0)
 	_camera.fov = lerpf(hip_fov, ads_fov, ads)
@@ -750,6 +752,7 @@ func _update_stick_hand(delta: float) -> void:
 ## 點燃之後：放開就丟，按太久在手上爆。不管滑鼠有沒有鎖住都要算（按 Esc 時引信照樣燒）
 func _update_cook(delta: float) -> void:
 	_update_stick_hand(delta)
+	_draw_arc()   # 沒拿著就藏起來
 	if _cook < 0.0:
 		return
 	_cook += delta
@@ -761,9 +764,71 @@ func _update_cook(delta: float) -> void:
 		var left := FUSE - _cook   # 先算：_use_dynamite 會把 _cook 歸成 -1
 		_use_dynamite()
 		# ponytail: 放開當下就丟出去（手的甩動是 0.1 秒後才到最前面）。引信、連線都照放開那一刻算，比較單純
-		var fwd := -_camera.global_basis.z
-		var from := _camera.global_position + fwd * 0.5 + _camera.global_basis.x * 0.15
-		_throw.rpc(from, fwd * THROW_SPEED + Vector3.UP * 2.5 + _player.velocity, left)
+		var s := _throw_start()
+		_throw.rpc(s[0], s[1], left)
+		_draw_arc()   # 丟出去了，拋物線馬上收掉
+
+
+## 炸藥從哪丟出去、初速多少：[位置, 速度]。丟出去和預測的拋物線共用，兩個才會一樣
+func _throw_start() -> Array:
+	var fwd := -_camera.global_basis.z
+	var from := _camera.global_position + fwd * 0.5 + _camera.global_basis.x * 0.15
+	return [from, fwd * THROW_SPEED + Vector3.UP * 2.5 + _player.velocity]
+
+
+## 拿著點燃的炸藥時畫預測的拋物線（跟 Dynamite 一樣的重力和時間步）到第一次碰到東西，落點畫一個圈。
+## ponytail: 只畫到第一次落地，不算之後的彈跳和滾動
+func _draw_arc() -> void:
+	if _cook < 0.0 or not is_multiplayer_authority():
+		if _arc:
+			_arc.visible = false
+		return
+	if _arc == null:
+		_arc = MeshInstance3D.new()
+		_arc.mesh = ImmediateMesh.new()
+		var m := StandardMaterial3D.new()
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m.albedo_color = Color(1.0, 0.85, 0.4)
+		m.no_depth_test = true   # 隔著草、矮牆也看得到落點
+		_arc.material_override = m
+		_arc.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_arc.top_level = true
+		add_child(_arc)
+	_arc.visible = true
+	_arc.global_transform = Transform3D.IDENTITY
+	var s := _throw_start()
+	var p: Vector3 = s[0]
+	var v: Vector3 = s[1]
+	var pts: Array[Vector3] = [p]
+	var space := get_world_3d().direct_space_state
+	var dt := 1.0 / Engine.physics_ticks_per_second
+	var hit := {}
+	for i in int(4.0 / dt):   # 最多算 4 秒（引信長度）
+		v.y -= Dynamite.GRAVITY * dt
+		var q := PhysicsRayQueryParameters3D.create(p, p + v * dt)
+		q.exclude = [_player.get_rid()]
+		hit = space.intersect_ray(q)
+		if not hit.is_empty():
+			pts.append(hit.position)
+			break
+		p += v * dt
+		pts.append(p)
+	arc_land = hit.position if not hit.is_empty() else Vector3.INF
+	var mesh := _arc.mesh as ImmediateMesh
+	mesh.clear_surfaces()
+	mesh.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
+	for q in pts:
+		mesh.surface_add_vertex(q)
+	mesh.surface_end()
+	if not hit.is_empty():   # 落點：貼著碰到的面畫一個圈
+		var n: Vector3 = hit.normal
+		var a := n.cross(Vector3.FORWARD if absf(n.y) > 0.9 else Vector3.UP).normalized()
+		var b := n.cross(a)
+		mesh.surface_begin(Mesh.PRIMITIVE_LINE_STRIP)
+		for k in 25:
+			var ang := TAU * k / 24.0
+			mesh.surface_add_vertex(hit.position + n * 0.05 + (a * cos(ang) + b * sin(ang)) * 0.5)
+		mesh.surface_end()
 
 
 func _use_dynamite() -> void:

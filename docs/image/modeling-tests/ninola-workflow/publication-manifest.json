@@ -3,10 +3,10 @@
   "published": [
     {
       "path": ".gitignore",
-      "bytes": 809,
-      "sha256": "cfa1f60fc988f7747e53a7333496f09b80c94fb97e19752e9c9a8465a2be58cc",
-      "git_blob_sha256": "cfa1f60fc988f7747e53a7333496f09b80c94fb97e19752e9c9a8465a2be58cc",
-      "git_blob_bytes": 809
+      "bytes": 863,
+      "sha256": "fbb36a7f8cb05d6eea4807121a9f227ca9dfb29aaa7d2f3d05f0ad6f5caf9181",
+      "git_blob_sha256": "fbb36a7f8cb05d6eea4807121a9f227ca9dfb29aaa7d2f3d05f0ad6f5caf9181",
+      "git_blob_bytes": 863
     },
     {
       "path": "blender/ninola/.gdignore",
@@ -7836,24 +7836,24 @@
     },
     {
       "path": "docs/image/modeling-tests/ninola-workflow/PR_VALIDATION.md",
-      "bytes": 1878,
-      "sha256": "3354f4ed49acbd999c39ce22658dbbb38980b830e489c3d78467a6a52f1b11e2",
-      "git_blob_sha256": "3354f4ed49acbd999c39ce22658dbbb38980b830e489c3d78467a6a52f1b11e2",
-      "git_blob_bytes": 1878
+      "bytes": 2348,
+      "sha256": "6ed6bf5bf2a934368e88875ece07668e75bd2e633994856321d128c1254ddd29",
+      "git_blob_sha256": "6ed6bf5bf2a934368e88875ece07668e75bd2e633994856321d128c1254ddd29",
+      "git_blob_bytes": 2348
     },
     {
       "path": "docs/image/modeling-tests/ninola-workflow/PR_asset_budget.txt",
       "bytes": 3619,
-      "sha256": "36a64bba9dfcf397a12d7e8c8498ebfb3121d87d0d6a88932c8fd9283603e0dc",
-      "git_blob_sha256": "36a64bba9dfcf397a12d7e8c8498ebfb3121d87d0d6a88932c8fd9283603e0dc",
+      "sha256": "5d993ee7e6fad75e70c44c8c5df94d251bc71a5eef45087858f0372272d3d9a9",
+      "git_blob_sha256": "5d993ee7e6fad75e70c44c8c5df94d251bc71a5eef45087858f0372272d3d9a9",
       "git_blob_bytes": 3619
     },
     {
       "path": "docs/image/modeling-tests/ninola-workflow/STATE.md",
-      "bytes": 11515,
-      "sha256": "adc9d5c36170af835fce3de46aaa5134c0f03ddc504629fde37f9d7be8be6783",
-      "git_blob_sha256": "adc9d5c36170af835fce3de46aaa5134c0f03ddc504629fde37f9d7be8be6783",
-      "git_blob_bytes": 11515
+      "bytes": 12019,
+      "sha256": "b4b45641aa8653e11d911fb08d8f4b006e2556564bb8bbc6aa0653272a71033f",
+      "git_blob_sha256": "b4b45641aa8653e11d911fb08d8f4b006e2556564bb8bbc6aa0653272a71033f",
+      "git_blob_bytes": 12019
     },
     {
       "path": "docs/image/modeling-tests/ninola-workflow/WORKFLOW.md",
@@ -7892,10 +7892,10 @@
     },
     {
       "path": "docs/素材流水線/物件表.md",
-      "bytes": 7997,
-      "sha256": "1aded392639c0d65ed40167750b6041613d576374dfb79ac35f910adb9a816c6",
-      "git_blob_sha256": "1aded392639c0d65ed40167750b6041613d576374dfb79ac35f910adb9a816c6",
-      "git_blob_bytes": 7997
+      "bytes": 8031,
+      "sha256": "a5a2f4625c7a1af7c5d899e99fec73eda763920690da83f72484d89e6237002c",
+      "git_blob_sha256": "a5a2f4625c7a1af7c5d899e99fec73eda763920690da83f72484d89e6237002c",
+      "git_blob_bytes": 8031
     }
   ],
   "local_only": [

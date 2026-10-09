@@ -13,7 +13,7 @@ extends CharacterBody3D
 signal died(killer: Node)
 
 const GRAVITY := 25.0
-const LOOK_SETTLE_MS := 1500  # macOS：滑鼠鎖定後先忽略這麼久的位移（從鎖定那一刻算）
+const HITCH_MS := 250   # 兩幀之間隔超過這麼久算卡頓（4 fps 以下）；見 after_hitch
 
 @export var max_hp := 100
 ## true = 電腦操控。不讀鍵盤，自己照優先序決策。
@@ -24,7 +24,7 @@ var hp := 0
 var hit_until := 0  # 自己的彈打中人，準心閃紅到這個時刻（毫秒）
 var _last_hit_by: Node = null  # 只有主機需要，用來記誰殺了誰
 static var diag := {}       # 診斷（暫時，滑鼠視角卡住的 bug 修好就拿掉）：滑鼠事件走到哪一步，main.gd 每半秒印一次
-static var _look_from := 0   # 這個時刻（毫秒）之前的滑鼠位移不算。全部角色共用：重生的新角色不用重新等
+static var _frame_ms := 0   # 上一幀跑完的時刻（毫秒），main.gd 每幀寫
 
 # --- 別人的角色：平滑顯示 ---
 # 同步器只同步 net_state = [送出時的時間, 位置, 朝向]。收到的先存起來，畫面刻意晚 NET_DELAY 毫秒，
@@ -144,17 +144,15 @@ func _sync_hp(v: int, from := Vector3.INF) -> void:
 			queue_free()  # MultiplayerSpawner 會同步移除其他人畫面上的它
 
 ## 鎖住滑鼠（進遊戲、關選單、點畫面、系統放掉後鎖回來）都要走這裡。
-## 滑鼠一被鎖定，macOS 會噴出一串「游標歸位」的殘留位移（實測從鎖定後 780ms 開始、
-## 衰減到 1200ms 才停），不擋掉的話視角一進遊戲就自己甩到隨機角度。所以 macOS 鎖定後 LOOK_SETTLE_MS 內的位移不算。
-## 以前這段時間是在 mouse_look 收到「鎖定後第一個滑鼠事件」才開始算，等於玩家一動滑鼠就被凍 1.5 秒
-## （剛進遊戲、關 Esc 選單、每次重生都會，2026-10-02 回報「滑鼠動了鏡頭不動」）。現在從鎖定那一刻算、只有 macOS 擋。
-## ponytail: 固定時間窗。macOS 上鎖定後馬上動滑鼠還是會卡一下，嫌卡再改成「等殘留位移出現一段空檔就開始吃輸入」。
 static func lock_mouse() -> void:
-	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		return   # 已經鎖著（例如每幀的保險），不要重算
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	if OS.get_name() == "macOS":
-		_look_from = Time.get_ticks_msec() + LOOK_SETTLE_MS
+
+## 上一幀跑完到現在超過 HITCH_MS＝剛卡了一下（載入、第一次編譯著色器）。卡住時累積的滑鼠位移會一次湧進來，
+## 視角甩到亂七八糟的角度（以前以為是 macOS 鎖滑鼠噴的殘留位移，實測鎖定後不碰滑鼠一個事件都沒有）。
+## 以前的做法是鎖定後一律擋 1.5 秒，結果進遊戲、關 Esc 都卡約 1 秒轉不了視角（2026-10-07 回報）。
+## 現在只丟卡頓那一下湧進來的，其他立刻算。_frame_ms 由 main.gd 每幀更新；0＝還沒開始跑，不擋
+static func after_hitch() -> bool:
+	return _frame_ms > 0 and Time.get_ticks_msec() - _frame_ms > HITCH_MS
 
 ## 這個角色吃不吃這台電腦的滑鼠：要是自己操控的，而且不是電腦。
 ## 電腦（boss、bot、移動標靶）也是主機在操控，authority 是主機——不擋的話主機玩家一動滑鼠，
@@ -166,11 +164,11 @@ func takes_mouse() -> bool:
 func mouse_look(e: InputEvent) -> Vector2:
 	if e is InputEventMouseMotion and takes_mouse():
 		_diag("角色收到")
-		if Time.get_ticks_msec() < _look_from:
-			_diag("等待中擋掉")
+		if after_hitch():
+			_diag("卡頓擋掉")
 	if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED or not takes_mouse() or not (e is InputEventMouseMotion):
 		return Vector2.ZERO
-	if Time.get_ticks_msec() < _look_from:
+	if after_hitch():
 		return Vector2.ZERO
 	_diag("有轉")
 	return e.relative

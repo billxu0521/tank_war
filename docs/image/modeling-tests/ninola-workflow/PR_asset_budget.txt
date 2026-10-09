@@ -42,6 +42,6 @@ houses.glb  House3           大型建築     FAIL 面數 16852 超過上限 400
 towns.glb  Saloon           大型建築     FAIL 面數 16120 超過上限 4000
 towns.glb  Sheriff          大型建築     FAIL 面數 12812 超過上限 4000
 towns.glb  Store            大型建築     FAIL 面數 12184 超過上限 4000
-cowboy.glb  cowboy           一般敵人     FAIL 面數 15248 超過上限 8000
+cowboy.glb  cowboy           一般敵人     FAIL 面數 30044 超過上限 8000
 revolver.glb  revolver         第一人稱武器   注意 面數 10896 超過建議 8000
 資產檢查：29 個超過上限、15 個注意

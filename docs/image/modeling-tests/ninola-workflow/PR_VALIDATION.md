@@ -9,3 +9,7 @@
 - asset_budget.gd：退出1，既有資產29超限／15注意。其掃描正式models資源與HEAD保持相同，此PR沒有改這些資產；不能宣稱全專案budget通過，也不能用此結果驗收未整合的7007tri Prototype。
 - 來源R2v005 SHA保持，Rig／Rest／正式Mesh未改，Production仍01J。Pipeline兩個未使用旧眼材質槽與其他工程限制仍未修；不宣稱CHECK OK或完整工程驗收。
 - Git分支asset/ninola-authoritative；建立草稿PR，main需另選整合範圍。
+
+## 同步 main 與草稿PR
+
+草稿PR #7：https://github.com/billxu0521/tank_war/pull/7。首次提交3e4a2c9。main新增的忽略規則與本分支.gitignore有文字衝突，已保留雙方規則並同步main，其餘上游變更沿用原內容。同步後乾淨暫存副本再匯入、test_battle.gd輸出OK且退出0，asset_budget仍29超限／15注意；相對origin/main，正式models、trex.gd、main.gd、project.godot無差異。頭頸模型來源保持。

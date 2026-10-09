@@ -79,3 +79,7 @@ R1獨立審視通過方向討論，色面改善微幅、仍需真正轉面方案
 使用者「均同意判斷，進行下一步」接受B體態方向與1.5°閉合候選並授權合併驗證。新隔離Viewer已建立：每幀原動作後頸Skeleton-X+12°／頭-4°、jaw中性基準改1.5°，T可切原版／候選。原版及候選各六模式120幀共1440幀，牙面交叉max0；候選軟面max1，僅既有後口配對(3573,2487)，idle／walk／run／turn皆120幀存在、bite96、roar67，並非完整口腔修復。Rest一致、spine2差0、來源hash保持；選取視圖未見明顯新裂口。獨立審視通過有限合併測試；新原生Godot Viewer已獲使用者定版核可。沒有真輸入／完整遊戲驗收，MCP未連；ground DEFERRED、原內口腔／牙列仍保護。最新核可Mesh仍R2v005，Production仍01J。報告../ninola-01S/2026-10-09-combined-viewer-v001/index.html。
 
 2026-10-09｜使用者「覺得好，就這樣定版」核可01S合併體態／咬合基準：R2v005 Mesh＋B姿態（頸Skeleton-X+12°、頭補償-4°）＋jaw中性閉合1.5°。本輪造型與動作基準收束，後續沿用此組合；來源Blend不烘焙Pose、不改Rig／Rest。後口內腔既有交叉仍OPEN，接地DEFERRED；Production仍01J，沒有正式整合或Commit／Push／PR。
+
+## 分支交付
+
+本輪模型回顧已收束，使用者授權準備PR。精選核可checkpoint與最終隔離Viewer、參考、文字歷程已提交並推送asset/ninola-authoritative；草稿PR #7（https://github.com/billxu0521/tank_war/pull/7）供成果與後續整合範圍審視。main正式資產未替換；大量本機歷史保留且未提交，publication-manifest明確區分。詳細驗證見PR_VALIDATION.md。後口內腔OPEN／接地DEFERRED仍保持，未自行展開新模型工作。

@@ -1,0 +1,78 @@
+{
+ "Thumb_Proximal": [
+  0.8215,
+  0.5702,
+  0.0018
+ ],
+ "Thumb_Intermediate": [
+  0.7111,
+  0.6515,
+  -0.2644
+ ],
+ "Thumb_Distal": [
+  0.8954,
+  0.4251,
+  0.1326
+ ],
+ "Index_Proximal": [
+  0.984,
+  0.1515,
+  -0.0935
+ ],
+ "Index_Intermediate": [
+  0.5356,
+  -0.0856,
+  -0.8401
+ ],
+ "Index_Distal": [
+  -0.0802,
+  -0.0639,
+  -0.9947
+ ],
+ "Middle_Proximal": [
+  0.8513,
+  -0.1889,
+  -0.4895
+ ],
+ "Middle_Intermediate": [
+  0.059,
+  -0.0364,
+  -0.9976
+ ],
+ "Middle_Distal": [
+  -0.3647,
+  -0.5281,
+  -0.7669
+ ],
+ "Ring_Proximal": [
+  0.7692,
+  -0.2431,
+  -0.5909
+ ],
+ "Ring_Intermediate": [
+  0.3452,
+  -0.2061,
+  -0.9156
+ ],
+ "Ring_Distal": [
+  -0.1219,
+  -0.1968,
+  -0.9728
+ ],
+ "Little_Proximal": [
+  0.8768,
+  -0.4611,
+  -0.1361
+ ],
+ "Little_Intermediate": [
+  0.6801,
+  -0.2152,
+  -0.7008
+ ],
+ "Little_Distal": [
+  0.334,
+  0.0861,
+  -0.9386
+ ],
+ "_source": "docs/movie/LEVER-ACTION_RIFLES.mov 第 180、182、184 格，tools/hand_skeleton.py 抓的左手從上面握護木（已鏡射成右手）"
+}
