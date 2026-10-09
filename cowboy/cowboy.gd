@@ -9,7 +9,9 @@ class_name Cowboy
 @export var walk_speed := 5.0
 @export var sprint_speed := 8.5
 @export var crouch_speed := 2.5
-@export var jump_velocity := 4.5
+## 起跳速度。設計原則（2026-10-09 使用者）：原地平地跳的高度不能超過柵欄高度（main.gd 的 FENCE_H），
+## 過柵欄一定要翻越。3.1 → 腳離地約 0.49 公尺（v²/2g，重力 9.8）；以前 4.5 是 1.03 公尺，直接跳過 1 公尺的柵欄
+@export var jump_velocity := 3.1
 ## 加速度，單位是 m/s²（不是每 frame 的插值比例），所以幀率高低不影響手感。
 @export var ground_accel := 25.0
 @export var air_accel := 6.0

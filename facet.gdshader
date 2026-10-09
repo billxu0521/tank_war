@@ -34,8 +34,17 @@ uniform float value = 1.0;            // 整體明度：屋頂比牆暗一段（
 // 夕陽很橘，直接乘上去每樣東西都變成同一種橘。太陽光的顏色先抽掉一些，材質自己的色相才留得住（規格第 5 節）
 uniform float sun_neutral = 0.3;
 
+// 像素材質（tools/make_pixel_tex.py、main.gd 的 PIXEL_RULES）：16×16 灰階、最近點取樣，跟顏色相乘。
+// 物件自己的座標，一張鋪 1 / pixel_scale 公尺；三面投影但不混合，只取最正對的那一面（混合會出現半透明的疊格，不像像素）
+uniform sampler2D pixel_tex : source_color, filter_nearest_mipmap, repeat_enable;
+uniform bool use_pixel = false;
+uniform float pixel_scale = 1.0;
+uniform float pixel_mean = 1.0;   // 貼圖平均亮度（線性）：除掉，整體顏色跟沒貼之前一樣
+
 varying vec3 tri_pos;
 varying vec3 tri_w;
+varying vec3 pix_pos;
+varying vec3 pix_n;
 
 // 照到多少光 x（0～1）壓成 ramp_steps 段：四捨五入到最近的一段，平均亮度跟連續的差不多
 float ramp_n(float x, float n) {
@@ -58,6 +67,10 @@ void vertex() {
 		tri_w /= dot(tri_w, vec3(1.0));
 		tri_pos = (VERTEX * uv_scale + uv_offset) * vec3(1.0, -1.0, 1.0);
 	}
+	if (use_pixel) {
+		pix_pos = VERTEX * pixel_scale * vec3(1.0, -1.0, 1.0);
+		pix_n = NORMAL;
+	}
 }
 
 void fragment() {
@@ -73,6 +86,11 @@ void fragment() {
 	}
 	if (use_vcol) {
 		c *= COLOR;
+	}
+	if (use_pixel) {
+		vec3 a = abs(pix_n);
+		vec2 uv = a.y > a.x && a.y > a.z ? pix_pos.xz : (a.x > a.z ? pix_pos.zy : pix_pos.xy);
+		c.rgb *= texture(pixel_tex, uv).rgb / pixel_mean;
 	}
 	vec3 wn = normalize((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz);
 	float fill = ramp_n(0.5 + 0.5 * dot(wn, normalize(fill_dir)), fill_steps);

@@ -78,6 +78,76 @@ func _plan() -> void:
 		_main.get_node(^"Arena").add_child(mi)
 		mi.global_position = _ground(spot + k[1])
 	_views.append(["maple", spot + Vector3(0, 2.5, 20), spot + up * 4.5])
+	# 灌木叢近看：空的靶場臨時擺兩叢（葉片卡版，props.py 的 Bush）
+	var bspot := _ground(Vector3(-30, 0, 40))
+	for off: Vector3 in [Vector3(-1.6, 0, 0), Vector3(1.8, 0, 0.8)]:
+		var bmi := MeshInstance3D.new()
+		bmi.mesh = _main._props[&"Bush"]
+		_main.get_node(^"Arena").add_child(bmi)
+		bmi.global_position = _ground(bspot + off)
+	_views.append(["bush", bspot + Vector3(0, 1.6, 6.5), bspot + up * 0.8])
+	# 場上撒的灌木（MultiMesh 那批）：挑離農莊最近的一叢，從 6 公尺外、背光和順光各拍一張
+	if not _main._bushes.is_empty():
+		var fb: Vector3 = _main._bushes[0]
+		for b: Vector3 in _main._bushes:
+			if b.length() < fb.length():
+				fb = b
+		fb = _ground(fb)
+		_views.append(["field_bush_a", fb + Vector3(6, 1.6, 0), fb + up * 0.6])
+		_views.append(["field_bush_b", fb + Vector3(-6, 1.6, 0), fb + up * 0.6])
+	# 環境小物件（main.gd _clutter_field）：每種挑第一個，從 6 公尺外眼睛高度看
+	var seen := {}
+	for c: Array in _main.clutter_spots:
+		if seen.has(c[0]):
+			continue
+		seen[c[0]] = true
+		var at: Vector3 = c[1]
+		var yaw: float = c[2]   # 從物件的正面斜 35 度看（正面 = 自己的 +Z）
+		var dir := Vector3(sin(yaw + 0.6), 0, cos(yaw + 0.6))
+		var eye := _ground(at + dir * 5.0) + up * 1.6
+		_views.append(["clutter_" + String(c[0]), eye, at + up * 0.6])
+		if c[0] == &"DinoSkull":   # 頭骨另外從側面（自己的 +X 方向，模型沿 X 長）近拍
+			var side := Vector3(cos(yaw), 0, -sin(yaw))
+			_views.append(["clutter_DinoSkull_side", _ground(at - side.cross(Vector3.UP) * 4.5) + up * 1.2, at + up * 0.6])
+	# 地面材質（main.gd _ground_mix）：每種找一塊權重最高的地，從 6 公尺外、2.5 公尺高往下看
+	var best := [[-1.0, Vector2()], [-1.0, Vector2()], [-1.0, Vector2()], [-1.0, Vector2()]]
+	var cover := [0, 0, 0, 0]
+	for gx in range(-80, 81, 3):
+		for gz in range(-80, 81, 3):
+			var w: Color = _main._ground_mix(gx, gz, _main._terrain.height(gx, gz))
+			var arr := [w.r, w.g, w.b, w.a]
+			for k in 4:
+				if arr[k] > 0.5:
+					cover[k] += 1
+				if arr[k] > best[k][0]:
+					best[k] = [arr[k], Vector2(gx, gz)]
+	var names := ["gravel", "clay", "mud", "outcrop"]
+	for k in 4:
+		print("ground ", names[k], " 覆蓋 ", snappedf(cover[k] * 9.0 / (161.0 * 161.0) * 100.0, 0.1), "% 最高 ", snappedf(best[k][0], 0.01), " 在 ", best[k][1])
+		var g: Vector2 = best[k][1]
+		var at := _ground(Vector3(g.x, 0, g.y))
+		_views.append(["ground_" + names[k], at + Vector3(2.5, 3.5, 2.5), at])   # 往下約 45 度
+	# 地被（main.gd _groundcover_field）：每種挑最靠近場中央的一塊，蹲高 1 公尺、3 公尺外往下看
+	var gcs := {}
+	for mmi: MultiMeshInstance3D in _main.get_node(^"Arena").find_children("*", "MultiMeshInstance3D", true, false):
+		var mesh: Mesh = mmi.multimesh.mesh
+		if mmi.material_override == null or (mmi.material_override as ShaderMaterial).shader != _main.GROUNDCOVER_SHADER or mmi.multimesh.instance_count < 20:
+			continue
+		var k := mesh.get_instance_id()
+		var p: Vector3 = mmi.position + mmi.multimesh.get_instance_transform(0).origin
+		if not gcs.has(k) or p.length() < (gcs[k] as Vector3).length():
+			gcs[k] = p
+	var gi := 0
+	for k in gcs:
+		var p: Vector3 = gcs[k]
+		_views.append(["groundcover_%d" % gi, p + Vector3(2.5, 1.0, 2.5), p])
+		gi += 1
+	# 站在麥田邊、眼睛高度（1.6）往麥田裡看：麥子要比人高
+	var wf := _ground(Vector3(-56, 0, 44))   # 田中間那條車輪痕上，往田裡看
+	_views.append(["wheat_eye", wf + Vector3(0, 1.6, 0), wf + Vector3(-2, 1.6, 10)])
+	_views.append(["wheat_inside", _ground(Vector3(-60, 0, 54)) + Vector3(0, 1.6, 0), _ground(Vector3(-70, 0, 56)) + Vector3(0, 1.6, 0)])
+	# 草葉近看（蹲著、鏡頭貼近草地往前看）：grass.gdshader 的像素草葉
+	_views.append(["grass_low", _ground(Vector3(-30, 0, 10)) + up * 0.6, _ground(Vector3(-40, 0, 10)) + up * 0.3])
 	_views.append(["oak_close", spot + Vector3(3, 3.5, 9), spot + Vector3(5, 6.5, 0)])   # 近看葉子
 	for kind: StringName in [&"Windmill", &"HayShed"]:     # 場景小物件（kits.glb）：風車、麥田角落的倉庫
 		var n := _find(kind)

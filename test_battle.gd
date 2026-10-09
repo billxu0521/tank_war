@@ -377,6 +377,10 @@ func _case_hunt_weapons() -> void:
 	revolver.ads_first_shot_perfect = false
 	vm.ads = 0.0
 
+	# 設計原則：原地平地跳不能超過柵欄高度（過柵欄要翻越）
+	var jump_h: float = me.jump_velocity * me.jump_velocity / (2.0 * ProjectSettings.get_setting("physics/3d/default_gravity"))
+	_ck(jump_h < m.FENCE_H, "原地跳 %.2f 公尺不能超過柵欄 %.2f 公尺" % [jump_h, m.FENCE_H])
+
 	# 換彈會放下槍回腰射：舉滿時按 R，按著右鍵也舉不起來；換完才舉回去
 	revolver.mag = 3
 	vm.ads = 1.0

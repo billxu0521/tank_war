@@ -190,7 +190,8 @@ func fast_color(x: float, z: float) -> Color:
 
 ## 蓋出地面：畫面是頂點上色的 ArrayMesh，碰撞是同一份格點的 HeightMapShape3D。
 ## color_at(x, z, h) -> Color 由呼叫的人決定（路、麥田、草地）
-func build(color_at: Callable) -> StaticBody3D:
+## mix_at(x, z, h) -> Color：四種地面材質的權重（r 碎石、g 乾裂土、b 濕泥、a 岩盤），沒給就全 0
+func build(color_at: Callable, mix_at := Callable()) -> StaticBody3D:
 	var n := int(size / cell) + 1
 	var heights := PackedFloat32Array()
 	heights.resize(n * n)
@@ -203,6 +204,7 @@ func build(color_at: Callable) -> StaticBody3D:
 	_grid_c.resize(n * n)
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_custom_format(0, SurfaceTool.CUSTOM_RGBA_FLOAT)
 	for iz in n:
 		for ix in n:
 			var x := -size * 0.5 + ix * cell
@@ -211,6 +213,7 @@ func build(color_at: Callable) -> StaticBody3D:
 			var col: Color = color_at.call(x, z, h)
 			_grid_c[iz * n + ix] = col
 			st.set_color(col)
+			st.set_custom(0, mix_at.call(x, z, h) if mix_at.is_valid() else Color(0, 0, 0, 0))
 			st.add_vertex(Vector3(x, h, z))
 	for iz in n - 1:
 		for ix in n - 1:
@@ -226,9 +229,11 @@ func build(color_at: Callable) -> StaticBody3D:
 	# 地面紋理（tools/make_ground_tex.py）：灰階，跟頂點顏色相乘；頂點顏色的透明度是路的濃度（見 terrain.gdshader）
 	var mat := ShaderMaterial.new()
 	mat.shader = preload("res://terrain.gdshader")
-	mat.set_shader_parameter(&"detail_tex", preload("res://assets/textures/ground_detail.png"))
+	mat.set_shader_parameter(&"detail_tex", preload("res://assets/textures/pixel/grass.png"))
 	mat.set_shader_parameter(&"macro_tex", preload("res://assets/textures/ground_macro.png"))
-	mat.set_shader_parameter(&"path_tex", preload("res://assets/textures/path_dirt.png"))
+	mat.set_shader_parameter(&"path_tex", preload("res://assets/textures/pixel/dirt.png"))
+	for k: String in ["gravel", "clay", "mud", "outcrop"]:
+		mat.set_shader_parameter(StringName(k + "_tex"), load("res://assets/textures/pixel/%s.png" % k))
 	st.set_material(mat)
 
 	var body := StaticBody3D.new()

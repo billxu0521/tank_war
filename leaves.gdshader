@@ -25,6 +25,12 @@ uniform vec3 shade_tint = vec3(0.90, 1.0, 0.98);
 uniform vec3 lit_tint = vec3(1.04, 1.06, 0.86);
 uniform float sun_neutral = 0.3;
 
+uniform float edge_fade = 0.3;    // 卡片側面朝鏡頭（視線跟卡片法線的 cos 小於這個）就挖空：側面的卡片會變成一條黑細線，像枯枝或刮痕（灌木審查）
+uniform float tint = 1.0;
+uniform float leaf_px = 24.0;      // 像素風：一張葉片卡切成幾格（輪廓一階一階、顏色一格一色）；0 = 原本平滑。細長的尖葉（約書亞樹、松、柳）設 0
+uniform float pixel_far = 15.0;    // 這麼遠以外不切格、不做側面挖空：遠處看不出格子，切了只會閃、透明邊被平均成亮色（遠景的樹變黃）          // 顏色倍數：灌木朝陽面比樹的葉子亮，在麥田裡很跳，壓一點
+varying float facing;
+
 float steps(float x, float n) {
 	float s = x * n;
 	float f = floor(s);
@@ -33,6 +39,7 @@ float steps(float x, float n) {
 
 void vertex() {
 	vec3 root = MODEL_MATRIX[3].xyz;   // 樹根（world_vertex_coords 下 VERTEX 已是世界座標）
+	facing = abs(dot(normalize(NORMAL), normalize(CAMERA_POSITION_WORLD - VERTEX)));   // 卡片自己的法線（下面會換成球面法線，要先算）
 	vec3 center = root + vec3(0.0, crown_height * length(MODEL_MATRIX[1].xyz), 0.0);
 	NORMAL = normalize(mix(NORMAL, normalize(VERTEX - center), crown_round));
 	vec2 dir = normalize(wind_dir);
@@ -47,13 +54,18 @@ void vertex() {
 }
 
 void fragment() {
-	vec4 c = texture(leaf_tex, UV);
+	bool pix = leaf_px > 0.0 && length(VERTEX) < pixel_far;
+	vec2 uv = pix ? (floor(UV * leaf_px) + 0.5) / leaf_px : UV;
 	// 顏色取貼圖模糊幾級的版本（mipmap 偏移）：葉片內部的迷彩斑點和零星亮點抹成整片，樹冠讀起來是大塊明暗。
 	// 輪廓（透明度）照原本清晰度挖：葉緣形狀不變（美術風格評估：樹冠內部太碎）
 	vec3 wn = normalize((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz);
 	float fill = steps(0.5 + 0.5 * dot(wn, normalize(fill_dir)), leaf_steps);
-	ALBEDO = texture(leaf_tex, UV, leaf_blur).rgb * (1.0 + leaf_fill * (fill - 0.6)) * shade_tint;
-	ALPHA = c.a;
+	// 一格一色：格子內 uv 固定，自動算 mipmap 會在格子交界選錯級、出現棋盤雜點，所以直接指定級數（一格大約對到哪一級，再加模糊）
+	float lod = log2(float(textureSize(leaf_tex, 0).x) / max(leaf_px, 1.0));
+	// 透明度用整格平均（那一級 mipmap）判斷：只取格子中心一點的話，細尖端會剩一兩格不連續的方塊浮在樹冠外面（收尾審查）
+	vec4 c = pix ? textureLod(leaf_tex, uv, lod) : texture(leaf_tex, UV);
+	ALBEDO = (pix ? textureLod(leaf_tex, uv, lod + leaf_blur * 0.5).rgb : texture(leaf_tex, uv, leaf_blur).rgb) * (1.0 + leaf_fill * (fill - 0.6)) * shade_tint * tint;
+	ALPHA = c.a * (pix ? step(edge_fade, facing) : 1.0);
 	ALPHA_SCISSOR_THRESHOLD = 0.5;
 	ROUGHNESS = 0.81;   // 記號：outline.gdshader 對葉子只畫跟天空交界的外輪廓，不畫每張卡片的邊（卡片邊緣一圈圈細黑線很吵）
 }
