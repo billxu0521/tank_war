@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "imported_file_count": 63,
+  "imported_bytes": 65590064,
+  "all_imported_sha256_match": true,
+  "models_imported": [
+    "01J",
+    "01K6"
+  ],
+  "K7_archive_only": true,
+  "source_archive_sha256": "c5bda2aba84848edf23f5d3c40a4c35ccfd9fcf7be3cc3d8a7d1f4ff44fe1733",
+  "overwritten_different_files": 0
+}

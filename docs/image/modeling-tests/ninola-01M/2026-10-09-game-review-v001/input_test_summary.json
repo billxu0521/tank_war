@@ -1,0 +1,42 @@
+{
+  "renderer": "forward_plus",
+  "source": "actual sandbox dino.gd, user physical keyboard after CUA short presses did not trigger polling",
+  "human_takeover_observed": true,
+  "human_key_count": 21,
+  "human_key_names": [
+    "Command",
+    "D",
+    "F",
+    "S",
+    "W"
+  ],
+  "peak_horizontal_speed": 9.16759093408614,
+  "peak_bite": 0.9490995,
+  "moving_sample_count": 76,
+  "biting_sample_count": 15,
+  "initial_position": [
+    0.0,
+    5.48825788497925,
+    76.0
+  ],
+  "last_position": [
+    14.4962873458862,
+    7.17804002761841,
+    70.1055221557617
+  ],
+  "gait_min": 0.0,
+  "gait_max": 0.998512834350145,
+  "movement_input_response": true,
+  "bite_input_response": true,
+  "sustained_sprint_validated": false,
+  "live_roar_validated": false,
+  "multiplayer_validated": false,
+  "production_integration": false,
+  "notes": [
+    "spawn capsule height corrected only in isolated test setup",
+    "original dino.gd/rig/mesh not edited",
+    "F9 capture hook conflicts with original pixel-style toggle: images represent both display styles",
+    "observer camera is a test camera, not shipped gameplay camera",
+    "initialization-trial is invalid for movement/grounding conclusions"
+  ]
+}

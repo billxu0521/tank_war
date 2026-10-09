@@ -1,0 +1,107 @@
+[
+  {
+    "asset": "01J",
+    "path": "blender/ninola/checkpoints/01J/ninola_global_mass_01J_approved.blend",
+    "expected": "b8b7e5c11f9a7c6f80901086e3d03d609f6ec732a1d888b0fdd66a61eba613b3",
+    "actual": "b8b7e5c11f9a7c6f80901086e3d03d609f6ec732a1d888b0fdd66a61eba613b3",
+    "match": true
+  },
+  {
+    "asset": "01K6",
+    "path": "blender/ninola/candidates/01K6/ninola_01K6_pedal_mass_reconstruction.blend",
+    "expected": "6be6642d8ed8cb2b48a31bd2649cf94457be6073daa59ac6653197dd222f18ca",
+    "actual": "6be6642d8ed8cb2b48a31bd2649cf94457be6073daa59ac6653197dd222f18ca",
+    "match": true
+  },
+  {
+    "asset": "01K8",
+    "path": "blender/ninola/working/01K8/2026-10-08-v004/ninola_01K8_hock_mass_continuity.blend",
+    "expected": "d157deaadc78216d39f8265340c7e742416742391899a602c3fc685875d778f9",
+    "actual": "d157deaadc78216d39f8265340c7e742416742391899a602c3fc685875d778f9",
+    "match": true
+  },
+  {
+    "asset": "01L1",
+    "path": "blender/ninola/working/01L1/2026-10-08-v001/ninola_01L1_forward_toe_volume.blend",
+    "expected": "7e4792bf471dd6a76b4e44a7ed983e70bc036723b28f266577b4727df48fefd7",
+    "actual": "7e4792bf471dd6a76b4e44a7ed983e70bc036723b28f266577b4727df48fefd7",
+    "match": true
+  },
+  {
+    "asset": "01L2",
+    "path": "blender/ninola/working/01L2/2026-10-08-v002/ninola_01L2_toe_separation.blend",
+    "expected": "ba36ca8176957bd8dea0d9fa5d68ec7c719297c2897a0b00c800eef2a46ca2f2",
+    "actual": "ba36ca8176957bd8dea0d9fa5d68ec7c719297c2897a0b00c800eef2a46ca2f2",
+    "match": true
+  },
+  {
+    "asset": "01L3",
+    "path": "blender/ninola/working/01L3/2026-10-08-v002/ninola_01L3_toe_volume_rebuild.blend",
+    "expected": "34e6608bfb04e73a271199dbd3f4f684545bf7d7cdc8f6e3282d3d970c44c6fd",
+    "actual": "34e6608bfb04e73a271199dbd3f4f684545bf7d7cdc8f6e3282d3d970c44c6fd",
+    "match": true
+  },
+  {
+    "asset": "01M1",
+    "path": "blender/ninola/working/01M1/2026-10-08-v002/ninola_01M1_jaw_mass_blockout.blend",
+    "expected": "97b38435343c4312e16f5bf3f81e3ee892158f1ce201a1716f75ba43c1e96674",
+    "actual": "97b38435343c4312e16f5bf3f81e3ee892158f1ce201a1716f75ba43c1e96674",
+    "match": true
+  },
+  {
+    "asset": "01M2",
+    "path": "blender/ninola/working/01M2/2026-10-08-v002/ninola_01M2_head_identity_blockout.blend",
+    "expected": "41afab419ca0e1347696d6b851ebb4f8c0db12d2080dd7f7b43358bfb2a00cec",
+    "actual": "41afab419ca0e1347696d6b851ebb4f8c0db12d2080dd7f7b43358bfb2a00cec",
+    "match": true
+  },
+  {
+    "asset": "01M3",
+    "path": "blender/ninola/working/01M3/2026-10-09-v006/ninola_01M3_concept_head_reconstruction.blend",
+    "expected": "53709e152c66e05a7c5d6224eae1b3f727f52cce839a7410e912c75bb2038de7",
+    "actual": "53709e152c66e05a7c5d6224eae1b3f727f52cce839a7410e912c75bb2038de7",
+    "match": true
+  },
+  {
+    "asset": "01M4",
+    "path": "blender/ninola/working/01M4/2026-10-09-v001/ninola_01M4_cranial_identity.blend",
+    "expected": "6716d0d2389ed582479d92a6a68675b41832f0e48e84ff433fd16b11cbe93bcf",
+    "actual": "6716d0d2389ed582479d92a6a68675b41832f0e48e84ff433fd16b11cbe93bcf",
+    "match": true
+  },
+  {
+    "asset": "01M5B",
+    "path": "blender/ninola/working/01M5B/2026-10-09-v007/ninola_01M5B_face_mass_gaze.blend",
+    "expected": "8bbd3030004528102b176204cdd2da0fb5c88b5edee326d2bc3356c114f08e4a",
+    "actual": "8bbd3030004528102b176204cdd2da0fb5c88b5edee326d2bc3356c114f08e4a",
+    "match": true
+  },
+  {
+    "asset": "01M6",
+    "path": "blender/ninola/working/01M6/2026-10-09-v004/ninola_01M6_whole_cranial_blockout.blend",
+    "expected": "c80991fbb57f514fae7c7a94c8abec20394440de5457d65a5144d1822c42c28c",
+    "actual": "c80991fbb57f514fae7c7a94c8abec20394440de5457d65a5144d1822c42c28c",
+    "match": true
+  },
+  {
+    "asset": "01M7",
+    "path": "blender/ninola/working/01M7/2026-10-09-v003/ninola_01M7_whole_cranial_blockout.blend",
+    "expected": "db68379629742716900b1e6d6bf03a3ca016c3faf85bd7d4b86935bcb72bed25",
+    "actual": "db68379629742716900b1e6d6bf03a3ca016c3faf85bd7d4b86935bcb72bed25",
+    "match": true
+  },
+  {
+    "asset": "01M8",
+    "path": "blender/ninola/working/01M8/2026-10-09-v001/ninola_01M8_cranial_identity.blend",
+    "expected": "85c4698b0dbccc116257c73bf23219ac347507e4167881cc994ba0d5390d9d40",
+    "actual": "85c4698b0dbccc116257c73bf23219ac347507e4167881cc994ba0d5390d9d40",
+    "match": true
+  },
+  {
+    "asset": "01N1",
+    "path": "blender/ninola/working/01N1/2026-10-09-v004/ninola_01N1_jaw_volume_reconstruction.blend",
+    "expected": "aa6fe9e30596855215b3db8c93a8b9c4da12639cc8d9ce897f7f3e7b350a04a9",
+    "actual": "aa6fe9e30596855215b3db8c93a8b9c4da12639cc8d9ce897f7f3e7b350a04a9",
+    "match": true
+  }
+]

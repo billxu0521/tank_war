@@ -1,0 +1,5031 @@
+{
+  "source_sha256": "363eb15913ff2b7ee528a67163aa86805126e56a64514e07001cddc0ff305929",
+  "source_unchanged": true,
+  "rest_mapping_error": 3.4570693969726562e-06,
+  "pose_replay_error": 1.1444091796875e-05,
+  "bones": 45,
+  "pose_restored": true,
+  "ground_plane_z": 0,
+  "foot_minimum_scope": "all foot/toe weighted mesh points incl claws; pair flags are triangle intersections, not volume certification",
+  "sequence_summary": {
+    "walk": {
+      "_l": {
+        "all_frames_min_height": -0.8753625154495239,
+        "support_samples_min_height": -0.7641204595565796,
+        "support_samples_max_min_height": -0.016777338460087776
+      },
+      "_r": {
+        "all_frames_min_height": -0.9117361903190613,
+        "support_samples_min_height": -0.7627217769622803,
+        "support_samples_max_min_height": -0.016745369881391525
+      }
+    },
+    "run": {
+      "_l": {
+        "all_frames_min_height": -1.14375638961792,
+        "support_samples_min_height": -0.5850538015365601,
+        "support_samples_max_min_height": -0.016854360699653625
+      },
+      "_r": {
+        "all_frames_min_height": -0.9514243602752686,
+        "support_samples_min_height": -0.49480894207954407,
+        "support_samples_max_min_height": 0.11342975497245789
+      }
+    },
+    "turn": {
+      "_l": {
+        "all_frames_min_height": -1.076711893081665,
+        "support_samples_min_height": -0.7409204244613647,
+        "support_samples_max_min_height": -0.01699802652001381
+      },
+      "_r": {
+        "all_frames_min_height": -0.8697113394737244,
+        "support_samples_min_height": -0.7732833623886108,
+        "support_samples_max_min_height": -0.04304435849189758
+      }
+    },
+    "bite": {
+      "_l": {
+        "all_frames_min_height": -0.01782345026731491,
+        "support_samples_min_height": -0.01782345026731491,
+        "support_samples_max_min_height": 0.39215511083602905
+      },
+      "_r": {
+        "all_frames_min_height": -0.017823457717895508,
+        "support_samples_min_height": -0.017823457717895508,
+        "support_samples_max_min_height": -0.016953375190496445
+      }
+    },
+    "roar": {
+      "_l": {
+        "all_frames_min_height": -0.017615962773561478,
+        "support_samples_min_height": -0.017615962773561478,
+        "support_samples_max_min_height": 0.1987856924533844
+      },
+      "_r": {
+        "all_frames_min_height": -0.017838137224316597,
+        "support_samples_min_height": -0.017838137224316597,
+        "support_samples_max_min_height": 0.016900353133678436
+      }
+    },
+    "jaw_sweep": {
+      "_l": {
+        "all_frames_min_height": -0.01720208115875721,
+        "support_samples_min_height": -0.01720208115875721,
+        "support_samples_max_min_height": -0.01720207743346691
+      },
+      "_r": {
+        "all_frames_min_height": -0.017202086746692657,
+        "support_samples_min_height": -0.017202086746692657,
+        "support_samples_max_min_height": -0.01720208302140236
+      }
+    }
+  },
+  "samples": [
+    {
+      "sequence": "walk",
+      "frame": 0,
+      "time": 0.0,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.016997788101434708,
+        "_r": -0.34978756308555603
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 2,
+      "time": 0.0833333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.017265047878026962,
+        "_r": -0.9117361903190613
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 4,
+      "time": 0.166666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.018182363361120224,
+        "_r": -0.5048176646232605
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 6,
+      "time": 0.25,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.5721031427383423,
+        "_r": -0.2131977379322052
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 8,
+      "time": 0.333333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.7360416650772095,
+        "_r": -0.016756022348999977
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 10,
+      "time": 0.416666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.748882532119751,
+        "_r": -0.018294138833880424
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 12,
+      "time": 0.5,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.6395214796066284,
+        "_r": -0.38973796367645264
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 14,
+      "time": 0.583333333333333,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.016862429678440094,
+        "_r": -0.7536153197288513
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 16,
+      "time": 0.666666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.017790181562304497,
+        "_r": -0.8441462516784668
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 18,
+      "time": 0.75,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.020664511248469353,
+        "_r": -0.5567253828048706
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 20,
+      "time": 0.833333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.42033982276916504,
+        "_r": -0.4076792597770691
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 22,
+      "time": 0.916666666666667,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.7591960430145264,
+        "_r": -0.016764318570494652
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 24,
+      "time": 1.0,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.8364343643188477,
+        "_r": -0.017970502376556396
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 26,
+      "time": 1.08333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.5760142803192139,
+        "_r": -0.026169035583734512
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 28,
+      "time": 1.16666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.31996721029281616,
+        "_r": -0.4504782259464264
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 30,
+      "time": 1.25,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.016777338460087776,
+        "_r": -0.7627217769622803
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 32,
+      "time": 1.33333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.018101071938872337,
+        "_r": -0.8267083168029785
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 34,
+      "time": 1.41666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.03560816869139671,
+        "_r": -0.5940446853637695
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 36,
+      "time": 1.5,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.4799670875072479,
+        "_r": -0.22213894128799438
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 38,
+      "time": 1.58333333333333,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.7641204595565796,
+        "_r": -0.016874853521585464
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 40,
+      "time": 1.66666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.8179107904434204,
+        "_r": -0.01819799654185772
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 42,
+      "time": 1.75,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.6174932718276978,
+        "_r": -0.0479886457324028
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 44,
+      "time": 1.83333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.1112489402294159,
+        "_r": -0.5086266398429871
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 46,
+      "time": 1.91666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.016949789598584175,
+        "_r": -0.7641575336456299
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 48,
+      "time": 2.0,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.018263457342982292,
+        "_r": -0.5019546151161194
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 50,
+      "time": 2.08333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.06310899555683136,
+        "_r": -0.7619501352310181
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 52,
+      "time": 2.16666666666667,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.5362935066223145,
+        "_r": -0.016889160498976707
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 54,
+      "time": 2.25,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.7641698122024536,
+        "_r": -0.017000582069158554
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 56,
+      "time": 2.33333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.4969688951969147,
+        "_r": -0.018295932561159134
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 58,
+      "time": 2.41666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.7767577171325684,
+        "_r": -0.08076447993516922
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 60,
+      "time": 2.5,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.016797401010990143,
+        "_r": -0.5628145933151245
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 62,
+      "time": 2.58333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.01702835224568844,
+        "_r": -0.7641779780387878
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 64,
+      "time": 2.66666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.01829732581973076,
+        "_r": -0.4864482879638672
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 66,
+      "time": 2.75,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.10074199736118317,
+        "_r": -0.7923982739448547
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 68,
+      "time": 2.83333333333333,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.5880517959594727,
+        "_r": -0.016745369881391525
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 70,
+      "time": 2.91666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.7641788721084595,
+        "_r": -0.01703486032783985
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 72,
+      "time": 3.0,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.48268693685531616,
+        "_r": -0.018269795924425125
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 74,
+      "time": 3.08333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.8045706748962402,
+        "_r": -0.12282596528530121
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 76,
+      "time": 3.16666666666667,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.016818616539239883,
+        "_r": -0.6118891835212708
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 78,
+      "time": 3.25,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.017024243250489235,
+        "_r": -0.7641769647598267
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 80,
+      "time": 3.33333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.01821814849972725,
+        "_r": -0.47346216440200806
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 82,
+      "time": 3.41666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.14679765701293945,
+        "_r": -0.8169321417808533
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 84,
+      "time": 3.5,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.634223461151123,
+        "_r": -0.016897905617952347
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 86,
+      "time": 3.58333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.7641717195510864,
+        "_r": -0.017002718523144722
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 88,
+      "time": 3.66666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.4713625907897949,
+        "_r": -0.018147405236959457
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 90,
+      "time": 3.75,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.8232649564743042,
+        "_r": -0.17243258655071259
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 92,
+      "time": 3.83333333333333,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.01697743870317936,
+        "_r": -0.6549720168113708
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 94,
+      "time": 3.91666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.016976648941636086,
+        "_r": -0.7641646862030029
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 96,
+      "time": 4.0,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.01806410774588585,
+        "_r": -0.46397867798805237
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 98,
+      "time": 4.08333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.19949820637702942,
+        "_r": -0.8284155130386353
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 100,
+      "time": 4.16666666666667,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.6740541458129883,
+        "_r": -0.01705392263829708
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 102,
+      "time": 4.25,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.7641586065292358,
+        "_r": -0.016952909529209137
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 104,
+      "time": 4.33333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.4640778601169586,
+        "_r": -0.017975637689232826
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 106,
+      "time": 4.41666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.8242826461791992,
+        "_r": -0.22776463627815247
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 108,
+      "time": 4.5,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.017121681943535805,
+        "_r": -0.6914228796958923
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 110,
+      "time": 4.58333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.01693953573703766,
+        "_r": -0.8809471726417542
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 112,
+      "time": 4.66666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.017888396978378296,
+        "_r": -0.5003097057342529
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 114,
+      "time": 4.75,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.2570032775402069,
+        "_r": -0.6919589638710022
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 116,
+      "time": 4.83333333333333,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.7070300579071045,
+        "_r": -0.017177190631628036
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 118,
+      "time": 4.91666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.8753625154495239,
+        "_r": -0.016942249611020088
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 120,
+      "time": 5.0,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.5089055895805359,
+        "_r": -0.017810514196753502
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 122,
+      "time": 5.08333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.6560510396957397,
+        "_r": -0.28698375821113586
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 124,
+      "time": 5.16666666666667,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.017214948311448097,
+        "_r": -0.7208360433578491
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 126,
+      "time": 5.25,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.016965199261903763,
+        "_r": -0.8685390949249268
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 128,
+      "time": 5.33333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.017746131867170334,
+        "_r": -0.5144544839859009
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 130,
+      "time": 5.41666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.317474365234375,
+        "_r": -0.6168341636657715
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 132,
+      "time": 5.5,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.7328062057495117,
+        "_r": -0.01723376475274563
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 134,
+      "time": 5.58333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.8622477054595947,
+        "_r": -0.01701420173048973
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 136,
+      "time": 5.66666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.5267318487167358,
+        "_r": -0.017699208110570908
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 138,
+      "time": 5.75,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.564224362373352,
+        "_r": -0.34824761748313904
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 140,
+      "time": 5.83333333333333,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.01722981035709381,
+        "_r": -0.7429068684577942
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 142,
+      "time": 5.91666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.01708962954580784,
+        "_r": -0.8544687032699585
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 0,
+      "time": 0.0,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.017218587920069695,
+        "_r": -0.7638658881187439
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 2,
+      "time": 0.0833333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.017392288893461227,
+        "_r": -0.5357175469398499
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 4,
+      "time": 0.166666666666667,
+      "swing": [
+        true,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.3885875940322876,
+        "_r": -0.8433390855789185
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 6,
+      "time": 0.25,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -1.14375638961792,
+        "_r": -0.017592398449778557
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 8,
+      "time": 0.333333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.5529820919036865,
+        "_r": -0.027294237166643143
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 10,
+      "time": 0.416666666666667,
+      "swing": [
+        true,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.44242292642593384,
+        "_r": -0.47148317098617554
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 12,
+      "time": 0.5,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.017733890563249588,
+        "_r": -0.8233327865600586
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 14,
+      "time": 0.583333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.016999991610646248,
+        "_r": -0.524696946144104
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 16,
+      "time": 0.666666666666667,
+      "swing": [
+        true,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.3459175229072571,
+        "_r": -0.5872178077697754
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 18,
+      "time": 0.75,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.9512819051742554,
+        "_r": -0.01766844652593136
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 20,
+      "time": 0.833333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.5029727220535278,
+        "_r": -0.016771696507930756
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 22,
+      "time": 0.916666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.6882538795471191,
+        "_r": -0.25957581400871277
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 24,
+      "time": 1.0,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.017850184813141823,
+        "_r": -0.9290162920951843
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 26,
+      "time": 1.08333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.02737107127904892,
+        "_r": -0.4733148217201233
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 28,
+      "time": 1.16666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.5825066566467285,
+        "_r": -0.7851192951202393
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 30,
+      "time": 1.25,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -1.116152286529541,
+        "_r": -0.01816963218152523
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 32,
+      "time": 1.33333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.6132338047027588,
+        "_r": -0.20307783782482147
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 34,
+      "time": 1.41666666666667,
+      "swing": [
+        true,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.5224577188491821,
+        "_r": -0.7338628768920898
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 36,
+      "time": 1.5,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.017993489280343056,
+        "_r": -0.6952841877937317
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 38,
+      "time": 1.58333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.016854360699653625,
+        "_r": -0.5003958344459534
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 40,
+      "time": 1.66666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.3965105414390564,
+        "_r": -0.7573210000991821
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 42,
+      "time": 1.75,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -1.0120621919631958,
+        "_r": -0.01748747006058693
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 44,
+      "time": 1.83333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.46389198303222656,
+        "_r": -0.016772828996181488
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 46,
+      "time": 1.91666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.7384206056594849,
+        "_r": -0.3127419948577881
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 48,
+      "time": 2.0,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.01733403652906418,
+        "_r": -0.944172203540802
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 50,
+      "time": 2.08333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.016991492360830307,
+        "_r": -0.4678640067577362
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 52,
+      "time": 2.16666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.18473698198795319,
+        "_r": -0.7080857753753662
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 54,
+      "time": 2.25,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.9195084571838379,
+        "_r": -0.01723080687224865
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 56,
+      "time": 2.33333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.4818176329135895,
+        "_r": -0.01721862517297268
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 58,
+      "time": 2.41666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.6747802495956421,
+        "_r": -0.07968970388174057
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 60,
+      "time": 2.5,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.017275124788284302,
+        "_r": -0.4571189880371094
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 62,
+      "time": 2.58333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.017251161858439445,
+        "_r": -0.7750090956687927
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 64,
+      "time": 2.66666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.33603811264038086,
+        "_r": -0.6558831930160522
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 66,
+      "time": 2.75,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.6116384267807007,
+        "_r": 0.11342975497245789
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 68,
+      "time": 2.83333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.7593671083450317,
+        "_r": -0.0171330738812685
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 70,
+      "time": 2.91666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.7828452587127686,
+        "_r": -0.49480894207954407
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 72,
+      "time": 3.0,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.01782144233584404,
+        "_r": -0.9514243602752686
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 74,
+      "time": 3.08333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.017591364681720734,
+        "_r": -0.47828832268714905
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 76,
+      "time": 3.16666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.09491293132305145,
+        "_r": -0.6746057271957397
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 78,
+      "time": 3.25,
+      "swing": [
+        true,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.5500359535217285,
+        "_r": -0.17772580683231354
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 80,
+      "time": 3.33333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.7539784908294678,
+        "_r": -0.017377641052007675
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 82,
+      "time": 3.41666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.5537333488464355,
+        "_r": -0.028244484215974808
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 84,
+      "time": 3.5,
+      "swing": [
+        true,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.4392896592617035,
+        "_r": -0.47423112392425537
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 86,
+      "time": 3.58333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.01745925471186638,
+        "_r": -0.7729799151420593
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 88,
+      "time": 3.66666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.017343586310744286,
+        "_r": -0.5254840850830078
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 90,
+      "time": 3.75,
+      "swing": [
+        true,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.3669227063655853,
+        "_r": -0.584577202796936
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 92,
+      "time": 3.83333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.8514899015426636,
+        "_r": -0.017537828534841537
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 94,
+      "time": 3.91666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.503512442111969,
+        "_r": -0.01692815124988556
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 96,
+      "time": 4.0,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.6865055561065674,
+        "_r": -0.271300733089447
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 98,
+      "time": 4.08333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.0177766103297472,
+        "_r": -0.928799033164978
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 100,
+      "time": 4.16666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.028226960450410843,
+        "_r": -0.47371071577072144
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 102,
+      "time": 4.25,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.5850538015365601,
+        "_r": -0.7848420739173889
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 104,
+      "time": 4.33333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -1.11616849899292,
+        "_r": -0.018146714195609093
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 106,
+      "time": 4.41666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.6140732765197754,
+        "_r": -0.20576073229312897
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 108,
+      "time": 4.5,
+      "swing": [
+        true,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.5196137428283691,
+        "_r": -0.7356663346290588
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 110,
+      "time": 4.58333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.01802060380578041,
+        "_r": -0.6947532892227173
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 112,
+      "time": 4.66666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.016888877376914024,
+        "_r": -0.5008135437965393
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 114,
+      "time": 4.75,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.39827480912208557,
+        "_r": -0.75710129737854
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 116,
+      "time": 4.83333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -1.0126025676727295,
+        "_r": -0.017545457929372787
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 118,
+      "time": 4.91666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.4637316167354584,
+        "_r": -0.016827376559376717
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 120,
+      "time": 5.0,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.7389861345291138,
+        "_r": -0.3149726986885071
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 122,
+      "time": 5.08333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.01739993505179882,
+        "_r": -0.9441832900047302
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 124,
+      "time": 5.16666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.017050614580512047,
+        "_r": -0.4676080346107483
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 126,
+      "time": 5.25,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.1898508369922638,
+        "_r": -0.7087459564208984
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 128,
+      "time": 5.33333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.9201787710189819,
+        "_r": -0.017296668142080307
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 130,
+      "time": 5.41666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.48149245977401733,
+        "_r": -0.017276830971240997
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 132,
+      "time": 5.5,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.675432562828064,
+        "_r": -0.08397521078586578
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 134,
+      "time": 5.58333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.017336435616016388,
+        "_r": -0.4600967466831207
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 136,
+      "time": 5.66666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.017299361526966095,
+        "_r": -0.7705774307250977
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 138,
+      "time": 5.75,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.33679574728012085,
+        "_r": -0.6568324565887451
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 140,
+      "time": 5.83333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.6127605438232422,
+        "_r": 0.11022889614105225
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 142,
+      "time": 5.91666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.7612042427062988,
+        "_r": -0.01717304438352585
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 0,
+      "time": 0.0,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.01699802652001381,
+        "_r": -0.44962912797927856
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 2,
+      "time": 0.0833333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.017575176432728767,
+        "_r": -0.8697113394737244
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 4,
+      "time": 0.166666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.023848241195082664,
+        "_r": -0.5609512329101562
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 6,
+      "time": 0.25,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.6025404930114746,
+        "_r": -0.15748260915279388
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 8,
+      "time": 0.333333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -1.076711893081665,
+        "_r": -0.04304435849189758
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 10,
+      "time": 0.416666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.8594942092895508,
+        "_r": -0.33191463351249695
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 12,
+      "time": 0.5,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.036630697548389435,
+        "_r": -0.7553787231445312
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 14,
+      "time": 0.583333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.041783735156059265,
+        "_r": -0.8240071535110474
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 16,
+      "time": 0.666666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.057449162006378174,
+        "_r": -0.6267565488815308
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 18,
+      "time": 0.75,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.49310436844825745,
+        "_r": -0.11705050617456436
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 20,
+      "time": 0.833333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.8330018520355225,
+        "_r": -0.06529449671506882
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 22,
+      "time": 0.916666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.5464276075363159,
+        "_r": -0.07557013630867004
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 24,
+      "time": 1.0,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.3846922516822815,
+        "_r": -0.4324694275856018
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 26,
+      "time": 1.08333333333333,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.0373668372631073,
+        "_r": -0.7728954553604126
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 28,
+      "time": 1.16666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.041857462376356125,
+        "_r": -0.7934279441833496
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 30,
+      "time": 1.25,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.0929986983537674,
+        "_r": -0.703302264213562
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 32,
+      "time": 1.33333333333333,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.5752607583999634,
+        "_r": -0.0671515241265297
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 34,
+      "time": 1.41666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.748848557472229,
+        "_r": -0.06470328569412231
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 36,
+      "time": 1.5,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.4480556547641754,
+        "_r": -0.07412144541740417
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 38,
+      "time": 1.58333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.8099822998046875,
+        "_r": -0.2450868785381317
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 40,
+      "time": 1.66666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.040401943027973175,
+        "_r": -0.757378339767456
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 42,
+      "time": 1.75,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.04557008296251297,
+        "_r": -0.48189637064933777
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 44,
+      "time": 1.83333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.15128874778747559,
+        "_r": -0.8318884372711182
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 46,
+      "time": 1.91666666666667,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.6383979320526123,
+        "_r": -0.047115493565797806
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 48,
+      "time": 2.0,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.7437210083007812,
+        "_r": -0.061095286160707474
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 50,
+      "time": 2.08333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.446496844291687,
+        "_r": -0.06972455978393555
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 52,
+      "time": 2.16666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.7309366464614868,
+        "_r": -0.33719685673713684
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 54,
+      "time": 2.25,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.03918549418449402,
+        "_r": -0.7573122978210449
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 56,
+      "time": 2.33333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.044317178428173065,
+        "_r": -0.8247607350349426
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 58,
+      "time": 2.41666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.06026522070169449,
+        "_r": -0.6287603974342346
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 60,
+      "time": 2.5,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.4922327995300293,
+        "_r": -0.11819954961538315
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 62,
+      "time": 2.58333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.8303753137588501,
+        "_r": -0.0669359639286995
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 64,
+      "time": 2.66666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.5455855131149292,
+        "_r": -0.07728419452905655
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 66,
+      "time": 2.75,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.3819520175457001,
+        "_r": -0.43368324637413025
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 68,
+      "time": 2.83333333333333,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.03753212094306946,
+        "_r": -0.7729591727256775
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 70,
+      "time": 2.91666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.04203514754772186,
+        "_r": -0.7930872440338135
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 72,
+      "time": 3.0,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.09367645531892776,
+        "_r": -0.7043125629425049
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 74,
+      "time": 3.08333333333333,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.5758177042007446,
+        "_r": -0.06658899784088135
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 76,
+      "time": 3.16666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.7485913038253784,
+        "_r": -0.06478342413902283
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 78,
+      "time": 3.25,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.4476959705352783,
+        "_r": -0.07424239069223404
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 80,
+      "time": 3.33333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.8094204664230347,
+        "_r": -0.24616315960884094
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 82,
+      "time": 3.41666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.04059167206287384,
+        "_r": -0.7582098841667175
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 84,
+      "time": 3.5,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.04576887562870979,
+        "_r": -0.48185765743255615
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 86,
+      "time": 3.58333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.15214431285858154,
+        "_r": -0.8321396112442017
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 88,
+      "time": 3.66666666666667,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.6385464668273926,
+        "_r": -0.04707929491996765
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 90,
+      "time": 3.75,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.7432392835617065,
+        "_r": -0.06121044233441353
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 92,
+      "time": 3.83333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.44599267840385437,
+        "_r": -0.06995222717523575
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 94,
+      "time": 3.91666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.7292076349258423,
+        "_r": -0.3384188115596771
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 96,
+      "time": 4.0,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.039522089064121246,
+        "_r": -0.757782518863678
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 98,
+      "time": 4.08333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.04467522352933884,
+        "_r": -0.8246365785598755
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 100,
+      "time": 4.16666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.06091377139091492,
+        "_r": -0.6295902729034424
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 102,
+      "time": 4.25,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.4924889802932739,
+        "_r": -0.11775493621826172
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 104,
+      "time": 4.33333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.8290807008743286,
+        "_r": -0.06718744337558746
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 106,
+      "time": 4.41666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.5453736782073975,
+        "_r": -0.07769331336021423
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 108,
+      "time": 4.5,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.379070907831192,
+        "_r": -0.43497011065483093
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 110,
+      "time": 4.58333333333333,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.0379110723733902,
+        "_r": -0.7732833623886108
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 112,
+      "time": 4.66666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.04242710769176483,
+        "_r": -0.7929580211639404
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 114,
+      "time": 4.75,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.09456216543912888,
+        "_r": -0.7053238749504089
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 116,
+      "time": 4.83333333333333,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.5759391784667969,
+        "_r": -0.06597667932510376
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 118,
+      "time": 4.91666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.7479742765426636,
+        "_r": -0.06502261757850647
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 120,
+      "time": 5.0,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.4469275176525116,
+        "_r": -0.07463303208351135
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 122,
+      "time": 5.08333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.8086124658584595,
+        "_r": -0.24741485714912415
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 124,
+      "time": 5.16666666666667,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.04098626226186752,
+        "_r": -0.7246501445770264
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 126,
+      "time": 5.25,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.046703025698661804,
+        "_r": -0.8511284589767456
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 128,
+      "time": 5.33333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.04959753900766373,
+        "_r": -0.5728884339332581
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 130,
+      "time": 5.41666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.40075817704200745,
+        "_r": -0.39128053188323975
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 132,
+      "time": 5.5,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.7409204244613647,
+        "_r": -0.054931093007326126
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 134,
+      "time": 5.58333333333333,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.765262246131897,
+        "_r": -0.06630352884531021
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 136,
+      "time": 5.66666666666667,
+      "swing": [
+        true,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.6818392276763916,
+        "_r": -0.12206649035215378
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 138,
+      "time": 5.75,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.05182088911533356,
+        "_r": -0.6060417294502258
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 140,
+      "time": 5.83333333333333,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.04288868606090546,
+        "_r": -0.7735621929168701
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 142,
+      "time": 5.91666666666667,
+      "swing": [
+        false,
+        true
+      ],
+      "foot_min_height": {
+        "_l": -0.04645640403032303,
+        "_r": -0.471992164850235
+      }
+    },
+    {
+      "sequence": "bite",
+      "frame": 0,
+      "time": 0.0,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.017223991453647614,
+        "_r": -0.017224004492163658
+      },
+      "jaw_head_soft_triangle_pairs": 1,
+      "tooth_triangle_pairs": 0
+    },
+    {
+      "sequence": "bite",
+      "frame": 20,
+      "time": 0.833333333333333,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.01777135208249092,
+        "_r": -0.017771337181329727
+      },
+      "jaw_head_soft_triangle_pairs": 0,
+      "tooth_triangle_pairs": 0
+    },
+    {
+      "sequence": "bite",
+      "frame": 24,
+      "time": 1.0,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": 0.15215575695037842,
+        "_r": -0.017195509746670723
+      },
+      "jaw_head_soft_triangle_pairs": 0,
+      "tooth_triangle_pairs": 0
+    },
+    {
+      "sequence": "bite",
+      "frame": 26,
+      "time": 1.08333333333333,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": 0.3917948007583618,
+        "_r": -0.016953375190496445
+      },
+      "jaw_head_soft_triangle_pairs": 0,
+      "tooth_triangle_pairs": 0
+    },
+    {
+      "sequence": "bite",
+      "frame": 28,
+      "time": 1.16666666666667,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": 0.39215511083602905,
+        "_r": -0.01740713231265545
+      },
+      "jaw_head_soft_triangle_pairs": 0,
+      "tooth_triangle_pairs": 0
+    },
+    {
+      "sequence": "bite",
+      "frame": 40,
+      "time": 1.66666666666667,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.01782345026731491,
+        "_r": -0.017823457717895508
+      },
+      "jaw_head_soft_triangle_pairs": 0,
+      "tooth_triangle_pairs": 0
+    },
+    {
+      "sequence": "bite",
+      "frame": 70,
+      "time": 2.91666666666667,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.017649993300437927,
+        "_r": -0.017649995163083076
+      },
+      "jaw_head_soft_triangle_pairs": 0,
+      "tooth_triangle_pairs": 0
+    },
+    {
+      "sequence": "roar",
+      "frame": 0,
+      "time": 0.0,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.017223991453647614,
+        "_r": -0.017224004492163658
+      },
+      "jaw_head_soft_triangle_pairs": 1,
+      "tooth_triangle_pairs": 0
+    },
+    {
+      "sequence": "roar",
+      "frame": 20,
+      "time": 0.833333333333333,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.017614679411053658,
+        "_r": 0.016900353133678436
+      },
+      "jaw_head_soft_triangle_pairs": 0,
+      "tooth_triangle_pairs": 0
+    },
+    {
+      "sequence": "roar",
+      "frame": 28,
+      "time": 1.16666666666667,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": 0.1987856924533844,
+        "_r": -0.017727676779031754
+      },
+      "jaw_head_soft_triangle_pairs": 0,
+      "tooth_triangle_pairs": 0
+    },
+    {
+      "sequence": "roar",
+      "frame": 46,
+      "time": 1.91666666666667,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.017615962773561478,
+        "_r": -0.017838137224316597
+      },
+      "jaw_head_soft_triangle_pairs": 0,
+      "tooth_triangle_pairs": 0
+    },
+    {
+      "sequence": "jaw_sweep",
+      "frame": 0,
+      "time": 0.0,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.01720208115875721,
+        "_r": -0.017202086746692657
+      },
+      "jaw_head_soft_triangle_pairs": 22,
+      "tooth_triangle_pairs": 5
+    },
+    {
+      "sequence": "jaw_sweep",
+      "frame": 1,
+      "time": 0.0,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.01720207743346691,
+        "_r": -0.01720208302140236
+      },
+      "jaw_head_soft_triangle_pairs": 0,
+      "tooth_triangle_pairs": 0
+    },
+    {
+      "sequence": "jaw_sweep",
+      "frame": 2,
+      "time": 0.0,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.01720207743346691,
+        "_r": -0.01720208302140236
+      },
+      "jaw_head_soft_triangle_pairs": 0,
+      "tooth_triangle_pairs": 0
+    },
+    {
+      "sequence": "jaw_sweep",
+      "frame": 3,
+      "time": 0.0,
+      "swing": [
+        false,
+        false
+      ],
+      "foot_min_height": {
+        "_l": -0.01720207743346691,
+        "_r": -0.01720208302140236
+      },
+      "jaw_head_soft_triangle_pairs": 0,
+      "tooth_triangle_pairs": 0
+    }
+  ],
+  "original_Trex_control_foot_samples": [
+    {
+      "sequence": "walk",
+      "frame": 0,
+      "foot_min_height": {
+        "_l": -0.016997771337628365,
+        "_r": -0.34978753328323364
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 2,
+      "foot_min_height": {
+        "_l": -0.017265036702156067,
+        "_r": -0.9117361903190613
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 4,
+      "foot_min_height": {
+        "_l": -0.01818235218524933,
+        "_r": -0.5048176646232605
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 6,
+      "foot_min_height": {
+        "_l": -0.5721030831336975,
+        "_r": -0.2131977081298828
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 8,
+      "foot_min_height": {
+        "_l": -0.7360416650772095,
+        "_r": -0.016756024211645126
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 10,
+      "foot_min_height": {
+        "_l": -0.7488826513290405,
+        "_r": -0.018294140696525574
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 12,
+      "foot_min_height": {
+        "_l": -0.6395214200019836,
+        "_r": -0.38973796367645264
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 14,
+      "foot_min_height": {
+        "_l": -0.01686241291463375,
+        "_r": -0.7536152601242065
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 16,
+      "foot_min_height": {
+        "_l": -0.0177901703864336,
+        "_r": -0.8441462516784668
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 18,
+      "foot_min_height": {
+        "_l": -0.020664500072598457,
+        "_r": -0.5567253828048706
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 20,
+      "foot_min_height": {
+        "_l": -0.42033976316452026,
+        "_r": -0.4076792001724243
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 22,
+      "foot_min_height": {
+        "_l": -0.7591961026191711,
+        "_r": -0.016764312982559204
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 24,
+      "foot_min_height": {
+        "_l": -0.8364344239234924,
+        "_r": -0.017970502376556396
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 26,
+      "foot_min_height": {
+        "_l": -0.5760142803192139,
+        "_r": -0.026168998330831528
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 28,
+      "foot_min_height": {
+        "_l": -0.3199671506881714,
+        "_r": -0.45047813653945923
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 30,
+      "foot_min_height": {
+        "_l": -0.01677732728421688,
+        "_r": -0.7627217769622803
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 32,
+      "foot_min_height": {
+        "_l": -0.018101060763001442,
+        "_r": -0.8267083168029785
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 34,
+      "foot_min_height": {
+        "_l": -0.03560812398791313,
+        "_r": -0.5940446853637695
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 36,
+      "foot_min_height": {
+        "_l": -0.47996705770492554,
+        "_r": -0.222138911485672
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 38,
+      "foot_min_height": {
+        "_l": -0.7641203999519348,
+        "_r": -0.016874855384230614
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 40,
+      "foot_min_height": {
+        "_l": -0.81791090965271,
+        "_r": -0.01819799840450287
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 42,
+      "foot_min_height": {
+        "_l": -0.6174932718276978,
+        "_r": -0.04798860847949982
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 44,
+      "foot_min_height": {
+        "_l": -0.11124889552593231,
+        "_r": -0.5086266398429871
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 46,
+      "foot_min_height": {
+        "_l": -0.01694977842271328,
+        "_r": -0.7641575336456299
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 48,
+      "foot_min_height": {
+        "_l": -0.018263446167111397,
+        "_r": -0.5019546747207642
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 50,
+      "foot_min_height": {
+        "_l": -0.06310895085334778,
+        "_r": -0.7619501352310181
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 52,
+      "foot_min_height": {
+        "_l": -0.5362934470176697,
+        "_r": -0.016889160498976707
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 54,
+      "foot_min_height": {
+        "_l": -0.7641696929931641,
+        "_r": -0.017000582069158554
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 56,
+      "foot_min_height": {
+        "_l": -0.49696892499923706,
+        "_r": -0.018295934423804283
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 58,
+      "foot_min_height": {
+        "_l": -0.7767577171325684,
+        "_r": -0.08076444268226624
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 60,
+      "foot_min_height": {
+        "_l": -0.016797389835119247,
+        "_r": -0.5628145933151245
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 62,
+      "foot_min_height": {
+        "_l": -0.017028341069817543,
+        "_r": -0.7641779780387878
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 64,
+      "foot_min_height": {
+        "_l": -0.018297314643859863,
+        "_r": -0.48644834756851196
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 66,
+      "foot_min_height": {
+        "_l": -0.10074195265769958,
+        "_r": -0.7923982739448547
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 68,
+      "foot_min_height": {
+        "_l": -0.5880517363548279,
+        "_r": -0.016745364293456078
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 70,
+      "foot_min_height": {
+        "_l": -0.7641788721084595,
+        "_r": -0.01703486032783985
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 72,
+      "foot_min_height": {
+        "_l": -0.48268699645996094,
+        "_r": -0.018269797787070274
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 74,
+      "foot_min_height": {
+        "_l": -0.804570734500885,
+        "_r": -0.12282593548297882
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 76,
+      "foot_min_height": {
+        "_l": -0.01681859977543354,
+        "_r": -0.6118891835212708
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 78,
+      "foot_min_height": {
+        "_l": -0.01702423207461834,
+        "_r": -0.7641769647598267
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 80,
+      "foot_min_height": {
+        "_l": -0.018218137323856354,
+        "_r": -0.47346216440200806
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 82,
+      "foot_min_height": {
+        "_l": -0.14679759740829468,
+        "_r": -0.8169321417808533
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 84,
+      "foot_min_height": {
+        "_l": -0.6342234015464783,
+        "_r": -0.0168979000300169
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 86,
+      "foot_min_height": {
+        "_l": -0.7641717195510864,
+        "_r": -0.017002718523144722
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 88,
+      "foot_min_height": {
+        "_l": -0.4713625907897949,
+        "_r": -0.018147407099604607
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 90,
+      "foot_min_height": {
+        "_l": -0.8232649564743042,
+        "_r": -0.1724325567483902
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 92,
+      "foot_min_height": {
+        "_l": -0.016977421939373016,
+        "_r": -0.6549720168113708
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 94,
+      "foot_min_height": {
+        "_l": -0.01697663776576519,
+        "_r": -0.7641646862030029
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 96,
+      "foot_min_height": {
+        "_l": -0.018064096570014954,
+        "_r": -0.46397864818573
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 98,
+      "foot_min_height": {
+        "_l": -0.19949814677238464,
+        "_r": -0.8284155130386353
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 100,
+      "foot_min_height": {
+        "_l": -0.6740541458129883,
+        "_r": -0.017053917050361633
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 102,
+      "foot_min_height": {
+        "_l": -0.7641585469245911,
+        "_r": -0.016952909529209137
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 104,
+      "foot_min_height": {
+        "_l": -0.464077889919281,
+        "_r": -0.017975637689232826
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 106,
+      "foot_min_height": {
+        "_l": -0.824282705783844,
+        "_r": -0.22776460647583008
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 108,
+      "foot_min_height": {
+        "_l": -0.01712166517972946,
+        "_r": -0.6914228200912476
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 110,
+      "foot_min_height": {
+        "_l": -0.016939524561166763,
+        "_r": -0.8809471726417542
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 112,
+      "foot_min_height": {
+        "_l": -0.0178883858025074,
+        "_r": -0.5003097653388977
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 114,
+      "foot_min_height": {
+        "_l": -0.25700321793556213,
+        "_r": -0.6919589638710022
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 116,
+      "foot_min_height": {
+        "_l": -0.7070300579071045,
+        "_r": -0.01717718504369259
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 118,
+      "foot_min_height": {
+        "_l": -0.8753625154495239,
+        "_r": -0.016942251473665237
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 120,
+      "foot_min_height": {
+        "_l": -0.5089056491851807,
+        "_r": -0.017810514196753502
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 122,
+      "foot_min_height": {
+        "_l": -0.6560510396957397,
+        "_r": -0.28698378801345825
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 124,
+      "foot_min_height": {
+        "_l": -0.017214931547641754,
+        "_r": -0.7208360433578491
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 126,
+      "foot_min_height": {
+        "_l": -0.016965188086032867,
+        "_r": -0.8685390949249268
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 128,
+      "foot_min_height": {
+        "_l": -0.01774612069129944,
+        "_r": -0.5144544243812561
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 130,
+      "foot_min_height": {
+        "_l": -0.3174743056297302,
+        "_r": -0.6168341040611267
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 132,
+      "foot_min_height": {
+        "_l": -0.7328062057495117,
+        "_r": -0.01723375916481018
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 134,
+      "foot_min_height": {
+        "_l": -0.8622477054595947,
+        "_r": -0.01701420173048973
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 136,
+      "foot_min_height": {
+        "_l": -0.5267318487167358,
+        "_r": -0.017699209973216057
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 138,
+      "foot_min_height": {
+        "_l": -0.564224362373352,
+        "_r": -0.34824758768081665
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 140,
+      "foot_min_height": {
+        "_l": -0.017229793593287468,
+        "_r": -0.7429068684577942
+      }
+    },
+    {
+      "sequence": "walk",
+      "frame": 142,
+      "foot_min_height": {
+        "_l": -0.017089618369936943,
+        "_r": -0.8544687032699585
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 0,
+      "foot_min_height": {
+        "_l": -0.01721857115626335,
+        "_r": -0.7638658285140991
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 2,
+      "foot_min_height": {
+        "_l": -0.017392277717590332,
+        "_r": -0.5357175469398499
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 4,
+      "foot_min_height": {
+        "_l": -0.3885875344276428,
+        "_r": -0.8433390855789185
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 6,
+      "foot_min_height": {
+        "_l": -1.14375638961792,
+        "_r": -0.01759239286184311
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 8,
+      "foot_min_height": {
+        "_l": -0.5529822111129761,
+        "_r": -0.027294199913740158
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 10,
+      "foot_min_height": {
+        "_l": -0.44242292642593384,
+        "_r": -0.47148311138153076
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 12,
+      "foot_min_height": {
+        "_l": -0.017733873799443245,
+        "_r": -0.8233327865600586
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 14,
+      "foot_min_height": {
+        "_l": -0.016999980434775352,
+        "_r": -0.524696946144104
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 16,
+      "foot_min_height": {
+        "_l": -0.3459175229072571,
+        "_r": -0.5872176885604858
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 18,
+      "foot_min_height": {
+        "_l": -0.9512819051742554,
+        "_r": -0.01766844093799591
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 20,
+      "foot_min_height": {
+        "_l": -0.5029727816581726,
+        "_r": -0.016771696507930756
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 22,
+      "foot_min_height": {
+        "_l": -0.6882539391517639,
+        "_r": -0.2595757246017456
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 24,
+      "foot_min_height": {
+        "_l": -0.01785016804933548,
+        "_r": -0.9290162920951843
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 26,
+      "foot_min_height": {
+        "_l": -0.027371026575565338,
+        "_r": -0.4733147621154785
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 28,
+      "foot_min_height": {
+        "_l": -0.5825066566467285,
+        "_r": -0.7851192951202393
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 30,
+      "foot_min_height": {
+        "_l": -1.1161525249481201,
+        "_r": -0.018169626593589783
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 32,
+      "foot_min_height": {
+        "_l": -0.6132339239120483,
+        "_r": -0.2030777931213379
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 34,
+      "foot_min_height": {
+        "_l": -0.5224577188491821,
+        "_r": -0.7338628768920898
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 36,
+      "foot_min_height": {
+        "_l": -0.017993472516536713,
+        "_r": -0.6952841877937317
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 38,
+      "foot_min_height": {
+        "_l": -0.01685434579849243,
+        "_r": -0.5003958940505981
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 40,
+      "foot_min_height": {
+        "_l": -0.3965104818344116,
+        "_r": -0.7573210000991821
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 42,
+      "foot_min_height": {
+        "_l": -1.0120621919631958,
+        "_r": -0.01748746447265148
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 44,
+      "foot_min_height": {
+        "_l": -0.46389204263687134,
+        "_r": -0.01677282340824604
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 46,
+      "foot_min_height": {
+        "_l": -0.7384206056594849,
+        "_r": -0.3127419352531433
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 48,
+      "foot_min_height": {
+        "_l": -0.017334019765257835,
+        "_r": -0.944172203540802
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 50,
+      "foot_min_height": {
+        "_l": -0.016991475597023964,
+        "_r": -0.4678640365600586
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 52,
+      "foot_min_height": {
+        "_l": -0.1847369372844696,
+        "_r": -0.7080857753753662
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 54,
+      "foot_min_height": {
+        "_l": -0.9195084571838379,
+        "_r": -0.017230801284313202
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 56,
+      "foot_min_height": {
+        "_l": -0.48181772232055664,
+        "_r": -0.01721861958503723
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 58,
+      "foot_min_height": {
+        "_l": -0.6747802495956421,
+        "_r": -0.07968966662883759
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 60,
+      "foot_min_height": {
+        "_l": -0.01727510802447796,
+        "_r": -0.4571189284324646
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 62,
+      "foot_min_height": {
+        "_l": -0.017251145094633102,
+        "_r": -0.7750090956687927
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 64,
+      "foot_min_height": {
+        "_l": -0.33603811264038086,
+        "_r": -0.6558831930160522
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 66,
+      "foot_min_height": {
+        "_l": -0.6116384267807007,
+        "_r": 0.11342976242303848
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 68,
+      "foot_min_height": {
+        "_l": -0.7593671083450317,
+        "_r": -0.017133070155978203
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 70,
+      "foot_min_height": {
+        "_l": -0.7828452587127686,
+        "_r": -0.4948089122772217
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 72,
+      "foot_min_height": {
+        "_l": -0.017821425572037697,
+        "_r": -0.9514243602752686
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 74,
+      "foot_min_height": {
+        "_l": -0.01759134791791439,
+        "_r": -0.4782884120941162
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 76,
+      "foot_min_height": {
+        "_l": -0.09491288661956787,
+        "_r": -0.6746057271957397
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 78,
+      "foot_min_height": {
+        "_l": -0.5500359535217285,
+        "_r": -0.17772577702999115
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 80,
+      "foot_min_height": {
+        "_l": -0.7539784908294678,
+        "_r": -0.017377635464072227
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 82,
+      "foot_min_height": {
+        "_l": -0.5537333488464355,
+        "_r": -0.028244446963071823
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 84,
+      "foot_min_height": {
+        "_l": -0.4392896890640259,
+        "_r": -0.4742310643196106
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 86,
+      "foot_min_height": {
+        "_l": -0.017459237948060036,
+        "_r": -0.7729799151420593
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 88,
+      "foot_min_height": {
+        "_l": -0.01734357513487339,
+        "_r": -0.5254840850830078
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 90,
+      "foot_min_height": {
+        "_l": -0.3669227361679077,
+        "_r": -0.584577202796936
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 92,
+      "foot_min_height": {
+        "_l": -0.8514899015426636,
+        "_r": -0.01753782294690609
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 94,
+      "foot_min_height": {
+        "_l": -0.5035125017166138,
+        "_r": -0.01692815311253071
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 96,
+      "foot_min_height": {
+        "_l": -0.6865055561065674,
+        "_r": -0.271300733089447
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 98,
+      "foot_min_height": {
+        "_l": -0.017776593565940857,
+        "_r": -0.928799033164978
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 100,
+      "foot_min_height": {
+        "_l": -0.02822691574692726,
+        "_r": -0.4737107753753662
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 102,
+      "foot_min_height": {
+        "_l": -0.5850537419319153,
+        "_r": -0.7848420739173889
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 104,
+      "foot_min_height": {
+        "_l": -1.1161686182022095,
+        "_r": -0.018146708607673645
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 106,
+      "foot_min_height": {
+        "_l": -0.6140732765197754,
+        "_r": -0.20576070249080658
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 108,
+      "foot_min_height": {
+        "_l": -0.5196136236190796,
+        "_r": -0.7356662750244141
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 110,
+      "foot_min_height": {
+        "_l": -0.018020587041974068,
+        "_r": -0.6947532892227173
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 112,
+      "foot_min_height": {
+        "_l": -0.01688886061310768,
+        "_r": -0.5008135437965393
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 114,
+      "foot_min_height": {
+        "_l": -0.3982747793197632,
+        "_r": -0.75710129737854
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 116,
+      "foot_min_height": {
+        "_l": -1.0126025676727295,
+        "_r": -0.01754545234143734
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 118,
+      "foot_min_height": {
+        "_l": -0.46373170614242554,
+        "_r": -0.01682737097144127
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 120,
+      "foot_min_height": {
+        "_l": -0.7389861345291138,
+        "_r": -0.3149726390838623
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 122,
+      "foot_min_height": {
+        "_l": -0.017399918287992477,
+        "_r": -0.9441832900047302
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 124,
+      "foot_min_height": {
+        "_l": -0.017050597816705704,
+        "_r": -0.46760809421539307
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 126,
+      "foot_min_height": {
+        "_l": -0.1898508071899414,
+        "_r": -0.7087459564208984
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 128,
+      "foot_min_height": {
+        "_l": -0.9201788306236267,
+        "_r": -0.01729666255414486
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 130,
+      "foot_min_height": {
+        "_l": -0.48149245977401733,
+        "_r": -0.01727682538330555
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 132,
+      "foot_min_height": {
+        "_l": -0.675432562828064,
+        "_r": -0.0839751735329628
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 134,
+      "foot_min_height": {
+        "_l": -0.017336418852210045,
+        "_r": -0.46009671688079834
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 136,
+      "foot_min_height": {
+        "_l": -0.017299344763159752,
+        "_r": -0.7705774307250977
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 138,
+      "foot_min_height": {
+        "_l": -0.33679574728012085,
+        "_r": -0.6568324565887451
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 140,
+      "foot_min_height": {
+        "_l": -0.6127605438232422,
+        "_r": 0.11022890359163284
+      }
+    },
+    {
+      "sequence": "run",
+      "frame": 142,
+      "foot_min_height": {
+        "_l": -0.7612043023109436,
+        "_r": -0.0171730387955904
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 0,
+      "foot_min_height": {
+        "_l": -0.016998011618852615,
+        "_r": -0.44962912797927856
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 2,
+      "foot_min_height": {
+        "_l": -0.017575165256857872,
+        "_r": -0.8697114586830139
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 4,
+      "foot_min_height": {
+        "_l": -0.02384823188185692,
+        "_r": -0.5609513521194458
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 6,
+      "foot_min_height": {
+        "_l": -0.6025404930114746,
+        "_r": -0.1574825793504715
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 8,
+      "foot_min_height": {
+        "_l": -1.076711893081665,
+        "_r": -0.04304436594247818
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 10,
+      "foot_min_height": {
+        "_l": -0.8594942092895508,
+        "_r": -0.3319145441055298
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 12,
+      "foot_min_height": {
+        "_l": -0.03663067892193794,
+        "_r": -0.7553786635398865
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 14,
+      "foot_min_height": {
+        "_l": -0.041783709079027176,
+        "_r": -0.8240071535110474
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 16,
+      "foot_min_height": {
+        "_l": -0.057449135929346085,
+        "_r": -0.6267565488815308
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 18,
+      "foot_min_height": {
+        "_l": -0.49310433864593506,
+        "_r": -0.11705051362514496
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 20,
+      "foot_min_height": {
+        "_l": -0.8330018520355225,
+        "_r": -0.06529451161623001
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 22,
+      "foot_min_height": {
+        "_l": -0.5464276075363159,
+        "_r": -0.07557015120983124
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 24,
+      "foot_min_height": {
+        "_l": -0.3846922516822815,
+        "_r": -0.43246936798095703
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 26,
+      "foot_min_height": {
+        "_l": -0.03736681118607521,
+        "_r": -0.7728954553604126
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 28,
+      "foot_min_height": {
+        "_l": -0.041857436299324036,
+        "_r": -0.7934279441833496
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 30,
+      "foot_min_height": {
+        "_l": -0.09299866110086441,
+        "_r": -0.703302264213562
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 32,
+      "foot_min_height": {
+        "_l": -0.5752606391906738,
+        "_r": -0.06715153902769089
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 34,
+      "foot_min_height": {
+        "_l": -0.7488486170768738,
+        "_r": -0.0647033080458641
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 36,
+      "foot_min_height": {
+        "_l": -0.4480557441711426,
+        "_r": -0.07412145286798477
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 38,
+      "foot_min_height": {
+        "_l": -0.8099822998046875,
+        "_r": -0.24508681893348694
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 40,
+      "foot_min_height": {
+        "_l": -0.040401920676231384,
+        "_r": -0.757378339767456
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 42,
+      "foot_min_height": {
+        "_l": -0.04557005688548088,
+        "_r": -0.48189640045166016
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 44,
+      "foot_min_height": {
+        "_l": -0.1512886881828308,
+        "_r": -0.8318884372711182
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 46,
+      "foot_min_height": {
+        "_l": -0.6383978724479675,
+        "_r": -0.0471155010163784
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 48,
+      "foot_min_height": {
+        "_l": -0.7437210083007812,
+        "_r": -0.06109530106186867
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 50,
+      "foot_min_height": {
+        "_l": -0.4464969038963318,
+        "_r": -0.06972457468509674
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 52,
+      "foot_min_height": {
+        "_l": -0.7309366464614868,
+        "_r": -0.33719682693481445
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 54,
+      "foot_min_height": {
+        "_l": -0.03918547183275223,
+        "_r": -0.7573122978210449
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 56,
+      "foot_min_height": {
+        "_l": -0.044317156076431274,
+        "_r": -0.8247607350349426
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 58,
+      "foot_min_height": {
+        "_l": -0.0602651908993721,
+        "_r": -0.6287603974342346
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 60,
+      "foot_min_height": {
+        "_l": -0.4922327995300293,
+        "_r": -0.11819954961538315
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 62,
+      "foot_min_height": {
+        "_l": -0.8303753137588501,
+        "_r": -0.06693597882986069
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 64,
+      "foot_min_height": {
+        "_l": -0.5455855131149292,
+        "_r": -0.07728421688079834
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 66,
+      "foot_min_height": {
+        "_l": -0.3819519877433777,
+        "_r": -0.43368321657180786
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 68,
+      "foot_min_height": {
+        "_l": -0.03753209114074707,
+        "_r": -0.7729591727256775
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 70,
+      "foot_min_height": {
+        "_l": -0.04203512519598007,
+        "_r": -0.7930872440338135
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 72,
+      "foot_min_height": {
+        "_l": -0.09367641061544418,
+        "_r": -0.7043125629425049
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 74,
+      "foot_min_height": {
+        "_l": -0.5758177638053894,
+        "_r": -0.06658900529146194
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 76,
+      "foot_min_height": {
+        "_l": -0.7485913038253784,
+        "_r": -0.06478343904018402
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 78,
+      "foot_min_height": {
+        "_l": -0.4476959705352783,
+        "_r": -0.07424239814281464
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 80,
+      "foot_min_height": {
+        "_l": -0.8094205260276794,
+        "_r": -0.24616314470767975
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 82,
+      "foot_min_height": {
+        "_l": -0.04059164971113205,
+        "_r": -0.7582098245620728
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 84,
+      "foot_min_height": {
+        "_l": -0.045768849551677704,
+        "_r": -0.48185765743255615
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 86,
+      "foot_min_height": {
+        "_l": -0.15214422345161438,
+        "_r": -0.8321396112442017
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 88,
+      "foot_min_height": {
+        "_l": -0.638546347618103,
+        "_r": -0.04707930237054825
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 90,
+      "foot_min_height": {
+        "_l": -0.7432392835617065,
+        "_r": -0.06121046096086502
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 92,
+      "foot_min_height": {
+        "_l": -0.44599270820617676,
+        "_r": -0.06995223462581635
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 94,
+      "foot_min_height": {
+        "_l": -0.7292076349258423,
+        "_r": -0.33841878175735474
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 96,
+      "foot_min_height": {
+        "_l": -0.039522066712379456,
+        "_r": -0.757782518863678
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 98,
+      "foot_min_height": {
+        "_l": -0.044675201177597046,
+        "_r": -0.8246365785598755
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 100,
+      "foot_min_height": {
+        "_l": -0.06091373413801193,
+        "_r": -0.6295902729034424
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 102,
+      "foot_min_height": {
+        "_l": -0.49248892068862915,
+        "_r": -0.1177549660205841
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 104,
+      "foot_min_height": {
+        "_l": -0.8290807008743286,
+        "_r": -0.06718745827674866
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 106,
+      "foot_min_height": {
+        "_l": -0.5453737378120422,
+        "_r": -0.07769332826137543
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 108,
+      "foot_min_height": {
+        "_l": -0.37907087802886963,
+        "_r": -0.43497002124786377
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 110,
+      "foot_min_height": {
+        "_l": -0.03791104629635811,
+        "_r": -0.7732833027839661
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 112,
+      "foot_min_height": {
+        "_l": -0.04242708161473274,
+        "_r": -0.7929580211639404
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 114,
+      "foot_min_height": {
+        "_l": -0.0945621132850647,
+        "_r": -0.7053238749504089
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 116,
+      "foot_min_height": {
+        "_l": -0.5759391784667969,
+        "_r": -0.06597669422626495
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 118,
+      "foot_min_height": {
+        "_l": -0.7479742765426636,
+        "_r": -0.06502262502908707
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 120,
+      "foot_min_height": {
+        "_l": -0.44692760705947876,
+        "_r": -0.07463304698467255
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 122,
+      "foot_min_height": {
+        "_l": -0.8086124658584595,
+        "_r": -0.24741478264331818
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 124,
+      "foot_min_height": {
+        "_l": -0.04098623991012573,
+        "_r": -0.7246501445770264
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 126,
+      "foot_min_height": {
+        "_l": -0.046702995896339417,
+        "_r": -0.8511284589767456
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 128,
+      "foot_min_height": {
+        "_l": -0.04959751293063164,
+        "_r": -0.5728884339332581
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 130,
+      "foot_min_height": {
+        "_l": -0.40075814723968506,
+        "_r": -0.39128047227859497
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 132,
+      "foot_min_height": {
+        "_l": -0.7409204840660095,
+        "_r": -0.05493110045790672
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 134,
+      "foot_min_height": {
+        "_l": -0.765262246131897,
+        "_r": -0.06630352884531021
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 136,
+      "foot_min_height": {
+        "_l": -0.6818393468856812,
+        "_r": -0.12206650525331497
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 138,
+      "foot_min_height": {
+        "_l": -0.05182085931301117,
+        "_r": -0.6060416102409363
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 140,
+      "foot_min_height": {
+        "_l": -0.04288865625858307,
+        "_r": -0.7735620737075806
+      }
+    },
+    {
+      "sequence": "turn",
+      "frame": 142,
+      "foot_min_height": {
+        "_l": -0.04645637795329094,
+        "_r": -0.4719921946525574
+      }
+    },
+    {
+      "sequence": "bite",
+      "frame": 0,
+      "foot_min_height": {
+        "_l": -0.017223980277776718,
+        "_r": -0.017224006354808807
+      }
+    },
+    {
+      "sequence": "bite",
+      "frame": 20,
+      "foot_min_height": {
+        "_l": -0.017771335318684578,
+        "_r": -0.01777133159339428
+      }
+    },
+    {
+      "sequence": "bite",
+      "frame": 24,
+      "foot_min_height": {
+        "_l": 0.1521557867527008,
+        "_r": -0.017195504158735275
+      }
+    },
+    {
+      "sequence": "bite",
+      "frame": 26,
+      "foot_min_height": {
+        "_l": 0.3917948007583618,
+        "_r": -0.016953375190496445
+      }
+    },
+    {
+      "sequence": "bite",
+      "frame": 28,
+      "foot_min_height": {
+        "_l": 0.39215514063835144,
+        "_r": -0.01740713231265545
+      }
+    },
+    {
+      "sequence": "bite",
+      "frame": 40,
+      "foot_min_height": {
+        "_l": -0.017823439091444016,
+        "_r": -0.017823459580540657
+      }
+    },
+    {
+      "sequence": "bite",
+      "frame": 70,
+      "foot_min_height": {
+        "_l": -0.017649982124567032,
+        "_r": -0.017649997025728226
+      }
+    },
+    {
+      "sequence": "roar",
+      "frame": 0,
+      "foot_min_height": {
+        "_l": -0.017223980277776718,
+        "_r": -0.017224006354808807
+      }
+    },
+    {
+      "sequence": "roar",
+      "frame": 20,
+      "foot_min_height": {
+        "_l": -0.017614668235182762,
+        "_r": 0.016900353133678436
+      }
+    },
+    {
+      "sequence": "roar",
+      "frame": 28,
+      "foot_min_height": {
+        "_l": 0.1987857222557068,
+        "_r": -0.017727678641676903
+      }
+    },
+    {
+      "sequence": "roar",
+      "frame": 46,
+      "foot_min_height": {
+        "_l": -0.017615951597690582,
+        "_r": -0.017838137224316597
+      }
+    },
+    {
+      "sequence": "jaw_sweep",
+      "frame": 0,
+      "foot_min_height": {
+        "_l": -0.017202069982886314,
+        "_r": -0.017202086746692657
+      }
+    },
+    {
+      "sequence": "jaw_sweep",
+      "frame": 1,
+      "foot_min_height": {
+        "_l": -0.017202066257596016,
+        "_r": -0.01720208302140236
+      }
+    },
+    {
+      "sequence": "jaw_sweep",
+      "frame": 2,
+      "foot_min_height": {
+        "_l": -0.017202066257596016,
+        "_r": -0.01720208302140236
+      }
+    },
+    {
+      "sequence": "jaw_sweep",
+      "frame": 3,
+      "foot_min_height": {
+        "_l": -0.017202066257596016,
+        "_r": -0.01720208302140236
+      }
+    }
+  ],
+  "driver": "isolated Godot unaltered trex.gd direct procedural calls; not game/player input",
+  "selected_frames": {
+    "walk": [
+      48,
+      56,
+      64,
+      72,
+      80,
+      88,
+      96,
+      104,
+      112,
+      120,
+      128,
+      136
+    ],
+    "run": [
+      48,
+      56,
+      64,
+      72,
+      80,
+      88,
+      96,
+      104,
+      112,
+      120,
+      128,
+      136
+    ],
+    "turn": [
+      48,
+      60,
+      72,
+      84,
+      96,
+      108,
+      120,
+      132
+    ],
+    "bite": [
+      0,
+      20,
+      24,
+      26,
+      28,
+      40,
+      70
+    ],
+    "roar": [
+      0,
+      20,
+      28,
+      46
+    ],
+    "jaw_sweep": [
+      0,
+      1,
+      2,
+      3
+    ]
+  }
+}

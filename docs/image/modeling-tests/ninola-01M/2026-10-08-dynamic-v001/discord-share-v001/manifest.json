@@ -1,0 +1,53 @@
+{
+  "role": "discord_discussion_snapshot",
+  "date": "2026-10-08",
+  "not_current_state": true,
+  "post_characters": 692,
+  "files": [
+    {
+      "name": "01_bite_comparison.gif",
+      "bytes": 5950498,
+      "sha256": "5fe0acb941776994bf4f0ba1459e017931153be3b0a8d39c104bf8954f87d322"
+    },
+    {
+      "name": "02_roar_comparison.gif",
+      "bytes": 3893082,
+      "sha256": "24453db4e284bba3ff1e52c9f44e08faf61c15607fed541a3538e976a27a608c"
+    },
+    {
+      "name": "03_bite_key_comparison.png",
+      "bytes": 669196,
+      "sha256": "7a5a07d3b0fe3ac997bd43bdbec827a2e893c5bf39fe0712c65ef9ac29f5ee51"
+    },
+    {
+      "name": "04_head_identity_scope.png",
+      "bytes": 1125518,
+      "sha256": "78ba5f8986b1d5b7b1a3ad1f42cce574f35c2ba5a565c30ca029969ef668a536"
+    },
+    {
+      "name": "DISCORD_POST.md",
+      "bytes": 1812,
+      "sha256": "421c2fee144cce006f99c1ce56d949da0559224be21e2e04347ebe2d6b323de1"
+    },
+    {
+      "name": "DISCORD_POST.txt",
+      "bytes": 1812,
+      "sha256": "421c2fee144cce006f99c1ce56d949da0559224be21e2e04347ebe2d6b323de1"
+    },
+    {
+      "name": "FULL_REPORT.md",
+      "bytes": 4265,
+      "sha256": "a268cb65618bd996d57685d83b30fd60772eae017cfed5534b690ba7b153f1be"
+    },
+    {
+      "name": "NEXT_PROPOSAL.md",
+      "bytes": 2826,
+      "sha256": "a27dd04c8582a00142888f351cf524c0c4caa29d88767421559eb2db6c538196"
+    },
+    {
+      "name": "READ_ME.txt",
+      "bytes": 429,
+      "sha256": "eed3ec44f576c72f3e42d95c156bffc5ca08fc15c4486423cebf1fea2d4f10f2"
+    }
+  ]
+}

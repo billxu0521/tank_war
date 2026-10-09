@@ -1,0 +1,23 @@
+{
+  "model_sha256_unchanged": true,
+  "model_fingerprint_unchanged": true,
+  "all_shape_key_coordinates_values_pose_weights_rest_topology_unchanged": true,
+  "v1_region_ids_data_file_unchanged": true,
+  "v1_regions_preserved": 26,
+  "new_pedal_communication_ids": 24,
+  "no_new_vertex_groups": true,
+  "no_blend_copies_in_workflow": true,
+  "image_count": 7,
+  "image_sha256": {
+    "pedal_bottom_region_map.png": "c6e406e9cb26e4da76595513801fec3674e927138d6ed77cf8f06da5660060e8",
+    "pedal_front_region_joint_overlay.png": "6e5996991a2e2c0159da83bb16280ee231d6757445fe7367f2e201fc49fd3c70",
+    "pedal_side_envelope_analysis.png": "848bf366afe754a18579f2e9c454391e93b0acc0b5bffc0d53fc29259129fc17",
+    "pedal_side_region_joint_overlay.png": "cdeeafaeec351009b100e315b156f3948828dad4d7c3444d36007cfefdd01c0b",
+    "pedal_top_region_joint_overlay.png": "f81c45793d57affcbdb79186ec2d61c77367cad07f77cd86f99540cd43d2431c",
+    "rear_digit_candidate_analysis.png": "1838364100cc059b52cf5f23a7bf51783769e7cba23c71c95ab7e2b966c418c2",
+    "toe_claw_morphology_audit.png": "2d87e218d301eaea9e5f4e811da28d1a950ed8007dcdc9ad185ccd8aa1166add"
+  },
+  "checkpoint_index_unchanged_sha256": "752902626f39467cd95074e692c0ea89f03e6ae7965040f95dd4db835420ae13",
+  "annotation_exact_mapping": "unknown; readable latest Side missing",
+  "rvi003": "OPEN; user-requested registration"
+}

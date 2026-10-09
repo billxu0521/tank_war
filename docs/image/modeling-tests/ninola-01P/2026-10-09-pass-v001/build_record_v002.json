@@ -1,0 +1,132 @@
+{
+  "source": "blender/ninola/working/01O2/2026-10-09-v003/ninola_01O2_ventral_belly_tuck.blend",
+  "source_sha256": "2c18b78c86106815af02b4b7e03c510ccfc2ff432428224d7eb1e7c26b512991",
+  "output": "blender/ninola/working/01P1/2026-10-09-v002/ninola_01P1_palm_digit_continuity.blend",
+  "sha256": "49bf5f7e625538cfa48868e5ac1050d2892b646b17915e5ce113675c0c58429e",
+  "object": "01P1_Palm_Digit_Continuity",
+  "replaced_faces": [
+    288,
+    562,
+    817,
+    1139,
+    1141,
+    1205,
+    1208,
+    1209,
+    1445,
+    1457,
+    1555,
+    2362,
+    2695,
+    2826,
+    2857,
+    2864,
+    2880
+  ],
+  "replaced_triangles": 17,
+  "new_vertices": 44,
+  "new_faces_before_triangulation": 80,
+  "vertices": 11180,
+  "triangles": 7004,
+  "non_target_faces_coordinates_materials_retained": true,
+  "all_original_bind_coordinates_and_weights_exact": true,
+  "Rig_Trex_keys_pose_exact": true,
+  "claw_root_seams": [
+    {
+      "side": 1,
+      "digit": 1,
+      "root_vertex_ids": [
+        7730,
+        7734,
+        7725,
+        7727
+      ],
+      "root_weights": {
+        "finger1_l": 0.9872545003890991,
+        "finger2_l": 0.012745494954288006
+      },
+      "root_exact": true
+    },
+    {
+      "side": 1,
+      "digit": 2,
+      "root_vertex_ids": [
+        7739,
+        7742,
+        7750,
+        7747
+      ],
+      "root_weights": {
+        "finger1_l": 0.5865932106971741,
+        "finger2_l": 0.4134068191051483
+      },
+      "root_exact": true
+    },
+    {
+      "side": -1,
+      "digit": 1,
+      "root_vertex_ids": [
+        7827,
+        7819,
+        7822,
+        7830
+      ],
+      "root_weights": {
+        "finger1_r": 1.0
+      },
+      "root_exact": true
+    },
+    {
+      "side": -1,
+      "digit": 2,
+      "root_vertex_ids": [
+        7837,
+        7839,
+        7842,
+        7846
+      ],
+      "root_weights": {
+        "finger1_r": 1.0
+      },
+      "root_exact": true
+    }
+  ],
+  "limited_pose_checks": [],
+  "pipeline_issues": [],
+  "source_unchanged": true,
+  "production_ready": false,
+  "limitation": "local hand skin replacement; original two claws weight mainly finger1 remains; no production keys/GLB/new game test",
+  "revision": "v002 winding-only correction",
+  "previous_output": "blender/ninola/working/01P1/2026-10-09-v001/ninola_01P1_palm_digit_continuity.blend",
+  "flipped_new_faces": [
+    6940,
+    6934,
+    6937,
+    6931,
+    6889,
+    6890,
+    6891,
+    6927,
+    6920,
+    6906,
+    6928,
+    6914,
+    6908,
+    6932,
+    6933,
+    6967,
+    6968,
+    6960,
+    6946,
+    6954,
+    6948,
+    6938,
+    6939,
+    6936,
+    6935
+  ],
+  "local_skin_winding_consistent": true,
+  "inherited_claw_base_caps_retained": true,
+  "claw_base_valence3_edges": 16,
+  "closed_manifold_production_claim": false
+}

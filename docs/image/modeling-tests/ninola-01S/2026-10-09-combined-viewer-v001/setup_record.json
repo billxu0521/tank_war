@@ -1,0 +1,14 @@
+{
+  "base_viewer": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project",
+  "asset": "01R2 v005",
+  "source_blend_sha256": "363eb15913ff2b7ee528a67163aa86805126e56a64514e07001cddc0ff305929",
+  "runtime_candidates": {
+    "neck_model_pitch": 12,
+    "head_model_pitch": -4,
+    "jaw_neutral": 1.5
+  },
+  "original_files_modified": false,
+  "old_viewer_preserved": true,
+  "rest_edited": false,
+  "comparison_key": "T"
+}

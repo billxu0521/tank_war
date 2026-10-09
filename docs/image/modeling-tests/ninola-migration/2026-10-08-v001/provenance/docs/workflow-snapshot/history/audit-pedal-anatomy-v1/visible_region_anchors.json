@@ -1,0 +1,466 @@
+{
+  "front": {
+    "L_PEDAL_PROXIMAL": {
+      "anchor": null,
+      "face_index": null,
+      "visible_face_count": 0,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "L_PEDAL_MID": {
+      "anchor": null,
+      "face_index": null,
+      "visible_face_count": 0,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "L_PEDAL_DISTAL": {
+      "anchor": [
+        0.4319862723350525,
+        0.08671915531158447,
+        0.13544601202011108
+      ],
+      "face_index": 1908,
+      "visible_face_count": 4,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "L_TOE_BASE": {
+      "anchor": [
+        0.9103657603263855,
+        0.18887114524841309,
+        0.2454257607460022
+      ],
+      "face_index": 1123,
+      "visible_face_count": 4,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "L_MAIN_TOE_INNER": {
+      "anchor": [
+        0.5456263422966003,
+        0.7012069225311279,
+        0.09506463259458542
+      ],
+      "face_index": 1181,
+      "visible_face_count": 11,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "L_MAIN_TOE_CENTER": {
+      "anchor": [
+        0.7273797988891602,
+        0.6258623600006104,
+        0.14158861339092255
+      ],
+      "face_index": 1343,
+      "visible_face_count": 12,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "L_MAIN_TOE_OUTER": {
+      "anchor": [
+        0.945426344871521,
+        0.7381210327148438,
+        0.10327354073524475
+      ],
+      "face_index": 1141,
+      "visible_face_count": 10,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "L_REAR_DIGIT_CANDIDATE": {
+      "anchor": null,
+      "face_index": null,
+      "visible_face_count": 0,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "L_CLAW_INNER": {
+      "anchor": [
+        0.4989912509918213,
+        0.8128740191459656,
+        0.05494394153356552
+      ],
+      "face_index": 2804,
+      "visible_face_count": 3,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "L_CLAW_CENTER": {
+      "anchor": [
+        0.7615596652030945,
+        1.0339988470077515,
+        0.055955223739147186
+      ],
+      "face_index": 2811,
+      "visible_face_count": 3,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "L_CLAW_OUTER": {
+      "anchor": [
+        1.043860673904419,
+        0.8110188245773315,
+        0.05634725093841553
+      ],
+      "face_index": 2817,
+      "visible_face_count": 2,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "R_PEDAL_PROXIMAL": {
+      "anchor": null,
+      "face_index": null,
+      "visible_face_count": 0,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "R_PEDAL_MID": {
+      "anchor": [
+        -0.9039815664291382,
+        0.07379084080457687,
+        0.36914926767349243
+      ],
+      "face_index": 1619,
+      "visible_face_count": 1,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "R_PEDAL_DISTAL": {
+      "anchor": [
+        -0.4315752387046814,
+        0.18826937675476074,
+        0.1880352944135666
+      ],
+      "face_index": 860,
+      "visible_face_count": 4,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "R_TOE_BASE": {
+      "anchor": [
+        -0.9516685009002686,
+        0.1785789430141449,
+        0.2309238165616989
+      ],
+      "face_index": 699,
+      "visible_face_count": 5,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "R_MAIN_TOE_INNER": {
+      "anchor": [
+        -0.5451868772506714,
+        0.6501221060752869,
+        0.1602393090724945
+      ],
+      "face_index": 142,
+      "visible_face_count": 9,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "R_MAIN_TOE_CENTER": {
+      "anchor": [
+        -0.754565954208374,
+        0.860013484954834,
+        0.13892245292663574
+      ],
+      "face_index": 474,
+      "visible_face_count": 14,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "R_MAIN_TOE_OUTER": {
+      "anchor": [
+        -0.8820220828056335,
+        0.25657913088798523,
+        0.273914098739624
+      ],
+      "face_index": 84,
+      "visible_face_count": 9,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "R_REAR_DIGIT_CANDIDATE": {
+      "anchor": null,
+      "face_index": null,
+      "visible_face_count": 0,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "R_CLAW_INNER": {
+      "anchor": [
+        -0.4989911913871765,
+        0.8128740191459656,
+        0.05494394153356552
+      ],
+      "face_index": 2841,
+      "visible_face_count": 3,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "R_CLAW_CENTER": {
+      "anchor": [
+        -0.7615597248077393,
+        1.0339988470077515,
+        0.055955223739147186
+      ],
+      "face_index": 2846,
+      "visible_face_count": 3,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "R_CLAW_OUTER": {
+      "anchor": [
+        -1.0438605546951294,
+        0.8110188245773315,
+        0.05634724348783493
+      ],
+      "face_index": 2852,
+      "visible_face_count": 2,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "L_MAIN_TOES_SHARED": {
+      "anchor": [
+        0.645728588104248,
+        0.45991212129592896,
+        0.21804141998291016
+      ],
+      "face_index": 1348,
+      "visible_face_count": 8,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "R_MAIN_TOES_SHARED": {
+      "anchor": [
+        -0.6148760318756104,
+        0.47780150175094604,
+        0.22504597902297974
+      ],
+      "face_index": 929,
+      "visible_face_count": 9,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    }
+  },
+  "top": {
+    "L_PEDAL_PROXIMAL": {
+      "anchor": [
+        0.8858851194381714,
+        -0.16413578391075134,
+        0.41028839349746704
+      ],
+      "face_index": 1617,
+      "visible_face_count": 7,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "L_PEDAL_MID": {
+      "anchor": [
+        0.9439878463745117,
+        -0.028787534683942795,
+        0.22084948420524597
+      ],
+      "face_index": 244,
+      "visible_face_count": 1,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "L_PEDAL_DISTAL": {
+      "anchor": [
+        0.48816511034965515,
+        0.07321090251207352,
+        0.07053562998771667
+      ],
+      "face_index": 1297,
+      "visible_face_count": 4,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "L_TOE_BASE": {
+      "anchor": [
+        0.9103657603263855,
+        0.18887114524841309,
+        0.2454257607460022
+      ],
+      "face_index": 1123,
+      "visible_face_count": 1,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "L_MAIN_TOE_INNER": {
+      "anchor": [
+        0.5659826993942261,
+        0.24310635030269623,
+        0.03837098181247711
+      ],
+      "face_index": 1974,
+      "visible_face_count": 10,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "L_MAIN_TOE_CENTER": {
+      "anchor": [
+        0.8725345134735107,
+        0.573596179485321,
+        0.1418123096227646
+      ],
+      "face_index": 1323,
+      "visible_face_count": 8,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "L_MAIN_TOE_OUTER": {
+      "anchor": [
+        0.7502645254135132,
+        0.3112964928150177,
+        0.017045458778738976
+      ],
+      "face_index": 1754,
+      "visible_face_count": 16,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "L_REAR_DIGIT_CANDIDATE": {
+      "anchor": [
+        0.5514141917228699,
+        -0.24715089797973633,
+        0.14929112792015076
+      ],
+      "face_index": 1695,
+      "visible_face_count": 13,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "L_CLAW_INNER": {
+      "anchor": [
+        0.4372090697288513,
+        0.7941392660140991,
+        0.054943956434726715
+      ],
+      "face_index": 2805,
+      "visible_face_count": 3,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "L_CLAW_CENTER": {
+      "anchor": [
+        0.7615596652030945,
+        1.0339988470077515,
+        0.055955223739147186
+      ],
+      "face_index": 2811,
+      "visible_face_count": 2,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "L_CLAW_OUTER": {
+      "anchor": [
+        1.0999239683151245,
+        0.7791745662689209,
+        0.05634727329015732
+      ],
+      "face_index": 2816,
+      "visible_face_count": 2,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "R_PEDAL_PROXIMAL": {
+      "anchor": [
+        -0.5530449151992798,
+        -0.27008962631225586,
+        0.163985937833786
+      ],
+      "face_index": 1188,
+      "visible_face_count": 9,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "R_PEDAL_MID": {
+      "anchor": [
+        -0.9039815664291382,
+        0.07379084080457687,
+        0.36914926767349243
+      ],
+      "face_index": 1619,
+      "visible_face_count": 2,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "R_PEDAL_DISTAL": {
+      "anchor": [
+        -0.5097448825836182,
+        0.02478143945336342,
+        0.024840664118528366
+      ],
+      "face_index": 1988,
+      "visible_face_count": 3,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "R_TOE_BASE": {
+      "anchor": [
+        -0.9516685009002686,
+        0.1785789430141449,
+        0.2309238165616989
+      ],
+      "face_index": 699,
+      "visible_face_count": 2,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "R_MAIN_TOE_INNER": {
+      "anchor": [
+        -0.5451868772506714,
+        0.6501221060752869,
+        0.1602393090724945
+      ],
+      "face_index": 142,
+      "visible_face_count": 5,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "R_MAIN_TOE_CENTER": {
+      "anchor": [
+        -0.7584843635559082,
+        0.6797322034835815,
+        0.17334894835948944
+      ],
+      "face_index": 471,
+      "visible_face_count": 10,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "R_MAIN_TOE_OUTER": {
+      "anchor": [
+        -0.7579807043075562,
+        0.32001793384552,
+        0.0924740880727768
+      ],
+      "face_index": 1989,
+      "visible_face_count": 18,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "R_REAR_DIGIT_CANDIDATE": {
+      "anchor": [
+        -0.7066349983215332,
+        -0.21530678868293762,
+        0.09530462324619293
+      ],
+      "face_index": 1601,
+      "visible_face_count": 8,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "R_CLAW_INNER": {
+      "anchor": [
+        -0.43720901012420654,
+        0.7941392660140991,
+        0.05494394898414612
+      ],
+      "face_index": 2840,
+      "visible_face_count": 2,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "R_CLAW_CENTER": {
+      "anchor": [
+        -0.8256995677947998,
+        1.0272473096847534,
+        0.055955223739147186
+      ],
+      "face_index": 2847,
+      "visible_face_count": 2,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "R_CLAW_OUTER": {
+      "anchor": [
+        -1.099923849105835,
+        0.7791745662689209,
+        0.05634725093841553
+      ],
+      "face_index": 2853,
+      "visible_face_count": 2,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "L_MAIN_TOES_SHARED": {
+      "anchor": [
+        0.7722229361534119,
+        0.4029167592525482,
+        0.21860477328300476
+      ],
+      "face_index": 1122,
+      "visible_face_count": 2,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    },
+    "R_MAIN_TOES_SHARED": {
+      "anchor": [
+        -0.5520647764205933,
+        0.4099225699901581,
+        0.33732303977012634
+      ],
+      "face_index": 1815,
+      "visible_face_count": 1,
+      "method": "First-hit triangle centroid ray against same displayed source faces; missing anchors remain hidden/uncertain."
+    }
+  }
+}

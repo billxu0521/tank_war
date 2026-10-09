@@ -1,0 +1,74 @@
+{
+  "foot_side": {
+    "matrix": true,
+    "scale": true,
+    "camera_type": true,
+    "lens": true,
+    "resolution": true,
+    "lighting": true,
+    "display_mask": true
+  },
+  "foot_silhouette": {
+    "matrix": true,
+    "scale": true,
+    "camera_type": true,
+    "lens": true,
+    "resolution": true,
+    "lighting": true,
+    "display_mask": true
+  },
+  "foot_front": {
+    "matrix": true,
+    "scale": true,
+    "camera_type": true,
+    "lens": true,
+    "resolution": true,
+    "lighting": true,
+    "display_mask": true
+  },
+  "foot_rear": {
+    "matrix": true,
+    "scale": true,
+    "camera_type": true,
+    "lens": true,
+    "resolution": true,
+    "lighting": true,
+    "display_mask": true
+  },
+  "foot_top": {
+    "matrix": true,
+    "scale": true,
+    "camera_type": true,
+    "lens": true,
+    "resolution": true,
+    "lighting": true,
+    "display_mask": true
+  },
+  "foot_front_threequarter": {
+    "matrix": true,
+    "scale": true,
+    "camera_type": true,
+    "lens": true,
+    "resolution": true,
+    "lighting": true,
+    "display_mask": true
+  },
+  "foot_rear_threequarter": {
+    "matrix": true,
+    "scale": true,
+    "camera_type": true,
+    "lens": true,
+    "resolution": true,
+    "lighting": true,
+    "display_mask": true
+  },
+  "full_body_side": {
+    "matrix": true,
+    "scale": true,
+    "camera_type": true,
+    "lens": true,
+    "resolution": true,
+    "lighting": true,
+    "display_mask": true
+  }
+}

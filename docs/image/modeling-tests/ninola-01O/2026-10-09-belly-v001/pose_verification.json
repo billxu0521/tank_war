@@ -1,0 +1,41 @@
+{
+  "results": {
+    "baseline": {
+      "source_sha256_unchanged": "aa6fe9e30596855215b3db8c93a8b9c4da12639cc8d9ce897f7f3e7b350a04a9",
+      "pose_restored": true,
+      "frames": {
+        "original": {
+          "max_delta_vs_baseline": 0.0,
+          "protected_coordinates_max_delta": 0.0
+        },
+        "bite026": {
+          "max_delta_vs_baseline": 0.0,
+          "protected_coordinates_max_delta": 0.0
+        },
+        "sweep003": {
+          "max_delta_vs_baseline": 0.0,
+          "protected_coordinates_max_delta": 0.0
+        }
+      }
+    },
+    "O2v003": {
+      "source_sha256_unchanged": "2c18b78c86106815af02b4b7e03c510ccfc2ff432428224d7eb1e7c26b512991",
+      "pose_restored": true,
+      "frames": {
+        "original": {
+          "max_delta_vs_baseline": 0.22327047253940827,
+          "protected_coordinates_max_delta": 0.0
+        },
+        "bite026": {
+          "max_delta_vs_baseline": 0.21947709006600075,
+          "protected_coordinates_max_delta": 0.0
+        },
+        "sweep003": {
+          "max_delta_vs_baseline": 0.22017601845885698,
+          "protected_coordinates_max_delta": 0.0
+        }
+      }
+    }
+  },
+  "pose_source": "recorded M7 Godot samples replayed on same locked rig; tests bite026 and jaw_sweep003 only, not new game input or full neck animation"
+}

@@ -1,0 +1,19 @@
+{
+  "reopened_saved_asset": true,
+  "Rig_Trex_shape_keys_pose_exact": true,
+  "legacy_M1_10444_coordinates_exact": true,
+  "all_source_weights_exact": true,
+  "outside_edit_mask_exact": true,
+  "retained_face_vertices_exact": true,
+  "original_mouth_teeth_body_foot_materials_exact": true,
+  "source_and_output_hashes_match": true,
+  "new_faces_near_degenerate": [],
+  "triangles": 6530,
+  "vertices": 10761,
+  "production_ready": false,
+  "limitations": [
+    "Prototype has no Production Shape Keys",
+    "Spine bases embedded, not welded engineering cleanup",
+    "No true input/full gameplay validation"
+  ]
+}

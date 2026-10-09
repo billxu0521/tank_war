@@ -1,0 +1,526 @@
+{
+  "candidate": "01O2 v003",
+  "user_review": "pending",
+  "files": [
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/INDEPENDENT_REVIEW.md",
+      "sha256": "b7a904e6fa78b499d883f7ab30f44479911920ea1398fed25ccc10ea057e5ef5",
+      "bytes": 798
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/RESULT.md",
+      "sha256": "676226838f49d494cc68ed0bd850745d69f27983acc2e6bbff8218e7744085a1",
+      "bytes": 2926
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/belly_close_comparison.png",
+      "sha256": "490ab7ab803036b5b35d954c04ea87182cb3d82364c4db390db23743045ffc96",
+      "bytes": 274077
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/build_01O2.py",
+      "sha256": "5a2c9dd02cf2a7000d35e12a0ecb91b6bc5526f69f91b096d9340a3f70ab82d7",
+      "bytes": 6620
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/build_01O2_v002.py",
+      "sha256": "8b2e1a368b2fe121f37e0d2b46196b03ea14ae03934bde52c61b52323e3fa261",
+      "bytes": 6659
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/build_01O2_v003.py",
+      "sha256": "800f9b16f0c2f0aae175be9da76b1a79538cf54fbcef4c9869dbf4db356aa201",
+      "bytes": 6862
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/build_record.json",
+      "sha256": "6d37eaf42a76ba665fca3f4b4a5347c072b4b790dcdc4bb98dba7f58a64104c6",
+      "bytes": 1481
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/capture_01O2.py",
+      "sha256": "39d1c36c3871e1bd72fe7d4312d5b3888568a0ce2f4b4b214b9c8c2a3a6b206c",
+      "bytes": 5998
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/capture_01O2_v002.py",
+      "sha256": "e7dc7cb1c79bc7c8b5b1821145ba4e2c3f9a7d0073ffd8fb52164bbb4726d2de",
+      "bytes": 5998
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/capture_01O2_v003.py",
+      "sha256": "418692abca8ce5e1bb0433d86c69770f8fb7a212db227317bd6136d2e8f318cb",
+      "bytes": 5998
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/capture_gray_01O2.py",
+      "sha256": "05714e767f7101a14001d15c72befa50e219385da1abf908e96a744bbc0245d3",
+      "bytes": 5917
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/capture_gray_01O2_v002.py",
+      "sha256": "f3fb481820812fd4cc3af809f42717fb1f65f6c3fc2e52bf1c142632315ec793",
+      "bytes": 5917
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/capture_gray_01O2_v003.py",
+      "sha256": "4d30b063c490710acc23a6677254f8a2ad8e6154b4125a79dbe5503c215a6b0d",
+      "bytes": 5917
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/captures/capture_settings_01O2.json",
+      "sha256": "5141a2c68ecf8ab1ef55949a6273e190a8660ec31ea1c98bac663194f27812de",
+      "bytes": 4701
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/captures/full_body_front_01O2.png",
+      "sha256": "59e0dc39ca95c473a543b3b91515d71bd5a3ef74e448498199aac55ec85465c1",
+      "bytes": 1373325
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/captures/full_body_side_01O2.png",
+      "sha256": "0cc80cee30bff6c9cf3c3eff39217a4ae27c57d345f70d17e310db0024d0d8c2",
+      "bytes": 1268946
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/captures/inspection.json",
+      "sha256": "bb82175c76b074f01a6ce314d455b3d3d0224fd89f9767db2d852a61477123c4",
+      "bytes": 34976
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/captures/torso_rear_threequarter_01O2.png",
+      "sha256": "db75921b54f2f0cccf4f5f1a8dc19863c7f4db6e647510d619615b828dde5286",
+      "bytes": 1365555
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/captures/torso_right_threequarter_01O2.png",
+      "sha256": "806daa0cadaf64086e2ce92be62da87b84cff2a195f732cb9f9e258f85330c0a",
+      "bytes": 1370145
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/captures/torso_side_01O2.png",
+      "sha256": "8a841d7e8fc4145b1a30ddc29ecd750ced8aba838102e431581e5612b608cca0",
+      "bytes": 1374087
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/captures/torso_threequarter_01O2.png",
+      "sha256": "c426dd3bc11bbedecfea393ca2399bf728a6e8065dcd99756474f642e2db8edd",
+      "bytes": 1371219
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/captures-v002/capture_settings_01O2.json",
+      "sha256": "5141a2c68ecf8ab1ef55949a6273e190a8660ec31ea1c98bac663194f27812de",
+      "bytes": 4701
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/captures-v002/full_body_front_01O2.png",
+      "sha256": "cac23578e6ab0fce90db262fecf267822bbf5ffecd23c43939bb8211619322fb",
+      "bytes": 1373325
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/captures-v002/full_body_side_01O2.png",
+      "sha256": "8d833662c1df89a63a1a716ce1335aaf9433441bcf711878034455773d699348",
+      "bytes": 1268946
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/captures-v002/inspection.json",
+      "sha256": "d4b8ffa7fc1b1d156e252806190a7fbc35113273aed2bb6134d5e927d4a16238",
+      "bytes": 34976
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/captures-v002/torso_rear_threequarter_01O2.png",
+      "sha256": "81b3005d01944756e1587195cb78645bd0d44e622f7532ab8668cef3bfe31937",
+      "bytes": 1365555
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/captures-v002/torso_right_threequarter_01O2.png",
+      "sha256": "9f26406ff461155a4d2cfea3183bf686f685547178bbde0009492d9b10485a4d",
+      "bytes": 1370145
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/captures-v002/torso_side_01O2.png",
+      "sha256": "c3504c65fefa4bd8d193f76a46214f86c17f5eeb0f225f33dadf68b2100aff8f",
+      "bytes": 1374087
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/captures-v002/torso_threequarter_01O2.png",
+      "sha256": "6c2cc13e0679346161842cdc79b8f9a674627df23cec67ab17b8e92730b2c368",
+      "bytes": 1371219
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/captures-v003/capture_settings_01O2.json",
+      "sha256": "5141a2c68ecf8ab1ef55949a6273e190a8660ec31ea1c98bac663194f27812de",
+      "bytes": 4701
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/captures-v003/full_body_front_01O2.png",
+      "sha256": "66fa745786a3a1ce690134e5dcfeaf3c09c8cebc7fd16e1fb4fb6d34c99655a9",
+      "bytes": 1374307
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/captures-v003/full_body_side_01O2.png",
+      "sha256": "2c530e33c5d97d3c41042ae82a6a013fac2c27d5e4a14ecfcecd9b2575fc73b5",
+      "bytes": 1268734
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/captures-v003/inspection.json",
+      "sha256": "18ec7cf141effe91be493ea73b706a2739977e321a643b81646bc98a1f97db01",
+      "bytes": 34976
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/captures-v003/torso_rear_threequarter_01O2.png",
+      "sha256": "fcacc299877dbf00b24a91bb8b60bf086d9db3940c4036572c3472f4b9fecbd6",
+      "bytes": 1365555
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/captures-v003/torso_right_threequarter_01O2.png",
+      "sha256": "3ce719f3702f5e408c28db1b2a7aeab21064c3a65dbb6a00ac06a9a38e299935",
+      "bytes": 1370590
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/captures-v003/torso_side_01O2.png",
+      "sha256": "9e49a74a651100b902dbbf37899a0b06bbdbb452a3cfbab2d4e270890d377c23",
+      "bytes": 1373205
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/captures-v003/torso_threequarter_01O2.png",
+      "sha256": "beb890391d17b287a303eb45b9441daee46c0c343e29791ba15187c01b4ff98e",
+      "bytes": 1370995
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/compose_review.py",
+      "sha256": "e6fae52d6dce6ddf82302dc9969787bd2307a36ab0297f9d05f7c28931750064",
+      "bytes": 1071
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/compose_review_v003.py",
+      "sha256": "fc1c2473596366fc5984536e342a09d89efd77fb33005754ea6d11bacf88ba78",
+      "bytes": 1086
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/dynamic-captures/O2v003/bite026_side.png",
+      "sha256": "fd4fb30414a46cb8a5b1ad18433c695d68f6589559c5c056e428eac5d4055383",
+      "bytes": 1104188
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/dynamic-captures/O2v003/bite026_threequarter.png",
+      "sha256": "11e891c7c07a4272c54b69920c7c3e9748c742dc7442730ef5a13713e8cf9337",
+      "bytes": 1105977
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/dynamic-captures/O2v003/original_side.png",
+      "sha256": "ff6576661f5bd4be9e56fcb5ee11a2b609d977906396a14f2206f771c6c5c1ae",
+      "bytes": 1088068
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/dynamic-captures/O2v003/original_threequarter.png",
+      "sha256": "b05b3c3666495b022cc464463e35d0a80e9819698d9d8653e9ae2c6402d5b594",
+      "bytes": 1102275
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/dynamic-captures/O2v003/sweep003_side.png",
+      "sha256": "1e80e1b2c8b14c294428a9670a743f9b166e04cbd3c82c6b0184c5c6e89ebab4",
+      "bytes": 1094474
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/dynamic-captures/O2v003/sweep003_threequarter.png",
+      "sha256": "50720c19c2576d7ab1bfec157fdd779aad375ba24944e423835e25ad19c06407",
+      "bytes": 1112437
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/dynamic-captures/baseline/bite026_side.png",
+      "sha256": "752b75cf4373127a5bba6fa8a474dd723e43cf5132c928719c9181fec8db1c34",
+      "bytes": 1106086
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/dynamic-captures/baseline/bite026_threequarter.png",
+      "sha256": "0457c7e1cc21123d0fc6a4bcddc3084dd3e44c75455b67d3fb0fc43c1e56a66c",
+      "bytes": 1104061
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/dynamic-captures/baseline/original_side.png",
+      "sha256": "26d4e30776836598c66f056ef13476bc06a8bb6bffc9f1123be6267ea7e4150a",
+      "bytes": 1089556
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/dynamic-captures/baseline/original_threequarter.png",
+      "sha256": "cccc3b828e6f24e581bf65ab3026aa41f682ae3a4d602cc93d87e35b9204e61a",
+      "bytes": 1102134
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/dynamic-captures/baseline/sweep003_side.png",
+      "sha256": "3542edafea60c63c6cc83d4538a40db49448cb37bac1e7a05dc92df861e731c7",
+      "bytes": 1094814
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/dynamic-captures/baseline/sweep003_threequarter.png",
+      "sha256": "2389df447745559c46497a122fc23bb3ef681b08a8f4dbfa1a414df441e0e189",
+      "bytes": 1111608
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/edit_mask.json",
+      "sha256": "f8e754eb20357460f2ec1a38a7db05169123256fb3eeef04231b0c4927400ffd",
+      "bytes": 5046
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/full_body_front_comparison.png",
+      "sha256": "cbd4ec769628b5cad4e0aac238dff35c6c481b1482828caf6292da4252f76167",
+      "bytes": 568396
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/full_body_front_v003_comparison.png",
+      "sha256": "cf4f09f4d81903da7167d37661390cc91492e2a392799b0d5809f20f864ebc56",
+      "bytes": 570777
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/full_body_side_comparison.png",
+      "sha256": "15bacf688e5ececad39dbecf19088025d7087561d3918da737fd9bd3b5becfab",
+      "bytes": 513949
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/full_body_side_v003_comparison.png",
+      "sha256": "38a464a980d10b13157371cd5f2b7713035115627367a04fc006dd7af484f0fa",
+      "bytes": 515271
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/gray-captures/capture_settings_01O2.json",
+      "sha256": "eeada153ea88ae4d30c88f98ca1957e1ec12ed6697d1292e9a9bc4ce1de199d6",
+      "bytes": 2206
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/gray-captures/inspection.json",
+      "sha256": "bb82175c76b074f01a6ce314d455b3d3d0224fd89f9767db2d852a61477123c4",
+      "bytes": 34976
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/gray-captures/torso_rear_threequarter_01O2.png",
+      "sha256": "73db1bd2cb09c8389f185ac14f13cc2412ba3585ee56ef67871dde1a87052851",
+      "bytes": 1343008
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/gray-captures/torso_side_01O2.png",
+      "sha256": "9a6fba12c0c2540efc5cd94588ed72cc9c4b9bedd52b490bf8e13b6a7092536b",
+      "bytes": 1351845
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/gray-captures/torso_top_01O2.png",
+      "sha256": "ccc70a2502846521bbae35dbf77bcbe403285eaa224b35c63088983ca5ca0912",
+      "bytes": 1339617
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/gray-captures-v002/capture_settings_01O2.json",
+      "sha256": "eeada153ea88ae4d30c88f98ca1957e1ec12ed6697d1292e9a9bc4ce1de199d6",
+      "bytes": 2206
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/gray-captures-v002/inspection.json",
+      "sha256": "d4b8ffa7fc1b1d156e252806190a7fbc35113273aed2bb6134d5e927d4a16238",
+      "bytes": 34976
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/gray-captures-v002/torso_rear_threequarter_01O2.png",
+      "sha256": "5f20c75e12f6e494879bcdc489a0429333457903ebdaf16b2ec41fffd11f0a56",
+      "bytes": 1343008
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/gray-captures-v002/torso_side_01O2.png",
+      "sha256": "6912afeb1367b0d95bb58e12dd5bf50834377692c6047dbef947df49787cf7af",
+      "bytes": 1351845
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/gray-captures-v002/torso_top_01O2.png",
+      "sha256": "c8e66faffabaf9ee722cb0c0d7a1d38e8bf4516f748def1dd60c1dcc4663f2b1",
+      "bytes": 1339617
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/gray-captures-v003/capture_settings_01O2.json",
+      "sha256": "eeada153ea88ae4d30c88f98ca1957e1ec12ed6697d1292e9a9bc4ce1de199d6",
+      "bytes": 2206
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/gray-captures-v003/inspection.json",
+      "sha256": "18ec7cf141effe91be493ea73b706a2739977e321a643b81646bc98a1f97db01",
+      "bytes": 34976
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/gray-captures-v003/torso_rear_threequarter_01O2.png",
+      "sha256": "c58e1347efcff936f16b7358932fd9621fac9aed2b873a5944556e53103a0e30",
+      "bytes": 1343008
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/gray-captures-v003/torso_side_01O2.png",
+      "sha256": "fbc99b7b4b42efcc26bdcc06a64d20190ce162781feb719e962440276d994823",
+      "bytes": 1351232
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/gray-captures-v003/torso_top_01O2.png",
+      "sha256": "70b71f732075e84f83637deae59b33dde88714b340912be5de3d718ec3242fc7",
+      "bytes": 1339617
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/index.html",
+      "sha256": "03d0771f5906f9d45df87269fa2abc0764b2afe394ccbf33012c362473ebf5b0",
+      "bytes": 2653
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/inspection_geometry.json",
+      "sha256": "ca83b093877b96b1d6fb9813af469883c87fd2e7885c5f2609f04c02e40bf2b1",
+      "bytes": 865795
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/mcp_front_low.png",
+      "sha256": "46c36c47468f846fac72924c0ad0605ccd3f7fb991540c3edcfe07a0e923424e",
+      "bytes": 228335
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/mcp_inspect.py",
+      "sha256": "212797ab664278ac8b0ae64b0d6cf007715548591ebf708af6cde526e8447677",
+      "bytes": 1687
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/mcp_rear_low.png",
+      "sha256": "b3c0727ea9ca7f45e8ff5a0fabcfda42a5c5863d73122169a0d1786562d988e1",
+      "bytes": 170627
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/mcp_verification.json",
+      "sha256": "cd660ff198d8c1392fce024c06a54feec93cfbde8228decd3216259391302529",
+      "bytes": 415
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/pose_verification.json",
+      "sha256": "0a337bbb42f476294b5dada3c456844944e1ea07573714eb98126db17eda022a",
+      "bytes": 1311
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/readback_verification.json",
+      "sha256": "82c131286b5f727c8c21c9eab79c75b8d4993b8d0546ed14e3d42362e6f409d4",
+      "bytes": 299
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/reference_provenance.json",
+      "sha256": "6156aa4d4f4133bd86452804ee09fee7bc53d952c3586fffb9160b609361d07b",
+      "bytes": 418
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/references/user_belly_target.png",
+      "sha256": "732846077c548abb052349bb63a949039861baae155fcc507d5717643693495a",
+      "bytes": 1057859
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/refined-v002/build_record.json",
+      "sha256": "bf03c18073e22acb050084539063c208a2be8438c360b8169efc192767d98d16",
+      "bytes": 1481
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/refined-v002/edit_mask.json",
+      "sha256": "7c53776545f1cc00dbc9f0a2e9a8950ae717f8ca3e95722259a1d3220342eab7",
+      "bytes": 6221
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/refined-v002/inspection_geometry.json",
+      "sha256": "ca83b093877b96b1d6fb9813af469883c87fd2e7885c5f2609f04c02e40bf2b1",
+      "bytes": 865795
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/refined-v003/build_record.json",
+      "sha256": "bd4c5d74de7ac83e9d286dcfad0be1cd1463812c6e703abeeb9123bf55efc6e7",
+      "bytes": 1482
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/refined-v003/edit_mask.json",
+      "sha256": "7ea591d67d6aca49e950aaf2674d1b9bf3b1cf43eff00df5256808879786282d",
+      "bytes": 8096
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/refined-v003/inspection_geometry.json",
+      "sha256": "3e4e8679f4e7ced3c189f0e0b9aab6d4ff1da0dcf9d9517adf6f2953ff7608bf",
+      "bytes": 865795
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/render_pose_comparison.py",
+      "sha256": "978b1dbdd3d33922acbcc268c2434a41484abd2977c93e31d321f37475ac7c68",
+      "bytes": 3839
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/source_hash_verification.json",
+      "sha256": "6a38d8472124270ed2148aac0bb70294c704b719572f08f650e90076f9ad27b3",
+      "bytes": 2146
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/torso_rear_threequarter_comparison.png",
+      "sha256": "0942e48a531280a48e3eee9836a938d42a5d56ecf98b612d2ec0d1779784f2a0",
+      "bytes": 555269
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/torso_rear_threequarter_gray_comparison.png",
+      "sha256": "66b8a1b86207f70db3bf4f9d0a4f83420de3025abcc24e9b8bea7deb2f0a8b69",
+      "bytes": 566864
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/torso_rear_threequarter_v003_comparison.png",
+      "sha256": "c95364af7fe56177ec1691461a766dd26726602765474ba2defc834b23086cfe",
+      "bytes": 556252
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/torso_rear_threequarter_v003_gray_comparison.png",
+      "sha256": "23aa2c2f247c909c8089a9aac6f15569ecc98176b0b36cd9082725e9bf9ca884",
+      "bytes": 567899
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/torso_right_threequarter_comparison.png",
+      "sha256": "30c889eb41796726073a2a0c53a2456a353699f50d11cf5c705ddc698ef6544b",
+      "bytes": 568956
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/torso_right_threequarter_v003_comparison.png",
+      "sha256": "c8e55b6e14bd0601499f1b8d1ba25335785ec4dfd30d8adfa114e3ec8824fe78",
+      "bytes": 571759
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/torso_side_comparison.png",
+      "sha256": "21ca3e4ee31aa8e1dae3910bb9df6f1245ef7ca4a6fb9f604d0fbd572bda8e9a",
+      "bytes": 565308
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/torso_side_gray_comparison.png",
+      "sha256": "77d6c68ed2c811362033e4553445c350047b46a5383e943b19ed97d7f0770fb1",
+      "bytes": 575752
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/torso_side_v003_comparison.png",
+      "sha256": "23591eafcd4f69738bb84ec331fd8ba4dd1db7262e2dabdeaf7c1cc66884ab63",
+      "bytes": 567409
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/torso_side_v003_gray_comparison.png",
+      "sha256": "279a79f6013f500012f832195bccea61d240f2ce0a61b97d65b0545cb56ab91d",
+      "bytes": 577930
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/torso_threequarter_comparison.png",
+      "sha256": "9c0185bbf923a1e284ba11c992f769bc873ff4305648690f17ef187bf7576324",
+      "bytes": 557834
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/torso_threequarter_v003_comparison.png",
+      "sha256": "faad6636a793f53c3dd52844c8f449a975f998dbbbaa7d429070d409cbb0f998",
+      "bytes": 559565
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/torso_top_gray_comparison.png",
+      "sha256": "1c7382a94dbaf0d3928d2df90a04ee867341745409279eaf34833f2eb10549c5",
+      "bytes": 556806
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/torso_top_v003_gray_comparison.png",
+      "sha256": "ceef7f9cf2d5af5700869f168c96f6b9ee64369174f5384f3bbef1d22c8999de",
+      "bytes": 557808
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/verify_readback.py",
+      "sha256": "bf2b578b357d4e8d3b7ae902b3ab8b7ead5b9b3d70149e7087546f1ac12ff9ad",
+      "bytes": 2534
+    }
+  ]
+}

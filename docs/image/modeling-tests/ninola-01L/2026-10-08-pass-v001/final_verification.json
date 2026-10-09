@@ -1,0 +1,72 @@
+{
+  "source_models": [
+    {
+      "asset": "01J",
+      "sha256": "b8b7e5c11f9a7c6f80901086e3d03d609f6ec732a1d888b0fdd66a61eba613b3",
+      "unchanged": true
+    },
+    {
+      "asset": "01K6",
+      "sha256": "6be6642d8ed8cb2b48a31bd2649cf94457be6073daa59ac6653197dd222f18ca",
+      "unchanged": true
+    },
+    {
+      "asset": "01K8",
+      "sha256": "d157deaadc78216d39f8265340c7e742416742391899a602c3fc685875d778f9",
+      "unchanged": true
+    }
+  ],
+  "output_sha256": "7e4792bf471dd6a76b4e44a7ed983e70bc036723b28f266577b4727df48fefd7",
+  "output_hash_match": true,
+  "fixed_view_comparison": {
+    "foot_side": {
+      "matrix": true,
+      "scale": true,
+      "display_mask": true,
+      "resolution": true
+    },
+    "foot_silhouette": {
+      "matrix": true,
+      "scale": true,
+      "display_mask": true,
+      "resolution": true
+    },
+    "foot_front": {
+      "matrix": true,
+      "scale": true,
+      "display_mask": true,
+      "resolution": true
+    },
+    "foot_rear": {
+      "matrix": true,
+      "scale": true,
+      "display_mask": true,
+      "resolution": true
+    },
+    "foot_top": {
+      "matrix": true,
+      "scale": true,
+      "display_mask": true,
+      "resolution": true
+    },
+    "foot_front_threequarter": {
+      "matrix": true,
+      "scale": true,
+      "display_mask": true,
+      "resolution": true
+    },
+    "foot_rear_threequarter": {
+      "matrix": true,
+      "scale": true,
+      "display_mask": true,
+      "resolution": true
+    },
+    "full_body_side": {
+      "matrix": true,
+      "scale": true,
+      "display_mask": true,
+      "resolution": true
+    }
+  },
+  "scope": "rig/Trex data and protected vertices checked at build/reopen; global collisions/deformation not certified"
+}

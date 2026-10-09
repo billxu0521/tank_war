@@ -1,0 +1,91 @@
+{
+  "image": "sweep003_current.png",
+  "samples": [
+    {
+      "pixel": [
+        390,
+        537
+      ],
+      "face": 3437,
+      "material": "d_bone",
+      "face_is_new_external": false,
+      "groups": [
+        "jaw"
+      ],
+      "majority_hits": 1,
+      "classified_samples": 1
+    },
+    {
+      "pixel": [
+        502,
+        449
+      ],
+      "face": 3445,
+      "material": "d_bone",
+      "face_is_new_external": false,
+      "groups": [
+        "jaw"
+      ],
+      "majority_hits": 24,
+      "classified_samples": 30
+    },
+    {
+      "pixel": [
+        552,
+        406
+      ],
+      "face": 3447,
+      "material": "d_bone",
+      "face_is_new_external": false,
+      "groups": [
+        "jaw"
+      ],
+      "majority_hits": 32,
+      "classified_samples": 43
+    },
+    {
+      "pixel": [
+        599,
+        355
+      ],
+      "face": 3407,
+      "material": "d_bone",
+      "face_is_new_external": false,
+      "groups": [
+        "jaw"
+      ],
+      "majority_hits": 23,
+      "classified_samples": 45
+    },
+    {
+      "pixel": [
+        531,
+        470
+      ],
+      "face": 3561,
+      "material": "d_mouth",
+      "face_is_new_external": false,
+      "groups": [
+        "jaw"
+      ],
+      "majority_hits": 49,
+      "classified_samples": 49
+    },
+    {
+      "pixel": [
+        567,
+        423
+      ],
+      "face": 3560,
+      "material": "d_mouth",
+      "face_is_new_external": false,
+      "groups": [
+        "jaw"
+      ],
+      "majority_hits": 46,
+      "classified_samples": 49
+    }
+  ],
+  "source_unchanged": true,
+  "limitation": "Only these sampled image locations, not every possible sharp feature."
+}

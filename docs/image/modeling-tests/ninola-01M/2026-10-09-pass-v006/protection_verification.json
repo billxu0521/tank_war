@@ -1,0 +1,13 @@
+{
+  "Rig_Trex_shape_keys_source_pose_signature_exact": true,
+  "all_M3_source_rest_coords_and_weights_exact": true,
+  "original_5999_retained_faces_and_materials_exact": true,
+  "original_33_boundary_points_unmodified": true,
+  "new_vertex_weights_sum_max_error": 5.960464477539063e-08,
+  "new_vertex_weights_only_existing_deform_bones": true,
+  "prototype_shape_keys": false,
+  "bones": 45,
+  "M3_sha256": "53709e152c66e05a7c5d6224eae1b3f727f52cce839a7410e912c75bb2038de7",
+  "M6_sha256": "c80991fbb57f514fae7c7a94c8abec20394440de5457d65a5144d1822c42c28c",
+  "production_integration": false
+}

@@ -1,0 +1,12 @@
+{
+  "actual_M4_Godot_import_and_driver_pass": true,
+  "pose_replay_max_error": 0.0,
+  "driver_byte_exact": true,
+  "samples": {
+    "bite": 72,
+    "jaw_sweep": 4,
+    "rest": "metadata",
+    "roar": 48
+  },
+  "scope": "isolated procedural animation, not true input or full game"
+}

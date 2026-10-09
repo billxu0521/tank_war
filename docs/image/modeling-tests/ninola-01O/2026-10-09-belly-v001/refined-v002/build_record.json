@@ -1,0 +1,51 @@
+{
+  "source_path": "blender/ninola/working/01N1/2026-10-09-v004/ninola_01N1_jaw_volume_reconstruction.blend",
+  "source_sha256": "aa6fe9e30596855215b3db8c93a8b9c4da12639cc8d9ce897f7f3e7b350a04a9",
+  "output_path": "blender/ninola/working/01O2/2026-10-09-v002/ninola_01O2_ventral_belly_tuck.blend",
+  "sha256": "2e642d7ec1647ddcdda8a8ad1feaf1d2f279321a9acfcf10f5afa27bf7b6446f",
+  "object": "01O2_Ventral_Belly_Tuck",
+  "selected_faces": 79,
+  "candidate_coordinates": 65,
+  "fixed_coincident_coordinates": 45,
+  "free_coordinates": 20,
+  "changed_coordinates": 7,
+  "changed_vertex_ids": 43,
+  "max_world_displacement": 0.2232706727605168,
+  "vertices": 11136,
+  "triangles": 6906,
+  "topology_material_weights_exact": true,
+  "all_non_target_face_coordinates_exact": true,
+  "Rig_Trex_keys_pose_exact": true,
+  "inverse_bind_error": 1.7881393432617188e-07,
+  "new_degenerate_faces": [],
+  "normal_reversal_faces": [],
+  "pipeline_issues": [],
+  "new_geometry": false,
+  "target_line_y_z": [
+    [
+      0.5,
+      1.063
+    ],
+    [
+      0.85,
+      1.155
+    ],
+    [
+      1.2,
+      1.247
+    ],
+    [
+      1.41,
+      1.465
+    ],
+    [
+      1.59,
+      1.5
+    ]
+  ],
+  "neck_main_torso_policy": "preserve N1, reject O1 neck changes",
+  "source_unchanged": true,
+  "spike_attachment_coordinates_exact": true,
+  "limitation": "user yellow-line ventral tuck only; neck and main torso upper/side mass unchanged; endpoint and limb borders fixed",
+  "production_ready": false
+}

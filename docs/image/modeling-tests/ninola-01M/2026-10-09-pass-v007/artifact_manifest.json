@@ -1,0 +1,1221 @@
+{
+  "artifacts": [
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/research_source.json",
+      "sha256": "ae3c7242f1350fc27c4611a5295bac613df564f70b85ebc05e29b112845f24da",
+      "bytes": 369
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/INDEPENDENT_REVIEW.md",
+      "sha256": "c844476a49c1609469feeca8e46bde8b1dcadb206de100b41ae32f45aaa82407",
+      "bytes": 1859
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/capture_01M7_v002.py",
+      "sha256": "303ba3d75d575284a84362d5e910808096555b9ace634871faab0256493338a4",
+      "bytes": 5515
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/head_front_color_comparison.png",
+      "sha256": "4cf3a191648071608bcc371e9f1f696fae44959e3ddece23606bc8b7b5df055f",
+      "bytes": 804368
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/build_record.json",
+      "sha256": "ac5a350bc3d1772e022e0c7bf534c6aa3f8af1664e297cef6ee6c9e648ccdbbb",
+      "bytes": 2566
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/verify_protection.py",
+      "sha256": "8a16a52fc26074168a7b9b3b9a66f06edcfa0b57567e6686f4b0b649f3f08f3b",
+      "bytes": 2260
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/export_evaluation.py",
+      "sha256": "817ba0f6e676c769c304381ee944710270b7cffdba053db6a1f30a5b82341862",
+      "bytes": 2088
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/render_roar_reframed.py",
+      "sha256": "5e22373ff7f1d3e9e3a39859da8a2f625eb6c73bcae30530204d47682ab422a2",
+      "bytes": 6425
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/bite_comparison.gif",
+      "sha256": "86b2836ccfb9fcdc0c23a56c36cbe3418c811673330e78b848d8eabdd3ad1fcf",
+      "bytes": 12589870
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/index.html",
+      "sha256": "5c5c222d8d42547ff74b0a3e81941f07f11e9aa49d15c6115d5c33073575e6ce",
+      "bytes": 1761
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/capture_01M7_v003.py",
+      "sha256": "ad4141a14c8e3ffad54ff902182ac7512697561d9fdf551ba54daca2c8e54653",
+      "bytes": 5515
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/RESULT.md",
+      "sha256": "3f1c6bfb657fcaa4e25883d648f9308d89e224934ac2daa66b15d55005de2304",
+      "bytes": 4485
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/capture_01M7.py",
+      "sha256": "a8d929303dd713ef0c16509f1d9e39dc2abd41fe9ee35463d7096257a74bc009",
+      "bytes": 5515
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/full_body_side_comparison.png",
+      "sha256": "f76d20fef38e73955128540248665ba67cb304e8f3ab9df82f38255355f06e69",
+      "bytes": 746084
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/head_side_comparison.png",
+      "sha256": "5d7719d46f52c723c265ef76a408d4b6562bcd3dcd9fe6ea27773c41ea2c20c6",
+      "bytes": 716239
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/bite_key_comparison.png",
+      "sha256": "7df96e54c4ad2d7eb183d8f78793d07e5d2f4542780cd93eb4d196e7f8b1f958",
+      "bytes": 651919
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/head_front_comparison.png",
+      "sha256": "694b8c80b462cdfbf188d7dedd903be34b730a4a78707123902c8d6a83894a8d",
+      "bytes": 824497
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/head_side_color_comparison.png",
+      "sha256": "ecfba3b4a918ae4918e3efff830a6964ada9c7d5b1ddfe0a96dce6fe6ecbc1be",
+      "bytes": 709403
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/roar_key_comparison.png",
+      "sha256": "2017708fed8c3753d845565e86949787f0614d0661e3a76be879c7bb726f7f51",
+      "bytes": 592313
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/render_simulation.py",
+      "sha256": "6f62a6169695996b406932d096ca7ad0636f195794cc5dfe556ebe71d2566222",
+      "bytes": 6449
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/roar_comparison.gif",
+      "sha256": "482dbf480dcb3cf97245bfd856c7dc279a536c2bb18c65b198a73613ebc036ee",
+      "bytes": 8146054
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/edit_mask.json",
+      "sha256": "17a56744b4be2627f3566fe5de7af1d14562d513c1f30ee824078ab122124964",
+      "bytes": 70672
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/render_roar_front_fixed.py",
+      "sha256": "1b18fa0831b00c532320b098b267cd2f5de9f6d40eb103fae84ec7fab57a1f2e",
+      "bytes": 6409
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/head_threequarter_color_comparison.png",
+      "sha256": "771c3b1aab4377f1c07a6d175f922c779d4927b21f52eff4485cda567d1f6b8c",
+      "bytes": 755782
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/diagnose_contact.py",
+      "sha256": "05ef1e733e889d8a3cea830f9ccf9601cdb7274cd35720c82010cec385ea8895",
+      "bytes": 4355
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/mcp_verification.json",
+      "sha256": "51cdde4838bf73c7dfeed7d8c4d98de37aaea4b9905ecd4c09d1555e0156d91a",
+      "bytes": 243
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/mcp_threequarter.png",
+      "sha256": "90c52b21f138550b99c2434e4919045d39c01dc5f36a99983c7dcee1b3cc4576",
+      "bytes": 422995
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/compose_review.py",
+      "sha256": "b261a0425c9cef6697bf09fc383b4e96f61209114ef0967456c064d5327ca18f",
+      "bytes": 4623
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/eye_closeup.png",
+      "sha256": "f8e80cbd4a885138515002836da4a69cff348858928dfdb5fc167e2b9014a4a2",
+      "bytes": 390696
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/verification.json",
+      "sha256": "e4d0cc837b9a777e8b1a050aeb9b58b4c3d0d74b827c7317b070b264146d0ced",
+      "bytes": 172
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/nose_closeup.png",
+      "sha256": "27f1cf00cd5c095381d9d06d93ccb23378b4f539990bf582784f7d3ff6bdf357",
+      "bytes": 395639
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/concept_comparison.png",
+      "sha256": "fbd6dc66c2d24ef97039a704e48c63e928fa1f1c4e072e972f1204ac4dff5e81",
+      "bytes": 1811368
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/build_01M7_v002.py",
+      "sha256": "881d414574c6a30b31527aaf28d675d7656b8e1d9e48f2241328e31833af4ee2",
+      "bytes": 15397
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/head_threequarter_comparison.png",
+      "sha256": "36309b8503b20c0de2f5b8ea73e98b95e1afa09dab51900afc92d4607a244287",
+      "bytes": 777622
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/head_right_threequarter_comparison.png",
+      "sha256": "259c76f15cc99e1a80e654b01affe4900142ea26dc06c4c83d62f047aa5bb755",
+      "bytes": 786159
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/head_top_comparison.png",
+      "sha256": "0a249c897ee758c6212e38d4ae0c632baa709cd0b97954203f593f91be620713",
+      "bytes": 692227
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/build_01M7_v003.py",
+      "sha256": "19effb2432fce888ef7695749cf909c9076ce8c2bce21ec2097d99e034c9bbb2",
+      "bytes": 15398
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/build_01M7.py",
+      "sha256": "cf9802daf4f6fa254593f8e1e29f1bbfa9435a84d75675919037dc5c6c9084dc",
+      "bytes": 15382
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/protection_verification.json",
+      "sha256": "b1b42638ac364de67c7482eab130074364e5720b6eefbbd790ab2d4b02684cda",
+      "bytes": 593
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/render_roar_front.py",
+      "sha256": "11b61fa816ec9bdcc679073c4c6c06d81147bd725189a12c9226edde598b40dd",
+      "bytes": 6404
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/captures/head_front_color_01M7.png",
+      "sha256": "3ddd105a6b2d8e21aa8570e25e4b9772987da9c97838017f485b1f973af6bf79",
+      "bytes": 1419746
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/captures/capture_settings_01M7.json",
+      "sha256": "ef19a00dabfac8e7173145c88b19f334773d4e9137b308f167667d762b032099",
+      "bytes": 7686
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/captures/head_right_threequarter_01M7.png",
+      "sha256": "596c4818b2352c886f6e1715135eb10fe22a5849f17cd394d4fe87e9ae90a84a",
+      "bytes": 1358077
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/captures/head_threequarter_01M7.png",
+      "sha256": "4967cb9ddd989ccf4e88c71e1083868d35324c90760d14e18dee33282d11cdfd",
+      "bytes": 1377346
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/captures/head_side_color_01M7.png",
+      "sha256": "f886bb5921b528b46e73d7c81775a139bf447292f77937ab5d353b556543885d",
+      "bytes": 1339156
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/captures/full_body_side_01M7.png",
+      "sha256": "f83165db7f230e67f5ebefb9c0de941fc14c6cd9223cc35b8d34691455f9e7e1",
+      "bytes": 1268466
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/captures/head_front_01M7.png",
+      "sha256": "309cf2af218e345fb34a3267a603905094846bd811f84b20a61d84c3d10e3037",
+      "bytes": 1401854
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/captures/head_right_threequarter_color_01M7.png",
+      "sha256": "f752186aee61615954c237ac9fcece600a83007819c956ca492c7d70277c8062",
+      "bytes": 1373377
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/captures/head_top_01M7.png",
+      "sha256": "c1088a9af15b9044198472f08b01400aa7d57b4f9f70ceceab14c20adb93801f",
+      "bytes": 1279590
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/captures/head_threequarter_color_01M7.png",
+      "sha256": "6be0c405dbb3cac8aaedd03c743463e4c4fad81c6808c77af424cbc9d37eca1e",
+      "bytes": 1386436
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/captures/head_side_01M7.png",
+      "sha256": "638e09fd65cde9059c2f905b7f3138813c998d55ef45dfcc628becad6e3553a9",
+      "bytes": 1322250
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/captures/inspection.json",
+      "sha256": "5b672dbb92763878cc92128bb82f5d5a07d7e1212579b16c6c2ca0e4d74c6e3e",
+      "bytes": 34984
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/driver_verification.json",
+      "sha256": "0704b9cab62bf6a7db1b2797f711a385ccc964b4a246571f23dda8cbff0f41c1",
+      "bytes": 68
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/simulation_verification_extra.json",
+      "sha256": "28e4826840f035edd2dffc43d79453a29c865ed6b379d26d42234ab058867cdb",
+      "bytes": 488
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/simulation_verification.json",
+      "sha256": "92e590532382f2fe174ee2c3baff670e7d0dc003fd98874de56c16ea21c60d14",
+      "bytes": 9046
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/godot_pose_samples_M7_actual.json",
+      "sha256": "390c63a009ca097a96e28bb990bb37f27cb66f0112ca94355109d337093a7792",
+      "bytes": 2758412
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/contact_diagnostic_M7.png",
+      "sha256": "0a84083073d829cfc7f6a10f0a736b57de43bf125b8da87ac32062d92c9b0e45",
+      "bytes": 772828
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/contact_diagnostics.json",
+      "sha256": "fa3ec07f372aff8b32a585f04ffba6c9e593e1765eb12f6c2d3a02e0dbb24ed4",
+      "bytes": 5371
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/capture_record_reframed_M7.json",
+      "sha256": "c1a5cc80c29cac9d0a7d858e161506db10aa593f05e61acac4c61cda981ebb04",
+      "bytes": 31028
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/godot_pose_samples.json",
+      "sha256": "9e63ab3aa4252573121804204a02b71c58d45e7286c6c35902a45c66566a2e8e",
+      "bytes": 1529263
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/capture_record_extra_M7.json",
+      "sha256": "d0f2d62be12194619e71c6ee6fb5afacadc87809231db029928a5f1cfa0b63d5",
+      "bytes": 3261
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/simulation_verification_reframed.json",
+      "sha256": "8ba00a9273145e38af3f04302c6b511c161060971d75f042500d9936319b76a3",
+      "bytes": 3220
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/export_records.json",
+      "sha256": "ddd9204fb4a7eead32ea0d1d5f8f8c375350cd340ff7627fc968939655e3b322",
+      "bytes": 29271
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/capture_record_M7.json",
+      "sha256": "69ebad88ccbf9d4b32a2241f5d41f345e429f3a4a9865cb48c8aabcaab0739e9",
+      "bytes": 94081
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v003/build_record.json",
+      "sha256": "f67549011ad31b367bec0d6d5fa529781d56bdaf25a781bc1bfc9bbbd4c1eda1",
+      "bytes": 2564
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v003/edit_mask.json",
+      "sha256": "17a56744b4be2627f3566fe5de7af1d14562d513c1f30ee824078ab122124964",
+      "bytes": 70672
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v002/build_record.json",
+      "sha256": "63018d2c0eeb4cfaad3537d4eb7d96beb194184de895e5b0419e05bed648fb3a",
+      "bytes": 2564
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v002/edit_mask.json",
+      "sha256": "17a56744b4be2627f3566fe5de7af1d14562d513c1f30ee824078ab122124964",
+      "bytes": 70672
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic-v002/export_records.json",
+      "sha256": "a56e4718ebd84fb8046ce6ececd2a9e26f2f226093e021bb7e6f66b4ad9ee2e6",
+      "bytes": 29271
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/test-project/facet.gdshader",
+      "sha256": "8154911f5422037452d858797648b273ceb1d79e94b8332485889e8266480617",
+      "bytes": 4423
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/test-project/viewmodel_mark.gd",
+      "sha256": "104701eddf3339bfb79e9c273aa98ee3babafd902a848555e67b3f5d6c4b34c7",
+      "bytes": 829
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/test-project/candidate.gd",
+      "sha256": "38ed68fa9b26e71917a9feb477783ce22f7f75723de4394100fbf3333eb9d30d",
+      "bytes": 1167
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/test-project/fx.gd",
+      "sha256": "040aa9af3da36adeb0cb440b59bafd260ddef3d0825bd0b2b9eb6d42c6c27136",
+      "bytes": 12033
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/test-project/trex.gd",
+      "sha256": "2421f15edcdfad584470cf2239d822e916e6fbeefa14edf6cd4c96ac55c55cb8",
+      "bytes": 42220
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/test-project/run_evaluation.gd",
+      "sha256": "268eb824aab9b409006ca052e0aa40abb315159cf07493bcf8e47cbc4ee4eb9c",
+      "bytes": 2400
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/test-project/project.godot",
+      "sha256": "a191907487191e7ce3f6f1a32b08ca6f7c774048f5c8e9bd8f7a59d818175a1a",
+      "bytes": 133
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/000_threequarter.png",
+      "sha256": "9efbf3cad4284c339dba1fa5691a18c9d601f3d992d4f6116ed3cdb215330013",
+      "bytes": 773862
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/002_side.png",
+      "sha256": "26533d98d50929b718396e4b37f833b1369b0f1c699c78e64af4ed37ce3400ff",
+      "bytes": 733239
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/036_side.png",
+      "sha256": "1a09f46a5c4b13b600d325c4ac66fd495a959ff08a98b9761376d43b1ddf8686",
+      "bytes": 734206
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/040_body.png",
+      "sha256": "6dd96f2854398aa082b0779a1ce977b8b65f37b8285523f007637060e73f85fd",
+      "bytes": 680685
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/008_side.png",
+      "sha256": "46e4f92b6c8d90c6ec85e0a373047f0a9cbc04cda7697d9bec2356e97c7a2ab8",
+      "bytes": 735670
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/040_side.png",
+      "sha256": "ac5ac1e700145ced0a4deb281f6546a5a6695209e6e64e17230b1b70e1fe11f4",
+      "bytes": 734183
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/062_side.png",
+      "sha256": "03a1396e035c7879a5181df5a4ee51c6460c62b47ca0bda5bc1698ec9ededfed",
+      "bytes": 736669
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/014_side.png",
+      "sha256": "9b9c94dbb0f2b9fe969e2ec900332f8284cd11251787b207dd764c3083a48579",
+      "bytes": 735197
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/068_side.png",
+      "sha256": "f81310444b1ee170ec395ebb93f6f586bdf99d8485ddbc892e9353f0a1acfacd",
+      "bytes": 737009
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/020_side.png",
+      "sha256": "0f566de2db616375a3e1b66044cdcf7f3e90f895f75ad296b5abd3329e89b059",
+      "bytes": 736640
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/040_threequarter.png",
+      "sha256": "3694ccb57de6ea5d9caf14f65d542e6a4018a0ba12972be34813e68c31aaccc0",
+      "bytes": 775503
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/056_side.png",
+      "sha256": "5616f8fda407791ebddb621ad1d78ab2435388bd18f25f89a6fc4b54d5afce5b",
+      "bytes": 737065
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/064_side.png",
+      "sha256": "0fe6e43bf724d83137cbea204ca663b0a1d74afd18fbab898f92451011bf93bc",
+      "bytes": 736466
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/020_threequarter.png",
+      "sha256": "024d6e33fd37f5015109f45fbb8482a9f9c454ff656bea6373b8808de1902d59",
+      "bytes": 774178
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/012_side.png",
+      "sha256": "39365f62a8068255bd4b8597b6b7081b4ce3704882e7d17630916d6f6c4010b5",
+      "bytes": 735582
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/026_body.png",
+      "sha256": "7065dc10cfc2fa045aad457c958206d6ab47aa50991a5194926f5934722624f1",
+      "bytes": 683410
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/026_side.png",
+      "sha256": "c35f79dd84f76df1af0fef35c8fc3838b8b76c382ac6c5dcc6da4d46a8129660",
+      "bytes": 757385
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/050_side.png",
+      "sha256": "44140d3872f8ad7b39d54890296d9fc7d9161b66cf36afeeee2432ff6d28ee48",
+      "bytes": 738299
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/070_threequarter.png",
+      "sha256": "6e1a0a5db4fccdb784746f11cd70df4ee1a1e94d74255fab70f77ffc39937761",
+      "bytes": 776525
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/018_side.png",
+      "sha256": "724f1835ddbbefad125c17d15b192ce32e32d66290b1453cd811c0c8480ba9af",
+      "bytes": 735567
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/004_side.png",
+      "sha256": "5e7c66d0c8fa7885a89d959df3813f2cf99631ecbae135ebf4a4c06a58072083",
+      "bytes": 734333
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/024_threequarter.png",
+      "sha256": "01b23853f9b521fdeb6a601a2fc3d513dd9f55f13379a396f48189f2ed7a7723",
+      "bytes": 781646
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/030_side.png",
+      "sha256": "2ee2c6aaa77080f59af91853fea55408d3e28406bbca6238300812989c66d7ce",
+      "bytes": 750244
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/046_side.png",
+      "sha256": "1b5aaa9a228bd5f042d0cbdc97f7ae314d8bfdf48311645d12fd9a91919acf25",
+      "bytes": 738399
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/022_side.png",
+      "sha256": "b107237bd24ea75aa63b59ab13faa8a12a8f2add5b343610c92fd9a5721b1d78",
+      "bytes": 736937
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/054_side.png",
+      "sha256": "d807ccb16eb3be6ce66f53fa58e1d5c239781bab6d307a4b29164cd85d90354d",
+      "bytes": 737028
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/028_threequarter.png",
+      "sha256": "85aaf42d077599230393ba0a08534446acddc9aeca771d60cd156974a1b042e8",
+      "bytes": 779687
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/028_side.png",
+      "sha256": "ca97d2d62da0d3da673c9232f530503cad2c83499bc3b75793c3c10692e53ae3",
+      "bytes": 756129
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/060_side.png",
+      "sha256": "80416abf209f2ccf28a09146caaa44b09ac1bacb474d9cf85e99f800db228c76",
+      "bytes": 736475
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/016_side.png",
+      "sha256": "2e9d0cebd5bb545be526adf2f8e29ecce6b3ae11db23c1a145089e77a3e8a439",
+      "bytes": 736782
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/034_side.png",
+      "sha256": "81a7f6b4b66dbf72f009a6dc52a29b351a2d17fa44af063ed9ac6ed41d379989",
+      "bytes": 738773
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/042_side.png",
+      "sha256": "c5e3894a2eb52673ce1c051de671d0d0c1c412ae83b4dd8040df31df43ddd5a3",
+      "bytes": 736818
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/048_side.png",
+      "sha256": "e4a4225fe185bdce7b69b434f6db89d3ea81721371eeb9ee92a0bb6d741051a9",
+      "bytes": 738261
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/000_body.png",
+      "sha256": "2a946d9851e9241832d4aa86a1a39f4c7273db9e15cb8b6fc3a441fce2de93b0",
+      "bytes": 680699
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/000_side.png",
+      "sha256": "b695941e90fa6545b03722aafaa3275f385a9c1c522dcba8cf54ce8e45f1e77b",
+      "bytes": 733543
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/032_side.png",
+      "sha256": "1c799e727f50acba017d4b4e95f8108efad2e59b3d39e4752548b1d0ab5716a5",
+      "bytes": 738503
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/044_side.png",
+      "sha256": "e9eaac5f8fa45dd767ce4056c4601180a89b553a2b3eb4042aa4208e3d59f705",
+      "bytes": 738723
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/070_side.png",
+      "sha256": "fc7e341a5260e8ede627a8d38df135c8c28e256ed7b9077878694d258575915b",
+      "bytes": 736331
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/038_side.png",
+      "sha256": "1d837aef6f22418e19dbe20df1b5711c177c6890082e220705394d8847b95617",
+      "bytes": 734576
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/070_body.png",
+      "sha256": "8fd1f4cc33d21c15a568d58483c3a150f3cc517f3c49d50ee119f3c9efdc6c06",
+      "bytes": 683837
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/006_side.png",
+      "sha256": "57b1a2971ad19dfb6aaa88e2505f59a49dab7fb4c215398e1d67aa82a2a21c8d",
+      "bytes": 734461
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/024_body.png",
+      "sha256": "d924b2ae40979c8bd3a5d84751276810b3ad1ff146e1c81ff198fc0cfb690f01",
+      "bytes": 682198
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/024_side.png",
+      "sha256": "004f5b4482c33cc6b616fa796e07e8b1785d371fc1d1cbc876790fc40c133051",
+      "bytes": 749828
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/052_side.png",
+      "sha256": "83b495a97ab0d15eb7df453e6c0dd667b4df593063f3360228a679da137a566d",
+      "bytes": 736647
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/026_threequarter.png",
+      "sha256": "a037daf61bfc554520221f2bf72753767c532aafb2b42d0fddb64192e4bcf103",
+      "bytes": 779236
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/066_side.png",
+      "sha256": "e9a6b0b32bacda5ab7ec65ca281600b0c6e9da44ab052cef3d018e367d9e5ff0",
+      "bytes": 736894
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/010_side.png",
+      "sha256": "0c5ed4d46ca9f65e6f95d6c34fc22dd35041da620201368203c8174ff3a24e98",
+      "bytes": 739419
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/bite/058_side.png",
+      "sha256": "444403958b3120780d812e78e731cd83af273156161dea1f3520d9602eff90c0",
+      "bytes": 736920
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/sweep/002_front.png",
+      "sha256": "45e08af1ee7e002047d145ca4e2bc67b51d8bcb4bb010a3e266ff6610845494b",
+      "bytes": 748566
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/sweep/000_threequarter.png",
+      "sha256": "a17c281db73ece2dd29bc762b86629c074d89d5a99d66fe126f0e5bf6a6c5afd",
+      "bytes": 771966
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/sweep/002_side.png",
+      "sha256": "b6f9ab6b4c36e7b7385327f973549e1b9636ac14825319c1253117c06eab616d",
+      "bytes": 734479
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/sweep/003_side.png",
+      "sha256": "648ff0c3593df9d4f232102a8bf8ebb5cb4d2c7d86c99fac6e580becbe5c0264",
+      "bytes": 734545
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/sweep/003_bottom_threequarter.png",
+      "sha256": "9868d4b4c3c55f825f88c70bab4110a93688bd471878f508cfc3809b8ac61309",
+      "bytes": 758328
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/sweep/001_threequarter.png",
+      "sha256": "640c6980ae834ce63a5c41ef23a1fad9138edefa51b870ddc071274de5b58660",
+      "bytes": 776790
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/sweep/000_bottom_threequarter.png",
+      "sha256": "d3dc0cd5937ea981123bad4ff3fd2e3f4bf29dcd0095539ad72bc87fbd561dbe",
+      "bytes": 752940
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/sweep/003_front.png",
+      "sha256": "443283e9536b71bb1affb1f2fb9682f6f3919c1a1c9af80707be3dde46886594",
+      "bytes": 748023
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/sweep/000_front.png",
+      "sha256": "5ef2c900866a26b4c9bbaa332022c3d08dbd85f2cf0218f683c98676997be737",
+      "bytes": 739564
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/sweep/002_bottom_threequarter.png",
+      "sha256": "8c1a2a2665e89467797ec76bc346e520ce2b8f0db5e51a32b93779584665a641",
+      "bytes": 756499
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/sweep/002_threequarter.png",
+      "sha256": "c585bdde806c2823018e764e004e950dbb967c33f2086f54021660033cb5f186",
+      "bytes": 777865
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/sweep/001_side.png",
+      "sha256": "1c52ac1518b550524735df381a7e02ef19bd59a8cc0c15b1594a074d8092b262",
+      "bytes": 734689
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/sweep/000_side.png",
+      "sha256": "a83151f7f71b2a5c64127a2931fc740913185d5909268ea09e904c753358f352",
+      "bytes": 732199
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/sweep/001_front.png",
+      "sha256": "8c16a32161488d89f48ac2e89b87e1ab426ba6da2a6e8399d3dfce7876faaaf3",
+      "bytes": 746262
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/sweep/003_threequarter.png",
+      "sha256": "1f2c4ebb9846904ae3fe014d33c25b3352a058aa3c8112b651bc7c386a5aa2b2",
+      "bytes": 776756
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/sweep/001_bottom_threequarter.png",
+      "sha256": "95b7d8c98e1eea3bac408cb3cffe832bf17bca6e00255b75159c963c4005de89",
+      "bytes": 756128
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/000_threequarter.png",
+      "sha256": "84fa955c2533464cac7495cc99b4d8b27fce9674bc6f1225d4a44a037ff71532",
+      "bytes": 773862
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/002_side.png",
+      "sha256": "70a37cc13d528ea9b5b23d4490ae6e682d039d74a415aa2080abe1d4fd376ad5",
+      "bytes": 733239
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/036_side.png",
+      "sha256": "8e74f92ff9fffcb7dec7e624dc695ab002030046c204dabe4079e6ce7dadbaf2",
+      "bytes": 737421
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/008_side.png",
+      "sha256": "ddcd5fd1b98a13dd681902cf79234e4c0fea9e8ff328094a56e2daa38b8d9779",
+      "bytes": 744554
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/040_side.png",
+      "sha256": "85005416e250d1edc8687805659404852bac034e8bf6befac795196f560e326f",
+      "bytes": 736512
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/014_side.png",
+      "sha256": "27cda1f6dd7c1d59cbcb2fa6a31a6c36ee5d639eb2b6e2d4b1c0bb4dd21bdf36",
+      "bytes": 745767
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/020_side.png",
+      "sha256": "53f528fbee02108322bf95402755b0a1e64defe8a139af54021cfa6f8895f1a8",
+      "bytes": 734638
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/020_threequarter.png",
+      "sha256": "6068e978aca37388c74600ed4f900650eaa2015c00df2216635eb80b042920da",
+      "bytes": 770283
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/012_side.png",
+      "sha256": "3cde4953251bd18daefc62b674b59253ff4a0c72e02a3d463157d9b0d176d97c",
+      "bytes": 740597
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/026_side.png",
+      "sha256": "252700298ff73e5cecbe0b3beb39889fd514fcb1d6c2991dc3a625cec6340fb2",
+      "bytes": 744427
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/018_side.png",
+      "sha256": "f38a917e58d2527f6731c8ffc30f95a7b6bd73148c7501b5d9b5aee44f357551",
+      "bytes": 743843
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/004_side.png",
+      "sha256": "0d24fd6d0c62fb187898d452cdb6ae05dcb0df201558da7d98fc9860bceec1e3",
+      "bytes": 734333
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/030_side.png",
+      "sha256": "019867e9947dc492668c2307ad4e9c9e40ed94bf532028adb1b1a3dbe66d34e7",
+      "bytes": 739871
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/046_body.png",
+      "sha256": "dbcc850fba81e24c8f6ca6e3e8542bac78bc011a5578a5279f521eef7e4236cb",
+      "bytes": 682020
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/046_side.png",
+      "sha256": "3debfc46be94d746b5383db773cbd649cae82dd982cee27e52a309c502e8082b",
+      "bytes": 736249
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/022_side.png",
+      "sha256": "1e9299003790839566f0825d31eeaa030a86515bb73f39ddc1a5fea3fd188034",
+      "bytes": 740779
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/028_threequarter.png",
+      "sha256": "0eec1aeb36ce1f85fd340fef6b0a27e158e38842b85b2dd713f9a1826d78a756",
+      "bytes": 770142
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/028_side.png",
+      "sha256": "bd7af9582be6e24b6048a59842f1e4734d08b434719383967b7cfce618ac1063",
+      "bytes": 741765
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/028_body.png",
+      "sha256": "462033e84b4c33346f7425024439511924568efb753db1c65f5e89dafa58dfbd",
+      "bytes": 685419
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/016_side.png",
+      "sha256": "09ac03e74bc9fcf9effdfd2459018b0343356105ea4a30430a6f8ab58f289717",
+      "bytes": 745445
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/046_threequarter.png",
+      "sha256": "07e700523bfbf90af851068b1e0f6e0aa8585a26e62315742d94be279b983e8b",
+      "bytes": 776986
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/034_side.png",
+      "sha256": "3c0974bebc3da98b11fa3f768e8eb65d7a9f24cc912ebc60bd67630e4d3100a7",
+      "bytes": 738352
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/042_side.png",
+      "sha256": "2cfa57473f5dfeb75dc89bd06fc39df8719ee2444603e6b145813803be41025b",
+      "bytes": 737229
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/000_body.png",
+      "sha256": "876ea089ea4f693b604cd3b9f0e58ecbbe45757c9061c78f20cbfa19f6d2be8d",
+      "bytes": 680699
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/000_side.png",
+      "sha256": "0d2c3000e4300c1bd8b879f41666e0304bbdbb263f6b347850e5221a6036aac9",
+      "bytes": 733543
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/032_side.png",
+      "sha256": "4d6831d05408feb694b3ff36a47a8fe8e221a1289b9328b012c28f134ca0c7b9",
+      "bytes": 742656
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/044_side.png",
+      "sha256": "f3195fdf1131325a33457632180c2fa0622653aae9835482db301c0ecfd3c15a",
+      "bytes": 736632
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/038_side.png",
+      "sha256": "855ddb9c8aaa7ee746319ecfd8a6a6e15f27b017ad169e29a371ac867e27db39",
+      "bytes": 736583
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/006_side.png",
+      "sha256": "06b7b354a639cbae64b367489e8626e89eb7fe15b622413cdabd13e904ad5dfa",
+      "bytes": 734461
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/024_side.png",
+      "sha256": "009f178e43436ba7757e19751fdb958ae82bb4eddc2d8aa47986e5c7fc79130e",
+      "bytes": 742779
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures/M7/roar/010_side.png",
+      "sha256": "6758813d793c655f0c461df74a273dcdb5b164b8f78de01d8c462924b5404a4d",
+      "bytes": 733736
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/extra-roar/M7/roar/028_front.png",
+      "sha256": "38a8b55034b90f4e7027428406a67bfb75d3d271ec653023ee2d80896dc37172",
+      "bytes": 754868
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/extra-roar/M7/roar/028_threequarter.png",
+      "sha256": "958449c05c79dff0752beb831be5143cffcbc56ad425c8df23f321c09e9a07de",
+      "bytes": 743458
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/extra-roar/M7/roar/028_body.png",
+      "sha256": "6e9bf1f2c7baf0e5e7ada49658581d74d704f504aa0f6320b64d2bbb0af3cb3b",
+      "bytes": 685419
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/000_threequarter.png",
+      "sha256": "d05290c4af0520f9eb369189459ea3f2d31b783c819298fe2c35ef1b194f2867",
+      "bytes": 735528
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/002_side.png",
+      "sha256": "30be472f1e3f3fa6459ece4c0c7d7f1381844afec6b8b5f0293a677b80d2aa45",
+      "bytes": 722778
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/036_side.png",
+      "sha256": "ddef994d98b212094fa6a7d9a1dafba096a013b0801e710ba16cc78ec933f5d8",
+      "bytes": 724830
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/008_side.png",
+      "sha256": "941ad7a21d52e87a1d43956c6b19b5043676fabe461f60c0ea8f83df0ec64886",
+      "bytes": 728480
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/040_side.png",
+      "sha256": "03b6428dac1598994a2779f675bc510f24930b133aee69599e480daa8551bda8",
+      "bytes": 724041
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/014_side.png",
+      "sha256": "ddab624135690d664f624870dab5cb14efb645bd3a38275638d140d707f018d8",
+      "bytes": 733627
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/020_side.png",
+      "sha256": "0322ffba4c1fe8ed6534f20bf68c51546bfdb8d7c6cb28a71ab10895aabe1849",
+      "bytes": 728265
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/020_threequarter.png",
+      "sha256": "d4d8779fed7bb3c511e40b80cacbab9d18d4599a47014369e29982b56f0d8053",
+      "bytes": 740820
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/012_side.png",
+      "sha256": "54143ff887e6b115fdc4f1b91cc0d36e2553c63995d3a7d00228199e43bbc3ef",
+      "bytes": 728488
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/026_side.png",
+      "sha256": "910b9b7483ade4a0127dbf813ee6f5c24ef2e02898cca5522260ee17ef6dc0ed",
+      "bytes": 735333
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/018_side.png",
+      "sha256": "ef2b58e765ed00de3002ffa7abbb4d446efdb21420c38065e686f0387a9c489e",
+      "bytes": 734545
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/004_side.png",
+      "sha256": "54a42797d766bf59ac77eede29e68cdd94a3d9e333c4eafad12539ea779849e0",
+      "bytes": 723427
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/030_side.png",
+      "sha256": "d0b154943f39ace08834d290d33d4cd57431454c8bfab654273d3a57e575e1d1",
+      "bytes": 727359
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/046_body.png",
+      "sha256": "adbae290f924f6da144a772e05dd6346fe6a5f41db4b44451bb168cf33321c62",
+      "bytes": 682020
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/046_side.png",
+      "sha256": "26d998c8627520ebf3d93726e5d99862c3e9106875ea877f03f0c2a99bf99c95",
+      "bytes": 723557
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/022_side.png",
+      "sha256": "ef6d5156bb0dd5fca8efa839e09d9969a7a76e166139703e8d363708a7560f81",
+      "bytes": 733191
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/028_threequarter.png",
+      "sha256": "e9460db100758b5ae41c6f93c1ef3a745b6d7a698079b5ec1bd88b5bb7de5a2a",
+      "bytes": 743458
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/028_side.png",
+      "sha256": "5df6e2f969a927e5ed68c3959ba96f4b36d5ebb310692288adb13c2789fbff07",
+      "bytes": 732960
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/028_body.png",
+      "sha256": "2335e206285d754fe5027823e2932b8f1514479537959c5012b54b5ca04098ad",
+      "bytes": 685419
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/016_side.png",
+      "sha256": "8c02755d4b3627bb3f01899be15fb43244f9bd414ae04f0bca228de2839ba6fb",
+      "bytes": 732835
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/046_threequarter.png",
+      "sha256": "787e8f839eb2d984b9398cd190ef3e21ccceee1462b2a0d5decb8f3d5eb0ce36",
+      "bytes": 735091
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/034_side.png",
+      "sha256": "1887cf49bc8dbfb6e5c95c732fa8804a4b8f5558bd886572a52f698c81bc599d",
+      "bytes": 725758
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/042_side.png",
+      "sha256": "18218f88d4fc7916477f819af792a10352794cd73ed79017a48fe165094fb90c",
+      "bytes": 722709
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/000_body.png",
+      "sha256": "f02c546ab379f11d714aa073ec1bd0e2d6f62eb935e5781a4fb75e2cbcdeae54",
+      "bytes": 680699
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/000_side.png",
+      "sha256": "468e488ee6535cd6938362095912cbdb1dd4e4c5818bbdf8ca4c8cdbb7bb7d88",
+      "bytes": 721437
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/032_side.png",
+      "sha256": "073166d2093b06cd2150fc11b244c0e8b4e1e4e62f73e2425710901ae55024ed",
+      "bytes": 727838
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/044_side.png",
+      "sha256": "a5683aac77ddd4dac386d8c9f9db265d573472ebab8af69a1e989d7e6108fd36",
+      "bytes": 723079
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/038_side.png",
+      "sha256": "f60a1ba65627a3ecf0e4f2d628b64160788d6631eebfca329d4f1766b068a7c9",
+      "bytes": 723768
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/006_side.png",
+      "sha256": "83fe5e2d830683cf9db4d1849893bcd48aace03d15c9f4e39f030ccb6b220930",
+      "bytes": 723043
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/024_side.png",
+      "sha256": "e190a5c1ac7621d99720d964740b4000fdc3396eded01a7c37d0b2cd158e8b5f",
+      "bytes": 732606
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/captures-reframed/M7/roar/010_side.png",
+      "sha256": "226ef22c6f20ab55653cd897387ea30f965ae0d7ca12e282fc72e69bc6316332",
+      "bytes": 724664
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/extra-roar-fixed/M7/roar/028_front.png",
+      "sha256": "1f745fc5b5a8aa213ae5de23550d681db46a1ffa18fb74a92bc4f863f2b2df9b",
+      "bytes": 686764
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/extra-roar-fixed/M7/roar/028_threequarter.png",
+      "sha256": "2a7b91a806cc2f73070c466fd9d9d537c233de762138a1ee26c10da7d10685e5",
+      "bytes": 743458
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/extra-roar-fixed/M7/roar/028_body.png",
+      "sha256": "98ace3c106e6eb0ff789de212fbdc4eff1bb96cc199e379fbd1394e8f933bb01",
+      "bytes": 685419
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/test-project/models/M7_eight_weights.glb",
+      "sha256": "01381b58756bc4e633263adee9b618382e76d62306bf1952ad1cad1d8e2e0888",
+      "bytes": 1138096
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/test-project/models/trex_hd.glb",
+      "sha256": "54b02c2e756fd28954a1edb78d92ddd9d387457631b82b7108fa8c0fe9d6dd3b",
+      "bytes": 436872
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v003/captures/head_front_color_01M7.png",
+      "sha256": "8980569a03b3191d9bc16828ccddc687cd9412337c7667cacdf4bf1627ad0eaf",
+      "bytes": 1419702
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v003/captures/capture_settings_01M7.json",
+      "sha256": "ef19a00dabfac8e7173145c88b19f334773d4e9137b308f167667d762b032099",
+      "bytes": 7686
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v003/captures/head_right_threequarter_01M7.png",
+      "sha256": "f121297003d613e6af79746eccef455d9a694e6c4e71108f52af6511d2ca1a2f",
+      "bytes": 1357394
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v003/captures/head_threequarter_01M7.png",
+      "sha256": "60d7c98fc2b7a0982727a3509ac604c35c575773d5516d119ee31f100107ce48",
+      "bytes": 1375155
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v003/captures/head_side_color_01M7.png",
+      "sha256": "7f4194f329ddee45e52ca4b371d106622dbe46070a8100d10292109336a7e5a2",
+      "bytes": 1339539
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v003/captures/full_body_side_01M7.png",
+      "sha256": "7805fc08fa50e6a9d192f31afedd2171ed57ce589d2318b022b808ed9ce83544",
+      "bytes": 1268508
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v003/captures/head_front_01M7.png",
+      "sha256": "2b6fd4f5e0208a4f721da55e7c934950dfa39316aa0702e2503de9e545189da9",
+      "bytes": 1401220
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v003/captures/head_right_threequarter_color_01M7.png",
+      "sha256": "39f5e58a37b671d8d82b3c4f1be8026cbf8b9434e0c90b5041ab5e05a422da81",
+      "bytes": 1372986
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v003/captures/head_top_01M7.png",
+      "sha256": "e70da10483ebee5dbc9bd826219a24c779c89b9347cd0311f1e007f4545a3d1e",
+      "bytes": 1279051
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v003/captures/head_threequarter_color_01M7.png",
+      "sha256": "60ed97929065a79c5487883e9b4f15f449122e6fc94f6360075ff232b1ab0a69",
+      "bytes": 1385320
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v003/captures/head_side_01M7.png",
+      "sha256": "ac6449c7391249512ee3861f82e5844e889cc5e55acebf16e55a9eb677647bf8",
+      "bytes": 1322253
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v003/captures/inspection.json",
+      "sha256": "3b8c32855da4f80b68f47bb2293879bf4292b91d3cb1f87ede0970f4459e22e6",
+      "bytes": 34984
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v002/captures/head_front_color_01M7.png",
+      "sha256": "8c3bef71fbe86b59bbefe706a2e56480ab29d475b8b0fd7c29fd7c671c6077d0",
+      "bytes": 1419208
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v002/captures/capture_settings_01M7.json",
+      "sha256": "ef19a00dabfac8e7173145c88b19f334773d4e9137b308f167667d762b032099",
+      "bytes": 7686
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v002/captures/head_right_threequarter_01M7.png",
+      "sha256": "a3daa95c27da0e5b90f7235cbccb47857afd5b358b89b9ad8b9972ef39d58841",
+      "bytes": 1357458
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v002/captures/head_threequarter_01M7.png",
+      "sha256": "98ce1c90a73fe37a48c5c95335baadb779b754b5d4bd3acafbc9a96741c301f5",
+      "bytes": 1375489
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v002/captures/head_side_color_01M7.png",
+      "sha256": "f041ac6c695cb9bbe41fbf353f2b069b6ea839c0cc915c1bae6f0eb1029165e4",
+      "bytes": 1339387
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v002/captures/full_body_side_01M7.png",
+      "sha256": "23cb169bd5fc7ce0a82ee10fb20ad372d2b297b9bcdc5511b75f278299ba47ff",
+      "bytes": 1268385
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v002/captures/head_front_01M7.png",
+      "sha256": "87f4010980dd9fb288b0ef4ead1aa3f62150bf8dbaad00c99d85a351b876ab51",
+      "bytes": 1401103
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v002/captures/head_right_threequarter_color_01M7.png",
+      "sha256": "47980de99dd72cb73cd89b10e566dc408939a70e8a21065cd2398f30e56540c1",
+      "bytes": 1372884
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v002/captures/head_top_01M7.png",
+      "sha256": "8060a396d3f74b4118f8e094a8507b2b7242083d96f42b051e9ead81f46e4628",
+      "bytes": 1279153
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v002/captures/head_threequarter_color_01M7.png",
+      "sha256": "5f8f2b06b21db7dbb20e43a0cf0c84755c18999ab76950104808d0f1fff7f834",
+      "bytes": 1385206
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v002/captures/head_side_01M7.png",
+      "sha256": "796c0b2c95d4b11dfac285567eea024d7a78b15fdec7a14bf78e604ca26644a7",
+      "bytes": 1322052
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/refined-v002/captures/inspection.json",
+      "sha256": "9f9885ed49c02f97aef7b36be5d5f4b9f37f39e0cd563eb7cd21dc93635139bd",
+      "bytes": 34984
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic-v002/test-project/facet.gdshader",
+      "sha256": "8154911f5422037452d858797648b273ceb1d79e94b8332485889e8266480617",
+      "bytes": 4423
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic-v002/test-project/viewmodel_mark.gd",
+      "sha256": "104701eddf3339bfb79e9c273aa98ee3babafd902a848555e67b3f5d6c4b34c7",
+      "bytes": 829
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic-v002/test-project/candidate.gd",
+      "sha256": "38ed68fa9b26e71917a9feb477783ce22f7f75723de4394100fbf3333eb9d30d",
+      "bytes": 1167
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic-v002/test-project/fx.gd",
+      "sha256": "040aa9af3da36adeb0cb440b59bafd260ddef3d0825bd0b2b9eb6d42c6c27136",
+      "bytes": 12033
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic-v002/test-project/trex.gd",
+      "sha256": "2421f15edcdfad584470cf2239d822e916e6fbeefa14edf6cd4c96ac55c55cb8",
+      "bytes": 42220
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic-v002/test-project/run_evaluation.gd",
+      "sha256": "268eb824aab9b409006ca052e0aa40abb315159cf07493bcf8e47cbc4ee4eb9c",
+      "bytes": 2400
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic-v002/test-project/project.godot",
+      "sha256": "a191907487191e7ce3f6f1a32b08ca6f7c774048f5c8e9bd8f7a59d818175a1a",
+      "bytes": 133
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic-v002/test-project/models/M7_eight_weights.glb",
+      "sha256": "ebceca296407a066b4c426011ab221bd978affe2734c8df5de09e62901780228",
+      "bytes": 1139376
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic-v002/test-project/models/trex_hd.glb",
+      "sha256": "54b02c2e756fd28954a1edb78d92ddd9d387457631b82b7108fa8c0fe9d6dd3b",
+      "bytes": 436872
+    }
+  ],
+  "production_ready": false,
+  "discussion_anchor": "01M6 v004"
+}

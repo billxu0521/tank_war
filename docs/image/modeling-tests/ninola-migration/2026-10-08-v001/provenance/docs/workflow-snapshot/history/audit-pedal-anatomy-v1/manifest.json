@@ -1,0 +1,66 @@
+{
+  "pass_id": "audit-pedal-anatomy-v1",
+  "status": "audit_pending_review",
+  "review_state": "audit_pending_review",
+  "date": "2026-10-08",
+  "title": "Pedal Anatomy Audit + Region Map v2",
+  "base_checkpoint": "docs/image/modeling-tests/ninola-global-mass-01J/2026-10-07-v004/ninola_global_mass_01J_approved.blend",
+  "approved_configuration": {
+    "01H_HindUpper_Peak_Downshift": 0.8,
+    "01I_InterJoint_LowerLimb_Carve": 1,
+    "01I1_SharedBoundary_Silhouette_Cleanup": 1,
+    "01J_Foot_Proportion": 1,
+    "01J_Ground_Contact": 0.8
+  },
+  "source_sha256": "b8b7e5c11f9a7c6f80901086e3d03d609f6ec732a1d888b0fdd66a61eba613b3",
+  "source_record_directory": "docs/image/modeling-tests/ninola-pedal-anatomy-audit/2026-10-08-v001",
+  "region_map_v1": "docs/image/modeling-tests/ninola-region-map/2026-10-07-v001/region_map.json",
+  "region_map_v1_sha256": "41660587ecf0585c3d2ce26f12688f145202f5654fb7ef99faf9a810cbcc8872",
+  "pedal_region_map": "pedal_region_map_v2.json",
+  "technical_report": "pedal_anatomy_audit_v1.md",
+  "handoff_summary": "handoff_summary.md",
+  "review_images": [
+    "images/pedal_bottom_region_map.png",
+    "images/pedal_front_region_joint_overlay.png",
+    "images/pedal_side_envelope_analysis.png",
+    "images/pedal_side_region_joint_overlay.png",
+    "images/pedal_top_region_joint_overlay.png",
+    "images/rear_digit_candidate_analysis.png",
+    "images/toe_claw_morphology_audit.png"
+  ],
+  "package_files": [
+    "manifest.json",
+    "handoff_summary.md",
+    "pedal_anatomy_audit_v1.md",
+    "pedal_region_map_v2.json",
+    "pedal_analysis.json",
+    "pedal_structure_summary.json",
+    "side_envelope_profile.json",
+    "visible_region_anchors.json",
+    "capture_settings.json",
+    "validation.json",
+    "package_validation.json",
+    "images/pedal_bottom_region_map.png",
+    "images/pedal_front_region_joint_overlay.png",
+    "images/pedal_side_envelope_analysis.png",
+    "images/pedal_side_region_joint_overlay.png",
+    "images/pedal_top_region_joint_overlay.png",
+    "images/rear_digit_candidate_analysis.png",
+    "images/toe_claw_morphology_audit.png"
+  ],
+  "rvi_items": {
+    "RVI-001": "OPEN",
+    "RVI-002": "OPEN",
+    "RVI-003": "OPEN"
+  },
+  "model_modified": false,
+  "shape_key_values_changed": false,
+  "new_checkpoint_created": false,
+  "annotation_status": "latest readable Side not available; provisional text-only intent guides",
+  "known_issues": [
+    "Exact Green annotation correspondence unverified",
+    "Pedal morphology gate not fully satisfied by existing surface, even though bone chain preserved",
+    "Static mapping is not a safe deformation clearance certification",
+    "Ground0.8 residual belowZ0 references and6 existing skin/claw interface new face pairs retained"
+  ]
+}

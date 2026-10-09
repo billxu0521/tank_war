@@ -1,0 +1,38 @@
+{
+  "base_sha256": "6be6642d8ed8cb2b48a31bd2649cf94457be6073daa59ac6653197dd222f18ca",
+  "base": "01K6 v003, no L1/L2 geometry layering",
+  "output_path": "blender/ninola/working/01L3/2026-10-08-v002/ninola_01L3_toe_volume_rebuild.blend",
+  "object": "01L3_Three_Toe_Volume_Reconstruction",
+  "removed_source_faces": 260,
+  "new_skin_faces": 1410,
+  "new_vertices": 678,
+  "vertices": 10444,
+  "faces": 6308,
+  "original_ref_coords_max_displacement": 0.0,
+  "retained_original_weights_exact": true,
+  "rig_Trex_exact": true,
+  "topology_changed": true,
+  "new_weights": "provisional inverse-distance interpolation from source foot skin; no deformation approval",
+  "inverse_bind_error": 1.884864366154897e-07,
+  "new_skin_near_degenerates": 6,
+  "new_internal_winding_conflicts": 0,
+  "source_seam_edges": 30,
+  "claw_base_cap_note": "original closed claw base caps retained unchanged; geometric skin/claw interface may be nonmanifold and needs separately authorized production cleanup",
+  "source_seam_winding_conflicts": 0,
+  "boolean_summary": [
+    {
+      "side_sign": 1,
+      "skin_faces": 704,
+      "temporary_caps_removed": 18
+    },
+    {
+      "side_sign": -1,
+      "skin_faces": 704,
+      "temporary_caps_removed": 18
+    }
+  ],
+  "unused_old_skin_points_retained_for_provenance": true,
+  "status": "pending_visual_review",
+  "reopen_locked_data_exact": true,
+  "output_sha256": "34e6608bfb04e73a271199dbd3f4f684545bf7d7cdc8f6e3282d3d970c44c6fd"
+}

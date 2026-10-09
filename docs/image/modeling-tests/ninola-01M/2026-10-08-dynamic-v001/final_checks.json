@@ -1,0 +1,17 @@
+{
+  "01J_L3_M1_K6_source_hashes_match": true,
+  "evaluation_glb_each_meshes": 1,
+  "evaluation_glb_each_joints": 45,
+  "eight_weight_primitives_each": 14,
+  "bite_gif_frames": 36,
+  "bite_gif_ms": 3000,
+  "roar_gif_frames": 24,
+  "roar_gif_ms": 2000,
+  "review_page_local_links_exist": true,
+  "driver_copy_matches_original": true,
+  "formal_game_glb_matches_original": true,
+  "git_diff_check": "passed",
+  "staged_paths": [],
+  "AGENTS_excluded": true,
+  "M2_executed": false
+}

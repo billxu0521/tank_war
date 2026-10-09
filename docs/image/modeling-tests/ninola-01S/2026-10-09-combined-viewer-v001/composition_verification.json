@@ -1,0 +1,6 @@
+{
+  "samples": 720,
+  "neck_head_composition_max_error": 1.327938698736375e-05,
+  "spine_pose_difference": 0,
+  "rest_equal": true
+}

@@ -1,0 +1,17 @@
+{
+  "reopened_Rig_Trex_shape_keys_exact": true,
+  "outside_mask_rest_exact": true,
+  "all_original_weights_exact": true,
+  "retained_faces_exact": true,
+  "new_socket_weights": "head 1.0",
+  "vertices": 10552,
+  "triangles": 6380,
+  "new_faces_near_degenerate": [],
+  "all_mesh_near_degenerate_count": 18,
+  "retained_face_normal_flips": [],
+  "GLB_meshes": 1,
+  "GLB_joints": 45,
+  "source_sha256_matches": true,
+  "output_sha256_matches": true,
+  "status": "prototype_review_not_production_acceptance"
+}

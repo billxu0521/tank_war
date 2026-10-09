@@ -1,0 +1,50 @@
+[
+  {
+    "source": "/Users/ChenPo-Yun/Documents/GameDev/worktrees/ninola/docs/image/modeling-tests/ninola-01K8/2026-10-08-v001/references/user_reference_5.png",
+    "source_sha256": "8c72643d581c3b0512a96bf8be321af9705fcd7ef95c18f2e3bdb619313672c0",
+    "crop_native_pixels": [
+      300,
+      0,
+      1050,
+      390
+    ],
+    "result": "/Users/ChenPo-Yun/Documents/GameDev/worktrees/ninola/docs/image/modeling-tests/ninola-01Q/2026-10-09-review-v001/references/concept_side.png",
+    "role": "AI design intent, not anatomical proof"
+  },
+  {
+    "source": "/Users/ChenPo-Yun/Documents/GameDev/worktrees/ninola/docs/image/modeling-tests/ninola-01K8/2026-10-08-v001/references/user_reference_5.png",
+    "source_sha256": "8c72643d581c3b0512a96bf8be321af9705fcd7ef95c18f2e3bdb619313672c0",
+    "crop_native_pixels": [
+      0,
+      365,
+      760,
+      555
+    ],
+    "result": "/Users/ChenPo-Yun/Documents/GameDev/worktrees/ninola/docs/image/modeling-tests/ninola-01Q/2026-10-09-review-v001/references/concept_top.png",
+    "role": "AI design intent, not anatomical proof"
+  },
+  {
+    "source": "/Users/ChenPo-Yun/Documents/GameDev/worktrees/ninola/docs/image/modeling-tests/ninola-01K8/2026-10-08-v001/references/user_reference_3.png",
+    "source_sha256": "dcf941bc4c07b251c691551ca3f14584bacacffd5228490f17c47f75d18ee126",
+    "crop_native_pixels": [
+      0,
+      0,
+      840,
+      350
+    ],
+    "result": "/Users/ChenPo-Yun/Documents/GameDev/worktrees/ninola/docs/image/modeling-tests/ninola-01Q/2026-10-09-review-v001/references/design_skeleton_mass.png",
+    "role": "AI design intent, not anatomical proof"
+  },
+  {
+    "source": "/Users/ChenPo-Yun/Documents/GameDev/worktrees/ninola/docs/image/modeling-tests/ninola-01K8/2026-10-08-v001/references/user_reference_5.png",
+    "source_sha256": "8c72643d581c3b0512a96bf8be321af9705fcd7ef95c18f2e3bdb619313672c0",
+    "crop_native_pixels": [
+      0,
+      560,
+      760,
+      840
+    ],
+    "result": "/Users/ChenPo-Yun/Documents/GameDev/worktrees/ninola/docs/image/modeling-tests/ninola-01Q/2026-10-09-review-v001/references/design_muscle_mass.png",
+    "role": "AI design intent, not anatomical proof"
+  }
+]

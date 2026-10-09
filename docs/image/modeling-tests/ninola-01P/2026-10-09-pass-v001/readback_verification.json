@@ -1,0 +1,9 @@
+{
+  "all_original_coordinates_weights_exact": true,
+  "all_non_target_faces_indices_materials_exact": true,
+  "rig_rest_pose_hierarchy_names_pose_channels_exact": true,
+  "original_Trex_shape_keys_exact": true,
+  "v001_v002_coordinates_weights_exact": true,
+  "source_hash_unchanged": true,
+  "production_integration": false
+}

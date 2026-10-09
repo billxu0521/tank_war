@@ -1,0 +1,171 @@
+{
+  "source_path": "blender/ninola/working/01P1/2026-10-09-v002/ninola_01P1_palm_digit_continuity.blend",
+  "source_sha256": "49bf5f7e625538cfa48868e5ac1050d2892b646b17915e5ce113675c0c58429e",
+  "output_path": "blender/ninola/working/01Q1/2026-10-09-v002/ninola_01Q1_tail_taper.blend",
+  "sha256": "89feeb79f1849b590476715f1db34779d27e6dfa5d918e9ef68bc217280919ae",
+  "object": "01Q1_Tail_Taper",
+  "selected_faces": 260,
+  "candidate_coordinates": 140,
+  "fixed_coincident_coordinates": 20,
+  "free_coordinates": 120,
+  "changed_coordinates": 89,
+  "changed_vertex_ids": 534,
+  "max_world_displacement": 0.12476133868284,
+  "vertices": 11180,
+  "triangles": 7004,
+  "topology_material_weights_exact": true,
+  "all_non_target_face_coordinates_exact": true,
+  "Rig_Trex_keys_pose_exact": true,
+  "inverse_bind_error": 9.31531167512404e-07,
+  "new_degenerate_faces": [],
+  "normal_reversal_faces": [],
+  "pipeline_issues": [],
+  "new_geometry": false,
+  "design_stations": [
+    {
+      "y": -1.2,
+      "source_skin_halfwidth": 0.9698702096939087,
+      "source_skin_bottom": 1.2483677864074707,
+      "source_skin_top": 2.5568251609802246,
+      "target_halfwidth": 0.9698702060279267,
+      "target_bottom": 1.2483677864074707,
+      "target_top": 2.5568253345517333,
+      "role": "design control, not fitted mesh or physical dimension target"
+    },
+    {
+      "y": -1.5,
+      "source_skin_halfwidth": 0.876818835735321,
+      "source_skin_bottom": 1.3016458749771118,
+      "source_skin_top": 2.4031572341918945,
+      "target_halfwidth": 0.8768188587140353,
+      "target_bottom": 1.3016458749771118,
+      "target_top": 2.4031572819647153,
+      "role": "design control, not fitted mesh or physical dimension target"
+    },
+    {
+      "y": -1.8,
+      "source_skin_halfwidth": 0.7284923195838928,
+      "source_skin_bottom": 1.3723894357681274,
+      "source_skin_top": 2.260653018951416,
+      "target_halfwidth": 0.7284923122614213,
+      "target_bottom": 1.3208537318489768,
+      "target_top": 2.2606528699869513,
+      "role": "design control, not fitted mesh or physical dimension target"
+    },
+    {
+      "y": -2.1,
+      "source_skin_halfwidth": 0.615772008895874,
+      "source_skin_bottom": 1.3840551376342773,
+      "source_skin_top": 2.2219791412353516,
+      "target_halfwidth": 0.6157720084936055,
+      "target_bottom": 1.3400615887208418,
+      "target_top": 2.2219791191516585,
+      "role": "design control, not fitted mesh or physical dimension target"
+    },
+    {
+      "y": -2.4,
+      "source_skin_halfwidth": 0.48023539781570435,
+      "source_skin_bottom": 1.3539621829986572,
+      "source_skin_top": 2.1716902256011963,
+      "target_halfwidth": 0.515,
+      "target_bottom": 1.3592694455927068,
+      "target_top": 2.1716901742746937,
+      "role": "design control, not fitted mesh or physical dimension target"
+    },
+    {
+      "y": -2.7,
+      "source_skin_halfwidth": 0.4608116149902344,
+      "source_skin_bottom": 1.313083291053772,
+      "source_skin_top": 2.1397294998168945,
+      "target_halfwidth": 0.47,
+      "target_bottom": 1.3784773024645718,
+      "target_top": 2.139729654708141,
+      "role": "design control, not fitted mesh or physical dimension target"
+    },
+    {
+      "y": -3.0,
+      "source_skin_halfwidth": 0.4766117036342621,
+      "source_skin_bottom": 1.2743477821350098,
+      "source_skin_top": 2.1371703147888184,
+      "target_halfwidth": 0.425,
+      "target_bottom": 1.397685159336437,
+      "target_top": 2.1371702091307583,
+      "role": "design control, not fitted mesh or physical dimension target"
+    },
+    {
+      "y": -3.3,
+      "source_skin_halfwidth": 0.4604531228542328,
+      "source_skin_bottom": 1.2670981884002686,
+      "source_skin_top": 2.124112844467163,
+      "target_halfwidth": 0.385,
+      "target_bottom": 1.4168930162083018,
+      "target_top": 2.124112987342202,
+      "role": "design control, not fitted mesh or physical dimension target"
+    },
+    {
+      "y": -3.6,
+      "source_skin_halfwidth": 0.40939509868621826,
+      "source_skin_bottom": 1.3125460147857666,
+      "source_skin_top": 2.055326461791992,
+      "target_halfwidth": 0.345,
+      "target_bottom": 1.436100873080167,
+      "target_top": 2.05532659749532,
+      "role": "design control, not fitted mesh or physical dimension target"
+    },
+    {
+      "y": -3.9,
+      "source_skin_halfwidth": 0.3521156311035156,
+      "source_skin_bottom": 1.3645920753479004,
+      "source_skin_top": 2.0134193897247314,
+      "target_halfwidth": 0.31,
+      "target_bottom": 1.4553087299520318,
+      "target_top": 2.0134194959017897,
+      "role": "design control, not fitted mesh or physical dimension target"
+    },
+    {
+      "y": -4.2,
+      "source_skin_halfwidth": 0.31343138217926025,
+      "source_skin_bottom": 1.429520845413208,
+      "source_skin_top": 1.9726977348327637,
+      "target_halfwidth": 0.285,
+      "target_bottom": 1.474516586823897,
+      "target_top": 1.9726977624712267,
+      "role": "design control, not fitted mesh or physical dimension target"
+    },
+    {
+      "y": -4.5,
+      "source_skin_halfwidth": 0.29525214433670044,
+      "source_skin_bottom": 1.4621387720108032,
+      "source_skin_top": 1.9117770195007324,
+      "target_halfwidth": 0.26,
+      "target_bottom": 1.493724443695762,
+      "target_top": 1.911777078147319,
+      "role": "design control, not fitted mesh or physical dimension target"
+    },
+    {
+      "y": -4.8,
+      "source_skin_halfwidth": 0.2328033298254013,
+      "source_skin_bottom": 1.512932300567627,
+      "source_skin_top": 1.8440473079681396,
+      "target_halfwidth": 0.23280332592167097,
+      "target_bottom": 1.512932300567627,
+      "target_top": 1.8440473200124572,
+      "role": "design control, not fitted mesh or physical dimension target"
+    },
+    {
+      "y": -5.1,
+      "source_skin_halfwidth": 0.143895223736763,
+      "source_skin_bottom": 1.5640578269958496,
+      "source_skin_top": 1.7656171321868896,
+      "target_halfwidth": 0.1438952177479783,
+      "target_bottom": 1.5640578269958496,
+      "target_top": 1.7656170786467036,
+      "role": "design control, not fitted mesh or physical dimension target"
+    }
+  ],
+  "scope": "tail mid skin only, root and tip protected",
+  "source_unchanged": true,
+  "spike_attachment_coordinates_exact": true,
+  "limitation": "limited taper trial; spines and fixed coincident skin untouched; no whole-tail remodel or production integration",
+  "production_ready": false
+}

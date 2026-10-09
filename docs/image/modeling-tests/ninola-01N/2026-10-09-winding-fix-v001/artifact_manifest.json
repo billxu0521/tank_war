@@ -1,0 +1,176 @@
+{
+  "files": [
+    {
+      "path": "INDEPENDENT_REVIEW.md",
+      "sha256": "9b283ea78400406b1fd5143a636f9c17809ae5536d997e34040b690814a44f6e"
+    },
+    {
+      "path": "RESULT.md",
+      "sha256": "d62f812ae12510c5a78c02799548ae821724144eaff37dfe96447b854ace956a"
+    },
+    {
+      "path": "bite026_side_comparison.png",
+      "sha256": "8c3dc0f77bb97f1dcf6a6d55a17498a4aac4de12ae79d4c9fdce3d273508aaf8"
+    },
+    {
+      "path": "bite026_threequarter_comparison.png",
+      "sha256": "2a91ce8650dfb5ba8ede03bcb28edfe3c7c1fe8b078586635e0347ad17ea1a30"
+    },
+    {
+      "path": "captures/v003/bite026_side.png",
+      "sha256": "67a5530705a250bb2d5925feaadfe6e3ae3da5da2ab301a4078ed7a6af330263"
+    },
+    {
+      "path": "captures/v003/bite026_threequarter.png",
+      "sha256": "8a52694a2bb458729ccf677703513dbda96c0cd620f9653bde88552767f0a292"
+    },
+    {
+      "path": "captures/v003/original_side.png",
+      "sha256": "107f34c5e33588bc0f7304adf37130b4c34533809f3d0f905744209ad33227a2"
+    },
+    {
+      "path": "captures/v003/original_threequarter.png",
+      "sha256": "b30dcfa2ad3aec949844f5b6c8f120e71b5e4d786e8bb58e30fa8c04fcf3e96f"
+    },
+    {
+      "path": "captures/v003/sweep003_side.png",
+      "sha256": "63242922a11f8f9abd0f5fc67c98b383b0bfb46917b16ea3692b5112ac0cfa60"
+    },
+    {
+      "path": "captures/v003/sweep003_threequarter.png",
+      "sha256": "fc09ed13b697d8e7370ad338ac2869b6ea29f063610ee4da072cf45be4de8f6b"
+    },
+    {
+      "path": "captures/v004/bite026_side.png",
+      "sha256": "5c9f7d9eb1c5be936a3d88e1e523288a909551a679af006f4c6d7c342282d587"
+    },
+    {
+      "path": "captures/v004/bite026_threequarter.png",
+      "sha256": "3c1b21f5096c989a328692f977cd540279fc97e6f09cdf23882c88a6f873d0b4"
+    },
+    {
+      "path": "captures/v004/original_side.png",
+      "sha256": "afd86610f79eb4fbaba8fba4c635c1c15b03972ae2ed5eba219d205bf0e2c928"
+    },
+    {
+      "path": "captures/v004/original_threequarter.png",
+      "sha256": "5c34d0953b199fab538d17ed1bae8108484a15794360dac0719af3fb4281ffd4"
+    },
+    {
+      "path": "captures/v004/sweep003_side.png",
+      "sha256": "a5602d09cec75b80ebe3f6ad627a732a36602c70ebc040cc6a077e32d3bcb081"
+    },
+    {
+      "path": "captures/v004/sweep003_threequarter.png",
+      "sha256": "509438b4426be487be0ad5922af4942c4b787cbf3cef230e803c7631403a19bc"
+    },
+    {
+      "path": "check_glb.py",
+      "sha256": "c3c2763bfe17c8864791a23401799fdc53d4319247f5b1b96bc2a57452ad4876"
+    },
+    {
+      "path": "check_godot_import.gd",
+      "sha256": "0365a8f00563b3b907377295e52c9366144f822eff5df2c6905c40fdc027a33b"
+    },
+    {
+      "path": "compose_comparison.py",
+      "sha256": "88f2bd847c70cc66c05b7cc637ad5fae0f3e51904f7de71edada264f83f6e3cd"
+    },
+    {
+      "path": "evaluation-exports/N1v003_eight_weights.glb",
+      "sha256": "5efc335092aca773ec66e362ebdc1ae4b195214f9707e812eda7f194cc6031c3"
+    },
+    {
+      "path": "evaluation-exports/N1v004_eight_weights.glb",
+      "sha256": "240b91115b24788014d6d52568886618907d825ef36c6ff76c60ecfc8e7d84fa"
+    },
+    {
+      "path": "expected_source_data.json",
+      "sha256": "4b22a456d77acbeffde15ed7a2ba1f6e054f8b330e9917673a6530575f5fc726"
+    },
+    {
+      "path": "export_evaluation.py",
+      "sha256": "57fcfd7a5e6d59620736f883ae06b98d65e7edd2a05e10b5be255199f01330ab"
+    },
+    {
+      "path": "export_inspection.py",
+      "sha256": "44cf3be79b5fb8e9e11c4a5f39b948395788b6defd4ff73d8a619f00d3a91a9c"
+    },
+    {
+      "path": "export_records.json",
+      "sha256": "317d829acf1afb6d5bbbd8516f2dbc6139d4a7c567194c5c9c8a2c9dbad309f1"
+    },
+    {
+      "path": "fix_record.json",
+      "sha256": "11544c3f6e43238fcba900010553b914ab0d6a4a134e95ea1f7a822597300b76"
+    },
+    {
+      "path": "fix_winding.py",
+      "sha256": "9c61bb3e6752760f27651caf28ace5b76810b4c586827f1f8e7ca96980ec0532"
+    },
+    {
+      "path": "glb_verification.json",
+      "sha256": "aa6434242e5ce8fb6ed7cde4c704968cfc1448b5e57c19303d7a875f2b209048"
+    },
+    {
+      "path": "godot_import_verification.json",
+      "sha256": "b347bd77a15b45abbaca7221e38d0d5191cccd29a41ac342aeaad9e9c5fac84e"
+    },
+    {
+      "path": "index.html",
+      "sha256": "fa42803f6e06b16a6a92b95945b85b930647893cc9c57f292f8f0278b99bd9b7"
+    },
+    {
+      "path": "inspection_geometry.json",
+      "sha256": "a862243b2bcd09acfa355dc6d16cf91d50d585b2260dc65a97bc1db2fc95eb4b"
+    },
+    {
+      "path": "mcp_inspect.py",
+      "sha256": "e16c4164c43888b3f4a5287316d7ba38635574c99bcad0ede87f0a07000e9f1f"
+    },
+    {
+      "path": "mcp_opposite_under.png",
+      "sha256": "ab822c8b1f6042d16ecd052c0001458e4f78af90cf46425b7c2a0f44dcad31df"
+    },
+    {
+      "path": "mcp_threequarter.png",
+      "sha256": "1f04e90fc39300b46f49d2a4511d27e5c113a1c407507d6c4a5fee4d85c5aa6a"
+    },
+    {
+      "path": "mcp_verification.json",
+      "sha256": "01872a6e81ddb9b8ab12225d94a72a7956993014df59eac5dd0198cd1978d1cf"
+    },
+    {
+      "path": "original_side_comparison.png",
+      "sha256": "349c28650b800f8c2ce73af896721962b8682a74ca5325e22920d165da0a19bc"
+    },
+    {
+      "path": "original_threequarter_comparison.png",
+      "sha256": "d21fe2a67bdad54173295cf00e1ea0d56d0f5cc73c4d694431d825f048e0f6f4"
+    },
+    {
+      "path": "pose_verification.json",
+      "sha256": "1bb3911211e51a9a52cc5094d4bc14ecdbd4c42abc48ac935953a0456b80c9b6"
+    },
+    {
+      "path": "readback_verification.json",
+      "sha256": "0e1ed1380c4de9e4bb21ed8a761f54bd685bc06f2a04ded184e601c2ecf8d8a0"
+    },
+    {
+      "path": "render_pose_comparison.py",
+      "sha256": "a4050a3d8b2c78fc27579201233e1a38ca885505f73a4bc7b7adda7ada2dd8e3"
+    },
+    {
+      "path": "sweep003_side_comparison.png",
+      "sha256": "0a6ea4a7a1657aedc029aeb0f55bd9510d66e9adcefb64383e6e54ae8c7c05ae"
+    },
+    {
+      "path": "sweep003_threequarter_comparison.png",
+      "sha256": "dceaca0deabc60cb1c3335ac7e5340a0fbe5824fcb5fe106b53f03338a16a347"
+    },
+    {
+      "path": "verify_readback.py",
+      "sha256": "e51778f35d22f90221da8cb47b34629e2e11c17307f55f87ee3af47f552189b9"
+    }
+  ]
+}

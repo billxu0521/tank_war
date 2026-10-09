@@ -1,0 +1,5 @@
+import bpy,json
+from pathlib import Path
+r=Path.cwd();p=r/'docs/image/modeling-tests/ninola-01M/2026-10-08-pass-v001'
+bpy.ops.wm.open_mainfile(filepath=str(r/'blender/ninola/working/01L3/2026-10-08-v002/ninola_01L3_toe_volume_rebuild.blend'));o=bpy.data.objects['01L3_Three_Toe_Volume_Reconstruction'];bpy.context.view_layer.update();ev=o.evaluated_get(bpy.context.evaluated_depsgraph_get());coords=[list(o.matrix_world@v.co) for v in ev.data.vertices];weights=[{o.vertex_groups[g.group].name:g.weight for g in v.groups} for v in o.data.vertices];faces=[{'ids':list(f.vertices),'mat':f.material_index} for f in o.data.polygons]
+d={'coords':coords,'weights':weights,'faces':faces,'materials':[m.name if m else None for m in o.data.materials]};(p/'geometry.json').write_text(json.dumps(d));jaw=[i for i,w in enumerate(weights) if w.get('jaw',0)>.5];print(json.dumps({'materials':d['materials'],'jaw_vertices':len(jaw),'jaw_bounds':[[min(coords[i][j] for i in jaw),max(coords[i][j] for i in jaw)] for j in range(3)],'jaw_faces':{str(m):sum(all(i in jaw for i in f['ids']) for f in faces if f['mat']==m) for m in range(len(d['materials']))}}))

@@ -1,0 +1,846 @@
+{
+  "01M3": {
+    "source": "blender/ninola/working/01M3/2026-10-09-v006/ninola_01M3_concept_head_reconstruction.blend",
+    "sha256": "53709e152c66e05a7c5d6224eae1b3f727f52cce839a7410e912c75bb2038de7",
+    "object": "01M3_Concept_Head_Reconstruction",
+    "bones": 45,
+    "prototype_shape_keys": false,
+    "landmarks": [
+      {
+        "id": "L1",
+        "side": 0,
+        "region": "Nasal_Vault",
+        "candidate_skin_region_centroid": [
+          -0.005209245719015598,
+          3.38381028175354,
+          2.4729676246643066
+        ],
+        "vertex_samples": 11,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L2",
+        "side": -1,
+        "region": "Preorbital",
+        "candidate_skin_region_centroid": [
+          -0.2970147728919983,
+          3.078181505203247,
+          2.4165711402893066
+        ],
+        "vertex_samples": 11,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L2",
+        "side": 1,
+        "region": "Preorbital",
+        "candidate_skin_region_centroid": [
+          0.3140515685081482,
+          3.078181505203247,
+          2.386119842529297
+        ],
+        "vertex_samples": 11,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L3",
+        "side": -1,
+        "region": "Postorbital",
+        "candidate_skin_region_centroid": [
+          -0.3795677125453949,
+          2.674999952316284,
+          2.4034767150878906
+        ],
+        "vertex_samples": 6,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L3",
+        "side": 1,
+        "region": "Postorbital",
+        "candidate_skin_region_centroid": [
+          0.3894546926021576,
+          2.674999952316284,
+          2.3991708755493164
+        ],
+        "vertex_samples": 6,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L4",
+        "side": -1,
+        "region": "Supraorbital",
+        "candidate_skin_region_centroid": [
+          -0.2751886248588562,
+          2.9700000286102295,
+          2.5001540184020996
+        ],
+        "vertex_samples": 12,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L4",
+        "side": 1,
+        "region": "Supraorbital",
+        "candidate_skin_region_centroid": [
+          0.27575650811195374,
+          2.950000047683716,
+          2.510488748550415
+        ],
+        "vertex_samples": 9,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L5",
+        "side": -1,
+        "region": "Eyeball_Region",
+        "candidate_skin_region_centroid": [
+          -0.34705352783203125,
+          2.971818208694458,
+          2.4028713703155518
+        ],
+        "vertex_samples": 11,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L5",
+        "side": 1,
+        "region": "Eyeball_Region",
+        "candidate_skin_region_centroid": [
+          0.35272112488746643,
+          2.9862499237060547,
+          2.377833366394043
+        ],
+        "vertex_samples": 8,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L6",
+        "side": -1,
+        "region": "Infraorbital_Jugal",
+        "candidate_skin_region_centroid": [
+          -0.382901668548584,
+          2.93999981880188,
+          2.310584306716919
+        ],
+        "vertex_samples": 10,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L6",
+        "side": 1,
+        "region": "Infraorbital_Jugal",
+        "candidate_skin_region_centroid": [
+          0.3825598359107971,
+          2.9607691764831543,
+          2.2825703620910645
+        ],
+        "vertex_samples": 13,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L7",
+        "side": -1,
+        "region": "Maxillary_Mass",
+        "candidate_skin_region_centroid": [
+          -0.3035033643245697,
+          3.2769367694854736,
+          2.258718252182007
+        ],
+        "vertex_samples": 10,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L7",
+        "side": 1,
+        "region": "Maxillary_Mass",
+        "candidate_skin_region_centroid": [
+          0.31148776412010193,
+          3.2475647926330566,
+          2.246940851211548
+        ],
+        "vertex_samples": 13,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L8",
+        "side": 0,
+        "region": "Muzzle_Premaxillary",
+        "candidate_skin_region_centroid": [
+          0.015240246430039406,
+          3.6079659461975098,
+          2.321934938430786
+        ],
+        "vertex_samples": 12,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L9",
+        "side": -1,
+        "region": "Naris_Region",
+        "candidate_skin_region_centroid": [
+          -0.17318356037139893,
+          3.548809051513672,
+          2.3671486377716064
+        ],
+        "vertex_samples": 4,
+        "evidence_class": "I/D",
+        "confidence": "LOW",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "UNCERTAIN"
+      },
+      {
+        "id": "L9",
+        "side": 1,
+        "region": "Naris_Region",
+        "candidate_skin_region_centroid": [
+          0.17984774708747864,
+          3.5693325996398926,
+          2.3451220989227295
+        ],
+        "vertex_samples": 5,
+        "evidence_class": "I/D",
+        "confidence": "LOW",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "UNCERTAIN"
+      }
+    ],
+    "eyes": [
+      {
+        "side": -1,
+        "sphere_center_measured": null,
+        "sphere_radius_fitted": null,
+        "sphere_fit_max_residual": null,
+        "visible_patch_centroid_only": [
+          -0.3600606620311737,
+          2.986999750137329,
+          2.36580228805542
+        ],
+        "pupil_cap_axis_measured": null,
+        "tests": {
+          "near": {
+            "point_visibility": 9,
+            "tested_face_centroids": 9,
+            "visible_fraction": 1.0,
+            "axis_target_angle_degrees": null,
+            "target_world": [
+              0.0,
+              5.110000133514404,
+              2.434999942779541
+            ],
+            "occlusion_distance_min": null
+          },
+          "far": {
+            "point_visibility": 9,
+            "tested_face_centroids": 9,
+            "visible_fraction": 1.0,
+            "axis_target_angle_degrees": null,
+            "target_world": [
+              0.0,
+              9.15999984741211,
+              2.434999942779541
+            ],
+            "occlusion_distance_min": null
+          },
+          "front": {
+            "point_visibility": 9,
+            "tested_face_centroids": 9,
+            "visible_fraction": 1.0,
+            "axis_target_angle_degrees": null,
+            "target_world": [
+              0.0,
+              22.0,
+              2.434999942779541
+            ],
+            "occlusion_distance_min": null
+          },
+          "left_threequarter": {
+            "point_visibility": 9,
+            "tested_face_centroids": 9,
+            "visible_fraction": 1.0,
+            "axis_target_angle_degrees": null,
+            "target_world": [
+              -14.0,
+              16.0,
+              6.0
+            ],
+            "occlusion_distance_min": null
+          },
+          "right_threequarter": {
+            "point_visibility": 0,
+            "tested_face_centroids": 9,
+            "visible_fraction": 0.0,
+            "axis_target_angle_degrees": null,
+            "target_world": [
+              14.0,
+              16.0,
+              6.0
+            ],
+            "occlusion_distance_min": 0.5530431270599365
+          }
+        },
+        "note": "neutral pose samples; point rays exclude eye surfaces but include external shell; not area integration or full biological visual field"
+      },
+      {
+        "side": 1,
+        "sphere_center_measured": null,
+        "sphere_radius_fitted": null,
+        "sphere_fit_max_residual": null,
+        "visible_patch_centroid_only": [
+          0.37114861607551575,
+          2.9955551624298096,
+          2.3270578384399414
+        ],
+        "pupil_cap_axis_measured": null,
+        "tests": {
+          "near": {
+            "point_visibility": 8,
+            "tested_face_centroids": 8,
+            "visible_fraction": 1.0,
+            "axis_target_angle_degrees": null,
+            "target_world": [
+              0.0,
+              5.110000133514404,
+              2.434999942779541
+            ],
+            "occlusion_distance_min": null
+          },
+          "far": {
+            "point_visibility": 8,
+            "tested_face_centroids": 8,
+            "visible_fraction": 1.0,
+            "axis_target_angle_degrees": null,
+            "target_world": [
+              0.0,
+              9.15999984741211,
+              2.434999942779541
+            ],
+            "occlusion_distance_min": null
+          },
+          "front": {
+            "point_visibility": 8,
+            "tested_face_centroids": 8,
+            "visible_fraction": 1.0,
+            "axis_target_angle_degrees": null,
+            "target_world": [
+              0.0,
+              22.0,
+              2.434999942779541
+            ],
+            "occlusion_distance_min": null
+          },
+          "left_threequarter": {
+            "point_visibility": 0,
+            "tested_face_centroids": 8,
+            "visible_fraction": 0.0,
+            "axis_target_angle_degrees": null,
+            "target_world": [
+              -14.0,
+              16.0,
+              6.0
+            ],
+            "occlusion_distance_min": 0.6097068190574646
+          },
+          "right_threequarter": {
+            "point_visibility": 8,
+            "tested_face_centroids": 8,
+            "visible_fraction": 1.0,
+            "axis_target_angle_degrees": null,
+            "target_world": [
+              14.0,
+              16.0,
+              6.0
+            ],
+            "occlusion_distance_min": null
+          }
+        },
+        "note": "neutral pose samples; point rays exclude eye surfaces but include external shell; not area integration or full biological visual field"
+      }
+    ],
+    "material_names": [
+      "d_olive",
+      "d_moss",
+      "d_tan",
+      "d_tailu",
+      "d_taild",
+      "d_belly",
+      "d_spike",
+      "d_spike_lit",
+      "d_ridge",
+      "d_bone",
+      "d_claw",
+      "d_mouth",
+      "d_pupil"
+    ],
+    "source_saved": false
+  },
+  "01M5B": {
+    "source": "blender/ninola/working/01M5B/2026-10-09-v007/ninola_01M5B_face_mass_gaze.blend",
+    "sha256": "8bbd3030004528102b176204cdd2da0fb5c88b5edee326d2bc3356c114f08e4a",
+    "object": "01M5B_Face_Mass_Gaze",
+    "bones": 45,
+    "prototype_shape_keys": false,
+    "landmarks": [
+      {
+        "id": "L1",
+        "side": 0,
+        "region": "Nasal_Vault",
+        "candidate_skin_region_centroid": [
+          -0.026601705700159073,
+          3.4216372966766357,
+          2.47933292388916
+        ],
+        "vertex_samples": 10,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L2",
+        "side": -1,
+        "region": "Preorbital",
+        "candidate_skin_region_centroid": [
+          -0.3310260474681854,
+          3.062321901321411,
+          2.42250657081604
+        ],
+        "vertex_samples": 22,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L2",
+        "side": 1,
+        "region": "Preorbital",
+        "candidate_skin_region_centroid": [
+          0.33529844880104065,
+          3.0663678646087646,
+          2.4188339710235596
+        ],
+        "vertex_samples": 18,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L3",
+        "side": -1,
+        "region": "Postorbital",
+        "candidate_skin_region_centroid": [
+          -0.3842707574367523,
+          2.741013288497925,
+          2.4174797534942627
+        ],
+        "vertex_samples": 10,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L3",
+        "side": 1,
+        "region": "Postorbital",
+        "candidate_skin_region_centroid": [
+          0.3886875808238983,
+          2.7409489154815674,
+          2.4177091121673584
+        ],
+        "vertex_samples": 10,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L4",
+        "side": -1,
+        "region": "Supraorbital",
+        "candidate_skin_region_centroid": [
+          -0.33905914425849915,
+          2.973278284072876,
+          2.4775149822235107
+        ],
+        "vertex_samples": 32,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L4",
+        "side": 1,
+        "region": "Supraorbital",
+        "candidate_skin_region_centroid": [
+          0.34421002864837646,
+          2.9627811908721924,
+          2.4766342639923096
+        ],
+        "vertex_samples": 26,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L5",
+        "side": -1,
+        "region": "Eyeball_Region",
+        "candidate_skin_region_centroid": [
+          -0.37625446915626526,
+          2.974180221557617,
+          2.4191150665283203
+        ],
+        "vertex_samples": 26,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L5",
+        "side": 1,
+        "region": "Eyeball_Region",
+        "candidate_skin_region_centroid": [
+          0.3747146427631378,
+          2.977708101272583,
+          2.427363395690918
+        ],
+        "vertex_samples": 17,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L6",
+        "side": -1,
+        "region": "Infraorbital_Jugal",
+        "candidate_skin_region_centroid": [
+          -0.3937165141105652,
+          2.945328712463379,
+          2.3123509883880615
+        ],
+        "vertex_samples": 14,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L6",
+        "side": 1,
+        "region": "Infraorbital_Jugal",
+        "candidate_skin_region_centroid": [
+          0.39135631918907166,
+          2.9584507942199707,
+          2.2733871936798096
+        ],
+        "vertex_samples": 11,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L7",
+        "side": -1,
+        "region": "Maxillary_Mass",
+        "candidate_skin_region_centroid": [
+          -0.3174179792404175,
+          3.2429261207580566,
+          2.2696590423583984
+        ],
+        "vertex_samples": 12,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L7",
+        "side": 1,
+        "region": "Maxillary_Mass",
+        "candidate_skin_region_centroid": [
+          0.3099067807197571,
+          3.269996404647827,
+          2.241462230682373
+        ],
+        "vertex_samples": 12,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L8",
+        "side": 0,
+        "region": "Muzzle_Premaxillary",
+        "candidate_skin_region_centroid": [
+          0.01248989813029766,
+          3.636542797088623,
+          2.2970287799835205
+        ],
+        "vertex_samples": 14,
+        "evidence_class": "I/D",
+        "confidence": "MEDIUM",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "region correspondence only"
+      },
+      {
+        "id": "L9",
+        "side": -1,
+        "region": "Naris_Region",
+        "candidate_skin_region_centroid": [
+          -0.16083666682243347,
+          3.541565418243408,
+          2.3836171627044678
+        ],
+        "vertex_samples": 3,
+        "evidence_class": "I/D",
+        "confidence": "LOW",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "UNCERTAIN"
+      },
+      {
+        "id": "L9",
+        "side": 1,
+        "region": "Naris_Region",
+        "candidate_skin_region_centroid": [
+          0.16527798771858215,
+          3.5404539108276367,
+          2.378406524658203
+        ],
+        "vertex_samples": 3,
+        "evidence_class": "I/D",
+        "confidence": "LOW",
+        "meaning": "actual skin samples in explicitly chosen design region; not measured fossil bone landmark",
+        "anatomical_identity": "UNCERTAIN"
+      }
+    ],
+    "eyes": [
+      {
+        "side": -1,
+        "sphere_center_measured": [
+          -0.35252442955970764,
+          2.9699997901916504,
+          2.434999704360962
+        ],
+        "sphere_radius_fitted": 0.0519999765131544,
+        "sphere_fit_max_residual": 4.068461392919831e-07,
+        "visible_patch_centroid_only": null,
+        "pupil_cap_axis_measured": [
+          0.046456608921289444,
+          0.9989203214645386,
+          4.624331268132664e-06
+        ],
+        "tests": {
+          "near": {
+            "point_visibility": 16,
+            "tested_face_centroids": 32,
+            "visible_fraction": 0.5,
+            "axis_target_angle_degrees": 6.691667384116192,
+            "target_world": [
+              0.0,
+              5.110000133514404,
+              2.434999942779541
+            ],
+            "occlusion_distance_min": 0.02307106740772724
+          },
+          "far": {
+            "point_visibility": 21,
+            "tested_face_centroids": 32,
+            "visible_fraction": 0.65625,
+            "axis_target_angle_degrees": 0.5967608848600072,
+            "target_world": [
+              0.0,
+              9.15999984741211,
+              2.434999942779541
+            ],
+            "occlusion_distance_min": 0.027845485135912895
+          },
+          "front": {
+            "point_visibility": 22,
+            "tested_face_centroids": 32,
+            "visible_fraction": 0.6875,
+            "axis_target_angle_degrees": 1.6014445726152708,
+            "target_world": [
+              0.0,
+              22.0,
+              2.434999942779541
+            ],
+            "occlusion_distance_min": 0.03150874003767967
+          },
+          "left_threequarter": {
+            "point_visibility": 32,
+            "tested_face_centroids": 32,
+            "visible_fraction": 1.0,
+            "axis_target_angle_degrees": 49.84919650632719,
+            "target_world": [
+              -14.0,
+              16.0,
+              6.0
+            ],
+            "occlusion_distance_min": null
+          },
+          "right_threequarter": {
+            "point_visibility": 0,
+            "tested_face_centroids": 32,
+            "visible_fraction": 0.0,
+            "axis_target_angle_degrees": 46.03642440218057,
+            "target_world": [
+              14.0,
+              16.0,
+              6.0
+            ],
+            "occlusion_distance_min": 0.4778449535369873
+          }
+        },
+        "note": "neutral pose samples; point rays exclude eye surfaces but include external shell; not area integration or full biological visual field"
+      },
+      {
+        "side": 1,
+        "sphere_center_measured": [
+          0.3529590368270874,
+          2.9699997901916504,
+          2.434999942779541
+        ],
+        "sphere_radius_fitted": 0.0519999868550734,
+        "sphere_fit_max_residual": 5.150304848641762e-07,
+        "visible_patch_centroid_only": null,
+        "pupil_cap_axis_measured": [
+          -0.04651414230465889,
+          0.9989176392555237,
+          0.0
+        ],
+        "tests": {
+          "near": {
+            "point_visibility": 16,
+            "tested_face_centroids": 32,
+            "visible_fraction": 0.5,
+            "axis_target_angle_degrees": 6.699692856390957,
+            "target_world": [
+              0.0,
+              5.110000133514404,
+              2.434999942779541
+            ],
+            "occlusion_distance_min": 0.03830888867378235
+          },
+          "far": {
+            "point_visibility": 21,
+            "tested_face_centroids": 32,
+            "visible_fraction": 0.65625,
+            "axis_target_angle_degrees": 0.597416316216064,
+            "target_world": [
+              0.0,
+              9.15999984741211,
+              2.434999942779541
+            ],
+            "occlusion_distance_min": 0.03399689495563507
+          },
+          "front": {
+            "point_visibility": 22,
+            "tested_face_centroids": 32,
+            "visible_fraction": 0.6875,
+            "axis_target_angle_degrees": 1.6033985403264235,
+            "target_world": [
+              0.0,
+              22.0,
+              2.434999942779541
+            ],
+            "occlusion_distance_min": 0.034097492694854736
+          },
+          "left_threequarter": {
+            "point_visibility": 0,
+            "tested_face_centroids": 32,
+            "visible_fraction": 0.0,
+            "axis_target_angle_degrees": 46.034098722768185,
+            "target_world": [
+              -14.0,
+              16.0,
+              6.0
+            ],
+            "occlusion_distance_min": 0.47735852003097534
+          },
+          "right_threequarter": {
+            "point_visibility": 32,
+            "tested_face_centroids": 32,
+            "visible_fraction": 1.0,
+            "axis_target_angle_degrees": 49.85160414800961,
+            "target_world": [
+              14.0,
+              16.0,
+              6.0
+            ],
+            "occlusion_distance_min": null
+          }
+        },
+        "note": "neutral pose samples; point rays exclude eye surfaces but include external shell; not area integration or full biological visual field"
+      }
+    ],
+    "material_names": [
+      "d_olive",
+      "d_moss",
+      "d_tan",
+      "d_tailu",
+      "d_taild",
+      "d_belly",
+      "d_spike",
+      "d_spike_lit",
+      "d_ridge",
+      "d_bone",
+      "d_claw",
+      "d_mouth",
+      "d_pupil",
+      "Ninola_Iris_Gold_M4",
+      "Ninola_Eye_Dark_Bronze"
+    ],
+    "source_saved": false
+  }
+}

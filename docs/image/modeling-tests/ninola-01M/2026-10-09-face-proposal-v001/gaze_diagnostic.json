@@ -1,0 +1,79 @@
+{
+  "source": "blender/ninola/working/01M4/2026-10-09-v001/ninola_01M4_cranial_identity.blend",
+  "source_sha256": "6716d0d2389ed582479d92a6a68675b41832f0e48e84ff433fd16b11cbe93bcf",
+  "object": "01M4_Cranial_Identity",
+  "world_forward_axis": "+Y",
+  "common_target_world": [
+    0.0,
+    10.549087524414062,
+    2.434999942779541
+  ],
+  "target_role": "distant front diagnostic only; not production constraint or gaze prescription",
+  "eyes": [
+    {
+      "side": -1,
+      "iris_surface_centroid_world": [
+        -0.32885029911994934,
+        2.9800000190734863,
+        2.434999942779541
+      ],
+      "iris_surface_normal_world": [
+        -0.9056144952774048,
+        0.2267349362373352,
+        0.3584045171737671
+      ],
+      "iris_normal_angle_to_common_target_degrees": 79.20984723861044,
+      "eye_sphere_center": null,
+      "reason": "No independent sphere/eye object; current iris is surface patch, centroid is not eyeball center",
+      "skin_ray_hit": null,
+      "iris_yz_extent": [
+        0.037999868392944336,
+        0.034238338470458984
+      ]
+    },
+    {
+      "side": 1,
+      "iris_surface_centroid_world": [
+        0.32996731996536255,
+        2.9800000190734863,
+        2.434999942779541
+      ],
+      "iris_surface_normal_world": [
+        0.9049393534660339,
+        0.232504203915596,
+        0.35640785098075867
+      ],
+      "iris_normal_angle_to_common_target_degrees": 78.87962125261866,
+      "eye_sphere_center": null,
+      "reason": "No independent sphere/eye object; current iris is surface patch, centroid is not eyeball center",
+      "skin_ray_hit": null,
+      "iris_yz_extent": [
+        0.037999868392944336,
+        0.034238338470458984
+      ]
+    }
+  ],
+  "materials": [
+    "d_olive",
+    "d_moss",
+    "d_tan",
+    "d_tailu",
+    "d_taild",
+    "d_belly",
+    "d_spike",
+    "d_spike_lit",
+    "d_ridge",
+    "d_bone",
+    "d_claw",
+    "d_mouth",
+    "d_pupil",
+    "Ninola_Iris_Gold_M4"
+  ],
+  "eye_objects": [],
+  "limitations": [
+    "surface normal is geometric proxy, not biological optical axis",
+    "single neutral pose straight ray sample; no full visual field validation",
+    "naris location not inferred solely from absence of named material"
+  ],
+  "saved_source": false
+}

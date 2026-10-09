@@ -1,0 +1,10 @@
+{
+  "new_skin_faces": 80,
+  "welded_local_edges": 149,
+  "local_open_edges": 0,
+  "local_winding_conflicts": 0,
+  "welded_claw_base_three_face_edges": 16,
+  "minimum_new_triangle_area": 6.520664520927556e-05,
+  "new_degenerate_triangles": 0,
+  "role": "local topology check; original claw caps deliberately retained, not production manifold acceptance"
+}

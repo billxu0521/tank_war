@@ -1,0 +1,322 @@
+{
+  "side": {
+    "model": "01K8",
+    "object": "01K8_Hock_Mass_Continuity",
+    "matrix": [
+      [
+        -4.371138828673793e-08,
+        -4.371138828673793e-08,
+        -1.0,
+        -20.0
+      ],
+      [
+        -1.0,
+        1.910685676922942e-15,
+        4.371138828673793e-08,
+        0.30000001192092896
+      ],
+      [
+        0.0,
+        1.0,
+        -4.371138828673793e-08,
+        0.550000011920929
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 2.45,
+    "camera_type": "ORTHO",
+    "lens": 50.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 1498,
+    "display_mask": "Same-sided leg faces |X|>.35, Z<1.35 (.70 for Top); Side shows X<0 leg. Visual crop only; not model modification."
+  },
+  "silhouette": {
+    "model": "01K8",
+    "object": "01K8_Hock_Mass_Continuity",
+    "matrix": [
+      [
+        -4.371138828673793e-08,
+        -4.371138828673793e-08,
+        -1.0,
+        -20.0
+      ],
+      [
+        -1.0,
+        1.910685676922942e-15,
+        4.371138828673793e-08,
+        0.30000001192092896
+      ],
+      [
+        0.0,
+        1.0,
+        -4.371138828673793e-08,
+        0.550000011920929
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 2.45,
+    "camera_type": "ORTHO",
+    "lens": 50.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 1498,
+    "display_mask": "Same-sided leg faces |X|>.35, Z<1.35 (.70 for Top); Side shows X<0 leg. Visual crop only; not model modification."
+  },
+  "full_body_side": {
+    "model": "01K8",
+    "object": "01K8_Hock_Mass_Continuity",
+    "matrix": [
+      [
+        -4.371138828673793e-08,
+        -4.371138828673793e-08,
+        -1.0,
+        -20.0
+      ],
+      [
+        -1.0,
+        1.910685676922942e-15,
+        4.371138828673793e-08,
+        -0.9526101350784302
+      ],
+      [
+        0.0,
+        1.0,
+        -4.371138828673793e-08,
+        1.6843751668930054
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 10.552172889709473,
+    "camera_type": "ORTHO",
+    "lens": 50.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 5410,
+    "display_mask": "full model"
+  },
+  "front": {
+    "model": "01K8",
+    "object": "01K8_Hock_Mass_Continuity",
+    "matrix": [
+      [
+        -1.0,
+        -1.509957598955225e-07,
+        1.5099581673894136e-07,
+        0.0
+      ],
+      [
+        1.5099580252808664e-07,
+        1.6292069915380125e-07,
+        1.0,
+        20.299999237060547
+      ],
+      [
+        -1.5099578831723193e-07,
+        1.0,
+        -1.6292068494294654e-07,
+        0.3799999952316284
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 2.85,
+    "camera_type": "ORTHO",
+    "lens": 50.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 2979,
+    "display_mask": "Same-sided leg faces |X|>.35, Z<1.35 (.70 for Top); Side shows X<0 leg. Visual crop only; not model modification."
+  },
+  "rear": {
+    "model": "01K8",
+    "object": "01K8_Hock_Mass_Continuity",
+    "matrix": [
+      [
+        1.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        -1.6292068494294654e-07,
+        -1.0,
+        -19.700000762939453
+      ],
+      [
+        0.0,
+        1.0,
+        -1.6292068494294654e-07,
+        0.3799999952316284
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 2.85,
+    "camera_type": "ORTHO",
+    "lens": 50.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 2979,
+    "display_mask": "Same-sided leg faces |X|>.35, Z<1.35 (.70 for Top); Side shows X<0 leg. Visual crop only; not model modification."
+  },
+  "top": {
+    "model": "01K8",
+    "object": "01K8_Hock_Mass_Continuity",
+    "matrix": [
+      [
+        -1.0,
+        -1.5099580252808664e-07,
+        0.0,
+        0.0
+      ],
+      [
+        1.5099580252808664e-07,
+        -1.0,
+        0.0,
+        0.30000001192092896
+      ],
+      [
+        0.0,
+        0.0,
+        1.0,
+        20.100000381469727
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 2.85,
+    "camera_type": "ORTHO",
+    "lens": 50.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 2078,
+    "display_mask": "Same-sided leg faces |X|>.35, Z<1.35 (.70 for Top); Side shows X<0 leg. Visual crop only; not model modification."
+  },
+  "front_threequarter_closeup": {
+    "model": "01K8",
+    "object": "01K8_Hock_Mass_Continuity",
+    "matrix": [
+      [
+        -0.7071067690849304,
+        0.16987472772598267,
+        -0.6863982677459717,
+        -4.5672173500061035
+      ],
+      [
+        -0.7071067690849304,
+        -0.16987471282482147,
+        0.6863982677459717,
+        4.867217540740967
+      ],
+      [
+        9.654121946311989e-09,
+        0.97071373462677,
+        0.24023914337158203,
+        2.0985260009765625
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 2.9,
+    "camera_type": "PERSP",
+    "lens": 70.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 5410,
+    "display_mask": "full model"
+  },
+  "rear_threequarter_closeup": {
+    "model": "01K8",
+    "object": "01K8_Hock_Mass_Continuity",
+    "matrix": [
+      [
+        0.7071067690849304,
+        0.16987493634223938,
+        -0.6863982081413269,
+        -4.5672173500061035
+      ],
+      [
+        -0.7071067690849304,
+        0.1698746681213379,
+        -0.6863982677459717,
+        -4.26721715927124
+      ],
+      [
+        -1.889349476869029e-07,
+        0.97071373462677,
+        0.24023926258087158,
+        2.0985260009765625
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 2.9,
+    "camera_type": "PERSP",
+    "lens": 70.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 5410,
+    "display_mask": "full model"
+  }
+}

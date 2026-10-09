@@ -1,0 +1,12 @@
+[
+  {
+    "path": "docs/image/modeling-tests/ninola-01K8/2026-10-08-v001/references/user_reference_4.png",
+    "sha256": "bc00adb3d53a94797ed5683bacb2e8e91762d1e01b6bcc6ac9a7104f318ab232",
+    "role": "AI concept visual intent; not calibrated anatomy or joint range measurements"
+  },
+  {
+    "path": "docs/image/modeling-tests/ninola-01K8/2026-10-08-v001/references/user_reference_5.png",
+    "sha256": "8c72643d581c3b0512a96bf8be321af9705fcd7ef95c18f2e3bdb619313672c0",
+    "role": "AI concept visual intent; not calibrated anatomy or joint range measurements"
+  }
+]

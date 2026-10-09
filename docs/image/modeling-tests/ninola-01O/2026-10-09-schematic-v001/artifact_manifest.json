@@ -1,0 +1,81 @@
+{
+  "phase": "01O1_design_schematic_only",
+  "source_model_edited": false,
+  "files": [
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-schematic-v001/DESIGN.md",
+      "sha256": "377203fbf744e19b52131152ae7c5264caf02f6c7ad94cf55594b3af5d5ce649",
+      "bytes": 3214
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-schematic-v001/INDEPENDENT_REVIEW.md",
+      "sha256": "c6226ba0ef5b71a174d6f80d63ecdc1244d92173530414eafe154d790caacc2c",
+      "bytes": 1112
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-schematic-v001/build_schematic.py",
+      "sha256": "1a3161b80187f42efac222e55f091c2cdb3373fe3d211bbe5a2229b38c0c070c",
+      "bytes": 9474
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-schematic-v001/constraint_inspection.json",
+      "sha256": "a3fd6f2648fafe39925d51113f842927c480626d0675c68e79d5ebeeda433136",
+      "bytes": 14496
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-schematic-v001/full_body_side_schematic.png",
+      "sha256": "2ccd3f6749fd20bca599a62469f44122bbe44c9ddd0dd522a7e16dee9a775995",
+      "bytes": 833194
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-schematic-v001/index.html",
+      "sha256": "5e431a120743e8c4be67baf94f8f8d5a967b403ba4bd1ce43aa7f4c853aa38ae",
+      "bytes": 2069
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-schematic-v001/inspect_constraints.py",
+      "sha256": "8773d2179773c01c71216acf5b2411335e7afbd2293aae5fed92fe6e513dcc89",
+      "bytes": 2669
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-schematic-v001/schematic_geometry.json",
+      "sha256": "ecfea0ac344498d6b08be3b68bed8508b8fb6ef80048bbf702ed0598856da5fe",
+      "bytes": 16175
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-schematic-v001/sections.png",
+      "sha256": "5fff9da8614506556e8fa31a2dbf7672cc694c36920d6a051db494bd1100f63a",
+      "bytes": 65829
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-schematic-v001/source_geometry.json",
+      "sha256": "6f1bb6d5f782c2c0ca0429b8a035787b82c22fdbdc1643898e73bbe0966d4ced",
+      "bytes": 1952006
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-schematic-v001/source_hash_verification.json",
+      "sha256": "6cf200e76684c0fdcb9215793952936552ec8be760641ee7c94f12b77440b20d",
+      "bytes": 2012
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-schematic-v001/torso_right_threequarter_schematic.png",
+      "sha256": "f90d009db3d98589a57bfa5d7a28c0d8efd171bf3bc4c3873dbeae3fd6ccef38",
+      "bytes": 952669
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-schematic-v001/torso_side_schematic.png",
+      "sha256": "76335ada8343f1d42099b9deec66153d424e762925e643d4c014c137a6451778",
+      "bytes": 933171
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-schematic-v001/torso_threequarter_schematic.png",
+      "sha256": "c59c8142fc505fb64b9e032b4ef1b5ca95baf8ab08009065c394380b36f1a452",
+      "bytes": 942228
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-schematic-v001/torso_top_schematic.png",
+      "sha256": "e36e8639375bab1cea7fe4262f7080de394ccb123c43fce3c5c377eb3c71a4ae",
+      "bytes": 903687
+    }
+  ]
+}

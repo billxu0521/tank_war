@@ -1,0 +1,10 @@
+{
+  "readback_pass": true,
+  "evaluated_delta_vs_build": 0.0,
+  "unchanged_coordinates_exact": true,
+  "topology_material_weights_exact": true,
+  "Rig_Trex_keys_pose_exact": true,
+  "source_output_hash_match": true,
+  "prototype_shape_keys": false,
+  "full_dynamic_or_production_validation": false
+}

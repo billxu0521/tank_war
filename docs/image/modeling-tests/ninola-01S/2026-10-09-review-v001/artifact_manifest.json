@@ -1,0 +1,710 @@
+{
+  "source": "blender/ninola/working/01R2/2026-10-09-v005/ninola_01R2_gold_slit_eye.blend",
+  "source_sha256": "363eb15913ff2b7ee528a67163aa86805126e56a64514e07001cddc0ff305929",
+  "files": [
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/REPORT.md",
+      "sha256": "122ea34f05d9e5c9c756eaad83b9733c3d4af0055ed566e7a2d96ba1ef10fb3e",
+      "bytes": 4931
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/audit_metrics.json",
+      "sha256": "427182c55e791e51231738f4909472677eae07eef55197a62dd8294225b63a5d",
+      "bytes": 99228
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/bite.gif",
+      "sha256": "71d5dafb703ea7b44094643b6210c8c0b2818696ec8a2881a3a4ca3bfbc76928",
+      "bytes": 1509706
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/capture_settings.json",
+      "sha256": "2a799eb779dc1c963475d1406ac1e359e098693c0144f95b6c6ce7356bd0378c",
+      "bytes": 8609
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/capture_static.py",
+      "sha256": "e30c6cf343d4f592d58bcf2de78f19c4b57bd981bb64f8a0f2587a4035f27471",
+      "bytes": 3723
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/captures/body_style_close.png",
+      "sha256": "d87ab78dc9bba45f0c653ad4f0709f12246e48174ad3d8c4fc516e2dae9c57ff",
+      "bytes": 1404395
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/captures/dorsal_oblique.png",
+      "sha256": "ccd14faee6e555188c4b5934033d6701f4bc9e03e90a30d34f2cf184c563acb0",
+      "bytes": 1307860
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/captures/full_front.png",
+      "sha256": "c2b8770dc68a3c4558355a84f1037ccc44e7458e4d727c83fe70da2576f78bbb",
+      "bytes": 1360103
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/captures/full_left_oblique.png",
+      "sha256": "ffc19ea886216088d3140b9920f7a9ee27a7b4306e8e7c9b406f75be4d17bd99",
+      "bytes": 1279248
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/captures/full_other_side.png",
+      "sha256": "8145b029a2d5ec63f628ba63479014a7c90dc58c546ec449b1fc84b0e3228eac",
+      "bytes": 1284061
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/captures/full_rear.png",
+      "sha256": "85204a12adef12703f8051b29c3be4d9f79aa71d3ae2f044c041e1b97253ccdd",
+      "bytes": 1372753
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/captures/full_right_oblique.png",
+      "sha256": "d3856af6d78772872ec3c8ff0abeaa3276a2d08707d83d29160c3f7fdce8d2bb",
+      "bytes": 1283491
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/captures/full_side.png",
+      "sha256": "76772abf62a923990bdab995f924333020304b38122efdae26e08ef2df93ce24",
+      "bytes": 1264295
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/captures/full_top.png",
+      "sha256": "12a005acb4b61bda45fceda480c4e82c31268d5c2573b1a141856475ce29ea57",
+      "bytes": 1291079
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/captures/head_body_context.png",
+      "sha256": "634489dfe521309d99f687552fc40a46c982ac862a4743a30c0c2ecc429861be",
+      "bytes": 1385924
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/captures/head_front.png",
+      "sha256": "0ab2cc58cd3ceaa77240c76aa64696f552452036d5b82f1800a5204ec1b370fd",
+      "bytes": 1465178
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/captures/head_side.png",
+      "sha256": "4b3824cef3b9a8d33043d5112390e9169b87c72dda18d09830681d6dd5a927f0",
+      "bytes": 1325067
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/captures/head_threequarter.png",
+      "sha256": "124696841efad52b294081f80b0c8b14e1db75f89dba639b50aa3bba45255c05",
+      "bytes": 1373525
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/captures/head_top.png",
+      "sha256": "3561a2c1758f3c687bf27bef7c60098274b1bcefd3407464df719de25c9528bf",
+      "bytes": 1291504
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/compose.py",
+      "sha256": "7a858f1d056c96c9d9c235b26e2750d1daa59ee53bcc0dc5b5ae78ceec38bb56",
+      "bytes": 2015
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/concept_comparison.png",
+      "sha256": "d3bc7f49d1ac39a1a06f56f2cd989735fbabbbb0fa2317447339f6a158e2a25c",
+      "bytes": 823820
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/control_audit.py",
+      "sha256": "cf46ad1a64ade108a20186ed42e012f698edf87156786289bc8537761c745c52",
+      "bytes": 6602
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/export_clean.py",
+      "sha256": "ca0eb4d9dee547f787739f5a4f7d971dbefc2ae0411c37494e0d9bc350f1c09d",
+      "bytes": 2251
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/export_evaluation.py",
+      "sha256": "185cb3da94c9eb83b4eaa02bf35b54b3053e29783c1bc38f708ac3a8069656a1",
+      "bytes": 2097
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/export_isolated.py",
+      "sha256": "3e584f87c9beffb99bbe3cca2dad07c2b7bb9ec8953ece28b32d87869610b99e",
+      "bytes": 2214
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/export_readback.json",
+      "sha256": "d36257541bcc30f32fe9f016e80662fba5512e1ba60b06abcacd38765d8a010d",
+      "bytes": 510
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/export_records.json",
+      "sha256": "f8084cc919834c1821fc53bd06b5353ac3ab7718a719ccb6e03d299da0b8a131",
+      "bytes": 29562
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/godot_pose_samples.json",
+      "sha256": "64a683c64b18c71b791d9521018108d9d0d25382f97ba555a9935ca6599f91ea",
+      "bytes": 12284672
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/independent_review.txt",
+      "sha256": "65a2fcdca67601aa75f02357c5af7b255f6bc855ccfc1d2a4f73c150242c4b31",
+      "bytes": 608
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/index.html",
+      "sha256": "d7d374d3b59a8ed805e7108b81b27a5f711ef51b766829844eaff55b689185d8",
+      "bytes": 2201
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/initial-export/export_readback.json",
+      "sha256": "f928ceeaa67ba5bf0ac44ef94a635e5463df6e7ee88dc22689336cdff88f2a96",
+      "bytes": 465
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/initial-export/export_records.json",
+      "sha256": "17440288127ffe1b7338755e8d4ee5fb6fd4dc922c851c27b06003b3e845271a",
+      "bytes": 29570
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/inspection.json",
+      "sha256": "0ebce490434d9969cc7814e6bdeb1d105e10707e38dd271dbdd41c8ef89e3413",
+      "bytes": 5082
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/bite_000_body.png",
+      "sha256": "517ee1678b434731281b0bdaf9ac0a6d1e951879b244cd61aa0cb7c604597381",
+      "bytes": 743346
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/bite_000_head.png",
+      "sha256": "e66a971ae29e08a7739dcacee048bec81a29fc6c0186650a214483cd72456cd8",
+      "bytes": 796956
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/bite_020_body.png",
+      "sha256": "1241d901fba19126ff6dda48686bb15da2b33ed78066903933a5ce94c19693ad",
+      "bytes": 747064
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/bite_020_head.png",
+      "sha256": "e5a122ee5a7cdd5bb42a2bee284a5fbb2f889ac5d25ae526b6b46b14e1482560",
+      "bytes": 798662
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/bite_024_body.png",
+      "sha256": "fba1902006a770905aa5e33be971b71b0c58fe4ebb698b9561cdc4cd3a627b3e",
+      "bytes": 745787
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/bite_024_head.png",
+      "sha256": "8aaafafe4c4e6c49872b7360a114add363a59b2941e355011878372b5650ba67",
+      "bytes": 801687
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/bite_026_body.png",
+      "sha256": "fcb671d0599b36a588a40ec5bc0e1125befb2e8a2f09bbbc7890670695996021",
+      "bytes": 747317
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/bite_026_head.png",
+      "sha256": "1282f096401e0ef6b7e7159e9a0793e7bb93d93b112c546d0ccb1fd1ebb069bc",
+      "bytes": 798221
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/bite_028_body.png",
+      "sha256": "0ce955c244836081dd8e7f09da263b5bf3e6fc1a19c456e61965f76ed132a0e3",
+      "bytes": 746101
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/bite_028_head.png",
+      "sha256": "f00da4d441208e5f1c9bcf1072323197fb0719f363f157f395699a6abe2e995b",
+      "bytes": 801115
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/bite_040_body.png",
+      "sha256": "85b5b365438fd82d7115ef8dd7efd8f553014c1d8562015f7d704948b5c46e09",
+      "bytes": 743476
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/bite_040_head.png",
+      "sha256": "b9d2eee807792600a44cae54d603730547f799eaa22416cd1988addcfb6d09e1",
+      "bytes": 797697
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/bite_070_body.png",
+      "sha256": "b9b2e9aef7fc5a2eed15fee4a0ff875700a76d3b34dc829297cd5e801e65b140",
+      "bytes": 744460
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/bite_070_head.png",
+      "sha256": "0925fd065201aa4013787a0539ddc9c1bea8655c22a7486fdb997190914b7ab1",
+      "bytes": 797039
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/jaw_sweep_000_body.png",
+      "sha256": "161922bc29d6e7dd880a50f39d9c5e9d537c45a64267c676bf83c42a9df666b4",
+      "bytes": 743081
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/jaw_sweep_000_head.png",
+      "sha256": "921285cc0141888f02ed740aa631a7e2abb6e4706d886b9f323fe545ae3823fa",
+      "bytes": 795452
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/jaw_sweep_001_body.png",
+      "sha256": "199fc84ba51cfc84abec5ddaf9d47faf55b91ebfb881a76e22f745061d2578c4",
+      "bytes": 744341
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/jaw_sweep_001_head.png",
+      "sha256": "75b25ec47d4a7d26c6233fd081fd7518743177c424689b8b1a9e42f03d8a5a48",
+      "bytes": 799761
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/jaw_sweep_002_body.png",
+      "sha256": "a01dd681750de1ce166f8fbaf5f0de02c1ee48c01bacef0b24b8f75fd87db4f3",
+      "bytes": 744537
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/jaw_sweep_002_head.png",
+      "sha256": "5f6e419ee92a25992cf84e9dad08af39cda126be80ca64a54bb8b56ef1de68c1",
+      "bytes": 799784
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/jaw_sweep_003_body.png",
+      "sha256": "19a6f9f13a2d83d3a96988f644126c148522f4543a5d2c605e00f5d83d63219c",
+      "bytes": 744546
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/jaw_sweep_003_head.png",
+      "sha256": "cb4f87ba85849d6f06f9e1472a44e77fb0aebf1fed61ebf07a589e37671d4f46",
+      "bytes": 801419
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/roar_000_body.png",
+      "sha256": "2f78bb63064bd572c2e1844f451d012e9a086fe777dce32913c57156edb42dae",
+      "bytes": 743346
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/roar_000_head.png",
+      "sha256": "d8a6b1ef7532a813860f97ca9647744f280169e14c3b30323c0af6bebb6b8ba2",
+      "bytes": 796956
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/roar_020_body.png",
+      "sha256": "5ca587025767a3e0e842c29c45f417763a2e7534c6b20dd7fa70c647edfafd33",
+      "bytes": 749472
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/roar_020_head.png",
+      "sha256": "3dd977c3874c774a44a8d3976f49ef333b7a8118411075f504765827fee7993d",
+      "bytes": 790300
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/roar_028_body.png",
+      "sha256": "07b2b980c8a728a949cacb78344a31ed89ac813f9a283eadb929c577e0b42a51",
+      "bytes": 753315
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/roar_028_head.png",
+      "sha256": "83dc7a999213051952edbdc32b92025591b6b939454332cad84cfe102b11fbe8",
+      "bytes": 799179
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/roar_046_body.png",
+      "sha256": "13c20ad962633eb95bfbb51abb52c7f98b611b405df4e6227a2a59d142ee57ff",
+      "bytes": 744104
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/roar_046_head.png",
+      "sha256": "e709e3d98d8f9075f06575200aaef27e4fcc10b05ff6d74d702ed23fdfba7abf",
+      "bytes": 796793
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/run_048_body.png",
+      "sha256": "ddc9a40994cb1f7e3ff95f2e5559df2c1539f7c58e85366de8f1afeb4368a894",
+      "bytes": 753253
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/run_048_feet.png",
+      "sha256": "9e7068dc4efc34e642b1fbeabc242ad292de887e7f7c29f8d013c439cb1a00d8",
+      "bytes": 778706
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/run_056_body.png",
+      "sha256": "26d9a49b94f68df99b906bf23b5b333dbff8d9f935e1f5d54b9381e918d04696",
+      "bytes": 746843
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/run_064_body.png",
+      "sha256": "3a03c53eddf8111635b1d86e07337bcb15340c4b55404ff0d707c604202564c4",
+      "bytes": 756823
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/run_072_body.png",
+      "sha256": "e129b6809b960bf0589cbeb097c63eff1c2d22e9060377e43eb5cb75ef3e6d9e",
+      "bytes": 756060
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/run_072_feet.png",
+      "sha256": "6471b15b7bf1eb7637be14585d555cf37d6f72df7b82b26eb387a8e5ca5580e1",
+      "bytes": 791277
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/run_080_body.png",
+      "sha256": "f2407ecb1c756d4432b051c814748f2a416097264e45f80fe9916350e797bb05",
+      "bytes": 750509
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/run_088_body.png",
+      "sha256": "e014b6d74bc6cbc2ccc845c50ac7f36b728db69d642071967225431b41ece848",
+      "bytes": 752426
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/run_096_body.png",
+      "sha256": "c1edab900281d2cf3ff8e58287a32aed4897b765eb55fb648dc357cd8263b266",
+      "bytes": 754941
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/run_096_feet.png",
+      "sha256": "44a6f230c863d94b7f7b1958646207855a36800d24dc3aa3fd919a46cfeb065c",
+      "bytes": 785272
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/run_104_body.png",
+      "sha256": "632195c62aca66085f4710985e6ec32d5e86649b13753077fed5adba7f41bf3d",
+      "bytes": 757369
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/run_112_body.png",
+      "sha256": "99544209cc2e884c4c526527447efe5d385a33fc6a83b0ef4c199e7b3f6a8818",
+      "bytes": 753195
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/run_120_body.png",
+      "sha256": "e14e730a84b0edfbc4215f8c7bef2fbff80a06f2ef6dd4d8a6ad26e0cdbffddd",
+      "bytes": 754769
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/run_120_feet.png",
+      "sha256": "1dc60efe72382b7a692632a73baec955d2ffc0cad98594f4ee193398ed9c29fa",
+      "bytes": 779332
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/run_128_body.png",
+      "sha256": "adcd49152c20b82c15229ba12e80f101ec9ec9a737138f04fbb8ffa94c58b1c3",
+      "bytes": 755051
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/run_136_body.png",
+      "sha256": "7742665f30cb6e66f64349f7fd60f6e10fdb9c98bba5b646b29a634c3d3aa041",
+      "bytes": 751484
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/turn_048_body.png",
+      "sha256": "bc425f2f9e491d6d15c9bf554f56aa95a274ac90ce7247a0a1a1a5634eba804e",
+      "bytes": 736918
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/turn_048_feet.png",
+      "sha256": "b0f956ab616a79db123e200ec2a04a71c4b1c820338890b93c311cf3ccf29dd7",
+      "bytes": 792666
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/turn_060_body.png",
+      "sha256": "6a7c3a7d4b45344a528c2ee3f91a2ef1ec055620dd2d7f1a97984e49eeddd6bc",
+      "bytes": 727770
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/turn_072_body.png",
+      "sha256": "8af9df8f87971a57124e8fcd41b55df8db810f40303a19db5f9e177435718789",
+      "bytes": 727367
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/turn_084_body.png",
+      "sha256": "dac03ae64741bce6acd05ea20f352d68cad87cd82327726107b90b96b8ad1118",
+      "bytes": 734103
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/turn_084_feet.png",
+      "sha256": "176626ee3534a27cfdf3331f13ae2c33cd114e0642db0ae8df3321053ea81e84",
+      "bytes": 773378
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/turn_096_body.png",
+      "sha256": "4cbfbdf05f5dab2c49735e6f74a5f29a7cde5fe7377e6689719c25d3867ecffd",
+      "bytes": 741867
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/turn_108_body.png",
+      "sha256": "d382e37a1c5e2288e5365bc525910b7c62a3034f6e97bc6dc319a1c41d754cf1",
+      "bytes": 745324
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/turn_120_body.png",
+      "sha256": "51debe769c4efb24694d941929fd063c67e70acc5c62d97122ba61c0a8c33b15",
+      "bytes": 754524
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/turn_120_feet.png",
+      "sha256": "f834bda017013b676dbf5c11549a52be7df05d3f6deec9f46b5968d63e8426aa",
+      "bytes": 771030
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/turn_132_body.png",
+      "sha256": "e2ffd02856549473487b32b2a7206867be3eae2a609c8e0d445a2c958834bd7f",
+      "bytes": 750288
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/walk_048_body.png",
+      "sha256": "2feb7854f1ed38eefeadd6756c324b27884041ccacb00c0926057fdcf9e98d9f",
+      "bytes": 750191
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/walk_048_feet.png",
+      "sha256": "e3981d64024f68455a06225c5a8d415d8edbf43b4ca22a0a3c6e2385f4d322bc",
+      "bytes": 775146
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/walk_056_body.png",
+      "sha256": "c22eea774cf6f6b4ca54def9076ff32cf8e472b4fed314bd0a810376fb558f3e",
+      "bytes": 748327
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/walk_064_body.png",
+      "sha256": "fbad4fab9f9f21b5dfb534fa8b8266d3add9045fd1264f9b885cb690d0c1b1f7",
+      "bytes": 750189
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/walk_072_body.png",
+      "sha256": "c71e542273f4b5cd69045128543f6ef97f9d4b04e73b904146d9a723ebb03e8f",
+      "bytes": 747455
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/walk_072_feet.png",
+      "sha256": "8bd05f2da5890304dd21e37e282c902c13edd0bd7f6aaad8713560828b656d5a",
+      "bytes": 775250
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/walk_080_body.png",
+      "sha256": "5a6a562c6c9d09235378c6d51d8089a67936936aea72e411b88b26fff88e13be",
+      "bytes": 750014
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/walk_088_body.png",
+      "sha256": "3f7af88e897a1cd7d154be050ff550a5c2df8e2f2f5e7319d19c73723016c91d",
+      "bytes": 747698
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/walk_096_body.png",
+      "sha256": "ad630e6ab345692bc35117bb3e08149cd192d3af25fc49f665ed5cff6a9b3ebd",
+      "bytes": 749960
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/walk_096_feet.png",
+      "sha256": "0233e138c308a642549c9e1428a829f57a7308055c1aa0a070b7ef5543b4dfe4",
+      "bytes": 773650
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/walk_104_body.png",
+      "sha256": "7ef959abb87309dfd0d027bae6d977aa33676efa1104eefeb6d4dcda5a865306",
+      "bytes": 747233
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/walk_112_body.png",
+      "sha256": "2c622eaad2e39c3332195fbf0a16a05018cb3c664c93fc12ff618f8247428d4c",
+      "bytes": 752577
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/walk_120_body.png",
+      "sha256": "d1296304a4915c0cad8396d9b85a605947f08049767a5c37f12816e93265307c",
+      "bytes": 748934
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/walk_120_feet.png",
+      "sha256": "bc4a7f4e40fd8c5d529348c2c50509fbbccd8839f61deb7c9b4916e1a7cf430b",
+      "bytes": 778510
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/walk_128_body.png",
+      "sha256": "5651cd914ff2746b2fc13939d563e90b0b8bb1ae791bdb42a11b9acb9f48d11b",
+      "bytes": 751595
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/motion/walk_136_body.png",
+      "sha256": "de4bfb191fa51af7083019069a687193bf3b32feb24213580916c7aa71637c22",
+      "bytes": 748839
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/references/concept_front.png",
+      "sha256": "29872949862858e5f1aa21dea6bdb585f841ae03eee8e93da058892ff1562c0f",
+      "bytes": 205808
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/references/concept_rear.png",
+      "sha256": "05c6184312d09242e728c7bb31250622d0f25fc0448555bed52535f20871d4aa",
+      "bytes": 198203
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/references/concept_side.png",
+      "sha256": "630fcf5932b82fb4883c0cf06a24b5a81daae06e60fec9f058a695dc04ba0b26",
+      "bytes": 403066
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/replay_audit.py",
+      "sha256": "ca1d0624f57090b4655ea7b90550e4056b43aca9c71cd5450f4f4b3fee27d50c",
+      "bytes": 5977
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/resource_provenance.json",
+      "sha256": "e5a0efd55b5cb92ed9ef7cc8642fda075eb164b2a26dc400d00b8031aefff925",
+      "bytes": 2674
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/roar.gif",
+      "sha256": "1408dfd7ad36087d1d7403878f36667e98c0b7f4cac53db0cbc6cbd814b56951",
+      "bytes": 852797
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/run.gif",
+      "sha256": "20edc226f16d4394e2787108efb27a6327aa1317cecb4fa14d28ebbb555627bb",
+      "bytes": 2357745
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/setup.py",
+      "sha256": "76e793fb7e296239c7229751af00dc34eadadd35ef0e1b66c42f7172cc359541",
+      "bytes": 1201
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/source_geometry.json",
+      "sha256": "c5a364335975f3a544792612c9d08fe21d218a74835e65cfa8739e2df4e96673",
+      "bytes": 2466062
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/test-project/candidate.gd",
+      "sha256": "38ed68fa9b26e71917a9feb477783ce22f7f75723de4394100fbf3333eb9d30d",
+      "bytes": 1167
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/test-project/candidate.gd.uid",
+      "sha256": "2fbb19ad3b195a6fb0dabe4d1c9c63fe6cfe5a6d38890252c84fbb7ba252d110",
+      "bytes": 20
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/test-project/facet.gdshader",
+      "sha256": "8154911f5422037452d858797648b273ceb1d79e94b8332485889e8266480617",
+      "bytes": 4423
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/test-project/facet.gdshader.uid",
+      "sha256": "6a4a3757516f55e3227962e9a33d1dc1cf67feb418ecc4688a5b735770b3509c",
+      "bytes": 20
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/test-project/fx.gd",
+      "sha256": "040aa9af3da36adeb0cb440b59bafd260ddef3d0825bd0b2b9eb6d42c6c27136",
+      "bytes": 12033
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/test-project/fx.gd.uid",
+      "sha256": "ee31ae07059f16d3f91873b18656bbe8a57797a1e9c40826e28a393518e7923e",
+      "bytes": 19
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/test-project/models/S_clean.glb",
+      "sha256": "3569eeb2b68bf1c33c4ade619513fb68fa6ad4f8560907db5d8e8fd16dc9efe1",
+      "bytes": 1113324
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/test-project/models/S_clean.glb.import",
+      "sha256": "ca76470f218cf790af3dc1286efa44296991d7da3ec2e069a5a15187ade67854",
+      "bytes": 1143
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/test-project/models/S_eight_weights.glb",
+      "sha256": "3569eeb2b68bf1c33c4ade619513fb68fa6ad4f8560907db5d8e8fd16dc9efe1",
+      "bytes": 1113324
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/test-project/models/S_eight_weights.glb.import",
+      "sha256": "d703ac057e1ff712d22acff64c3ab47dcdbbf276bc2189fff211483de33c6d26",
+      "bytes": 1167
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/test-project/models/S_isolated.glb",
+      "sha256": "3569eeb2b68bf1c33c4ade619513fb68fa6ad4f8560907db5d8e8fd16dc9efe1",
+      "bytes": 1113324
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/test-project/models/S_isolated.glb.import",
+      "sha256": "c5bb9737032b8f57c72996096f0e88e5d0e36d49fcaa1f1f0e3227a035e15f5f",
+      "bytes": 1152
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/test-project/models/trex_hd.glb",
+      "sha256": "54b02c2e756fd28954a1edb78d92ddd9d387457631b82b7108fa8c0fe9d6dd3b",
+      "bytes": 436872
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/test-project/models/trex_hd.glb.import",
+      "sha256": "3c0a10056de9ec52db19bfbf81ffcc96527e64580f70b0a1e2c1c474e212b681",
+      "bytes": 1143
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/test-project/project.godot",
+      "sha256": "a191907487191e7ce3f6f1a32b08ca6f7c774048f5c8e9bd8f7a59d818175a1a",
+      "bytes": 133
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/test-project/run_evaluation.gd",
+      "sha256": "3f04285ba0f7b8a603f14b6b44e59e5ba856117913862e157c56808afcc34df4",
+      "bytes": 3203
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/test-project/run_evaluation.gd.uid",
+      "sha256": "974851ebfdcb9aa5f434375477fd2a0539b2d9ce7aa69221144b18e4af9bd671",
+      "bytes": 20
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/test-project/trex.gd",
+      "sha256": "2421f15edcdfad584470cf2239d822e916e6fbeefa14edf6cd4c96ac55c55cb8",
+      "bytes": 42220
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/test-project/trex.gd.uid",
+      "sha256": "9c24bb1e527f6b9580d6c69391afc17df080637c8da3a82f010a1cea7d6becc4",
+      "bytes": 19
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/test-project/viewmodel_mark.gd",
+      "sha256": "104701eddf3339bfb79e9c273aa98ee3babafd902a848555e67b3f5d6c4b34c7",
+      "bytes": 829
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/test-project/viewmodel_mark.gd.uid",
+      "sha256": "94a13842692b1697dfab495817f1b603d7f44ed13c4b72c78474f00cfcb9d2f3",
+      "bytes": 20
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/turn.gif",
+      "sha256": "e28cd676bf4d8eba6e284b0163acc91f9c3edd62b131df743c2325f4de31f95e",
+      "bytes": 1265710
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/verify_export.py",
+      "sha256": "75d6ca5af64ee7b7c94da2da3c91171921300c065096b2cfe3a2fc8828234a0e",
+      "bytes": 1821
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/walk.gif",
+      "sha256": "6dd94aec1abfce2a8de0aa02d14d76832fbfd2afd8c6326f609c80e329281553",
+      "bytes": 2267994
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/write_report.py",
+      "sha256": "7239fa59a2be5a1e4a87e3691244ab7f143145f6b8cb1796630d2b84484d8839",
+      "bytes": 11206
+    }
+  ],
+  "excludes": [
+    "Godot .godot generated cache",
+    "manifest itself"
+  ]
+}

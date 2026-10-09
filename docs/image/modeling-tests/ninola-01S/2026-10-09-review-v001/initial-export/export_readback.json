@@ -1,0 +1,14 @@
+{
+  "GLB_blender_import_meshes": [
+    "01R2_Gold_Slit_Eye",
+    "Icosphere"
+  ],
+  "triangles": 7087,
+  "import_vertex_count": 16174,
+  "max_nearest_source_bind_world_error": 1.1952913999557495,
+  "max_nearest_source_evaluated_world_error": 1.195291519165039,
+  "bind_world_geometry_matches": false,
+  "triangle_count_matches": false,
+  "scope": "Blender exporter/importer bind geometry check; not full Godot skin/PBR acceptance",
+  "source_hash_unchanged": true
+}

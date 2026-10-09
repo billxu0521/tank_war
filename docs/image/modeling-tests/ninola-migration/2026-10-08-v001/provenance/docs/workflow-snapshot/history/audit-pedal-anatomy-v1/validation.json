@@ -1,0 +1,8 @@
+{
+  "source_sha256_before_after": "b8b7e5c11f9a7c6f80901086e3d03d609f6ec732a1d888b0fdd66a61eba613b3",
+  "model_fingerprint_before_after": "661f09a5f1144bf02677e29316b3a40bf3e49dbfc169bde12d7ef80eba1b5bfe",
+  "model_geometry_groups_weights_pose_rest_keys_values_unchanged": true,
+  "new_vertex_groups": false,
+  "no_save": true,
+  "no_apply_bake": true
+}

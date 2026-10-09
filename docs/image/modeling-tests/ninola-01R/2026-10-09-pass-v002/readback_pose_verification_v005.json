@@ -1,0 +1,34 @@
+{
+  "Rig_names_hierarchy_rest_pose_channels_Trex_keys_exact": true,
+  "unchanged_retained_bind_coordinates_exact": true,
+  "all_retained_weights_exact": true,
+  "intentional_surface_vertices_changed": 131,
+  "retained_source_hashes_unchanged": true,
+  "checks": [
+    {
+      "name": "jaw_open20",
+      "bone": "jaw",
+      "local_axis": "X",
+      "angle_degrees": 20,
+      "retained_vertex_evaluation_max_delta": 0.0,
+      "scope": "artificial local test not full bite/locomotion/game"
+    },
+    {
+      "name": "jaw_open35",
+      "bone": "jaw",
+      "local_axis": "X",
+      "angle_degrees": 35,
+      "retained_vertex_evaluation_max_delta": 0.0,
+      "scope": "artificial local test not full bite/locomotion/game"
+    },
+    {
+      "name": "head_turn10",
+      "bone": "head",
+      "local_axis": "Z",
+      "angle_degrees": 10,
+      "retained_vertex_evaluation_max_delta": 0.0,
+      "scope": "artificial local test not full bite/locomotion/game"
+    }
+  ],
+  "full_deformation_export_game_acceptance": false
+}

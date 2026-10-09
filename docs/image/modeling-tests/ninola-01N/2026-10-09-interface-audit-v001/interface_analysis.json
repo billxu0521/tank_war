@@ -1,0 +1,1390 @@
+{
+  "source": "01N1 v003 user accepted",
+  "fixed_point_count": 27,
+  "shared_boundary_missing_coordinates": [],
+  "new_exterior_faces": 197,
+  "collar_faces": 54,
+  "shoulder_faces": 54,
+  "lower_transition_faces": 54,
+  "floor_faces": 35,
+  "boundary_points": [
+    {
+      "order": 0,
+      "world": [
+        -0.00186,
+        2.07756,
+        1.77108
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3765,
+        3786,
+        3792
+      ],
+      "deviation_from_neighbour_chord": 0.015398901230133521,
+      "collar_point": [
+        -0.0017151415813714266,
+        2.0761568546295166,
+        1.7510838508605957
+      ],
+      "shoulder_point": [
+        -0.0004101425874978304,
+        2.063863515853882,
+        1.676487684249878
+      ],
+      "lower_point": [
+        4.829019535591492e-16,
+        2.0924999713897705,
+        1.5049998760223389
+      ]
+    },
+    {
+      "order": 1,
+      "world": [
+        0.28547,
+        2.09433,
+        1.78996
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3772,
+        3779,
+        3780,
+        3792,
+        3793
+      ],
+      "deviation_from_neighbour_chord": 0.11905508841782969,
+      "collar_point": [
+        0.28553831577301025,
+        2.0954084396362305,
+        1.769958734512329
+      ],
+      "shoulder_point": [
+        0.2861350178718567,
+        2.104855537414551,
+        1.6840767860412598
+      ],
+      "lower_point": [
+        0.24623741209506989,
+        2.1379330158233643,
+        1.4984216690063477
+      ]
+    },
+    {
+      "order": 2,
+      "world": [
+        0.40652,
+        2.02512,
+        1.63534
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3779
+      ],
+      "deviation_from_neighbour_chord": 0.14107906223107683,
+      "collar_point": [
+        0.4040471315383911,
+        2.038975954055786,
+        1.6153385639190674
+      ],
+      "shoulder_point": [
+        0.38242655992507935,
+        2.1602418422698975,
+        1.612333059310913
+      ],
+      "lower_point": [
+        0.3230431079864502,
+        2.2239365577697754,
+        1.4826772212982178
+      ]
+    },
+    {
+      "order": 3,
+      "world": [
+        0.4008,
+        2.11065,
+        1.74739
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3779,
+        3780
+      ],
+      "deviation_from_neighbour_chord": 0.07408905199247505,
+      "collar_point": [
+        0.4022895097732544,
+        2.12441086769104,
+        1.7273919582366943
+      ],
+      "shoulder_point": [
+        0.4152897000312805,
+        2.2448365688323975,
+        1.6607403755187988
+      ],
+      "lower_point": [
+        0.36066290736198425,
+        2.3040504455566406,
+        1.4680109024047852
+      ]
+    },
+    {
+      "order": 4,
+      "world": [
+        0.3893,
+        2.3631,
+        1.76465
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3780,
+        3782,
+        3793
+      ],
+      "deviation_from_neighbour_chord": 0.047694276544737346,
+      "collar_point": [
+        0.39475783705711365,
+        2.3716399669647217,
+        1.7446479797363281
+      ],
+      "shoulder_point": [
+        0.44254860281944275,
+        2.4463794231414795,
+        1.686776876449585
+      ],
+      "lower_point": [
+        0.3935089707374573,
+        2.481875419616699,
+        1.471794605255127
+      ]
+    },
+    {
+      "order": 5,
+      "world": [
+        0.43637,
+        2.58091,
+        1.71071
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3781,
+        3782
+      ],
+      "deviation_from_neighbour_chord": 0.1087880590364286,
+      "collar_point": [
+        0.4371919631958008,
+        2.587517261505127,
+        1.6907103061676025
+      ],
+      "shoulder_point": [
+        0.4444010853767395,
+        2.645340919494629,
+        1.6713197231292725
+      ],
+      "lower_point": [
+        0.3841334879398346,
+        2.6658387184143066,
+        1.4931621551513672
+      ]
+    },
+    {
+      "order": 6,
+      "world": [
+        0.33473,
+        2.68631,
+        1.79159
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3774,
+        3781,
+        3796
+      ],
+      "deviation_from_neighbour_chord": 0.032374936635464466,
+      "collar_point": [
+        0.3412128686904907,
+        2.6960973739624023,
+        1.77158522605896
+      ],
+      "shoulder_point": [
+        0.3979385495185852,
+        2.781695604324341,
+        1.7083582878112793
+      ],
+      "lower_point": [
+        0.3575592637062073,
+        2.8036677837371826,
+        1.5169541835784912
+      ]
+    },
+    {
+      "order": 7,
+      "world": [
+        0.24001,
+        2.87155,
+        1.85405
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3775,
+        3785,
+        3794,
+        3796
+      ],
+      "deviation_from_neighbour_chord": 0.11315913140978423,
+      "collar_point": [
+        0.24999023973941803,
+        2.8809139728546143,
+        1.8340470790863037
+      ],
+      "shoulder_point": [
+        0.33731892704963684,
+        2.9628560543060303,
+        1.7499668598175049
+      ],
+      "lower_point": [
+        0.3136979639530182,
+        2.9746787548065186,
+        1.5578656196594238
+      ]
+    },
+    {
+      "order": 8,
+      "world": [
+        0.33973,
+        2.93406,
+        1.80053
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3785
+      ],
+      "deviation_from_neighbour_chord": 0.12449080087372477,
+      "collar_point": [
+        0.3387995660305023,
+        2.946178913116455,
+        1.7805311679840088
+      ],
+      "shoulder_point": [
+        0.3306683301925659,
+        3.0522232055664062,
+        1.731844425201416
+      ],
+      "lower_point": [
+        0.28217703104019165,
+        3.0667736530303955,
+        1.5781102180480957
+      ]
+    },
+    {
+      "order": 9,
+      "world": [
+        0.17178,
+        3.17282,
+        1.87682
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3777,
+        3778,
+        3785,
+        3794
+      ],
+      "deviation_from_neighbour_chord": 0.13110650448618194,
+      "collar_point": [
+        0.17611126601696014,
+        3.1800942420959473,
+        1.8568150997161865
+      ],
+      "shoulder_point": [
+        0.2140045017004013,
+        3.2437756061553955,
+        1.773566722869873
+      ],
+      "lower_point": [
+        0.19428586959838867,
+        3.236100435256958,
+        1.6225159168243408
+      ]
+    },
+    {
+      "order": 10,
+      "world": [
+        0.28283,
+        3.25296,
+        1.83933
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3778
+      ],
+      "deviation_from_neighbour_chord": 0.12373876243741332,
+      "collar_point": [
+        0.27377450466156006,
+        3.2581682205200195,
+        1.819329023361206
+      ],
+      "shoulder_point": [
+        0.19457878172397614,
+        3.303767442703247,
+        1.7566978931427002
+      ],
+      "lower_point": [
+        0.14593225717544556,
+        3.2876932621002197,
+        1.6442394256591797
+      ]
+    },
+    {
+      "order": 11,
+      "world": [
+        0.15928,
+        3.31202,
+        1.87776
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3777,
+        3778,
+        3789,
+        3795
+      ],
+      "deviation_from_neighbour_chord": 0.05713072413339804,
+      "collar_point": [
+        0.15521763265132904,
+        3.3151023387908936,
+        1.857757568359375
+      ],
+      "shoulder_point": [
+        0.11970460414886475,
+        3.3420770168304443,
+        1.7739911079406738
+      ],
+      "lower_point": [
+        0.09334729611873627,
+        3.3185269832611084,
+        1.657221794128418
+      ]
+    },
+    {
+      "order": 12,
+      "world": [
+        0.14955,
+        3.37313,
+        1.83461
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3789
+      ],
+      "deviation_from_neighbour_chord": 0.0460814422444559,
+      "collar_point": [
+        0.1428493708372116,
+        3.3719534873962402,
+        1.8146090507507324
+      ],
+      "shoulder_point": [
+        0.08419524133205414,
+        3.361656427383423,
+        1.7545738220214844
+      ],
+      "lower_point": [
+        0.05655452981591225,
+        3.3259990215301514,
+        1.6603682041168213
+      ]
+    },
+    {
+      "order": 13,
+      "world": [
+        0.1097,
+        3.37913,
+        1.86764
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3776,
+        3789,
+        3795
+      ],
+      "deviation_from_neighbour_chord": 0.025044294914519972,
+      "collar_point": [
+        0.10092680156230927,
+        3.3775975704193115,
+        1.847641944885254
+      ],
+      "shoulder_point": [
+        0.024134673178195953,
+        3.3642079830169678,
+        1.7694389820098877
+      ],
+      "lower_point": [
+        4.327362912448507e-10,
+        3.3274996280670166,
+        1.6609997749328613
+      ]
+    },
+    {
+      "order": 14,
+      "world": [
+        -0.06919,
+        3.35814,
+        1.88448
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3771,
+        3776,
+        3791
+      ],
+      "deviation_from_neighbour_chord": 0.05079087804689445,
+      "collar_point": [
+        -0.07340018451213837,
+        3.3571603298187256,
+        1.864480972290039
+      ],
+      "shoulder_point": [
+        -0.11025939136743546,
+        3.3485941886901855,
+        1.7770164012908936
+      ],
+      "lower_point": [
+        -0.10478559881448746,
+        3.3141071796417236,
+        1.6553609371185303
+      ]
+    },
+    {
+      "order": 15,
+      "world": [
+        -0.14767,
+        3.36529,
+        1.81958
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3791
+      ],
+      "deviation_from_neighbour_chord": 0.0660199778329791,
+      "collar_point": [
+        -0.14859962463378906,
+        3.3621227741241455,
+        1.7995784282684326
+      ],
+      "shoulder_point": [
+        -0.15671586990356445,
+        3.33439564704895,
+        1.7478101253509521
+      ],
+      "lower_point": [
+        -0.13696934282779694,
+        3.2948975563049316,
+        1.6472725868225098
+      ]
+    },
+    {
+      "order": 16,
+      "world": [
+        -0.19195,
+        3.30495,
+        1.86482
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3770,
+        3771,
+        3790,
+        3791
+      ],
+      "deviation_from_neighbour_chord": 0.06168552629571888,
+      "collar_point": [
+        -0.19174528121948242,
+        3.3046793937683105,
+        1.844815969467163
+      ],
+      "shoulder_point": [
+        -0.1899144947528839,
+        3.30230975151062,
+        1.76816725730896
+      ],
+      "lower_point": [
+        -0.1628316342830658,
+        3.271987199783325,
+        1.6376261711120605
+      ]
+    },
+    {
+      "order": 17,
+      "world": [
+        -0.29411,
+        3.2952,
+        1.80601
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3790
+      ],
+      "deviation_from_neighbour_chord": 0.11828078542180889,
+      "collar_point": [
+        -0.28895294666290283,
+        3.292340040206909,
+        1.7860107421875
+      ],
+      "shoulder_point": [
+        -0.2438582479953766,
+        3.2673048973083496,
+        1.7417047023773193
+      ],
+      "lower_point": [
+        -0.1975296437740326,
+        3.2319648265838623,
+        1.620774745941162
+      ]
+    },
+    {
+      "order": 18,
+      "world": [
+        -0.16262,
+        3.21449,
+        1.86695
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3769,
+        3770,
+        3788,
+        3790
+      ],
+      "deviation_from_neighbour_chord": 0.13813136704224319,
+      "collar_point": [
+        -0.17218579351902008,
+        3.2120025157928467,
+        1.846949815750122
+      ],
+      "shoulder_point": [
+        -0.25585126876831055,
+        3.190214157104492,
+        1.7671124935150146
+      ],
+      "lower_point": [
+        -0.24264566600322723,
+        3.159698247909546,
+        1.5976734161376953
+      ]
+    },
+    {
+      "order": 19,
+      "world": [
+        -0.28364,
+        3.07196,
+        1.82595
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3764,
+        3769
+      ],
+      "deviation_from_neighbour_chord": 0.026163399639678314,
+      "collar_point": [
+        -0.2875746488571167,
+        3.0721514225006104,
+        1.8059544563293457
+      ],
+      "shoulder_point": [
+        -0.32196319103240967,
+        3.0738062858581543,
+        1.7426671981811523
+      ],
+      "lower_point": [
+        -0.28618308901786804,
+        3.056110143661499,
+        1.5758655071258545
+      ]
+    },
+    {
+      "order": 20,
+      "world": [
+        -0.39203,
+        2.92217,
+        1.7322
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3764
+      ],
+      "deviation_from_neighbour_chord": 0.1932210544124195,
+      "collar_point": [
+        -0.39117303490638733,
+        2.923312187194824,
+        1.7121968269348145
+      ],
+      "shoulder_point": [
+        -0.3837125301361084,
+        2.933328866958618,
+        1.6912240982055664
+      ],
+      "lower_point": [
+        -0.3279763162136078,
+        2.9251530170440674,
+        1.5460174083709717
+      ]
+    },
+    {
+      "order": 21,
+      "world": [
+        -0.17921,
+        2.85957,
+        1.85367
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3763,
+        3764,
+        3767,
+        3768,
+        3769,
+        3788
+      ],
+      "deviation_from_neighbour_chord": 0.2214720717281695,
+      "collar_point": [
+        -0.19920456409454346,
+        2.8509414196014404,
+        1.8336687088012695
+      ],
+      "shoulder_point": [
+        -0.3741822838783264,
+        2.775423765182495,
+        1.7356510162353516
+      ],
+      "lower_point": [
+        -0.369090735912323,
+        2.749605178833008,
+        1.507270336151123
+      ]
+    },
+    {
+      "order": 22,
+      "world": [
+        -0.35629,
+        2.6969,
+        1.79009
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3763
+      ],
+      "deviation_from_neighbour_chord": 0.16653674747491987,
+      "collar_point": [
+        -0.3646128475666046,
+        2.686466693878174,
+        1.7700917720794678
+      ],
+      "shoulder_point": [
+        -0.437446266412735,
+        2.595146656036377,
+        1.7070412635803223
+      ],
+      "lower_point": [
+        -0.39588963985443115,
+        2.5736234188079834,
+        1.4776313304901123
+      ]
+    },
+    {
+      "order": 23,
+      "world": [
+        -0.20985,
+        2.58514,
+        1.83743
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3763,
+        3766,
+        3767,
+        3784,
+        3787
+      ],
+      "deviation_from_neighbour_chord": 0.1685549138961631,
+      "collar_point": [
+        -0.22934478521347046,
+        2.572878360748291,
+        1.8174278736114502
+      ],
+      "shoulder_point": [
+        -0.3999142050743103,
+        2.465632677078247,
+        1.7153544425964355
+      ],
+      "lower_point": [
+        -0.390028715133667,
+        2.4458301067352295,
+        1.4702768325805664
+      ]
+    },
+    {
+      "order": 24,
+      "world": [
+        -0.39845,
+        2.34044,
+        1.75107
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3762,
+        3783,
+        3784
+      ],
+      "deviation_from_neighbour_chord": 0.11534258020885267,
+      "collar_point": [
+        -0.3984902799129486,
+        2.3322691917419434,
+        1.7310662269592285
+      ],
+      "shoulder_point": [
+        -0.3988074064254761,
+        2.2607645988464355,
+        1.6634552478790283
+      ],
+      "lower_point": [
+        -0.34306010603904724,
+        2.2618768215179443,
+        1.475731611251831
+      ]
+    },
+    {
+      "order": 25,
+      "world": [
+        -0.36359,
+        2.05911,
+        1.72348
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3762
+      ],
+      "deviation_from_neighbour_chord": 0.14590326400811496,
+      "collar_point": [
+        -0.3587357699871063,
+        2.0639185905456543,
+        1.7034780979156494
+      ],
+      "shoulder_point": [
+        -0.3162606358528137,
+        2.106006145477295,
+        1.6538877487182617
+      ],
+      "lower_point": [
+        -0.26050373911857605,
+        2.1487724781036377,
+        1.4964375495910645
+      ]
+    },
+    {
+      "order": 26,
+      "world": [
+        -0.20961,
+        2.08128,
+        1.77873
+      ],
+      "fixed_source_neighbour_materials": [
+        "d_mouth"
+      ],
+      "protected_source_faces": [
+        3762,
+        3765,
+        3783
+      ],
+      "deviation_from_neighbour_chord": 0.03743264267561324,
+      "collar_point": [
+        -0.21062496304512024,
+        2.0810649394989014,
+        1.7587265968322754
+      ],
+      "shoulder_point": [
+        -0.21946807205677032,
+        2.079190969467163,
+        1.6797211170196533
+      ],
+      "lower_point": [
+        -0.19113270938396454,
+        2.1101720333099365,
+        1.5035037994384766
+      ]
+    }
+  ],
+  "top_boundary_z_range": [
+    1.63534,
+    1.88448
+  ],
+  "collar_z_offset_range": [
+    -0.02000490028381341,
+    -0.01999554367065426
+  ],
+  "new_patch_internal_boundary_edges": 27,
+  "new_patch_nonmanifold_edges": 0,
+  "new_patch_inconsistent_winding_edges": [
+    {
+      "local_faces": [
+        3,
+        56
+      ],
+      "vertices": [
+        11051,
+        11052
+      ]
+    },
+    {
+      "local_faces": [
+        12,
+        15
+      ],
+      "vertices": [
+        5764,
+        11057
+      ]
+    },
+    {
+      "local_faces": [
+        14,
+        17
+      ],
+      "vertices": [
+        5863,
+        11058
+      ]
+    },
+    {
+      "local_faces": [
+        16,
+        19
+      ],
+      "vertices": [
+        5765,
+        11059
+      ]
+    },
+    {
+      "local_faces": [
+        18,
+        21
+      ],
+      "vertices": [
+        5889,
+        11060
+      ]
+    },
+    {
+      "local_faces": [
+        23,
+        76
+      ],
+      "vertices": [
+        11061,
+        11062
+      ]
+    },
+    {
+      "local_faces": [
+        32,
+        35
+      ],
+      "vertices": [
+        5650,
+        11067
+      ]
+    },
+    {
+      "local_faces": [
+        34,
+        37
+      ],
+      "vertices": [
+        5706,
+        11068
+      ]
+    },
+    {
+      "local_faces": [
+        38,
+        41
+      ],
+      "vertices": [
+        5594,
+        11070
+      ]
+    },
+    {
+      "local_faces": [
+        40,
+        41
+      ],
+      "vertices": [
+        5594,
+        11071
+      ]
+    },
+    {
+      "local_faces": [
+        41,
+        94
+      ],
+      "vertices": [
+        11070,
+        11071
+      ]
+    },
+    {
+      "local_faces": [
+        56,
+        59
+      ],
+      "vertices": [
+        11052,
+        11079
+      ]
+    },
+    {
+      "local_faces": [
+        56,
+        57
+      ],
+      "vertices": [
+        11051,
+        11079
+      ]
+    },
+    {
+      "local_faces": [
+        68,
+        71
+      ],
+      "vertices": [
+        11058,
+        11085
+      ]
+    },
+    {
+      "local_faces": [
+        68,
+        69
+      ],
+      "vertices": [
+        11057,
+        11085
+      ]
+    },
+    {
+      "local_faces": [
+        72,
+        75
+      ],
+      "vertices": [
+        11060,
+        11087
+      ]
+    },
+    {
+      "local_faces": [
+        72,
+        73
+      ],
+      "vertices": [
+        11059,
+        11087
+      ]
+    },
+    {
+      "local_faces": [
+        76,
+        79
+      ],
+      "vertices": [
+        11062,
+        11089
+      ]
+    },
+    {
+      "local_faces": [
+        76,
+        77
+      ],
+      "vertices": [
+        11061,
+        11089
+      ]
+    },
+    {
+      "local_faces": [
+        88,
+        91
+      ],
+      "vertices": [
+        11068,
+        11095
+      ]
+    },
+    {
+      "local_faces": [
+        88,
+        89
+      ],
+      "vertices": [
+        11067,
+        11095
+      ]
+    }
+  ],
+  "new_patch_large_normal_angle_edges": [
+    {
+      "local_faces": [
+        2,
+        5
+      ],
+      "vertices": [
+        5791,
+        11052
+      ],
+      "normal_angle_degrees": 140.89173528267048
+    },
+    {
+      "local_faces": [
+        3,
+        56
+      ],
+      "vertices": [
+        11051,
+        11052
+      ],
+      "normal_angle_degrees": 123.78412157612554
+    },
+    {
+      "local_faces": [
+        12,
+        15
+      ],
+      "vertices": [
+        5764,
+        11057
+      ],
+      "normal_angle_degrees": 100.14940420839098
+    },
+    {
+      "local_faces": [
+        16,
+        19
+      ],
+      "vertices": [
+        5765,
+        11059
+      ],
+      "normal_angle_degrees": 92.36849836754959
+    },
+    {
+      "local_faces": [
+        22,
+        25
+      ],
+      "vertices": [
+        5772,
+        11062
+      ],
+      "normal_angle_degrees": 88.78164564706657
+    },
+    {
+      "local_faces": [
+        23,
+        76
+      ],
+      "vertices": [
+        11061,
+        11062
+      ],
+      "normal_angle_degrees": 141.70967366642475
+    },
+    {
+      "local_faces": [
+        34,
+        37
+      ],
+      "vertices": [
+        5706,
+        11068
+      ],
+      "normal_angle_degrees": 101.3439396046915
+    },
+    {
+      "local_faces": [
+        40,
+        41
+      ],
+      "vertices": [
+        5594,
+        11071
+      ],
+      "normal_angle_degrees": 121.77177260857864
+    },
+    {
+      "local_faces": [
+        41,
+        94
+      ],
+      "vertices": [
+        11070,
+        11071
+      ],
+      "normal_angle_degrees": 91.74406819035723
+    },
+    {
+      "local_faces": [
+        42,
+        45
+      ],
+      "vertices": [
+        5568,
+        11072
+      ],
+      "normal_angle_degrees": 93.20730051450121
+    },
+    {
+      "local_faces": [
+        48,
+        51
+      ],
+      "vertices": [
+        5523,
+        11075
+      ],
+      "normal_angle_degrees": 92.06197452835595
+    },
+    {
+      "local_faces": [
+        56,
+        57
+      ],
+      "vertices": [
+        11051,
+        11079
+      ],
+      "normal_angle_degrees": 80.5856812163639
+    },
+    {
+      "local_faces": [
+        62,
+        63
+      ],
+      "vertices": [
+        11054,
+        11082
+      ],
+      "normal_angle_degrees": 83.33096923828357
+    },
+    {
+      "local_faces": [
+        76,
+        77
+      ],
+      "vertices": [
+        11061,
+        11089
+      ],
+      "normal_angle_degrees": 87.18287247159986
+    },
+    {
+      "local_faces": [
+        86,
+        89
+      ],
+      "vertices": [
+        11067,
+        11094
+      ],
+      "normal_angle_degrees": 85.59336905929302
+    },
+    {
+      "local_faces": [
+        88,
+        91
+      ],
+      "vertices": [
+        11068,
+        11095
+      ],
+      "normal_angle_degrees": 145.09788250602625
+    },
+    {
+      "local_faces": [
+        88,
+        89
+      ],
+      "vertices": [
+        11067,
+        11095
+      ],
+      "normal_angle_degrees": 89.17133724586891
+    },
+    {
+      "local_faces": [
+        94,
+        95
+      ],
+      "vertices": [
+        11070,
+        11098
+      ],
+      "normal_angle_degrees": 83.8928811881779
+    },
+    {
+      "local_faces": [
+        96,
+        99
+      ],
+      "vertices": [
+        11072,
+        11099
+      ],
+      "normal_angle_degrees": 94.39432197276916
+    },
+    {
+      "local_faces": [
+        96,
+        97
+      ],
+      "vertices": [
+        11071,
+        11099
+      ],
+      "normal_angle_degrees": 91.37363334107866
+    },
+    {
+      "local_faces": [
+        100,
+        103
+      ],
+      "vertices": [
+        11074,
+        11101
+      ],
+      "normal_angle_degrees": 98.5020499630591
+    },
+    {
+      "local_faces": [
+        100,
+        101
+      ],
+      "vertices": [
+        11073,
+        11101
+      ],
+      "normal_angle_degrees": 118.91712278758045
+    },
+    {
+      "local_faces": [
+        101,
+        154
+      ],
+      "vertices": [
+        11100,
+        11101
+      ],
+      "normal_angle_degrees": 83.96199021368264
+    },
+    {
+      "local_faces": [
+        151,
+        186
+      ],
+      "vertices": [
+        11125,
+        11126
+      ],
+      "normal_angle_degrees": 81.1222105233684
+    },
+    {
+      "local_faces": [
+        155,
+        166
+      ],
+      "vertices": [
+        11127,
+        11128
+      ],
+      "normal_angle_degrees": 84.3020664052756
+    }
+  ],
+  "interpretation_limits": "Sharp angle and notch metrics locate candidates, not visual approval or proof of holes; winding is a concrete local mesh consistency check, source and rig not modified.",
+  "diagnostic_orientation_only": {
+    "new_local_faces_to_reverse": [
+      72,
+      19,
+      76,
+      88,
+      35,
+      41,
+      34,
+      18,
+      14,
+      15,
+      68,
+      56
+    ],
+    "source_model_changed": false,
+    "coordinates_changed": false,
+    "remaining_inconsistent_new_patch_edges": 0,
+    "boundary_orientation_votes_before_global_choice": {
+      "false": 27
+    },
+    "note": "A hypothesis on an evaluation display, not a saved corrected model; geometric notches still remain."
+  }
+}

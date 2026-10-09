@@ -1,0 +1,18 @@
+{
+  "M5B": {
+    "rest_mapping_max_error": 3.4570693969726562e-06,
+    "pose_replay_max_error": 2.3096799850463867e-06,
+    "bones": 45,
+    "rest_and_mesh_restored_exact": true,
+    "source_sha256_unchanged": "29658a46efa0633e7206fbcdd3b7797029d1f7d1a8483bbed2ea2014e074521f",
+    "metrics": [
+      {
+        "sequence": "roar",
+        "frame": 28,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      }
+    ],
+    "jaw_skin_face_count": 238,
+    "head_skin_face_count": 350
+  }
+}

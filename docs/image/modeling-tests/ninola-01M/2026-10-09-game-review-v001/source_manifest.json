@@ -1,0 +1,898 @@
+{
+  "copied_allowlist": [
+    {
+      "source": "leaves.gdshader",
+      "sha256": "54bc0227b341823b51ec813dfc1c154f02269e528f6677e237823e332a8424f2"
+    },
+    {
+      "source": "_chk.gd.uid",
+      "sha256": "37b49220120f811a1cb88ae13158c9e6085130adbc33f3c1e3af17e98e3f78eb"
+    },
+    {
+      "source": "main.tscn",
+      "sha256": "920df7cb655519e3b533e116656168a637d5b11c6faf844f6b07c7fef13e059a"
+    },
+    {
+      "source": "test_battle.gd.uid",
+      "sha256": "d1806c2c2b1e9195c257e45c2ddfc791824459feff59201b37ca0f6d7c3f5cec"
+    },
+    {
+      "source": "fire_ground.gdshader.uid",
+      "sha256": "5cd9cc136f32982960c4590a503035f89803e44ef836d4f6baa32e572df926dd"
+    },
+    {
+      "source": "trex.gd.uid",
+      "sha256": "758efa7d29b27495a305e0ff26a42eb3680e124f47b68f71206a76cda93786fe"
+    },
+    {
+      "source": "fire_ground.gdshader",
+      "sha256": "870b50f82191367842ef51944294ffd8a18193553194ecdb4ca91726267e0a84"
+    },
+    {
+      "source": "compass.gd.uid",
+      "sha256": "1017d8b5ddaaec0c80169b57f92fd5a7fd7cd2e34d97962e5fa0544db30f8a2b"
+    },
+    {
+      "source": "terrain.gdshader",
+      "sha256": "8275655673bb832899b7b5d5db1e87c83c377475a021c7d71d6bda7162f194d0"
+    },
+    {
+      "source": "compass.gd",
+      "sha256": "17299adf54666d5d14745aa33696a242a384d0c5c1d40cef79526687b0b7dc27"
+    },
+    {
+      "source": "cowboy/dynamite.gd",
+      "sha256": "fb378afa09c003ca71558c44a898ea5aee09b7eba5467d421eb237e6be909a49"
+    },
+    {
+      "source": "cowboy/bullet.gd.uid",
+      "sha256": "ee595968d2fa26da46cae9df9dcd26a16f895bdfa6418715523f2ff5ea282b0a"
+    },
+    {
+      "source": "cowboy/explosive.gd.uid",
+      "sha256": "154d8b12a294af4dc9d1183f85b69d9278b5f5d110a139de62d390a40a3d755a"
+    },
+    {
+      "source": "cowboy/viewmodel.gd",
+      "sha256": "dac73d46b4dd9cea7d33c7a8f33f3d95336d6701f31caffe17dad7a3255a728b"
+    },
+    {
+      "source": "cowboy/weapon.gd",
+      "sha256": "aa48be371621c9246ee16135da5007a753969d5b0ef224d570c72bdb8df121a9"
+    },
+    {
+      "source": "cowboy/hurt_hud.gd",
+      "sha256": "a39942261ffd85c309af4b42b993bccbd9d825cc673d38c3d16bf5251f093fdb"
+    },
+    {
+      "source": "cowboy/shot_fx.gd.uid",
+      "sha256": "5f6083abd9eaf5e9ba9890556c0a3c468b55cd59875a368694524dc42cde2611"
+    },
+    {
+      "source": "cowboy/bullet.gd",
+      "sha256": "10be3168db57205bd46d653afb72b29c50587df68c251f9ec58502a8cc3b8f11"
+    },
+    {
+      "source": "cowboy/weapon.gd.uid",
+      "sha256": "7c455a7de50cdbcbafbfb229e96249d569efae44edf469f44c34ba81d014518b"
+    },
+    {
+      "source": "cowboy/shot_fx.gd",
+      "sha256": "3a3b1f5e84562c90d1a1ad495279c1512717664b686e37b767ce3a473b446742"
+    },
+    {
+      "source": "cowboy/dynamite.gd.uid",
+      "sha256": "8b0591da961840c7c939c07e24fbbc3cd3471ab35b6ab4a5ba6febd1a8b9fb35"
+    },
+    {
+      "source": "cowboy/explosive.gd",
+      "sha256": "9de814139c77bf32cdcd2bdfd23a40edb99b0d37420ed572704ced34a8b2aad6"
+    },
+    {
+      "source": "cowboy/hurt_hud.gd.uid",
+      "sha256": "765548a15d8c1e0f1850ae4a19c74829df225f3e66c0e1857ce00a098d892d88"
+    },
+    {
+      "source": "cowboy/cowboy.tscn",
+      "sha256": "b5593b977112bb535edd2719747537ccc0a760774097d35be818b499f5778a1b"
+    },
+    {
+      "source": "cowboy/viewmodel.gd.uid",
+      "sha256": "0f87525934f286af2418f8f5ddd2b62f77f31cbe33292b8781304b3a9186cfe0"
+    },
+    {
+      "source": "cowboy/cowboy.gd",
+      "sha256": "18b8afee57d17a0facac58710c97986c23bef060e6893a86732dda33cec00686"
+    },
+    {
+      "source": "cowboy/cowboy.gd.uid",
+      "sha256": "ef71161bfc8af56c0bb50043ad2cec1e4469285969c4cc7a13f765d626c2e380"
+    },
+    {
+      "source": "cowboy/weapons/shotgun.tscn",
+      "sha256": "c54a07915b5a4a7fe9ca2ae17a646e9aea67c61dfdc135ad26ac8af40d7e352b"
+    },
+    {
+      "source": "cowboy/weapons/lance.tscn",
+      "sha256": "16baa7464ca24801ca3e5d4c87e3aa0af7fccb3c8113ed272a338faaf6387683"
+    },
+    {
+      "source": "cowboy/weapons/revolver.tscn",
+      "sha256": "4036ccdebd2bb73b839241f751a9474b30c23e690b91f6450d4ea143754cb90d"
+    },
+    {
+      "source": "cowboy/weapons/weapons.csv",
+      "sha256": "da4d5d2cc23bcaa0cc8267dea4a7e1f2f1c4bf96b082cb39325a2208136ec2d0"
+    },
+    {
+      "source": "cowboy/weapons/rifle.tscn",
+      "sha256": "22ed937406acb2ae2c26e3c6504e44b9d53882f6e2f4861849a6c98f6f779df6"
+    },
+    {
+      "source": "oil_fire.gd",
+      "sha256": "ae442c8fd04a0497b76ada203d3884b6b628df4c10897f522f34248fc408f287"
+    },
+    {
+      "source": "fighter.gd.uid",
+      "sha256": "b8953712b280627b8863442457d46396135eafc3f17549463c27148a1bf69115"
+    },
+    {
+      "source": "grass.gdshader.uid",
+      "sha256": "faf7662dca0da1ecb290a08894befb00ddc2408f285563959ee6c815d2e9c7d8"
+    },
+    {
+      "source": "fireball.gd.uid",
+      "sha256": "040a6baca6cf93544339afab2e780d84bf77d9cc91556c321f5ce60b8e008890"
+    },
+    {
+      "source": "dino.tscn",
+      "sha256": "297be736f2530c77dcda9415473e00d34190cd364e3c185e1320ff7abe37723a"
+    },
+    {
+      "source": "lantern.gd.uid",
+      "sha256": "2fcfdb795c10c24ccc1bd2f795b9d27d065d530222479f68d6a86fbdf61c5cbc"
+    },
+    {
+      "source": "bug_report.gd.uid",
+      "sha256": "1c368f63b444c125d0c27a7058221db488ce2ddfa650a782615742b14bf7820a"
+    },
+    {
+      "source": "leaves.gdshader.uid",
+      "sha256": "5940c6f64d4e0af642ec883a2efff03f7520f30338fac76305649a220c095308"
+    },
+    {
+      "source": "fighter.gd",
+      "sha256": "67b9c06a2ff878457f5663b62df3862f13ed54970dfdc7e56eab9a311aca6d64"
+    },
+    {
+      "source": "facet.gdshader",
+      "sha256": "8154911f5422037452d858797648b273ceb1d79e94b8332485889e8266480617"
+    },
+    {
+      "source": "bug_report.gd",
+      "sha256": "a89f9f4f566ecc324a3eca29a2d37bb172395e4c41b5bcc5c96b00e63565c357"
+    },
+    {
+      "source": "boss.tscn",
+      "sha256": "e82d7e4f841e3171789649f6f03d09695eb81b752ef75c8383acd8df8611b1d2"
+    },
+    {
+      "source": "fireball.tscn",
+      "sha256": "75b5e66a16d9fa40d36a038a6989735c7547414652e7f844eace55853a9a219a"
+    },
+    {
+      "source": "wheat.gdshader.uid",
+      "sha256": "316d55ed8448c2fb978a4f4ac666bd40b56e8ea816ebd07c4042b321228a93b6"
+    },
+    {
+      "source": "icon.svg",
+      "sha256": "6c80384360a5b269d1054bfb27241258154e2cc8167c522016fdc1820e84e0f8"
+    },
+    {
+      "source": "trails.gd.uid",
+      "sha256": "ad6713a15b17172e7a673231e82b4ccf4bba9051a19261085a6ee202c4e3eb3d"
+    },
+    {
+      "source": "terrain.gdshader.uid",
+      "sha256": "b32fa316b1f2f1856271d6633991a5c577462636749b50ec4e9cb79143354f96"
+    },
+    {
+      "source": "fx.gd.uid",
+      "sha256": "a86d4c03bf40f5b9edb854340f3ff9c00f931bed9886f69d3656fa8b2796ea6d"
+    },
+    {
+      "source": "outline.gdshader.uid",
+      "sha256": "20f5f07fd143a04ca7dc004210e0884b51a3175f2385c2aa04aba627ae30a4bf"
+    },
+    {
+      "source": "fx.gd",
+      "sha256": "040aa9af3da36adeb0cb440b59bafd260ddef3d0825bd0b2b9eb6d42c6c27136"
+    },
+    {
+      "source": "models/groves.glb",
+      "sha256": "69f85de96b5ec246f6a1250e75e5079b9245005b32d743e97039e61daa1314ae"
+    },
+    {
+      "source": "models/apartments_apartment_a.png",
+      "sha256": "e646ba2fe613e6e3925b256a3879cb8f4a38941656f4fa56ce2cc7f6ebae90ef"
+    },
+    {
+      "source": "models/revolver.glb",
+      "sha256": "2d0b6a5aabc348b5cd053a9784a11163d4ec0daf46713f5bf67da652681b1b0c"
+    },
+    {
+      "source": "models/groves_leaf_willow.png",
+      "sha256": "4664f3509bf87d3ae593f30db8589387c047afa2bef156859a00e5fc8bb99abc"
+    },
+    {
+      "source": "models/apartments_apartment_b.png",
+      "sha256": "971aaf90b35203e325378c0128a57a495bf8a6841d37a0b6c70afb1613445a2e"
+    },
+    {
+      "source": "models/shotgun.glb",
+      "sha256": "0595cb964277884e41449726c8047fd2f723131850eaffb21bdf72720e6b2225"
+    },
+    {
+      "source": "models/trees.glb",
+      "sha256": "fbc922b8ee97751d2d5e32c934cf2c1a389c4de3a8fb5c88030c500a9567b7ae"
+    },
+    {
+      "source": "models/props.glb",
+      "sha256": "7894fcd2bb9dcf02f2f45ba522ad831f8852ef1f19c690a014f200082e09cae2"
+    },
+    {
+      "source": "models/kits.glb",
+      "sha256": "12aa3b6307a299a8de3fcd5354da9eca882c8ffe69dc06dabfc5f420178411ff"
+    },
+    {
+      "source": "models/apartments.glb",
+      "sha256": "5f2a1b27e401d18b60878e7ea724953f54d3db17f37f569fdd25db03602d3fd5"
+    },
+    {
+      "source": "models/towns.glb",
+      "sha256": "8bc846347541f367e60c16680c519829709c301c26795424a277928c61daec38"
+    },
+    {
+      "source": "models/rifle.glb",
+      "sha256": "97b649faaa8a36ea0ec0608bfc3cd232f820b11778ed540bb25d849322637399"
+    },
+    {
+      "source": "models/apartment_a.png",
+      "sha256": "e646ba2fe613e6e3925b256a3879cb8f4a38941656f4fa56ce2cc7f6ebae90ef"
+    },
+    {
+      "source": "models/houses.glb",
+      "sha256": "ca75e6551797625fff2ff2d8d876783228c8ca631af051ff2235811b5a9d2599"
+    },
+    {
+      "source": "models/trex_hd.glb",
+      "sha256": "54b02c2e756fd28954a1edb78d92ddd9d387457631b82b7108fa8c0fe9d6dd3b"
+    },
+    {
+      "source": "models/lance.glb",
+      "sha256": "efd1f6f75167f86a4ffe886598de25c30bfffca758abc979165b3f0ffe056f00"
+    },
+    {
+      "source": "models/apartment_b.png",
+      "sha256": "971aaf90b35203e325378c0128a57a495bf8a6841d37a0b6c70afb1613445a2e"
+    },
+    {
+      "source": "models/survivals.glb",
+      "sha256": "7e9b7c22bf496172b6013c88326f1fd598288557081067bee2dc16085023ad79"
+    },
+    {
+      "source": "models/survivals_can_label.png",
+      "sha256": "a53ac60fbaf4073d40f39e3f5af8b09ee0717fcbf222a40f4e287b668d1e0610"
+    },
+    {
+      "source": "models/trees_leaf_oak.png",
+      "sha256": "946515c69a29c95114c2834d110cdff781b3de6e2a387ee1ae04db9148ff8f16"
+    },
+    {
+      "source": "models/groves_leaf_pine.png",
+      "sha256": "a9ee1ad9104cb125cd123e490de56d3b30598976ea6b190cf67702ae08260e08"
+    },
+    {
+      "source": "models/rocks.glb",
+      "sha256": "4e7e44ed1a535791d57fb78db027e23495d44116eefe0429ed683a166b53766e"
+    },
+    {
+      "source": "models/floras.glb",
+      "sha256": "a1f142836f6c4d4b499b6166bb88ee765843cedb438b981c6b9e6897e1840e6b"
+    },
+    {
+      "source": "models/survivals_matchbox_label.png",
+      "sha256": "882b9e64aa5d3cabb4e1659557e5a5fd9ccdd3b0562bb0fb90037b424224151f"
+    },
+    {
+      "source": "models/golden_eye.glb",
+      "sha256": "96dbb8545cdfd78db2a616d9cc5eabf548040dc4ae3e419713cbf5532bed3bbc"
+    },
+    {
+      "source": "models/cowboy.glb",
+      "sha256": "b9e63ec49e84f3fb2b467815c8e9df4cc69111f3be6df29340924012a2d0edc7"
+    },
+    {
+      "source": "models/groves_leaf_maple.png",
+      "sha256": "d6f357725939d82d9186976b1865e8244d08d5cf0c80ae7f2f154cfba7fcb2c3"
+    },
+    {
+      "source": "models/groves_leaf_yucca.png",
+      "sha256": "96f1eab06989fe98b81c311be654423f2438fcb4a4b3df50e0a478c773f9a5f7"
+    },
+    {
+      "source": "models/trex.glb",
+      "sha256": "29adc714cb4ef1aa93929c8bd34e87ad9ef8d679300bb5ecb420db79af4bc05b"
+    },
+    {
+      "source": "fireball.gd",
+      "sha256": "18425e0ce3a8976f0bb75d8c30dddec092b5b849cc71c4ffc2e80ac567a508d4"
+    },
+    {
+      "source": "facet.gdshader.uid",
+      "sha256": "3d1a4856008b8fb8b03ee0108dbbb8876e7cd6066b9f4fad4231fb06b66646dd"
+    },
+    {
+      "source": "dino.gd",
+      "sha256": "7fd8b9cc80041493110a3838414ae554284347841c48c89e8bbbead4732968fe"
+    },
+    {
+      "source": "main.gd",
+      "sha256": "fbc9b6ecd34edba60282080515c51327b0753e3d053688c7d4414edde59a9fc3"
+    },
+    {
+      "source": "lantern.gd",
+      "sha256": "a4d5f5826a2e5250afc8cd071aeea8874d774a4344c60b1278ef7efcea391abd"
+    },
+    {
+      "source": "director.gd",
+      "sha256": "9ac0eb720ea587d081f61d149629e03195264a4fb09b22daebd9bc45c0dd3ed7"
+    },
+    {
+      "source": "director.gd.uid",
+      "sha256": "b713edbfd0e85edf77117ee4b87a22773a9bb055b315d52557d848b9c825b8d9"
+    },
+    {
+      "source": "viewer.gd",
+      "sha256": "ee562fda3565247df747888ac29a069ad8a0be0be5f783f15f29bc7a4cf5edfa"
+    },
+    {
+      "source": "wheat.gdshader",
+      "sha256": "ec1e969ca8226a41e496a2109d0c15016dce360dd681fa9280709cafb9f6bf0f"
+    },
+    {
+      "source": "viewer.gd.uid",
+      "sha256": "ff5b3af9a7dce452d508d72e8ec1cb11772f54c2c667851f826bce927882354c"
+    },
+    {
+      "source": "oil_fire.gd.uid",
+      "sha256": "eb2c2020869677039b392e8ea54f8543d7c387bd3fe62e655177d33e01180a39"
+    },
+    {
+      "source": "terrain.gd.uid",
+      "sha256": "6569b1437103c25ece6d4b3c6e0ff112d70cd9801f6d0f3ecca3508dce9ffc66"
+    },
+    {
+      "source": "pixel_style.gd.uid",
+      "sha256": "8bf85108149e21c67307394e1932c224f811170bd1559070da02586fca6f0afd"
+    },
+    {
+      "source": "trex.gd",
+      "sha256": "2421f15edcdfad584470cf2239d822e916e6fbeefa14edf6cd4c96ac55c55cb8"
+    },
+    {
+      "source": "sky.gdshader.uid",
+      "sha256": "1e0bf3a948af15388c5f5c6c2d5683bfb64921cca87eb2591cbde43d879214b3"
+    },
+    {
+      "source": "bt.gd.uid",
+      "sha256": "a25ad6d97cb4ba50dda0a6d6584b4a2e6407faf9173adb4ea88e1faa75cd6f93"
+    },
+    {
+      "source": "grass.gdshader",
+      "sha256": "283842e9d1ac39605e51b53d4555f49c74c8c766643b1953b558c4786b9ef1ac"
+    },
+    {
+      "source": "sky.gdshader",
+      "sha256": "7998491afe316e03ca25691f6604a7188ef4b976d6b51b5c9f58aec3aee8f0e7"
+    },
+    {
+      "source": "far_land.gd.uid",
+      "sha256": "476cc05a8fefc88f95117100c11d5cc03113184d8b3f5091369e80a3323ee9cc"
+    },
+    {
+      "source": "terrain.gd",
+      "sha256": "843b6874043ee3b40e0c1afd3a611e1e8c61ce7e7a7a7da7c0aa6620ba9e7974"
+    },
+    {
+      "source": "outline.gdshader",
+      "sha256": "405e374ed0b827ea587b42b7a510a4c41c478ba9e8a067fb39cfdb90b791090e"
+    },
+    {
+      "source": "egg.gd.uid",
+      "sha256": "da8fad325e45f1eb1e25d74dceb5a6894f09d78448c1a133fdee168b70321341"
+    },
+    {
+      "source": "bt.gd",
+      "sha256": "6205c6300ea0dffb98e4da29f8c9ed1da3363c1b1e280bb3a2d98365de6c978d"
+    },
+    {
+      "source": "main.gd.uid",
+      "sha256": "e8eca14ff735a98be17474df019fffc2c525516f3bc5b8c9333f1341a34a7a66"
+    },
+    {
+      "source": "boss.gd",
+      "sha256": "1fd2ad86555fad30e3b21c864eade97b587df5254855d4b875fce221086cf0af"
+    },
+    {
+      "source": "project.godot",
+      "sha256": "7b4e6514949e277d87ec48403e763e73a7da0b03f2be44b0c4d705358d411f00"
+    },
+    {
+      "source": "boss.gd.uid",
+      "sha256": "8206d5ac477406178e43299615329e9d4ed1523d7a8cff2cdb9fc50d30245dbb"
+    },
+    {
+      "source": "levels/ranch.tscn",
+      "sha256": "d9d298291fd649e44aa0f689c6a3b6f1572034e76d6ee336aad87c9966322790"
+    },
+    {
+      "source": "levels/range.tscn",
+      "sha256": "86fcb622cba1992555874b76c164b8a10aada11be36be1c41f5f9186f42a12ef"
+    },
+    {
+      "source": "levels/level_preview.gd",
+      "sha256": "78467702fab738df628f97063fd15d5089948f572074825d3ccfc2b4e61aad59"
+    },
+    {
+      "source": "levels/level_preview.gd.uid",
+      "sha256": "9781981a7df6cc580004189249780ea7f047ba02f7990e68d5125d02ffc90762"
+    },
+    {
+      "source": "levels/截圖 2026-09-30 下午1.43.28.png",
+      "sha256": "0e9e7412d7ac3ceba484b0fc9476b2b78000f2f1e81f5b712e5f01a9203b1d60"
+    },
+    {
+      "source": "levels/level_root.gd.uid",
+      "sha256": "47117e0d1fa80558d796fe7d4f23f257eed11a667f84b3db7b849f1438bb1939"
+    },
+    {
+      "source": "levels/level_check.gd.uid",
+      "sha256": "2095e76466378748fcc09d7c3e954475f66b7732e516ccf6070dd385ab4d3341"
+    },
+    {
+      "source": "levels/level_item.gd",
+      "sha256": "16d69a5594fef629cde474b590ecefcbcb5dd603009fda7c824a04dc03131474"
+    },
+    {
+      "source": "levels/level_item.gd.uid",
+      "sha256": "b1def89156bdc40d8e0657fa5f2a4dc000e34bc1576d0fab2c6dfd528af90834"
+    },
+    {
+      "source": "levels/level_root.gd",
+      "sha256": "dd5d727db243a46394f9970d96d95f6a5633fa2486d11f420c109dc890dc1c97"
+    },
+    {
+      "source": "levels/level_check.gd",
+      "sha256": "80b612c9958ee70da6df63652b4fdc101117c035a6cc780843f9370a8f0e591d"
+    },
+    {
+      "source": "levels/物件庫/松樹.tscn",
+      "sha256": "4661fbf5c04de4883f41d622355b5420e5c99e8561dc0e6a2c3cf64376ea684c"
+    },
+    {
+      "source": "levels/物件庫/繫柱架.tscn",
+      "sha256": "a392036da4e4051bf0ff9f00c95cc09256c9db13b62f241df60260dfe7d41b8c"
+    },
+    {
+      "source": "levels/物件庫/石頭_Rock14.tscn",
+      "sha256": "8980b1d76e6636a6f9f97085e6d2321a799dc7480e7ecd5cdeee195164ffddc8"
+    },
+    {
+      "source": "levels/物件庫/石頭_Rock02.tscn",
+      "sha256": "b87fbcc3d99a62667fb172b9acbee2556d671887fd6d2f1d2f1cf05c3df614ba"
+    },
+    {
+      "source": "levels/物件庫/木箱.tscn",
+      "sha256": "05bd1d81c1dd1f7fe3cdf4ec50f4d8de4a7f78877d723509273f94c582dfc114"
+    },
+    {
+      "source": "levels/物件庫/約書亞樹.tscn",
+      "sha256": "189c947411f20ca96336444b6ca94d23a15bd4f83eaa59245ab831b5e2e8eb79"
+    },
+    {
+      "source": "levels/物件庫/方草捆.tscn",
+      "sha256": "e5187e2feb77c8f3cb8d6f4becf6cdd0b741d3253dd87d3bc3f88f5303f9e30d"
+    },
+    {
+      "source": "levels/物件庫/街道.tscn",
+      "sha256": "3ebaa91ca4ac7c333119bd698977a41fa84487805f75a8fb980aa296a459adbc"
+    },
+    {
+      "source": "levels/物件庫/石頭_Rock03.tscn",
+      "sha256": "0efcfdf637751b761f628af8294ee0cf292dd140b5abb395404aa303338bf8db"
+    },
+    {
+      "source": "levels/物件庫/警長辦公室.tscn",
+      "sha256": "216a2d0d8df458587aefe0fff53f7dd9b7278b181709d9e738bce79509edc593"
+    },
+    {
+      "source": "levels/物件庫/柵欄6公尺.tscn",
+      "sha256": "cba9ca010135c29fa3f43834cb53a601d3bb91c82fe1a706f458dded94e69557"
+    },
+    {
+      "source": "levels/物件庫/石頭_Rock15.tscn",
+      "sha256": "8b863c0ebcaa5d7ffa4c0565f9a4dd4fe1b7406b0a1cf2db842a9f38a0ebb95a"
+    },
+    {
+      "source": "levels/物件庫/木桶.tscn",
+      "sha256": "afb3f6ea310cac9dc5f296e737cecc6f09b2f8a0cb88bf4b20b97070813fdaf7"
+    },
+    {
+      "source": "levels/物件庫/雜貨店.tscn",
+      "sha256": "1b93a3c2b4f6c68c92d043685a35571aba8250f2d3abce42aa0b32467490a04e"
+    },
+    {
+      "source": "levels/物件庫/倉庫.tscn",
+      "sha256": "413ae3bfc0d92217e3eb44d7726c378dbd1ec072210fea74a9a9f527c3994718"
+    },
+    {
+      "source": "levels/物件庫/前廊農舍.tscn",
+      "sha256": "896a17defc09a7417a9b521f7bce9883fd3f840329c569e6094db19338485487"
+    },
+    {
+      "source": "levels/物件庫/仙人掌_大.tscn",
+      "sha256": "fba8bf99f29b80a9c4216e274afea0b4e327938831eb7bd69ec298fdeea7425a"
+    },
+    {
+      "source": "levels/物件庫/石頭_Rock08.tscn",
+      "sha256": "4cc77da10b4a84ab48b2d4e9cc648c278275b23e6d8f4c53873a10035c6da0d6"
+    },
+    {
+      "source": "levels/物件庫/闊葉樹_大.tscn",
+      "sha256": "bb78145f3297df269ea2f7fe1712a5d5afe6846fbc61407902f7ec5619c2313e"
+    },
+    {
+      "source": "levels/物件庫/石頭_Rock12.tscn",
+      "sha256": "6120c3f9a94ea3f63d28271e066488beed8a4a2c291db4af9e5fe57129251ef8"
+    },
+    {
+      "source": "levels/物件庫/石頭_Rock04.tscn",
+      "sha256": "2fb81735199e01f024c91e7fb0add38767c2e1b8042372d484091940d83b8b58"
+    },
+    {
+      "source": "levels/物件庫/石頭_Rock05.tscn",
+      "sha256": "303a9b874ad5600971a4f8e8b7edd05186ab4726471ed699b320ae5a8072ec14"
+    },
+    {
+      "source": "levels/物件庫/石頭_Rock13.tscn",
+      "sha256": "b3c2d93daac6f3716152f7bd113484b5cf1ab0fceb1042dea39dc916ee65091c"
+    },
+    {
+      "source": "levels/物件庫/圍欄門_右.tscn",
+      "sha256": "5235b8a0a7b323531407d1aba24de0c183cf98a1d0b9044e49d2e984e20d0de4"
+    },
+    {
+      "source": "levels/物件庫/石頭_Rock09.tscn",
+      "sha256": "a40156685f64046649b9dccc7916d6dc0f1f09ac866fb57aed61591bb534e9a6"
+    },
+    {
+      "source": "levels/物件庫/風車.tscn",
+      "sha256": "c86eef5d5a8fbad1f6d5d3a16976c8a906dea39274feda43c23144a3cf1f07ba"
+    },
+    {
+      "source": "levels/物件庫/篷車.tscn",
+      "sha256": "26ad8fb04d121a3de520db7ed3f818b3132c1b84476ff1c0a5a5b3df8a9a2fad"
+    },
+    {
+      "source": "levels/物件庫/圓草捆.tscn",
+      "sha256": "b8a1d2218417adf8f8df4cb4b95c8c2acce0013ba9c2f1ec5f975c79bd7e87b6"
+    },
+    {
+      "source": "levels/物件庫/圓木小屋.tscn",
+      "sha256": "d2101e0400def6b330dc45013870231a6a9e01eb8d1b1a894d0ec560cea35441"
+    },
+    {
+      "source": "levels/物件庫/靠牆車輪.tscn",
+      "sha256": "b0173a449b5425703f924cca2900a1b31fc523cdbd3d0ec076a28d8c01db29f5"
+    },
+    {
+      "source": "levels/物件庫/麥田.tscn",
+      "sha256": "458728d503b2faad6292ccaaff57999664dec09c09a49328c969a82fc640ea34"
+    },
+    {
+      "source": "levels/物件庫/柵欄10公尺.tscn",
+      "sha256": "1bf28c303c745ba20183ca5f74e3b9acce4f36a0c3ba9274ba58a7b82b576d37"
+    },
+    {
+      "source": "levels/物件庫/石頭_Rock06.tscn",
+      "sha256": "3722e2bc1e367c9a019ed9bdaec1542b909054383909d7cda4bf856a803fc6bc"
+    },
+    {
+      "source": "levels/物件庫/石頭_Rock10.tscn",
+      "sha256": "3cfaaee418529de5a1cd2418cd223b29e04011e28b8373120713c575b1a70553"
+    },
+    {
+      "source": "levels/物件庫/筒倉.tscn",
+      "sha256": "4a108fcda859ac9e6ad3ac225c18aa31341b8b7596a142513eac0a39210d4777"
+    },
+    {
+      "source": "levels/物件庫/枯樹.tscn",
+      "sha256": "e0d96e8e9d24bb965470ea6b215e00e816f821fd38d6eba03254e08b70e3f980"
+    },
+    {
+      "source": "levels/物件庫/闊葉樹_中.tscn",
+      "sha256": "75e46aa80163441d5df29091a5e67788f224e91f2433fd9b217e861da25af653"
+    },
+    {
+      "source": "levels/物件庫/整平區.tscn",
+      "sha256": "db69f938235e6b1fb29ad368c9582ff3c99ad62f1a4b05ea2b83d98fd1dcaf1e"
+    },
+    {
+      "source": "levels/物件庫/石頭_Rock11.tscn",
+      "sha256": "28c85e27464d01f338a24674ee387451dee4c23e4868eccb6c84b1abda9954f9"
+    },
+    {
+      "source": "levels/物件庫/楓樹.tscn",
+      "sha256": "71ecdd713deaa175ab40428ae0afeb13f7d3a5b88552466a5f152a49509c7a13"
+    },
+    {
+      "source": "levels/物件庫/石頭_Rock07.tscn",
+      "sha256": "9e45ae60d949089f12397e9c211dec8f5d836cfd4cca8f9f5983691fed0d4fe2"
+    },
+    {
+      "source": "levels/物件庫/直板高屋.tscn",
+      "sha256": "6784f39a602c3d7f3f92ad57821089ee5172eececf6ac2fb354ed456c43f32cf"
+    },
+    {
+      "source": "levels/物件庫/吊燈.tscn",
+      "sha256": "99b0c4cd00032722bbaa2717199ed5e87d7ab19572217cd4bdba4632751b62e3"
+    },
+    {
+      "source": "levels/物件庫/石頭_Rock16.tscn",
+      "sha256": "abc5cfd20cc87f950e144adcee0d9c058270027a7ac5917256ab953a07e12bb5"
+    },
+    {
+      "source": "levels/物件庫/酒館.tscn",
+      "sha256": "219f801ccce41620aee2f0c323b7a7df2b919c8637f4509db786ce5c278741e4"
+    },
+    {
+      "source": "levels/物件庫/柳樹.tscn",
+      "sha256": "32f7f94f22080b19b6cf03b5b14355702e4ace7c097eba2606df04ca96db53e6"
+    },
+    {
+      "source": "levels/物件庫/圍欄門_左.tscn",
+      "sha256": "9b11f1de42c0ccdf0e880cdb6d4184143dec34838619e88c828d1fe3b410f56a"
+    },
+    {
+      "source": "levels/物件庫/仙人掌_小.tscn",
+      "sha256": "de03f420e13f64f4daceaa83f6f1eb8cd139d4959f711629f512d8f0cf8d7b78"
+    },
+    {
+      "source": "levels/物件庫/小棚子.tscn",
+      "sha256": "5f77f33e3cc43dc82e163372d8a36fd3cfaa6f29e67f66fd5bd6a4be2c32dc77"
+    },
+    {
+      "source": "levels/物件庫/水塔.tscn",
+      "sha256": "316dff22562499f09ff271e589c36104fd9d0989569cb87f7a15e7babf4d8c87"
+    },
+    {
+      "source": "levels/物件庫/闊葉樹_小.tscn",
+      "sha256": "f4c42cc3ab4bfd3b622b83aa9ae50ff8bfe636dcffe56655080e66bdbe3ee7f9"
+    },
+    {
+      "source": "levels/物件庫/灌木.tscn",
+      "sha256": "7c268551c655b51db81a89d1a2ab87d135c757c466a5ead9dc78120f889a9bd8"
+    },
+    {
+      "source": "levels/物件庫/石頭_Rock01.tscn",
+      "sha256": "f033f08d7df7066884b103a3d5fd48310d9196d9296c60a3fcb092330146c4ea"
+    },
+    {
+      "source": "levels/物件庫/穀倉.tscn",
+      "sha256": "b0b52fe4cf4026c66733157b9c71fc305d60540c547ac900eda666fb6e06e605"
+    },
+    {
+      "source": "test_battle.gd",
+      "sha256": "139c1f756e9369d2b964f948dc70df289108f080032097f8fc9cb9c113928d90"
+    },
+    {
+      "source": "interact/door.gd",
+      "sha256": "2c253a1edb6421dcb0e6dd995bfed9ea810fb743680f6dd8dafc73b661e7f934"
+    },
+    {
+      "source": "interact/supply.gd",
+      "sha256": "acb2cc170b46e281a8e333d5d6086af0f964bff8e54c179352fd5dbfc81a24fd"
+    },
+    {
+      "source": "interact/supply.gd.uid",
+      "sha256": "018abe833b7b6838a79371ce46e2118ddc3b4ab5ca12687f14e4c1dcc7116d28"
+    },
+    {
+      "source": "interact/ladder.gd",
+      "sha256": "e3661e3ba41a18c127f67bd887cdb07c4e9768a38422d18d7aea01196038e24c"
+    },
+    {
+      "source": "interact/door.gd.uid",
+      "sha256": "1d01ffcdea4b7d5356a7ad9dae40f9b1b71ed5710300ed8d4307f09c8d18b259"
+    },
+    {
+      "source": "interact/ladder.gd.uid",
+      "sha256": "32d00f38983f5a1779d81a28ab69090c21297861782c45b6967bd9caaff0d654"
+    },
+    {
+      "source": "dino.gd.uid",
+      "sha256": "cf92b5274146d44bf99e57f3191739ab08ff69824bbfef103fe3dddb6b012794"
+    },
+    {
+      "source": "assets/textures/ground_macro.png",
+      "sha256": "1bce5bc8bd4b7431f30175ec941a08b4c8dd64479bca37b6057081cdecb48c8a"
+    },
+    {
+      "source": "assets/textures/leaf_willow.png",
+      "sha256": "4664f3509bf87d3ae593f30db8589387c047afa2bef156859a00e5fc8bb99abc"
+    },
+    {
+      "source": "assets/textures/path_dirt.png",
+      "sha256": "96ac25875870f29aac798d2ae268817382538b6ae83a529335a35dc66ce5fa0b"
+    },
+    {
+      "source": "assets/textures/muzzle_flash.png",
+      "sha256": "132be2dfe100c83d455641ad23bbe88000cc10819b55615a34c9916372cc78d2"
+    },
+    {
+      "source": "assets/textures/bullet_hole.png",
+      "sha256": "145e96f65757511adc696f8ac1598fcf9dfdc3d4ca57257ba43d0eaeec931616"
+    },
+    {
+      "source": "assets/textures/leaf_oak.png",
+      "sha256": "946515c69a29c95114c2834d110cdff781b3de6e2a387ee1ae04db9148ff8f16"
+    },
+    {
+      "source": "assets/textures/wheat_card.png",
+      "sha256": "13e54f040ffb7107c31e51d0db5e3cb2dc86519b9e760a8827d39bcae45cf29f"
+    },
+    {
+      "source": "assets/textures/smoke_card.png",
+      "sha256": "2a6eee0338e2b23406585f3e7af830e7970e847760d23d1a4f978a40963a4c3e"
+    },
+    {
+      "source": "assets/textures/leaf_maple.png",
+      "sha256": "d6f357725939d82d9186976b1865e8244d08d5cf0c80ae7f2f154cfba7fcb2c3"
+    },
+    {
+      "source": "assets/textures/leaf_pine.png",
+      "sha256": "a9ee1ad9104cb125cd123e490de56d3b30598976ea6b190cf67702ae08260e08"
+    },
+    {
+      "source": "assets/textures/ground_detail.png",
+      "sha256": "07883f9cc2d1cc9bc80107b81419f12d97ac7cb994bd0aab3e15a6ef0d854256"
+    },
+    {
+      "source": "assets/textures/leaf_yucca.png",
+      "sha256": "96f1eab06989fe98b81c311be654423f2438fcb4a4b3df50e0a478c773f9a5f7"
+    },
+    {
+      "source": "assets/materials/bullet_hole.tres",
+      "sha256": "936b61b9ec6f1eb7045f4fda07def8e4ed49731ab4cd995da3c48c7ca9807f2a"
+    },
+    {
+      "source": "assets/materials/muzzle_flash.tres",
+      "sha256": "e41f63c19b5022598094ec70d15d113f25acb5353462e86cb57d16866dd8e105"
+    },
+    {
+      "source": "assets/materials/tracer.tres",
+      "sha256": "ddae972ea778cf6d4d0aaa9efbeb50e67b4123eb53b6f73ce639d9abd4a0a048"
+    },
+    {
+      "source": "assets/audio/jump_start.mp3",
+      "sha256": "cd38f4e71617d981d876ac9711ba2f2286e6cb2ca1f27d11216a0c5478d2e801"
+    },
+    {
+      "source": "assets/audio/jump_end.mp3",
+      "sha256": "947aca6c8fc6e0a626cc4b5c79ee158acc72d50794819692f4480b93dde9d1a8"
+    },
+    {
+      "source": "assets/audio/weapons/fuse.wav",
+      "sha256": "3c1e36f6303b51c830561e7153b6b6f82cfb20c231d0e5f46d58a161aa928842"
+    },
+    {
+      "source": "assets/audio/weapons/no_ammo.wav",
+      "sha256": "64d98697dbf2432d1f34e5c9f5762649c91764b8fc4d9c5df09ed73e7c250b16"
+    },
+    {
+      "source": "assets/audio/weapons/pistol_reload.wav",
+      "sha256": "cd0fc4f51bde1bacb0d8f723585bc8c1c57cba1092b2031663268fa03e179136"
+    },
+    {
+      "source": "assets/audio/weapons/boom.wav",
+      "sha256": "16f18529f304c5d6391797657bf263b1cceb0e66920e0e65efa78086135f5985"
+    },
+    {
+      "source": "assets/audio/weapons/pistol_shoot.wav",
+      "sha256": "2671f1d6b681a705cd06eca455ea2cc0b3e57e27d5ff587fb2dc024a2a2c8c5b"
+    },
+    {
+      "source": "assets/audio/weapons/launch.wav",
+      "sha256": "dfe6be739482539a60cae8fad4adbd608342576dfc4901a6d007a4a127cee2de"
+    },
+    {
+      "source": "assets/audio/weapons/shotgun_reload.wav",
+      "sha256": "e25531e3dd34d9a06098a0b03f31bb82647380281972438b20f60ca548dcc689"
+    },
+    {
+      "source": "assets/audio/weapons/shotgun_shoot.wav",
+      "sha256": "99ebaadbe3f1a1721f6a7ee36a0f235db9b597e2a163a1a597ef1d709fc9ef7e"
+    },
+    {
+      "source": "assets/audio/weapons/bullet_hole.wav",
+      "sha256": "3c0379624005afe1189013a41c3362bcddc419f0e4a02858651d5c6008ef171d"
+    },
+    {
+      "source": "assets/audio/dino/roar.wav",
+      "sha256": "0d3e1648f4ccaf770b1e0f5a9fdd8da997d5a44de8a68dc6b3f086c4aaa839a0"
+    },
+    {
+      "source": "assets/audio/dino/yelp.wav",
+      "sha256": "95557e90cf50c34603af58a133ab3242777a83b1e06e80199ae7882c4cc98398"
+    },
+    {
+      "source": "assets/audio/dino/sniff.wav",
+      "sha256": "1be01e2489373aa47e75d4e3d0153571688f943e2bb6f9b7ac11f6aaac173140"
+    },
+    {
+      "source": "assets/audio/dino/growl.wav",
+      "sha256": "50e14d6929683845cfe4c71a48c1e95098f82a6a5ba2edb6b4d305ec12f75d5e"
+    },
+    {
+      "source": "assets/audio/dino/snarl.wav",
+      "sha256": "e1f09ef370d77ce0c5aa5b2747958dc169c8239bd43bea1b6b81305dde08bb82"
+    },
+    {
+      "source": "assets/audio/dino/bellow.wav",
+      "sha256": "74e104e155a30c203ff088293fc7a05c9d3967b686b7d97bbe0372364b827454"
+    },
+    {
+      "source": "assets/audio/footsteps/footstep0.mp3",
+      "sha256": "f696f95ae14f264b92e8e21102a78fafb5afc93094e2be263487ac52b18801aa"
+    },
+    {
+      "source": "assets/audio/footsteps/footstep1.mp3",
+      "sha256": "10abd30086daf90f78bbcca15f63489b535ba8239481287fdf5c8794a9e96110"
+    },
+    {
+      "source": "assets/audio/footsteps/footstep3.mp3",
+      "sha256": "7f7516ae2b301ae5ad8357ad3700002a9e70292fb3e4c771598332fbcef935f2"
+    },
+    {
+      "source": "assets/audio/footsteps/footstep2.mp3",
+      "sha256": "b791b537e4945b5b1dd6a17b3296caff25833c67edbc234499208db95a866711"
+    },
+    {
+      "source": "egg.gd",
+      "sha256": "4b43749b6a928f363b07a9491b57f4bf0c622df569753fdcec92d5a2be79a707"
+    },
+    {
+      "source": "pixel_style.gd",
+      "sha256": "e529e603f1a682f4657df4876ccae80b0d235337f462b74392fe1c0ec56d7c38"
+    },
+    {
+      "source": "trails.gd",
+      "sha256": "98d42363d63b1d9fc4012a56b5b45f48abb7353a1a79fa6fd79d04a36e1253f9"
+    },
+    {
+      "source": "far_land.gd",
+      "sha256": "8fc75115c6b627822e2629ffbacecaedd7a6062776220147ec37dba41b1f79d5"
+    }
+  ],
+  "evaluation_asset_sha256": "01381b58756bc4e633263adee9b618382e76d62306bf1952ad1cad1d8e2e0888",
+  "isolated_changes": [
+    "trex MODEL resource path",
+    "sandbox player1 DINO for true input",
+    "read-only telemetry/observer camera",
+    "isolated user settings directory",
+    "practice spawn raised 4.1 to accommodate existing 8.1 capsule",
+    "practice cowboy viewmodel call guarded for dino"
+  ],
+  "original_checkout_modified": false
+}

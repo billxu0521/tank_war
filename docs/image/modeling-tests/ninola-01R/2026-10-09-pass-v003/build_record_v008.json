@@ -1,0 +1,31 @@
+{
+  "source_path": "blender/ninola/working/01R-spine/2026-10-09-v001/ninola_Q1_approved_spine_palette.blend",
+  "source_sha256": "5ea751f097f0332b26eaa8abaa21ea3610e7cea3d230a02451f81f98a537909b",
+  "donor_path": "blender/ninola/working/01M1/2026-10-08-v002/ninola_01M1_jaw_mass_blockout.blend",
+  "donor_sha256": "97b38435343c4312e16f5bf3f81e3ee892158f1ce201a1716f75ba43c1e96674",
+  "output_path": "blender/ninola/working/01R1/2026-10-09-v008/ninola_01R1_old_panel_head_transfer.blend",
+  "sha256": "9fa0336c069dc19bbf7068d850ef431197734ad01bde73eea0eec799da53ba3b",
+  "object": "01R1_Old_Panel_Head_Transfer",
+  "source_head_skin_faces": 484,
+  "retained_eye_collar_faces": 76,
+  "removed_skin_faces": 408,
+  "donor_faces_added": 118,
+  "source_triangles": 7004,
+  "triangles": 6714,
+  "vertices": 9301,
+  "donor_vertices": 354,
+  "exact_shared_seam_vertices": 78,
+  "max_donor_fit_distance": 0.13244760036468506,
+  "all_retained_original_coordinates_weights_exact": true,
+  "skin_palette_preserved": true,
+  "spine_geometry_materials_preserved": true,
+  "rig_edited": false,
+  "degenerated_faces": 0,
+  "pipeline_issues": [],
+  "source_donor_hashes_unchanged": true,
+  "production_ready": false,
+  "limitations": [
+    "retained orbit collar overlays coarse shell; interface overlap/attachment needs visual and deformation inspection",
+    "new shell weights interpolated from current target skin; full animation/export unverified"
+  ]
+}

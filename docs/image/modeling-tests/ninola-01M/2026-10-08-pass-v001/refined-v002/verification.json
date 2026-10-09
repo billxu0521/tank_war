@@ -1,0 +1,20 @@
+{
+  "reopen_Rig_Trex_keys_pose_exact": true,
+  "topology_material_assignments_exact": true,
+  "all_weights_exact": true,
+  "object_matrix_exact": true,
+  "outside_mask_rest_exact": true,
+  "protected_rest_exact": true,
+  "outside_mask_evaluated_world_exact": true,
+  "saved_change_count": 513,
+  "saved_changed_vertices_match_mask": true,
+  "source_hashes_unchanged": {
+    "01J": true,
+    "01K6": true,
+    "01K8": true,
+    "01L1": true,
+    "01L2": true,
+    "01L3": true
+  },
+  "output_sha256_verified": true
+}

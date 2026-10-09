@@ -1,0 +1,47 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+rocks.glb  Rock01           小型道具     注意 面數 462 超過建議 300
+rocks.glb  Rock02           小型道具     注意 面數 386 超過建議 300
+rocks.glb  Rock03           小型道具     注意 面數 448 超過建議 300
+rocks.glb  Rock04           小型道具     FAIL 面數 970 超過上限 500
+rocks.glb  Rock05           小型道具     注意 面數 392 超過建議 300
+rocks.glb  Rock06           小型道具     注意 面數 384 超過建議 300
+rocks.glb  Rock07           小型道具     注意 面數 372 超過建議 300
+rocks.glb  Rock08           小型道具     注意 面數 390 超過建議 300
+rocks.glb  Rock09           小型道具     注意 面數 320 超過建議 300
+rocks.glb  Rock11           小型道具     注意 面數 314 超過建議 300
+rocks.glb  Rock12           小型道具     FAIL 面數 1216 超過上限 500
+rocks.glb  Rock13           小型道具     FAIL 面數 1174 超過上限 500
+rocks.glb  Rock14           小型道具     FAIL 面數 1132 超過上限 500
+rocks.glb  Rock15           小型道具     FAIL 面數 1718 超過上限 500
+rocks.glb  Rock16           小型道具     FAIL 面數 1200 超過上限 500
+floras.glb  BarrelCactus     小型道具     FAIL 面數 972 超過上限 500
+floras.glb  DesertBush       小型道具     FAIL 面數 900 超過上限 500
+floras.glb  GrassDense       小型道具     注意 面數 450 超過建議 300
+floras.glb  PricklyPear      小型道具     FAIL 面數 630 超過上限 500
+floras.glb  Saguaro          小型道具     FAIL 面數 2030 超過上限 500
+floras.glb  SaguaroS         小型道具     FAIL 面數 1726 超過上限 500
+floras.glb  ScrubBush        小型道具     FAIL 面數 987 超過上限 500
+props.glb  Barn             大型建築     注意 面數 3228 超過建議 2500
+props.glb  Bush             中型道具     FAIL 面數 1370 超過上限 1000
+props.glb  Egg              中型道具     FAIL 面數 1840 超過上限 1000
+props.glb  Wagon            中型道具     FAIL 面數 2164 超過上限 1000
+kits.glb  HayBlock         中型道具     FAIL 面數 1524 超過上限 1000
+kits.glb  HayShed          大型建築     FAIL 面數 18260 超過上限 4000
+kits.glb  WindmillRotor    中型道具     注意 面數 708 超過建議 700
+trees.glb  TreeOak          樹        FAIL 面數 5902 超過上限 2500
+trees.glb  TreeOakM         樹        FAIL 面數 3674 超過上限 2500
+trees.glb  TreeOakS         樹        注意 面數 2466 超過建議 1500
+groves.glb  TreeJoshua       樹        注意 面數 2196 超過建議 1500
+groves.glb  TreeMaple        樹        FAIL 面數 3400 超過上限 2500
+groves.glb  TreePine2        樹        FAIL 面數 3284 超過上限 2500
+groves.glb  TreeWillow       樹        FAIL 面數 7820 超過上限 2500
+houses.glb  House1           大型建築     FAIL 面數 22144 超過上限 4000
+houses.glb  House2           大型建築     FAIL 面數 17080 超過上限 4000
+houses.glb  House3           大型建築     FAIL 面數 16852 超過上限 4000
+towns.glb  Saloon           大型建築     FAIL 面數 16120 超過上限 4000
+towns.glb  Sheriff          大型建築     FAIL 面數 12812 超過上限 4000
+towns.glb  Store            大型建築     FAIL 面數 12184 超過上限 4000
+cowboy.glb  cowboy           一般敵人     FAIL 面數 30044 超過上限 8000
+revolver.glb  revolver         第一人稱武器   注意 面數 10896 超過建議 8000
+資產檢查：29 個超過上限、15 個注意

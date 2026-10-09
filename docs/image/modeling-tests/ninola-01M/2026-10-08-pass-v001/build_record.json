@@ -1,0 +1,21 @@
+{
+  "base_path": "blender/ninola/working/01L3/2026-10-08-v002/ninola_01L3_toe_volume_rebuild.blend",
+  "base_sha256": "34e6608bfb04e73a271199dbd3f4f684545bf7d7cdc8f6e3282d3d970c44c6fd",
+  "output_path": "blender/ninola/working/01M1/2026-10-08-v001/ninola_01M1_jaw_mass_blockout.blend",
+  "object": "01M1_Lower_Jaw_Mass_Blockout",
+  "changed_vertices": 513,
+  "changed_faces": 198,
+  "topology_unchanged": true,
+  "weights_unchanged": true,
+  "protected_vertices_unchanged": true,
+  "outside_mask_rest_coords_exact": true,
+  "Rig_Trex_keys_pose_exact": true,
+  "changed_skin_near_degenerates": 0,
+  "changed_face_normal_dot_negative": 0,
+  "inverse_bind_error": 4.915124923727108e-07,
+  "max_world_displacement": 0.27679961514065493,
+  "status": "pending_visual_review",
+  "attack_deformation_not_tested": true,
+  "reopen_Rig_Trex_topology_weights_exact": true,
+  "output_sha256": "2f802ce60de099159a946c865178ab7473691a209a254d4d04960b0af951c8d6"
+}

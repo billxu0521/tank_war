@@ -1,0 +1,15 @@
+{
+  "model_hashes_unchanged": {
+    "01J": "b8b7e5c11f9a7c6f80901086e3d03d609f6ec732a1d888b0fdd66a61eba613b3",
+    "01M3": "53709e152c66e05a7c5d6224eae1b3f727f52cce839a7410e912c75bb2038de7",
+    "01M5B": "8bbd3030004528102b176204cdd2da0fb5c88b5edee326d2bc3356c114f08e4a"
+  },
+  "read_only_blend_audit_completed": true,
+  "M3_and_M5B_actual_bones": 45,
+  "models_modified": false,
+  "independent_design_review": "pass_design_only",
+  "new_morphology_or_clearance_validated": false,
+  "new_weights_validated": false,
+  "landmark_class": "I/D region samples; L9 uncertain",
+  "shared_camera_projection": true
+}

@@ -1,0 +1,49 @@
+{
+  "copied_allowlist": [
+    {
+      "source": "/Users/ChenPo-Yun/Documents/GameDev/worktrees/ninola/trex.gd",
+      "sha256": "2421f15edcdfad584470cf2239d822e916e6fbeefa14edf6cd4c96ac55c55cb8"
+    },
+    {
+      "source": "/Users/ChenPo-Yun/Documents/GameDev/worktrees/ninola/docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic-v002/test-project/candidate.gd",
+      "sha256": "38ed68fa9b26e71917a9feb477783ce22f7f75723de4394100fbf3333eb9d30d"
+    },
+    {
+      "source": "/Users/ChenPo-Yun/Documents/GameDev/worktrees/ninola/docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic-v002/test-project/viewmodel_mark.gd",
+      "sha256": "104701eddf3339bfb79e9c273aa98ee3babafd902a848555e67b3f5d6c4b34c7"
+    },
+    {
+      "source": "/Users/ChenPo-Yun/Documents/GameDev/worktrees/ninola/docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic-v002/test-project/fx.gd",
+      "sha256": "040aa9af3da36adeb0cb440b59bafd260ddef3d0825bd0b2b9eb6d42c6c27136"
+    },
+    {
+      "source": "/Users/ChenPo-Yun/Documents/GameDev/worktrees/ninola/docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic-v002/test-project/project.godot",
+      "sha256": "a191907487191e7ce3f6f1a32b08ca6f7c774048f5c8e9bd8f7a59d818175a1a"
+    },
+    {
+      "source": "/Users/ChenPo-Yun/Documents/GameDev/worktrees/ninola/facet.gdshader",
+      "sha256": "8154911f5422037452d858797648b273ceb1d79e94b8332485889e8266480617"
+    }
+  ],
+  "original_checkout_readonly_checks": [
+    {
+      "path": "/Users/ChenPo-Yun/Documents/Codex/2026-10-06/https-github-com-billxu0521-tank-war/tank_war/trex.gd",
+      "exists": true,
+      "sha256": "2421f15edcdfad584470cf2239d822e916e6fbeefa14edf6cd4c96ac55c55cb8",
+      "worktree_sha256": "2421f15edcdfad584470cf2239d822e916e6fbeefa14edf6cd4c96ac55c55cb8"
+    },
+    {
+      "path": "/Users/ChenPo-Yun/Documents/Codex/2026-10-06/https-github-com-billxu0521-tank-war/tank_war/models/trex_hd.glb",
+      "exists": true,
+      "sha256": "54b02c2e756fd28954a1edb78d92ddd9d387457631b82b7108fa8c0fe9d6dd3b",
+      "worktree_sha256": "54b02c2e756fd28954a1edb78d92ddd9d387457631b82b7108fa8c0fe9d6dd3b"
+    }
+  ],
+  "driver": "worktree trex.gd copied unchanged; isolated direct procedural calls, not player input",
+  "evaluation_setup_notes": [
+    "Missing facet.gdshader in first attempt; copied unchanged and retry passed",
+    "Flat StaticBody collision at y=0, waited physics_frame before samples",
+    "Initial GLB readback falsely counted Blender importer Icosphere display shape; raw GLB has only Ninola mesh; corrected filtering passed",
+    "All three evaluation GLBs have identical SHA; no source meshes changed"
+  ]
+}

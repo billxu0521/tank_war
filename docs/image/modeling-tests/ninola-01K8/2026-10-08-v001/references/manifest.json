@@ -1,0 +1,32 @@
+[
+  {
+    "original_source": "/Users/ChenPo-Yun/Documents/GameDev/material/Ninola/ChatGPT 圖像 2026年10月2日 下午12_33_43-1.png",
+    "local_path": "docs/image/modeling-tests/ninola-01K8/2026-10-08-v001/references/user_reference_1.png",
+    "sha256": "0a1b7a77e88d129c6bccf70d45e17c4f325030e4a2229d79cbc63f554f15be71",
+    "role": "user AI-generated concept / intended mass distribution; not anatomical authority"
+  },
+  {
+    "original_source": "/Users/ChenPo-Yun/Documents/GameDev/material/Ninola/ChatGPT 圖像 2026年10月2日 下午12_33_46-2.png",
+    "local_path": "docs/image/modeling-tests/ninola-01K8/2026-10-08-v001/references/user_reference_2.png",
+    "sha256": "a70be48c16460866b0ef2849dc87592386eb8b43b8cf8cc0e0e8e58a16f2b0f7",
+    "role": "user AI-generated concept / intended mass distribution; not anatomical authority"
+  },
+  {
+    "original_source": "/Users/ChenPo-Yun/Documents/GameDev/material/Ninola/ChatGPT 圖像 2026年10月2日 下午12_34_00-3.png",
+    "local_path": "docs/image/modeling-tests/ninola-01K8/2026-10-08-v001/references/user_reference_3.png",
+    "sha256": "dcf941bc4c07b251c691551ca3f14584bacacffd5228490f17c47f75d18ee126",
+    "role": "user AI-generated concept / intended mass distribution; not anatomical authority"
+  },
+  {
+    "original_source": "/Users/ChenPo-Yun/Documents/GameDev/material/Ninola/ChatGPT 圖像 2026年10月2日 下午12_34_04-4.png",
+    "local_path": "docs/image/modeling-tests/ninola-01K8/2026-10-08-v001/references/user_reference_4.png",
+    "sha256": "bc00adb3d53a94797ed5683bacb2e8e91762d1e01b6bcc6ac9a7104f318ab232",
+    "role": "user AI-generated concept / intended mass distribution; not anatomical authority"
+  },
+  {
+    "original_source": "/Users/ChenPo-Yun/Downloads/ChatGPT 圖像 2026年10月2日 下午12_33_24.png",
+    "local_path": "docs/image/modeling-tests/ninola-01K8/2026-10-08-v001/references/user_reference_5.png",
+    "sha256": "8c72643d581c3b0512a96bf8be321af9705fcd7ef95c18f2e3bdb619313672c0",
+    "role": "user AI-generated concept / intended mass distribution; not anatomical authority"
+  }
+]

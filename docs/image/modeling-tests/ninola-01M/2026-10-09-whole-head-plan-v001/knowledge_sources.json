@@ -1,0 +1,44 @@
+{
+  "read_on": "2026-10-09",
+  "usage": "planning; local library remains read-only",
+  "sources": [
+    {
+      "topic": "cranial_anatomy",
+      "path": "/Users/ChenPo-Yun/Documents/GameDev/Library/Modeling/Anatomy/Ninola_Cranial_Anatomy_and_Morphology_Research_2026-10-09.md",
+      "sha256": "20c7eccb93b12f7fc3372298a2979ff1633ec69fd31d4354b711a6c07e124c0c",
+      "evidence": "user-provided research/technical notes; relevant sections reviewed, not independent proof of all cited claims"
+    },
+    {
+      "topic": "silhouette_cross_sections",
+      "path": "/Users/ChenPo-Yun/Documents/GameDev/Library/Modeling/KB_Blender_LowPolyDinosaur_PolygonRunway.md",
+      "sha256": "5af14cc2f63b56b1343f6556fdd9d947d92822dda48b77177a7d6de3302d3125",
+      "evidence": "user-provided research/technical notes; relevant sections reviewed, not independent proof of all cited claims"
+    },
+    {
+      "topic": "topology",
+      "path": "/Users/ChenPo-Yun/Documents/GameDev/Library/fromBXu/mesh/拓撲完整指南：面數預算、變形環線與星形點擺放.md",
+      "sha256": "c615b4548623210be81d8059d7fd0db5a965a961e5b096e1db4b6f3d189398e1",
+      "evidence": "user-provided research/technical notes; relevant sections reviewed, not independent proof of all cited claims"
+    },
+    {
+      "topic": "design_before_detail",
+      "path": "/Users/ChenPo-Yun/Documents/GameDev/Library/fromBXu/mesh/遊戲角色製作全流程：情緒板、頭身比例粗模與 Solidify 做衣服（Thomas Potter）.md",
+      "sha256": "9d4853384c1d0ca6c4e08356c00e275866297410292eac584814e7d9172316e2",
+      "evidence": "user-provided research/technical notes; relevant sections reviewed, not independent proof of all cited claims"
+    }
+  ],
+  "external_checks": [
+    {
+      "url": "https://www.nature.com/articles/s42003-022-03706-0",
+      "scope": "article text: orbit diversity does not imply identical visible-eye shape"
+    },
+    {
+      "url": "https://app.pan.pl/article/item/app48-161.html",
+      "scope": "publisher abstract: broad posterior skull tapering toward snout"
+    },
+    {
+      "url": "https://zenodo.org/records/4458582",
+      "scope": "Brochu Figure15 caption/record, not whole-monograph verification"
+    }
+  ]
+}

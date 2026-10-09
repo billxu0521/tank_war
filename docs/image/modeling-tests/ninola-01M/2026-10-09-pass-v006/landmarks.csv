@@ -1,0 +1,17 @@
+asset,id,side,region,evidence,confidence,object,world_x,world_y,world_z,samples,meaning
+01M6,L1,0,Nasal_Vault,I/D,MEDIUM,01M6_Whole_Cranial_Blockout,0.0,3.322143077850342,2.4618217945098877,14,actual skin samples in explicitly chosen design region; not measured fossil bone landmark
+01M6,L2,-1,Preorbital,I/D,MEDIUM,01M6_Whole_Cranial_Blockout,-0.3320683240890503,3.054015636444092,2.42606782913208,34,actual skin samples in explicitly chosen design region; not measured fossil bone landmark
+01M6,L2,1,Preorbital,I/D,MEDIUM,01M6_Whole_Cranial_Blockout,0.3320682942867279,3.054015636444092,2.42606782913208,34,actual skin samples in explicitly chosen design region; not measured fossil bone landmark
+01M6,L3,-1,Postorbital,I/D,MEDIUM,01M6_Whole_Cranial_Blockout,-0.4356355369091034,2.73909068107605,2.3741276264190674,11,actual skin samples in explicitly chosen design region; not measured fossil bone landmark
+01M6,L3,1,Postorbital,I/D,MEDIUM,01M6_Whole_Cranial_Blockout,0.4351465106010437,2.750833034515381,2.3752238750457764,12,actual skin samples in explicitly chosen design region; not measured fossil bone landmark
+01M6,L4,-1,Supraorbital,I/D,MEDIUM,01M6_Whole_Cranial_Blockout,-0.3327888548374176,2.983043670654297,2.4618077278137207,46,actual skin samples in explicitly chosen design region; not measured fossil bone landmark
+01M6,L4,1,Supraorbital,I/D,MEDIUM,01M6_Whole_Cranial_Blockout,0.3327888548374176,2.983043909072876,2.4618074893951416,46,actual skin samples in explicitly chosen design region; not measured fossil bone landmark
+01M6,L5,-1,Eyeball_Region,I/D,MEDIUM,01M6_Whole_Cranial_Blockout,-0.3655519485473633,2.9743595123291016,2.436922073364258,39,actual skin samples in explicitly chosen design region; not measured fossil bone landmark
+01M6,L5,1,Eyeball_Region,I/D,MEDIUM,01M6_Whole_Cranial_Blockout,0.3655519485473633,2.9743595123291016,2.436922073364258,39,actual skin samples in explicitly chosen design region; not measured fossil bone landmark
+01M6,L6,-1,Infraorbital_Jugal,I/D,MEDIUM,01M6_Whole_Cranial_Blockout,-0.4209116995334625,2.9549996852874756,2.2964508533477783,18,actual skin samples in explicitly chosen design region; not measured fossil bone landmark
+01M6,L6,1,Infraorbital_Jugal,I/D,MEDIUM,01M6_Whole_Cranial_Blockout,0.4209116995334625,2.9549994468688965,2.2964508533477783,18,actual skin samples in explicitly chosen design region; not measured fossil bone landmark
+01M6,L7,-1,Maxillary_Mass,I/D,MEDIUM,01M6_Whole_Cranial_Blockout,-0.33462199568748474,3.2766666412353516,2.261388063430786,18,actual skin samples in explicitly chosen design region; not measured fossil bone landmark
+01M6,L7,1,Maxillary_Mass,I/D,MEDIUM,01M6_Whole_Cranial_Blockout,0.33462199568748474,3.2766666412353516,2.261388063430786,18,actual skin samples in explicitly chosen design region; not measured fossil bone landmark
+01M6,L8,0,Muzzle_Premaxillary,I/D,MEDIUM,01M6_Whole_Cranial_Blockout,-0.005321557633578777,3.667318105697632,2.2070424556732178,40,actual skin samples in explicitly chosen design region; not measured fossil bone landmark
+01M6,L9,-1,Naris_Region,I/D,LOW,01M6_Whole_Cranial_Blockout,-0.19072481989860535,3.5642857551574707,2.3183393478393555,7,actual skin samples in explicitly chosen design region; not measured fossil bone landmark
+01M6,L9,1,Naris_Region,I/D,LOW,01M6_Whole_Cranial_Blockout,0.19072481989860535,3.5642857551574707,2.3183393478393555,7,actual skin samples in explicitly chosen design region; not measured fossil bone landmark

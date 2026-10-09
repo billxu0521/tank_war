@@ -1,0 +1,22 @@
+{
+  "local_concept_reference_ids": [
+    2,
+    3,
+    5
+  ],
+  "sources": [
+    {
+      "doi": "10.7717/peerj.2312",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/27547591/",
+      "access": "abstract, figure captions and searchable text excerpts; full publisher text unavailable"
+    },
+    {
+      "doi": "10.7717/peerj.3427",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/28603673/",
+      "figure_url": "https://cdn.ncbi.nlm.nih.gov/pmc/blobs/3e46/5463970/fa8d74d8f441/peerj-05-3427-g002.jpg",
+      "access": "searchable descriptions and Fig.2 actually viewed in browser",
+      "local_media_imported": false
+    }
+  ],
+  "model_changes": false
+}

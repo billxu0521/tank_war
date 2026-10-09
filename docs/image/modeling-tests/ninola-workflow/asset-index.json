@@ -1,0 +1,1628 @@
+{
+  "schema_version": 1,
+  "archive": "/Users/ChenPo-Yun/Documents/Codex/2026-10-06/https-github-com-billxu0521-tank-war/tank_war/docs/image/modeling-tests/Ninola_01K_Migration_Archive_2026-10-08.zip",
+  "archive_root": "Ninola_01K_Closeout_2026-10-08",
+  "archive_sha256": "c5bda2aba84848edf23f5d3c40a4c35ccfd9fcf7be3cc3d8a7d1f4ff44fe1733",
+  "canonical_documents": "docs/image/modeling-tests/ninola-workflow",
+  "assets": {
+    "01J": {
+      "source_repo_path": "docs/image/modeling-tests/ninola-global-mass-01J/2026-10-07-v004/ninola_global_mass_01J_approved.blend",
+      "archive_path": "assets/repository/docs/image/modeling-tests/ninola-global-mass-01J/2026-10-07-v004/ninola_global_mass_01J_approved.blend",
+      "object": "Trex",
+      "sha256": "b8b7e5c11f9a7c6f80901086e3d03d609f6ec732a1d888b0fdd66a61eba613b3",
+      "local_path": "blender/ninola/checkpoints/01J/ninola_global_mass_01J_approved.blend",
+      "imported": true,
+      "role": "approved_production_checkpoint"
+    },
+    "01K6": {
+      "source_repo_path": "docs/image/modeling-tests/ninola-global-mass-01K6-pedal-mass-reconstruction/2026-10-08-v003/ninola_01K6_pedal_mass_reconstruction.blend",
+      "archive_path": "assets/repository/docs/image/modeling-tests/ninola-global-mass-01K6-pedal-mass-reconstruction/2026-10-08-v003/ninola_01K6_pedal_mass_reconstruction.blend",
+      "object": "01K6_Pedal_Segment_Mass_Reconstruction",
+      "sha256": "6be6642d8ed8cb2b48a31bd2649cf94457be6073daa59ac6653197dd222f18ca",
+      "local_path": "blender/ninola/candidates/01K6/ninola_01K6_pedal_mass_reconstruction.blend",
+      "imported": true,
+      "role": "selected_morphology_candidate"
+    },
+    "01K7": {
+      "source_repo_path": "docs/image/modeling-tests/ninola-global-mass-01K7-anatomical-integration/2026-10-08-v006/ninola_01K7_anatomical_integration.blend",
+      "archive_path": "assets/repository/docs/image/modeling-tests/ninola-global-mass-01K7-anatomical-integration/2026-10-08-v006/ninola_01K7_anatomical_integration.blend",
+      "object": "01K7_Anatomical_Transition_Integration",
+      "sha256": "3bd8a3b4132b4418868a40b341175c7ac0f7687f9785c3e8b5341c4a5685947d",
+      "local_path": null,
+      "imported": false,
+      "role": "rejected_archive_only"
+    },
+    "01K8": {
+      "local_path": "blender/ninola/working/01K8/2026-10-08-v004/ninola_01K8_hock_mass_continuity.blend",
+      "object": "01K8_Hock_Mass_Continuity",
+      "sha256": "d157deaadc78216d39f8265340c7e742416742391899a602c3fc685875d778f9",
+      "role": "historical_working_trial_partial_not_selected",
+      "imported": false,
+      "created_from": "01K6",
+      "base_sha256": "6be6642d8ed8cb2b48a31bd2649cf94457be6073daa59ac6653197dd222f18ca",
+      "origin": "created_locally_from_01K6",
+      "review_result": "PARTIAL_deferred",
+      "reference_manifest": "docs/image/modeling-tests/ninola-01K8/2026-10-08-v001/references/manifest.json"
+    },
+    "01L1": {
+      "local_path": "blender/ninola/working/01L1/2026-10-08-v001/ninola_01L1_forward_toe_volume.blend",
+      "object": "01L1_Forward_Toe_Volume_Blockout",
+      "sha256": "7e4792bf471dd6a76b4e44a7ed983e70bc036723b28f266577b4727df48fefd7",
+      "role": "historical_unsuccessful_trial_not_selected",
+      "imported": false,
+      "origin": "created_locally_from_01K6",
+      "created_from": "01K6",
+      "base_sha256": "6be6642d8ed8cb2b48a31bd2649cf94457be6073daa59ac6653197dd222f18ca",
+      "review_result": "PARTIAL",
+      "user_feedback": "thickened_but_shape_still_awkward_possible_oversized_foot_envelope"
+    },
+    "01L2": {
+      "local_path": "blender/ninola/working/01L2/2026-10-08-v002/ninola_01L2_toe_separation.blend",
+      "object": "01L2_Forward_Toe_Separation",
+      "sha256": "ba36ca8176957bd8dea0d9fa5d68ec7c719297c2897a0b00c800eef2a46ca2f2",
+      "role": "historical_unsuccessful_trial_not_selected",
+      "imported": false,
+      "origin": "created_locally_from_01K6",
+      "base_sha256": "6be6642d8ed8cb2b48a31bd2649cf94457be6073daa59ac6653197dd222f18ca",
+      "created_from": "01K6",
+      "review_result": "PARTIAL_surface_definition_improved"
+    },
+    "01L3": {
+      "local_path": "blender/ninola/working/01L3/2026-10-08-v002/ninola_01L3_toe_volume_rebuild.blend",
+      "object": "01L3_Three_Toe_Volume_Reconstruction",
+      "sha256": "34e6608bfb04e73a271199dbd3f4f684545bf7d7cdc8f6e3282d3d970c44c6fd",
+      "role": "accepted_temporary_foot_morphology_checkpoint",
+      "version": "v002",
+      "imported": false,
+      "origin": "created_locally_from_01K6",
+      "created_from": "01K6",
+      "base_sha256": "6be6642d8ed8cb2b48a31bd2649cf94457be6073daa59ac6653197dd222f18ca",
+      "review_result": "user_accepted_morphology_not_production",
+      "verification": "docs/image/modeling-tests/ninola-01L/2026-10-08-pass-v003/refined-v002/verification.json",
+      "production_ready": false,
+      "user_feedback": "approved_after_local_and_wide_view_comparison"
+    },
+    "01M1": {
+      "local_path": "blender/ninola/working/01M1/2026-10-08-v002/ninola_01M1_jaw_mass_blockout.blend",
+      "object": "01M1_Lower_Jaw_Mass_Blockout",
+      "sha256": "97b38435343c4312e16f5bf3f81e3ee892158f1ce201a1716f75ba43c1e96674",
+      "version": "v002",
+      "role": "jaw_morphology_working_candidate_pending_user_review",
+      "created_from": "01L3",
+      "base_sha256": "34e6608bfb04e73a271199dbd3f4f684545bf7d7cdc8f6e3282d3d970c44c6fd",
+      "origin": "created_locally_from_accepted_01L3",
+      "imported": false,
+      "review_result": "local_jaw_improvement_head_identity_still_partial",
+      "production_ready": false,
+      "verification": "docs/image/modeling-tests/ninola-01M/2026-10-08-pass-v001/refined-v002/verification.json"
+    },
+    "01M2": {
+      "local_path": "blender/ninola/working/01M2/2026-10-08-v002/ninola_01M2_head_identity_blockout.blend",
+      "object": "01M2_Head_Identity_Blockout",
+      "sha256": "41afab419ca0e1347696d6b851ebb4f8c0db12d2080dd7f7b43358bfb2a00cec",
+      "version": "v002",
+      "role": "rejected_head_morphology_experiment_history_only",
+      "created_from": "01M1",
+      "base_sha256": "97b38435343c4312e16f5bf3f81e3ee892158f1ce201a1716f75ba43c1e96674",
+      "production_ready": false,
+      "verification": "docs/image/modeling-tests/ninola-01M/2026-10-08-pass-v002/refined-v002/verification.json",
+      "result": "docs/image/modeling-tests/ninola-01M/2026-10-08-pass-v002/RESULT.md",
+      "review_result": "user_rejected_2026_10_09_triangular_cranial_peak",
+      "user_feedback": "side cranial outline deviates from concept; do not carry forward"
+    },
+    "01M3": {
+      "local_path": "blender/ninola/working/01M3/2026-10-09-v006/ninola_01M3_concept_head_reconstruction.blend",
+      "object": "01M3_Concept_Head_Reconstruction",
+      "sha256": "53709e152c66e05a7c5d6224eae1b3f727f52cce839a7410e912c75bb2038de7",
+      "version": "v006",
+      "role": "user_accepted_concept_head_working_checkpoint",
+      "created_from": "01M1",
+      "base_sha256": "97b38435343c4312e16f5bf3f81e3ee892158f1ce201a1716f75ba43c1e96674",
+      "production_ready": false,
+      "review_result": "user_accepted_for_continuation_2026_10_09",
+      "verification": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v003/refined-v006/verification.json",
+      "history_versions": [
+        {
+          "version": "v001",
+          "path": "blender/ninola/working/01M3/2026-10-09-v001/ninola_01M3_concept_head_reconstruction.blend",
+          "role": "unadopted_iteration_history",
+          "sha256": "bd720a1a4375d94d6db1a3776fcf9b762635ba1fe12fb5f80081d265e77bc66f"
+        },
+        {
+          "version": "v002",
+          "path": "blender/ninola/working/01M3/2026-10-09-v002/ninola_01M3_concept_head_reconstruction.blend",
+          "role": "unadopted_iteration_history",
+          "sha256": "b28ecb444320da74fb20190554d915ad404eb05dca7e7dbe22178da44c71b3d8"
+        },
+        {
+          "version": "v003",
+          "path": "blender/ninola/working/01M3/2026-10-09-v003/ninola_01M3_concept_head_reconstruction.blend",
+          "role": "unadopted_iteration_history",
+          "sha256": "08cf6de7838862a8bf1827117d41fb69a1537bc2771095f5f458cf173274d008"
+        },
+        {
+          "version": "v004",
+          "path": "blender/ninola/working/01M3/2026-10-09-v004/ninola_01M3_concept_head_reconstruction.blend",
+          "role": "unadopted_iteration_history",
+          "sha256": "9feb3a648703a815c695d217bc3e763d67446ad27ba1314a9919190f530de2fe"
+        },
+        {
+          "version": "v005",
+          "path": "blender/ninola/working/01M3/2026-10-09-v005/ninola_01M3_concept_head_reconstruction.blend",
+          "role": "unadopted_iteration_history",
+          "sha256": "9e6f3b0e2647226cc296564cfef31f93c4337635df695de636885e379d5bf627"
+        }
+      ],
+      "user_feedback": "可接受；與M1各有優點，值得承接"
+    },
+    "01M4": {
+      "local_path": "blender/ninola/working/01M4/2026-10-09-v001/ninola_01M4_cranial_identity.blend",
+      "object": "01M4_Cranial_Identity",
+      "sha256": "6716d0d2389ed582479d92a6a68675b41832f0e48e84ff433fd16b11cbe93bcf",
+      "version": "v001",
+      "role": "cranial_identity_candidate_pending_user_review",
+      "created_from": "01M3",
+      "base_sha256": "53709e152c66e05a7c5d6224eae1b3f727f52cce839a7410e912c75bb2038de7",
+      "production_ready": false,
+      "review_result": "independent_identity_discussion_candidate_pass_not_complete_concept",
+      "verification": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v004/verification.json",
+      "result": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v004/RESULT.md"
+    },
+    "01M5B": {
+      "local_path": "blender/ninola/working/01M5B/2026-10-09-v007/ninola_01M5B_face_mass_gaze.blend",
+      "object": "01M5B_Face_Mass_Gaze",
+      "sha256": "8bbd3030004528102b176204cdd2da0fb5c88b5edee326d2bc3356c114f08e4a",
+      "version": "v007",
+      "created_from": "01M3",
+      "base_sha256": "53709e152c66e05a7c5d6224eae1b3f727f52cce839a7410e912c75bb2038de7",
+      "role": "unadopted_B_trial_partial",
+      "production_ready": false,
+      "review_result": "independent_not_pass_v007_not_adopted",
+      "history_versions": [
+        {
+          "version": "v001",
+          "path": "blender/ninola/working/01M5B/2026-10-09-v001/ninola_01M5B_face_mass_gaze.blend",
+          "sha256": "f408bcc2a90a167addfe2ca7fdab85a8b9ae696272872a36011fc9497b1eb1e6",
+          "reason": "露球過多，正面偏瞪眼",
+          "role": "unadopted_trial"
+        },
+        {
+          "version": "v002",
+          "path": "blender/ninola/working/01M5B/2026-10-09-v002/ninola_01M5B_face_mass_gaze.blend",
+          "sha256": "29658a46efa0633e7206fbcdd3b7797029d1f7d1a8483bbed2ea2014e074521f",
+          "reason": "獨立審查否決：放射長三角眶區／驚訝感",
+          "role": "unadopted_trial"
+        },
+        {
+          "version": "v003",
+          "path": "blender/ninola/working/01M5B/2026-10-09-v003/ninola_01M5B_face_mass_gaze.blend",
+          "sha256": "24dc72becccb92d3ae1f0df40df6a3fb69a3283ecd4c2da8249149adc06d7a5a",
+          "reason": "對應環過渡仍有尖折",
+          "role": "unadopted_trial"
+        },
+        {
+          "version": "v004",
+          "path": "blender/ninola/working/01M5B/2026-10-09-v004/ninola_01M5B_face_mass_gaze.blend",
+          "sha256": "5125daa583d9e98c1d7755fc3d1d05e2a65ff73cb139e0e6831a0c3744343937",
+          "reason": "星芒減少但球面成為側面裝飾，眉遮不足",
+          "role": "unadopted_trial"
+        },
+        {
+          "version": "v005",
+          "path": "blender/ninola/working/01M5B/2026-10-09-v005/ninola_01M5B_face_mass_gaze.blend",
+          "sha256": "24e231efc147af9024a37a85c6d9c229cfd3d5042d74bb020b027349d5a8a715",
+          "reason": "更深眼位導致虹膜被遮",
+          "role": "unadopted_trial"
+        },
+        {
+          "version": "v006",
+          "path": "blender/ninola/working/01M5B/2026-10-09-v006/ninola_01M5B_face_mass_gaze.blend",
+          "sha256": "ecb06cd6403cf7b4ce14c736e2f56a2c5c8e4a64f7558c44d7dc45f0520f8948",
+          "reason": "後移眼位仍未解決可讀性",
+          "role": "unadopted_trial"
+        },
+        {
+          "version": "v007",
+          "path": "blender/ninola/working/01M5B/2026-10-09-v007/ninola_01M5B_face_mass_gaze.blend",
+          "sha256": "8bbd3030004528102b176204cdd2da0fb5c88b5edee326d2bc3356c114f08e4a",
+          "reason": "最終討論試作：眼眶未達B，整版不承接",
+          "role": "unadopted_trial"
+        }
+      ],
+      "verification": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v005B/verification.json",
+      "result": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v005B/RESULT.md"
+    },
+    "01M6": {
+      "local_path": "blender/ninola/working/01M6/2026-10-09-v004/ninola_01M6_whole_cranial_blockout.blend",
+      "object": "01M6_Whole_Cranial_Blockout",
+      "sha256": "c80991fbb57f514fae7c7a94c8abec20394440de5457d65a5144d1822c42c28c",
+      "version": "v004",
+      "created_from": "01M3",
+      "base_sha256": "53709e152c66e05a7c5d6224eae1b3f727f52cce839a7410e912c75bb2038de7",
+      "role": "historical_superseded_not_current_anchor",
+      "production_ready": false,
+      "review_result": "independent_not_pass; historical_only_after_user_selects_M7",
+      "history_versions": [
+        {
+          "version": "v001",
+          "path": "blender/ninola/working/01M6/2026-10-09-v001/ninola_01M6_whole_cranial_blockout.blend",
+          "sha256": "861d312e744ea1a90a01330d83426a786cf5a3578dde18fa8f30b2e87215ae3b",
+          "reason": "圖表插點鼻扇／折面，不採納",
+          "role": "unadopted_trial"
+        },
+        {
+          "version": "v002",
+          "path": "blender/ninola/working/01M6/2026-10-09-v002/ninola_01M6_whole_cranial_blockout.blend",
+          "sha256": "1176848fa326c819e9c0c66178a9f6aa77d25267b19395efed5ece90f01ff04d",
+          "reason": "連續格面成立、眼周尖折，不採納",
+          "role": "unadopted_trial"
+        },
+        {
+          "version": "v003",
+          "path": "blender/ninola/working/01M6/2026-10-09-v003/ninola_01M6_whole_cranial_blockout.blend",
+          "sha256": "15d83983ce7ae29dd6ca91a9da2608794fbb4adbea5661c838ea340c870766a1",
+          "reason": "眼瞼貼主面、前口緣折面，不採納",
+          "role": "unadopted_trial"
+        },
+        {
+          "version": "v004",
+          "path": "blender/ninola/working/01M6/2026-10-09-v004/ninola_01M6_whole_cranial_blockout.blend",
+          "sha256": "c80991fbb57f514fae7c7a94c8abec20394440de5457d65a5144d1822c42c28c",
+          "reason": "本輪討論版；鼻吻台階／罩殼／眶區承托不足，造型不通過",
+          "role": "unadopted_trial"
+        }
+      ],
+      "review_documents": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v006/RESULT.md",
+      "user_decision": "2026-10-09 保留作為可退回討論錨點；不等於Concept／工程驗收通過",
+      "latest_user_decision": "2026-10-09 M6 no longer discussion anchor; retain history only"
+    },
+    "01M7": {
+      "local_path": "blender/ninola/working/01M7/2026-10-09-v003/ninola_01M7_whole_cranial_blockout.blend",
+      "object": "01M7_Whole_Cranial_Blockout",
+      "sha256": "db68379629742716900b1e6d6bf03a3ca016c3faf85bd7d4b86935bcb72bed25",
+      "version": "v003",
+      "created_from": "01M3",
+      "discussion_anchor": "01M7 v003",
+      "base_sha256": "53709e152c66e05a7c5d6224eae1b3f727f52cce839a7410e912c75bb2038de7",
+      "role": "approved_structural_base_historical_game_test_baseline",
+      "production_ready": false,
+      "history_versions": [
+        {
+          "version": "v001",
+          "path": "blender/ninola/working/01M7/2026-10-09-v001/ninola_01M7_whole_cranial_blockout.blend",
+          "sha256": "12d7fe6294dbd1aad8282a8e80497891f349f4fa83c7b37541984db6deb779be",
+          "reason": "眉罩過強／遮眼",
+          "role": "structural_trial_not_production"
+        },
+        {
+          "version": "v002",
+          "path": "blender/ninola/working/01M7/2026-10-09-v002/ninola_01M7_whole_cranial_blockout.blend",
+          "sha256": "ec93cd3ac29d8f82186c7e8c9ff165c58a2cdf5d9cab5937911275959926df82",
+          "reason": "縮小遮罩，虹膜弱",
+          "role": "structural_trial_not_production"
+        },
+        {
+          "version": "v003",
+          "path": "blender/ninola/working/01M7/2026-10-09-v003/ninola_01M7_whole_cranial_blockout.blend",
+          "sha256": "db68379629742716900b1e6d6bf03a3ca016c3faf85bd7d4b86935bcb72bed25",
+          "reason": "最終結構粗模；正面眼神仍需審視",
+          "role": "structural_trial_not_production"
+        }
+      ],
+      "review_documents": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/RESULT.md",
+      "review_result": "structural_direction_pass; frontal_gaze_unresolved; not_production"
+    },
+    "01M8": {
+      "local_path": "blender/ninola/working/01M8/2026-10-09-v001/ninola_01M8_cranial_identity.blend",
+      "object": "01M8_Cranial_Identity",
+      "sha256": "85c4698b0dbccc116257c73bf23219ac347507e4167881cc994ba0d5390d9d40",
+      "version": "v001",
+      "created_from": "01M7",
+      "base_sha256": "db68379629742716900b1e6d6bf03a3ca016c3faf85bd7d4b86935bcb72bed25",
+      "role": "approved_historical_rollback_before_N1",
+      "production_ready": false,
+      "report": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v008/index.html",
+      "protection_verification": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v008/protection_verification.json",
+      "review_result": "user_approved_identity_restoration; independent_limited_pass; no_new_dynamic_validation",
+      "user_approved": "2026-10-09"
+    },
+    "01N1": {
+      "local_path": "blender/ninola/working/01N1/2026-10-09-v004/ninola_01N1_jaw_volume_reconstruction.blend",
+      "object": "01N1_Jaw_Volume_Reconstruction",
+      "sha256": "aa6fe9e30596855215b3db8c93a8b9c4da12639cc8d9ce897f7f3e7b350a04a9",
+      "version": "v004",
+      "created_from": "01M8",
+      "base_sha256": "85c4698b0dbccc116257c73bf23219ac347507e4167881cc994ba0d5390d9d40",
+      "role": "user_approved_working_checkpoint_with_open_issues",
+      "review_result": "user_approved_v004; independent_technical_fix_pass; accepted_v003_shape_preserved",
+      "production_ready": false,
+      "report": "docs/image/modeling-tests/ninola-01N/2026-10-09-pass-v001/index.html",
+      "history_versions": [
+        {
+          "version": "v001",
+          "path": "blender/ninola/working/01N1/2026-10-09-v001/ninola_01N1_jaw_volume_reconstruction.blend",
+          "sha256": "69f6edac5acc9f0a7ecda5baa2423b3d09a06713d5022253b289b9c6a510fd6d",
+          "status": "partial_not_adopted"
+        },
+        {
+          "version": "v002",
+          "path": "blender/ninola/working/01N1/2026-10-09-v002/ninola_01N1_jaw_volume_reconstruction.blend",
+          "sha256": "8e2a7a6a74084e1e7a30feb56e694b1034af60216541008171ba0bb0554f7198",
+          "status": "partial_not_adopted"
+        },
+        {
+          "version": "v003",
+          "path": "blender/ninola/working/01N1/2026-10-09-v003/ninola_01N1_jaw_volume_reconstruction.blend",
+          "sha256": "29c0ce14748c7953a071f5efe7635ec851816b6ffdef0cae041decb24138bb84",
+          "status": "user_accepted_with_open_issues"
+        },
+        {
+          "version": "v004",
+          "path": "blender/ninola/working/01N1/2026-10-09-v004/ninola_01N1_jaw_volume_reconstruction.blend",
+          "sha256": "aa6fe9e30596855215b3db8c93a8b9c4da12639cc8d9ce897f7f3e7b350a04a9",
+          "status": "user_approved_technical_revision_with_open_issues"
+        }
+      ],
+      "user_accepted": "2026-10-09",
+      "open_technical_issue": "local winding repaired; other interface/contact/production validation remains open",
+      "interface_audit": "docs/image/modeling-tests/ninola-01N/2026-10-09-interface-audit-v001/index.html",
+      "user_accepted_shape_version": "v003",
+      "technical_fix_authorized": "2026-10-09",
+      "winding_fix_report": "docs/image/modeling-tests/ninola-01N/2026-10-09-winding-fix-v001/index.html",
+      "evaluation_exports": [
+        {
+          "path": "docs/image/modeling-tests/ninola-01N/2026-10-09-winding-fix-v001/evaluation-exports/N1v003_eight_weights.glb",
+          "sha256": "5efc335092aca773ec66e362ebdc1ae4b195214f9707e812eda7f194cc6031c3",
+          "role": "isolated_export_comparison_not_production"
+        },
+        {
+          "path": "docs/image/modeling-tests/ninola-01N/2026-10-09-winding-fix-v001/evaluation-exports/N1v004_eight_weights.glb",
+          "sha256": "240b91115b24788014d6d52568886618907d825ef36c6ff76c60ecfc8e7d84fa",
+          "role": "isolated_export_comparison_not_production"
+        }
+      ],
+      "user_accepted_version": "v004"
+    },
+    "01O1": {
+      "local_path": "blender/ninola/working/01O1/2026-10-09-v002/ninola_01O1_neck_chest_continuity.blend",
+      "object": "01O1_Neck_Chest_Continuity",
+      "sha256": "dbcdc459a52a6f8817ca4aeff807aa3d304be1005133c83eee2f9b453f235648",
+      "version": "v002",
+      "created_from": "01N1 v004",
+      "base_sha256": "aa6fe9e30596855215b3db8c93a8b9c4da12639cc8d9ce897f7f3e7b350a04a9",
+      "role": "user_rejected_experiment",
+      "review_result": "user_rejected_2026-10-09; neck_and_torso_N1_retained",
+      "production_ready": false,
+      "report": "docs/image/modeling-tests/ninola-01O/2026-10-09-pass-v001/index.html",
+      "history_versions": [
+        {
+          "version": "v001",
+          "path": "blender/ninola/working/01O1/2026-10-09-v001/ninola_01O1_neck_chest_continuity.blend",
+          "sha256": "2cb5e308a9ec7f61be0cfabb5122c639c6d60444d1a4402754ce642929de39b3",
+          "status": "overconservative_7_coordinates_trial"
+        },
+        {
+          "version": "v002",
+          "path": "blender/ninola/working/01O1/2026-10-09-v002/ninola_01O1_neck_chest_continuity.blend",
+          "sha256": "dbcdc459a52a6f8817ca4aeff807aa3d304be1005133c83eee2f9b453f235648",
+          "status": "user_rejected"
+        }
+      ],
+      "user_rejected": "2026-10-09"
+    },
+    "01O2": {
+      "local_path": "blender/ninola/working/01O2/2026-10-09-v003/ninola_01O2_ventral_belly_tuck.blend",
+      "object": "01O2_Ventral_Belly_Tuck",
+      "sha256": "2c18b78c86106815af02b4b7e03c510ccfc2ff432428224d7eb1e7c26b512991",
+      "version": "v003",
+      "created_from": "01N1 v004",
+      "base_sha256": "aa6fe9e30596855215b3db8c93a8b9c4da12639cc8d9ce897f7f3e7b350a04a9",
+      "role": "user_approved_working_checkpoint",
+      "review_result": "independent_visual_pass; user_approved_closeout_2026-10-09",
+      "production_ready": false,
+      "report": "docs/image/modeling-tests/ninola-01O/2026-10-09-belly-v001/index.html",
+      "history_versions": [
+        {
+          "version": "v001",
+          "path": "blender/ninola/working/01O2/2026-10-09-v001/ninola_01O2_ventral_belly_tuck.blend",
+          "sha256": "1d4ec7f3d68bd2c4a8308edc91a218cf8dc4ca101737809514909b8e93a6e52d",
+          "status": "initial_stepped_belly_not_selected"
+        },
+        {
+          "version": "v002",
+          "path": "blender/ninola/working/01O2/2026-10-09-v002/ninola_01O2_ventral_belly_tuck.blend",
+          "sha256": "2e642d7ec1647ddcdda8a8ad1feaf1d2f279321a9acfcf10f5afa27bf7b6446f",
+          "status": "initial_stepped_belly_not_selected"
+        },
+        {
+          "version": "v003",
+          "path": "blender/ninola/working/01O2/2026-10-09-v003/ninola_01O2_ventral_belly_tuck.blend",
+          "sha256": "2c18b78c86106815af02b4b7e03c510ccfc2ff432428224d7eb1e7c26b512991",
+          "status": "user_approved_archived_working_checkpoint"
+        }
+      ],
+      "user_accepted": "2026-10-09",
+      "user_accepted_version": "v003",
+      "closeout": "docs/image/modeling-tests/ninola-01O/2026-10-09-closeout-v001"
+    },
+    "01P1": {
+      "local_path": "blender/ninola/working/01P1/2026-10-09-v002/ninola_01P1_palm_digit_continuity.blend",
+      "object": "01P1_Palm_Digit_Continuity",
+      "sha256": "49bf5f7e625538cfa48868e5ac1050d2892b646b17915e5ce113675c0c58429e",
+      "version": "v002",
+      "created_from": "01O2 v003",
+      "role": "user_approved_working_checkpoint",
+      "production_ready": false,
+      "report": "docs/image/modeling-tests/ninola-01P/2026-10-09-pass-v001/index.html",
+      "history_versions": [
+        {
+          "version": "v001",
+          "path": "blender/ninola/working/01P1/2026-10-09-v001/ninola_01P1_palm_digit_continuity.blend",
+          "sha256": "037c879867b673689127acc09d80d25325e9459421b70a5d576ac501b5febca0",
+          "status": "same_shape_before_new_skin_winding_fix"
+        }
+      ],
+      "review_result": "independent_visual_pass; user_approved_2026-10-09",
+      "user_accepted": "2026-10-09",
+      "user_accepted_version": "v002"
+    },
+    "01Q1": {
+      "local_path": "blender/ninola/working/01Q1/2026-10-09-v002/ninola_01Q1_tail_taper.blend",
+      "object": "01Q1_Tail_Taper",
+      "sha256": "89feeb79f1849b590476715f1db34779d27e6dfa5d918e9ef68bc217280919ae",
+      "version": "v002",
+      "created_from": "01P1 v002",
+      "role": "user_approved_working_checkpoint",
+      "review_result": "independent_visual_pass; user_approved_2026-10-09",
+      "production_ready": false,
+      "report": "docs/image/modeling-tests/ninola-01Q/2026-10-09-pass-v001/index.html",
+      "history_versions": [
+        {
+          "version": "v001",
+          "path": "blender/ninola/working/01Q1/2026-10-09-v001/ninola_01Q1_tail_taper.blend",
+          "sha256": "f8da19ce349af00d0e9a4d7735256cdbd1ab08b15fb88acffc7a9a8f68bd0492",
+          "status": "incomplete_tail_skin_mask_not_accepted"
+        }
+      ],
+      "user_accepted": "2026-10-09",
+      "user_accepted_version": "v002"
+    },
+    "01R1": {
+      "local_path": "blender/ninola/working/01R1/2026-10-09-v011/ninola_01R1_posterior_junction.blend",
+      "object": "01R1_Posterior_Junction",
+      "sha256": "55fc4e50b9f279eaa4a1662187199e347c18d1d25772746e466908a261614f79",
+      "created_from": "01R1 v010",
+      "base_sha256": "a83fd2fa0a3bc0c1d35fdce72a7c56f1b74cd733770d237670550e1a223ab3e6",
+      "role": "user_approved_working_checkpoint",
+      "vertices": 9301,
+      "triangles": 6719,
+      "production_ready": false,
+      "report": "docs/image/modeling-tests/ninola-01R/2026-10-09-pass-v004/index.html",
+      "history": [
+        {
+          "version": "v001",
+          "path": "blender/ninola/working/01R1/2026-10-09-v001/ninola_01R1_geometric_head_jaw.blend",
+          "sha256": "ceeca9ef08d8314ae79ead3b25a70861f0674994081245caba7cfe2cefa27d08",
+          "role": "historical_trial_not_selected"
+        },
+        {
+          "version": "v002",
+          "path": "blender/ninola/working/01R1/2026-10-09-v002/ninola_01R1_geometric_head_jaw.blend",
+          "sha256": "72a8302f21ed32161693657e0f22c5b1b431c8752476411f449a0d4834ff9eb7",
+          "role": "historical_trial_not_selected"
+        },
+        {
+          "version": "v003",
+          "path": "blender/ninola/working/01R1/2026-10-09-v003/ninola_01R1_geometric_head_jaw.blend",
+          "sha256": "c7a2d0f3ccd39ec67d9afc5153110db21d439a6eac4dafa78c7396943f01a754",
+          "role": "historical_trial_not_selected"
+        },
+        {
+          "version": "v004",
+          "path": "blender/ninola/working/01R1/2026-10-09-v004/ninola_01R1_geometric_head_jaw.blend",
+          "sha256": "7e583440db9052055ceaebfb578a26add23f2287115c00b14c2eaf683dee19b9",
+          "role": "geometry_rejected_by_user; spine_palette_approved_separately"
+        },
+        {
+          "version": "v005",
+          "path": "blender/ninola/working/01R1/2026-10-09-v005/ninola_01R1_geometric_head_jaw.blend",
+          "sha256": "572f593b7d8bf754422fb3cc38184efb66ff99c75866ce0f539f8333df8e1001",
+          "role": "historical_trial_independent_not_passed"
+        },
+        {
+          "version": "v006",
+          "path": "blender/ninola/working/01R1/2026-10-09-v006/ninola_01R1_geometric_head_jaw.blend",
+          "sha256": "e881ce6b046b3218edc1da16f8188ea3e1dab2cccbe3ffb0b2ff2f3906affca2",
+          "role": "not_selected; improved_but_below_user_expectation"
+        },
+        {
+          "version": "v007",
+          "path": "blender/ninola/working/01R1/2026-10-09-v007/ninola_01R1_old_panel_head_transfer.blend",
+          "sha256": "403b13b831a59e7933d27953d796cd96c6f7232f4b58c899deb3d3e509067afc",
+          "role": "historical_transfer_trial_not_selected"
+        },
+        {
+          "version": "v008",
+          "path": "blender/ninola/working/01R1/2026-10-09-v008/ninola_01R1_old_panel_head_transfer.blend",
+          "sha256": "9fa0336c069dc19bbf7068d850ef431197734ad01bde73eea0eec799da53ba3b",
+          "role": "historical_transfer_trial_not_selected"
+        },
+        {
+          "version": "v009",
+          "path": "blender/ninola/working/01R1/2026-10-09-v009/ninola_01R1_old_panel_head_transfer.blend",
+          "sha256": "a15207aae62be5b89b5592bd99f8acd906f9cb1ad903fb851c7cc072c32479e2",
+          "role": "historical_transfer_trial_not_selected"
+        },
+        {
+          "version": "v010",
+          "path": "blender/ninola/working/01R1/2026-10-09-v010/ninola_01R1_old_panel_head_transfer.blend",
+          "sha256": "a83fd2fa0a3bc0c1d35fdce72a7c56f1b74cd733770d237670550e1a223ab3e6",
+          "role": "nose_orbit_user_accepted; posterior_junction_defect_confirmed; rollback"
+        }
+      ],
+      "user_accepted_components": [
+        "v010_nose_form_preserved",
+        "v010_orbit_visual_result_preserved",
+        "spine_palette_preserved"
+      ],
+      "changed_vertex_count": 6,
+      "review_result": "user_approved_v011; independent_limited_junction_pass; production_unverified",
+      "user_approved": true,
+      "approval_date": "2026-10-09"
+    },
+    "01R_spine": {
+      "local_path": "blender/ninola/working/01R-spine/2026-10-09-v001/ninola_Q1_approved_spine_palette.blend",
+      "object": "01Q1_Approved_Spine_Palette",
+      "sha256": "5ea751f097f0332b26eaa8abaa21ea3610e7cea3d230a02451f81f98a537909b",
+      "created_from": "01Q1 v002",
+      "base_sha256": "89feeb79f1849b590476715f1db34779d27e6dfa5d918e9ef68bc217280919ae",
+      "role": "user_approved_working_checkpoint_Q1_geometry_plus_head_spine_palette",
+      "geometry_changed": false,
+      "triangles": 7004,
+      "vertices": 11180,
+      "production_ready": false,
+      "verification": "docs/image/modeling-tests/ninola-01R/2026-10-09-pass-v002/approved_spine_palette.json"
+    },
+    "01R2": {
+      "local_path": "blender/ninola/working/01R2/2026-10-09-v005/ninola_01R2_gold_slit_eye.blend",
+      "object": "01R2_Gold_Slit_Eye",
+      "sha256": "363eb15913ff2b7ee528a67163aa86805126e56a64514e07001cddc0ff305929",
+      "base_sha256": "55fc4e50b9f279eaa4a1662187199e347c18d1d25772746e466908a261614f79",
+      "created_from": "01R1 v011",
+      "role": "user_approved_working_checkpoint",
+      "vertices": 9441,
+      "triangles": 7007,
+      "eye_triangles": 576,
+      "production_ready": false,
+      "report": "docs/image/modeling-tests/ninola-01R/2026-10-09-eye-pass-v005/index.html",
+      "review": "independent finite eye rotation review passed; user approved v005",
+      "MCP_inspection": "unavailable this round",
+      "history": [
+        {
+          "version": "v001",
+          "path": "blender/ninola/working/01R2/2026-10-09-v001/ninola_01R2_gold_slit_eye.blend",
+          "sha256": "eefa191546dd2a44140b1a4de99c8bcbf8937d3f9c2c36ed0773b7ad692a6374",
+          "role": "forward_axis_historical_trial"
+        },
+        {
+          "version": "v002",
+          "path": "blender/ninola/working/01R2/2026-10-09-v002/ninola_01R2_gold_slit_eye.blend",
+          "sha256": "ad2a8ce7af6c72f783cb62d5ad0a8b4427945d2d56049926cbe998ae4fd6742f",
+          "role": "lateral_installation_comparison_retained"
+        },
+        {
+          "version": "v003",
+          "path": "blender/ninola/working/01R2/2026-10-09-v003/ninola_01R2_gold_slit_eye.blend",
+          "sha256": "66b25203f1fcccf4e1340bd91e41470f0ce3b9f7ddea1ca164b10573f22ae1a1",
+          "role": "lateral_installation_comparison_retained"
+        },
+        {
+          "version": "v004",
+          "path": "blender/ninola/working/01R2/2026-10-09-v004/ninola_01R2_gold_slit_eye.blend",
+          "sha256": "6ef84c05ea4c62a135a8adf91dba1b89bd79101ba43270122bdc62062474d770",
+          "role": "lateral_installation_comparison_retained"
+        }
+      ],
+      "eye_axes": [
+        [
+          -0.8660254037844387,
+          0.49999999999999994,
+          0
+        ],
+        [
+          0.8660254037844387,
+          0.49999999999999994,
+          0
+        ]
+      ],
+      "user_approved": true,
+      "approved_version": "v005",
+      "approval_instruction": "決行此版",
+      "approved_on": "2026-10-09"
+    }
+  },
+  "imported_files": [
+    {
+      "archive_path": "assets/repository/docs/image/modeling-tests/ninola-global-mass-01J/2026-10-07-v004/ninola_global_mass_01J_approved.blend",
+      "local_path": "blender/ninola/checkpoints/01J/ninola_global_mass_01J_approved.blend",
+      "sha256": "b8b7e5c11f9a7c6f80901086e3d03d609f6ec732a1d888b0fdd66a61eba613b3",
+      "bytes": 570967,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "assets/repository/docs/image/modeling-tests/ninola-global-mass-01K6-pedal-mass-reconstruction/2026-10-08-v003/ninola_01K6_pedal_mass_reconstruction.blend",
+      "local_path": "blender/ninola/candidates/01K6/ninola_01K6_pedal_mass_reconstruction.blend",
+      "sha256": "6be6642d8ed8cb2b48a31bd2649cf94457be6073daa59ac6653197dd222f18ca",
+      "bytes": 1037432,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "ASSET_MANIFEST.csv",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/ASSET_MANIFEST.csv",
+      "sha256": "fc672bffe31e331c46f6b5f1b7e2cb29cff742e96654dfe4e2f2a5fa2d56f1eb",
+      "bytes": 559747,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "ASSET_MANIFEST.md",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/ASSET_MANIFEST.md",
+      "sha256": "84adcf4b6910995c6d9a71be04b79c86140cddcef78c67990819794c0a948e42",
+      "bytes": 1132,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "HANDOFF.md",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/HANDOFF.md",
+      "sha256": "339a1903c43392f8577ed0488ed96d12f9df9f1fd5bf4c73cb64ddc9f45991d3",
+      "bytes": 4488,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "OPEN_ISSUES.md",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/OPEN_ISSUES.md",
+      "sha256": "318e1bb91c5215feac53bcfb7c4859acdbb50bb61be81acced326222181e0cea",
+      "bytes": 2362,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "PASS_HISTORY.md",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/PASS_HISTORY.md",
+      "sha256": "da9d32be851f31da1acfe8cbf7351cb2fb5ac68234dd51ade2d1fd78901d39b2",
+      "bytes": 3946,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "REOPEN_INSTRUCTIONS.md",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/REOPEN_INSTRUCTIONS.md",
+      "sha256": "551fc1566011acabe4647483277bfa9663757e2d36bf1719c02f65a4138cf57e",
+      "bytes": 4896,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "SHA256SUMS.txt",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/SHA256SUMS.txt",
+      "sha256": "437d1611f6c1857c4c04934aaece0a34683cf4392f4577c1f11e9e6afdce0ff0",
+      "bytes": 194543,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "docs/key_assets.json",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/key_assets.json",
+      "sha256": "61a10e0a91d427fdadbb9cffd1184986e425921609f733e07c8546b2a1379740",
+      "bytes": 2266,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "docs/workflow-snapshot/WORKFLOW.md",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/WORKFLOW.md",
+      "sha256": "75027b8ad0a0d824e71ad6773f57120c7af63072e8e6418b371b85a4820c1cb3",
+      "bytes": 7343,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "docs/workflow-snapshot/history/audit-pedal-anatomy-v1/capture_settings.json",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/history/audit-pedal-anatomy-v1/capture_settings.json",
+      "sha256": "918c9837f4e8766965a25a7346342b678b55eb589500370561b90019e0d1c26e",
+      "bytes": 52887,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "docs/workflow-snapshot/history/audit-pedal-anatomy-v1/handoff_summary.md",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/history/audit-pedal-anatomy-v1/handoff_summary.md",
+      "sha256": "656dd4838e69c20326f71868e686644de6d749ee63706a407f26a3068f321c89",
+      "bytes": 1533,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "docs/workflow-snapshot/history/audit-pedal-anatomy-v1/manifest.json",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/history/audit-pedal-anatomy-v1/manifest.json",
+      "sha256": "ece246cfd01fea913d9d817807cdf5853c41e1fb082d7a068967ff397e7b4a84",
+      "bytes": 2755,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "docs/workflow-snapshot/history/audit-pedal-anatomy-v1/package_validation.json",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/history/audit-pedal-anatomy-v1/package_validation.json",
+      "sha256": "24a5f5fc75cff93e72655413a3242ef7b3aff2cb650332d07557cf53b8fc6e04",
+      "bytes": 1368,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "docs/workflow-snapshot/history/audit-pedal-anatomy-v1/pedal_analysis.json",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/history/audit-pedal-anatomy-v1/pedal_analysis.json",
+      "sha256": "54dced6ba962c1c7383e0813d14a576e02fc32122e4b5efa090368f772c6b1f3",
+      "bytes": 210787,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "docs/workflow-snapshot/history/audit-pedal-anatomy-v1/pedal_anatomy_audit_v1.md",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/history/audit-pedal-anatomy-v1/pedal_anatomy_audit_v1.md",
+      "sha256": "1e5e04784db13fcae5e637844f343ecb065e4439bb9be2eba256d84825ed3b11",
+      "bytes": 13372,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "docs/workflow-snapshot/history/audit-pedal-anatomy-v1/pedal_region_map_v2.json",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/history/audit-pedal-anatomy-v1/pedal_region_map_v2.json",
+      "sha256": "daf893cb58e334e442083bddc4d7d2db24267d5e19e170024dd0309218c2a5d2",
+      "bytes": 262390,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "docs/workflow-snapshot/history/audit-pedal-anatomy-v1/pedal_structure_summary.json",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/history/audit-pedal-anatomy-v1/pedal_structure_summary.json",
+      "sha256": "123b19cd9caae4be43cabfa684b55fc54533063fa914d5be384dd5f5ee2abfcd",
+      "bytes": 5609,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "docs/workflow-snapshot/history/audit-pedal-anatomy-v1/side_envelope_profile.json",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/history/audit-pedal-anatomy-v1/side_envelope_profile.json",
+      "sha256": "fdec1fee3741d4d0be468f4fdf843e71855f070ae62e4d61889321ef7791044c",
+      "bytes": 20119,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "docs/workflow-snapshot/history/audit-pedal-anatomy-v1/validation.json",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/history/audit-pedal-anatomy-v1/validation.json",
+      "sha256": "2e860af2a8294e99b8c9bbcb33a5204db8f507921ea44dd5dc7d7081210f2a42",
+      "bytes": 353,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "docs/workflow-snapshot/history/audit-pedal-anatomy-v1/visible_region_anchors.json",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/history/audit-pedal-anatomy-v1/visible_region_anchors.json",
+      "sha256": "fe77821b14f4a421926da1db3ae7f527c5fc28d7e90b0c69cfc5e93bc9afbdf1",
+      "bytes": 15351,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "docs/workflow-snapshot/revisit-register.md",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/docs/workflow-snapshot/revisit-register.md",
+      "sha256": "ea670cb494941ab3c6d34a7c8b1cbdbbda72bec5418f71b49a35dbaec00cd850",
+      "bytes": 5785,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "references/README.md",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/README.md",
+      "sha256": "f9a8170a65b368e051ed638f2cb357750848ce1a5f5fa3997a16ddd7d249fb49",
+      "bytes": 1092,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "references/extracted-views/concept_front.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/extracted-views/concept_front.png",
+      "sha256": "29872949862858e5f1aa21dea6bdb585f841ae03eee8e93da058892ff1562c0f",
+      "bytes": 205808,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "references/extracted-views/concept_rear.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/extracted-views/concept_rear.png",
+      "sha256": "05c6184312d09242e728c7bb31250622d0f25fc0448555bed52535f20871d4aa",
+      "bytes": 198203,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "references/extracted-views/concept_side.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/extracted-views/concept_side.png",
+      "sha256": "630fcf5932b82fb4883c0cf06a24b5a81daae06e60fec9f058a695dc04ba0b26",
+      "bytes": 403066,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "references/original-concept/original_side.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/original-concept/original_side.png",
+      "sha256": "80fc896e226f8e7491f9a33f163b4c09122e4c722d4c76ebb7ae3a80584a08fb",
+      "bytes": 587341,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "references/original-concept/reference_1.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/original-concept/reference_1.png",
+      "sha256": "8c72643d581c3b0512a96bf8be321af9705fcd7ef95c18f2e3bdb619313672c0",
+      "bytes": 2263072,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "references/original-concept/reference_2.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/original-concept/reference_2.png",
+      "sha256": "0a1b7a77e88d129c6bccf70d45e17c4f325030e4a2229d79cbc63f554f15be71",
+      "bytes": 2505574,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "references/original-concept/reference_3.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/original-concept/reference_3.png",
+      "sha256": "a70be48c16460866b0ef2849dc87592386eb8b43b8cf8cc0e0e8e58a16f2b0f7",
+      "bytes": 2505692,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "references/original-concept/reference_4.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/original-concept/reference_4.png",
+      "sha256": "dcf941bc4c07b251c691551ca3f14584bacacffd5228490f17c47f75d18ee126",
+      "bytes": 2469477,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "references/original-concept/reference_5.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/original-concept/reference_5.png",
+      "sha256": "bc00adb3d53a94797ed5683bacb2e8e91762d1e01b6bcc6ac9a7104f318ab232",
+      "bytes": 2525058,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "references/original-user-concept/ChatGPT 圖像 2026年10月7日 上午07_27_39-3.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/original-user-concept/ChatGPT 圖像 2026年10月7日 上午07_27_39-3.png",
+      "sha256": "dcf941bc4c07b251c691551ca3f14584bacacffd5228490f17c47f75d18ee126",
+      "bytes": 2469477,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "references/original-user-concept/ChatGPT 圖像 2026年10月7日 上午07_27_41-4.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/original-user-concept/ChatGPT 圖像 2026年10月7日 上午07_27_41-4.png",
+      "sha256": "bc00adb3d53a94797ed5683bacb2e8e91762d1e01b6bcc6ac9a7104f318ab232",
+      "bytes": 2525058,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "references/user-annotations/download-10.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/user-annotations/download-10.png",
+      "sha256": "8d5c626f90cd655c08bfb9daafb2b4a0faa847744ca4474cb0231a3b80ec40e8",
+      "bytes": 3628973,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "references/user-annotations/download-13.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/user-annotations/download-13.png",
+      "sha256": "6931d1767552e76d4445e903868babedd64b4e49690c1887054e5360d0b8650a",
+      "bytes": 1313358,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "references/user-annotations/download-15.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/references/references/user-annotations/download-15.png",
+      "sha256": "78fb4c4cc1b7ec7cadbcb5011f50776533fccc985c6f8e2be88800340e4bf823",
+      "bytes": 1150386,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "reports/VALIDATION.md",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/reports/VALIDATION.md",
+      "sha256": "03bcf1d5ca3d7944ff7f68356c09995dfaebde8f008ef0227e743f35132292ba",
+      "bytes": 1810,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "reports/closeout_verification.json",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/provenance/reports/closeout_verification.json",
+      "sha256": "699a4778e57f4a5089bedef7c1a9ecc8fc3c108e1990b29f8f63ae73c0354017",
+      "bytes": 1720,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "review/01K7/ankle_pedal_threequarter_before_after.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/01K7/ankle_pedal_threequarter_before_after.png",
+      "sha256": "b48c44ac17508658d7059ac3836ef4a2d966089fde41fc05903f453021b07e2d",
+      "bytes": 631889,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "review/01K7/concept_K6_K7_full_hindlimb_side.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/01K7/concept_K6_K7_full_hindlimb_side.png",
+      "sha256": "55969493b117adb3cbbdd9c0333421d32ff8d85777574fb2ebbd6266a5e02229",
+      "bytes": 1018149,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "review/01K7/concept_K6_K7_side_silhouette.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/01K7/concept_K6_K7_side_silhouette.png",
+      "sha256": "d1aed2776a76a481baacbfa0f47d76a4c8874c3a2884c4b8ed6bd1d7fd2c28ab",
+      "bytes": 534677,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "review/context/audit-pedal-anatomy-v1/pedal_bottom_region_map.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/context/audit-pedal-anatomy-v1/pedal_bottom_region_map.png",
+      "sha256": "c6e406e9cb26e4da76595513801fec3674e927138d6ed77cf8f06da5660060e8",
+      "bytes": 1878391,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "review/context/audit-pedal-anatomy-v1/pedal_front_region_joint_overlay.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/context/audit-pedal-anatomy-v1/pedal_front_region_joint_overlay.png",
+      "sha256": "6e5996991a2e2c0159da83bb16280ee231d6757445fe7367f2e201fc49fd3c70",
+      "bytes": 1697203,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "review/context/audit-pedal-anatomy-v1/pedal_side_envelope_analysis.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/context/audit-pedal-anatomy-v1/pedal_side_envelope_analysis.png",
+      "sha256": "848bf366afe754a18579f2e9c454391e93b0acc0b5bffc0d53fc29259129fc17",
+      "bytes": 1541495,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "review/context/audit-pedal-anatomy-v1/pedal_side_region_joint_overlay.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/context/audit-pedal-anatomy-v1/pedal_side_region_joint_overlay.png",
+      "sha256": "cdeeafaeec351009b100e315b156f3948828dad4d7c3444d36007cfefdd01c0b",
+      "bytes": 2129689,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "review/context/audit-pedal-anatomy-v1/pedal_top_region_joint_overlay.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/context/audit-pedal-anatomy-v1/pedal_top_region_joint_overlay.png",
+      "sha256": "f81c45793d57affcbdb79186ec2d61c77367cad07f77cd86f99540cd43d2431c",
+      "bytes": 1951684,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "review/context/audit-pedal-anatomy-v1/rear_digit_candidate_analysis.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/context/audit-pedal-anatomy-v1/rear_digit_candidate_analysis.png",
+      "sha256": "1838364100cc059b52cf5f23a7bf51783769e7cba23c71c95ab7e2b966c418c2",
+      "bytes": 6131931,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "review/context/audit-pedal-anatomy-v1/toe_claw_morphology_audit.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/context/audit-pedal-anatomy-v1/toe_claw_morphology_audit.png",
+      "sha256": "2d87e218d301eaea9e5f4e811da28d1a950ed8007dcdc9ad185ccd8aa1166add",
+      "bytes": 2643701,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "review/key-captures/01K6/front_K6.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/key-captures/01K6/front_K6.png",
+      "sha256": "b348d33963a7e01757d414399302c9a124110c057424a6d24fb1b2978604ea21",
+      "bytes": 1274507,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "review/key-captures/01K6/front_threequarter_closeup_K6.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/key-captures/01K6/front_threequarter_closeup_K6.png",
+      "sha256": "541ff132140c3cd2e77f80987fafdca619dd5b0029a4ac311665cbaf15d16242",
+      "bytes": 1374818,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "review/key-captures/01K6/full_body_side_K6.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/key-captures/01K6/full_body_side_K6.png",
+      "sha256": "13539e132f19fee10143524212ab0692b336d836c67ac74c9768130e8e3e5909",
+      "bytes": 1271176,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "review/key-captures/01K6/rear_K6.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/key-captures/01K6/rear_K6.png",
+      "sha256": "c46e2568f130cd46c8d09211f1d217172497afa4a554665abfc3f4ab7a38f5ff",
+      "bytes": 1275627,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "review/key-captures/01K6/rear_threequarter_closeup_K6.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/key-captures/01K6/rear_threequarter_closeup_K6.png",
+      "sha256": "ee8d537c8899edc50a2b2a6c3622da805f504fec50de068e705852f6c2b8659a",
+      "bytes": 1338354,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "review/key-captures/01K6/side_K6.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/key-captures/01K6/side_K6.png",
+      "sha256": "4bb55d593c75d476920600bca113b995b455747d83c6c9d23e5fc137608d9003",
+      "bytes": 1249130,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "review/key-captures/01K6/silhouette_K6.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/key-captures/01K6/silhouette_K6.png",
+      "sha256": "6589b2c9b7f9d30f08aabbdbffa374bf5c0bd118aa5834b9d8a9247430f53f43",
+      "bytes": 424728,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "review/key-captures/01K6/top_K6.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/key-captures/01K6/top_K6.png",
+      "sha256": "aeaf7e3fd116ee3266638ab527d8e216ce02f5cbb3ff146ea4231f3d4c89279d",
+      "bytes": 1271956,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "review/region-map-v1/front_region_map.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/region-map-v1/front_region_map.png",
+      "sha256": "e3b77baa31598cc01e1a9babc28476f98a2457b152219d7a4c43b32f057911ca",
+      "bytes": 1661435,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "review/region-map-v1/hind_limb_closeup_region_map.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/region-map-v1/hind_limb_closeup_region_map.png",
+      "sha256": "096023bd96b7399fedbd9b2320ce14e75490a3704e0e8cdcc0a1337e6e067395",
+      "bytes": 2008591,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "review/region-map-v1/rear_region_map.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/region-map-v1/rear_region_map.png",
+      "sha256": "77e86118cfd9bfbcdbe79551d5b44541ffb0a9c111ff118e066e146c42969fb1",
+      "bytes": 1652955,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "review/region-map-v1/right_side_region_map.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/region-map-v1/right_side_region_map.png",
+      "sha256": "294e42d5d1dc4b987ab5357842c31e231948e2858ab2a94cfaaf6e6ef395d92e",
+      "bytes": 1441816,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    },
+    {
+      "archive_path": "review/region-map-v1/top_region_map.png",
+      "local_path": "docs/image/modeling-tests/ninola-migration/2026-10-08-v001/evidence/review/region-map-v1/top_region_map.png",
+      "sha256": "d081aba1bbf08bd5cd13e8a045e3e27acbe0925ea6dea8cd6647c63311b794cd",
+      "bytes": 1449566,
+      "verified": true,
+      "git_tracking": "untracked_at_import"
+    }
+  ],
+  "current_editing_state": {
+    "asset": "01R2",
+    "version": "v005",
+    "status": "user_approved_working_checkpoint; eye pass closed; no new mesh pass underway"
+  },
+  "morphology_landing_point": {
+    "asset": "01K6",
+    "version": "v003",
+    "path": "blender/ninola/candidates/01K6/ninola_01K6_pedal_mass_reconstruction.blend",
+    "sha256": "6be6642d8ed8cb2b48a31bd2649cf94457be6073daa59ac6653197dd222f18ca",
+    "role": "temporary_morphology_baseline_for_01L_preparation",
+    "reason": "selected proportions retained; K7 rejected; K8 partial trial not adopted as baseline"
+  },
+  "active_phase": "01S posture B + jaw neutral 1.5deg approved by user; morphology and runtime posture baseline closed; inner oral interface OPEN, grounding DEFERRED; production remains 01J",
+  "accepted_working_checkpoint": "01R2 v005 user approved; inherits 01R1 v011 and Q1/P1/O2/N1/M8/L3; previous approved checkpoints retained for rollback",
+  "evaluations": [
+    {
+      "id": "01M_dynamic_v001",
+      "role": "isolated_evaluation_only_not_production",
+      "source_assets": [
+        "01L3 v002",
+        "01M1 v002"
+      ],
+      "report": "docs/image/modeling-tests/ninola-01M/2026-10-08-dynamic-v001/REPORT.md",
+      "files": [
+        {
+          "path": "docs/image/modeling-tests/ninola-01M/2026-10-08-dynamic-v001/test-project/models/L3_eight_weights.glb",
+          "sha256": "15aba724bda3db729fd902e933b4cec03de8d9e4923dae4ff9e2df4ee1beb7d1",
+          "bytes": 1052048
+        },
+        {
+          "path": "docs/image/modeling-tests/ninola-01M/2026-10-08-dynamic-v001/test-project/models/M1_eight_weights.glb",
+          "sha256": "c8da7f642d2db18c862fb10da094e7faf627c813a27315b911d09695c67bfd6e",
+          "bytes": 1052044
+        },
+        {
+          "path": "docs/image/modeling-tests/ninola-01M/2026-10-08-dynamic-v001/mcp_evaluation_scene.blend",
+          "sha256": "c499a92db6b2e0c7a8bd1c5f76fb21d6490fca8d22ff370b6683049781686792",
+          "bytes": 1784364
+        },
+        {
+          "path": "docs/image/modeling-tests/ninola-01M/2026-10-08-dynamic-v001/godot_pose_samples.json",
+          "sha256": "c631fc009fdd2170fb2ac75765ca117534279d82140fba8096d1d5a735afd63e",
+          "bytes": 5516439
+        },
+        {
+          "path": "docs/image/modeling-tests/ninola-01M/2026-10-08-dynamic-v001/driver_source.json",
+          "sha256": "d3772d5f1a606a11c8a5df89a3b602f9f45efe720d0de02153d491b5626d0bec",
+          "bytes": 391
+        },
+        {
+          "path": "docs/image/modeling-tests/ninola-01M/2026-10-08-dynamic-v001/simulation_verification.json",
+          "sha256": "6a8d61243cc7e4e84bad71e8dbbc8f3c27a5140f1ed720af88d5739975759341",
+          "bytes": 18090
+        },
+        {
+          "path": "docs/image/modeling-tests/ninola-01M/2026-10-08-dynamic-v001/simulation_verification_reframed.json",
+          "sha256": "408e7f8f5c000feff2316841082dbaef620fa5a1c9b52f29624be327fa3a1de4",
+          "bytes": 6438
+        },
+        {
+          "path": "docs/image/modeling-tests/ninola-01M/2026-10-08-dynamic-v001/contact_diagnostics.json",
+          "sha256": "620cd23bad62882d70724d8b49519c3dc93ce5444dee9af5038597844f2c664c",
+          "bytes": 10733
+        },
+        {
+          "path": "docs/image/modeling-tests/ninola-01M/2026-10-08-dynamic-v001/bite_comparison.gif",
+          "sha256": "305f2e22fe91a50e02f30b2e4dc93d943cddd838cf76f984b3e42250df6420ae",
+          "bytes": 13361312
+        },
+        {
+          "path": "docs/image/modeling-tests/ninola-01M/2026-10-08-dynamic-v001/roar_comparison.gif",
+          "sha256": "5e0c9adce1af72ed518682d638ec9273da5d567efb78a54ce43f2bf5fd28ac6b",
+          "bytes": 8544113
+        },
+        {
+          "path": "docs/image/modeling-tests/ninola-01M/2026-10-08-dynamic-v001/head_identity_scope.png",
+          "sha256": "78ba5f8986b1d5b7b1a3ad1f42cce574f35c2ba5a565c30ca029969ef668a536",
+          "bytes": 1125518
+        }
+      ],
+      "source_models_unchanged": true,
+      "mcp_original_session_restored": true,
+      "real_input_combat_validation": false
+    },
+    {
+      "id": "01M2_dynamic_v001",
+      "role": "isolated_evaluation_not_production",
+      "GLB_path": "docs/image/modeling-tests/ninola-01M/2026-10-08-pass-v002/dynamic/test-project/models/M2_eight_weights.glb",
+      "GLB_sha256": "887489de1f51362a748428fcb07f795656017347084467903d032288d9dc3d7e",
+      "runtime_verification": "docs/image/modeling-tests/ninola-01M/2026-10-08-pass-v002/dynamic/godot_runtime_verification.json",
+      "real_input_combat_validation": false,
+      "mcp_original_dirty_state_preserved": true
+    },
+    {
+      "id": "01M3_v006_dynamic",
+      "role": "evaluation_only_not_production",
+      "GLB_path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v003/dynamic-v006/test-project/models/M3_eight_weights.glb",
+      "GLB_sha256": "124d0f6b38708a0722b9dd4d328d16045dee8a52018974b9ac9dc3a3bb07b907",
+      "runtime_verification": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v003/dynamic-v006/runtime_verification.json",
+      "true_player_input_tested": false
+    },
+    {
+      "id": "01M6_v004_dynamic",
+      "role": "isolated_evaluation_not_production",
+      "GLB_path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v006/dynamic/test-project/models/M6_eight_weights.glb",
+      "GLB_sha256": "19c6939f925965f5762ecbc320e70268bda969d0537c8ba3b19f5197b818169d",
+      "runtime_verification": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v006/dynamic/simulation_verification.json",
+      "true_player_input_tested": false,
+      "mcp_original_dirty_state_preserved": true
+    },
+    {
+      "id": "01M7_v003_dynamic",
+      "role": "isolated_evaluation_not_production",
+      "GLB_path": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/test-project/models/M7_eight_weights.glb",
+      "GLB_sha256": "01381b58756bc4e633263adee9b618382e76d62306bf1952ad1cad1d8e2e0888",
+      "runtime_verification": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v007/dynamic/simulation_verification.json",
+      "true_player_input_tested": false,
+      "mcp_original_dirty_state_preserved": true
+    },
+    {
+      "id": "01M7_v003_game_review",
+      "role": "isolated_game_evaluation_not_production",
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-game-review-v001",
+      "GLB_sha256": "01381b58756bc4e633263adee9b618382e76d62306bf1952ad1cad1d8e2e0888",
+      "true_player_movement_response": true,
+      "true_player_bite_response": true,
+      "evidence": "telemetry_snapshot.json; input_test_summary.json",
+      "independent_scope": "static screenshots only",
+      "full_collision_multiplayer_boss_validation": false,
+      "runtime_copy_gitignored": true
+    },
+    {
+      "id": "01Q_review_v001",
+      "base": "01P1 v002",
+      "path": "docs/image/modeling-tests/ninola-01Q/2026-10-09-review-v001/index.html",
+      "model_edited": false,
+      "status": "read_only_review_complete_proposal_pending",
+      "independent_review": "passed_limited_design_proposal_positioning"
+    },
+    {
+      "id": "01R_review_v001",
+      "base": "01Q1 v002",
+      "status": "read_only_review_complete_independent_pass_for_proposal_positioning",
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-review-v001/index.html",
+      "model_edited": false
+    },
+    {
+      "id": "v011_eyeball_readonly_inspection",
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-eyeball-inspection-v001/index.html",
+      "model_edited": false,
+      "eye_triangles_per_side": 144,
+      "eye_module": "M7 integrated low-poly spherical eye; gold iris and round dark pupil",
+      "golden_eye_imported": false
+    },
+    {
+      "phase": "01S",
+      "report": "docs/image/modeling-tests/ninola-01S/2026-10-09-review-v001/index.html",
+      "source": "01R2 v005",
+      "source_sha256": "363eb15913ff2b7ee528a67163aa86805126e56a64514e07001cddc0ff305929",
+      "status": "audit_completed_functional_validation_partial",
+      "model_modified": false,
+      "static_views": 14,
+      "motion_images": 73,
+      "sample_count": 231,
+      "original_Trex_max_foot_height_delta": 2.384185791015625e-07,
+      "export_readback": "7007 triangles; source bind matches; importer display shapes excluded",
+      "MCP": "not_connected",
+      "full_game_validation": false
+    },
+    {
+      "phase": "01S_user_viewer",
+      "project": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project",
+      "asset": "01R2 v005",
+      "status": "interactive_viewer_opened_waiting_user_feedback",
+      "screenshot": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/viewer_open.png",
+      "full_game_validation": false,
+      "formal_assets_modified": false
+    },
+    {
+      "phase": "01S_occlusion",
+      "report": "docs/image/modeling-tests/ninola-01S/2026-10-09-occlusion-v001/index.html",
+      "source": "01R2 v005",
+      "source_sha256": "363eb15913ff2b7ee528a67163aa86805126e56a64514e07001cddc0ff305929",
+      "status": "read_only_diagnosis_completed",
+      "closed_strict_pairs": {
+        "R2": [
+          22,
+          5
+        ],
+        "original_Trex": [
+          21,
+          5
+        ]
+      },
+      "small_opening_1_15_degrees_pairs": [
+        1,
+        0
+      ],
+      "opening_8_59_degrees_pairs": [
+        0,
+        0
+      ],
+      "model_modified": false,
+      "ground_contact": "deferred_by_user"
+    },
+    {
+      "phase": "01S_posture_bite",
+      "report": "docs/image/modeling-tests/ninola-01S/2026-10-09-posture-bite-v001/index.html",
+      "source": "01R2 v005",
+      "source_sha256": "363eb15913ff2b7ee528a67163aa86805126e56a64514e07001cddc0ff305929",
+      "posture_candidates": [
+        {
+          "label": "baseline",
+          "neck_world_pitch_delta_degrees": 0,
+          "head_world_pitch_delta_degrees": 0,
+          "spine_delta": 0,
+          "head_origin_world": [
+            3.4668457137725962e-15,
+            2.3274035453796387,
+            2.188072919845581
+          ],
+          "pose_scope": "temporary evaluation only, source saved rest/current pose unchanged"
+        },
+        {
+          "label": "A",
+          "neck_world_pitch_delta_degrees": 6,
+          "head_world_pitch_delta_degrees": -2,
+          "spine_delta": 0,
+          "head_origin_world": [
+            7.835102407705561e-16,
+            2.295278549194336,
+            2.285609245300293
+          ],
+          "pose_scope": "temporary evaluation only, source saved rest/current pose unchanged"
+        },
+        {
+          "label": "B",
+          "neck_world_pitch_delta_degrees": 12,
+          "head_world_pitch_delta_degrees": -4,
+          "spine_delta": 0,
+          "head_origin_world": [
+            -3.604475015174264e-15,
+            2.253133773803711,
+            2.379253387451172
+          ],
+          "pose_scope": "temporary evaluation only, source saved rest/current pose unchanged"
+        }
+      ],
+      "jaw_candidate_degrees": 1.5,
+      "cycles": {
+        "1.0": {
+          "frames": 120,
+          "soft_max": 1,
+          "teeth_max": 0,
+          "soft_nonzero_frames": 96
+        },
+        "1.5": {
+          "frames": 120,
+          "soft_max": 1,
+          "teeth_max": 0,
+          "soft_nonzero_frames": 96
+        },
+        "2.0": {
+          "frames": 120,
+          "soft_max": 1,
+          "teeth_max": 0,
+          "soft_nonzero_frames": 96
+        }
+      },
+      "status": "evaluation_candidates_pending_user_review",
+      "model_modified": false,
+      "live_viewer_changed": false,
+      "independent_review": "finite trial passed; B / 1.5 candidates pending user selection; combined motion and game validation not complete"
+    },
+    {
+      "phase": "01S_combined_viewer",
+      "report": "docs/image/modeling-tests/ninola-01S/2026-10-09-combined-viewer-v001/index.html",
+      "source": "01R2 v005",
+      "source_sha256": "363eb15913ff2b7ee528a67163aa86805126e56a64514e07001cddc0ff305929",
+      "neck_model_x_degrees": 12,
+      "head_model_x_degrees": -4,
+      "jaw_neutral_degrees": 1.5,
+      "test_frames": 1440,
+      "status": "user_approved_working_runtime_baseline",
+      "mesh_modified": false,
+      "rig_rest_modified": false,
+      "original_viewer_preserved": true,
+      "contacts_remaining": [
+        [
+          3573,
+          2487
+        ]
+      ],
+      "user_approval": {
+        "date": "2026-10-09",
+        "quote": "覺得好，就這樣定版"
+      }
+    }
+  ],
+  "design_proposals": [
+    {
+      "id": "01M3_schematic_v001",
+      "role": "conceptual_envelope_not_model_or_calibrated_blueprint",
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-head-schematic-v001",
+      "geometry_record": "docs/image/modeling-tests/ninola-01M/2026-10-09-head-schematic-v001/schematic_geometry.json"
+    },
+    {
+      "asset": "01M5B",
+      "status": "schematic_complete_pending_user_review",
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-face-schematic-B-v001/index.html",
+      "model_edited": false,
+      "selected_by_user": "2026-10-09"
+    },
+    {
+      "asset": "01M6",
+      "status": "design_authorized_implemented_trial_not_pass",
+      "path": "docs/image/modeling-tests/ninola-01M/2026-10-09-whole-head-plan-v001/PROPOSAL.md",
+      "knowledge_sources": "docs/image/modeling-tests/ninola-01M/2026-10-09-whole-head-plan-v001/knowledge_sources.json",
+      "model_edited": false,
+      "design_package": "docs/image/modeling-tests/ninola-01M/2026-10-09-head-design-v006/index.html",
+      "audit": "docs/image/modeling-tests/ninola-01M/2026-10-09-head-design-v006/audit_results.json",
+      "authorization": "2026-10-09 同意，試作",
+      "implementation": "docs/image/modeling-tests/ninola-01M/2026-10-09-pass-v006/index.html"
+    },
+    {
+      "id": "01N_jaw_review_v001",
+      "status": "read_only_review_complete_design_package_proposed_pending_authorization",
+      "base": "01M8 v001",
+      "path": "docs/image/modeling-tests/ninola-01N/2026-10-09-review-v001/REVIEW_AND_PROPOSAL.md",
+      "model_edited": false,
+      "scope": "whole lower jaw outer-shell design; bones and oral constraints remain protected"
+    },
+    {
+      "id": "01N1_jaw_schematic_v001",
+      "status": "design_authorized_trial_implemented_partial_not_adopted",
+      "base": "01M8 v001",
+      "path": "docs/image/modeling-tests/ninola-01N/2026-10-09-schematic-v001/index.html",
+      "geometry": "docs/image/modeling-tests/ninola-01N/2026-10-09-schematic-v001/schematic_geometry.json",
+      "reference": "docs/image/modeling-tests/ninola-01N/2026-10-09-schematic-v001/reference_provenance.json",
+      "model_edited": false,
+      "fixed_boundary_fit_solved": false,
+      "dynamic_tested": false,
+      "independent_review": "pass_for_direction_only; box_bottom_risk; boundary_clearance_dynamic_unverified"
+    },
+    {
+      "id": "01N1_interface_audit_v001",
+      "status": "orientation_repair_authorized_and_implemented_v004",
+      "base": "01N1 v003",
+      "path": "docs/image/modeling-tests/ninola-01N/2026-10-09-interface-audit-v001/index.html",
+      "model_edited": false,
+      "hypothetical_face_reversals": 12,
+      "actual_working_model_repaired": true,
+      "repaired_revision": "v004",
+      "repair_report": "docs/image/modeling-tests/ninola-01N/2026-10-09-winding-fix-v001/index.html"
+    },
+    {
+      "id": "01O_review_v001",
+      "base": "01N1 v004",
+      "status": "read_only_review_complete_design_authorized_2026-10-09",
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-review-v001/index.html",
+      "model_edited": false,
+      "scope": "neck-root shoulder-chest ventral transition; no Rig or accepted regional asset changes"
+    },
+    {
+      "id": "01O1_schematic_v001",
+      "status": "implemented_limited_trial_PARTIAL",
+      "base": "01N1 v004",
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-schematic-v001/index.html",
+      "geometry": "docs/image/modeling-tests/ninola-01O/2026-10-09-schematic-v001/schematic_geometry.json",
+      "model_edited": false,
+      "rig_edited": false,
+      "implementation_authorized": true,
+      "constraint_fit_solved": false,
+      "implementation": "2026-10-09 user: 許可試做，請執行",
+      "implementation_report": "docs/image/modeling-tests/ninola-01O/2026-10-09-pass-v001/index.html"
+    },
+    {
+      "id": "01P_review_v001",
+      "base": "01O2 v003",
+      "status": "read_only_review_complete_minimal_hand_design_proposed_pending_authorization",
+      "path": "docs/image/modeling-tests/ninola-01P/2026-10-09-review-v001/index.html",
+      "model_edited": false
+    },
+    {
+      "id": "01P1_schematic_v001",
+      "base": "01O2 v003",
+      "status": "implemented_P1_v002_pending_user_review",
+      "path": "docs/image/modeling-tests/ninola-01P/2026-10-09-schematic-v001/index.html",
+      "geometry": "docs/image/modeling-tests/ninola-01P/2026-10-09-schematic-v001/schematic_geometry.json",
+      "model_edited": false,
+      "rig_edited": false,
+      "claws_edited": false,
+      "implementation_authorized": true,
+      "boundary_fit_solved": false,
+      "independent_review": "passed_design_discussion_only",
+      "implementation_report": "docs/image/modeling-tests/ninola-01P/2026-10-09-pass-v001/index.html"
+    },
+    {
+      "id": "01Q1_tail_envelope_proposal",
+      "status": "implemented_v002_pending_user_review",
+      "path": "docs/image/modeling-tests/ninola-01Q/2026-10-09-schematic-v001/index.html",
+      "model_edited": false,
+      "implementation_authorized": true,
+      "geometry": "docs/image/modeling-tests/ninola-01Q/2026-10-09-schematic-v001/schematic_geometry.json",
+      "rig_edited": false,
+      "spines_edited": false,
+      "endpoints_fitted": false,
+      "independent_review": "passed_direction_discussion_only",
+      "implementation_report": "docs/image/modeling-tests/ninola-01Q/2026-10-09-pass-v001/index.html"
+    },
+    {
+      "id": "01R1_primary_plane_color_grouping",
+      "status": "user_rejected_color_grouping; original_skin_palette_retained",
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-schematic-v001/index.html",
+      "model_edited": false,
+      "implementation_authorized": false,
+      "grouping": "docs/image/modeling-tests/ninola-01R/2026-10-09-schematic-v001/grouping_spec.json",
+      "spine_proposal": "docs/image/modeling-tests/ninola-01R/2026-10-09-schematic-v001/spine_style_plan.png",
+      "source_geometry_edited": false,
+      "source_materials_edited": false,
+      "triangle_savings": 0,
+      "independent_review": "passed_discussion_only_not_geometry_or_spine_effect_acceptance",
+      "geometry_trial_authorized": true,
+      "implementation_report": "docs/image/modeling-tests/ninola-01R/2026-10-09-pass-v001/index.html"
+    },
+    {
+      "id": "01R1_main_plane_trial_v006",
+      "status": "implemented_pending_user_visual_approval",
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-pass-v002/index.html",
+      "model_edited": true,
+      "rig_edited": false,
+      "spine_palette_user_approved": true,
+      "spine_geometry_edited": false,
+      "independent_review": "passed_limited_trial_discussion; style_unification_incomplete"
+    },
+    {
+      "id": "01R1_old_head_panel_transfer_v010",
+      "status": "user_authorized_implemented_PARTIAL_pending_review",
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-pass-v003/index.html",
+      "model_edited": true,
+      "rig_edited": false,
+      "eye_collar_faces_retained": 76,
+      "spine_geometry_materials_preserved": true
+    },
+    {
+      "id": "01R1_rear_junction_explanation",
+      "path": "docs/image/modeling-tests/ninola-01R/2026-10-09-rear-junction-explanation-v001/index.html",
+      "status": "annotation_complete_pending_user_judgement",
+      "model_edited": false,
+      "interpretation": "narrow plane transition/bright seam reading, not confirmed crack/intersection",
+      "optional_cleanup_only": true
+    }
+  ],
+  "discussion_anchor": {
+    "asset": "01R1",
+    "version": "v011",
+    "purpose": "latest user-approved Prototype checkpoint, not Production acceptance"
+  },
+  "closeout_archives": [
+    {
+      "phase": "01O",
+      "path": "docs/image/modeling-tests/ninola-01O/2026-10-09-closeout-v001/Ninola_01O_Closeout_2026-10-09.zip",
+      "sha256": "3cad070f58d45bb5b3410911d414ddf0dafd36119670623571d3f6b0ec0d5482",
+      "manifest": "docs/image/modeling-tests/ninola-01O/2026-10-09-closeout-v001/ASSET_MANIFEST.json",
+      "verified": true
+    }
+  ],
+  "approved_runtime_baseline": {
+    "mesh_checkpoint": "01R2 v005",
+    "implementation": "docs/image/modeling-tests/ninola-01S/2026-10-09-combined-viewer-v001/test-project/combined_trex.gd",
+    "neck_model_x_degrees": 12,
+    "head_model_x_degrees": -4,
+    "jaw_neutral_degrees": 1.5,
+    "approved_date": "2026-10-09",
+    "pose_baked_into_blend": false,
+    "production_integrated": false
+  }
+}

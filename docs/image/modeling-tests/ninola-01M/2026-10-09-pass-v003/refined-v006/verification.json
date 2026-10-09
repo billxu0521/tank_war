@@ -1,0 +1,13 @@
+{
+  "reopened_Rig_Trex_15_shape_keys_pose_exact": true,
+  "all_original_rest_coords_weights_exact": true,
+  "retained_original_faces_material_identity_exact": true,
+  "protected_teeth_tongue_original_inner_mouth_jaw_body_exact": true,
+  "new_skin_faces_near_degenerate": [],
+  "original_boundary_vertices_preserved": 33,
+  "GLB_meshes": 1,
+  "GLB_joints": 45,
+  "source_hash_matches": true,
+  "output_hash_matches": true,
+  "production_acceptance": false
+}

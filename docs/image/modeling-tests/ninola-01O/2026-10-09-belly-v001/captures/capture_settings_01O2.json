@@ -1,0 +1,242 @@
+{
+  "torso_side": {
+    "model": "01O2",
+    "object": "01O2_Ventral_Belly_Tuck",
+    "matrix": [
+      [
+        -4.371138828673793e-08,
+        -4.371138828673793e-08,
+        -1.0,
+        -20.0
+      ],
+      [
+        -1.0,
+        1.910685676922942e-15,
+        4.371138828673793e-08,
+        0.8500000238418579
+      ],
+      [
+        0.0,
+        1.0,
+        -4.371138828673793e-08,
+        2.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 5.6,
+    "camera_type": "ORTHO",
+    "lens": 50.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 6906,
+    "display_mask": "full model"
+  },
+  "torso_threequarter": {
+    "model": "01O2",
+    "object": "01O2_Ventral_Belly_Tuck",
+    "matrix": [
+      [
+        -0.7071067690849304,
+        0.12309149652719498,
+        -0.6963106393814087,
+        -8.307760238647461
+      ],
+      [
+        -0.7071067690849304,
+        -0.12309146672487259,
+        0.6963106393814087,
+        9.157760620117188
+      ],
+      [
+        1.861425324989341e-08,
+        0.984731912612915,
+        0.17407764494419098,
+        4.076940059661865
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 5.2,
+    "camera_type": "PERSP",
+    "lens": 70.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 6906,
+    "display_mask": "full model"
+  },
+  "torso_right_threequarter": {
+    "model": "01O2",
+    "object": "01O2_Ventral_Belly_Tuck",
+    "matrix": [
+      [
+        -0.7071067690849304,
+        -0.12309149652719498,
+        0.6963106393814087,
+        8.307760238647461
+      ],
+      [
+        0.7071067690849304,
+        -0.12309146672487259,
+        0.6963106393814087,
+        9.157760620117188
+      ],
+      [
+        -1.861425324989341e-08,
+        0.984731912612915,
+        0.17407764494419098,
+        4.076940059661865
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 5.2,
+    "camera_type": "PERSP",
+    "lens": 70.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 6906,
+    "display_mask": "full model"
+  },
+  "torso_rear_threequarter": {
+    "model": "01O2",
+    "object": "01O2_Ventral_Belly_Tuck",
+    "matrix": [
+      [
+        0.7071067094802856,
+        0.12309147417545319,
+        -0.6963106989860535,
+        -8.307760238647461
+      ],
+      [
+        -0.70710688829422,
+        0.12309132516384125,
+        -0.6963105797767639,
+        -7.457760334014893
+      ],
+      [
+        -8.215030788960576e-08,
+        0.9847319722175598,
+        0.17407752573490143,
+        4.076940059661865
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 5.2,
+    "camera_type": "PERSP",
+    "lens": 70.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 6906,
+    "display_mask": "full model"
+  },
+  "full_body_side": {
+    "model": "01O2",
+    "object": "01O2_Ventral_Belly_Tuck",
+    "matrix": [
+      [
+        -4.371138828673793e-08,
+        -4.371138828673793e-08,
+        -1.0,
+        -20.0
+      ],
+      [
+        -1.0,
+        1.910685676922942e-15,
+        4.371138828673793e-08,
+        -0.939200758934021
+      ],
+      [
+        0.0,
+        1.0,
+        -4.371138828673793e-08,
+        1.6843751668930054
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 10.58220989227295,
+    "camera_type": "ORTHO",
+    "lens": 70.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 6906,
+    "display_mask": "full model"
+  },
+  "full_body_front": {
+    "model": "01O2",
+    "object": "01O2_Ventral_Belly_Tuck",
+    "matrix": [
+      [
+        -1.0,
+        -1.6207674491397484e-07,
+        1.3851207825155143e-07,
+        0.0
+      ],
+      [
+        1.5099580252808664e-07,
+        -0.07974524050951004,
+        0.9968152642250061,
+        20.136306762695312
+      ],
+      [
+        -1.505148929936695e-07,
+        0.9968152642250061,
+        0.07974524050951004,
+        3.144904375076294
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 4.5,
+    "camera_type": "ORTHO",
+    "lens": 70.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 6906,
+    "display_mask": "full model"
+  }
+}

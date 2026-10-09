@@ -1,0 +1,122 @@
+{
+  "hindlimb_threequarter": {
+    "model": "01L3",
+    "object": "01L3_Three_Toe_Volume_Reconstruction",
+    "matrix": [
+      [
+        -0.7071067690849304,
+        0.2562994658946991,
+        -0.6590224504470825,
+        -5.388689041137695
+      ],
+      [
+        -0.7071067690849304,
+        -0.2562994360923767,
+        0.6590224504470825,
+        4.988688945770264
+      ],
+      [
+        2.3310748886729016e-08,
+        0.9319984912872314,
+        0.3624621629714966,
+        3.7112786769866943
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 3.2,
+    "camera_type": "PERSP",
+    "lens": 70.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 6308,
+    "display_mask": "full model"
+  },
+  "front_threequarter": {
+    "model": "01L3",
+    "object": "01L3_Three_Toe_Volume_Reconstruction",
+    "matrix": [
+      [
+        -0.7071067690849304,
+        0.16987472772598267,
+        -0.6863982677459717,
+        -16.61864471435547
+      ],
+      [
+        -0.7071067690849304,
+        -0.16987471282482147,
+        0.6863982677459717,
+        15.666034698486328
+      ],
+      [
+        9.654121946311989e-09,
+        0.97071373462677,
+        0.24023914337158203,
+        7.500900745391846
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 10.552172889709473,
+    "camera_type": "PERSP",
+    "lens": 70.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 6308,
+    "display_mask": "full model"
+  },
+  "full_body_side": {
+    "model": "01L3",
+    "object": "01L3_Three_Toe_Volume_Reconstruction",
+    "matrix": [
+      [
+        -4.371138828673793e-08,
+        -4.371138828673793e-08,
+        -1.0,
+        -20.0
+      ],
+      [
+        -1.0,
+        1.910685676922942e-15,
+        4.371138828673793e-08,
+        -0.9526101350784302
+      ],
+      [
+        0.0,
+        1.0,
+        -4.371138828673793e-08,
+        1.6843751668930054
+      ],
+      [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    ],
+    "scale": 10.552172889709473,
+    "camera_type": "ORTHO",
+    "lens": 70.0,
+    "resolution": [
+      1100,
+      1100
+    ],
+    "lighting": "Workbench STUDIO / silhouette FLAT",
+    "display_face_count": 6308,
+    "display_mask": "full model"
+  }
+}

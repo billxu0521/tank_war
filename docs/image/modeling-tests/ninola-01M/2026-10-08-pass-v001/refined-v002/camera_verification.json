@@ -1,0 +1,10 @@
+{
+  "head_side": true,
+  "head_silhouette": true,
+  "head_front": true,
+  "head_top": true,
+  "head_bottom": true,
+  "head_threequarter": true,
+  "head_rear_threequarter": true,
+  "full_body_side": true
+}

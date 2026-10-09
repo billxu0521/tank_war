@@ -1,0 +1,43 @@
+{
+  "original_rest_coords_exact": true,
+  "original_vertex_weights_exact_by_name": true,
+  "retained_faces_and_materials_exact": true,
+  "rig_Trex_keys_pose_exact": true,
+  "source_claw_faces_removed": 0,
+  "base_active_foot_bounds": {
+    "x": [
+      0.4023982286453247,
+      1.1644084453582764
+    ],
+    "y": [
+      -0.31500115990638733,
+      1.1914225816726685
+    ],
+    "z": [
+      -0.01750323735177517,
+      0.3783490061759949
+    ]
+  },
+  "result_active_foot_bounds": {
+    "x": [
+      0.40893450379371643,
+      1.1644084453582764
+    ],
+    "y": [
+      -0.31500115990638733,
+      1.1914225816726685
+    ],
+    "z": [
+      -0.01750323735177517,
+      0.3783490061759949
+    ]
+  },
+  "hashes": {
+    "01J": true,
+    "01K6": true,
+    "01K8": true,
+    "01L1": true,
+    "01L2": true
+  },
+  "output_sha256": "34e6608bfb04e73a271199dbd3f4f684545bf7d7cdc8f6e3282d3d970c44c6fd"
+}

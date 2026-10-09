@@ -1,0 +1,361 @@
+{
+  "M3": {
+    "rest_mapping_max_error": 3.4570693969726562e-06,
+    "pose_replay_max_error": 2.3096799850463867e-06,
+    "bones": 45,
+    "rest_and_mesh_restored_exact": true,
+    "source_sha256_unchanged": "9feb3a648703a815c695d217bc3e763d67446ad27ba1314a9919190f530de2fe",
+    "metrics": [
+      {
+        "sequence": "sweep",
+        "frame": 0,
+        "jaw_parent_world_quat": [
+          0.0,
+          0.0,
+          4.44089209850063e-16,
+          1.0
+        ],
+        "jaw_head_soft_surface_triangle_overlaps": 21,
+        "note": "surface intersection flag, not tooth clearance nor closed-volume penetration certification"
+      },
+      {
+        "sequence": "sweep",
+        "frame": 1,
+        "jaw_parent_world_quat": [
+          -0.161785796284676,
+          -3.77123850448767e-17,
+          -4.56200669265056e-16,
+          0.986825883388519
+        ],
+        "jaw_head_soft_surface_triangle_overlaps": 0,
+        "note": "surface intersection flag, not tooth clearance nor closed-volume penetration certification"
+      },
+      {
+        "sequence": "sweep",
+        "frame": 2,
+        "jaw_parent_world_quat": [
+          -0.319308817386627,
+          -5.58079674578435e-16,
+          -1.12528602328442e-15,
+          0.947650671005249
+        ],
+        "jaw_head_soft_surface_triangle_overlaps": 0,
+        "note": "surface intersection flag, not tooth clearance nor closed-volume penetration certification"
+      },
+      {
+        "sequence": "sweep",
+        "frame": 3,
+        "jaw_parent_world_quat": [
+          -0.457338482141495,
+          -5.98024424881968e-16,
+          1.91826241310591e-16,
+          0.88929271697998
+        ],
+        "jaw_head_soft_surface_triangle_overlaps": 0,
+        "note": "surface intersection flag, not tooth clearance nor closed-volume penetration certification"
+      },
+      {
+        "sequence": "bite",
+        "frame": 0,
+        "jaw_head_soft_surface_triangle_overlaps": 1
+      },
+      {
+        "sequence": "bite",
+        "frame": 2,
+        "jaw_head_soft_surface_triangle_overlaps": 1
+      },
+      {
+        "sequence": "bite",
+        "frame": 4,
+        "jaw_head_soft_surface_triangle_overlaps": 1
+      },
+      {
+        "sequence": "bite",
+        "frame": 6,
+        "jaw_head_soft_surface_triangle_overlaps": 1
+      },
+      {
+        "sequence": "bite",
+        "frame": 8,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 10,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 12,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 14,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 16,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 18,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 20,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 22,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 24,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 26,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 28,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 30,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 32,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 34,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 36,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 38,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 40,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 42,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 44,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 46,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 48,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 50,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 52,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 54,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 56,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 58,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 60,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 62,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 64,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 66,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 68,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "bite",
+        "frame": 70,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "roar",
+        "frame": 0,
+        "jaw_head_soft_surface_triangle_overlaps": 1
+      },
+      {
+        "sequence": "roar",
+        "frame": 2,
+        "jaw_head_soft_surface_triangle_overlaps": 1
+      },
+      {
+        "sequence": "roar",
+        "frame": 4,
+        "jaw_head_soft_surface_triangle_overlaps": 1
+      },
+      {
+        "sequence": "roar",
+        "frame": 6,
+        "jaw_head_soft_surface_triangle_overlaps": 1
+      },
+      {
+        "sequence": "roar",
+        "frame": 8,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "roar",
+        "frame": 10,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "roar",
+        "frame": 12,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "roar",
+        "frame": 14,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "roar",
+        "frame": 16,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "roar",
+        "frame": 18,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "roar",
+        "frame": 20,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "roar",
+        "frame": 22,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "roar",
+        "frame": 24,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "roar",
+        "frame": 26,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "roar",
+        "frame": 28,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "roar",
+        "frame": 30,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "roar",
+        "frame": 32,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "roar",
+        "frame": 34,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "roar",
+        "frame": 36,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "roar",
+        "frame": 38,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "roar",
+        "frame": 40,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "roar",
+        "frame": 42,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "roar",
+        "frame": 44,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      },
+      {
+        "sequence": "roar",
+        "frame": 46,
+        "jaw_head_soft_surface_triangle_overlaps": 0
+      }
+    ],
+    "jaw_skin_face_count": 238,
+    "head_skin_face_count": 248
+  }
+}

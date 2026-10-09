@@ -1,0 +1,21 @@
+{
+  "before": "blender/ninola/working/01R2/2026-10-09-v002/ninola_01R2_gold_slit_eye.blend",
+  "before_sha256": "ad2a8ce7af6c72f783cb62d5ad0a8b4427945d2d56049926cbe998ae4fd6742f",
+  "trial": "blender/ninola/working/01R2/2026-10-09-v003/ninola_01R2_gold_slit_eye.blend",
+  "trial_sha256": "66b25203f1fcccf4e1340bd91e41470f0ce3b9f7ddea1ca164b10573f22ae1a1",
+  "same_camera_for_each_pair": true,
+  "views": 9,
+  "eye_axes": [
+    [
+      -0.984807753012208,
+      0.17364817766693033,
+      0
+    ],
+    [
+      0.984807753012208,
+      0.17364817766693033,
+      0
+    ]
+  ],
+  "forward_rotation_from_lateral_degrees": 10
+}

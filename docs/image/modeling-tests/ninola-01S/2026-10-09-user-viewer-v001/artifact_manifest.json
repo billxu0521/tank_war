@@ -1,0 +1,146 @@
+{
+  "files": [
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/README.txt",
+      "sha256": "1221e3c96a60007d70aa7417a2c66ecaf7a4faa854528afe34cd827d35fa7d1f"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/setup_record.json",
+      "sha256": "0373f7cbf48ffd09af58411accf57944cd086a4d1174e18b48e4fd4f8bccd0c7"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/assets/textures/smoke_card.png",
+      "sha256": "2a6eee0338e2b23406585f3e7af830e7970e847760d23d1a4f978a40963a4c3e"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/assets/textures/smoke_card.png.import",
+      "sha256": "97bab2b8c3fca37c5a5d5f47ef5691510227612cc84a72ed77dfd8163dda4ef6"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/facet.gdshader",
+      "sha256": "8154911f5422037452d858797648b273ceb1d79e94b8332485889e8266480617"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/facet.gdshader.uid",
+      "sha256": "19e4a5034c542c396ac8717501426811523272a5f0d5ac785b5c04c726f501e6"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/fx.gd",
+      "sha256": "040aa9af3da36adeb0cb440b59bafd260ddef3d0825bd0b2b9eb6d42c6c27136"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/fx.gd.uid",
+      "sha256": "a6d11b1ad63d3c099b5e6d98f5b62f62cc11e27a723d5a50e0d64ff077a9bcc9"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/models/cowboy.glb",
+      "sha256": "b9e63ec49e84f3fb2b467815c8e9df4cc69111f3be6df29340924012a2d0edc7"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/models/cowboy.glb.import",
+      "sha256": "f7f591554d8d8d64e0c853bce0327b790bc8a85f63971c2844969166282f34d5"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/models/ninola_R2_v005.glb",
+      "sha256": "3569eeb2b68bf1c33c4ade619513fb68fa6ad4f8560907db5d8e8fd16dc9efe1"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/models/ninola_R2_v005.glb.import",
+      "sha256": "b8acb79b1d9fa01c2e4a68eaf6febe924673e25ab021c7cb4dc3ea3b7e49671f"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/models/revolver.glb",
+      "sha256": "2d0b6a5aabc348b5cd053a9784a11163d4ec0daf46713f5bf67da652681b1b0c"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/models/revolver.glb.import",
+      "sha256": "61e36d58039f383f0f4806127c8a57290545ae9932a940bf62302f20fa60b176"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/models/rifle.glb",
+      "sha256": "97b649faaa8a36ea0ec0608bfc3cd232f820b11778ed540bb25d849322637399"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/models/rifle.glb.import",
+      "sha256": "0d235386ab7ed5bccf13a9591b984c266095834f27ff6e7f36622fa2ce9a243c"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/models/shotgun.glb",
+      "sha256": "0595cb964277884e41449726c8047fd2f723131850eaffb21bdf72720e6b2225"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/models/shotgun.glb.import",
+      "sha256": "c12f358f09da5d1a83365c16d80423d635edce6b1d71819c79376c0308717219"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/models/survivals.glb",
+      "sha256": "7e9b7c22bf496172b6013c88326f1fd598288557081067bee2dc16085023ad79"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/models/survivals.glb.import",
+      "sha256": "d534445272e92b95308c0dd095433f202a5eec0cb50e7c0105cd15364379a70c"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/models/survivals_can_label.png",
+      "sha256": "a53ac60fbaf4073d40f39e3f5af8b09ee0717fcbf222a40f4e287b668d1e0610"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/models/survivals_can_label.png.import",
+      "sha256": "159801ac06092297f5db88d901522254736df79a447d15eb135aa209184f466c"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/models/survivals_matchbox_label.png",
+      "sha256": "882b9e64aa5d3cabb4e1659557e5a5fd9ccdd3b0562bb0fb90037b424224151f"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/models/survivals_matchbox_label.png.import",
+      "sha256": "488169456bffff39ecbc18ea404b2e07efc5aa947a015131d9cad31c38c8f4e4"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/project.godot",
+      "sha256": "b8c31e16f1a8d4cc200ade3d9b3feef88c5873c5ccd0c72562a39d2eb8c7c3c6"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/trex.gd",
+      "sha256": "cac2d1a2b1a2000704c5d01c1d17de8bf0cebfc2b322847d3091d5ac5ca24a02"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/trex.gd.uid",
+      "sha256": "51cffe1bcc0b95c3c2498ab14ac5f430c5a210fe492fcfce241ad4ca542532ed"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/viewer.gd",
+      "sha256": "3e647690bdc405b8ee6f74bbe166fbc09a16957561600e0122b98571eda4a348"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/viewer.gd.uid",
+      "sha256": "08f1e22ab6d236e014d45fe1f1f6e46234db128f71a45e4406890148b4b36977"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/viewer.tscn",
+      "sha256": "9f8e39bb968513574a5c4c57f723db9c1d0b5add920022380cf65eedd223ec99"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/viewer_entry.gd",
+      "sha256": "bff9531b9570b4d1d0d90b00d487863f709f09653ee45e4bd550db0f478ca18c"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/viewer_entry.gd.uid",
+      "sha256": "10a308e081004c715e7a06570bf2bcb0c9d059f68da264f7d16f43a10533012d"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/viewmodel_mark.gd",
+      "sha256": "104701eddf3339bfb79e9c273aa98ee3babafd902a848555e67b3f5d6c4b34c7"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project/viewmodel_mark.gd.uid",
+      "sha256": "324e09105bee750f42b614042be0d4d72f01ca47a4da43bb1ed5ca032a97dad9"
+    },
+    {
+      "path": "docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/viewer_open.png",
+      "sha256": "05e95a60df6443a8352c0d76efb0ca8e3355a274dfc789406e3ae74619e528d9"
+    }
+  ],
+  "launch": "godot --path /Users/ChenPo-Yun/Documents/GameDev/worktrees/ninola/docs/image/modeling-tests/ninola-01S/2026-10-09-user-viewer-v001/test-project",
+  "asset": "01R2 v005"
+}
