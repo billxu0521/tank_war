@@ -1,6 +1,6 @@
 class_name Trex
 extends Node3D
-## 暴龍：Blender 建的蒙皮模型（models/trex_hd.glb，blender/trex_hd.py 產生）——一整張皮包在 47 根骨頭上。
+## 暴龍：Blender 建的蒙皮模型（models/ninola.glb，尼諾拉 01S 定版；舊版 models/trex_hd.glb，blender/trex_hd.py 產生）——一整張皮包在 47 根骨頭上。
 ##
 ## 動畫是程式算的，不用 AnimationPlayer——走路快慢直接跟著實際位移，
 ## 而且不管是自己那隻還是別人同步過來的都會動。
@@ -12,7 +12,16 @@ extends Node3D
 ## 骨頭的靜止朝向是 Blender 給的（每根沿自己的方向），下面的動作程式都當成「靜止時沒有轉角、軸是世界的 x 右 y 上 z 後」來寫，
 ## 所以 _set_rot 會先換算：在父骨的靜止朝向裡套上旋轉。改骨架不用動任何一行動作程式。
 
-const MODEL := preload("res://models/trex_hd.glb")
+## 2026-10-10 換成尼諾拉 01S 定版（models/ninola.glb＝R2 v005；模型和核可紀錄在 docs/image/modeling-tests/ninola-01S/）。
+## 舊的 trex_hd.glb 留著，NINOLA_OLD=1 啟動可以切回去比對
+const MODEL_NEW := preload("res://models/ninola.glb")
+const MODEL_OLD := preload("res://models/trex_hd.glb")
+var MODEL: PackedScene = MODEL_OLD if OS.get_environment("NINOLA_OLD") != "" else MODEL_NEW
+## 01S 定版的姿態（跟模型一起核可）：頸在骨架座標抬 12°、頭補回 -4°、下顎中性閉到 1.5°。
+## 每幀在原本的動作算完之後疊上去（不改 Rest、不累積）。舊模型不套
+const NECK_LIFT := 12.0
+const HEAD_COMPENSATION := -4.0
+const JAW_NEUTRAL := 1.5
 const MODEL_LIFT := 0.0    # 腳底在模型原點（腿加長後，docs/企劃/尼諾拉.md）；走路時腳由 IK 踩在實際地面上
 const TAIL_N := 8          # 尾巴節數（舊骨架 4 節）。每節角度乘 TAIL_PER，整條彎的總量跟以前一樣
 const TAIL_PER := 0.5
@@ -406,6 +415,21 @@ func flinch(push: Vector3, strength: float, head: bool) -> void:
 	_drift_v += Vector2(push.x, push.z) * FLINCH_DRIFT * strength
 
 func _process(delta: float) -> void:
+	_process_base(delta)
+	if MODEL != MODEL_NEW or skel == null:
+		return
+	var jaw_pitch: float = pose_rot("jaw").get_euler().x
+	_pose("jaw", Vector3.RIGHT, jaw_pitch + 0.12 - deg_to_rad(JAW_NEUTRAL))
+	_model_pitch("neck", NECK_LIFT)
+	_model_pitch("head", HEAD_COMPENSATION)
+
+func _model_pitch(bone: String, degrees: float) -> void:
+	var id: int = _idx[bone]
+	var pose: Transform3D = skel.get_bone_global_pose(id)
+	pose.basis = Basis(Vector3.RIGHT, deg_to_rad(degrees)) * pose.basis
+	skel.set_bone_global_pose(id, pose)
+
+func _process_base(delta: float) -> void:
 	# 載入、切視窗卡一下，一幀可能超過 0.16 秒：脊椎彈簧（硬度 55）在那麼大的時間步會發散亂甩（知識庫二階動態筆記算過）
 	delta = minf(delta, 0.05)
 	var moved := (global_position - _last_pos) / maxf(delta, 0.0001)

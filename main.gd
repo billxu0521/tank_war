@@ -2808,7 +2808,7 @@ static func meshes() -> Dictionary:
 const LEAVES_SHADER := preload("res://leaves.gdshader")
 const FLAT_MODELS := ["res://models/props.glb", "res://models/trees.glb", "res://models/rocks.glb", "res://models/houses.glb", "res://models/kits.glb", "res://models/towns.glb",
 	"res://models/groves.glb", "res://models/floras.glb", "res://models/clutters.glb",
-	"res://models/cowboy.glb", "res://models/trex_hd.glb", "res://models/revolver.glb",
+	"res://models/cowboy.glb", "res://models/trex_hd.glb", "res://models/ninola.glb", "res://models/revolver.glb",
 	"res://models/shotgun.glb", "res://models/rifle.glb", "res://models/lance.glb"]
 static var _flat_keep: Array[PackedScene] = []
 static func _flatten_models() -> void:
