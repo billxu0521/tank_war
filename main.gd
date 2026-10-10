@@ -236,6 +236,9 @@ func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventKey and e.pressed and not e.echo and e.keycode == KEY_F8:
 		report_bug()   # 大廳、遊戲中都能按
 		return
+	if e is InputEventKey and e.pressed and not e.echo and e.keycode == KEY_F3:
+		debug_hud = not debug_hud
+		return
 	if lobby.visible:
 		return
 	if e is InputEventKey and e.pressed and e.keycode == KEY_ESCAPE:
@@ -1245,8 +1248,11 @@ func _track_frame_time(delta: float) -> void:
 		_slow = 0.0
 		_slow_since = now
 
-## 右上角：本機 IP（開房的人報給朋友用）、連線延遲、每秒畫面數、最慢一幀
+## 右上角：本機 IP（開房的人報給朋友用）、連線延遲、每秒畫面數、最慢一幀。
+## 遊戲中是開發資訊，平常收起來，F3 打開（2026-10-10 FPS 角度評估 #5）
+var debug_hud := false
 func _update_net_info() -> void:
+	net_info.visible = lobby.visible or debug_hud
 	var parts: Array[String] = ["本機 IP：" + _ips]
 	var peer := multiplayer.multiplayer_peer as ENetMultiplayerPeer
 	if not lobby.visible and peer and not multiplayer.is_server() \
@@ -1338,6 +1344,9 @@ func _build_arena() -> void:
 		_groundcover_field()
 		_flora_field()
 		_drift = Fx.drift($Arena)
+		var amb := Ambience.new()
+		$Arena.add_child(amb)
+		amb.setup(self)
 	_lighten_small($Arena)
 
 ## 減輕負擔：小東西（桶子、箱子、乾草、草叢……最長邊不到 SMALL_SIZE）不投影子、太遠就不畫。
@@ -2521,6 +2530,8 @@ func _barn(p: Vector3, size: Vector3) -> void:
 	_roof(p, size, BARN_PITCH)
 	_prop(&"Barn", p, s)
 	_prop(&"BarnRoof", p + Vector3(0, size.y, 0), Vector3(s.x, s.x, s.z))
+	if DisplayServer.get_name() != "headless":
+		_barn_light(p, size)
 	# 正面兩扇滑門：關著剛好蓋住門洞，開的時候各往外滑半個門寬
 	var front := size.z * 0.5 + 0.12
 	for side in [-1.0, 1.0]:
@@ -2573,6 +2584,8 @@ func _kit(name: StringName, p: Vector3, yaw: float) -> Node3D:
 	elif name == &"Crate":
 		body.set_script(SupplyCrate)   # 木箱都是補給箱（F 補炸藥）
 	_prop(name, Vector3(0, -size.y * 0.5, 0), Vector3.ONE, body)
+	if name == &"Crate":
+		Accent.mark(body)
 	return body
 
 ## 靠在牆上的車輪（只有外觀）。p 是牆腳，牆面朝 yaw 方向（0 = 朝 +Z），輪子頂端往牆那邊倒一點
@@ -2699,6 +2712,44 @@ func _roof(p: Vector3, size: Vector3, pitch: float) -> void:
 		var b := _solid_box(p + Vector3(sx * run * 0.5, size.y + rise * 0.5, 0), Vector3(w, 0.3, size.z + 1.0))
 		b.rotation.z = -sx * pitch
 
+## 穀倉裡的夕陽光柱和飄浮的灰塵（2026-10-10 環境感）：太陽那側的牆（+X）透進三道光，照太陽方向斜斜射進來，
+## 在閣樓（-Z 那半）底下的另一半。只是畫面，伺服器不做
+const SHAFT_SHADER := preload("res://light_shaft.gdshader")
+func _barn_light(p: Vector3, size: Vector3) -> void:
+	var d := -FarLand.TO_SUN.normalized()
+	for z: float in [0.12, 0.25, 0.38]:
+		var a := p + Vector3(size.x * 0.5 - 0.3, size.y * 0.42, z * size.z)
+		var reach := minf((a.y - p.y - 0.3) / -d.y, minf((size.x - 0.6) / -d.x, (p.z + size.z * 0.5 - 0.3 - a.z) / d.z))
+		var q := QuadMesh.new()   # 繞長軸轉向鏡頭（見 light_shaft.gdshader）
+		q.size = Vector2(1.1, reach)
+		q.material = ShaderMaterial.new()
+		q.material.shader = SHAFT_SHADER
+		q.custom_aabb = AABB(Vector3(-1, -reach * 0.5, -1), Vector3(2, reach, 2))   # 頂點在 shader 裡轉，原本的扁盒子會被誤判看不到
+		var mi := MeshInstance3D.new()
+		mi.mesh = q
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		$Arena.add_child(mi)
+		var side := d.cross(Vector3.UP).normalized()
+		# 方形的 Y 軸順著光，UV.y = 0 在入口
+		mi.global_transform = Transform3D(Basis(side, -d, side.cross(-d)), a + d * reach * 0.5)
+	var motes := CPUParticles3D.new()
+	motes.mesh = Fx._box(0.02, Color(1.0, 0.85, 0.6))
+	motes.mesh.material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	motes.amount = 60
+	motes.lifetime = 8.0
+	motes.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	motes.emission_box_extents = Vector3(size.x * 0.4, size.y * 0.2, size.z * 0.2)
+	motes.gravity = Vector3(0, -0.02, 0)
+	motes.spread = 180.0
+	motes.initial_velocity_max = 0.08
+	motes.tangential_accel_min = -0.05
+	motes.tangential_accel_max = 0.05
+	motes.color_ramp = Fx._fade(Color(1, 1, 1, 0.7))
+	motes.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	$Arena.add_child(motes)
+	motes.global_position = p + Vector3(0, size.y * 0.3, size.z * 0.25)
+	motes.emitting = true
+
 ## 會動的門：碰撞是一塊板（看不見），外觀是 Blender 的門。
 ## pivot 是門軸／底部中央的位置；box 是門板大小（沒縮放前），center 是門板中心相對門軸的位置。
 ## 名字依序取 Door0、Door1…：每台機器蓋場景的順序一樣，RPC 才找得到同一扇門
@@ -2713,6 +2764,7 @@ func _door(mesh: StringName, pivot: Vector3, box: Vector3, center: Vector3, scal
 	cs.position = (center + Vector3(0, box.y * 0.5, 0)) * scale
 	d.add_child(cs)
 	_prop(mesh, Vector3.ZERO, scale, d)
+	Accent.mark(d)
 	$Arena.add_child(d)
 	_doors.append(d)
 	return d
@@ -2733,6 +2785,18 @@ func _ladder(at: Vector3, height: float, foot: Vector3, top_y: float, exit: Vect
 	l.top_y = top_y
 	l.exit = exit
 	l.yaw = yaw
+	# 梯子的模型是建築的一部分，強調色疊不上去：兩側另外貼兩條強調色的細條
+	for x: float in [-0.22, 0.22]:
+		var rail := MeshInstance3D.new()
+		var bm := BoxMesh.new()
+		bm.size = Vector3(0.06, height, 0.06)
+		rail.mesh = bm
+		var rm := StandardMaterial3D.new()
+		rm.albedo_color = Accent.COLOR
+		rail.material_override = rm
+		rail.position = Vector3(x, 0, 0.06)
+		l.add_child(rail)
+	Accent.mark(l)
 	$Arena.add_child(l)
 
 ## 室內的暖光：提燈的光。範圍收在屋子裡，不開影子（十幾盞都開影子太貴）

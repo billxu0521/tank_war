@@ -44,8 +44,10 @@ const SKY := {
 	"cloud_shade": Color("4a2633"), "cloud_edge": Color("8a3533"), "cloud_lit": Color("c8583a"),
 	"cloud_cover": 0.6, "halo": 0.45, "rays": 0.45,
 }
-## 遠景的空氣：霧調成偏紫、濃一點，越遠越紫，跟近景的暖褐分開（參考圖的遠山是 #5E4354）
-const FOG := {"fog_light_color": Color("6a4a64"), "fog_density": 0.006, "fog_sun_scatter": 0.15}
+## 遠景的空氣：霧調成偏紫、濃一點，越遠越紫，跟近景的暖褐分開（參考圖的遠山是 #5E4354）。
+## 濃度 0.006 時 50 公尺的人蓋掉 26%，交戰距離被洗淡；0.0045 降到 20%，遠山照樣紫（2026-10-10 FPS 角度評估 #6）。
+## ponytail: 不用 Godot 的高度霧：它照「那一點多高」算不是照視線，地面腳邊也會起霧
+const FOG := {"fog_light_color": Color("6a4a64"), "fog_density": 0.0045, "fog_sun_scatter": 0.15}
 
 const LUT_SIZE := 33
 

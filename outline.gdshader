@@ -63,6 +63,16 @@ uniform float rim_far_start = 30.0;   // 公尺：從這裡開始轉成強調色
 uniform float rim_far_end = 60.0;
 uniform float target_line_alpha = 0.6;   // 目標輪廓線的濃度（1 = 全黑不透明）
 uniform float target_fade_end = 300.0;   // 公尺：目標的輪廓線到這裡才淡完（一般物件 fade_end）
+// 逆光（2026-10-10）：面向太陽時遠處更朦朧（沿視線越遠越往夕陽色收），加上從太陽往外放射的光束（被樹、屋頂擋住的地方變成一條條暗縫）
+uniform vec3 to_sun = vec3(0.88, 0.208, -0.43);   // 往太陽的方向（世界座標）：main.tscn 的 Sun，跟 far_land.gd 的 TO_SUN 一樣
+uniform vec3 sun_haze_color : source_color = vec3(1.0, 0.62, 0.32);
+uniform float sun_haze = 0.4;           // 正對太陽、最遠處最多混多少
+uniform float sun_haze_power = 10.0;    // 越大越集中在太陽附近
+uniform float sun_haze_density = 0.012; // 每公尺：越遠越朦朧（50 公尺約四成、150 公尺八成多）
+uniform float sun_haze_bright = 1.6;    // 夕陽色的亮度（線性）：比天空地平線暗一點，遠景不會被洗成白
+uniform float shafts = 0.8;             // 光束強度；0 = 關
+uniform vec3 shaft_color : source_color = vec3(1.0, 0.7, 0.4);
+uniform float shaft_len = 1.0;          // 從這個像素往太陽方向取樣走多遠（畫面上的比例）
 
 void vertex() {
 	POSITION = vec4(VERTEX.xy, 1.0, 1.0);   // 蓋滿整個畫面，不管相機在哪
@@ -271,6 +281,34 @@ void fragment() {
 			base = mix(base, mix(vec3(l), base, mix(gun_sat, 1.0, smoothstep(0.08, 0.25, l / (1.0 + l)))), blue);
 			base *= 1.0 + gun_lift * (1.0 - smoothstep(0.03, 0.2, l / (1.0 + l)));
 		}
+	}
+	// 逆光：視線方向（只看方向，跟深度無關）跟太陽方向的夾角
+	vec4 vp = INV_PROJECTION_MATRIX * vec4(uv * 2.0 - 1.0, 0.5, 1.0);
+	vec3 vdir = normalize(vp.xyz / vp.w);
+	vec3 sun_v = normalize((VIEW_MATRIX * vec4(normalize(to_sun), 0.0)).xyz);
+	float facing = max(dot(vdir, sun_v), 0.0);
+	if (d < 500.0 && !near) {
+		// 面向太陽時遠處更朦朧：遠山一層層變成剪影。目標只吃一半，不要整隻被洗掉
+		float amt = (1.0 - exp(-d * sun_haze_density)) * pow(facing, sun_haze_power) * sun_haze * (target ? 0.5 : 1.0);
+		base = mix(base, sun_haze_color * sun_haze_bright, amt);
+	}
+	if (shafts > 0.0 && sun_v.z < 0.0 && facing > 0.0) {
+		// 光束：從這個像素往太陽在畫面上的位置走，數沿路有幾點是天空。被樹葉、屋頂擋住的方向就少，畫面上變成放射狀的亮條和暗縫。
+		// ponytail: 單輪 16 點、起點加亂數打散色階；要更細的光束得另開一輪低解析度的遮罩（CompositorEffect）
+		vec4 sc = PROJECTION_MATRIX * vec4(sun_v * 100.0, 1.0);
+		vec2 sun_uv = sc.xy / sc.w * 0.5 + 0.5;
+		vec2 stp = (sun_uv - uv) * shaft_len / 16.0;
+		vec2 q = uv + stp * fract(sin(dot(FRAGCOORD.xy, vec2(12.9898, 78.233))) * 43758.5453);
+		float lit = 0.0;
+		float w = 1.0;
+		for (int i = 0; i < 16; i++) {
+			q += stp;
+			if (q.x > 0.0 && q.x < 1.0 && q.y > 0.0 && q.y < 1.0 && lin_depth(q, INV_PROJECTION_MATRIX) >= 500.0) {
+				lit += w;
+			}
+			w *= 0.96;
+		}
+		base += shaft_color * lit / 12.0 * shafts * pow(facing, 8.0) * (near ? 0.3 : (d >= 500.0 ? 0.35 : 1.0));   // 天空本來就亮，光束主要加在被照到的空氣（物體前面）
 	}
 	// 抖色：每個像素亮度 ±1.5% 的固定雜訊，把天空漸層、太陽光暈的一圈圈色階打散（引擎的去色帶在這片方塊之前就做完了）
 	base *= 1.0 + (fract(sin(dot(FRAGCOORD.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) * dither;
