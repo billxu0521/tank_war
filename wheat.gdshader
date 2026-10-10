@@ -11,7 +11,8 @@ uniform float tip_sat = 0.6;          // 穗尖飽和度倍數
 // 麥浪（2026-10-10 環境感）：跟草地（grass.gdshader）同一個方向、同一波陣風。風吹過的那一條穗尖翻亮，遠看一波波掃過麥田
 uniform vec2 wind_dir = vec2(1.0, 0.35);
 uniform float wind_strength = 0.35;   // 公尺：卡片頂端最多被吹偏多少
-uniform float wave_lift = 0.35;       // 陣風經過時穗尖亮多少
+uniform float wave_lift = 0.35;
+uniform vec3 backlight : source_color = vec3(1.0, 0.85, 0.55);   // 逆光透光的顏色（時段：午夜改銀藍，period.gd）       // 陣風經過時穗尖亮多少
 
 varying float v_gust;
 
@@ -47,7 +48,7 @@ void fragment() {
 	ALBEDO = mix(c.rgb, mix(vec3(l), c.rgb, tip_sat) * tip_dim * (1.0 + wave_lift * v_gust * v_gust), tip);
 	ALPHA = c.a;
 	// 逆光透光（2026-10-10）：面向夕陽時麥穗發金光。只有穗那一段透，麥稈不透，不然整片變成一面亮牆
-	BACKLIGHT = vec3(1.0, 0.85, 0.55) * mix(0.05, 0.5, tip * tip);
+	BACKLIGHT = backlight * mix(0.05, 0.5, tip * tip);
 	ALPHA_SCISSOR_THRESHOLD = 0.5;
 	ROUGHNESS = 0.5;   // 描線跳過的記號（見 outline.gdshader），一根根麥稈描線會變成一片雜訊
 }

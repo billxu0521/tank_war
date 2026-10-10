@@ -199,6 +199,7 @@ static func drift(parent: Node) -> Node3D:
 	leaves.angular_velocity_min = -180.0
 	leaves.angular_velocity_max = 180.0
 	leaves.particle_flag_rotate_y = true
+	leaves.name = &"Leaves"   # period.gd 用名字找
 	root.add_child(leaves)
 	var bug := _box(0.025, Color(0.1, 0.1, 0.08))
 	_glow_backlit(bug.material)   # 夕陽前面飛的小蟲一閃一閃發亮，背光時才看得到
@@ -214,6 +215,7 @@ static func drift(parent: Node) -> Node3D:
 	bugs.initial_velocity_max = 0.8
 	bugs.tangential_accel_min = -2.0   # 繞圈亂飛，不是直線
 	bugs.tangential_accel_max = 2.0
+	bugs.name = &"Bugs"
 	root.add_child(bugs)
 	# 貼地被風捲起的薄塵（2026-10-10 環境感）：大片、很淡，順風一直飄過去。淡進淡出，不會突然冒出來
 	var gust := _emitter(_card(1.6, DUST), 10, 7.0)
@@ -242,6 +244,24 @@ static func drift(parent: Node) -> Node3D:
 	gust.emitting = true
 	return root
 
+
+
+## 夜晚把飛蟲換成螢火蟲（period.gd）：黃綠色自己發光、一明一滅；off 換回原本的小黑點
+static func firefly(bugs: CPUParticles3D, on: bool) -> void:
+	var m: StandardMaterial3D = bugs.mesh.material
+	if not m.has_meta(&"base_emission"):
+		m.set_meta(&"base_emission", m.emission)
+	m.emission = Color(0.6, 1.0, 0.3) * 2.0 if on else m.get_meta(&"base_emission")
+	m.emission_energy_multiplier = 2.5 if on else 1.0
+	if on:
+		var g := Gradient.new()   # 一生亮滅三次
+		g.offsets = PackedFloat32Array([0.0, 0.15, 0.3, 0.45, 0.6, 0.75, 1.0])
+		g.colors = PackedColorArray([Color(1, 1, 1, 0), Color.WHITE, Color(1, 1, 1, 0.1), Color.WHITE,
+			Color(1, 1, 1, 0.1), Color.WHITE, Color(1, 1, 1, 0)])
+		bugs.color_ramp = g
+	else:
+		bugs.color_ramp = null
+	bugs.amount = 40 if on else 20
 
 
 # ---- 內部 ----

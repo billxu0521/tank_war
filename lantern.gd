@@ -30,10 +30,87 @@ static func place(parent: Node3D, mesh: Mesh, at: Vector3, hang := true) -> OilL
 	l._light.omni_range = 5.0
 	l._light.shadow_enabled = false
 	l._light.position = Vector3.DOWN * 0.29   # 玻璃罩中間
+	l._light.add_to_group(&"period_lamp")   # 時段調亮度（period.gd）
 	l.add_child(l._light)
 	parent.add_child(l)
 	l.global_position = at if hang else at + Vector3.UP * HEIGHT
 	return l
+
+
+## 模型上做死的提燈（2026-10-10 使用者：所有光源燈都要打得破、打破會燒）：繫馬柱、穀倉、農舍、店面的燈原本是建築模型的一部分。
+## 載入時把那幾盞從模型上挖掉（網格是共用的，挖一次全場都沒了），每個擺出來的建築在原位掛一盞真的油燈。
+## 位置：模型座標裡燈罩的大概中心（照 blender/kit.py、props.py、house.py、town.py 換算），再用附近發光面的中心校準
+const BAKED := {
+	&"HitchRail": [Vector3(0, 1.8, 0)],
+	&"Barn": [Vector3(0, 3.0, 0.3), Vector3(-6.3, 1.05, 3.45)],          # 閣樓下吊的、工作台上的
+	&"House1": [Vector3(-0.9, 3.0, 4.2), Vector3(-1.65, 1.5, 1.8)],      # 門廊吊的、屋裡桌上的
+	&"House2": [Vector3(-0.9, 3.0, 4.2), Vector3(-1.65, 1.5, 1.8)],
+	&"House3": [Vector3(0.9, 2.7, 4.2), Vector3(-1.65, 1.5, 1.8)],
+	&"Saloon": [Vector3(0, 4.2, 0)], &"Store": [Vector3(0, 3.3, 0)], &"Sheriff": [Vector3(0, 3.3, 0)],
+}
+const LIT_MATS := ["h_lit", "p_lamp"]
+const GLASS_TO_HOOK := 0.29   # 這支的油燈：燈罩中心在掛鉤下面多少
+
+
+## main.gd 蓋完場景後叫：挖掉模型上的燈、在每個建築的原位掛油燈（伺服器也要：子彈在每台都會打到燈）
+static func replace_baked(arena: Node, lantern_mesh: Mesh, meshes: Dictionary) -> void:
+	for name: StringName in BAKED:
+		var mesh: ArrayMesh = meshes.get(name)
+		if mesh and not mesh.has_meta(&"baked_lanterns"):
+			mesh.set_meta(&"baked_lanterns", _strip(mesh, BAKED[name]))
+	for mi: MeshInstance3D in arena.find_children("*", "MeshInstance3D", true, false):
+		if mi.mesh and mi.mesh.has_meta(&"baked_lanterns"):
+			for c: Vector3 in mi.mesh.get_meta(&"baked_lanterns"):
+				place(arena, lantern_mesh, mi.global_transform * c + Vector3.UP * GLASS_TO_HOOK)
+
+
+## 校準每盞燈罩的中心，把燈（罩、框、底座、屋簷）那一小塊的三角形全挖掉，掛燈的繩子和鉤子留著。回傳校準後的中心
+static func _strip(mesh: ArrayMesh, approx: Array) -> Array[Vector3]:
+	var centers: Array[Vector3] = []
+	for c0: Vector3 in approx:
+		var sum := Vector3.ZERO
+		var n := 0
+		for i in mesh.get_surface_count():
+			if not LIT_MATS.has(String(mesh.surface_get_material(i).resource_name)):
+				continue
+			for c: Vector3 in _centroids(mesh.surface_get_arrays(i)):
+				if c.distance_to(c0) < 0.45:
+					sum += c
+					n += 1
+		centers.append(sum / n if n > 0 else c0)
+	var surfaces := []
+	for i in mesh.get_surface_count():
+		var a := mesh.surface_get_arrays(i)
+		var idx: PackedInt32Array = a[Mesh.ARRAY_INDEX]
+		var cs := _centroids(a)
+		var keep := PackedInt32Array()
+		for t in cs.size():
+			if not centers.any(func(c: Vector3) -> bool: return _in_lantern(cs[t] - c)):
+				keep.append_array([idx[t * 3], idx[t * 3 + 1], idx[t * 3 + 2]])
+		a[Mesh.ARRAY_INDEX] = keep
+		surfaces.append([a, mesh.surface_get_material(i), mesh.surface_get_name(i)])
+	mesh.clear_surfaces()
+	for s: Array in surfaces:
+		if (s[0][Mesh.ARRAY_INDEX] as PackedInt32Array).is_empty():
+			continue
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, s[0])
+		mesh.surface_set_material(mesh.get_surface_count() - 1, s[1])
+		mesh.surface_set_name(mesh.get_surface_count() - 1, s[2])
+	return centers
+
+
+## 燈罩中心算起：左右前後 0.2、往下 0.3（底座）、往上 0.25（屋簷、頂蓋；再上面的繩子和鉤子留著）
+static func _in_lantern(d: Vector3) -> bool:
+	return absf(d.x) < 0.2 and absf(d.z) < 0.2 and d.y > -0.3 and d.y < 0.25
+
+
+static func _centroids(a: Array) -> PackedVector3Array:
+	var v: PackedVector3Array = a[Mesh.ARRAY_VERTEX]
+	var idx: PackedInt32Array = a[Mesh.ARRAY_INDEX]
+	var out := PackedVector3Array()
+	for t in range(0, idx.size(), 3):
+		out.append((v[idx[t]] + v[idx[t + 1]] + v[idx[t + 2]]) / 3.0)
+	return out
 
 
 func _ready() -> void:

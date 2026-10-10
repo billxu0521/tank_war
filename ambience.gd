@@ -6,7 +6,10 @@ extends Node3D
 ## 都只是畫面，不走網路，各台自己算。main.gd 在有畫面時才建（伺服器不建）。
 
 const FEATHER := 10.0   # 公尺：進區多深才完全換成那區的光
-## 區域 -> [太陽顏色, 太陽亮度倍數, 環境光顏色, 環境光亮度倍數]
+## 區域 -> [太陽顏色, 太陽亮度倍數, 環境光顏色, 環境光亮度倍數]。顏色是照夕陽調的；換時段（period.gd）時
+## 換算成「跟夕陽原本的顏色差幾倍」乘到那個時段上，不然進森林會一下跳回夕陽的顏色
+const REF_SUN := Color(1.0, 0.78, 0.52)      # main.tscn 的太陽
+const REF_AMB := Color(0.55, 0.52, 0.68)     # main.tscn 的環境光
 const LOOKS := {
 	&"forest": [Color(0.92, 0.8, 0.6), 0.75, Color(0.42, 0.56, 0.5), 0.9],
 	&"town": [Color(1.0, 0.64, 0.36), 1.05, Color(0.74, 0.5, 0.4), 1.05],
@@ -27,10 +30,11 @@ var _wind := Vector3(Fx.WIND.x, 0, Fx.WIND.z).normalized()
 
 
 func setup(main: Node) -> void:
+	name = &"Ambience"   # period.gd 用名字找
 	_main = main
 	_sun = main.get_node(^"Arena/Sun")
 	_env = (main.get_node(^"Arena/WorldEnvironment") as WorldEnvironment).environment
-	_base = [_sun.light_color, _sun.light_energy, _env.ambient_light_color, _env.ambient_light_energy]
+	rebase()
 	_zones = {&"forest": main.ZONE_FOREST, &"town": main.ZONE_TOWN, &"wheat": main.ZONE_WHEAT}
 	var mesh := _weed_mesh()
 	for i in WEEDS:
@@ -42,6 +46,11 @@ func setup(main: Node) -> void:
 		w.visible = false
 		_weeds.append(w)
 		_speed.append(0.0)
+
+
+## 時段換了（period.gd）：重抓太陽和環境光的基準
+func rebase() -> void:
+	_base = [_sun.light_color, _sun.light_energy, _env.ambient_light_color, _env.ambient_light_energy]
 
 
 func _process(delta: float) -> void:
@@ -63,9 +72,9 @@ func _light(at: Vector3) -> void:
 		if w <= 0.0:
 			continue
 		var l: Array = LOOKS[k]
-		look[0] = (look[0] as Color).lerp(l[0], w)
+		look[0] = (look[0] as Color).lerp(_base[0] * l[0] / REF_SUN, w)
 		look[1] = lerpf(look[1], _base[1] * l[1], w)
-		look[2] = (look[2] as Color).lerp(l[2], w)
+		look[2] = (look[2] as Color).lerp(_base[2] * l[2] / REF_AMB, w)
 		look[3] = lerpf(look[3], _base[3] * l[3], w)
 	_sun.light_color = look[0]
 	_sun.light_energy = look[1]

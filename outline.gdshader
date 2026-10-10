@@ -52,6 +52,7 @@ uniform float near_dark_end = 35.0;      // 公尺：到這裡回到原本亮度
 // 整體降飽和（Environment 的 adjustment_saturation）會連亮部的橘一起洗掉，暖冷對比跟著變小（第 68～70 版量到）
 uniform float shadow_sat = 0.8;    // 最暗處的飽和度倍數（參考圖最暗 15% 幾乎沒有顏色：b 只有 4，中間調 17、亮部 42）
 uniform vec3 shadow_tint : source_color = vec3(0.235, 0.224, 0.271);   // 暗部往指南的冷影色 #3C3945 混：只抽掉顏色會變灰泥，要往紫藍灰靠才是「冷」
+uniform float tint_keep_warm = 0.0;   // 0 = 照舊；1 = 暖色像素不往冷影色推（夜晚的燈光）
 uniform float shadow_tint_amount = 0.22;   // 0.35 時森林整片灰掉、樹冠看不出綠（第 77 版審查）
 uniform float light_sat = 1.0;     // 最亮處
 uniform float gun_sat = 0.4;
@@ -72,6 +73,7 @@ uniform float sun_haze_density = 0.012; // 每公尺：越遠越朦朧（50 公�
 uniform float sun_haze_bright = 1.6;    // 夕陽色的亮度（線性）：比天空地平線暗一點，遠景不會被洗成白
 uniform float shafts = 0.8;             // 光束強度；0 = 關
 uniform vec3 shaft_color : source_color = vec3(1.0, 0.7, 0.4);
+uniform float heat = 0.0;   // 熱浪（時段：正午，period.gd）：遠處地平線附近的畫面左右扭動 1～2 像素。0 = 關
 uniform float shaft_len = 1.0;          // 從這個像素往太陽方向取樣走多遠（畫面上的比例）
 
 void vertex() {
@@ -226,7 +228,13 @@ void fragment() {
 	edge = min(edge, 1.0);
 	float a = max(edge * (1.0 - smoothstep(fade_start, cliff ? 400.0 : (target_edge ? target_fade_end : fade_end), d)),
 			ridge * (1.0 - smoothstep(ridge_fade_start, ridge_fade_end, d)));
-	vec3 under = texture(screen_tex, uv).rgb;
+	vec2 uv_c = uv;
+	if (heat > 0.0 && !near && d > 30.0 && d < 500.0) {
+		// 熱浪：只扭取色的位置，描線照原本的深度算（線不會跟著抖）。越遠越扭、只在畫面中段（地平線附近）
+		float band = 1.0 - smoothstep(0.08, 0.25, abs(uv.y - 0.5));
+		uv_c.x += sin(uv.y * 420.0 + TIME * 7.0) * 1.5 / VIEWPORT_SIZE.x * heat * smoothstep(30.0, 120.0, d) * band;
+	}
+	vec3 under = texture(screen_tex, uv_c).rgb;
 	// 第一人稱：純深色、不透明，不跟底下混（深色的槍上，混色的線會跟槍同色）
 	// 目標的線也是純深色，但淡 40%（全不透明太搶，像貼紙）
 	bool solid_line = near || (target_edge && edge > 0.0);
@@ -271,7 +279,9 @@ void fragment() {
 		base = mix(vec3(l), base, mix(light_sat, shadow_sat, dark));
 		// 往冷影色混：保持原本亮度，只換色相（色調乘上 shadow_tint 的「形狀」，亮度照原來的 l）
 		vec3 tint = shadow_tint / dot(shadow_tint, vec3(0.2126, 0.7152, 0.0722)) * l;
-		base = mix(base, tint, near ? 0.0 : shadow_tint_amount * dark);
+		// 夜晚（tint_keep_warm = 1）：燈照到的暖色不往冷影色推，不然油燈的光圈混成粉紫（period.gd 午夜）
+		float warm_px = tint_keep_warm * smoothstep(0.0, 0.04, base.r - base.b);
+		base = mix(base, tint, near ? 0.0 : shadow_tint_amount * dark * (1.0 - warm_px));
 		if (near) {
 			// 槍的藍是中間調，上面的暗部處理碰不到，再降一次；只降深色的槍，手和袖子（亮的）不動，不然手變灰
 			// 只降「偏藍」的暗部（環境光把烤藍槍身染成深藍）：暖色（炸彈長矛的纏布、紅炸藥包、木頭）不動。

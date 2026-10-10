@@ -163,13 +163,18 @@ func _ready() -> void:
 	_on_mode_picked(0)
 	_use_sky()
 	_use_outline()
+	Period.snapshot(self)   # 要在像素風疊上去之前：記下的是夕陽原本的天空、霧
 	add_child(preload("res://pixel_style.gd").new())   # 像素風＋夕陽調色，F9 開關（pixel_style.gd）
 	_load_props()
 	_skin_egg()
 	_load_level()
 	_build_arena()
+	OilLantern.replace_baked($Arena, _props.get(&"Lantern"), _props)   # 模型上的提燈換成打得破的油燈（lantern.gd）
+	_dark_windows()
 	if mode != &"range":
 		_build_exits()
+	_add_period_picker()
+	Period.apply(self, period)
 	multiplayer.peer_connected.connect(_spawn)
 	multiplayer.peer_disconnected.connect(_despawn)
 	multiplayer.connected_to_server.connect(func() -> void: status.text = "已連線。WASD 移動，滑鼠瞄準，左鍵開槍，右鍵舉槍")
@@ -187,6 +192,7 @@ func _ready() -> void:
 ##   OvD.exe -- --viewer
 ##   OvD.exe -- --solo-dino    單人打恐龍（測恐龍行為）
 ##   OvD.exe -- --host --mode deathmatch    指定模式（egg、deathmatch、dino_duel）
+##   OvD.exe -- --host --period midnight    指定時段（sunset、noon、midnight），不填用大廳上次選的
 ##   godot --headless -- --server    專用伺服器（測試站）：自己不下場，一局結束自動開下一局
 func _autostart() -> void:
 	var args := OS.get_cmdline_user_args()
@@ -356,6 +362,8 @@ func _to_lobby(msg: String) -> void:
 	_lives.clear()
 	_out.clear()
 	rules = RULES.keys()[mode_pick.selected]   # 加入別人的房間時被主機改過，回大廳換回自己選的
+	if Period.current != period:   # 時段也是
+		Period.apply(self, period)
 	_apply_rules()
 	egg.visible = true
 	for n in get_tree().get_nodes_in_group(&"sandbox_prop"):
@@ -418,6 +426,44 @@ func _on_mode_picked(i: int) -> void:
 	rules = RULES.keys()[i]
 	mode_pick.select(i)
 	$UI/Root/Lobby/ModeDesc.text = RULES[rules].desc
+
+## 時段（period.gd）：大廳選，存在設定檔。開房、沙盒、靶場都用這個；加入別人的房間時照主機的（_set_period）
+var period := &"sunset"
+
+## 大廳「時段」下拉：放在模式說明上面，連線和練習都用得到
+func _add_period_picker() -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(settings_path)
+	period = StringName(cfg.get_value("display", "period", "sunset"))
+	var args := OS.get_cmdline_user_args()   # 專用伺服器：--period noon / midnight
+	var pi := args.find("--period")
+	if pi >= 0 and pi + 1 < args.size():
+		period = StringName(args[pi + 1])
+	if not Period.PRESETS.has(period):
+		period = &"sunset"
+	var row := HBoxContainer.new()
+	var label := Label.new()
+	label.text = "時段"
+	row.add_child(label)
+	var pick := OptionButton.new()
+	pick.name = &"PeriodPick"
+	pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	for k: StringName in Period.NAMES:
+		pick.add_item(Period.NAMES[k])
+	pick.select(Period.NAMES.keys().find(period))
+	pick.item_selected.connect(func(i: int) -> void:
+		period = Period.NAMES.keys()[i]
+		_save_setting("display", "period", String(period))
+		Period.apply(self, period))
+	row.add_child(pick)
+	var lobby_box := $UI/Root/Lobby
+	lobby_box.add_child(row)
+	lobby_box.move_child(row, $UI/Root/Lobby/OnlineLabel.get_index())
+
+## 主機告訴連進來的人這局是什麼時段
+@rpc("authority", "call_remote", "reliable")
+func _set_period(p: StringName) -> void:
+	Period.apply(self, p)
 
 ## 主機告訴連進來的人這局是什麼模式
 @rpc("authority", "call_remote", "reliable")
@@ -847,6 +893,7 @@ func _spawn(id: int) -> void:
 	_add_player(COWBOY, id)
 	if id != 1:
 		_set_rules.rpc_id(id, rules)
+		_set_period.rpc_id(id, Period.current)
 		_broadcast_lives()
 		for d in _doors:   # 門的開關不走同步器，晚來的人要補送一次
 			if d.is_open:
@@ -2547,7 +2594,6 @@ func _barn(p: Vector3, size: Vector3) -> void:
 	var lx := BARN_LADDER_X * s.x
 	_ladder(p + Vector3(lx, 0, 0.15 * s.z), loft + 1.0, p + Vector3(lx, 0, 0.15 * s.z + 0.5), loft,
 		p + Vector3(lx, loft + 0.1, -1.0 * s.z), 0.0)
-	_lamp(p + Vector3(0, loft - 1.0, 3.0 * s.z), 7.0 * s.x)
 
 ## 農舍：空心的，進得去。kind 是三種外觀之一（前廊農舍、圓木小屋、直板高屋），碰撞跟著外觀走
 func _house(p: Vector3, kind: StringName) -> void:
@@ -2559,7 +2605,6 @@ func _house(p: Vector3, kind: StringName) -> void:
 	var d := _door(&"HouseDoor", p + Vector3(-0.55, HOUSE_FLOOR, 4.0 - HOUSE_T * 0.5),
 		Vector3(1.1, 2.2, 0.08), Vector3(0.55, 0, 0), Vector3.ONE)
 	d.swing = PI * 0.5
-	_lamp(p + Vector3(-1.5, 2.6 + HOUSE_FLOOR, 1.8), 5.0)
 
 ## --- 場景小物件（kits.glb） ---
 ## 下面這些函式都自己貼地：p 給不含高度的位置（p.y 是離地高度，通常 0）。
@@ -2626,12 +2671,11 @@ const SHED_LANTERN := Vector3(2.0, 2.95, 3.25)   # 倉庫門口的吊燈（編�
 
 ## 倉庫／圍棚：門朝 +Z 敞開，裡面疊著方草捆。牆、屋頂、草捆的碰撞是 HayShedCol
 ## 城鎮店面（酒館、雜貨店、警長辦公室）：空心的，門窗是開口（沒有門板）。碰撞是 Blender 的 <名字>Col，
-## 跟著朝向轉（yaw 0 正面朝 +Z，PI 朝 -Z）。裡面一盞暖光
+## 跟著朝向轉（yaw 0 正面朝 +Z，PI 朝 -Z）。裡面吊的提燈是打得破的油燈（lantern.gd 的 replace_baked），屋裡的光就是它
 func _shop(p: Vector3, variant: StringName, yaw: float) -> void:
 	p = _on_ground(p)
 	_solid_mesh(p, _props.get(StringName(variant + "Col")), Vector3.ONE).rotation.y = yaw
 	_prop(variant, p).rotation.y = yaw
-	_lamp(p + Vector3(0, 3.0, 0), 7.0)
 
 ## 水塔：四根腳和水桶有碰撞（恐龍爬得上去，當城鎮的制高點）
 func _water_tower(p: Vector3, yaw: float) -> void:
@@ -2728,6 +2772,7 @@ func _barn_light(p: Vector3, size: Vector3) -> void:
 		var mi := MeshInstance3D.new()
 		mi.mesh = q
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.add_to_group(&"barn_light")   # 時段：正午關、午夜換月光色（period.gd）
 		$Arena.add_child(mi)
 		var side := d.cross(Vector3.UP).normalized()
 		# 方形的 Y 軸順著光，UV.y = 0 在入口
@@ -2746,9 +2791,25 @@ func _barn_light(p: Vector3, size: Vector3) -> void:
 	motes.tangential_accel_max = 0.05
 	motes.color_ramp = Fx._fade(Color(1, 1, 1, 0.7))
 	motes.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	motes.add_to_group(&"barn_light")
 	$Arena.add_child(motes)
 	motes.global_position = p + Vector3(0, size.y * 0.3, size.z * 0.25)
 	motes.emitting = true
+
+## 窗戶不發光（2026-10-10 使用者：之後改建模，不會有只有窗、裡面沒有室內的房子）：亮窗改成暗色玻璃。
+## 窗和燈罩共用同一個發光材質（h_lit），油燈（Lantern）先換一份自己的，燈照樣亮
+func _dark_windows() -> void:
+	var lantern: Mesh = _props.get(&"Lantern")
+	for i in lantern.get_surface_count():
+		var m := lantern.surface_get_material(i)
+		if m and String(m.resource_name) == "h_lit" and not m.has_meta(&"own"):
+			var own := m.duplicate()
+			own.set_meta(&"own", true)
+			lantern.surface_set_material(i, own)
+	for f: ShaderMaterial in _facet_of.values():
+		if String(f.resource_name) == "h_lit":
+			f.set_shader_parameter(&"emission", Color.BLACK)
+			f.set_shader_parameter(&"albedo", Color(0.09, 0.09, 0.11))
 
 ## 會動的門：碰撞是一塊板（看不見），外觀是 Blender 的門。
 ## pivot 是門軸／底部中央的位置；box 是門板大小（沒縮放前），center 是門板中心相對門軸的位置。
@@ -2798,17 +2859,6 @@ func _ladder(at: Vector3, height: float, foot: Vector3, top_y: float, exit: Vect
 		l.add_child(rail)
 	Accent.mark(l)
 	$Arena.add_child(l)
-
-## 室內的暖光：提燈的光。範圍收在屋子裡，不開影子（十幾盞都開影子太貴）
-func _lamp(at: Vector3, reach: float) -> void:
-	var light := OmniLight3D.new()
-	light.light_color = Color(1.0, 0.72, 0.42)
-	light.light_energy = 0.6
-	light.omni_range = reach
-	light.omni_attenuation = 2.0   # 很快衰減：沒開影子，光會穿牆照到屋外地面
-	light.shadow_enabled = false
-	light.position = at
-	$Arena.add_child(light)
 
 ## 空心建築的碰撞：直接拿 Blender 的碰撞模型（BarnCol / HouseCol）當形狀，照實際大小縮放。
 ## 縮放烘進頂點，不縮碰撞節點——物理引擎對非等比縮放的網格形狀支援不一
