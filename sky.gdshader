@@ -12,6 +12,9 @@ uniform vec3 cloud_edge : source_color = vec3(0.6, 0.35, 0.35);      // 背光�
 uniform float cloud_cover = 0.52;     // 0 晴天 .. 1 陰天；天空上半部大約三到四成有雲（美術風格評估第 77 版第 5 點）
 uniform float cloud_speed = 0.006;
 uniform float halo = 1.0;   // 太陽周圍兩層暖光的強度（像素風開著時調弱：pixel_style.gd 的 SKY）
+uniform float stars = 0.0;        // 星星（時段：午夜，period.gd）。0 = 沒有
+uniform float disk_size = 0.998;  // 太陽／月亮盤的大小（越接近 1 越小）
+uniform float disk_bright = 6.0;  // 盤的亮度：月亮調暗，不然泛光把它暈成一團
 uniform float rays = 0.0;   // 耶穌光：從太陽往上放射的光束（參考圖 survival_style.png）。0 = 關；像素風開著時打開
 
 float hash(vec2 p) {
@@ -52,7 +55,7 @@ void sky() {
 	float sa = max(dot(d, LIGHT0_DIRECTION), 0.0);
 	col += LIGHT0_COLOR * vec3(1.0, 0.8, 0.5) * pow(sa, 6.0) * 0.35 * halo;   // 太陽周圍一大片暖光（壓掉藍色，不然亮起來會被推成白）
 	if (!AT_CUBEMAP_PASS) {
-		col += LIGHT0_COLOR * smoothstep(0.998, 0.9997, sa) * 6.0;   // 太陽盤：邊緣柔一點，泛光（glow）再把它暈開
+		col += LIGHT0_COLOR * smoothstep(disk_size, disk_size + 0.0017 * (1.0 - disk_size) / 0.002, sa) * disk_bright;   // 太陽盤：邊緣柔一點，泛光（glow）再把它暈開
 		col += LIGHT0_COLOR * vec3(1.0, 0.75, 0.45) * pow(sa, 80.0) * 0.8 * halo;   // 太陽周圍 10 度內的光暈
 		if (rays > 0.0 && up > -0.02) {
 			// 耶穌光：繞著太陽的角度切成一條條光束（雜訊決定寬窄，軟邊：硬邊太像貼上去的，使用者 2026-10-06），離太陽 4 度起、60 度內漸漸淡掉，
@@ -68,6 +71,13 @@ void sky() {
 			// 跟著底下天空的亮度走：亮的地方（地平線附近）明顯，暗的天頂幾乎看不到（暗底上一點亮差就被調色盤跳一階，很硬）
 			float bright = dot(col, vec3(0.3, 0.59, 0.11));
 			col += LIGHT0_COLOR * vec3(1.0, 0.5, 0.2) * beam * fade * rays * smoothstep(0.0, 0.3, bright);
+		}
+		if (stars > 0.0 && up > 0.05) {
+			// 星星：方向切成細格子，每格亂數挑少數幾格亮，亮度也亂；畫在雲之前，雲會蓋住
+			vec3 cell = floor(d * 260.0);
+			float h = fract(sin(dot(cell, vec3(12.9898, 78.233, 37.719))) * 43758.5453);
+			float s = step(0.9975, h) * (0.4 + 0.6 * fract(h * 371.0));
+			col += vec3(0.85, 0.9, 1.0) * s * stars * smoothstep(0.05, 0.25, up);
 		}
 		if (up > 0.0) {
 			// 雲：少數幾條又扁又長的橫條（取樣時高度方向壓很密、水平方向拉很開），硬邊、只有兩個色階。

@@ -22,7 +22,7 @@ func _init() -> void:
 	offset_left = -WIDTH * 0.5
 	offset_right = WIDTH * 0.5
 	offset_top = 8
-	offset_bottom = 8 + HEIGHT + 34
+	offset_bottom = 8 + HEIGHT + 40
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
@@ -63,14 +63,14 @@ func _draw() -> void:
 			draw_line(Vector2(x, HEIGHT - (12.0 if big else 6.0)), Vector2(x, HEIGHT), Color(1, 1, 1, 0.8), 1.5)
 			if big:
 				var t := str(deg)
-				var w := font.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x
-				_text(font, Vector2(x - w * 0.5, 13), t, 13, Color(1, 1, 1, 0.9))
+				var w := font.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x
+				_text(font, Vector2(x - w * 0.5, 15), t, 16, Color(1, 1, 1, 0.9))
 		d += 15.0
 	# 目前方向：中間一根指針＋下面的度數
 	var h := str(int(round(heading)) % 360)
-	var hw := font.get_string_size(h, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
+	var hw := font.get_string_size(h, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x
 	draw_line(Vector2(WIDTH * 0.5, 0), Vector2(WIDTH * 0.5, HEIGHT), Color.WHITE, 2.0)
-	_text(font, Vector2(WIDTH * 0.5 - hw * 0.5, HEIGHT + 16), h, 15, Color.WHITE)
+	_text(font, Vector2(WIDTH * 0.5 - hw * 0.5, HEIGHT + 18), h, 18, Color.WHITE)
 	# 目標：蛋、撤離區。視野外的貼在兩端、畫成箭頭
 	for m: Dictionary in marks:
 		var x := _x_of(m["deg"])
@@ -88,6 +88,6 @@ func _draw() -> void:
 			draw_colored_polygon(tri, c)
 			draw_polyline(tri + PackedVector2Array([tri[0]]), Color(0.12, 0.07, 0.05), 1.5)
 		var t := "%s %dm" % [m["label"], int(m["dist"])]
-		var w := font.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
+		var w := font.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x
 		var tx := clampf(x - w * 0.5, 0.0, WIDTH - w)
-		_text(font, Vector2(tx, HEIGHT + 32), t, 14, c)
+		_text(font, Vector2(tx, HEIGHT + 36), t, 16, c)

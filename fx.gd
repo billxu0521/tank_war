@@ -186,8 +186,7 @@ static func chimney(parent: Node3D, pos: Vector3) -> CPUParticles3D:
 static func drift(parent: Node) -> Node3D:
 	var root := Node3D.new()
 	var leaf := _box(0.08, Color(0.75, 0.62, 0.3), Vector3(1, 0.1, 0.6))
-	# 從底下看是背光面，會變黑點。不吃光，逆光也看得出是葉子
-	leaf.material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_glow_backlit(leaf.material)
 	var leaves := _emitter(leaf, 30, 8.0)
 	leaves.one_shot = false
 	leaves.explosiveness = 0.0
@@ -200,8 +199,11 @@ static func drift(parent: Node) -> Node3D:
 	leaves.angular_velocity_min = -180.0
 	leaves.angular_velocity_max = 180.0
 	leaves.particle_flag_rotate_y = true
+	leaves.name = &"Leaves"   # period.gd 用名字找
 	root.add_child(leaves)
-	var bugs := _emitter(_box(0.025, Color(0.1, 0.1, 0.08)), 20, 4.0)
+	var bug := _box(0.025, Color(0.1, 0.1, 0.08))
+	_glow_backlit(bug.material)   # 夕陽前面飛的小蟲一閃一閃發亮，背光時才看得到
+	var bugs := _emitter(bug, 20, 4.0)
 	bugs.one_shot = false
 	bugs.explosiveness = 0.0
 	bugs.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
@@ -213,15 +215,66 @@ static func drift(parent: Node) -> Node3D:
 	bugs.initial_velocity_max = 0.8
 	bugs.tangential_accel_min = -2.0   # 繞圈亂飛，不是直線
 	bugs.tangential_accel_max = 2.0
+	bugs.name = &"Bugs"
 	root.add_child(bugs)
+	# 貼地被風捲起的薄塵（2026-10-10 環境感）：大片、很淡，順風一直飄過去。淡進淡出，不會突然冒出來
+	var gust := _emitter(_card(1.6, DUST), 10, 7.0)
+	_spin(gust)
+	gust.one_shot = false
+	gust.explosiveness = 0.0
+	gust.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	gust.emission_box_extents = Vector3(22, 0.3, 22)
+	gust.position.y = -1.1   # 根跟著鏡頭（眼睛高度）走，往下是腳邊
+	gust.direction = Vector3(WIND.x, 0, WIND.z).normalized()
+	gust.spread = 10.0
+	gust.initial_velocity_min = 2.5
+	gust.initial_velocity_max = 4.5
+	gust.gravity = Vector3(0, 0.05, 0)
+	gust.scale_amount_min = 0.8
+	gust.scale_amount_max = 1.6
+	gust.scale_amount_curve = _grow(0.6, 1.6)
+	var g := Gradient.new()
+	g.offsets = PackedFloat32Array([0.0, 0.3, 0.7, 1.0])
+	g.colors = PackedColorArray([Color(1, 1, 1, 0), Color(1, 1, 1, 0.32), Color(1, 1, 1, 0.32), Color(1, 1, 1, 0)])
+	gust.color_ramp = g
+	root.add_child(gust)
 	parent.add_child(root)
 	leaves.emitting = true
 	bugs.emitting = true
+	gust.emitting = true
 	return root
 
 
 
+## 夜晚把飛蟲換成螢火蟲（period.gd）：黃綠色自己發光、一明一滅；off 換回原本的小黑點
+static func firefly(bugs: CPUParticles3D, on: bool) -> void:
+	var m: StandardMaterial3D = bugs.mesh.material
+	if not m.has_meta(&"base_emission"):
+		m.set_meta(&"base_emission", m.emission)
+	m.emission = Color(0.6, 1.0, 0.3) * 2.0 if on else m.get_meta(&"base_emission")
+	m.emission_energy_multiplier = 2.5 if on else 1.0
+	if on:
+		var g := Gradient.new()   # 一生亮滅三次
+		g.offsets = PackedFloat32Array([0.0, 0.15, 0.3, 0.45, 0.6, 0.75, 1.0])
+		g.colors = PackedColorArray([Color(1, 1, 1, 0), Color.WHITE, Color(1, 1, 1, 0.1), Color.WHITE,
+			Color(1, 1, 1, 0.1), Color.WHITE, Color(1, 1, 1, 0)])
+		bugs.color_ramp = g
+	else:
+		bugs.color_ramp = null
+	bugs.amount = 40 if on else 20
+
+
 # ---- 內部 ----
+
+## 飄在空中的小東西（落葉、飛蟲）逆光會透光發亮（2026-10-10 逆光）。
+## 以前落葉是不吃光：從底下看是背光面會變黑點。改吃光＋透光，再留一點自發光墊底，背光面也不會黑
+static func _glow_backlit(m: StandardMaterial3D) -> void:
+	m.backlight_enabled = true
+	m.backlight = Color(1.0, 0.85, 0.55)
+	m.emission_enabled = true
+	m.emission = m.albedo_color * 0.35
+	m.disable_receive_shadows = true
+
 
 static func _emitter(mesh: Mesh, amount: int, lifetime: float) -> CPUParticles3D:
 	var p := CPUParticles3D.new()

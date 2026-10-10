@@ -199,7 +199,10 @@ godot --headless --quit --editor         # 新增 class_name 後重建型別快�
 |---|---|
 | `main.gd/tscn` | 大廳、連線、場地、蛋與撤離、勝負、HUD |
 | `terrain.gd` | 丘陵地形：高度、整平區、畫面網格和碰撞（同一份高度） |
-| `interact/` | F 互動的東西：`door.gd`（開關走主機、晚加入補送）、`ladder.gd`（爬的邏輯在 cowboy.gd） |
+| `interact/` | F 互動的東西：`door.gd`（開關走主機、晚加入補送）、`ladder.gd`（爬的邏輯在 cowboy.gd）、`accent.gd`（固定強調色，看著時更亮） |
+| `lantern.gd` | 油燈：打破會潑油燒起來（`oil_fire.gd`）。場上所有的燈都是它：繫馬柱、穀倉、農舍、店面模型上做死的燈，載入時挖掉換成這個（`replace_baked`） |
+| `period.gd` | 時段：夕陽、正午、午夜（月光）。大廳選，連線照開房的人；夕陽 = 場景原本的值，其他時段只寫要改的鍵（規劃見 docs/規劃/2026-10-10-時段-正午與午夜.md） |
+| `ambience.gd` | 環境感：照所在區域換太陽和環境光（森林冷綠、城鎮暖橘、麥田金黃）、順風滾的風滾草；穀倉光柱在 `light_shaft.gdshader` |
 | `fighter.gd` | 牛仔恐龍共用：血量、死亡、連線權限、中彈閃紅 |
 | `cowboy/` | 牛仔：`cowboy.gd` 移動與 bot、`viewmodel.gd` 開槍與 Hunt 規則、`weapon.gd` 槍的參數與程式動作、`weapons/*.tscn` 三把槍、`weapons/weapons.csv` 參數表 |
 | `models/*.glb` `blender/*.py` | 模型和產生它的 Blender 腳本（牛仔、槍、恐龍、場景物件），重建方式見 `blender/README.md` |

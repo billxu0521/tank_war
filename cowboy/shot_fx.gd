@@ -22,6 +22,9 @@ class_name ShotFX
 @onready var _flash: MeshInstance3D = get_node_or_null("Flash")
 
 var _flash_left := 0.0
+## 槍口火光亮度倍數（時段：夜晚開槍就暴露位置，period.gd）
+static var light_scale := 1.0
+var _base_energy := -1.0
 ## 曳光和火花要留在世界上，掛在自己底下會跟著相機轉。
 ## 掛在 arena 不掛 owner.get_parent()：牛仔的上一層是 Players，那裡的每個子節點
 ## 都會被當成玩家（bot 選目標、恐龍咬人、存活人數都是掃 Players 的子節點）。
@@ -50,6 +53,9 @@ func _process(delta: float) -> void:
 
 ## 槍口火光和煙。子彈本身（曳光、飛行）在 Bullet。smoke = 這把槍的煙量（Weapon.smoke）
 func flash(smoke := 1.0) -> void:
+	if _base_energy < 0.0:
+		_base_energy = _light.light_energy
+	_light.light_energy = _base_energy * light_scale
 	_light.visible = true
 	if _flash:
 		_flash.visible = true

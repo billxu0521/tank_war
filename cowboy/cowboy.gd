@@ -594,7 +594,11 @@ func update_focus() -> void:
 	var from := _camera.global_position
 	var hit := _ray(from, from - _camera.global_transform.basis.z * interact_range)
 	var c: Object = hit.get("collider")
+	var was := focus
 	focus = c if c and c.has_method(&"interact") else null
+	if focus != was:
+		Accent.focus(was, false)
+		Accent.focus(focus, true)
 	_prompt.text = "[F] %s" % focus.prompt if focus else ""
 
 

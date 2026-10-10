@@ -44,8 +44,10 @@ const SKY := {
 	"cloud_shade": Color("4a2633"), "cloud_edge": Color("8a3533"), "cloud_lit": Color("c8583a"),
 	"cloud_cover": 0.6, "halo": 0.45, "rays": 0.45,
 }
-## 遠景的空氣：霧調成偏紫、濃一點，越遠越紫，跟近景的暖褐分開（參考圖的遠山是 #5E4354）
-const FOG := {"fog_light_color": Color("6a4a64"), "fog_density": 0.006, "fog_sun_scatter": 0.15}
+## 遠景的空氣：霧調成偏紫、濃一點，越遠越紫，跟近景的暖褐分開（參考圖的遠山是 #5E4354）。
+## 濃度 0.006 時 50 公尺的人蓋掉 26%，交戰距離被洗淡；0.0045 降到 20%，遠山照樣紫（2026-10-10 FPS 角度評估 #6）。
+## ponytail: 不用 Godot 的高度霧：它照「那一點多高」算不是照視線，地面腳邊也會起霧
+const FOG := {"fog_light_color": Color("6a4a64"), "fog_density": 0.0045, "fog_sun_scatter": 0.15}
 
 const LUT_SIZE := 33
 
@@ -53,9 +55,9 @@ var on := true
 var _env: Environment
 var _cc_before: Texture   # 關掉時還原原本的設定
 var _adj_before: bool
-var _sky_before := {}
-var _glow_before := {}
-var _fog_before := {}
+## 調色的預設值（夕陽）。換時段時 period.gd 的 pixel 那組蓋上去（調色盤、暖色、暗部色……），回夕陽再還原
+const GRADE_KEYS := ["warm", "shadow_tint", "light_tint", "light_amount", "gamma", "contrast", "gun_lift"]
+var _grade_default := {}
 
 
 func _ready() -> void:
@@ -63,13 +65,8 @@ func _ready() -> void:
 	_env = get_viewport().find_child("WorldEnvironment", true, false).environment
 	_cc_before = _env.adjustment_color_correction
 	_adj_before = _env.adjustment_enabled
-	for k: String in SKY:
-		_sky_before[k] = _env.sky.sky_material.get_shader_parameter(k)
-	_glow_before["intensity"] = _env.glow_intensity
-	for k: String in FOG:
-		_fog_before[k] = _env.get(k)
-	for i in GLOW_LEVELS.size():
-		_glow_before[i] = _env.get_glow_level(i)
+	for k: String in GRADE_KEYS:
+		_grade_default[k] = get(k)
 	var cfg := ConfigFile.new()
 	cfg.load(get_parent().settings_path)
 	on = cfg.get_value("display", "pixel_style", true)
@@ -81,22 +78,32 @@ func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventKey and e.pressed and not e.echo and e.keycode == KEY_F9:
 		on = not on
 		get_parent()._save_setting("display", "pixel_style", on)
-		apply()
+		Period.apply(get_parent(), Period.current)   # 先還原這個時段的天空、霧，再叫回 apply() 疊像素風
 
 
+## 天空、霧、泛光的「關掉時的樣子」由 period.gd 負責還原（它每次都先還原成那個時段再叫這裡），這裡只在開著時往上疊
 func apply() -> void:
 	var vp := get_viewport()
-	for k: String in SKY:
-		_env.sky.sky_material.set_shader_parameter(k, SKY[k] if on else _sky_before[k])
+	var sunset := Period.current == &"sunset"
+	if on and sunset:   # 這組天空和霧是照夕陽參考圖調的，其他時段用 period.gd 自己的
+		for k: String in SKY:
+			_env.sky.sky_material.set_shader_parameter(k, SKY[k])
+		for k: String in FOG:
+			_env.set(k, FOG[k])
+	var grade_set: Dictionary = Period.preset().get("pixel", {})
+	for k: String in GRADE_KEYS:
+		set(k, grade_set.get(k, _grade_default[k]))
+	_pal.clear()   # 調色盤跟著時段換
 	var low := on and pixel > 1.0   # 有切方塊才要壓泛光（低解析度算的泛光放大後太大）
-	_env.glow_intensity = _glow_before["intensity"] * (glow_scale if low else 1.0)
-	for k: String in FOG:
-		_env.set(k, FOG[k] if on else _fog_before[k])
+	# ponytail: 只往下乘、不還原：pixel 現在固定 1（low 永遠 false）；要再切方塊時記得還原泛光
+	if low:
+		_env.glow_intensity *= glow_scale
 	Viewmodel.brightness = gun_brightness if on else 1.0
 	Viewmodel.lift = gun_lift if on else 0.0
 	get_tree().call_group(&"viewmodel", &"apply_brightness")
-	for i in GLOW_LEVELS.size():
-		_env.set_glow_level(i, GLOW_LEVELS[i] if low else _glow_before[i])
+	if low:
+		for i in GLOW_LEVELS.size():
+			_env.set_glow_level(i, GLOW_LEVELS[i])
 	var outline: Node = get_parent().get_node_or_null(^"Arena/Outline")
 	if outline:
 		outline.mesh.material.set_shader_parameter(&"gun_ridge", gun_ridge if on else 1.0)
@@ -137,7 +144,7 @@ func grade(c: Color) -> Color:
 var _pal: Array[Color] = []
 func _nearest(c: Color) -> Color:
 	if _pal.is_empty():
-		for h: String in PALETTE:
+		for h: String in Period.preset().get("pixel", {}).get("palette", PALETTE):
 			_pal.append(Color(h))
 	var best := c
 	var bd := INF

@@ -132,6 +132,7 @@ static func _mesas(t: Terrain, noise: FastNoiseLite, half: float, rng: RandomNum
 	var mi := MeshInstance3D.new()
 	mi.mesh = st.commit()
 	mi.material_override = mat
+	mi.add_to_group(&"far_mesa")   # 時段換天色時乘一個顏色（period.gd）：顏色是照夕陽烘的
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	return mi
 

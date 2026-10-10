@@ -24,6 +24,8 @@ func _process(_d: float) -> bool:
 	if _perf > 0.0:
 		return _perf_step(_d)
 	if _f == 5:
+		if OS.get_environment("PERIOD") != "":   # PERIOD=noon / midnight：拍那個時段（period.gd）
+			Period.apply(_main, StringName(OS.get_environment("PERIOD")))
 		_main._on_sandbox_pressed()
 	if _f == 40:
 		_plan()
