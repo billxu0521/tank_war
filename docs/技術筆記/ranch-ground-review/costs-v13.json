@@ -1,0 +1,151 @@
+{
+  "duration_seconds": 45.25,
+  "driver": "vulkan",
+  "costs": [
+    {
+      "resolution": "(1280, 720)",
+      "site": "house",
+      "config": "original",
+      "gpu_ms": 6.171499967575075,
+      "p95_ms": 6.44799995422363,
+      "block_medians": [
+        6.16849994659424,
+        6.172499895095825
+      ],
+      "samples": 120
+    },
+    {
+      "resolution": "(1280, 720)",
+      "site": "house",
+      "config": "full",
+      "gpu_ms": 5.73550009727478,
+      "p95_ms": 6.23699998855591,
+      "block_medians": [
+        5.195500135421755,
+        6.005499839782715
+      ],
+      "samples": 120
+    },
+    {
+      "resolution": "(1280, 720)",
+      "site": "house",
+      "config": "legacy",
+      "gpu_ms": 5.5764999389648455,
+      "p95_ms": 6.38600015640259,
+      "block_medians": [
+        5.71050000190735,
+        5.49499988555908
+      ],
+      "samples": 120
+    },
+    {
+      "resolution": "(1280, 720)",
+      "site": "forest",
+      "config": "original",
+      "gpu_ms": 4.877000093460085,
+      "p95_ms": 5.96400022506714,
+      "block_medians": [
+        4.98899984359741,
+        4.8129999637603795
+      ],
+      "samples": 120
+    },
+    {
+      "resolution": "(1280, 720)",
+      "site": "forest",
+      "config": "full",
+      "gpu_ms": 5.826500177383425,
+      "p95_ms": 6.28700017929077,
+      "block_medians": [
+        5.70199990272522,
+        5.907000064849855
+      ],
+      "samples": 120
+    },
+    {
+      "resolution": "(1280, 720)",
+      "site": "forest",
+      "config": "legacy",
+      "gpu_ms": 5.226500034332275,
+      "p95_ms": 6.25600004196167,
+      "block_medians": [
+        5.926500082015989,
+        5.194499969482425
+      ],
+      "samples": 120
+    },
+    {
+      "resolution": "(2560, 1440)",
+      "site": "house",
+      "config": "original",
+      "gpu_ms": 5.259000062942505,
+      "p95_ms": 6.02799987792969,
+      "block_medians": [
+        5.22200012207031,
+        5.54199981689453
+      ],
+      "samples": 120
+    },
+    {
+      "resolution": "(2560, 1440)",
+      "site": "house",
+      "config": "full",
+      "gpu_ms": 5.880500078201295,
+      "p95_ms": 6.34899997711182,
+      "block_medians": [
+        6.05450010299683,
+        5.83400011062622
+      ],
+      "samples": 120
+    },
+    {
+      "resolution": "(2560, 1440)",
+      "site": "house",
+      "config": "legacy",
+      "gpu_ms": 6.069000005722045,
+      "p95_ms": 6.21999979019165,
+      "block_medians": [
+        6.0425000190734846,
+        6.09850001335144
+      ],
+      "samples": 120
+    },
+    {
+      "resolution": "(2560, 1440)",
+      "site": "forest",
+      "config": "original",
+      "gpu_ms": 5.99499988555908,
+      "p95_ms": 6.3270001411438,
+      "block_medians": [
+        6.035499811172485,
+        5.9894998073577845
+      ],
+      "samples": 120
+    },
+    {
+      "resolution": "(2560, 1440)",
+      "site": "forest",
+      "config": "full",
+      "gpu_ms": 6.09299993515015,
+      "p95_ms": 6.41599988937378,
+      "block_medians": [
+        6.163500070571899,
+        5.73099994659424
+      ],
+      "samples": 120
+    },
+    {
+      "resolution": "(2560, 1440)",
+      "site": "forest",
+      "config": "legacy",
+      "gpu_ms": 6.01900005340576,
+      "p95_ms": 6.11399984359741,
+      "block_medians": [
+        6.02149987220764,
+        6.00349998474121
+      ],
+      "samples": 120
+    }
+  ],
+  "note": "main82ad1ea整合版，Vulkan fixed viewport，非Metal或多人FPS；兩解析度正逆測。"
+}

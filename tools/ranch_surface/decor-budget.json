@@ -1,0 +1,57 @@
+{
+  "source": "tools/ranch_surface/make_decor.py",
+  "generator": "Khronos glTF Blender I/O v5.2.40",
+  "sha256": "5294b2b052397492948f6b9b117a5c3c1e563c78ca15dd3c8fd32f0fb6818470",
+  "meshes": [
+    {
+      "mesh": "Chip0",
+      "triangles": 16
+    },
+    {
+      "mesh": "Chip1",
+      "triangles": 16
+    },
+    {
+      "mesh": "Chip2",
+      "triangles": 16
+    },
+    {
+      "mesh": "Leaf0",
+      "triangles": 22
+    },
+    {
+      "mesh": "Leaf1",
+      "triangles": 22
+    },
+    {
+      "mesh": "Leaf2",
+      "triangles": 22
+    },
+    {
+      "mesh": "Stone0",
+      "triangles": 16
+    },
+    {
+      "mesh": "Stone1",
+      "triangles": 16
+    },
+    {
+      "mesh": "Stone2",
+      "triangles": 16
+    },
+    {
+      "mesh": "Twig0",
+      "triangles": 26
+    },
+    {
+      "mesh": "Twig1",
+      "triangles": 26
+    },
+    {
+      "mesh": "Twig2",
+      "triangles": 26
+    }
+  ],
+  "total_triangles": 240,
+  "no_external_assets": true
+}

@@ -1395,6 +1395,8 @@ func _build_arena() -> void:
 		$Arena.add_child(amb)
 		amb.setup(self)
 	_lighten_small($Arena)
+	if DisplayServer.get_name() != "headless":
+		preload("res://levels/ranch_surface/surface.gd").install(self, ground)
 
 ## 減輕負擔：小東西（桶子、箱子、乾草、草叢……最長邊不到 SMALL_SIZE）不投影子、太遠就不畫。
 ## 影子要把場景再畫好幾遍，是最花的（docs/技術筆記/效能.md 量過：影子的繪製指令是畫面本身的兩倍多）；
