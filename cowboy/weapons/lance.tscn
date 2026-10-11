@@ -1,7 +1,8 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://cowboy/weapon.gd" id="1_weapon"]
 [ext_resource type="PackedScene" path="res://models/lance.glb" id="2_model"]
+[ext_resource type="PackedScene" path="res://models/lance_tripo.glb" id="20_tripo"]
 [ext_resource type="AudioStream" path="res://assets/audio/weapons/launch.wav" id="3_shoot"]
 [ext_resource type="AudioStream" path="res://assets/audio/weapons/shotgun_reload.wav" id="4_reload"]
 [ext_resource type="AudioStream" path="res://assets/audio/weapons/no_ammo.wav" id="5_empty"]
@@ -11,6 +12,8 @@
 [node name="Lance" type="Node3D"]
 transform = Transform3D(0.5817, 0.8134, 0, -0.8134, 0.5817, 0, 0, 0, 1, 0.07, -0.40, -0.34)
 script = ExtResource("1_weapon")
+tripo_model = ExtResource("20_tripo")
+tripo_overrides = {}
 display_name = "炸彈長矛"
 action_type = 5
 capacity = 1

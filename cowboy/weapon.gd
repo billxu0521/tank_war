@@ -189,6 +189,13 @@ enum Action { SINGLE_ACTION, DOUBLE_ACTION, BOLT, LEVER, BREAK, HARPOON }
 ## 塞彈的左手繞子彈轉多少（弧度，子彈座標）：手跟著子彈（拇指頂彈底），前臂另外用 pinch_arm_dir 轉出畫面
 @export var load_hand_rotation := Vector3.ZERO
 
+@export_group("Tripo")
+## Tripo 生成的模型（blender/weapons_tripo.py，2026-10-11）：有設就換掉 Model。零件名字和轉軸照舊的，程式動畫照用。
+## WEAPONS_OLD=1 啟動切回舊的（blender/weapons.py）
+@export var tripo_model: PackedScene
+## 換成 Tripo 模型時跟著改的參數：新模型形狀不一樣，槍口、左手位置要另外對
+@export var tripo_overrides: Dictionary = {}
+
 @export_group("Rig")
 ## 用會動的手（models/cowboy.glb 的 RigGrip / RigSupport / RigLoad：帶骨架，靜止姿勢＝握姿）。
 ## 開槍食指扣扳機；左輪拇指扳擊錘是一節一節彎；長槍換彈捏子彈的手塞完會張開放手（_rig_pose）。炸彈長矛還是固定網格
@@ -266,6 +273,7 @@ const ARMS := preload("res://models/cowboy.glb")
 
 
 func _ready() -> void:
+	use_tripo()
 	apply_table()
 	mag = capacity
 	reserve = starting_reserve
@@ -449,6 +457,24 @@ func _add_hands() -> void:
 		_load_hand = _copy_mesh(src, &"HandLoad", get_node(model_path))
 		_load_hand.visible = false
 	src.free()
+
+
+## 換成 Tripo 的模型。別人手上的槍（cowboy.gd 的 _show_gun）沒進場景樹也會叫
+func use_tripo() -> void:
+	if tripo_model == null or OS.get_environment("WEAPONS_OLD") != "" or has_meta(&"tripo"):
+		return
+	set_meta(&"tripo", true)
+	var old := get_node(model_path) as Node3D
+	var m := tripo_model.instantiate() as Node3D
+	m.name = old.name
+	m.transform = old.transform
+	var i := old.get_index()
+	remove_child(old)
+	old.free()
+	add_child(m)
+	move_child(m, i)
+	for k: String in tripo_overrides:
+		set(k, tripo_overrides[k])
 
 
 ## 會動的手：外層一個空節點（名字、位置跟原本的固定網格一樣，所以擺手的程式不用改），

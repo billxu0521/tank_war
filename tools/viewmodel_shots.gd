@@ -23,6 +23,7 @@ func _initialize() -> void:
 func _process(d: float) -> bool:
 	_f += 1
 	if _f == 5:
+		Period.apply(m, StringName(OS.get_environment("PERIOD")) if OS.get_environment("PERIOD") != "" else &"sunset")   # 存檔的時段是夜裡就看不清槍
 		m._on_sandbox_pressed()
 	if _f == 60:
 		vm = m.players.get_node(^"1").viewmodel

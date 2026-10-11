@@ -80,7 +80,9 @@ var _to_b := true
 ## bot 進這個距離才開槍。手槍腰射散布 4 度，再遠打人形靶就是浪費子彈。
 @export var bot_fire_range := 40.0
 
-const MODEL := preload("res://models/cowboy.glb")
+## 別人眼中的牛仔：Tripo 生成、blender/cowboy_tripo.py 轉成四塊（2026-10-11）。COWBOY_OLD=1 啟動切回程式建的舊版（cowboy.glb）
+const MODEL_NEW := preload("res://models/cowboy_tripo.glb")
+const MODEL_OLD := preload("res://models/cowboy.glb")
 
 @onready var head: Node3D = $Head
 @onready var viewmodel: Viewmodel = $Head/Camera3D/Viewmodel
@@ -95,6 +97,7 @@ const MODEL := preload("res://models/cowboy.glb")
 @onready var _face: MeshInstance3D = $Head/Face
 @onready var _leg_l: MeshInstance3D = $Body/LegL
 @onready var _leg_r: MeshInstance3D = $Body/LegR
+@onready var _arms: MeshInstance3D = $Body/Arms
 @onready var _step_sound: AudioStreamPlayer = get_node_or_null("StepSound")
 @onready var _jump_sound: AudioStreamPlayer = get_node_or_null("JumpSound")
 @onready var _land_sound: AudioStreamPlayer = get_node_or_null("LandSound")
@@ -105,6 +108,17 @@ var is_local := true
 ## 唯一同步出去的操作狀態。遠端拿它重跑 `_apply_crouch`，膠囊、碰撞、
 ## 頭高三者一次到位，不用再各同步一份。
 var sync_crouching := false
+## 手上拿哪把槍（Viewmodel 的 weapon_scenes 第幾個）。同步出去，別人看得到你換槍
+var gun := 0:
+	set(v):
+		if v != gun:
+			gun = v
+			if is_node_ready():
+				_show_gun()
+## 別人眼中手上那把槍：照 blender/cowboy_tripo.py 印出的手的位置（Arms 座標）擺，握把在右手、槍身朝左手
+const HAND_R := Vector3(0.116, -0.296, -0.352)
+const HAND_L := Vector3(0.057, -0.223, -0.521)
+var _held: Node3D
 
 var stamina: float
 ## 大於 0 的時候體力不回復
@@ -165,9 +179,11 @@ func _ready() -> void:
 		# 第一人稱看不到自己的軀幹和臉，但影子要在（地上看得到自己的影子，像 Hunt 那樣）。
 		# 腿照樣畫：低頭看得到自己的靴子
 		_body.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+		_arms.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
 		_face.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
 		for leg in [_leg_l, _leg_r]:
 			leg.position.z -= LOCAL_LEG_FORWARD
+	_show_gun()
 	if not is_local:
 		_become_remote()
 		Viewmodel.mark_meshes(self, Viewmodel.TARGET_MARK)   # 別人（和靶）是目標；自己的靴子不用
@@ -237,17 +253,49 @@ func _swing_legs(delta: float) -> void:
 	_leg_r.rotation.x = -sin(_stride) * _swing
 
 
-## 把 Blender 建的牛仔（blender/cowboy.py）換到身體和頭上。
+## 把牛仔模型換到身體和頭上。
 ## 頭掛在 Head 底下，跟著上下看的角度轉，別人看得出你在看哪裡。
 func _skin() -> void:
-	var src := MODEL.instantiate()
+	var src := (MODEL_OLD if OS.get_environment("COWBOY_OLD") != "" else MODEL_NEW).instantiate()
 	# 自己看自己的腿只畫靴子（整條腿從正上方看只看得到褲管頂端）
 	var leg := "Shin" if is_local else "Leg"
-	for pair in [["CowboyBody", _body], ["CowboyHead", _face], ["Cowboy%sL" % leg, _leg_l], ["Cowboy%sR" % leg, _leg_r]]:
+	for pair in [["CowboyBody", _body], ["CowboyHead", _face], ["Cowboy%sL" % leg, _leg_l], ["Cowboy%sR" % leg, _leg_r], ["CowboyArms", _arms]]:
 		var from := src.get_node_or_null(NodePath(pair[0])) as MeshInstance3D
 		if from:
 			(pair[1] as MeshInstance3D).mesh = from.mesh
 	src.free()
+
+
+## 手上的槍：拿那把槍場景裡的模型（Model）來擺，不跑槍的程式。自己看得到第一人稱的槍，這把只投影子
+func _show_gun() -> void:
+	if _held:
+		_held.queue_free()
+		_held = null
+	if _arms.mesh == null or gun < 0 or gun >= viewmodel.weapon_scenes.size():
+		return   # 舊牛仔沒有端槍的手臂
+	var w := viewmodel.weapon_scenes[gun].instantiate()
+	w.use_tripo()
+	var model := w.get_node(^"Model") as Node3D
+	w.remove_child(model)
+	w.free()
+	model.transform = Transform3D.IDENTITY
+	# 握把大概在模型後三分之一：槍身中心往前挪，讓右手落在握把上
+	var box := AABB()
+	for mi: MeshInstance3D in model.find_children("*", "MeshInstance3D", true, false):
+		var t := Transform3D.IDENTITY   # 還沒進場景樹，沒有 global_transform：自己沿父節點乘上去
+		var n: Node = mi
+		while n != model:
+			t = (n as Node3D).transform * t
+			n = n.get_parent()
+		box = (t * mi.get_aabb()) if box.size == Vector3.ZERO else box.merge(t * mi.get_aabb())
+		if is_local:
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+	_held = Node3D.new()
+	_held.name = &"Held"
+	_held.add_child(model)
+	model.position = -Vector3(box.get_center().x, box.get_center().y, box.end.z - box.size.z * 0.3)
+	_arms.add_child(_held)
+	_held.transform = Transform3D(Basis.looking_at(HAND_L - HAND_R), HAND_R)
 
 
 ## 別人的角色：把所有「這是我的畫面」的東西關掉。少關一項的症狀都很難查
@@ -263,6 +311,7 @@ func _become_remote() -> void:
 
 func _process(delta: float) -> void:
 	_swing_legs(delta)
+	_arms.rotation.x = head.rotation.x   # 端槍的手臂跟著上下看
 	if not is_local:
 		# 遠端角色拿同步過來的蹲下狀態重跑一次姿勢
 		# ponytail: 腳步聲和落地聲沒有同步，聽不到別人走路。要做就把 AudioStreamPlayer

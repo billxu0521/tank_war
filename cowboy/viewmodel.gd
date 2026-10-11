@@ -290,6 +290,7 @@ func switch_weapon(index: int) -> void:
 	_fire_queued = false
 	weapon.visible = false
 	_index = index
+	_player.gun = index   # 別人看到你手上換槍
 	weapon = _weapons[index]
 	weapon.visible = true
 	weapon.position = _hip_positions[index].lerp(weapon.ads_position, ads)
