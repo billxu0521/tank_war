@@ -1,7 +1,8 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://cowboy/weapon.gd" id="1_weapon"]
 [ext_resource type="PackedScene" path="res://models/revolver.glb" id="2_model"]
+[ext_resource type="PackedScene" path="res://models/revolver_tripo.glb" id="20_tripo"]
 [ext_resource type="AudioStream" path="res://assets/audio/weapons/pistol_shoot.wav" id="3_shoot"]
 [ext_resource type="AudioStream" path="res://assets/audio/weapons/pistol_reload.wav" id="4_reload"]
 [ext_resource type="AudioStream" path="res://assets/audio/weapons/no_ammo.wav" id="5_empty"]
@@ -12,6 +13,8 @@
 [node name="Revolver" type="Node3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.047, -0.075, -0.150)
 script = ExtResource("1_weapon")
+tripo_model = ExtResource("20_tripo")
+tripo_overrides = {"muzzle": Vector3(0, 0.0515, -0.213)}
 display_name = "左輪"
 capacity = 6
 damage = 50.0
