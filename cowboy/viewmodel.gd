@@ -427,6 +427,12 @@ func try_fire(fanning := false) -> void:
 		if reload_fire_shoots:
 			_fire_queued = true
 		return
+	# 槍還沒從換彈姿勢回正（剛換完：散彈槍管還開著、步槍還斜著）：記住這一發，回正了自動射，不在半路開槍
+	var settle := weapon.settle_time()
+	if settle > 0.0:
+		_fire_cooldown = maxf(_fire_cooldown, settle)
+		_fire_queued = true
+		return
 	if weapon.mag == 0:
 		weapon.play_sound(&"Empty")   # 硬派：打空不自動換彈，自己按 R
 		return

@@ -383,6 +383,13 @@ func ready_after_reload() -> float:
 	return maxf(reload_end, POSE_RETURN)
 
 
+## 換彈姿勢還要多久才收完、槍回正：還在換彈姿勢的時間 + 收回來的時間。開槍前要等到 0（Viewmodel.try_fire）
+func settle_time() -> float:
+	if _anim:
+		return 0.0
+	return _reload_left + _reload_pose * POSE_RETURN
+
+
 ## 兩槍之間實際要等多久：擊發間隔和上膛動作同時起算，取長的
 func shot_gap() -> float:
 	return maxf(fire_interval, cycle_time)
