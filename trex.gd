@@ -94,6 +94,15 @@ var _drift := Vector2.ZERO    # 身體相對腳的位移延遲（本地座標的
 var _drift_v := Vector2.ZERO
 var _local_v := Vector3.ZERO  # 上一幀的本地速度，用來算加速度
 var _breath := 0.0
+# 跑步姿勢：跑起來頭往前伸、身體前傾壓低、尾巴抬平（_run 0 走 → 1 跑，跟著速度平滑變）
+var _run := 0.0
+const RUN_FROM := 5.0       # 速度（公尺/秒）超過這個開始變跑步姿勢（走路 4）
+const RUN_FULL := 10.0      # 到這個速度全套（跑步 11）
+const RUN_NECK := -0.45     # 脖子往前下壓（弧度）
+const RUN_HEAD := 0.30      # 頭抬回一點，臉朝前不朝地
+const RUN_SPINE := -0.18    # 身體前傾
+const RUN_LOW := 0.30       # 身體壓低（模型單位，乘腿長比例）
+const RUN_TAIL := -0.12     # 尾巴抬平（尾巴俯仰正的是往下）
 
 func _ready() -> void:
 	var parts := MODEL.instantiate() as Node3D
@@ -547,6 +556,7 @@ func _process_base(delta: float) -> void:
 	# 站著不動時的呼吸和重心晃動。沒有這個，停下來就變雕像
 	_breath += delta * 1.6
 	var idle := 1.0 - clampf(stride, 0.0, 1.0)
+	_run += (clampf((speed - RUN_FROM) / (RUN_FULL - RUN_FROM), 0.0, 1.0) - _run) * (1.0 - exp(-2.5 * delta))   # 慢一點：身體一下壓太快，抬在半空的腳跟不上會掃進地裡
 
 	# 出招的腿部動作（疊在走路上）。thigh 正的是大腿往前抬、shin 負的是膝蓋彎、foot 正的是腳尖往下（看截圖確認過）
 	#   咬預備：重心往後坐（兩膝微彎）；咬下去：左腳往前踏一步
@@ -584,7 +594,7 @@ func _process_base(delta: float) -> void:
 		_foot_tilt = lerpf(_foot_tilt, clampf(atan2(hs[0] - hs[1], 1.64), -0.35, 0.35), 1.0 - exp(-6.0 * delta))
 	# 身體隨步伐上下起伏，再疊上位移延遲和呼吸。要在腳的 IK 之前設：IK 照這一幀的骨架位置算，之後再動髖就對不上了
 	skel.position = Vector3(_drift.x,
-		_body_h + STAND_RISE * _lk - 0.05 * cos(_phase * 2.0) * minf(stride * 2.0, 1.0) + sin(_breath * 0.5) * 0.025 * idle - (_crouch * 0.38 + _rear * 0.15) * _lk,   # 甩尾不壓低身體：轉的時候腿是凍住的，身體一沉腳就穿地
+		_body_h + STAND_RISE * _lk - 0.05 * cos(_phase * 2.0) * minf(stride * 2.0, 1.0) + sin(_breath * 0.5) * 0.025 * idle - (_crouch * 0.38 + _rear * 0.15 + _run * RUN_LOW) * _lk,   # 甩尾不壓低身體：轉的時候腿是凍住的，身體一沉腳就穿地
 		_drift.y - _lunge * 0.3 - sin(PI * _snap) * 0.4 * float(_snap_bite))   # 咬下去往前一衝：前後都平順（以前一幀衝 0.4，腿抽 32 度）
 	skel.rotation.y = _spin   # 甩尾：整隻轉一圈
 
@@ -627,7 +637,7 @@ func _process_base(delta: float) -> void:
 		+ sin(_act_t * 9.0) * 0.55 * _roar + 0.9 * _sweep
 	var tail_pitch_drive := clampf(-moved.y * 0.035, -0.30, 0.30) + 0.09 \
 		- _rear * 0.20 - _roar * 0.35 - _snap * 0.30 + _crouch * 0.10 + _stun * 0.40 \
-		- _hunt * 0.08 - _spot * 0.25   # 尾巴俯仰正的是往下（看截圖確認過）；0.09：參考動畫尾巴是平的、尾尖微垂
+		- _hunt * 0.08 - _spot * 0.25 + _run * RUN_TAIL   # 尾巴俯仰正的是往下（看截圖確認過）；0.09：參考動畫尾巴是平的、尾尖微垂
 	_propagate(_tail_yaw, _tail_yaw_v, tail_yaw_drive, TAIL_STIFF, TAIL_DAMP, delta)
 	_propagate(_tail_pitch, _tail_pitch_v, tail_pitch_drive, TAIL_STIFF, TAIL_DAMP, delta)
 	for i in TAIL_N:
@@ -641,16 +651,16 @@ func _process_base(delta: float) -> void:
 	# 頭再反向轉回去——掠食者跑起來頭是穩的，這一下最像活的。
 	# -0.12：身體壓平（設定圖「保持水平重心」、參考動畫背是平的）；模型靜止姿勢胸口偏高
 	_pose_pyr("spine1", -0.12 + sin(_phase * 0.4) * 0.02 + _lean.y * 0.50 - _crouch * 0.30 - _lunge * 0.20 + _roar * 0.15
-		+ _rear * 0.12 - _snap * 0.35 * float(_snap_bite) + _spot * 0.15,
+		+ _rear * 0.12 - _snap * 0.35 * float(_snap_bite) + _spot * 0.15 + _run * RUN_SPINE,
 		_spine_yaw[0], _lean.x * 0.45)
 	_pose_pyr("spine2", _lean.y * 0.30, _spine_yaw[1], _lean.x * 0.35)
 	_pose_pyr("neck", -0.20 + sin(_phase) * 0.05 * stride + chomp * 0.35 + look_pitch * 0.45
 		+ sin(_breath) * 0.030 * idle + _rear * 0.45 + _roar * 0.55 - _crouch * 0.15 - _stun * 0.45
 		- _snap * 0.45 * float(_snap_bite) + _spot * 0.55 + _search * 0.25 - _hunt * 0.12 - roam * 0.08 - sniff * 0.35
-		+ toss * 0.25,
+		+ toss * 0.25 + _run * RUN_NECK,
 		_spine_yaw[2] + shake + sin(_act_t * 11.0) * 0.25 * _recover + scan * 0.5 + toss * 0.3 * _toss_side, _lean.x * 0.25)
 	_pose_pyr("head", 0.18 - chomp * 0.25 + look_pitch * 0.35 - _lean.y * 0.55 + _rear * 0.25 + _roar * 0.40 - _stun * 0.25
-		+ _spot * 0.30 - _hunt * 0.08 - sniff * 0.25 + toss * 0.2,
+		+ _spot * 0.30 - _hunt * 0.08 - sniff * 0.25 + toss * 0.2 + _run * RUN_HEAD,
 		_spine_yaw[3] + sin(_breath * 0.31) * 0.10 * idle + shake + scan + toss * 0.4 * _toss_side,
 		-_lean.x * 0.75 + shake * 0.5)
 	_pose("jaw", Vector3.RIGHT, -0.12 - chomp * 0.65 - _rear * 0.30 - _roar * 0.75 - _lunge * 0.60 - _stun * 0.25
