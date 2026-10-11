@@ -2926,7 +2926,7 @@ const FLAT_MODELS := ["res://models/props.glb", "res://models/trees.glb", "res:/
 	"res://models/groves.glb", "res://models/floras.glb", "res://models/clutters.glb",
 	"res://models/cowboy.glb", "res://models/trex_hd.glb", "res://models/ninola.glb", "res://models/revolver.glb",
 	"res://models/shotgun.glb", "res://models/rifle.glb", "res://models/lance.glb",
-	"res://models/cowboy_tripo.glb", "res://models/revolver_tripo.glb", "res://models/shotgun_tripo.glb", "res://models/lance_tripo.glb"]   # Tripo 生成版（blender/cowboy_tripo.py、weapons_tripo.py）
+	"res://models/cowboy_tripo.glb", "res://models/ninola_tripo.glb", "res://models/revolver_tripo.glb", "res://models/shotgun_tripo.glb", "res://models/lance_tripo.glb"]   # Tripo 生成版（blender/cowboy_tripo.py、weapons_tripo.py）
 static var _flat_keep: Array[PackedScene] = []
 static func _flatten_models() -> void:
 	if not _flat_keep.is_empty():

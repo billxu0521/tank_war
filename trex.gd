@@ -16,12 +16,17 @@ extends Node3D
 ## 舊的 trex_hd.glb 留著，NINOLA_OLD=1 啟動可以切回去比對
 const MODEL_NEW := preload("res://models/ninola.glb")
 const MODEL_OLD := preload("res://models/trex_hd.glb")
-var MODEL: PackedScene = MODEL_OLD if OS.get_environment("NINOLA_OLD") != "" else MODEL_NEW
+## 2026-10-11 試 Tripo 生成版（docs/素材/dinosaur 3d model.glb → blender/ninola_tripo.py，綁同一副骨架）；NINOLA_01S=1 切回定版
+const MODEL_TRIPO := preload("res://models/ninola_tripo.glb")
+var MODEL: PackedScene = MODEL_OLD if OS.get_environment("NINOLA_OLD") != "" \
+	else (MODEL_NEW if OS.get_environment("NINOLA_01S") != "" else MODEL_TRIPO)
 ## 01S 定版的姿態（跟模型一起核可）：頸在骨架座標抬 12°、頭補回 -4°、下顎中性閉到 1.5°。
 ## 每幀在原本的動作算完之後疊上去（不改 Rest、不累積）。舊模型不套
 const NECK_LIFT := 12.0
 const HEAD_COMPENSATION := -4.0
 const JAW_NEUTRAL := 1.5
+const TRIPO_ARM := 0.7         # Tripo 版上臂平常往前補多少（弧度）：抵銷動作程式的 -0.7，維持模型原本的手勢
+const TRIPO_JAW_CLOSE := 0.75   # Tripo 版下顎平常往上閉多少（弧度）：模型的嘴張約 44 度，閉到牙齒交錯；0.85 會咬進上顎
 const MODEL_LIFT := 0.0    # 腳底在模型原點（腿加長後，docs/企劃/尼諾拉.md）；走路時腳由 IK 踩在實際地面上
 const TAIL_N := 8          # 尾巴節數（舊骨架 4 節）。每節角度乘 TAIL_PER，整條彎的總量跟以前一樣
 const TAIL_PER := 0.5
@@ -443,7 +448,14 @@ func flinch(push: Vector3, strength: float, head: bool) -> void:
 
 func _process(delta: float) -> void:
 	_process_base(delta)
-	if MODEL != MODEL_NEW or skel == null:
+	if skel == null:
+		return
+	if MODEL == MODEL_TRIPO:   # Tripo 版的嘴本來就張很大：平常閉上，咬、吼、發現人這些出招才照原本的量張開
+		_pose("jaw", Vector3.RIGHT, pose_rot("jaw").get_euler().x + 0.12 + TRIPO_JAW_CLOSE)
+		for arm in ["arm_l", "arm_r"]:   # 動作程式平常把上臂往後收 0.7（照定版的手調的）；這隻的手本來就垂在胸前，收了會貼到肚子上
+			_pose(arm, Vector3.RIGHT, pose_rot(arm).get_euler().x + TRIPO_ARM)
+		return
+	if MODEL != MODEL_NEW:
 		return
 	var jaw_pitch: float = pose_rot("jaw").get_euler().x
 	_pose("jaw", Vector3.RIGHT, jaw_pitch + 0.12 - deg_to_rad(JAW_NEUTRAL))
