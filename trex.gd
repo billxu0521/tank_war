@@ -111,6 +111,12 @@ func _ready() -> void:
 		_leg.append({hip = hip, l1 = _yz(knee - hip).length(), l2 = _yz(ankle - knee).length(), lm = _yz(ball - ankle).length(),
 			a1r = _ang(knee - hip), a2r = _ang(ankle - knee), a3r = _ang(ball - ankle), neutral = ball})
 		_lk = (_yz(knee - hip).length() + _yz(ankle - knee).length()) / LEG_REF
+	var toe := _rest_pos("toe2_2_l") - _rest_pos("toe2_1_l")
+	_toe_len = toe.length() * 2.0   # 兩節差不多長
+	_toe_rest = atan2(toe.y, -toe.z)
+	for s in ["_l", "_r"]:   # 靜止站姿時每根估出來的爪尖離地多高（骨架座標，地面在 0）：修腳趾時當基準，站著平貼時就不會被推
+		for t in [1, 2, 3]:
+			_toe_tip_rest[s + str(t)] = (skel.global_transform.affine_inverse() * (_toe_tip(t, s)[1] as Vector3)).y
 
 # --- 走路：腳踩在地上（兩段 IK）---
 ## 每隻腳的掌心（中趾根）在「支撐期」釘在世界座標不動，身體從上面走過去；「擺動期」抬起來，畫一道弧跨到下一個落點。
@@ -140,6 +146,14 @@ var _lift_from := [Vector3.ZERO, Vector3.ZERO]
 var _land := [Vector3.ZERO, Vector3.ZERO]
 var _landed := [false, false]   # 這一幀剛落地（塵土）
 var _curl := [0.0, 0.0]
+const CURL_SPEED := 8.0     # 腳趾捲、放每秒最多幾弧度：撲擊一開始、落地那一刻捲曲會一下子從 0 跳到 0.9（一幀轉 50 度）
+var _toe_s := [0.0, 0.0]    # 腳趾（第一節）平滑過的角度
+var _toe_h := [0.0, 0.0]    # 腳掌（趾根）離地多高（模型單位），估腳趾最多能往下彎多少
+var _toe_len := 1.0         # 中趾從趾根到趾尖多長（模型單位）
+var _toe_rest := 0.0        # 中趾靜止時往上翹的角度
+const TOE_CLEAR := 0.05     # 估腳趾能彎多少時，趾尖至少離地多少（公尺）
+var _toe_tip_rest := {}     # "_l1" -> 靜止站姿時爪尖離地多高（模型單位）
+const TOE_TIP := 1.8        # 爪尖在第二節骨頭往前幾節長的地方（爪子比骨頭長：中趾第二節 0.39、爪尖再出去 0.3）
 var _roll := [0.0, 0.0]     # 整條腿繞髖往外（+x）擺的角度
 var _leg_out := []          # 上一幀的腿角度（限速用）
 var _vel_smooth := Vector3.ZERO
@@ -193,6 +207,14 @@ func _ground(p: Vector3) -> Vector3:
 	if body:
 		q.exclude = [body.get_rid()]
 	var hit := w.direct_space_state.intersect_ray(q)
+	# 打到會動的角色（牛仔、別隻恐龍）不算地：不然人走到腳下、尾巴下，腳和尾巴會一下子踩上去
+	for _i in 3:
+		if hit.is_empty() or not hit.collider is CharacterBody3D:
+			break
+		var ex := q.exclude
+		ex.append(hit.rid)
+		q.exclude = ex
+		hit = w.direct_space_state.intersect_ray(q)
 	if hit.is_empty():
 		return Vector3(p.x, rest_y, p.z)
 	var foot_h: float = _leg[0].neutral.y * skel.global_basis.get_scale().y   # 腳掌骨頭離腳底的高度
@@ -299,7 +321,7 @@ func _walk(delta: float, moved: Vector3, speed: float, yaw_rate: float, teleport
 			var tuck: Vector3 = skel.global_transform * ((_leg[i].neutral as Vector3) + Vector3(0.0, 0.8, 0.5) * _lk)
 			_plant[i] = (_plant[i] as Vector3).lerp(tuck, 1.0 - exp(-14.0 * delta))
 			a3 -= 0.7
-			_curl[i] = 0.9
+			_curl[i] = move_toward(_curl[i], 0.9, CURL_SPEED * delta)
 		elif not stance:
 			if not _swing[i]:
 				# 從抬起來那一刻的相位算起：起步時相位被撥過，可能一抬腳就已經在擺動中段，腳會一幀跳過去
@@ -340,11 +362,13 @@ func _walk(delta: float, moved: Vector3, speed: float, yaw_rate: float, teleport
 				var pt := (_lift_from[i] as Vector3).lerp(_land[i], f)
 				clear = maxf(clear, _ground(pt).y - pt.y)
 			foot.y += clear * sin(PI * s)
-			foot.y += SWING_LIFT * _lk * sw * sin(PI * smoothstep(0.0, 1.0, s)) * clampf(travel_s / 2.0, 0.6, 1.0)   # 離地那一刻速度從 0 開始（以前一抬就往上衝，坡上腿伸很直時跟不上、腳會掃進坡裡）；慢的時候也要抬夠高，限速的腿慢半拍時才不會掃到地
+			var lift_y := SWING_LIFT * _lk * sw * sin(PI * smoothstep(0.0, 1.0, s)) * clampf(travel_s / 2.0, 0.6, 1.0)
+			foot.y += lift_y   # 離地那一刻速度從 0 開始（以前一抬就往上衝，坡上腿伸很直時跟不上、腳會掃進坡裡）；慢的時候也要抬夠高，限速的腿慢半拍時才不會掃到地
+			_toe_h[i] = lift_y / skel.global_basis.get_scale().y
 			_plant[i] = foot
 			# 擺動時腳背往後收，落地前伸回來。從支撐末段腳跟抬起的角度接著走（以前從 0 開始，抬腳那一幀膝蓋跳 0.7 弧度）
 			a3 -= heel * (1.0 - smoothstep(0.0, 0.6, s)) + 0.75 * sin(PI * minf(s * 1.3, 1.0))
-			_curl[i] = 0.9 * sin(PI * s)
+			_curl[i] = move_toward(_curl[i], 0.9 * sin(PI * s), CURL_SPEED * delta)
 		else:
 			if _swing[i]:
 				_swing[i] = false
@@ -352,7 +376,8 @@ func _walk(delta: float, moved: Vector3, speed: float, yaw_rate: float, teleport
 				_plant[i] = _ground(_land[i])   # 落地那一刻再貼一次地：落點的高度可能是舊的（坡上停下來時量到低了 2 公尺）
 			# 支撐末段腳跟抬起來，腳背轉到接近垂直：踝跑到腳趾正上方，腳往後伸時腿才搆得到
 			a3 -= heel * smoothstep(duty * 0.55, duty, ph)
-			_curl[i] = 0.0
+			_curl[i] = move_toward(_curl[i], 0.0, CURL_SPEED * delta)
+			_toe_h[i] = 0.0
 			if _air_land > 0.0:   # 撲擊落地：收著的腳放回地上
 				_plant[i] = (_plant[i] as Vector3).move_toward(_foot_world(i, 0.3 * _lk), 9.0 * _lk * sw * delta)
 			# 原地快轉時，踩著的腳會被身體掃到另一邊、腿擺不到：左右超過範圍就讓它往旁邊滑一點（連續的，不會跳）
@@ -370,6 +395,8 @@ func _walk(delta: float, moved: Vector3, speed: float, yaw_rate: float, teleport
 			ball += offs[i]
 		# 左右：腳不在靜止時的那條線上（側移、轉彎時腳釘在地上、身體走開），整條腿繞髖往外或往內擺（_roll），
 		# 再把腳轉回腿的平面裡解前後。以前只解前後，腳會被身體拖著橫滑
+		if air:   # 撲擊是貼地衝（boss.gd 不跳）：腳收起來多高就是離地多高（恐龍自己的座標，地面在 0）
+			_toe_h[i] = (skel.transform * ball).y - float(L.neutral.y)
 		var rh: Vector3 = L.hip
 		var r0 := atan2(float(L.neutral.x) - rh.x, rh.y - float(L.neutral.y))
 		var v := ball - rh
@@ -569,9 +596,17 @@ func _process_base(delta: float) -> void:
 		_set_rot("thigh" + s, Basis(Vector3.BACK, _roll[i]) * Basis(Vector3.RIGHT, p.x))
 		_pose("shin" + s, Vector3.RIGHT, p.y)
 		_pose("foot" + s, Vector3.RIGHT, p.z)
+		# 腳趾往下彎有上限：先用腳離地多高估（平地上就夠準），踩著的時候（離地 0）就是平貼，抬高了才捲得下去
+		# 趾根（腳掌骨）本身離地 neutral.y，再加上抬起的 _toe_h；趾尖可以往下到離地 TOE_CLEAR
+		var lowest := asin(clampf((TOE_CLEAR / skel.global_basis.get_scale().y - float(_toe_h[i]) - float(_leg[i].neutral.y)) / _toe_len, -1.0, 1.0)) - _toe_rest
+		var tip: float = p.x + p.y + p.z - _curl[i] * 1.3   # 中趾整隻往下的角度（第二節捲 0.6，約算一半長）
+		# 平滑地追：出招切換時（撲擊收腳 → 被打斷）估算會一下子從「懸空」變「踩著」，一幀轉 80 度；貼地交給後面的實際量測
+		_toe_s[i] = move_toward(_toe_s[i], -_curl[i] + maxf(lowest - tip, 0.0), 12.0 * delta)
+		var toe: float = _toe_s[i]
 		for t in 3:   # 腳趾：抬腳時往下捲、落地前張開（參考動畫）
-			_pose("toe%d_1%s" % [t + 1, s], Vector3.RIGHT, -_curl[i])
+			_pose("toe%d_1%s" % [t + 1, s], Vector3.RIGHT, toe)
 			_pose("toe%d_2%s" % [t + 1, s], Vector3.RIGHT, -_curl[i] * 0.6)
+		_toes_off_ground(s, toe)
 
 
 	# 尾巴：轉身往外甩 + 走路跟著擺，然後一節傳一節
@@ -585,6 +620,7 @@ func _process_base(delta: float) -> void:
 	_propagate(_tail_pitch, _tail_pitch_v, tail_pitch_drive, TAIL_STIFF, TAIL_DAMP, delta)
 	for i in TAIL_N:
 		_pose_pyr("tail%d" % (i + 1), _tail_pitch[i] * TAIL_PER, _tail_yaw[i] * TAIL_PER, _lean.x * 0.12 * TAIL_PER)
+	_tail_off_ground(delta)
 
 	# 脊椎到頭：同一套邏輯，但幅度小、追得緊，轉身時上半身會晚一點跟上
 	_propagate(_spine_yaw, _spine_yaw_v, clampf(-yaw_rate * 0.09, -0.28, 0.28),
@@ -615,6 +651,87 @@ func _process_base(delta: float) -> void:
 	_pose("arm_r", Vector3.RIGHT, arm_k - sin(_phase) * 0.15 * stride + sin(_breath) * 0.04 * idle - flail)
 
 # --- 塵土特效（純表演，每台自己播，見 fx.gd）---
+
+## 腳趾碰地就往上翹：腳趾掛在腳背下面，腳跟一抬（腳背轉直）、擺動時腳背往後收又往下捲，
+## 一公尺多長的腳趾就整隻垂進地裡（蒙皮檢查量到 1.4 公尺）。上面先用離地高度估了一次，
+## 這裡擺好之後再量每根趾尖，坡地、腿慢半拍、身體前傾、腿往外擺漏掉的，低過地面就從趾根往前翹回來。
+## 只往前翹：腳趾朝下偏後時往後折會折到腳底下（量過皮被扯 4.5 倍），那種就算了。每隻腳打一條射線（中趾尖）
+func _toes_off_ground(s: String, toe: float) -> void:
+	var sc := skel.global_basis.get_scale().y
+	var mid := _toe_tip(2, s)
+	var gy: float = _ground(mid[1] as Vector3).y - _leg[0].neutral.y * sc
+	var fwd := -skel.global_basis.z.normalized()
+	var curl: float = _curl[0 if s == "_l" else 1]
+	for t in [1, 2, 3]:
+		var floor_y: float = gy + float(_toe_tip_rest[s + str(t)]) * sc   # 不低於靜止站姿時的爪尖
+		var tip := _toe_tip(t, s)
+		var low: float = floor_y - (tip[1] as Vector3).y
+		if low <= 0.0:
+			continue
+		# 先把第二節照低了多少慢慢伸直（低 0.4 公尺就全直；試過 0.8 反而更糟），不一下子伸直（會一幀跳 30 度）；伸直後再量一次
+		var k := clampf(low / 0.4, 0.0, 1.0)
+		_pose("toe%d_2%s" % [t, s], Vector3.RIGHT, -curl * 0.6 * (1.0 - k))
+		tip = _toe_tip(t, s)
+		var root: Vector3 = tip[0]
+		var d: Vector3 = tip[1] - root
+		# 腿的平面裡的仰角：0 朝前、-90° 朝下；繞 X 轉正的仰角變大
+		var f := d.dot(fwd)
+		var now := atan2(d.y, f)
+		var e := asin(clampf((floor_y - root.y) / Vector2(f, d.y).length(), -1.0, 1.0))
+		# 朝下偏後 20～30 度之間漸漸不修，再偏後就不修（往後折會折到腳底下，量過皮被扯 4.5 倍）
+		var w := clampf((now + PI / 2.0 + 0.52) / 0.17, 0.0, 1.0)
+		_pose("toe%d_1%s" % [t, s], Vector3.RIGHT, toe + maxf(e - now, 0.0) * w)
+
+## 趾根和趾尖的世界座標（趾尖：第二節沿著自己的方向再一節長；不能照第一節的方向延長，第二節自己會捲）
+func _toe_tip(t: int, s: String) -> Array:
+	var a := skel.get_bone_global_pose(_idx["toe%d_1%s" % [t, s]]).origin
+	var g := skel.get_bone_global_pose(_idx["toe%d_2%s" % [t, s]])
+	return [skel.to_global(a), skel.to_global(g.origin + g.basis.y.normalized() * a.distance_to(g.origin) * TOE_TIP)]
+
+## 尾巴碰地就往上抬：被打斷垂尾、蹲低撲擊時，8 節一起往下彎，尾尖會插進地裡 3 公尺（蒙皮檢查量過）。
+## 只改這一幀的姿勢、不動彈簧，尾巴本身的晃動照舊；射線找地面，坡上也對。
+## 抬的量偏給尾根（尾根多、尾尖少），整條像被輕輕撐起來，不會尾根垂著、尾尖翹成鉤
+const TAIL_CLEAR := 0.3   # 尾巴骨頭離地至少多高（公尺）：骨頭在尾巴中心，下面還有皮
+const TAIL_UP_SPEED := 6.0   # 抬起、放下每秒最多轉幾弧度：有東西突然出現在尾巴下面時不會一幀彈起來
+var _tail_up := 0.0
+func _tail_off_ground(delta: float) -> void:
+	var foot_h: float = _leg[0].neutral.y * skel.global_basis.get_scale().y
+	var ground := []   # 地面高度只打一次射線，後面幾輪重用（尾巴抬起來前後左右位置幾乎不變）
+	var need := 0.0
+	for _pass in 4:   # 抬一點、再看一次：彎著的尾巴一次估不準
+		var pts := []
+		for i in range(3, TAIL_N):
+			pts.append(bone_pos("tail%d" % (i + 1)))
+		pts.append(_tail_tip())
+		if ground.is_empty():
+			for p: Vector3 in pts:
+				ground.append(_ground(p).y - foot_h)
+		var base := bone_pos("tail1")
+		var lift := 0.0
+		for k in pts.size():
+			var p: Vector3 = pts[k]
+			var gap: float = ground[k] + TAIL_CLEAR - p.y
+			if gap > 0.0:
+				lift = maxf(lift, atan2(gap, Vector2(p.x - base.x, p.z - base.z).length()))
+		if lift <= 0.0:
+			break
+		need += lift
+		_tail_lift(need)
+	_tail_up = move_toward(_tail_up, need, TAIL_UP_SPEED * delta)
+	_tail_lift(_tail_up)
+
+## 尾尖的世界座標：最後一節沿著自己的方向（骨頭的 +Y）再一節長。不能用前一節的方向延長：最後一節自己也會彎
+func _tail_tip() -> Vector3:
+	var n := "tail%d" % TAIL_N
+	var g := skel.get_bone_global_pose(_idx[n])
+	var seg := g.origin.distance_to(skel.get_bone_global_pose(_idx["tail%d" % (TAIL_N - 1)]).origin)
+	return skel.to_global(g.origin + g.basis.y.normalized() * seg)
+
+## 尾巴整條往上抬 total 弧度，按 8、7、6…1 的比例分給每一節
+func _tail_lift(total: float) -> void:
+	for i in TAIL_N:
+		var w := float(TAIL_N - i) / float(TAIL_N * (TAIL_N + 1) / 2)
+		_pose_pyr("tail%d" % (i + 1), _tail_pitch[i] * TAIL_PER - total * w, _tail_yaw[i] * TAIL_PER, _lean.x * 0.12 * TAIL_PER)
 
 func _world() -> Node:
 	return get_tree().get_first_node_in_group(&"arena") if is_inside_tree() else null
