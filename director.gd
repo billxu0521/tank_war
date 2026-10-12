@@ -12,12 +12,12 @@ extends RefCounted
 enum Phase { BUILD, RETREAT, RELAX }
 
 const MENACE_MAX := 100.0
-const MENACE_SEE := 7.0      # 每秒：看得到人
+const MENACE_SEE := 4.0      # 每秒：看得到人。7 的時候追 10 秒就退開，太好打（2026-10-12）
 const MENACE_CHASE := 3.0    # 每秒：沒看到但在追（往最後看到的地方、聽到的聲音）
 const MENACE_ATTACK := 12.0  # 每次出招
 const MENACE_DECAY := 2.5    # 每秒：什麼都沒在做
-const RETREAT_TIME := 12.0
-const RELAX_TIME := 15.0
+const RETREAT_TIME := 8.0
+const RELAX_TIME := 10.0
 const HINT_IDLE := 6.0       # 恐龍閒著這麼久，導演給一次方向
 const HINT_FUZZ := Vector2(12.0, 20.0)   # 提示點離那個人多遠（公尺）：不給準確位置
 const RELAX_HEAR := 40.0     # 放鬆的時候，只理這麼近的槍聲

@@ -31,7 +31,7 @@ extends "res://dino.gd"
 
 const WALK := 4.0            # 牛仔走 5.0
 const RUN := 11.0            # 牛仔跑 8.5
-const RUN_DRAIN := 14.0      # 每秒；滿體力約跑 7 秒
+const RUN_DRAIN := 10.0      # 每秒；滿體力約跑 10 秒
 const REGEN := 12.0          # 沒在跑的時候每秒回
 const RECOVER_AT := 45.0     # 跑到見底之後，回到這麼多才能再跑
 const SIGHT := 18.0          # 看得到多遠
@@ -41,7 +41,7 @@ const FEEL := 5.0            # 這麼近不管方向都會發現
 const HEAR_GUN := 150.0      # 槍聲：場地 168 公尺，幾乎整張圖都聽得到
 const HEAR_RUN := 20.0       # 有人在附近跑步
 const RUN_SPEED_HEARD := 6.5 # 水平速度超過這個算在跑（牛仔走 5、跑 8.5）
-const MEMORY := 6.0          # 看丟之後，往最後看到的位置追這麼久
+const MEMORY := 10.0         # 看丟之後，往最後看到的位置追這麼久
 const NOISE_FORGET := 12.0   # 聽到的聲音記多久
 const NOISE_FUZZ := 0.12     # 聲音的位置偏差：距離的這麼多倍……
 const NOISE_FUZZ_MAX := 15.0 # ……最多偏這麼遠
