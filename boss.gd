@@ -61,7 +61,7 @@ const RETREAT_DIST := 50.0   # 退開時往離最近的人這麼遠的地方跑
 
 # --- 三招（時間都是秒、距離是公尺）---
 enum { ACT_NONE, ACT_BITE_WIND, ACT_BITE, ACT_CHARGE_WIND, ACT_SWEEP, ACT_POUNCE_WIND, ACT_POUNCE, ACT_RECOVER, ACT_STUN, ACT_SPOT }
-enum { MOOD_ROAM, MOOD_SEARCH, MOOD_HUNT }
+enum { MOOD_ROAM, MOOD_SEARCH, MOOD_HUNT, MOOD_RETREAT }
 const SPOT_TIME := 0.7       # 發現人：停下來吼一聲這麼久，玩家還有這段時間跑
 const ATTACK_GAP := 1.2      # 收招之後至少隔這麼久才出下一招
 # 咬：近距離正前方。站定、頭往後仰、低吼，再咬下去
@@ -257,6 +257,8 @@ func _look(delta: float) -> void:
 		_hint = Vector3.INF
 
 func _mood() -> int:
+	if director.phase == Director.Phase.RETREAT and act == ACT_NONE and down_left <= 0.0:
+		return MOOD_RETREAT   # 跑起來要看得出是走掉不是衝過來（trex.gd 頭抬高、尾巴垂）
 	if act != ACT_NONE or _sees_now or _seen_left > 0.0:
 		return MOOD_HUNT
 	if _glimpse or _noise_left > 0.0 or (_hint != Vector3.INF and _hint_reached):

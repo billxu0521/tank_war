@@ -62,12 +62,20 @@ var _stun := 0.0     # 被打斷：頭垂下來晃
 var _sweep := 0.0    # 甩尾：尾巴甩直、兩腳張開
 var _recover := 0.0  # 收招：甩頭、喘
 var _spot := 0.0     # 發現人：挺起來、頭抬高張嘴吼（不跺腳、不揮手，跟蓄力分得開）
-## boss 的心情（boss.gd 的 MOOD_*：0 逛、1 找、2 追，同步來的）。每個心情頭的高低、動法不一樣，玩家看得出牠在幹嘛。
+## boss 的心情（boss.gd 的 MOOD_*：0 逛、1 找、2 追、3 退開，同步來的）。每個心情頭的高低、動法不一樣，玩家看得出牠在幹嘛。
 ## -1 = 不是 boss（玩家操控的恐龍），不套心情的姿勢
 var mood := -1
 var _roam := 0.0     # 逛：頭放低、不時低頭聞地
 var _search := 0.0   # 找：頭抬高、左右張望
-var _hunt := 0.0     # 追：頭往前伸低、嘴微張、尾巴打直
+var _hunt := 0.0     # 追：頭、身體、尾巴拉成一條水平線往前，嘴張開
+var _retreat := 0.0  # 退開：頭抬高偏一邊、尾巴垂，跑起來也不像在追（以前退開跟追的剪影一樣）
+## 心情的姿勢要大到隔 40 公尺看剪影也分得出（tools/trex_mood_shots.gd 拍對照圖）
+const MOOD_ROAM_NECK := -0.22    # 逛：頭垂低（-0.30 頭捲到胸前，不像聞地）
+const MOOD_SEARCH_NECK := 0.55   # 找：脖子抬約 30 度
+const MOOD_SEARCH_SCAN := 0.80   # 找：左右張望的幅度（弧度）
+const MOOD_HUNT_JAW := 0.45      # 追：嘴張約 25 度
+const MOOD_RETREAT_NECK := 0.40
+const MOOD_RETREAT_YAW := 0.45   # 退開：頭偏一邊，不看前面
 var _toss := 0.0     # 頭被打中：甩一下頭，1 → 0
 var _toss_side := 1.0
 var _act_t := 0.0    # 這個動作開始多久了（每台自己算，不同步）
@@ -518,9 +526,10 @@ func _process_base(delta: float) -> void:
 	_search += (float(mood == 1) - _search) * km
 	_hunt += (float(mood == 2) - _hunt) * km
 	_roam += (float(mood == 0) - _roam) * km
+	_retreat += (float(mood == 3) - _retreat) * km
 	var roam := _roam
 	var sniff := pow(maxf(sin(_breath * 0.35), 0.0), 4.0) * roam   # 逛的時候不時低頭聞地
-	var scan := sin(_breath * 1.1) * 0.45 * _search                # 找的時候左右張望
+	var scan := sin(_breath * 1.1) * MOOD_SEARCH_SCAN * _search                # 找的時候左右張望
 	_toss = maxf(_toss - delta * 4.0, 0.0)
 	var toss := sin(_toss * PI)
 	var shake := sin(_breath * 23.0) * 0.08 * _roar + sin(_breath * 7.0) * 0.18 * _stun
@@ -637,7 +646,7 @@ func _process_base(delta: float) -> void:
 		+ sin(_act_t * 9.0) * 0.55 * _roar + 0.9 * _sweep
 	var tail_pitch_drive := clampf(-moved.y * 0.035, -0.30, 0.30) + 0.09 \
 		- _rear * 0.20 - _roar * 0.35 - _snap * 0.30 + _crouch * 0.10 + _stun * 0.40 \
-		- _hunt * 0.08 - _spot * 0.25 + _run * RUN_TAIL   # 尾巴俯仰正的是往下（看截圖確認過）；0.09：參考動畫尾巴是平的、尾尖微垂
+		- _hunt * 0.06 - _spot * 0.25 + _run * RUN_TAIL + roam * 0.10 + _retreat * 0.30   # 尾巴俯仰正的是往下（看截圖確認過）；0.09：參考動畫尾巴是平的、尾尖微垂
 	_propagate(_tail_yaw, _tail_yaw_v, tail_yaw_drive, TAIL_STIFF, TAIL_DAMP, delta)
 	_propagate(_tail_pitch, _tail_pitch_v, tail_pitch_drive, TAIL_STIFF, TAIL_DAMP, delta)
 	for i in TAIL_N:
@@ -651,20 +660,20 @@ func _process_base(delta: float) -> void:
 	# 頭再反向轉回去——掠食者跑起來頭是穩的，這一下最像活的。
 	# -0.12：身體壓平（設定圖「保持水平重心」、參考動畫背是平的）；模型靜止姿勢胸口偏高
 	_pose_pyr("spine1", -0.12 + sin(_phase * 0.4) * 0.02 + _lean.y * 0.50 - _crouch * 0.30 - _lunge * 0.20 + _roar * 0.15
-		+ _rear * 0.12 - _snap * 0.35 * float(_snap_bite) + _spot * 0.15 + _run * RUN_SPINE,
+		+ _rear * 0.12 - _snap * 0.35 * float(_snap_bite) + _spot * 0.15 + _run * RUN_SPINE + _search * 0.15 - _hunt * 0.08,
 		_spine_yaw[0], _lean.x * 0.45)
 	_pose_pyr("spine2", _lean.y * 0.30, _spine_yaw[1], _lean.x * 0.35)
 	_pose_pyr("neck", -0.20 + sin(_phase) * 0.05 * stride + chomp * 0.35 + look_pitch * 0.45
 		+ sin(_breath) * 0.030 * idle + _rear * 0.45 + _roar * 0.55 - _crouch * 0.15 - _stun * 0.45
-		- _snap * 0.45 * float(_snap_bite) + _spot * 0.55 + _search * 0.25 - _hunt * 0.12 - roam * 0.08 - sniff * 0.35
-		+ toss * 0.25 + _run * RUN_NECK,
-		_spine_yaw[2] + shake + sin(_act_t * 11.0) * 0.25 * _recover + scan * 0.5 + toss * 0.3 * _toss_side, _lean.x * 0.25)
+		- _snap * 0.45 * float(_snap_bite) + _spot * 0.55 + _search * MOOD_SEARCH_NECK - _hunt * 0.12 + roam * MOOD_ROAM_NECK - sniff * 0.45
+		+ _retreat * MOOD_RETREAT_NECK + toss * 0.25 + _run * RUN_NECK * (1.0 - _retreat),   # 退開時跑步不壓脖子
+		_spine_yaw[2] + shake + sin(_act_t * 11.0) * 0.25 * _recover + scan * 0.5 + toss * 0.3 * _toss_side + _retreat * MOOD_RETREAT_YAW * 0.5, _lean.x * 0.25)
 	_pose_pyr("head", 0.18 - chomp * 0.25 + look_pitch * 0.35 - _lean.y * 0.55 + _rear * 0.25 + _roar * 0.40 - _stun * 0.25
-		+ _spot * 0.30 - _hunt * 0.08 - sniff * 0.25 + toss * 0.2 + _run * RUN_HEAD,
-		_spine_yaw[3] + sin(_breath * 0.31) * 0.10 * idle + shake + scan + toss * 0.4 * _toss_side,
+		+ _spot * 0.30 + _hunt * 0.10 - sniff * 0.35 + toss * 0.2 + _run * RUN_HEAD * (1.0 - _retreat),
+		_spine_yaw[3] + sin(_breath * 0.31) * 0.10 * idle + shake + scan + toss * 0.4 * _toss_side + _retreat * MOOD_RETREAT_YAW * 0.5,
 		-_lean.x * 0.75 + shake * 0.5)
 	_pose("jaw", Vector3.RIGHT, -0.12 - chomp * 0.65 - _rear * 0.30 - _roar * 0.75 - _lunge * 0.60 - _stun * 0.25
-		- _spot * 0.80 - _hunt * 0.12)
+		- _spot * 0.80 - _hunt * MOOD_HUNT_JAW)
 
 	# 小手貼著身體晃一下；長吼時亂揮、撲出去時往前抓、撲擊預備時收起來、被打斷時垂下
 	var flail := sin(_act_t * 14.0) * 0.5 * _roar

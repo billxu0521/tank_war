@@ -71,7 +71,7 @@ const MOVES := {
 	KEY_G: [[9, 0.7, 0.0]],                                                 # 發現人
 }
 const MOVE_NAMES := {1: "咬預備", 2: "咬", 3: "蓄力長吼", 4: "甩尾", 5: "撲擊預備", 6: "撲出去", 7: "收招", 8: "被打斷", 9: "發現人"}
-const MOOD_NAMES := {-1: "不套心情", 0: "逛", 1: "找", 2: "追"}
+const MOOD_NAMES := {-1: "不套心情", 0: "逛", 1: "找", 2: "追", 3: "退開"}
 
 ## 離開時呼叫，讓叫我的人把自己收回去
 signal closed
@@ -305,7 +305,7 @@ func _unhandled_input(e: InputEvent) -> void:
 					_trex.global_position = Vector3.ZERO   # 從中間、面朝北開始（斜坡在東、台階在北、石堆在南）
 					_trex.rotation.y = 0.0
 			KEY_M:
-				_mood = (_mood + 2) % 4 - 1   # -1 → 0 → 1 → 2 → -1
+				_mood = (_mood + 2) % 5 - 1   # -1 → 0 → 1 → 2 → 3 → -1
 				_trex.mood = _mood
 			KEY_BRACKETLEFT:
 				_slow = maxi(_slow - 1, 0)
