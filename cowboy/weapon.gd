@@ -216,6 +216,10 @@ enum Action { SINGLE_ACTION, DOUBLE_ACTION, BOLT, LEVER, BREAK, HARPOON }
 
 var mag: int
 var harpoon: MeshInstance3D   # 炸彈長矛管裡那支魚叉（沒有就是一般的槍）
+## 裝哪種子彈：0 輕、1 中、2 重，越重穿越硬的牆（Bullet.ARMOR）。換了馬上生效，不用重裝
+## ponytail: 三種只差穿透，傷害、彈數都一樣。要讓輕型有人用再加代價
+var ammo := 0
+const AMMO_NAMES := ["輕", "中", "重"]
 var reserve := 0   # 遊戲中還剩幾發備彈，-1 = 無限
 var current_action := &""
 

@@ -182,7 +182,7 @@ func _lance(target: Node3D) -> void:
 	var from: Vector3 = target.global_position + Vector3(0.5, 6.0, 0)   # 從正上方往下射：橫著射的話中間可能剛好有柵欄、木箱（擺設是隨機的）
 	var dir := (target.global_position + Vector3.UP * 1.0 - from).normalized()
 	w.mag -= 1
-	vm._launch(3, from, PackedVector3Array([dir]), false)
+	vm._launch(3, from, PackedVector3Array([dir]), false, 0)
 	await create_timer(0.8).timeout
 	var lost: int = target.max_hp - target.hp
 	_ck(lost > int(w.damage), "魚叉打中人：直接 %d 再加爆炸（扣了 %d）" % [int(w.damage), lost])
