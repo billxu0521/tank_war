@@ -175,6 +175,7 @@ func _ready() -> void:
 	_refresh_stamina_bar()
 
 	_skin()
+	died.connect(_drop_corpse)
 	if is_local:
 		# 第一人稱看不到自己的軀幹和臉，但影子要在（地上看得到自己的影子，像 Hunt 那樣）。
 		# 腿照樣畫：低頭看得到自己的靴子
@@ -633,6 +634,14 @@ func deal_damage(target: Node, amount: int, head := false) -> void:
 
 func _match() -> Node:
 	return get_tree().get_first_node_in_group(&"match")
+
+
+## 死掉時每台各自留一具會癱倒的屍體（corpse.gd）。專用伺服器沒人看，不做
+func _drop_corpse(_killer: Node) -> void:
+	var g := _match()
+	if g and g.get(&"_dedicated"):
+		return
+	Corpse.spawn(self, last_from, is_local)
 
 
 # --- 互動：門、梯子 ---
