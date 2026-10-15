@@ -77,6 +77,7 @@ func _process(_delta: float) -> bool:
 			# 子彈會飛，15 公尺要飛幾幀才到
 			if _frames == 3:
 				_check_melee_hits()
+				_check_pierce_flight()
 				_hp_before_shot = _dino.hp
 				_shooter._bot_shoot(_dino)
 				_ck(_dino.hp == _hp_before_shot, "子彈會飛，開槍當下不該立刻扣血")
@@ -553,6 +554,18 @@ func _case_hunt_weapons() -> void:
 	b.free()
 	_ck(rifle.muzzle_velocity > revolver.muzzle_velocity, "步槍子彈要比左輪快")
 
+	# 穿牆：穿透力 ≥ 牆的硬度才穿（輕 1 中 2 重 3 對 單層木板 1 雙層 2 金屬 3），沒標材質的照擋
+	for g: StringName in Bullet.ARMOR:
+		var wall := StaticBody3D.new()
+		wall.add_to_group(g)
+		for p in [1, 2, 3]:
+			_ck(Bullet.pierces(wall, p) == (p >= Bullet.ARMOR[g]), "穿透力 %d 打 %s 穿不穿不對" % [p, g])
+		wall.free()
+	var plain := StaticBody3D.new()
+	_ck(not Bullet.pierces(plain, 3), "沒標材質的東西重型也不能穿")
+	plain.free()
+	_ck(Weapon.AMMO_NAMES.size() == 3, "子彈要有輕、中、重三種")
+
 	# 有效射程：射程內全額，超過遞減，射程盡頭剩一半；射程要照步槍 > 左輪 > 散彈排
 	for w in vm._weapons:
 		if w.harpoon:
@@ -691,7 +704,7 @@ func _case_range() -> void:
 	root.add_child(m)
 	m._start_range()
 	_ck(m.level_path == Main.RANGE_LEVEL and ResourceLoader.exists(m.level_path), "靶場要讀自己的場景檔")
-	_ck(m.players.get_child_count() == 2 + m.RANGE_TARGETS.size(), "要有自己、恐龍靶和 %d 個牛仔靶" % m.RANGE_TARGETS.size())
+	_ck(m.players.get_child_count() == 2 + m.RANGE_TARGETS.size() + m.PIERCE_WALLS.size(), "要有自己、恐龍靶、%d 個牛仔靶和 %d 個牆後靶" % [m.RANGE_TARGETS.size(), m.PIERCE_WALLS.size()])
 	var me: Node3D = m.players.get_node(^"1")
 	var far: Node3D = m.players.get_node(NodePath(str(2 + m.RANGE_TARGETS.size())))
 	_ck(absf(-(far.global_position - me.global_position).z - 150.0) < 1.0, "最遠的靶在 150 公尺")
@@ -1171,7 +1184,7 @@ func _case_mouse_lock() -> void:
 
 func _case_input_map() -> void:
 	for a in ["move_forward", "move_back", "move_left", "move_right", "jump", "sprint",
-			"crouch", "crouch_toggle", "fire", "aim", "reload", "melee", "interact", "throw"]:
+			"crouch", "crouch_toggle", "fire", "aim", "reload", "melee", "interact", "throw", "ammo_next"]:
 		_ck(InputMap.has_action(a), "少了按鍵動作 %s" % a)
 		if not InputMap.has_action(a):
 			continue
@@ -1919,6 +1932,47 @@ func _start_gun_case() -> void:
 	_brawler = m.players.get_node(^"2")
 	_brawler.global_position = spot + Vector3(0, 0, -15.0 - 3.4)
 	_brawler.rotation.y = PI   # 面向 +Z，對著恐龍
+	# 穿牆實飛用：高空一面金屬板（要等一個物理幀才進得了物理世界，所以先放、第 3 幀才打）
+	_pierce_wall = StaticBody3D.new()
+	_pierce_wall.add_to_group(&"metal")
+	var cs := CollisionShape3D.new()
+	cs.shape = BoxShape3D.new()
+	(cs.shape as BoxShape3D).size = Vector3(4, 4, 0.03)
+	_pierce_wall.add_child(cs)
+	m.get_node(^"Arena").add_child(_pierce_wall)
+	_pierce_wall.global_position = Vector3(0, 400, -5)
+	var back := _pierce_wall.duplicate() as StaticBody3D
+	back.remove_from_group(&"metal")
+	m.get_node(^"Arena").add_child(back)
+	back.global_position = Vector3(0, 400, -8)
+
+var _pierce_wall: StaticBody3D
+
+## 實際飛一發打金屬板（5 公尺外，後面 8 公尺外一面沒標材質的牆）：輕型停在金屬板，重型穿過去停在後牆
+## 子彈走 _launch 生，順便驗子彈種類有變成穿透力
+func _check_pierce_flight() -> void:
+	var vm: Node = _shooter.viewmodel
+	var arena: Node = _pierce_wall.get_parent()
+	for ammo in Weapon.AMMO_NAMES.size():
+		var before := arena.get_child_count()
+		vm._launch(0, Vector3(0, 400, 0), PackedVector3Array([Vector3.FORWARD]), true, ammo)
+		var b: Bullet = arena.get_child(before)
+		b.fx = null   # 不出著彈聲：測試結束時還在播會算成沒清掉的物件
+		_ck(b.power == ammo + 1, "%s型彈穿透力要是 %d（是 %d）" % [Weapon.AMMO_NAMES[ammo], ammo + 1, b.power])
+		for i in 20:
+			if b.is_queued_for_deletion():
+				break
+			b.advance(1.0 / 120.0)
+		var want := 5.0 if ammo < 2 else 8.0
+		_ck(b.is_queued_for_deletion() and absf(b._traveled - want) < 0.1,
+			"%s型彈打金屬板要停在 %.0f 公尺（飛了 %.2f）" % [Weapon.AMMO_NAMES[ammo], want, b._traveled])
+		b.free()
+	for i in vm._weapons.size():
+		if vm._weapons[i].harpoon:
+			var before := arena.get_child_count()
+			vm._launch(i, Vector3(0, 400, 0), PackedVector3Array([Vector3.FORWARD]), true, 2)
+			_ck((arena.get_child(before) as Bullet).power == 0, "魚叉什麼都不能穿")
+			arena.get_child(before).free()
 
 ## 重擊比輕擊痛；體力見底照樣重擊
 func _check_melee_hits() -> void:

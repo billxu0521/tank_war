@@ -14,6 +14,8 @@ const SHOW_AFTER := 3.0
 const STREAK_LENGTH := 1.5
 ## 打在恐龍頭的位置這麼近算打中頭（boss 放大 1.5 倍，頭約 1.2 × 2 公尺）
 const DINO_HEAD := 1.6
+## 牆的硬度（群組名 -> 硬度）。子彈穿透力 ≥ 硬度就穿過去，沒在表上的東西都擋
+const ARMOR := {&"plank": 1, &"double_plank": 2, &"metal": 3}
 
 var origin := Vector3.ZERO
 var vel := Vector3.ZERO
@@ -21,6 +23,8 @@ var shooter: Node          # Cowboy。可能在子彈飛行中死掉被砍，用
 var weapon: Weapon         # 傷害、有效射程、射程都照這把槍
 var fx: ShotFX             # 火花、彈孔、著彈聲
 var mask := 1
+## 穿透力：輕型 1、中型 2、重型 3（Weapon.ammo + 1）。0 = 什麼都不穿（魚叉）
+var power := 0
 var visual_only := false
 ## 霰彈十顆同時打到，著彈聲只要第一顆出聲
 var sound := true
@@ -65,8 +69,18 @@ func advance(delta: float) -> void:
 	var exclude: Array[RID] = []
 	if is_instance_valid(shooter):
 		exclude.append(shooter.get_rid())
-	var q := PhysicsRayQueryParameters3D.create(from, to, mask, exclude)
-	var hit := get_world_3d().direct_space_state.intersect_ray(q)
+	var hit := {}
+	while true:
+		var q := PhysicsRayQueryParameters3D.create(from, to, mask, exclude)
+		hit = get_world_3d().direct_space_state.intersect_ray(q)
+		if hit.is_empty() or not pierces(hit["collider"], power):
+			break
+		# 穿牆：留彈孔、這面牆不再算，從打到的點繼續掃這一幀剩下的路
+		_traveled += from.distance_to(hit["position"])
+		if is_instance_valid(fx):
+			fx.impact(hit["position"], hit["normal"], surface_of(hit["collider"]), sound)
+		exclude.append(hit["rid"])   # ponytail: 排除整個物體不是單一碰撞形狀。整棟房子標材質時，同一幀會連後牆一起穿，到時改排除形狀
+		from = hit["position"]
 	if hit.is_empty():
 		_traveled += from.distance_to(to)
 		global_position = to
@@ -88,13 +102,23 @@ func advance(delta: float) -> void:
 	queue_free()
 
 
+## 穿透力 power 的子彈能不能穿過 target
+static func pierces(target: Object, power: int) -> bool:
+	if not target is Node:
+		return false
+	for g: StringName in ARMOR:
+		if (target as Node).is_in_group(g):
+			return power >= ARMOR[g]
+	return false
+
+
 ## 打到的是什麼材質：會扣血的噴血，地形噴土，石頭噴石屑，其他（房子、柵欄、樹）都當木頭
 static func surface_of(target: Object) -> StringName:
 	if target.has_method(&"take_damage"):
 		return &"blood"
 	if target is Node and target.is_in_group(&"ground"):
 		return &"dirt"
-	if target is Node and target.is_in_group(&"stone"):
+	if target is Node and (target.is_in_group(&"stone") or target.is_in_group(&"metal")):   # 金屬板先借石屑
 		return &"stone"
 	return &"wood"
 

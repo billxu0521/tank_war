@@ -581,6 +581,39 @@ func _start_range() -> void:
 		"靶場：打中會跳傷害和距離，準星下面是準星指到的距離。Esc 回大廳")
 	for d in range(10, 160, 10):   # 左邊每 10 公尺一塊距離牌，跟地上的土線對齊
 		_sign(_on_ground(RANGE_START + Vector3(-18, 1.2, -d)), "%d m" % d)
+	_pierce_walls()
+
+## 穿牆測試：跑道右邊三個牛仔靶，每個前面 3 公尺一面牆（單層木板、雙層木板、金屬板），站在射擊線上牆剛好擋在靶前面。B 換子彈試穿不穿得過
+const PIERCE_WALLS := [["單層木板", &"plank", 0.05, Color(0.66, 0.5, 0.32)],
+	["雙層木板", &"double_plank", 0.12, Color(0.45, 0.32, 0.2)], ["金屬板", &"metal", 0.03, Color(0.55, 0.57, 0.6)]]
+
+func _pierce_walls() -> void:
+	for i in PIERCE_WALLS.size():
+		var w: Array = PIERCE_WALLS[i]
+		var off := Vector3(12 + i * 3, 0, -20)   # 靶的位置（相對射擊線）。右邊柵欄在 x 20，恐龍靶在 40 公尺外
+		var t := _add_player(COWBOY, 9 + i)
+		t.global_position = _on_ground(RANGE_START + off)
+		t.rotation.y = PI
+		var at := _on_ground(RANGE_START + off * (1.0 - 3.0 / off.length()))   # 射擊線往靶看，靶前 3 公尺
+		var body := StaticBody3D.new()
+		body.add_to_group(w[1])
+		body.add_to_group(&"sandbox_prop")
+		var size := Vector3(2.0, 2.4, w[2])
+		var shape := CollisionShape3D.new()
+		shape.shape = BoxShape3D.new()
+		(shape.shape as BoxShape3D).size = size
+		body.add_child(shape)
+		var mi := MeshInstance3D.new()
+		mi.mesh = BoxMesh.new()
+		(mi.mesh as BoxMesh).size = size
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = w[3]
+		mi.material_override = mat
+		body.add_child(mi)
+		$Arena.add_child(body)
+		body.global_position = at + Vector3(0, size.y / 2, 0)
+		body.look_at(Vector3(RANGE_START.x, body.global_position.y, RANGE_START.z))   # 牆面朝射擊線
+		_sign(at + Vector3(0, 3.0, 0), w[0])
 
 ## 練槍的共用部分：自己（編號 1，子彈無限）、每個距離一個牛仔靶、一隻恐龍靶
 func _start_practice(start: Vector3, dists: Array, xs: Array, dino_at: Vector3, msg: String) -> void:

@@ -253,6 +253,9 @@ func _process(delta: float) -> void:
 			try_fire(true)   # 左輪腰射按住＝搧擊錘，快但散
 		elif Input.is_action_just_pressed("reload"):
 			try_reload()
+		elif Input.is_action_just_pressed("ammo_next") and not weapon.harpoon:
+			weapon.ammo = (weapon.ammo + 1) % Weapon.AMMO_NAMES.size()
+			_refresh_ammo()
 		elif Input.is_action_just_pressed("weapon_next"):
 			switch_weapon((_index + 1) % _weapons.size())
 		elif Input.is_action_just_pressed("weapon_prev"):
@@ -454,12 +457,12 @@ func try_fire(fanning := false) -> void:
 	for i in weapon.pellets:
 		dirs.append(_spread_direction(_camera, weapon.pellet_spread + (weapon.fan_spread if fanning else 0.0)))
 	var from := _camera.global_position
-	_launch(_index, from, dirs, false)
+	_launch(_index, from, dirs, false, weapon.ammo)
 	_alert_boss(from)
 	_muzzle_flash(weapon)
 	# 自己開的槍、或主機上的 bot 開的槍（bot 的 authority 是主機），廣播給其他人看火光和子彈
 	if is_multiplayer_authority():
-		_remote_shot.rpc(_index, from, dirs)
+		_remote_shot.rpc(_index, from, dirs, weapon.ammo)
 
 	_apply_recoil()
 	spread = minf(spread + spread_per_shot, max_spread)
@@ -471,13 +474,13 @@ func try_fire(fanning := false) -> void:
 ## 2026-09-29 用專用伺服器＋兩個客戶端實測過：B 收得到 A 的每一槍
 ## 保證送到（reliable）：槍聲是情報，恐龍 boss 也靠它找人，掉一包就少聽到一槍。手動槍射速慢，多花的頻寬可以不計
 @rpc("authority", "call_remote", "reliable")
-func _remote_shot(index: int, from: Vector3, dirs: PackedVector3Array) -> void:
+func _remote_shot(index: int, from: Vector3, dirs: PackedVector3Array, ammo: int) -> void:
 	if index < 0 or index >= _weapons.size():
 		return
 	remote_shots += 1
 	_weapons[index].play_sound(&"Shoot")
 	_muzzle_flash(_weapons[index])
-	_launch(index, from, dirs, true)
+	_launch(index, from, dirs, true, clampi(ammo, 0, Weapon.AMMO_NAMES.size() - 1))
 	_alert_boss(from)
 
 
@@ -506,7 +509,7 @@ func _muzzle_flash(w: Weapon) -> void:
 ## 生子彈。從鏡頭中心出發（所以瞄具不用歸零：近距離打哪中哪，遠了往下掉）。
 ## ponytail: 霰彈每顆彈丸打中都各送一次傷害，客戶端一槍最多 10 個 RPC。
 ## 真的卡再改成同一幀的命中先加總。
-func _launch(index: int, from: Vector3, dirs: PackedVector3Array, visual_only: bool) -> void:
+func _launch(index: int, from: Vector3, dirs: PackedVector3Array, visual_only: bool, ammo: int) -> void:
 	var w := _weapons[index]
 	var world := get_tree().get_first_node_in_group(&"arena")
 	if world == null:
@@ -520,6 +523,7 @@ func _launch(index: int, from: Vector3, dirs: PackedVector3Array, visual_only: b
 		b.fx = _fx
 		b.mask = hit_mask
 		b.visual_only = visual_only
+		b.power = 0 if w.harpoon else ammo + 1
 		b.sound = i == 0
 		if w.harpoon:   # 炸彈長矛：飛出去的是魚叉，打中就爆
 			var mi := MeshInstance3D.new()
@@ -660,8 +664,8 @@ func _play_move(base: StringName) -> float:
 
 func _refresh_ammo() -> void:
 	if ammo_label:
-		ammo_label.text = "%s  %d | %s    炸藥 %s" % [
-			weapon.display_name, weapon.mag,
+		ammo_label.text = "%s%s  %d | %s    炸藥 %s" % [
+			weapon.display_name, "" if weapon.harpoon else "（%s型彈）" % Weapon.AMMO_NAMES[weapon.ammo], weapon.mag,
 			"∞" if weapon.reserve < 0 else str(weapon.reserve),
 			"∞" if dynamite < 0 else str(dynamite),
 		]
