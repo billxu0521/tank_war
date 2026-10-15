@@ -12,7 +12,7 @@
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.096, -0.112, -0.203)
 script = ExtResource("1_weapon")
 tripo_model = ExtResource("20_tripo")
-tripo_overrides = {"position": Vector3(0.096, -0.09, -0.27), "hip_rotation": Vector3(0, 0.2, -0.22), "muzzle": Vector3(0, 0.026, -0.738), "support_hand": Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.042, -0.10)}
+tripo_overrides = {"position": Vector3(0.106, -0.085, -0.2), "hip_rotation": Vector3(0, 0.01, -0.22), "muzzle": Vector3(0, 0.026, -0.738), "support_hand": Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.042, -0.10)}
 display_name = "單管散彈"
 capacity = 1
 damage = 14.0
