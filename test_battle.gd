@@ -55,6 +55,7 @@ func _process(_delta: float) -> bool:
 		_case_egg()
 		_case_dino_cannot_take_egg()
 		_case_respawn()
+		_case_corpse()
 		_case_fireball()
 		_case_dino_attack_switch()
 		_case_ui()
@@ -1688,6 +1689,25 @@ func _case_respawn() -> void:
 	if back != null:
 		_ck(back.hp == back.max_hp, "重生要滿血")
 		_ck(back.bot, "重生後靶還是靶，不會變成真人操控的")
+	_end(m)
+
+## 牛仔死掉留一具會癱倒的屍體（corpse.gd）：四塊、不擋人不擋子彈、往被打的反方向倒；自己的那具帶死亡鏡頭
+func _case_corpse() -> void:
+	var m := _new_offline_game()
+	var me: Node3D = m.players.get_node(^"1")
+	var dino: Node3D = m.players.get_node(^"2")
+	dino.global_position = me.global_position + Vector3(0, 0, -8)   # 恐龍在北邊
+	me.take_damage(9999, dino)
+	var bodies := m.get_children().filter(func(n: Node) -> bool: return n is Corpse)
+	_ck(bodies.size() == 1, "牛仔死掉要留一具屍體（現在 %d 具）" % bodies.size())
+	if bodies.size() == 1:
+		var k: Corpse = bodies[0]
+		_ck(k.parts.size() == 4, "屍體是身體、頭、兩條腿四塊")
+		_ck(k.parts.values().all(func(p: RigidBody3D) -> bool: return p.collision_layer == 0), "屍體不擋人、不擋子彈（collision_layer 0）")
+		_ck((k.parts.torso as RigidBody3D).linear_velocity.z > 0.0, "恐龍從北邊咬，屍體要往南（+Z）倒")
+		_ck(k._cam != null and k._cam.current, "自己的屍體要帶死亡鏡頭")
+		var meshes := k.find_children("*", "MeshInstance3D", true, false)
+		_ck(meshes.size() == 5, "屍體要有身體、手、頭、兩條腿五個網格（現在 %d）" % meshes.size())
 	_end(m)
 
 ## 恐龍不能撿蛋

@@ -23,6 +23,7 @@ const HITCH_MS := 250   # 兩幀之間隔超過這麼久算卡頓（4 fps 以下
 var hp := 0
 var hit_until := 0  # 自己的彈打中人，準心閃紅到這個時刻（毫秒）
 var _last_hit_by: Node = null  # 只有主機需要，用來記誰殺了誰
+var last_from := Vector3.INF   # 最後一下從哪裡打來（每台都有）：屍體往反方向倒
 static var diag := {}       # 診斷（暫時，滑鼠視角卡住的 bug 修好就拿掉）：滑鼠事件走到哪一步，main.gd 每半秒印一次
 static var _frame_ms := 0   # 上一幀跑完的時刻（毫秒），main.gd 每幀寫
 
@@ -135,6 +136,7 @@ func _sync_hp(v: int, from := Vector3.INF) -> void:
 	if multiplayer.get_remote_sender_id() != 1:
 		return
 	if v < hp:
+		last_from = from
 		_flash_red()
 		_on_hurt(hp - v, from)
 	hp = v
