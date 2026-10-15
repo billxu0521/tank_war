@@ -143,13 +143,13 @@ var _solo_dino := false   # 單人打恐龍（測恐龍行為用）：沙盒的�
 var _continues := 0       # 單人打恐龍：接關了幾次
 
 func _ready() -> void:
+	BugReport.install()   # 要在開最大之前：macOS 放大視窗時會先跑一次 _process，那時要用到它
 	# 視窗開最大（填滿螢幕）。只在還是預設大小時才放大：截圖工具用 --resolution 指定了別的大小，照它的，不然裁切位置會跑掉
 	# （--resolution 是引擎吃掉的參數，OS.get_cmdline_args 看不到，只能看視窗大小）
 	var base := Vector2i(ProjectSettings.get_setting("display/window/size/viewport_width"),
 		ProjectSettings.get_setting("display/window/size/viewport_height"))
 	if DisplayServer.get_name() != "headless" and get_window().size == base:
 		get_window().mode = Window.MODE_MAXIMIZED
-	BugReport.install()
 	_add_report_button()
 	_flatten_models()
 	_use_cjk_font()
