@@ -1344,6 +1344,8 @@ func _case_boss() -> void:
 	for i in int(Director.MENACE_MAX / Director.MENACE_SEE * 60) + 5:
 		d.step(1.0 / 60.0, c, false, [c], rng)
 	_ck(d.phase == Director.Phase.RETREAT, "一直看到人，威脅滿了要退開")
+	b.director = d
+	_ck(b._mood() == b.MOOD_RETREAT, "退開時心情要是「退開」（姿勢跟追分得開），現在 %d" % b._mood())
 	for i in int((Director.RETREAT_TIME + Director.RELAX_TIME) * 60) + 5:
 		d.step(1.0 / 60.0, c, false, [c], rng)
 	_ck(d.phase == Director.Phase.BUILD and d.menace < 5.0, "退開、放鬆完回到醞釀，威脅從頭累積")
