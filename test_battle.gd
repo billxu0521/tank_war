@@ -472,7 +472,33 @@ func _case_hunt_weapons() -> void:
 	# 開槍：程式動作要動起來。Pax：槍口大翻、拇指上去扳擊錘，扳到一半轉輪轉一格
 	var turns: int = revolver._turns
 	revolver.play(&"fire", 0.1, 0.45)
-	_ck(revolver._kick > 0.0, "開槍要有後座")
+	_ck(revolver._since_fire == 0.0, "開槍要有後座（槍模型的曲線從頭開始走）")
+	# 後座力曲線四段 2:1:1:8：衝到頂、多衝一點、小回彈、慢慢回到留著不回正的那段
+	var keep := 0.3
+	var at := func(n: float) -> float: return Weapon.recoil_curve(n / 12.0, keep)
+	_ck(is_zero_approx(at.call(0.0)) and is_equal_approx(at.call(2.0), 1.0) and is_equal_approx(at.call(3.0), Weapon.RECOIL_OVERSHOOT)
+		and is_equal_approx(at.call(4.0), Weapon.RECOIL_BOUNCE) and is_equal_approx(at.call(12.0), keep),
+		"後座力曲線的節點要在 0、2、3、4、12 格（%.2f %.2f %.2f %.2f %.2f）" % [at.call(0.0), at.call(2.0), at.call(3.0), at.call(4.0), at.call(12.0)])
+	_ck(at.call(1.0) > 0.7, "第一段要先快後慢（走一半就過七成，現在 %.2f）" % at.call(1.0))
+	_ck(at.call(8.0) - keep < (Weapon.RECOIL_BOUNCE - keep) * 0.3, "回正段也要先快後慢（走一半就回了七成以上）")
+	# 準心：連開兩發，曲線疊起來，走完剩下兩發各自不回正的部分
+	var vm1: Node = me.viewmodel
+	vm1._kicks.clear()   # 前面的案例開過槍，還沒走完的不要混進來
+	var pitch0: float = me.head.rotation.x
+	var gun: Weapon = vm1.weapon
+	var rnd := gun.recoil_pitch_random
+	gun.recoil_pitch_random = 0.0
+	vm1._apply_recoil()
+	for i in 6:
+		vm1._update_recoil(DT)
+	vm1._apply_recoil()
+	for i in 120:
+		vm1._update_recoil(DT)
+	gun.recoil_pitch_random = rnd
+	var want := deg_to_rad(gun.recoil_pitch) * 2.0 * (1.0 - gun.recoil_return_ratio)
+	_ck(vm1._kicks.is_empty() and absf((me.head.rotation.x - pitch0) - want) < 0.001,
+		"連開兩發後座力要疊起來，最後留 %.2f 度（留了 %.2f）" % [rad_to_deg(want), rad_to_deg(me.head.rotation.x - pitch0)])
+	me.head.rotation.x = pitch0
 	# 左輪的手帶骨架（weapon.gd 的 use_rig）：量拇指指尖離擊錘尾端多近
 	var hammer: Node3D = revolver.get_node(revolver.hammer_path)
 	var sk: Skeleton3D = revolver._grip_sk

@@ -63,8 +63,8 @@ enum Action { SINGLE_ACTION, DOUBLE_ACTION, BOLT, LEVER, BREAK, HARPOON }
 @export var recoil_pitch_random := 0.4
 ## L1 水平後座力：每發往左右隨機偏幾度（±）
 @export var recoil_yaw := 0.5
-## 後座力回復時間：偏掉的準心幾秒內回正
-@export var recoil_return_time := 0.25
+## 後座力曲線時間：從開槍衝上去到回正的整條曲線幾秒（四段 2:1:1:8，見 recoil_curve）
+@export var recoil_return_time := 0.36
 ## 回正多少（1 = 回滿；0.7 = 回七成，剩下的玩家自己壓）
 @export var recoil_return_ratio := 0.7
 
@@ -215,6 +215,32 @@ enum Action { SINGLE_ACTION, DOUBLE_ACTION, BOLT, LEVER, BREAK, HARPOON }
 @export var pinch_arm_dir := Vector3(0.35, -1.0, 0.0)   # 往下、偏右伸出畫面（審查：往右橫著伸手臂太高、蓋住右半畫面；往鏡頭後伸手肘貼著鏡頭）
 
 var mag: int
+## 後座力曲線四段的比例：衝上去、頂點多衝一點、小回彈、慢慢回正
+const RECOIL_PHASES := [2.0, 1.0, 1.0, 8.0]
+const RECOIL_OVERSHOOT := 1.05   # 頂點多衝到幾倍
+const RECOIL_BOUNCE := 0.85      # 小回彈掉到幾倍
+
+## 後座力曲線：s 是走到整條曲線的幾成（0..1），回傳偏移是「一發後座力」的幾倍。keep 是最後留著不回正的比例
+static func recoil_curve(s: float, keep: float) -> float:
+	if s <= 0.0:
+		return 0.0
+	if s >= 1.0:
+		return keep
+	var total: float = RECOIL_PHASES.reduce(func(a: float, b: float) -> float: return a + b)
+	var at := s * total
+	var u := 0.0
+	for i in RECOIL_PHASES.size():
+		if at < RECOIL_PHASES[i] or i == RECOIL_PHASES.size() - 1:
+			u = at / RECOIL_PHASES[i]
+			match i:
+				0: return 1.0 - (1.0 - u) * (1.0 - u)                                    # 衝上去：先快後慢
+				1: return lerpf(1.0, RECOIL_OVERSHOOT, sin(u * PI / 2.0))                  # 頂點多衝一點
+				2: return lerpf(RECOIL_OVERSHOOT, RECOIL_BOUNCE, smoothstep(0.0, 1.0, u))  # 小回彈
+				3: return lerpf(RECOIL_BOUNCE, keep, 1.0 - (1.0 - u) * (1.0 - u))          # 慢慢回正：先快後慢
+		at -= RECOIL_PHASES[i]
+	return keep
+
+
 var harpoon: MeshInstance3D   # 炸彈長矛管裡那支魚叉（沒有就是一般的槍）
 ## 裝哪種子彈：0 輕、1 中、2 重，越重穿越硬的牆（Bullet.ARMOR）。換了馬上生效，不用重裝
 ## ponytail: 三種只差穿透，傷害、彈數都一樣。要讓輕型有人用再加代價
@@ -226,7 +252,6 @@ var current_action := &""
 var _model: Node3D
 var _rest_pos := Vector3.ZERO
 var _rest_rot := Vector3.ZERO
-var _kick := 0.0         # 1 = 剛開槍，衰減到 0
 var _cycle := 1.0        # 上膛進度 0..1，1 = 可以再開
 var _cycle_time := 0.3
 var _turns := 0          # 轉輪轉了幾格
@@ -776,7 +801,6 @@ func _play_procedural(action: StringName, fitted: float) -> float:
 	current_action = action
 	match action:
 		&"fire", &"fire_EMPTY":
-			_kick = 1.0
 			_since_fire = 0.0
 			_cycle = 0.0
 			_cycle_time = maxf(fitted, 0.05)
@@ -806,7 +830,7 @@ func _play_procedural(action: StringName, fitted: float) -> float:
 
 
 func _procedural(delta: float) -> void:
-	_kick = move_toward(_kick, 0.0, delta * 7.0)
+	var kick := recoil_curve(_since_fire / recoil_return_time, 0.0)   # 槍模型跟準心走同一條曲線，但會回滿
 	var was := _cycle
 	_cycle = minf(_cycle + delta / _cycle_time, 1.0)
 	_since_fire += delta
@@ -817,7 +841,7 @@ func _procedural(delta: float) -> void:
 
 	if _gate:
 		# 開槍 0.03 秒內槍口翻到頂，再慢慢回來。Pax 的後座是一大翻，不是往後頓一下
-		var flip := _since_fire / 0.03 if _since_fire < 0.03 else exp(-(_since_fire - 0.03) * 9.0)
+		var flip := kick
 		# 扳擊錘：上膛時間的後半段。拇指伸上去勾住扳手（0.35–0.55）、連擊錘一起往下拉（0.55–0.85）、放回去
 		cock = smoothstep(0.35, 0.55, _cycle) - 0.4 * smoothstep(0.55, 0.85, _cycle) - 0.6 * smoothstep(0.85, 1.0, _cycle)
 		if was < 0.75 and _cycle >= 0.75:
@@ -836,9 +860,9 @@ func _procedural(delta: float) -> void:
 		# 後座：往後退、槍口上揚。換彈：往下沉、往內側翻，看得到裝填口。近戰：往前捅
 		var rp := smoothstep(0.0, 1.0, _reload_pose)
 		_model.position = _rest_pos + reload_offset * rp + Vector3(0.12 * lower, -0.22 * lower,
-			0.06 * _kick - 0.18 * thrust + 0.12 * windup + 0.05 * lower)
+			0.08 * kick - 0.18 * thrust + 0.12 * windup + 0.05 * lower)
 		_model.rotation = _rest_rot + hip_rotation * (1.0 - aim) * (1.0 - rp) + ads_rotation * aim * (1.0 - rp) + reload_rotation * rp \
-			+ Vector3(0.22 * _kick - 0.3 * thrust - 0.8 * lower, 0.0, 0.4 * windup + 0.5 * lower)
+			+ Vector3(0.3 * kick - 0.3 * thrust - 0.8 * lower, 0.0, 0.4 * windup + 0.5 * lower)
 	if _support and support_only_ads:   # 左輪：舉槍時才用左手托住右手（雙手握，照影片）
 		_support.visible = aim > 0.3 and _reload_pose < 0.1
 	if _support and not reload_with_support:

@@ -85,6 +85,7 @@ func _spread_vs_recoil() -> void:
 	var pitch: float = me.head.rotation.x
 	vm._fire_cooldown = 0.0
 	vm.try_fire()
+	await _wait(0.1)                       # 後座力曲線第一段要一點時間才衝上去
 	_ck(absf(me.head.rotation.x - pitch) > 0.001, "散布 0 還是要有後座力（準心往上抬）")
 	_ck(vm._spread_direction(cam).is_equal_approx(-cam.global_transform.basis.z), "散布 0：子彈正正打在準心")
 
@@ -97,6 +98,7 @@ func _spread_vs_recoil() -> void:
 	var yaw: float = me.rotation.y
 	vm._fire_cooldown = 0.0
 	vm.try_fire()
+	await _wait(0.1)
 	_ck(is_equal_approx(me.head.rotation.x, pitch) and is_equal_approx(me.rotation.y, yaw), "後座力 0：準心不動")
 	vm.spread = 4.0
 	var off := 0
