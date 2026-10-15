@@ -74,7 +74,29 @@ func _ready() -> void:
 	apply()
 
 
+## F10 試風格：輪流套在描線 shader（outline.gdshader 的 look、paint_radius）上，比較用，不存設定
+const LOOKS := [["原本", 0, 0.0], ["賽璐璐卡通", 1, 0.0], ["老西部底片", 2, 0.0], ["漫畫網點", 3, 0.0], ["油畫", 0, 7.0]]
+var _look := 0
+var _look_label: Label
+
+func _next_look() -> void:
+	_look = (_look + 1) % LOOKS.size()
+	var mat: ShaderMaterial = (get_parent().get_node(^"Arena/Outline") as MeshInstance3D).mesh.material
+	mat.set_shader_parameter(&"look", float(LOOKS[_look][1]))
+	mat.set_shader_parameter(&"paint_radius", LOOKS[_look][2])
+	if _look_label == null:
+		_look_label = Label.new()
+		_look_label.add_theme_font_size_override(&"font_size", 28)
+		_look_label.position = Vector2(24, 24)
+		get_parent().get_node(^"UI/Root").add_child(_look_label)
+	_look_label.text = "畫面風格（F10）：" + LOOKS[_look][0]
+	_look_label.modulate.a = 1.0
+	create_tween().tween_property(_look_label, ^"modulate:a", 0.0, 0.6).set_delay(2.0)
+
+
 func _unhandled_input(e: InputEvent) -> void:
+	if e is InputEventKey and e.pressed and not e.echo and e.keycode == KEY_F10:
+		_next_look()
 	if e is InputEventKey and e.pressed and not e.echo and e.keycode == KEY_F9:
 		on = not on
 		get_parent()._save_setting("display", "pixel_style", on)
