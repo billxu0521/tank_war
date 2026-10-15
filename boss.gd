@@ -31,7 +31,7 @@ extends "res://dino.gd"
 
 const WALK := 4.0            # 牛仔走 5.0
 const RUN := 11.0            # 牛仔跑 8.5
-const RUN_DRAIN := 14.0      # 每秒；滿體力約跑 7 秒
+const RUN_DRAIN := 10.0      # 每秒；滿體力約跑 10 秒
 const REGEN := 12.0          # 沒在跑的時候每秒回
 const RECOVER_AT := 45.0     # 跑到見底之後，回到這麼多才能再跑
 const SIGHT := 18.0          # 看得到多遠
@@ -41,7 +41,7 @@ const FEEL := 5.0            # 這麼近不管方向都會發現
 const HEAR_GUN := 150.0      # 槍聲：場地 168 公尺，幾乎整張圖都聽得到
 const HEAR_RUN := 20.0       # 有人在附近跑步
 const RUN_SPEED_HEARD := 6.5 # 水平速度超過這個算在跑（牛仔走 5、跑 8.5）
-const MEMORY := 6.0          # 看丟之後，往最後看到的位置追這麼久
+const MEMORY := 10.0         # 看丟之後，往最後看到的位置追這麼久
 const NOISE_FORGET := 12.0   # 聽到的聲音記多久
 const NOISE_FUZZ := 0.12     # 聲音的位置偏差：距離的這麼多倍……
 const NOISE_FUZZ_MAX := 15.0 # ……最多偏這麼遠
@@ -61,7 +61,7 @@ const RETREAT_DIST := 50.0   # 退開時往離最近的人這麼遠的地方跑
 
 # --- 三招（時間都是秒、距離是公尺）---
 enum { ACT_NONE, ACT_BITE_WIND, ACT_BITE, ACT_CHARGE_WIND, ACT_SWEEP, ACT_POUNCE_WIND, ACT_POUNCE, ACT_RECOVER, ACT_STUN, ACT_SPOT }
-enum { MOOD_ROAM, MOOD_SEARCH, MOOD_HUNT }
+enum { MOOD_ROAM, MOOD_SEARCH, MOOD_HUNT, MOOD_RETREAT }
 const SPOT_TIME := 0.7       # 發現人：停下來吼一聲這麼久，玩家還有這段時間跑
 const ATTACK_GAP := 1.2      # 收招之後至少隔這麼久才出下一招
 # 咬：近距離正前方。站定、頭往後仰、低吼，再咬下去
@@ -257,6 +257,8 @@ func _look(delta: float) -> void:
 		_hint = Vector3.INF
 
 func _mood() -> int:
+	if director.phase == Director.Phase.RETREAT and act == ACT_NONE and down_left <= 0.0:
+		return MOOD_RETREAT   # 跑起來要看得出是走掉不是衝過來（trex.gd 頭抬高、尾巴垂）
 	if act != ACT_NONE or _sees_now or _seen_left > 0.0:
 		return MOOD_HUNT
 	if _glimpse or _noise_left > 0.0 or (_hint != Vector3.INF and _hint_reached):
