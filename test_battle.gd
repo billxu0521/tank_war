@@ -1415,7 +1415,7 @@ func _case_boss() -> void:
 	# 自己的體力：一直跑會見底，見底只能走，回到一定量才能再跑
 	c.global_position = Vector3(0, 500, 0)
 	b.act = b.ACT_NONE
-	for i in 600:
+	for i in int(b.STAMINA_MAX / b.RUN_DRAIN * 60) + 60:   # 跑完滿體力再多一秒
 		b._move(-b.global_basis.z, true, 1.0 / 60.0)
 	_ck(b.exhausted and not b.running, "一直跑體力會見底，見底只能走")
 	for i in 30:
