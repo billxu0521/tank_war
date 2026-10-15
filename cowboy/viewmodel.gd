@@ -146,8 +146,9 @@ var _sway_t := 0.0
 ## 這一幀是不是在閉氣，給 HUD 和測試看
 var holding_breath := false
 ## 還沒回復掉的後座力（x = 上抬，y = 水平），單位弧度
-var _recoil_left := Vector2.ZERO
-var _recoil_time_left := 0.0
+## 每一發的後座力各走自己的曲線（Weapon.recoil_curve），連開時疊起來：
+## amount = (抬幾弧度, 偏幾弧度)、t = 開槍後幾秒、time = 整條曲線幾秒、keep = 不回正的比例、done = 已經轉了幾倍
+var _kicks: Array[Dictionary] = []
 ## 每開一輪裝填就 +1，讓上一輪的 await 醒來時知道自己已經過期
 var _reload_id := 0
 var _fire_queued := false   # 等槍好了自動射的那一發：裝填中按開火（槍回正後射），或 fire_buffer 開著時提早按的
@@ -319,12 +320,13 @@ func _update_spread(delta: float) -> void:
 ## 把剩下的量平均分配到剩下的時間裡。用 delta/剩餘時間 而不是 delta/總時間，
 ## 才會真的收斂到零——後者是指數逼近，永遠留一點殘值。
 func _update_recoil(delta: float) -> void:
-	if _recoil_time_left <= 0.0:
-		return
-	var step := _recoil_left * minf(delta / _recoil_time_left, 1.0)
-	_player.rotate_view(Vector2(step.y, step.x))
-	_recoil_left -= step
-	_recoil_time_left -= delta
+	for k in _kicks:
+		k.t += delta
+		var f := Weapon.recoil_curve(k.t / k.time, k.keep)
+		var step: Vector2 = k.amount * (f - k.done)
+		_player.rotate_view(Vector2(-step.y, -step.x))
+		k.done = f
+	_kicks = _kicks.filter(func(k: Dictionary) -> bool: return k.t < k.time)
 
 
 ## 武器搖擺：視角轉動時武器往反方向拖一點，移動時往側面帶一點。
@@ -616,9 +618,8 @@ func _apply_recoil() -> void:
 	var w := weapon
 	var up := deg_to_rad(w.recoil_pitch + randf_range(-w.recoil_pitch_random, w.recoil_pitch_random))
 	var side := deg_to_rad(randf_range(-w.recoil_yaw, w.recoil_yaw))
-	_player.rotate_view(Vector2(-side, -up))
-	_recoil_left += Vector2(up, side) * w.recoil_return_ratio
-	_recoil_time_left = w.recoil_return_time
+	_kicks.append({amount = Vector2(up, side), t = 0.0, time = maxf(w.recoil_return_time, 0.01),
+		keep = 1.0 - w.recoil_return_ratio, done = 0.0})
 
 
 func _update_anim(delta: float) -> void:
