@@ -137,6 +137,9 @@ for sx, name in ((-1, 'CowboyLegL'), (1, 'CowboyLegR')):
 # HandGrip / HandGripThumb / HandGripArm / HandSupport / HandLoad 由 hands.py 建：
 # 一整張連續的手套皮＋手指骨架，擺好握姿再烘成網格，原點已經放好
 import hands
+if os.environ.get('HANDS_TRIPO'):   # 試驗：Tripo 生成的裸手套進同一副骨架（blender/hands_tripo.py）
+    import hands_tripo
+    hands_tripo.install()
 hands.build([HAND, SHIRT])   # 裸手、捲起的襯衫袖子（照 Hunt 影片）
 
 
