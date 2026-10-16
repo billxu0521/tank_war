@@ -21,8 +21,12 @@ SRC = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs', '�
 MV_SPLAY = (-8, -2, 5, 12)   # 拍圖時四指微張的角度（Tripo 才分得出四根手指）
 VIEW_C, VIEW_SIZE = Vector((0, 0.04, 0)), 0.34   # 拍圖的取景：中心、正交寬度（手的空間，公尺）
 OUR_ARM_END = -0.372         # hands.py 的前臂末端 y
-FACES = 6000                 # cowboy.glb 每塊 8000 面的預算
-THIN = 0.82                  # 往骨頭中心線縮多少（1 = 不縮）
+FACES = 7500                 # cowboy.glb 每塊 8000 面的預算（袖子另外約 130 面）；6000 時手腕點太少，彎起來折出一個角
+SMOOTH = 4                   # 權重抹平幾輪
+SMOOTH_MESH = 10             # 網格抹平幾輪（Taubin）
+THIN = 0.85                  # 往骨頭中心線縮多少（1 = 不縮）
+THUMB_ROOT_THIN = 0.45       # 拇指根（掌骨那段、拇指根那團肉）：左輪腰射時就是它疊在手背前面描出黑線、左邊寬一塊
+THUMB_THIN = 0.55            # 露出來的拇指：太粗的話左輪腰射從鏡頭看平躺在手背上方，變一大片、描出 V 字黑線
 orig_build_rig = hands.build_rig
 orig_bend = hands.bend
 
@@ -153,9 +157,12 @@ def tripo_build_rig():
     # 前臂拉長到跟 hands.py 的一樣（拍圖只拍到手腕下一段）：不然遊戲裡伸向鏡頭的那頭會看到斷面
     y0 = -0.02
     yl = min(v.co.y for v in ob.data.vertices)
-    for v in ob.data.vertices:
+    D = y0 - yl                       # 原本手腕到末端多長
+    a_ = ((y0 - OUR_ARM_END) - D) / D ** 2
+    for v in ob.data.vertices:        # 越往手肘拉越多（d + a·d²）：手腕那裡斜率 1，不會在拉長的起點斷一截
         if v.co.y < y0:
-            v.co.y = y0 + (v.co.y - y0) * (OUR_ARM_END - y0) / (yl - y0)
+            d_ = y0 - v.co.y
+            v.co.y = y0 - (d_ + a_ * d_ * d_)
 
     # ---- 骨架的靜止姿勢改成拍圖的姿勢（網格就是照這個姿勢生成的）；彎曲量不用再扣靜止時的彎度 ----
     pose = {pb.name: pb.matrix.copy() for pb in arm.pose.bones}
@@ -188,6 +195,27 @@ def tripo_build_rig():
             k = k * k * (3 - 2 * k)
             gH.add([v.index], hl * k, 'REPLACE')
             gL.add([v.index], hl * (1 - k), 'REPLACE')
+    # 抹平：Tripo 照圖連我們手上的支撐線也學進去（每個指節一圈接縫，遊戲裡描成一排黑點），指尖還有雜點。
+    # 在算完權重之後做：抹平過的網格 Blender 的自動權重（bone heat）會算不出來
+    # Taubin 平滑（往鄰居平均推一下、再反向拉回一點，輪流做）：只抹細小的起伏，細長的手指不會整根變細
+    # （Blender 內建的拉普拉斯平滑會讓手指縮成皮包骨，關節那圈反而鼓成一節一節）
+    nb = [[] for _ in ob.data.vertices]
+    for e in ob.data.edges:
+        a_, b_ = e.vertices
+        nb[a_].append(b_)
+        nb[b_].append(a_)
+    V = np.array([tuple(v.co) for v in ob.data.vertices])
+    for _ in range(SMOOTH_MESH):
+        for f_ in (0.5, -0.53):
+            V = V + f_ * (np.array([V[n].mean(0) if n else V[i] for i, n in enumerate(nb)]) - V)
+    for v, p in zip(ob.data.vertices, V):
+        v.co = Vector(tuple(p))
+    # 權重抹平：每個點的權重跟鄰居平均幾輪，骨頭之間（尤其手腕）交接不會一圈就換過去，彎的地方才圓
+    vl.objects.active = ob
+    bpy.ops.object.mode_set(mode='WEIGHT_PAINT')
+    bpy.ops.object.vertex_group_smooth(group_select_mode='ALL', factor=0.5, repeat=SMOOTH)
+    bpy.ops.object.vertex_group_normalize_all(lock_active=False)
+    bpy.ops.object.mode_set(mode='OBJECT')
     # 瘦一圈：Tripo 做的手指、拇指、手腕比我們的粗兩成（遊戲裡左輪的手看起來大一號）。
     # 每個點往它的骨頭中心線拉近（各骨頭照權重混合），形狀不變
     segs = {b.name: (np.array(b.head_local), np.array(b.tail_local)) for b in arm.data.bones}
@@ -200,7 +228,10 @@ def tripo_build_rig():
             acc += g.weight * (h + u * (t - h))
             tot += g.weight
         if tot > 0:
-            v.co = Vector(tuple(p + (1 - THIN) * (acc / tot - p)))
+            wr = sum(g.weight for g in v.groups if gname[g.group] == 'Thumb_Proximal') / tot
+            wt = sum(g.weight for g in v.groups if gname[g.group] in ('Thumb_Intermediate', 'Thumb_Distal')) / tot
+            k = THIN + (THUMB_ROOT_THIN - THIN) * wr + (THUMB_THIN - THIN) * wt   # 拇指根縮最多、露出來的拇指縮一點
+            v.co = Vector(tuple(p + (1 - k) * (acc / tot - p)))
     dom = []
     for v in ob.data.vertices:
         gs = sorted(v.groups, key=lambda x: -x.weight)
