@@ -134,50 +134,60 @@ def inside(c, lo, hi):
 
 
 # ================= 左輪 =================
-# 原檔：槍管沿 +X、上 +Z、高度從 0 起。轉輪是最寬的那段（|y| > 0.06）
-o = load('revolver_v2 3d model.glb')   # 2026-10-16 Tripo CLI 重做（blender/revolver_v2_prep.py 減面擺正）；舊版原檔 revolver 3d model.glb
-P = verts(o)
-cyl = P[np.abs(P[:, 1]) > 0.065]
-cyl_c = Vector(((cyl[:, 0].min() + cyl[:, 0].max()) / 2, 0, (cyl[:, 2].min() + cyl[:, 2].max()) / 2))
-muzzle_x = P[:, 0].max()
+# 2026-10-16 重做：Tripo CLI 生成低面數左輪 → Tripo 智慧拆零件 → blender/revolver_parts_prep.py 補破口、擺正
+# （槍管 +X、上 +Z、高度從 0 起）。轉輪、擊錘直接用拆好的零件；槍身＋握把＋扳機一塊，退殼桿和裝填門照位置從槍身切
+# 舊版（一整塊、照位置挖轉輪）的原檔是 revolver 3d model.glb，git 歷史裡有那時的切法
+before = set(bpy.data.objects)
+bpy.ops.import_scene.gltf(filepath=os.path.join(SRC, 'revolver_parts.glb'))
+RP = {o.name: o for o in set(bpy.data.objects) - before}
+for o in RP.values():
+    o.data.transform(o.matrix_world)
+    o.matrix_world = Matrix()
+P = verts(RP['Cylinder'])
+cyl_c = Vector(((P[:, 0].min() + P[:, 0].max()) / 2, 0, (P[:, 2].min() + P[:, 2].max()) / 2))
+muzzle_x = verts(RP['Frame'])[:, 0].max()
 old_cyl = Vector(PIVOT['RevolverCylinder'])
 s = (0.213 - old_cyl.y) / (muzzle_x - cyl_c.x)   # 轉輪中心到槍口的距離跟舊的一樣
 # 擺正：+X → +Y（繞 Z 轉 90 度），再把轉輪中心搬到舊的轉輪轉軸
 m = Matrix.Translation(old_cyl) @ Matrix.Scale(s, 4) @ Matrix.Rotation(math.pi / 2, 4, 'Z') @ Matrix.Translation(-cyl_c)
-xform(o, m)
 # 準星頂對到舊的準星高度（weapons.py 的 SIGHT）：舉槍瞄準靠這條線，比轉輪位置要緊
-dz = 0.0655 - verts(o)[:, 2].max()
-xform(o, Matrix.Translation((0, 0, dz)))
+for o in RP.values():
+    xform(o, m)
+dz = 0.0655 - verts(RP['Frame'])[:, 2].max()
+for o in RP.values():
+    xform(o, Matrix.Translation((0, 0, dz)))
 REV = dict(PIVOT)
-for k in ('RevolverCylinder', 'RevolverHammer', 'RevolverGate', 'RevolverEjector'):   # 轉軸跟著網格一起下移，才會繞自己的根部轉
+for k in ('RevolverCylinder', 'RevolverGate', 'RevolverEjector'):   # 轉軸跟著網格一起下移，才會繞自己的根部轉
     REV[k] = (PIVOT[k][0], PIVOT[k][1], PIVOT[k][2] + dz)
 CZ = old_cyl.z + dz
-print('revolver scale %.3f, dz %.4f, cylinder z %.4f' % (s, dz, CZ))
-CYL_R = 0.022
+H = verts(RP['Hammer'])
+REV['RevolverHammer'] = (0, H[:, 1].min() + 0.75 * np.ptp(H[:, 1]), H[:, 2].min() + 0.2 * np.ptp(H[:, 2]))   # 擊錘的軸在下緣偏前
+print('revolver scale %.3f, dz %.4f, cylinder z %.4f, hammer pivot y %.4f z %.4f' % (s, dz, CZ, REV['RevolverHammer'][1], REV['RevolverHammer'][2]))
+
+# 轉輪、擊錘：拆好的零件整塊用
+for name, part in (('RevolverCylinder', 'Cylinder'), ('RevolverHammer', 'Hammer')):
+    split(RP[part], lambda c, n=name: n, lambda c: STEEL, {name: REV[name]})
+# 槍身＋握把＋扳機合一塊，握把木頭色先上好（split 的 color_of=None 保留材質）
+for part, mt in (('Frame', STEEL), ('Grip', WOOD), ('Trigger', STEEL)):
+    RP[part].data.materials.clear()
+    RP[part].data.materials.append(mt)
+bpy.ops.object.select_all(action='DESELECT')
+for part in ('Frame', 'Grip', 'Trigger'):
+    RP[part].select_set(True)
+bpy.context.view_layer.objects.active = RP['Frame']
+bpy.ops.object.join()
 
 
 def rev_part(c):
-    if abs(c.y - 0.030) < 0.024 and math.hypot(c.x, c.z - CZ) < CYL_R + 0.002 and abs(c.x) > 0.004:
-        return 'RevolverCylinder'
-    if c.y < -0.006 and c.z > CZ + 0.002:
-        return 'RevolverHammer'   # 只要擊錘本體：放寬會把轉輪後面那塊機匣一起帶著轉（審查第 2 條）
-    if inside(c, (-0.02, 0.07, -0.01), (0.02, 0.13, CZ + 0.012)):   # v2 的退殼桿到 0.125 就停，再過去是槍管下緣
-        return 'RevolverEjector'   # 槍管下面那根退殼桿
+    if inside(c, (-0.02, 0.07, -0.01), (0.02, 0.13, CZ + 0.004)):
+        return 'RevolverEjector'   # 槍管下面那根退殼桿（上緣貼著槍管，再高就切到槍管）
     if inside(c, (0.012, -0.002, CZ - 0.012), (0.03, 0.010, CZ + 0.004)):
         return 'RevolverGate'
     return 'Revolver'
 
 
-def rev_color(c):
-    return WOOD if c.z < CZ - 0.028 and c.y < -0.012 else STEEL
-
-
-split(o, rev_part, rev_color, {k: v for k, v in REV.items() if k.startswith('Revolver')},
-      cuts=[(1, -0.006), (2, CZ + 0.002)])   # 擊錘的兩條切線剖開：照面中心切的話擊錘一轉開，根部露出鋸齒（第二輪審查）
-# v2 的轉輪換成手工那顆（weapons.py）：Tripo 的轉輪跟機匣黏成一塊、減面又壓爛凹槽，挖出來一轉就露縫和尖刺。
-# 兩顆大小位置幾乎一樣（半徑 0.022、中心 y 0.030），挖掉的面直接丟
-bpy.data.objects.remove(bpy.data.objects['RevolverCylinder'])
-borrow('revolver.glb', {'RevolverRound', 'RevolverCylinder'})
+split(RP['Frame'], rev_part, None, {k: REV[k] for k in ('Revolver', 'RevolverEjector', 'RevolverGate')})
+borrow('revolver.glb', {'RevolverRound'})
 
 # ================= 散彈 =================
 # 原檔斜放（俯看偏了一個角度）：用主軸轉正。槍口在 +X。長度縮到跟舊的一樣（槍托尾 -0.39 到槍口 0.788）
