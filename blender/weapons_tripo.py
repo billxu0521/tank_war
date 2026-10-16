@@ -135,7 +135,7 @@ def inside(c, lo, hi):
 
 # ================= 左輪 =================
 # 原檔：槍管沿 +X、上 +Z、高度從 0 起。轉輪是最寬的那段（|y| > 0.06）
-o = load('revolver 3d model.glb')
+o = load('revolver_v2 3d model.glb')   # 2026-10-16 Tripo CLI 重做（blender/revolver_v2_prep.py 減面擺正）；舊版原檔 revolver 3d model.glb
 P = verts(o)
 cyl = P[np.abs(P[:, 1]) > 0.065]
 cyl_c = Vector(((cyl[:, 0].min() + cyl[:, 0].max()) / 2, 0, (cyl[:, 2].min() + cyl[:, 2].max()) / 2))
@@ -159,9 +159,9 @@ CYL_R = 0.022
 def rev_part(c):
     if abs(c.y - 0.030) < 0.024 and math.hypot(c.x, c.z - CZ) < CYL_R + 0.002 and abs(c.x) > 0.004:
         return 'RevolverCylinder'
-    if c.y < -0.016 and c.z > CZ + 0.014:
+    if c.y < -0.006 and c.z > CZ + 0.002:
         return 'RevolverHammer'   # 只要擊錘本體：放寬會把轉輪後面那塊機匣一起帶著轉（審查第 2 條）
-    if inside(c, (-0.02, 0.07, -0.01), (0.02, 0.175, CZ + 0.012)):
+    if inside(c, (-0.02, 0.07, -0.01), (0.02, 0.13, CZ + 0.012)):   # v2 的退殼桿到 0.125 就停，再過去是槍管下緣
         return 'RevolverEjector'   # 槍管下面那根退殼桿
     if inside(c, (0.012, -0.002, CZ - 0.012), (0.03, 0.010, CZ + 0.004)):
         return 'RevolverGate'
@@ -173,7 +173,7 @@ def rev_color(c):
 
 
 split(o, rev_part, rev_color, {k: v for k, v in REV.items() if k.startswith('Revolver')},
-      cuts=[(1, -0.016), (2, CZ + 0.014)])   # 擊錘的兩條切線剖開：照面中心切的話擊錘一轉開，根部露出鋸齒（第二輪審查）
+      cuts=[(1, -0.006), (2, CZ + 0.002)])   # 擊錘的兩條切線剖開：照面中心切的話擊錘一轉開，根部露出鋸齒（第二輪審查）
 borrow('revolver.glb', {'RevolverRound'})
 
 # ================= 散彈 =================
