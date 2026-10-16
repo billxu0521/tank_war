@@ -5,6 +5,7 @@ extends Node3D
 ## 脊椎、脖子、手臂跟著抬頭低頭轉。近戰、爬梯、翻越時放開手臂，讓動作自己的手臂出來（槍先藏起來）。
 ## 動畫手動推進（advance）：讓 AnimationPlayer 自己跑的話，它會在這裡之後才更新，把蓋上去的手臂洗掉。
 ## 蹲沒有動作，照舊由 cowboy.gd 把整個身體壓扁。
+## 站在地上時腳貼地（IK）：每隻腳往下打一條射線找地面，低的那隻腳要踩得到就把臀部放低，腿再彎到地面。
 
 const SCENE := preload("res://models/cowboy_anim.glb")
 enum { ACT_NONE, ACT_VAULT, ACT_LADDER, ACT_MELEE }
@@ -27,6 +28,9 @@ const RUN_PACE := 4.0
 ## 比這個快就播 run：遊戲的「走」是每秒 5 公尺，其實是小跑，慢走的動作加速到那裡太急
 ## 已經在跑要掉到 RUN_FROM - 0.3 才換回走：斜著貼牆走速度會卡在這附近，不留緩衝會一直切
 const RUN_FROM := 3.5
+## 腳的 IK：往上往下各找多遠的地面、臀部最多放低多少（公尺）
+const FOOT_REACH := 0.5
+const HIP_DROP := 0.4
 
 var skeleton: Skeleton3D
 var anim: AnimationPlayer
@@ -41,6 +45,11 @@ var _one_shot := &""    # 正在播的一次性動作（中彈、近戰），播
 var _last_act := ACT_NONE
 var _air := false
 var _speed := 0.0
+var _hips := -1
+var _legs := []         # 左右各 [大腿, 小腿, 腳] 的骨頭編號
+var _foot_h := [0.0, 0.0]   # 每隻腳底下的地面比角色腳底高多少（抹平過）
+var _ik_w := 0.0        # 腳貼地蓋多少（跳、爬、翻越時收掉）
+var _ray_skip: Array[RID] = []   # 射線不打自己的碰撞體
 
 
 func _ready() -> void:
@@ -60,6 +69,15 @@ func _ready() -> void:
 			_hold[i] = skeleton.get_bone_pose_rotation(i)
 			if b == &"Arm":
 				_hold_world[i] = skeleton.get_bone_global_pose(i).basis.get_rotation_quaternion()
+	_hips = skeleton.find_bone("mixamorig_Hips")
+	for side in ["Left", "Right"]:
+		_legs.append([skeleton.find_bone("mixamorig_%sUpLeg" % side), skeleton.find_bone("mixamorig_%sLeg" % side),
+			skeleton.find_bone("mixamorig_%sFoot" % side)])
+	var body := get_parent()
+	while body and not body is CollisionObject3D:
+		body = body.get_parent()
+	if body:
+		_ray_skip = [(body as CollisionObject3D).get_rid()]
 	for bone: StringName in BEND:
 		_bend[skeleton.find_bone(bone)] = BEND[bone] * (-1.0 if bone.ends_with("Arm") else 1.0)   # 負號＝手臂，乘端槍權重
 	anim.play(&"idle")
@@ -104,6 +122,7 @@ func update(delta: float, speed: float, vy: float, act: int, pitch: float) -> vo
 	else:
 		anim.speed_scale = 1.0
 	anim.advance(delta)
+	_feet(delta, not _air and (act == ACT_NONE or act == ACT_MELEE))
 
 	var free_arms := _one_shot == &"slash" or act == ACT_LADDER or act == ACT_VAULT
 	_hold_w = move_toward(_hold_w, 0.0 if free_arms else 1.0, delta * 6.0)
@@ -116,6 +135,70 @@ func update(delta: float, speed: float, vy: float, act: int, pitch: float) -> vo
 	for b: int in _bend:
 		var w: float = _bend[b]
 		_turn(b, pitch * (-w * _hold_w if w < 0.0 else w))
+
+
+## 腳貼地：先照動作量兩隻腳底下的地面，臀部放低到低的那隻踩得到，兩條腿再各自彎到地面。
+## 動作是在平地上做的（腳底＝角色原點那一層），所以每隻腳要往上（或往下）挪「地面比原點高多少」。
+## ponytail: 每個人每幀兩條射線、腳掌不跟著坡度轉；人多變慢就只做離鏡頭近的，腳掌陷進坡面再轉腳掌
+func _feet(delta: float, on_ground: bool) -> void:
+	_ik_w = move_toward(_ik_w, 1.0 if on_ground else 0.0, delta * 4.0)
+	if _ik_w == 0.0 or not is_inside_tree():
+		return
+	var xf := skeleton.global_transform
+	var up := global_transform.basis.y.normalized()
+	var base := global_position   # 角色腳底
+	var space := get_world_3d().direct_space_state
+	var k := 1.0 - exp(-15.0 * delta)
+	var feet := []
+	for i in 2:
+		var w: Vector3 = xf * skeleton.get_bone_global_pose(_legs[i][2]).origin
+		feet.append(w)
+		var flat := w - up * up.dot(w - base)
+		var q := PhysicsRayQueryParameters3D.create(flat + up * FOOT_REACH, flat - up * FOOT_REACH, 1, _ray_skip.duplicate())
+		var hit := space.intersect_ray(q)
+		for t in 3:   # 打到別的玩家、恐龍（大家都在第 1 層）：跳過它再打，腳不要踩到別人身上
+			if not hit or not hit.collider is CharacterBody3D:
+				break
+			q.exclude += [hit.rid]
+			hit = space.intersect_ray(q)
+		if hit and hit.collider is CharacterBody3D:
+			hit = {}
+		_foot_h[i] = lerpf(_foot_h[i], up.dot(hit.position - base) if hit else 0.0, k)
+	var h := [_foot_h[0] * _ik_w, _foot_h[1] * _ik_w]
+	var drop := clampf(minf(h[0], h[1]), -HIP_DROP, 0.0)
+	# Hips 上面還有一根轉過的 Root：往下要換到 Root 的座標
+	var root_b := skeleton.get_bone_global_pose(skeleton.get_bone_parent(_hips)).basis
+	skeleton.set_bone_pose_position(_hips, skeleton.get_bone_pose_position(_hips) + root_b.inverse() * (xf.basis.inverse() * (up * drop)))
+	var fwd := (xf.basis.inverse() * -global_transform.basis.z).normalized()
+	for i in 2:
+		_leg_ik(_legs[i], xf.affine_inverse() * (feet[i] + up * h[i]), fwd)
+
+
+## 兩節的腿彎到 t（骨架空間）：膝蓋留在原本彎的那一面，腳掌朝向不變
+func _leg_ik(bones: Array, t: Vector3, fwd: Vector3) -> void:
+	var a := skeleton.get_bone_global_pose(bones[0])
+	var b := skeleton.get_bone_global_pose(bones[1])
+	var c := skeleton.get_bone_global_pose(bones[2])
+	var la := a.origin.distance_to(b.origin)
+	var lb := b.origin.distance_to(c.origin)
+	var dir := (t - a.origin).normalized()
+	var d := clampf(a.origin.distance_to(t), absf(la - lb) + 0.001, la + lb - 0.001)
+	var bend := b.origin - a.origin
+	var pole := bend - dir * bend.dot(dir)
+	if pole.length_squared() < 1e-6:   # 腿打直：膝蓋往前彎
+		pole = fwd - dir * fwd.dot(dir)
+	pole = pole.normalized()
+	var cos_a := (la * la + d * d - lb * lb) / (2.0 * la * d)
+	var knee := a.origin + dir * (la * cos_a) + pole * (la * sqrt(maxf(0.0, 1.0 - cos_a * cos_a)))
+	var q1 := Quaternion(bend.normalized(), (knee - a.origin).normalized())
+	var c1 := a.origin + q1 * (c.origin - a.origin)
+	var q2 := Quaternion((c1 - knee).normalized(), (a.origin + dir * d - knee).normalized())
+	var na := q1 * a.basis.get_rotation_quaternion()
+	var nb := q2 * q1 * b.basis.get_rotation_quaternion()
+	var pa := skeleton.get_bone_global_pose(skeleton.get_bone_parent(bones[0])).basis.get_rotation_quaternion()
+	skeleton.set_bone_pose_rotation(bones[0], pa.inverse() * na)
+	skeleton.set_bone_pose_rotation(bones[1], na.inverse() * nb)
+	skeleton.set_bone_pose_rotation(bones[2], nb.inverse() * c.basis.get_rotation_quaternion())
 
 
 ## 把骨頭繞「角色的右手方向」轉 angle：換到父骨頭的座標再乘上去

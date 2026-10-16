@@ -77,6 +77,7 @@ func _process(_delta: float) -> bool:
 			# 子彈會飛，15 公尺要飛幾幀才到
 			if _frames == 3:
 				_check_melee_hits()
+				_check_foot_ik()
 				_check_pierce_flight()
 				_hp_before_shot = _dino.hp
 				_shooter._bot_shoot(_dino)
@@ -264,6 +265,64 @@ func _case_offline_dino() -> void:
 	_end(m)
 
 ## 牛仔的身分：自己的有相機和 HUD，別人的（含 bot）全關；打中別人要走 deal_damage
+## 腳貼地（IK）：別人的牛仔左腳底下墊一塊 15 公分的箱子，左腳要踩上去、右腳留在地上。
+## 箱子要等物理世界跑過一幀射線才打得到：這幀先量平地，第 3 幀（_check_foot_ik）再量
+var _ik_rig: CowboyRig
+var _ik_flat := Vector2.ZERO   # 平地時左、右腳踝的高度
+
+
+## 先讓腳貼地收斂，再把站立動作倒回第 0 格量（站著也會微微晃，不同時間量會差幾公分）
+func _ik_ankles() -> Vector2:
+	for i in 20:
+		_ik_rig.update(0.1, 0.0, 0.0, CowboyRig.ACT_NONE, 0.0)
+	_ik_rig.anim.seek(0.0, true)
+	_ik_rig.update(0.0, 0.0, 0.0, CowboyRig.ACT_NONE, 0.0)
+	var sk := _ik_rig.skeleton
+	var l := sk.global_transform * sk.get_bone_global_pose(sk.find_bone("mixamorig_LeftFoot")).origin
+	var r := sk.global_transform * sk.get_bone_global_pose(sk.find_bone("mixamorig_RightFoot")).origin
+	return Vector2(l.y, r.y)
+
+
+## m 是開槍那場（_start_gun_case）：多放一個牛仔 4 在靶場旁邊，不另開一場（另開的要跨幀才收，會擋到別項）
+func _case_foot_ik(m: Node) -> void:
+	m._add_player(m.COWBOY, 4)
+	var c: Node3D = m.players.get_node(^"4")
+	c.set_physics_process(false)   # 位置自己擺，不讓它掉
+	c.global_position = m._on_ground(Vector3(20, 0, 60))
+	_ik_rig = c._rig
+	var ex: Array[RID] = [c.get_rid()]
+	var sp := c.get_world_3d().direct_space_state
+	c.global_position = sp.intersect_ray(PhysicsRayQueryParameters3D.create(c.global_position + Vector3.UP * 30.0, c.global_position + Vector3.DOWN * 30.0, 1, ex)).position
+	_ik_flat = _ik_ankles()
+	var sk := _ik_rig.skeleton
+	var foot_l := sk.global_transform * sk.get_bone_global_pose(sk.find_bone("mixamorig_LeftFoot")).origin
+	var foot_r := sk.global_transform * sk.get_bone_global_pose(sk.find_bone("mixamorig_RightFoot")).origin
+	var right_side := Vector3(foot_r.x - foot_l.x, 0.0, foot_r.z - foot_l.z).normalized()
+	var ground_l: Vector3 = sp.intersect_ray(PhysicsRayQueryParameters3D.create(foot_l + Vector3.UP, foot_l + Vector3.DOWN, 1, ex)).position
+	var box := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	shape.shape = BoxShape3D.new()
+	(shape.shape as BoxShape3D).size = Vector3(0.3, 0.3, 0.3)
+	box.add_child(shape)
+	m.add_child(box)
+	# 靠右腳那邊的邊緣在左腳外 4 公分（兩腳只隔 8 公分）；頂面比左腳底下的地高 15 公分
+	box.global_position = ground_l - right_side * 0.11
+
+
+func _check_foot_ik() -> void:
+	var d := _ik_ankles() - _ik_flat
+	_ck(absf(d.x - 0.15) < 0.01 and absf(d.y) < 0.01, "腳貼地：左腳踩上 15 公分的箱子、右腳不動（左 %+.3f 右 %+.3f）" % [d.x, d.y])
+	# 人站到箱子上（原點抬高 15 公分）、右腳伸出箱外：臀部要放低，右腳才踩得到下面的地
+	var c := _ik_rig.get_parent().get_parent() as Node3D
+	c.global_position += Vector3.UP * 0.15
+	d = _ik_ankles() - _ik_flat
+	_ck(absf(d.x - 0.15) < 0.01 and absf(d.y) < 0.01, "腳貼地：站在箱子邊，右腳伸下去踩地（左 %+.3f 右 %+.3f）" % [d.x, d.y])
+	_ik_rig.update(0.1, 0.0, -4.0, CowboyRig.ACT_NONE, 0.0)
+	for i in 10:
+		_ik_rig.update(0.1, 0.0, -4.0, CowboyRig.ACT_NONE, 0.0)
+	_ck(_ik_rig._ik_w == 0.0, "跳起來、掉下去時腳不貼地")
+
+
 func _case_cowboy() -> void:
 	var m := _new_game()   # 主機是恐龍，牛仔 2、3 在主機上都是「別人的」
 	var c: Node = m.players.get_node(^"2")
@@ -2003,6 +2062,7 @@ func _start_gun_case() -> void:
 	back.remove_from_group(&"metal")
 	m.get_node(^"Arena").add_child(back)
 	back.global_position = Vector3(0, 400, -8)
+	_case_foot_ik(m)
 
 var _pierce_wall: StaticBody3D
 
