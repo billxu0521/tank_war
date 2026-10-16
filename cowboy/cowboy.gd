@@ -339,7 +339,7 @@ func _process(delta: float) -> void:
 		sync_act = CowboyRig.ACT_VAULT if vaulting else (CowboyRig.ACT_LADDER if _ladder else
 			(CowboyRig.ACT_MELEE if viewmodel._melee_cooldown > 0.0 else CowboyRig.ACT_NONE))
 	if _rig:
-		_rig.update(delta, _speed, _vy, sync_act, head.rotation.x, walk_speed, sprint_speed)
+		_rig.update(delta, _speed, _vy, sync_act, head.rotation.x)
 		if _held:
 			_held.visible = _rig.holding
 			if _rig.holding:

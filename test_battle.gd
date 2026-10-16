@@ -276,32 +276,37 @@ func _case_cowboy() -> void:
 	var head_y: float = rig.skeleton.get_bone_global_pose(rig.skeleton.find_bone("mixamorig_Head")).origin.y
 	head_y = rig.to_local(rig.skeleton.global_transform * Vector3(0, head_y, 0)).y
 	_ck(absf(head_y - 1.6) < 0.2, "頭的骨頭在 1.6 公尺上下（現在 %.2f）" % head_y)
-	rig.update(0.1, 0.0, 0.0, CowboyRig.ACT_NONE, 0.0, c.walk_speed, c.sprint_speed)
+	rig.update(0.1, 0.0, 0.0, CowboyRig.ACT_NONE, 0.0)
 	_ck(rig.anim.current_animation == &"idle", "站著要播 idle（現在 %s）" % rig.anim.current_animation)
-	rig.update(0.1, c.walk_speed, 0.0, CowboyRig.ACT_NONE, 0.0, c.walk_speed, c.sprint_speed)
-	_ck(rig.anim.current_animation == &"walk", "走路要播 walk")
-	rig.update(0.1, c.sprint_speed, 0.0, CowboyRig.ACT_NONE, 0.0, c.walk_speed, c.sprint_speed)
+	rig.update(0.1, 2.5, 0.0, CowboyRig.ACT_NONE, 0.0)
+	_ck(rig.anim.current_animation == &"walk", "舉槍、蹲著走要播 walk")
+	_ck(absf(rig.anim.speed_scale * CowboyRig.WALK_PACE - 2.5) < 0.01, "走的時候腳步跟得上移動（倍率 %.2f）" % rig.anim.speed_scale)
+	rig.update(0.1, c.walk_speed, 0.0, CowboyRig.ACT_NONE, 0.0)
+	_ck(rig.anim.current_animation == &"run", "一般走（其實是小跑）要播 run")
+	rig.update(0.1, c.sprint_speed, 0.0, CowboyRig.ACT_NONE, 0.0)
 	_ck(rig.anim.current_animation == &"run", "衝刺要播 run")
-	rig.update(0.1, 0.0, 0.0, CowboyRig.ACT_LADDER, 0.0, c.walk_speed, c.sprint_speed)
+	# 腳不滑：動作播的步速＝實際移動速度
+	_ck(absf(rig.anim.speed_scale * CowboyRig.RUN_PACE - c.sprint_speed) < 0.01, "衝刺時腳步跟得上移動（倍率 %.2f）" % rig.anim.speed_scale)
+	rig.update(0.1, 0.0, 0.0, CowboyRig.ACT_LADDER, 0.0)
 	_ck(rig.anim.current_animation == &"ladder", "爬梯要播 ladder")
 	for i in 30:
-		rig.update(0.1, 0.0, 0.0, CowboyRig.ACT_NONE, 0.0, c.walk_speed, c.sprint_speed)
+		rig.update(0.1, 0.0, 0.0, CowboyRig.ACT_NONE, 0.0)
 	var hand_flat: Vector3 = rig.hand("Right")
 	_ck(hand_flat.z < -0.1 and hand_flat.y > 0.8 and hand_flat.y < 1.4, "端槍：右手在身體前面、腰到胸的高度（現在 %s）" % hand_flat)
-	rig.update(0.1, 0.0, 0.0, CowboyRig.ACT_NONE, 0.6, c.walk_speed, c.sprint_speed)
+	rig.update(0.1, 0.0, 0.0, CowboyRig.ACT_NONE, 0.6)
 	_ck(rig.hand("Right").y > hand_flat.y + 0.1, "抬頭時拿槍的手要跟著抬")
 	_ck(rig.get_node_or_null(^"Held") != null, "別人的牛仔手上要有槍")
 	rig.hit()
 	_ck(rig.anim.current_animation == &"hit_to_body_01", "被打要播中彈")
 	for i in 20:   # 重擊按住一秒（冷卻比揮砍那段長）
-		rig.update(0.05, 0.0, 0.0, CowboyRig.ACT_MELEE, 0.0, c.walk_speed, c.sprint_speed)
+		rig.update(0.05, 0.0, 0.0, CowboyRig.ACT_MELEE, 0.0)
 	_ck(rig.anim.assigned_animation != &"slash", "重擊一次只揮一下，揮完不重播")
 	for i in 60:   # 掉很久：停在跳躍最後一格，不重播
-		rig.update(0.05, 0.0, -4.0, CowboyRig.ACT_NONE, 0.0, c.walk_speed, c.sprint_speed)
+		rig.update(0.05, 0.0, -4.0, CowboyRig.ACT_NONE, 0.0)
 	_ck(rig.anim.assigned_animation == &"jump" and not rig.anim.is_playing(), "掉很久要停在跳躍的最後一格")
-	rig.update(0.1, 0.0, 0.0, CowboyRig.ACT_LADDER, 0.0, c.walk_speed, c.sprint_speed)
+	rig.update(0.1, 0.0, 0.0, CowboyRig.ACT_LADDER, 0.0)
 	for i in 10:
-		rig.update(0.1, 0.0, 0.0, CowboyRig.ACT_LADDER, 0.0, c.walk_speed, c.sprint_speed)
+		rig.update(0.1, 0.0, 0.0, CowboyRig.ACT_LADDER, 0.0)
 	_ck(not rig.holding, "爬梯時手臂放開、槍收起來")
 	_ck(c.max_hp == 150, "牛仔 150 血（Hunt 的數字）")
 

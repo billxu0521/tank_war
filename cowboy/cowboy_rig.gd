@@ -21,6 +21,12 @@ const BLEND := 0.2
 ## 垂直速度超過這個算跳起來、掉下去；回到 AIR_OUT 以下才算落地（中間不換，跳到最高點速度是 0 也不會閃回站姿）
 const AIR_IN := 2.0
 const AIR_OUT := 0.5
+## 動作原地播時本來的步速（公尺/秒，腳踩地往後滑的速度，量出來的）。播放倍率＝實際速度÷這個，腳才不會在地上滑
+const WALK_PACE := 1.2
+const RUN_PACE := 4.0
+## 比這個快就播 run：遊戲的「走」是每秒 5 公尺，其實是小跑，慢走的動作加速到那裡太急
+## 已經在跑要掉到 RUN_FROM - 0.3 才換回走：斜著貼牆走速度會卡在這附近，不留緩衝會一直切
+const RUN_FROM := 3.5
 
 var skeleton: Skeleton3D
 var anim: AnimationPlayer
@@ -68,7 +74,7 @@ func hit() -> void:
 
 
 ## 每幀：speed 水平速度、vy 垂直速度（公尺/秒，呼叫的人先抹平），act 是 ACT_*，pitch 抬頭角度（弧度，正＝往上看）
-func update(delta: float, speed: float, vy: float, act: int, pitch: float, walk_speed: float, sprint_speed: float) -> void:
+func update(delta: float, speed: float, vy: float, act: int, pitch: float) -> void:
 	_speed = speed
 	if act == ACT_MELEE and _last_act != ACT_MELEE:   # 按下去那一刻揮一次；重擊冷卻比這段長，不會揮兩次
 		_one_shot = &"slash"
@@ -86,12 +92,12 @@ func update(delta: float, speed: float, vy: float, act: int, pitch: float, walk_
 		elif _air:
 			want = &"jump"   # 不循環：掉很久就停在最後一格
 			rate = 1.5
-		elif speed > (walk_speed + sprint_speed) * 0.5:
+		elif speed > RUN_FROM - (0.3 if anim.assigned_animation == &"run" else 0.0):
 			want = &"run"
-			rate = clampf(speed / sprint_speed, 0.6, 1.5)
+			rate = speed / RUN_PACE
 		elif speed > 0.3:
 			want = &"walk"
-			rate = clampf(speed / walk_speed, 0.6, 1.6)
+			rate = maxf(speed / WALK_PACE, 0.6)
 		if anim.assigned_animation != want:   # 比 assigned 不比 current：跳躍播完停住時 current 是空的，比 current 會一直重播
 			anim.play(want, BLEND)
 		anim.speed_scale = rate
