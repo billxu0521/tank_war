@@ -174,7 +174,10 @@ def rev_color(c):
 
 split(o, rev_part, rev_color, {k: v for k, v in REV.items() if k.startswith('Revolver')},
       cuts=[(1, -0.006), (2, CZ + 0.002)])   # 擊錘的兩條切線剖開：照面中心切的話擊錘一轉開，根部露出鋸齒（第二輪審查）
-borrow('revolver.glb', {'RevolverRound'})
+# v2 的轉輪換成手工那顆（weapons.py）：Tripo 的轉輪跟機匣黏成一塊、減面又壓爛凹槽，挖出來一轉就露縫和尖刺。
+# 兩顆大小位置幾乎一樣（半徑 0.022、中心 y 0.030），挖掉的面直接丟
+bpy.data.objects.remove(bpy.data.objects['RevolverCylinder'])
+borrow('revolver.glb', {'RevolverRound', 'RevolverCylinder'})
 
 # ================= 散彈 =================
 # 原檔斜放（俯看偏了一個角度）：用主軸轉正。槍口在 +X。長度縮到跟舊的一樣（槍托尾 -0.39 到槍口 0.788）

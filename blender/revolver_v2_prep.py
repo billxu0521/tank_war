@@ -5,7 +5,7 @@ import bpy, math, os, sys
 import numpy as np
 from mathutils import Matrix
 
-FACES = 6000   # 舊原檔 4862 面、切好的遊戲版 6148 面
+FACES = 12000   # 舊原檔 4862 面；6000 面時機匣碎成尖角，拿在手上的槍 1.2 萬面不貴
 src = sys.argv[sys.argv.index('--') + 1]
 out = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs', '素材', 'revolver_v2 3d model.glb')
 
