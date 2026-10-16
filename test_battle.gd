@@ -270,12 +270,39 @@ func _case_cowboy() -> void:
 	_ck(not c.is_local, "主機上的牛仔是遠端角色")
 	_ck(not c.get_node(^"HUD").visible and not c.viewmodel.visible, "遠端角色的 HUD 和槍都要藏起來")
 	_ck(c.get_node(^"Body").visible, "遠端角色要看得到身體")
-	var body_mesh: Mesh = c.get_node(^"Body").mesh
-	_ck(body_mesh != null and absf(body_mesh.get_aabb().end.y - 1.5) < 0.2,
-		"身體要換上 Blender 的牛仔（肩膀約 1.5 公尺高）")
-	var hat: Mesh = c.get_node(^"Head/Face").mesh
-	_ck(hat != null and absf(hat.get_aabb().end.y - 0.28) < 0.06,
-		"頭要換上牛仔的頭，帽頂在眼睛上方約 28 公分（現在 %s）" % (hat.get_aabb().end.y if hat else -1.0))
+	# 別人的牛仔是有骨架的模型（CowboyRig）：站著播 idle、走起來換 walk、跑換 run，手上有槍
+	var rig: CowboyRig = c._rig
+	_ck(rig != null and rig.skeleton.get_bone_count() > 20, "遠端角色要換上有骨架的牛仔")
+	var head_y: float = rig.skeleton.get_bone_global_pose(rig.skeleton.find_bone("mixamorig_Head")).origin.y
+	head_y = rig.to_local(rig.skeleton.global_transform * Vector3(0, head_y, 0)).y
+	_ck(absf(head_y - 1.6) < 0.2, "頭的骨頭在 1.6 公尺上下（現在 %.2f）" % head_y)
+	rig.update(0.1, 0.0, 0.0, CowboyRig.ACT_NONE, 0.0, c.walk_speed, c.sprint_speed)
+	_ck(rig.anim.current_animation == &"idle", "站著要播 idle（現在 %s）" % rig.anim.current_animation)
+	rig.update(0.1, c.walk_speed, 0.0, CowboyRig.ACT_NONE, 0.0, c.walk_speed, c.sprint_speed)
+	_ck(rig.anim.current_animation == &"walk", "走路要播 walk")
+	rig.update(0.1, c.sprint_speed, 0.0, CowboyRig.ACT_NONE, 0.0, c.walk_speed, c.sprint_speed)
+	_ck(rig.anim.current_animation == &"run", "衝刺要播 run")
+	rig.update(0.1, 0.0, 0.0, CowboyRig.ACT_LADDER, 0.0, c.walk_speed, c.sprint_speed)
+	_ck(rig.anim.current_animation == &"ladder", "爬梯要播 ladder")
+	for i in 30:
+		rig.update(0.1, 0.0, 0.0, CowboyRig.ACT_NONE, 0.0, c.walk_speed, c.sprint_speed)
+	var hand_flat: Vector3 = rig.hand("Right")
+	_ck(hand_flat.z < -0.1 and hand_flat.y > 0.8 and hand_flat.y < 1.4, "端槍：右手在身體前面、腰到胸的高度（現在 %s）" % hand_flat)
+	rig.update(0.1, 0.0, 0.0, CowboyRig.ACT_NONE, 0.6, c.walk_speed, c.sprint_speed)
+	_ck(rig.hand("Right").y > hand_flat.y + 0.1, "抬頭時拿槍的手要跟著抬")
+	_ck(rig.get_node_or_null(^"Held") != null, "別人的牛仔手上要有槍")
+	rig.hit()
+	_ck(rig.anim.current_animation == &"hit_to_body_01", "被打要播中彈")
+	for i in 20:   # 重擊按住一秒（冷卻比揮砍那段長）
+		rig.update(0.05, 0.0, 0.0, CowboyRig.ACT_MELEE, 0.0, c.walk_speed, c.sprint_speed)
+	_ck(rig.anim.assigned_animation != &"slash", "重擊一次只揮一下，揮完不重播")
+	for i in 60:   # 掉很久：停在跳躍最後一格，不重播
+		rig.update(0.05, 0.0, -4.0, CowboyRig.ACT_NONE, 0.0, c.walk_speed, c.sprint_speed)
+	_ck(rig.anim.assigned_animation == &"jump" and not rig.anim.is_playing(), "掉很久要停在跳躍的最後一格")
+	rig.update(0.1, 0.0, 0.0, CowboyRig.ACT_LADDER, 0.0, c.walk_speed, c.sprint_speed)
+	for i in 10:
+		rig.update(0.1, 0.0, 0.0, CowboyRig.ACT_LADDER, 0.0, c.walk_speed, c.sprint_speed)
+	_ck(not rig.holding, "爬梯時手臂放開、槍收起來")
 	_ck(c.max_hp == 150, "牛仔 150 血（Hunt 的數字）")
 
 	# 主機上呼叫 deal_damage 直接扣血，而且記得是誰打的
