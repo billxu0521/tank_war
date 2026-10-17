@@ -469,7 +469,10 @@ func _start_dedicated() -> void:
 		return
 	multiplayer.multiplayer_peer = peer
 	_dedicated = true
-	Engine.max_fps = 120   # 沒畫面也會一直空轉：不鎖的話吃滿一顆處理器，跟物理一樣每秒 120 次就夠
+	# 物理 120Hz 只是為了畫面順（README「為什麼物理跑 120Hz」），伺服器沒畫面：60 次就夠，處理器省一半。
+	# 測試站（1 顆處理器）跑 120 次算不完，遊戲時間會變慢（2026-10-18 測試站回報）
+	Engine.physics_ticks_per_second = 60
+	Engine.max_fps = 60   # 沒畫面也會一直空轉：不鎖的話吃滿一顆處理器，跟物理一樣次數就夠
 	_enter_game("專用伺服器")
 	_apply_rules()
 	if RULES[rules].dino:
