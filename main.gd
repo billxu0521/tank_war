@@ -154,6 +154,7 @@ func _ready() -> void:
 	_add_report_button()
 	_flatten_models()
 	_use_cjk_font()
+	_add_controls_button()
 	_ips = _local_ips()
 	_load_saved_ips()
 	_load_settings()
@@ -249,6 +250,10 @@ func _unhandled_input(e: InputEvent) -> void:
 	if lobby.visible:
 		return
 	if e is InputEventKey and e.pressed and e.keycode == KEY_ESCAPE:
+		var ctl: Window = menu.get_node_or_null(^"ControlsDialog")
+		if ctl and ctl.visible:   # 操作說明開著：Esc 只關它，停在選單
+			ctl.hide()
+			return
 		_set_menu(not menu.visible)
 	elif e is InputEventMouseButton and e.pressed and not menu.visible and not result.visible:
 		Fighter.lock_mouse()  # 點畫面重新鎖回滑鼠
@@ -264,6 +269,55 @@ func _add_report_button() -> void:
 	var box := $UI/Root/Menu/Box
 	box.add_child(b)
 	box.move_child(b, $UI/Root/Menu/Box/QuitBtn.get_index())
+
+## Esc 選單裡的「操作說明」，放在「繼續遊戲」下面；按了彈出鍵盤／手把對照表。
+## 按鍵照 project.godot 的輸入設定寫，改了按鍵要回來改這張表
+const CONTROLS := [
+	["移動", "WASD", "左搖桿"],
+	["看", "滑鼠", "右搖桿"],
+	["開槍", "左鍵", "RT"],
+	["舉槍", "右鍵（選單可改成按一下切換）", "LT"],
+	["換彈", "R", "X"],
+	["換子彈（輕／中／重）", "B", "十字鍵右"],
+	["換槍", "1 左輪　2 散彈　3 步槍　4 炸彈長矛　或滾輪", "LB／RB"],
+	["槍托", "V（按住＝重擊）", "按右搖桿"],
+	["炸藥", "G：按住點燃、放開丟（太久會在手上爆）", "十字鍵下"],
+	["跑", "左 Shift", "按左搖桿"],
+	["閉氣（舉槍時）", "左 Shift", "按左搖桿"],
+	["蹲", "C 切換／左 Ctrl 按住", "Y 切換／B 按住"],
+	["跳", "Space", "A"],
+	["翻越", "往前頂著矮牆、柵欄按 Space", "往前推＋A"],
+	["互動", "F：開門、爬梯子、補給箱", "十字鍵上"],
+	["梯子上", "W／S 上下，Space 或 F 放手", "左搖桿上下，A 或十字鍵上放手"],
+	["選單", "Esc", "—"],
+	["回報問題", "F8", "—"],
+	["像素風開關", "F9", "—"],
+]
+
+func _add_controls_button() -> void:
+	var dlg := AcceptDialog.new()
+	dlg.name = "ControlsDialog"
+	dlg.title = "操作說明"
+	dlg.ok_button_text = "關閉"
+	var t := RichTextLabel.new()
+	t.bbcode_enabled = true
+	t.fit_content = true
+	t.custom_minimum_size = Vector2(760, 0)
+	var rows := "[table=3][cell][color=#e8b04a]動作[/color]　[/cell][cell][color=#e8b04a]鍵盤滑鼠[/color]　[/cell][cell][color=#e8b04a]手把[/color][/cell]"
+	for r: Array in CONTROLS:
+		rows += "[cell]%s　[/cell][cell]%s　[/cell][cell]%s[/cell]" % r
+	t.text = rows + "[/table]\n\n[color=#bbbbbb]沒有準心，靠槍身瞄；舉槍會晃，閉氣穩住但吃體力。跑起來會自動站起來、放下槍。[/color]"
+	dlg.add_child(t)
+	dlg.theme = $UI/Root.theme   # 視窗不吃 UI 的字型，要自己帶
+	menu.add_child(dlg)
+	menu.visibility_changed.connect(func() -> void: if not menu.visible: dlg.hide())   # 視窗不會跟著選單藏：一局結束、回大廳時對話框會擋住畫面
+	var b := Button.new()
+	b.name = "ControlsBtn"
+	b.text = "操作說明"
+	b.pressed.connect(dlg.popup_centered)
+	var box := $UI/Root/Menu/Box
+	box.add_child(b)
+	box.move_child(b, $UI/Root/Menu/Box/ResumeBtn.get_index() + 1)
 
 ## 存回報檔、複製到剪貼簿，告訴玩家貼到哪裡。回傳存檔路徑（測試用）
 func report_bug() -> String:
