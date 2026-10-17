@@ -469,7 +469,10 @@ func _start_dedicated() -> void:
 		return
 	multiplayer.multiplayer_peer = peer
 	_dedicated = true
-	Engine.max_fps = 120   # 沒畫面也會一直空轉：不鎖的話吃滿一顆處理器，跟物理一樣每秒 120 次就夠
+	# 物理 120Hz 只是為了畫面順（README「為什麼物理跑 120Hz」），伺服器沒畫面：60 次就夠，處理器省一半。
+	# 測試站（1 顆處理器）跑 120 次算不完，遊戲時間會變慢（2026-10-18 測試站回報）
+	Engine.physics_ticks_per_second = 60
+	Engine.max_fps = 60   # 沒畫面也會一直空轉：不鎖的話吃滿一顆處理器，跟物理一樣次數就夠
 	_enter_game("專用伺服器")
 	_apply_rules()
 	if RULES[rules].dino:
@@ -1058,9 +1061,10 @@ func apply_damage_request(shooter_id: int, target: Node, amount: int, from: Vect
 ## 勝負只有兩種：有人帶蛋撤離（那個人贏），或時間到（恐龍贏）。
 ## 「打死恐龍」不算贏，不然三個牛仔會理性地先聯手弄死恐龍，跟互相競爭矛盾。
 func _on_died(killer: Node, who: Node) -> void:
-	if _over:
-		return
 	var as_dino := who.is_in_group(&"dino")
+	if _over:   # 結束畫面時才死：不算勝負、不扣次數，但要排進重生單，下一局才生得回來（不然卡在觀戰）
+		_queue_respawn(who, as_dino)
+		return
 	var id := who.name.to_int()
 	_died_at[id] = [Time.get_ticks_msec(), who.global_position]   # 同歸於盡用（request_damage）
 	if not as_dino:
@@ -1078,6 +1082,9 @@ func _on_died(killer: Node, who: Node) -> void:
 			return
 		_lives[id] = int(_lives[id]) - 1
 		_broadcast_lives()
+	_queue_respawn(who, as_dino)
+
+func _queue_respawn(who: Node, as_dino: bool) -> void:
 	_respawn_queue.append({
 		"id": who.name.to_int(),
 		"dino": as_dino,
@@ -1175,6 +1182,7 @@ func _physics_process(delta: float) -> void:
 ## 每個牛仔重生（刪掉重生，客戶端的位置才會跟著換），出局的人也回來；boss 回到離大家最遠的地方
 func _new_round() -> void:
 	_over = false
+	var pending := _respawn_queue.duplicate()   # 一局結束時剛死、還在等重生的人（_enter_game 會清掉這張單）
 	_enter_game("專用伺服器" if _dedicated else "新的一局")
 	egg.extract = 0.0
 	_cowboys = 0
@@ -1200,6 +1208,14 @@ func _new_round() -> void:
 	for id: int in comeback:
 		if Fighter.is_bot_id(id) or id == 1 and not _dedicated or multiplayer.get_peers().has(id):
 			_add_player(COWBOY, id).set(&"bot", comeback[id])
+	# 等重生的人（含結束畫面時才死的）也要生回來：以前漏掉，那些人卡在觀戰，要回大廳重進（0.8.10 測試站回報）
+	for r: Dictionary in pending:
+		var id: int = r["id"]
+		if not players.has_node(NodePath(str(id))) and (Fighter.is_bot_id(id) or id == 1 and not _dedicated or multiplayer.get_peers().has(id)):
+			var q := _add_player(DINO if r["dino"] else COWBOY, id)
+			q.set(&"bot", r["bot"])
+			if r["walker"]:
+				_make_walker(q, r["patrol"][0], r["patrol"][1])
 	if RULES[rules].dino:
 		if boss == null:
 			spawn_boss()
@@ -1215,6 +1231,7 @@ func _announce(msg: String) -> void:
 	status.text = msg
 	result.hide()
 	_had_me = false
+	_dead_ms = -1   # 不然死過的人在新角色同步到之前會閃一下「重生倒數」
 	if not lobby.visible:
 		Fighter.lock_mouse()
 
