@@ -80,7 +80,8 @@ var _to_b := true
 ## bot 進這個距離才開槍。手槍腰射散布 4 度，再遠打人形靶就是浪費子彈。
 @export var bot_fire_range := 40.0
 
-## 別人眼中的牛仔：Tripo 生成、blender/cowboy_tripo.py 轉成四塊（2026-10-11）。COWBOY_OLD=1 啟動切回程式建的舊版（cowboy.glb）
+## 自己低頭看到的靴子、屍體：Tripo 生成、blender/cowboy_tripo.py 轉成四塊（2026-10-11）。COWBOY_OLD=1 啟動切回程式建的舊版（cowboy.glb）
+## 別人眼中的牛仔是有骨架會動的那個（CowboyRig，2026-10-16）；COWBOY_OLD=1 也一起切回硬塊
 const MODEL_NEW := preload("res://models/cowboy_tripo.glb")
 const MODEL_OLD := preload("res://models/cowboy.glb")
 
@@ -108,6 +109,8 @@ var is_local := true
 ## 唯一同步出去的操作狀態。遠端拿它重跑 `_apply_crouch`，膠囊、碰撞、
 ## 頭高三者一次到位，不用再各同步一份。
 var sync_crouching := false
+## 正在做什麼別人看不出來的事（CowboyRig.ACT_*：翻越、爬梯、近戰），同步出去，別人畫面上才播得出對的動作
+var sync_act := 0
 ## 手上拿哪把槍（Viewmodel 的 weapon_scenes 第幾個）。同步出去，別人看得到你換槍
 var gun := 0:
 	set(v):
@@ -119,6 +122,8 @@ var gun := 0:
 const HAND_R := Vector3(0.116, -0.296, -0.352)
 const HAND_L := Vector3(0.057, -0.223, -0.521)
 var _held: Node3D
+## 有骨架的身體（別人的牛仔才有）；null＝用硬塊（自己、COWBOY_OLD）
+var _rig: CowboyRig
 
 var stamina: float
 ## 大於 0 的時候體力不回復
@@ -141,6 +146,8 @@ const WALKER_SPEED := 3.0   # 移動標靶走多快（比人慢一點，練提�
 var _stride := 0.0
 var _swing := 0.0
 var _last_pos := Vector3.ZERO
+var _speed := 0.0   # 上一幀量到的水平、垂直速度（公尺/秒），骨架動畫挑動作用
+var _vy := 0.0
 const STRIDE_RATE := 3.0          # 每走一公尺相位走多少，越大步子越碎
 ## 自己的腿往前挪多少：腿在鏡頭正下方的話，低頭只看得到兩個褲管的頂端；
 ## 往前一點才看得到褲管和靴子的正面
@@ -219,6 +226,8 @@ var _kick := Vector2.ZERO    # 鏡頭被打歪多少（弧度：x 上下、y 左
 
 ## 被打了：畫面四周閃紅、準心外圍標出打你的方向、鏡頭抖一下（傷越重抖越大）
 func _on_hurt(amount: int, from: Vector3) -> void:
+	if _rig:
+		_rig.hit()
 	if not is_local or _hurt_hud == null:
 		return
 	var frac := float(amount) / max_hp
@@ -245,6 +254,10 @@ func _swing_legs(delta: float) -> void:
 	var moved := global_position - _last_pos
 	_last_pos = global_position
 	var speed := Vector2(moved.x, moved.z).length() / maxf(delta, 0.0001)
+	# 抹平再給骨架挑動作：主機收別人的位置一秒 40 次、畫面 60 幀以上，有些幀量到 0，不抹會在站和走之間一直切
+	var k := 1.0 - exp(-10.0 * delta)
+	_speed = lerpf(_speed, speed if speed <= 20.0 else 0.0, k)
+	_vy = lerpf(_vy, moved.y / maxf(delta, 0.0001) if absf(moved.y) < 1.0 else 0.0, k)   # 一幀動一公尺以上是瞬移
 	if speed > 20.0 or vaulting or _ladder:
 		speed = 0.0   # 瞬移（重生、爬到頂）和翻越、爬梯子時不擺
 	_stride += speed * delta * STRIDE_RATE
@@ -257,6 +270,12 @@ func _swing_legs(delta: float) -> void:
 ## 把牛仔模型換到身體和頭上。
 ## 頭掛在 Head 底下，跟著上下看的角度轉，別人看得出你在看哪裡。
 func _skin() -> void:
+	var g := _match()
+	if not is_local and OS.get_environment("COWBOY_OLD") == "" and not (g and g.get(&"_dedicated")):   # 專用伺服器沒人看
+		_rig = CowboyRig.new()
+		_rig.name = &"Rig"
+		_body.add_child(_rig)
+		return
 	var src := (MODEL_OLD if OS.get_environment("COWBOY_OLD") != "" else MODEL_NEW).instantiate()
 	# 自己看自己的腿只畫靴子（整條腿從正上方看只看得到褲管頂端）
 	var leg := "Shin" if is_local else "Leg"
@@ -272,7 +291,7 @@ func _show_gun() -> void:
 	if _held:
 		_held.queue_free()
 		_held = null
-	if _arms.mesh == null or gun < 0 or gun >= viewmodel.weapon_scenes.size():
+	if (_arms.mesh == null and _rig == null) or gun < 0 or gun >= viewmodel.weapon_scenes.size():
 		return   # 舊牛仔沒有端槍的手臂
 	var w := viewmodel.weapon_scenes[gun].instantiate()
 	w.use_tripo()
@@ -295,8 +314,11 @@ func _show_gun() -> void:
 	_held.name = &"Held"
 	_held.add_child(model)
 	model.position = -Vector3(box.get_center().x, box.get_center().y, box.end.z - box.size.z * 0.3)
-	_arms.add_child(_held)
-	_held.transform = Transform3D(Basis.looking_at(HAND_L - HAND_R), HAND_R)
+	if _rig:
+		_rig.add_child(_held)   # 位置每幀照手的骨頭擺（_process）
+	else:
+		_arms.add_child(_held)
+		_held.transform = Transform3D(Basis.looking_at(HAND_L - HAND_R), HAND_R)
 
 
 ## 別人的角色：把所有「這是我的畫面」的東西關掉。少關一項的症狀都很難查
@@ -313,6 +335,15 @@ func _become_remote() -> void:
 func _process(delta: float) -> void:
 	_swing_legs(delta)
 	_arms.rotation.x = head.rotation.x   # 端槍的手臂跟著上下看
+	if multiplayer.has_multiplayer_peer() and is_multiplayer_authority():
+		sync_act = CowboyRig.ACT_VAULT if vaulting else (CowboyRig.ACT_LADDER if _ladder else
+			(CowboyRig.ACT_MELEE if viewmodel._melee_cooldown > 0.0 else CowboyRig.ACT_NONE))
+	if _rig:
+		_rig.update(delta, _speed, _vy, sync_act, head.rotation.x)
+		if _held:
+			_held.visible = _rig.holding
+			if _rig.holding:
+				_held.transform = _rig.gun_transform()
 	if not is_local:
 		# 遠端角色拿同步過來的蹲下狀態重跑一次姿勢
 		# ponytail: 腳步聲和落地聲沒有同步，聽不到別人走路。要做就把 AudioStreamPlayer
