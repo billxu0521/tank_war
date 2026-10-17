@@ -103,6 +103,8 @@ const RULES := {
 		desc = "先把蛋帶進撤離區的人贏，一局四分鐘。場上有一隻恐龍，死了五秒後重生（不限次數）。"},
 	&"deathmatch": {name = "死鬥", lives = 3, dino = false, egg = false, timer = false,
 		desc = "沒有恐龍、沒有蛋。每個人可以重生 3 次，用完就出局，最後剩下的一個人獲勝。"},
+	&"versus": {name = "對抗", lives = -1, dino = true, egg = true, timer = true,
+		desc = "搶蛋，但尼諾拉由玩家操作（勾「我想當恐龍」的人每局抽一個，沒人勾就是電腦）。帶蛋撤離的牛仔贏，時間到沒人撤離就是尼諾拉贏。"},
 	&"dino_duel": {name = "恐龍決鬥", lives = 5, dino = true, egg = false, timer = false,
 		desc = "所有牛仔合力打一隻恐龍，打死牠大家一起贏。每人可以重生 5 次，全部出局就是恐龍贏。小心，打到隊友一樣會扣血。"},
 }
@@ -176,10 +178,13 @@ func _ready() -> void:
 	if mode != &"range":
 		_build_exits()
 	_add_period_picker()
+	_add_dino_volunteer()
 	Period.apply(self, period)
 	multiplayer.peer_connected.connect(_spawn)
 	multiplayer.peer_disconnected.connect(_despawn)
-	multiplayer.connected_to_server.connect(func() -> void: status.text = "已連線。WASD 移動，滑鼠瞄準，左鍵開槍，右鍵舉槍")
+	multiplayer.connected_to_server.connect(func() -> void:
+		status.text = "已連線。WASD 移動，滑鼠瞄準，左鍵開槍，右鍵舉槍"
+		_volunteer.rpc_id(1, want_dino))
 	multiplayer.connection_failed.connect(
 		func() -> void: _to_lobby.call_deferred("連線失敗，檢查 IP 和防火牆"))
 	multiplayer.server_disconnected.connect(
@@ -331,7 +336,7 @@ func report_bug() -> String:
 func _game_state() -> String:
 	if lobby.visible:
 		return "在大廳"
-	var me := players.get_node_or_null(NodePath(str(multiplayer.get_unique_id())))
+	var me := _me()
 	var role := "觀戰" if me == null else ("恐龍" if me.is_in_group(&"dino") else "牛仔")
 	var where := "單人打恐龍" if _solo_dino else ("沙盒" if _sandbox else ("靶場" if mode == &"range" else String(RULES.get(rules, {}).get("name", rules))))
 	var net := "離線" if _offline else ("專用伺服器" if _dedicated else ("主機" if multiplayer.is_server() else "連線中（編號 %d）" % multiplayer.get_unique_id()))
@@ -411,6 +416,8 @@ func _to_lobby(msg: String) -> void:
 	for p in players.get_children():
 		p.free()  # 用 free 不用 queue_free，不然馬上重開會撞到同名節點
 	_cowboys = 0
+	_volunteers.clear()
+	_pilot_picked = false
 	_over = false
 	_offline = false
 	_sandbox = false
@@ -518,6 +525,75 @@ func _add_period_picker() -> void:
 	var lobby_box := $UI/Root/Lobby
 	lobby_box.add_child(row)
 	lobby_box.move_child(row, $UI/Root/Lobby/OnlineLabel.get_index())
+
+## 大廳「我想當恐龍」：對抗模式每局從勾的人裡抽一個操作尼諾拉（docs/規劃/2026-10-18-對抗模式.md）
+var want_dino := false
+var _volunteers := {}   # 主機：想當恐龍的人（編號 -> true）
+var _pilot_picked := false   # 這局已經抽過了（make_pilot 設、_new_round 和回大廳清）
+
+func _add_dino_volunteer() -> void:
+	var c := CheckBox.new()
+	c.name = &"DinoVolunteer"
+	c.text = "我想當恐龍（對抗模式）"
+	c.toggled.connect(func(on: bool) -> void: want_dino = on)
+	var lobby_box := $UI/Root/Lobby
+	lobby_box.add_child(c)
+	lobby_box.move_child(c, $UI/Root/Lobby/ModeRow.get_index() + 1)
+
+## 連上之後告訴主機自己想不想當恐龍
+@rpc("any_peer", "call_remote", "reliable")
+func _volunteer(on: bool) -> void:
+	if not multiplayer.is_server():
+		return
+	var id := multiplayer.get_remote_sender_id()
+	if on:
+		_volunteers[id] = true
+	else:
+		_volunteers.erase(id)
+
+func _boss() -> Node:
+	return players.get_node_or_null(NodePath(str(BOSS_ID)))
+
+## 對抗模式：尼諾拉沒人操作、又有人想當，就從想當的人裡抽一個（主機每幀問一次，很便宜）
+func _pick_pilot() -> void:
+	var b := _boss()
+	# 一局只抽一次：駕駛中途斷線就讓電腦接手到這局結束，不然會把別人正在玩的牛仔（和身上的蛋）收掉。
+	# 沙盒、單人打恐龍、靶場的 rules 還是大廳選的那個，不能誤抽
+	if rules != &"versus" or b == null or b.pilot != 0 or _pilot_picked or _sandbox or mode == &"range":
+		return
+	var pool: Array = _volunteers.keys().filter(func(id: int) -> bool: return multiplayer.get_peers().has(id))
+	if want_dino and not _dedicated:   # 開房的人自己勾的（他不用送 _volunteer）
+		pool.append(1)
+	if not pool.is_empty():
+		make_pilot(pool.pick_random())
+
+## 讓 id 操作尼諾拉：他的牛仔收掉、不排重生
+func make_pilot(id: int) -> void:
+	var b := _boss()
+	if b == null:
+		return
+	b.pilot = id
+	_pilot_picked = true
+	var p := players.get_node_or_null(NodePath(str(id)))
+	if p:
+		players.remove_child(p)
+		p.queue_free()
+		_cowboys -= 1
+	_respawn_queue = _respawn_queue.filter(func(r: Dictionary) -> bool: return int(r["id"]) != id)
+	var msg := "你是尼諾拉！左鍵 咬　右鍵 撲擊　Space 蓄力甩尾　Shift 跑"
+	if id == multiplayer.get_unique_id():
+		_announce(msg)
+	else:
+		_announce.rpc_id(id, msg)
+
+## 自己的角色：牛仔，或是自己正在操作的尼諾拉
+func _me() -> Node:
+	var me := players.get_node_or_null(NodePath(str(multiplayer.get_unique_id())))
+	if me == null:
+		var b := _boss()
+		if b and b.pilot != 0 and b.pilot == multiplayer.get_unique_id():
+			return b
+	return me
 
 ## 主機告訴連進來的人這局是什麼時段
 @rpc("authority", "call_remote", "reliable")
@@ -1007,6 +1083,10 @@ func _add_player(scene: PackedScene, id: int) -> Node3D:
 func _despawn(id: int) -> void:
 	if not multiplayer.is_server():
 		return
+	_volunteers.erase(id)
+	var b := _boss()
+	if b and b.pilot == id:   # 操作尼諾拉的人走了：電腦接手
+		b.pilot = 0
 	var p := players.get_node_or_null(NodePath(str(id)))
 	if p:
 		p.queue_free()
@@ -1163,6 +1243,7 @@ func _physics_process(delta: float) -> void:
 	if lobby.visible or _over or not multiplayer.is_server():
 		return
 	_respawn_step()
+	_pick_pilot()
 	if _sandbox:
 		# 沒有時間限制，但重生是用剩餘秒數排的，時間還是要走（不會歸零結束）
 		_time_left -= delta
@@ -1177,7 +1258,7 @@ func _physics_process(delta: float) -> void:
 	if _time_left <= 0.0:
 		_over = true
 		_next_round = NEXT_ROUND_DELAY
-		_finish.rpc("時間到，沒有人把蛋帶走")
+		_finish.rpc("時間到，尼諾拉守住了蛋，尼諾拉獲勝！" if rules == &"versus" else "時間到，沒有人把蛋帶走")
 
 ## 開下一局（開房的人按「重開一局」、或專用伺服器自動）：時間和蛋歸位、重生次數補滿，
 ## 每個牛仔重生（刪掉重生，客戶端的位置才會跟著換），出局的人也回來；boss 回到離大家最遠的地方
@@ -1217,6 +1298,13 @@ func _new_round() -> void:
 			q.set(&"bot", r["bot"])
 			if r["walker"]:
 				_make_walker(q, r["patrol"][0], r["patrol"][1])
+	# 對抗模式：上一局操作尼諾拉的人變回牛仔，下一幀重抽（_pick_pilot）
+	_pilot_picked = false
+	if boss and boss.pilot != 0:
+		var old: int = boss.pilot
+		boss.pilot = 0
+		if (old == 1 and not _dedicated) or multiplayer.get_peers().has(old):
+			_add_player(COWBOY, old)
 	if RULES[rules].dino:
 		if boss == null:
 			spawn_boss()
@@ -1281,7 +1369,7 @@ func _process(delta: float) -> void:
 	if lobby.visible or multiplayer.multiplayer_peer == null \
 			or multiplayer.multiplayer_peer.get_connection_status() != MultiplayerPeer.CONNECTION_CONNECTED:
 		return
-	var me := players.get_node_or_null(NodePath(str(multiplayer.get_unique_id())))
+	var me := _me()
 	var dino := get_tree().get_first_node_in_group(&"dino")
 	# 保險：遊戲中、沒開選單和勝負畫面，游標卻沒鎖住（系統自己放掉的，0.8.1 回饋「舉槍後跑出游標」），就鎖回去。
 	# 視窗沒焦點時鎖不住，等切回來再鎖
@@ -1452,7 +1540,7 @@ func _dist_to_exit(p: Vector3) -> float:
 ## 牛仔的準心在自己的 HUD 裡（子彈是直線，畫正中央就對），沒有 aim_point，這裡就不顯示。
 func _update_crosshair(me: Node) -> void:
 	var cam := get_viewport().get_camera_3d()
-	if me == null or cam == null or not me.has_method("aim_point"):
+	if me == null or cam == null or not me.has_method("aim_point") or me.is_in_group(&"boss"):   # 操作尼諾拉時沒有火球，不畫準心
 		crosshair.hide()
 		return
 	# 打中人準心閃紅。遠距離看不出血條掉，這是唯一的命中確認

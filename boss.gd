@@ -104,6 +104,18 @@ const SNIFF := preload("res://assets/audio/dino/sniff.wav")
 @export var running := false
 @export var act := ACT_NONE
 @export var mood := MOOD_ROAM
+## 對抗模式：玩家操作尼諾拉（docs/規劃/2026-10-18-對抗模式.md）。0 = 電腦。有駕駛時行為樹不跑，照駕駛送來的輸入動，
+## 出招、預備動作、叫聲、體力、倒地、同步都跟電腦版一樣。駕駛斷線 main.gd 會清回 0，電腦接手
+@export var pilot := 0
+enum { PIN_BITE = 1, PIN_POUNCE = 2, PIN_SWEEP = 4, PIN_RUN = 8 }
+const PILOT_STALE := 0.5     # 主機這麼久沒收到駕駛的輸入就當放開（網路斷斷續續時不要一直往前衝）
+var _pin_move := Vector2.ZERO   # 主機：駕駛最新的輸入（相對鏡頭，x 右、y 後）
+var _pin_yaw := 0.0
+var _pin_buttons := 0
+var _pin_age := 0.0
+var _cam_yaw := 0.0             # 駕駛那台：鏡頭的水平角（身體慢慢轉過來）
+var _cam_pitch := 0.0
+var _piloting := false          # 駕駛那台：現在是不是由我操作（變成駕駛、不再是駕駛的那一刻才換鏡頭）
 
 var director := Director.new()
 var _tree: BT.Task
@@ -171,6 +183,16 @@ func _ready() -> void:
 ## 每台都跑：倒地往側邊躺；動作狀態一變，骨架換動作、出叫聲
 func _process(delta: float) -> void:
 	super(delta)
+	# 駕駛那台：第三人稱鏡頭照自己的視角，不等身體轉過來。只在變成／不再是駕駛那一刻換鏡頭：
+	# 新一局客戶端的牛仔常比 pilot=0 先同步到，每幀搶的話鏡頭會卡在恐龍身上
+	var mine := _is_my_pilot()
+	var cam: Camera3D = $CamPivot/Camera3D
+	if mine != _piloting:
+		_piloting = mine
+		cam.current = mine
+		_cam_yaw = rotation.y
+	if mine:
+		$CamPivot.rotation = Vector3(CAM_BASE + _cam_pitch + randf_range(-1.0, 1.0) * _stagger * 0.08, _cam_yaw - rotation.y, 0.0)
 	$Trex.rotation.z = lerpf($Trex.rotation.z, 1.35 if down_left > 0.0 else 0.0, minf(delta * 4.0, 1.0))
 	if down_left > 0.0 and not _was_down:   # 倒地：整隻摔下去揚起一大圈土
 		var w: Node = get_tree().get_first_node_in_group(&"arena")
@@ -203,6 +225,8 @@ func _say(s: AudioStream) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if _is_my_pilot():
+		_pilot_local()
 	if not is_multiplayer_authority():
 		return
 	think(delta)
@@ -215,6 +239,9 @@ func think(delta: float) -> void:
 	_attack_gap = maxf(_attack_gap - delta, 0.0)
 	_sweep_cd = maxf(_sweep_cd - delta, 0.0)
 	_pounce_cd = maxf(_pounce_cd - delta, 0.0)
+	if pilot != 0:
+		_pilot_step(delta)
+		return
 	_listen_steps(delta)
 	_look(delta)
 	var hint := director.step(delta, _sees_now, _seen_left > 0.0 or _noise_left > 0.0 or _glimpse != null, _cowboys(), _rng)
@@ -224,6 +251,80 @@ func think(delta: float) -> void:
 		_hint_reached = false
 	_tree.tick(delta)
 	mood = _mood()
+
+# --- 對抗模式：玩家駕駛 ---
+
+## 主機收駕駛的輸入（只收駕駛本人送的；主機自己當駕駛時直接呼叫）
+@rpc("any_peer", "call_remote", "unreliable_ordered")
+func pilot_input(move: Vector2, yaw: float, pitch: float, buttons: int) -> void:
+	var from := multiplayer.get_remote_sender_id()
+	if from == 0:
+		from = multiplayer.get_unique_id()
+	if not multiplayer.is_server() or from != pilot or not (is_finite(yaw) and is_finite(pitch) and move.is_finite()):
+		return
+	_pin_move = move.limit_length(1.0)
+	_pin_yaw = yaw
+	_pin_buttons = buttons
+	_pin_age = 0.0
+	look_pitch = clampf(pitch, PITCH_MIN, PITCH_MAX)
+
+## 駕駛這一幀：倒地、出招中照電腦版跑完；平常照輸入走、慢慢轉向鏡頭的方向、按鍵出招
+func _pilot_step(delta: float) -> void:
+	_pin_age += delta
+	if _pin_age > PILOT_STALE:
+		_pin_move = Vector2.ZERO
+		_pin_buttons = 0
+	mood = MOOD_HUNT if act != ACT_NONE or running else MOOD_ROAM
+	if down_left > 0.0:
+		_act_down(delta)
+		return
+	if act != ACT_NONE:
+		if act in [ACT_BITE_WIND, ACT_SPOT, ACT_POUNCE_WIND]:   # 預備時還能對準（跟電腦版一樣：咬半速、撲擊全速），起跳那刻方向就鎖死
+			rotation.y = rotate_toward(rotation.y, _pin_yaw, TURN * (1.0 if act == ACT_POUNCE_WIND else 0.5) * delta)
+		_act_attack(delta)
+		return
+	if _attack_gap <= 0.0:
+		_target = null   # 沒有目標：咬、撲擊都照面對的方向
+		if _pin_buttons & PIN_BITE:
+			_begin(ACT_BITE_WIND, BITE_WIND)
+			return
+		if _pin_buttons & PIN_SWEEP and _sweep_cd <= 0.0:
+			_sweep_cd = SWEEP_CD
+			_begin(ACT_CHARGE_WIND, CHARGE_WIND)
+			return
+		if _pin_buttons & PIN_POUNCE and _pounce_cd <= 0.0:
+			_pounce_cd = POUNCE_CD
+			_begin(ACT_POUNCE_WIND, POUNCE_WIND)
+			return
+	rotation.y = rotate_toward(rotation.y, _pin_yaw, TURN * delta)   # 轉身限速：繞著牠跑有用
+	var dir := Basis(Vector3.UP, _pin_yaw) * Vector3(_pin_move.x, 0.0, _pin_move.y)
+	_move(dir, _pin_buttons & PIN_RUN != 0, delta)
+
+## 駕駛那台：滑鼠轉鏡頭（身體由主機慢慢轉過來）
+func _unhandled_input(e: InputEvent) -> void:
+	if not _is_my_pilot() or not (e is InputEventMouseMotion) or Input.mouse_mode != Input.MOUSE_MODE_CAPTURED or after_hitch():
+		return
+	var rel: Vector2 = (e as InputEventMouseMotion).relative
+	_cam_yaw -= rel.x * MOUSE_SENS * 0.5   # 玩家恐龍原本的靈敏度是給會瞬間轉身的身體用的；這隻轉得慢，鏡頭也放慢一點
+	_cam_pitch = clampf(_cam_pitch - rel.y * MOUSE_SENS * 0.5, PITCH_MIN, PITCH_MAX)
+
+func _is_my_pilot() -> bool:
+	return pilot != 0 and multiplayer.multiplayer_peer != null and pilot == multiplayer.get_unique_id()
+
+## 駕駛那台每個物理幀：把按鍵送給主機（鏡頭在 _process）
+func _pilot_local() -> void:
+	var free := Input.mouse_mode == Input.MOUSE_MODE_CAPTURED   # 開選單、結算畫面時不送按鍵
+	var mv := Input.get_vector(&"move_left", &"move_right", &"move_forward", &"move_back") if free else Vector2.ZERO
+	var b := 0
+	if free:
+		b |= PIN_BITE if Input.is_action_pressed(&"fire") else 0
+		b |= PIN_POUNCE if Input.is_action_pressed(&"aim") else 0
+		b |= PIN_SWEEP if Input.is_action_pressed(&"jump") else 0
+		b |= PIN_RUN if Input.is_action_pressed(&"sprint") else 0
+	if multiplayer.is_server():
+		pilot_input(mv, _cam_yaw, _cam_pitch, b)
+	else:
+		pilot_input.rpc_id(1, mv, _cam_yaw, _cam_pitch, b)
 
 ## 看：瞄到人要盯一下才確定（越遠越久）。已經在追的人（剛看丟沒多久）一瞄到就確定。
 ## 確定之前人躲回去了，就去他剛才在的地方找（當成聽到聲音）
