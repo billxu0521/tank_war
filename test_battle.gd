@@ -524,7 +524,11 @@ func _case_hunt_weapons() -> void:
 	m._set_menu(true)
 	var info: GridContainer = m.menu.get_node(^"WeaponInfo")
 	_ck(info.visible and info.get_child_count() == (revolver.info_rows().size() + 1) * (vm._weapons.size() + 1), "Esc 選單要有每把槍的武器介紹")
+	var ctl: AcceptDialog = m.menu.get_node(^"ControlsDialog")
+	m.menu.get_node(^"Box/ControlsBtn").pressed.emit()
+	_ck(ctl.visible and m.CONTROLS.size() > 10, "Esc 選單按「操作說明」要彈出操作表")
 	m._set_menu(false)
+	_ck(not ctl.visible, "關掉選單時操作說明也要一起關（不然一局結束會擋住畫面）")
 
 	# 瞄準按住／切換：玩家的設定要存起來，下次開遊戲還在
 	m.settings_path = "user://test_settings.cfg"
