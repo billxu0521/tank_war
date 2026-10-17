@@ -116,7 +116,7 @@ func _ready() -> void:
 	var parts := MODEL.instantiate() as Node3D
 	add_child(parts)
 	parts.position.y = MODEL_LIFT
-	Viewmodel.mark_meshes(parts, Viewmodel.TARGET_MARK)
+	Viewmodel.mark_target(parts)
 	skel = parts.find_children("*", "Skeleton3D", true, false)[0]
 	for i in skel.get_bone_count():
 		_idx[skel.get_bone_name(i)] = i

@@ -179,6 +179,7 @@ OvD.exe -- --sandbox    # 沙盒：靶場練槍
 
 - 伺服器模式：`OvD.x86_64 --headless -- --server`。自己不下場，恐龍 boss 照生，**一局結束 10 秒後自動開下一局**
 - 架站／更新：`tools/deploy_server.sh 使用者@主機位址`（匯出 Linux 版、複製上去、裝成掛掉自動重開的服務）
+- 模式、時段：更新時沿用主機上現在的；要換就 `SERVER_ARGS="--mode deathmatch --period noon" tools/deploy_server.sh 使用者@主機位址`。伺服器物理跑 60Hz（沒畫面，120Hz 只為畫面順）
 - 主機的防火牆要開 **UDP 24680**
 - 大廳按鈕連的位址寫在 `main.gd` 的 `TEST_SERVER`，填好之後要重新打包客戶端
 

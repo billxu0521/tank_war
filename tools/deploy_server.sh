@@ -1,6 +1,7 @@
 #!/bin/sh
 # 把專用伺服器（測試站）裝到雲端主機上，或更新成目前的版本。
 # 用法：tools/deploy_server.sh 使用者@主機位址
+#   換模式、時段：SERVER_ARGS="--mode deathmatch --period noon" tools/deploy_server.sh 使用者@主機位址（不給就沿用主機上現在的）
 #
 # 主機上的資料夾和服務名稱沿用舊的 tankwar（改了會跟已經開著的測試站衝突），只有執行檔改名 OvD。
 # 會做的事：匯出 Linux 版 → 複製到主機的 ~/tankwar/ → 裝成開機自動啟動、掛掉自動重開的服務（systemd）。
@@ -21,6 +22,10 @@ ssh "$HOST" 'mv ~/tankwar/OvD.x86_64.new ~/tankwar/OvD.x86_64 && chmod +x ~/tank
 echo "== 裝成服務（掛掉自動重開、開機自動啟動） =="
 USER_NAME=$(ssh "$HOST" whoami)
 HOME_DIR=$(ssh "$HOST" 'echo $HOME')
+# 模式、時段（--mode egg --period noon）：有給 SERVER_ARGS 就用，沒給就沿用主機上現在的，不會每次更新都被蓋回預設。
+# 全新主機沒有服務檔：sed 失敗要 || true，不然 set -e 會在這裡停下
+SERVER_ARGS=${SERVER_ARGS-$(ssh "$HOST" "sed -n 's|^ExecStart=.*-- --server *||p' /etc/systemd/system/tankwar.service 2>/dev/null || true")}
+echo "伺服器參數：--server $SERVER_ARGS"
 ssh "$HOST" "sudo tee /etc/systemd/system/tankwar.service >/dev/null" <<EOF
 [Unit]
 Description=OvD 測試站
@@ -29,7 +34,7 @@ After=network-online.target
 [Service]
 User=$USER_NAME
 WorkingDirectory=$HOME_DIR/tankwar
-ExecStart=$HOME_DIR/tankwar/OvD.x86_64 --headless -- --server
+ExecStart=$HOME_DIR/tankwar/OvD.x86_64 --headless -- --server $SERVER_ARGS
 Restart=always
 RestartSec=3
 
