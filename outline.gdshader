@@ -75,6 +75,15 @@ uniform float shafts = 0.8;             // 光束強度；0 = 關
 uniform vec3 shaft_color : source_color = vec3(1.0, 0.7, 0.4);
 uniform float heat = 0.0;   // 熱浪（時段：正午，period.gd）：遠處地平線附近的畫面左右扭動 1～2 像素。0 = 關
 uniform float shaft_len = 1.0;          // 從這個像素往太陽方向取樣走多遠（畫面上的比例）
+// 試風格（F10 切換，pixel_style.gd）：0 原本、1 賽璐璐卡通、2 老西部底片、3 漫畫網點。油畫是上面的 paint_radius
+// ponytail: 只是比較用的整層濾鏡；選定方向後卡通要改到材質裡（facet.gdshader 的 ramp_steps），整層做不出真的硬邊影子
+uniform float look = 0.0;
+uniform float toon_dark = 0.4;      // 卡通：背光面的亮度倍數（中間還有一階 toon_mid）
+uniform float toon_mid = 0.7;
+uniform float film_grain = 0.08;    // 底片：顆粒幅度
+uniform float dot_size = 6.0;       // 網點：一格幾像素（照 1080p 算）
+uniform float vhs_sat = 1.35;       // 天龍特攻隊：顏色飽和倍數
+uniform float vhs_noise = 0.4;      // 天龍特攻隊：追蹤雜訊條的濃度
 
 void vertex() {
 	POSITION = vec4(VERTEX.xy, 1.0, 1.0);   // 蓋滿整個畫面，不管相機在哪
@@ -322,6 +331,54 @@ void fragment() {
 	}
 	// 抖色：每個像素亮度 ±1.5% 的固定雜訊，把天空漸層、太陽光暈的一圈圈色階打散（引擎的去色帶在這片方塊之前就做完了）
 	base *= 1.0 + (fract(sin(dot(FRAGCOORD.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) * dither;
-	ALBEDO = mix(base, line, a);
+	vec3 c = mix(base, line, a);
+	if (look > 0.5 && look < 1.5 && d < 500.0) {
+		// 卡通：用法線跟太陽的夾角分成受光、背光兩階，硬邊；先除掉原本的平滑明暗，再乘回分好的階
+		float ndl = dot(n, sun_v);
+		c = base / mix(0.45, 1.0, clamp(ndl, 0.0, 1.0)) * (ndl > 0.45 ? 1.1 : (ndl > 0.0 ? toon_mid : toon_dark));
+		c = mix(c, line_color * 0.4, min(a * 2.0, 1.0));   // 線加深加粗感
+	} else if (look > 1.5 && look < 2.5) {
+		// 老西部底片：褪成棕褐、黑位抬起、四角變暗、會跳動的顆粒
+		float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+		c = mix(c, l * vec3(1.15, 0.95, 0.7), 0.65) * 0.92 + 0.012;
+		vec2 q = uv - 0.5;
+		c *= 1.0 - 0.55 * pow(length(q * vec2(1.4, 1.0)) * 1.2, 2.5);
+		c *= 1.0 + (fract(sin(dot(floor(FRAGCOORD.xy * 0.7) + floor(TIME * 24.0), vec2(12.9898, 78.233))) * 43758.5453) - 0.5) * film_grain * 2.0;
+	} else if (look > 2.5 && look < 3.5) {
+		// 漫畫網點：轉 45 度的圓點格，越暗點越大；點內是深色墨，點外顏色提亮、壓平
+		float cell = dot_size * VIEWPORT_SIZE.y / 1080.0;
+		vec2 g = mat2(vec2(0.7071, 0.7071), vec2(-0.7071, 0.7071)) * FRAGCOORD.xy / cell;
+		float dist = length(fract(g) - 0.5);
+		float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+		float tone = l / (1.0 + l);
+		float rad = d < 500.0 ? 0.6 * sqrt(clamp(1.0 - tone / 0.2, 0.0, 1.0)) : 0.0;   // 只有暗部有點，天空不點
+		float ink = 1.0 - smoothstep(rad - 0.06, rad + 0.06, dist);
+		c = mix(c * 1.15, line_color * 0.5, ink * 0.85);
+	} else if (look > 3.5 && look < 4.5) {
+		// 天龍特攻隊（80 年代影集錄成錄影帶）：加州陽光的暖金、飽和、高反差；再過一層錄影帶：顏色往右暈開、掃描線、追蹤雜訊條、四角暗
+		const vec3 Y = vec3(0.299, 0.587, 0.114);
+		float sx = 2.0 * VIEWPORT_SIZE.y / 1080.0 / VIEWPORT_SIZE.x;
+		vec3 ch = vec3(0.0);
+		float glow = 0.0;
+		for (int i = 0; i < 6; i++) {
+			vec3 s = texture(screen_tex, uv - vec2(float(i) * sx, 0.0)).rgb;   // 左邊一段的顏色拖到這裡＝紅色往右溢
+			ch += s - dot(s, Y);
+			glow += max(dot(s, Y) - 0.75, 0.0);
+		}
+		float l = dot(c, Y);
+		c = l + mix(c - l, ch / 6.0, 0.7) * vhs_sat;   // 亮度留自己的，顏色換成糊掉的、加飽和
+		c *= vec3(1.04, 1.0, 0.9);                      // 暖金（牧場本來就偏橘，只推一點）
+		c += (1.0 - smoothstep(0.0, 0.3, l)) * vec3(-0.012, 0.004, 0.018);   // 暗部偏青
+		c = mix(c, smoothstep(0.0, 1.0, clamp(c, 0.0, 1.0)), 0.35);         // 加反差
+		c += glow / 6.0 * vec3(0.5, 0.35, 0.2);         // 亮處暈一圈暖光（柔焦鏡）
+		c *= 0.93 + 0.07 * cos(FRAGCOORD.y / VIEWPORT_SIZE.y * 240.0 * 6.2832);   // 240 條掃描線
+		vec2 q = uv - 0.5;
+		c *= 1.0 - 0.35 * pow(length(q * vec2(1.3, 1.0)) * 1.3, 3.0);
+		// 追蹤雜訊：一條白色雜訊帶由下往上慢慢滑過
+		float band = 1.0 - smoothstep(0.0, 0.012, abs(uv.y - (1.0 - fract(TIME * 0.11))));
+		float nz = fract(sin(dot(floor(FRAGCOORD.xy * vec2(0.25, 1.0)) + floor(TIME * 30.0), vec2(12.9898, 78.233))) * 43758.5453);
+		c = mix(c, vec3(nz * 1.2), band * vhs_noise * step(0.55, nz));
+	}
+	ALBEDO = c;
 	ALPHA = 1.0;
 }
