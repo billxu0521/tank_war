@@ -1745,6 +1745,9 @@ func _case_trex_lean() -> void:
 	var m := _new_offline_game()
 	var t: Node = m.players.get_node(^"2").get_node(^"Trex")
 	var d: Node3D = m.players.get_node(^"2")
+	# 放在整平的沙盒靶場路上：出生點是隨機的，落在坡上時兩腳高低差會吃掉側傾，偶爾只量到 -0.028（門檻 -0.03）
+	d.global_position = m._on_ground(Vector3(0, 4.2, 40))
+	d.reset_physics_interpolation()
 	for i in 120:   # 先站穩，記下站著的側傾（坡上會往低的那隻腳斜一點，身體跟著腳的高度）
 		t._last_pos = t.global_position
 		t._process(1.0 / 60.0)
@@ -1994,6 +1997,9 @@ func _case_bug_report() -> void:
 	push_error("bug 收集器測試：這是錯誤")
 	push_error("bug 收集器測試：這是錯誤")
 	_ck(r.error_count() == before + 1 and r.take_new_error(), "錯誤要記下來、跳提示，同一個只記一次")
+	push_error("Node not found: \"Main/Players/123456/Sync\" (relative to \"/root\").")
+	push_error("Node not found: \"Main/Players/987654/Sync\" (relative to \"/root\").")
+	_ck(r.error_count() == before + 2 and not r.take_new_error(), "玩家加入的時間差錯誤要併成一筆、不跳提示")
 	var path: String = m.report_bug()
 	_ck(path != "" and FileAccess.file_exists(path), "F8 要存出回報檔（%s）" % path)
 	var text := FileAccess.get_file_as_string(path)

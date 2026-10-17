@@ -13,6 +13,9 @@ extends Logger
 const KEEP_LINES := 200    # 最近幾行訊息
 const KEEP_ERRORS := 30    # 最多記幾種錯誤（同一個錯誤只記一次、算次數）
 const DIR := "user://bug_reports"
+## 連線時已知、無害的錯誤：玩家加入或離開那一刻，同步資料比角色先到或晚到。每個玩家編號都不一樣，
+## 以前一個編號算一種，30 種的名額被它塞滿、還一直跳「按 F8」的提示（0.8.10 測試站的回報有 24 種都是它）
+const JOIN_NOISE := ["Node not found: \"Main/Players/", "Failed to get cached node from peer", "Ignoring sync data from non-authority"]
 
 static var instance: BugReport
 
@@ -40,19 +43,27 @@ func _log_error(function: String, file: String, line: int, code: String, rationa
 	var kind: String = ["錯誤", "警告", "腳本錯誤", "著色器錯誤"][clampi(error_type, 0, 3)]
 	var what := rationale if rationale != "" else code
 	var where := "%s:%d（%s）" % [file, line, function]
-	_add_line("[%s] %s @ %s" % [kind, what, where])
+	var noise := JOIN_NOISE.any(func(s: String) -> bool: return what.begins_with(s))
+	_mutex.lock()
+	var seen := noise and _errors.has("join_noise")
+	_mutex.unlock()
+	if not seen:   # 時間差的錯誤只在紀錄裡留第一次，玩家多時才不會把有用的紀錄擠掉
+		_add_line("[%s] %s @ %s" % [kind, what, where])
 	if error_type == ERROR_TYPE_WARNING:
 		return   # 警告只進紀錄、不算錯誤（導航網格每局都會印兩行）
 	var text := "[%s] %s\n    @ %s" % [kind, what, where]
 	for bt in script_backtraces:
 		text += "\n" + bt.format(4)
-	_mutex.lock()
 	var key := where + what
+	if noise:   # 全部併成一筆，不跳提示
+		key = "join_noise"
+		text = "[已知、無害] 玩家加入或離開那一刻同步資料的時間差（Node not found …/Sync、Failed to get cached node、Ignoring sync data）"
+	_mutex.lock()
 	if _errors.has(key):
 		_errors[key].count += 1
 	elif _errors.size() < KEEP_ERRORS:
 		_errors[key] = {text = text, count = 1, first = _clock()}
-		_new_error = true
+		_new_error = not noise
 	_mutex.unlock()
 
 
