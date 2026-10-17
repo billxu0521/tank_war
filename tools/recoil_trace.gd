@@ -1,5 +1,5 @@
 extends SceneTree
-## 後座力曲線記錄：沙盒裡每把槍各開一槍（腰射、隨機歸零），每幀記準心抬了幾度、槍模型上揚幾度，存成 JSON。
+## 後座力曲線記錄：沙盒裡每把槍各開一槍（腰射、隨機歸零），每幀記準心抬了幾度、槍模型上揚幾度、畫面撞一下幾度，存成 JSON。
 ## 畫圖用 tools/recoil_plot.py。
 ##   OUT=/tmp/recoil.json godot --headless --path . --fixed-fps 120 --script tools/recoil_trace.gd
 
@@ -41,7 +41,8 @@ func _process(_d: float) -> bool:
 		_vm.try_fire()
 		_t = 0
 	var model_x: float = w._model.rotation.x - w._rest_rot.x if w._model else 0.0
-	_rows.append([_t / 120.0, rad_to_deg(_vm._player.head.rotation.x - _pitch0), rad_to_deg(model_x)])
+	_rows.append([_t / 120.0, rad_to_deg(_vm._player.head.rotation.x - _pitch0), rad_to_deg(model_x),
+		rad_to_deg(_vm._player.fire_punch.x)])
 	_t += 1
 	if _t > FRAMES:
 		_out[w.display_name] = {"pitch": w.recoil_pitch, "rows": _rows}

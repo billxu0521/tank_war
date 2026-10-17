@@ -67,6 +67,11 @@ enum Action { SINGLE_ACTION, DOUBLE_ACTION, BOLT, LEVER, BREAK, HARPOON }
 @export var recoil_return_time := 0.36
 ## 回正多少（1 = 回滿；0.7 = 回七成，剩下的玩家自己壓）
 @export var recoil_return_ratio := 0.7
+## 畫面撞一下：開槍時鏡頭往上甩幾度（附帶隨機側歪），走同一條四段曲線但拉長、會回滿。
+## 只是看起來猛，不會累積到下一發（真的頂走準心的是上面的 recoil_pitch）
+@export var recoil_punch := 0.0
+## 槍模型後座（往後撞、槍口上揚）的倍數，1 = 原本長槍的幅度
+@export var kick_scale := 1.0
 
 @export_group("散布")
 ## 腰射、瞄準的散布（度，中心到邊緣）。腰射也是基礎散布
@@ -830,7 +835,7 @@ func _play_procedural(action: StringName, fitted: float) -> float:
 
 
 func _procedural(delta: float) -> void:
-	var kick := recoil_curve(_since_fire / recoil_return_time, 0.0)   # 槍模型跟準心走同一條曲線，但會回滿
+	var kick := recoil_curve(_since_fire / recoil_return_time, 0.0) * kick_scale   # 槍模型跟準心走同一條曲線，但會回滿
 	var was := _cycle
 	_cycle = minf(_cycle + delta / _cycle_time, 1.0)
 	_since_fire += delta

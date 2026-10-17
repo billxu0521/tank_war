@@ -149,6 +149,9 @@ var holding_breath := false
 ## 每一發的後座力各走自己的曲線（Weapon.recoil_curve），連開時疊起來：
 ## amount = (抬幾弧度, 偏幾弧度)、t = 開槍後幾秒、time = 整條曲線幾秒、keep = 不回正的比例、done = 已經轉了幾倍
 var _kicks: Array[Dictionary] = []
+## 畫面撞一下（Weapon.recoil_punch）：每發 {amount = (上, 左右, 側歪) 弧度, t}，回滿，不碰瞄準累積
+const PUNCH_TIME := 0.7   # 比準心曲線長：撞上去快、落回來慢，眼睛才抓得到
+var _punches: Array[Dictionary] = []
 ## 每開一輪裝填就 +1，讓上一輪的 await 醒來時知道自己已經過期
 var _reload_id := 0
 var _fire_queued := false   # 等槍好了自動射的那一發：裝填中按開火（槍回正後射），或 fire_buffer 開著時提早按的
@@ -330,6 +333,12 @@ func _update_recoil(delta: float) -> void:
 		_player.rotate_view(Vector2(-step.y, -step.x))
 		k.done = f
 	_kicks = _kicks.filter(func(k: Dictionary) -> bool: return k.t < k.time)
+	var punch := Vector3.ZERO
+	for p in _punches:
+		p.t += delta
+		punch += p.amount * Weapon.recoil_curve(p.t / PUNCH_TIME, 0.0)
+	_punches = _punches.filter(func(p: Dictionary) -> bool: return p.t < PUNCH_TIME)
+	_player.fire_punch = punch
 
 
 ## 武器搖擺：視角轉動時武器往反方向拖一點，移動時往側面帶一點。
@@ -624,6 +633,9 @@ func _apply_recoil() -> void:
 	var side := deg_to_rad(randf_range(-w.recoil_yaw, w.recoil_yaw))
 	_kicks.append({amount = Vector2(up, side), t = 0.0, time = maxf(w.recoil_return_time, 0.01),
 		keep = 1.0 - w.recoil_return_ratio, done = 0.0})
+	var p := deg_to_rad(w.recoil_punch)
+	if p > 0.0:
+		_punches.append({amount = Vector3(p, randf_range(-0.25, 0.25) * p, randf_range(-0.5, 0.5) * p), t = 0.0})
 
 
 func _update_anim(delta: float) -> void:

@@ -223,6 +223,7 @@ var _hp_lost: ColorRect
 var _hp_lag := -1.0          # 殘影現在畫到的血量
 var _hp_lag_wait := 0.0      # 掉血後殘影先停這麼久才開始縮
 var _kick := Vector2.ZERO    # 鏡頭被打歪多少（弧度：x 上下、y 左右），每幀彈回來
+var fire_punch := Vector3.ZERO   # 開槍畫面撞一下（弧度：上、左右、側歪），viewmodel 每幀填
 
 ## 被打了：畫面四周閃紅、準心外圍標出打你的方向、鏡頭抖一下（傷越重抖越大）
 func _on_hurt(amount: int, from: Vector3) -> void:
@@ -353,7 +354,7 @@ func _process(delta: float) -> void:
 	# 翻越：鏡頭往下點頭、往側邊歪一下，看得出自己撐過去了
 	var v := sin(PI * vault_t)
 	_update_hurt(delta)
-	_camera.rotation = Vector3(-0.22 * v + _kick.x, _kick.y, 0.12 * v + _kick.y * 0.5)
+	_camera.rotation = Vector3(-0.22 * v + _kick.x, _kick.y, 0.12 * v + _kick.y * 0.5) + fire_punch
 	# 相機位置用補間後的（移動不抖），朝向用現在的（轉頭零延遲）：
 	# 相機掛在頭底下，差多少就往回挪多少。瞬移後補間會重設，這個差就是 0
 	var lag := head.get_global_transform_interpolated().origin - head.global_position
