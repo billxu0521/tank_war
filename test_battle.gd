@@ -65,6 +65,7 @@ func _process(_delta: float) -> bool:
 		_case_boss()
 		_case_compass()
 		_case_dedicated_round()
+		_case_cowboy_voice()
 		_start_gun_case()
 		return false
 	# 剩下的要跨好幾個 frame 才驗得到。總幀數設上限：腳本編譯壞掉時各階段等不到條件，
@@ -1383,6 +1384,22 @@ func _case_dedicated_round() -> void:
 	_ck(not m._over and m._time_left > m.MATCH_SECONDS - 1.0, "專用伺服器一局結束要自動開下一局")
 	_ck(m.players.has_node(^"2") and m.players.has_node(NodePath(str(m.BOSS_ID))), "開下一局玩家和 boss 都要還在")
 	_ck(m._cowboys == 3, "開下一局牛仔數要重算（現在 %d）" % m._cowboys)
+	_end(m)
+
+## 牛仔叫聲：被打會叫、散彈一次多顆不重來，死掉在原地留一聲慘叫（角色刪掉了聲音還在）
+func _case_cowboy_voice() -> void:
+	var m := _offline_match()
+	var c: Node = m._add_player(m.COWBOY, 2)
+	c.take_damage(20)
+	_ck(c._voice.playing and c._voice.stream in c.HURT_VOICES, "被打要叫一聲")
+	c._voice.stream = c.DEATH_VOICES[0]   # 換成受傷聲裡不會抽到的：重來的話會被換掉（headless 沒辦法看播放進度）
+	c._voice.play()
+	c.take_damage(5)
+	_ck(c._voice.stream == c.DEATH_VOICES[0], "還在叫就不重來（散彈一次十幾顆）")
+	var before := m.get_children().filter(func(n: Node) -> bool: return n is AudioStreamPlayer3D).size()
+	c.take_damage(500)
+	var after := m.get_children().filter(func(n: Node) -> bool: return n is AudioStreamPlayer3D and n.stream in c.DEATH_VOICES).size()
+	_ck(after == 1 and before == 0, "死掉要在場上留一聲慘叫")
 	_end(m)
 
 ## 方位條：0 = 北（-Z），順時針，東 = 90
