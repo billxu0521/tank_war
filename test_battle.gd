@@ -1361,13 +1361,28 @@ func _case_dedicated_round() -> void:
 	var m := _offline_match()
 	m._dedicated = true
 	m._add_player(m.COWBOY, 2)
+	var dead: Node = m._add_player(m.COWBOY, -50)   # 電腦牛仔：局末剛死、還在等重生
+	dead.set(&"bot", true)
 	m.spawn_boss()
+	m._on_died(null, dead)
+	m.players.remove_child(dead)
+	dead.free()
 	m._over = true
 	m._next_round = 0.0
 	m._physics_process(0.1)
+	_ck(m.players.has_node(^"-50"), "局末剛死在等重生的人，下一局要生回來（不然卡在觀戰）")
+	var late: Node = m._add_player(m.COWBOY, -51)   # 結束畫面時才被打死
+	late.set(&"bot", true)
+	m._over = true
+	m._on_died(null, late)
+	m.players.remove_child(late)
+	late.free()
+	m._next_round = 0.0
+	m._physics_process(0.1)
+	_ck(m.players.has_node(^"-51"), "結束畫面時才死的人，下一局也要生回來")
 	_ck(not m._over and m._time_left > m.MATCH_SECONDS - 1.0, "專用伺服器一局結束要自動開下一局")
 	_ck(m.players.has_node(^"2") and m.players.has_node(NodePath(str(m.BOSS_ID))), "開下一局玩家和 boss 都要還在")
-	_ck(m._cowboys == 1, "開下一局牛仔數要重算（現在 %d）" % m._cowboys)
+	_ck(m._cowboys == 3, "開下一局牛仔數要重算（現在 %d）" % m._cowboys)
 	_end(m)
 
 ## 方位條：0 = 北（-Z），順時針，東 = 90
