@@ -607,7 +607,7 @@ func cancel_reload() -> void:
 ## 在正前方為軸的圓錐內隨機取一個方向。sqrt 是為了讓落點在圓面上均勻，
 ## 不加的話會過度集中在中心。
 func _spread_direction(cam: Camera3D, extra := 0.0) -> Vector3:
-	var basis := cam.global_transform.basis
+	var basis: Basis = (cam.get_parent() as Node3D).global_basis * Basis.from_euler(_player.aim_rot)   # 不用鏡頭的：鏡頭乘過晃動設定
 	var forward := -basis.z
 	var total := spread + extra
 	if _first_shot_perfect():

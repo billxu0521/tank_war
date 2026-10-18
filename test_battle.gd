@@ -586,6 +586,7 @@ func _case_hunt_weapons() -> void:
 	var gun: Weapon = vm1.weapon
 	var rnd := gun.recoil_pitch_random
 	gun.recoil_pitch_random = 0.0
+	var sens0: float = Settings.v.get(&"mouse_sens", 1.0)
 	Settings.v[&"mouse_sens"] = 2.0   # 靈敏度只乘滑鼠：調高了後座力也不能跟著變大（下面的度數照舊）
 	vm1._apply_recoil()
 	for i in 6:
@@ -594,7 +595,7 @@ func _case_hunt_weapons() -> void:
 	for i in 120:
 		vm1._update_recoil(DT)
 	gun.recoil_pitch_random = rnd
-	Settings.v[&"mouse_sens"] = 1.0
+	Settings.v[&"mouse_sens"] = sens0
 	var want := deg_to_rad(gun.recoil_pitch) * 2.0 * (1.0 - gun.recoil_return_ratio)
 	_ck(vm1._kicks.is_empty() and absf((me.head.rotation.x - pitch0) - want) < 0.001,
 		"連開兩發後座力要疊起來，最後留 %.2f 度（留了 %.2f）" % [rad_to_deg(want), rad_to_deg(me.head.rotation.x - pitch0)])
@@ -1516,6 +1517,18 @@ func _case_settings() -> void:
 		"每頁的恢復預設要回到原本的手感")
 	m.free()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://test_settings.cfg"))
+	# 鏡頭晃動調到 0 只是畫面不晃：被打歪、開槍撞一下照樣讓子彈偏，不然調 0 會比別人準
+	var g := _offline_match()
+	var c: Node = g._add_player(g.COWBOY, 1)
+	c._kick = Vector2(0.05, 0.03)
+	Settings.v[&"shake"] = 0.0
+	c._process(DT)
+	c.viewmodel.spread = 0.0
+	var dir: Vector3 = c.viewmodel._spread_direction(c._camera)
+	Settings.v[&"shake"] = 1.0
+	_ck(c._camera.rotation.is_zero_approx() and dir.dot(-c._camera.global_basis.z) < 0.9995,
+		"鏡頭晃動 0：畫面不歪，子彈還是照被打歪的方向飛")
+	_end(g)
 
 ## 方位條：0 = 北（-Z），順時針，東 = 90
 func _case_compass() -> void:

@@ -494,7 +494,8 @@ func _start_dedicated() -> void:
 	print("測試站開好了，連接埠 %d（UDP）" % PORT)
 
 ## 主選單分兩層：首頁四顆按鈕，「連線對戰」「單人練習」各一頁，按「返回」或 Esc 回首頁。
-## 第二層的按鈕還是 Lobby 底下原本那些（場景裡接好的訊號不動），換頁只是藏起來
+## 第二層的按鈕還是 Lobby 底下原本那些（場景裡接好的訊號不動），換頁只是藏起來。
+## Lobby 底下加新東西要登記在這裡，沒登記的換頁時會被藏掉
 const LOBBY_PAGES := {
 	&"home": ["Title", "HomeOnline", "HomePractice", "HomeSettings", "HomeQuit"],
 	&"online": ["Title", "OnlineLabel", "ModeRow", "DinoVolunteer", "ModeDesc", "HostBtn", "JoinBtn", "IPRow", "TestServerBtn", "BackBtn"],
@@ -543,7 +544,8 @@ func _load_period() -> void:
 func _on_period_picked(i: int) -> void:
 	period = Period.NAMES.keys()[i]
 	_save_setting("display", "period", String(period))
-	Period.apply(self, period)
+	if lobby.visible:   # 遊戲中只存下來，回大廳才換：時段是整間房間一起的，自己先換會跟別人不一樣（暗處看得比較清楚）
+		Period.apply(self, period)
 
 ## 大廳「我想當恐龍」：對抗模式每局從勾的人裡抽一個操作尼諾拉（docs/規劃/2026-10-18-對抗模式.md）
 var want_dino := false
