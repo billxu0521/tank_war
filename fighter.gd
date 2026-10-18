@@ -173,7 +173,8 @@ func mouse_look(e: InputEvent) -> Vector2:
 	if after_hitch():
 		return Vector2.ZERO
 	_diag("有轉")
-	return e.relative
+	# screen_relative：relative 會跟著畫面縮放（canvas_items）變，全螢幕和小視窗靈敏度會不一樣
+	return Settings.look(e.screen_relative)
 
 static func _diag(k: String) -> void:
 	diag[k] = diag.get(k, 0) + 1

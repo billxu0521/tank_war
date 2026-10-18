@@ -370,7 +370,8 @@ func _process(delta: float) -> void:
 	# 翻越：鏡頭往下點頭、往側邊歪一下，看得出自己撐過去了
 	var v := sin(PI * vault_t)
 	_update_hurt(delta)
-	_camera.rotation = Vector3(-0.22 * v + _kick.x, _kick.y, 0.12 * v + _kick.y * 0.5) + fire_punch
+	# 都是純畫面的晃動，乘「鏡頭晃動」設定；後座力、舉槍晃在 rotate_view，不受影響
+	_camera.rotation = (Vector3(-0.22 * v + _kick.x, _kick.y, 0.12 * v + _kick.y * 0.5) + fire_punch) * Settings.v.get(&"shake", 1.0)
 	# 相機位置用補間後的（移動不抖），朝向用現在的（轉頭零延遲）：
 	# 相機掛在頭底下，差多少就往回挪多少。瞬移後補間會重設，這個差就是 0
 	var lag := head.get_global_transform_interpolated().origin - head.global_position
@@ -406,10 +407,15 @@ func _draw_spread_marks() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	# mouse_look 擋掉卡頓時累積湧進來的位移（見 fighter.gd 的 after_hitch）
-	var rel := mouse_look(event) * mouse_sensitivity
+	var rel := mouse_look(event) * mouse_sensitivity * _ads_sens()
 	if rel != Vector2.ZERO:
 		rotate_view(rel)
 		_look_delta += rel
+
+
+## 舉槍時靈敏度再乘的倍率（設定視窗），跟著舉槍進度慢慢變，不會一下跳
+func _ads_sens() -> float:
+	return lerpf(1.0, Settings.v.get(&"ads_sens", 1.0), viewmodel.ads) if viewmodel else 1.0
 
 
 func _physics_process(delta: float) -> void:
@@ -422,7 +428,8 @@ func _physics_process(delta: float) -> void:
 	# 滑鼠是事件驅動的，手把要自己每 frame 讀
 	var look := Input.get_vector("look_left", "look_right", "look_up", "look_down")
 	if look != Vector2.ZERO:
-		rotate_view(look * joypad_sensitivity * delta)
+		look.y *= -1.0 if Settings.v.get(&"invert_y", false) else 1.0
+		rotate_view(look * joypad_sensitivity * Settings.v.get(&"pad_sens", 1.0) * _ads_sens() * delta)
 
 	# 翻越期間位置由 Tween 接管，只留視角給玩家轉
 	if vaulting:

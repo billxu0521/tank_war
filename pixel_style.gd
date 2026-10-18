@@ -98,9 +98,14 @@ func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventKey and e.pressed and not e.echo and e.keycode == KEY_F10:
 		_next_look()
 	if e is InputEventKey and e.pressed and not e.echo and e.keycode == KEY_F9:
-		on = not on
-		get_parent()._save_setting("display", "pixel_style", on)
-		Period.apply(get_parent(), Period.current)   # 先還原這個時段的天空、霧，再叫回 apply() 疊像素風
+		set_on(not on)
+
+
+## F9 和設定視窗都走這裡
+func set_on(b: bool) -> void:
+	on = b
+	get_parent()._save_setting("display", "pixel_style", on)
+	Period.apply(get_parent(), Period.current)   # 先還原這個時段的天空、霧，再叫回 apply() 疊像素風
 
 
 ## 天空、霧、泛光的「關掉時的樣子」由 period.gd 負責還原（它每次都先還原成那個時段再叫這裡），這裡只在開著時往上疊

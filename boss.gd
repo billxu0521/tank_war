@@ -192,7 +192,7 @@ func _process(delta: float) -> void:
 		cam.current = mine
 		_cam_yaw = rotation.y
 	if mine:
-		$CamPivot.rotation = Vector3(CAM_BASE + _cam_pitch + randf_range(-1.0, 1.0) * _stagger * 0.08, _cam_yaw - rotation.y, 0.0)
+		$CamPivot.rotation = Vector3(CAM_BASE + _cam_pitch + randf_range(-1.0, 1.0) * _stagger * 0.08 * Settings.v.get(&"shake", 1.0), _cam_yaw - rotation.y, 0.0)
 	$Trex.rotation.z = lerpf($Trex.rotation.z, 1.35 if down_left > 0.0 else 0.0, minf(delta * 4.0, 1.0))
 	if down_left > 0.0 and not _was_down:   # 倒地：整隻摔下去揚起一大圈土
 		var w: Node = get_tree().get_first_node_in_group(&"arena")
@@ -304,7 +304,7 @@ func _pilot_step(delta: float) -> void:
 func _unhandled_input(e: InputEvent) -> void:
 	if not _is_my_pilot() or not (e is InputEventMouseMotion) or Input.mouse_mode != Input.MOUSE_MODE_CAPTURED or after_hitch():
 		return
-	var rel: Vector2 = (e as InputEventMouseMotion).relative
+	var rel := Settings.look((e as InputEventMouseMotion).screen_relative)
 	_cam_yaw -= rel.x * MOUSE_SENS * 0.5   # 玩家恐龍原本的靈敏度是給會瞬間轉身的身體用的；這隻轉得慢，鏡頭也放慢一點
 	_cam_pitch = clampf(_cam_pitch - rel.y * MOUSE_SENS * 0.5, PITCH_MIN, PITCH_MAX)
 

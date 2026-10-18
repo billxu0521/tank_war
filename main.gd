@@ -156,7 +156,7 @@ func _ready() -> void:
 	_add_report_button()
 	_flatten_models()
 	_use_cjk_font()
-	_add_controls_button()
+	_add_settings()
 	_ips = _local_ips()
 	_load_saved_ips()
 	_load_settings()
@@ -177,8 +177,9 @@ func _ready() -> void:
 	_dark_windows()
 	if mode != &"range":
 		_build_exits()
-	_add_period_picker()
+	_load_period()
 	_add_dino_volunteer()
+	_build_home()
 	Period.apply(self, period)
 	multiplayer.peer_connected.connect(_spawn)
 	multiplayer.peer_disconnected.connect(_despawn)
@@ -252,13 +253,15 @@ func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventKey and e.pressed and not e.echo and e.keycode == KEY_F3:
 		debug_hud = not debug_hud
 		return
-	if lobby.visible:
+	var esc: bool = e is InputEventKey and e.pressed and e.keycode == KEY_ESCAPE
+	if esc and settings.visible:   # 設定開著：Esc 只關它，停在原本的畫面
+		settings.hide()
 		return
-	if e is InputEventKey and e.pressed and e.keycode == KEY_ESCAPE:
-		var ctl: Window = menu.get_node_or_null(^"ControlsDialog")
-		if ctl and ctl.visible:   # 操作說明開著：Esc 只關它，停在選單
-			ctl.hide()
-			return
+	if lobby.visible:
+		if esc and lobby_page != &"home":
+			lobby_go(&"home")
+		return
+	if esc:
 		_set_menu(not menu.visible)
 	elif e is InputEventMouseButton and e.pressed and not menu.visible and not result.visible:
 		Fighter.lock_mouse()  # 點畫面重新鎖回滑鼠
@@ -281,7 +284,7 @@ const CONTROLS := [
 	["移動", "WASD", "左搖桿"],
 	["看", "滑鼠", "右搖桿"],
 	["開槍", "左鍵", "RT"],
-	["舉槍", "右鍵（選單可改成按一下切換）", "LT"],
+	["舉槍", "右鍵（設定可改成按一下切換）", "LT"],
 	["換彈", "R", "X"],
 	["換子彈（輕／中／重）", "B", "十字鍵右"],
 	["換槍", "1 左輪　2 散彈　3 步槍　4 炸彈長矛　或滾輪", "LB／RB"],
@@ -300,30 +303,33 @@ const CONTROLS := [
 	["試畫面風格", "F10（輪流切換，比較用，不存）", "—"],
 ]
 
-func _add_controls_button() -> void:
-	var dlg := AcceptDialog.new()
-	dlg.name = "ControlsDialog"
-	dlg.title = "操作說明"
-	dlg.ok_button_text = "關閉"
-	var t := RichTextLabel.new()
-	t.bbcode_enabled = true
-	t.fit_content = true
-	t.custom_minimum_size = Vector2(760, 0)
+## 設定視窗的「按鍵」頁
+func controls_table() -> String:
 	var rows := "[table=3][cell][color=#e8b04a]動作[/color]　[/cell][cell][color=#e8b04a]鍵盤滑鼠[/color]　[/cell][cell][color=#e8b04a]手把[/color][/cell]"
 	for r: Array in CONTROLS:
 		rows += "[cell]%s　[/cell][cell]%s　[/cell][cell]%s[/cell]" % r
-	t.text = rows + "[/table]\n\n[color=#bbbbbb]沒有準心，靠槍身瞄；舉槍會晃，閉氣穩住但吃體力。跑起來會自動站起來、放下槍。[/color]"
-	dlg.add_child(t)
-	dlg.theme = $UI/Root.theme   # 視窗不吃 UI 的字型，要自己帶
-	menu.add_child(dlg)
-	menu.visibility_changed.connect(func() -> void: if not menu.visible: dlg.hide())   # 視窗不會跟著選單藏：一局結束、回大廳時對話框會擋住畫面
-	var b := Button.new()
-	b.name = "ControlsBtn"
-	b.text = "操作說明"
-	b.pressed.connect(dlg.popup_centered)
+	return rows + "[/table]\n\n[color=#bbbbbb]沒有準心，靠槍身瞄；舉槍會晃，閉氣穩住但吃體力。跑起來會自動站起來、放下槍。[/color]"
+
+## 設定視窗（settings.gd）：主選單和 Esc 選單共用。Esc 選單放「設定」和「操作說明」（直接開按鍵頁）
+var settings: Settings
+
+func _add_settings() -> void:
+	settings = Settings.new(self)
+	$UI/Root.add_child(settings)
+	# 視窗不會跟著選單藏：一局結束、回大廳時會擋住畫面。在主選單開的不算（那時選單本來就沒開）
+	menu.visibility_changed.connect(func() -> void: if not menu.visible: settings.hide())
 	var box := $UI/Root/Menu/Box
-	box.add_child(b)
-	box.move_child(b, $UI/Root/Menu/Box/ResumeBtn.get_index() + 1)
+	for pair: Array in [["ControlsBtn", "操作說明", 3], ["SettingsBtn", "設定", 0]]:
+		var btn := Button.new()
+		btn.name = pair[0]
+		btn.text = pair[1]
+		btn.pressed.connect(open_settings.bind(pair[2]))
+		box.add_child(btn)
+		box.move_child(btn, $UI/Root/Menu/Box/ResumeBtn.get_index() + 1)
+
+func open_settings(tab: int) -> void:
+	settings.tabs.current_tab = tab
+	settings.popup_centered()
 
 ## 存回報檔、複製到剪貼簿，告訴玩家貼到哪裡。回傳存檔路徑（測試用）
 func report_bug() -> String:
@@ -487,6 +493,32 @@ func _start_dedicated() -> void:
 		spawn_boss()
 	print("測試站開好了，連接埠 %d（UDP）" % PORT)
 
+## 主選單分兩層：首頁四顆按鈕，「連線對戰」「單人練習」各一頁，按「返回」或 Esc 回首頁。
+## 第二層的按鈕還是 Lobby 底下原本那些（場景裡接好的訊號不動），換頁只是藏起來
+const LOBBY_PAGES := {
+	&"home": ["Title", "HomeOnline", "HomePractice", "HomeSettings", "HomeQuit"],
+	&"online": ["Title", "OnlineLabel", "ModeRow", "DinoVolunteer", "ModeDesc", "HostBtn", "JoinBtn", "IPRow", "TestServerBtn", "BackBtn"],
+	&"practice": ["Title", "PracticeLabel", "SandboxBtn", "SoloDinoBtn", "RangeBtn", "ViewerBtn", "BackBtn"],
+}
+var lobby_page := &"home"
+
+func _build_home() -> void:
+	for b: Array in [["HomeOnline", "連線對戰", lobby_go.bind(&"online")], ["HomePractice", "單人練習", lobby_go.bind(&"practice")],
+			["HomeSettings", "設定", open_settings.bind(0)], ["HomeQuit", "離開遊戲", _on_quit_pressed],
+			["BackBtn", "← 返回", lobby_go.bind(&"home")]]:
+		var btn := Button.new()
+		btn.name = b[0]
+		btn.text = b[1]
+		btn.custom_minimum_size.y = 48
+		btn.pressed.connect(b[2])
+		lobby.add_child(btn)
+	lobby_go(&"home")
+
+func lobby_go(page: StringName) -> void:
+	lobby_page = page
+	for c: Node in lobby.get_children():
+		c.visible = String(c.name) in LOBBY_PAGES[page]
+
 ## 大廳選模式：記下來、說明換成那個模式的
 func _on_mode_picked(i: int) -> void:
 	rules = RULES.keys()[i]
@@ -496,35 +528,22 @@ func _on_mode_picked(i: int) -> void:
 ## 時段（period.gd）：大廳選，存在設定檔。開房、沙盒、靶場都用這個；加入別人的房間時照主機的（_set_period）
 var period := &"sunset"
 
-## 大廳「時段」下拉：放在模式說明上面，連線和練習都用得到
-func _add_period_picker() -> void:
+## 時段：設定視窗「畫面」頁選，存在設定檔。專用伺服器用啟動參數 --period noon / midnight
+func _load_period() -> void:
 	var cfg := ConfigFile.new()
 	cfg.load(settings_path)
 	period = StringName(cfg.get_value("display", "period", "sunset"))
-	var args := OS.get_cmdline_user_args()   # 專用伺服器：--period noon / midnight
+	var args := OS.get_cmdline_user_args()
 	var pi := args.find("--period")
 	if pi >= 0 and pi + 1 < args.size():
 		period = StringName(args[pi + 1])
 	if not Period.PRESETS.has(period):
 		period = &"sunset"
-	var row := HBoxContainer.new()
-	var label := Label.new()
-	label.text = "時段"
-	row.add_child(label)
-	var pick := OptionButton.new()
-	pick.name = &"PeriodPick"
-	pick.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	for k: StringName in Period.NAMES:
-		pick.add_item(Period.NAMES[k])
-	pick.select(Period.NAMES.keys().find(period))
-	pick.item_selected.connect(func(i: int) -> void:
-		period = Period.NAMES.keys()[i]
-		_save_setting("display", "period", String(period))
-		Period.apply(self, period))
-	row.add_child(pick)
-	var lobby_box := $UI/Root/Lobby
-	lobby_box.add_child(row)
-	lobby_box.move_child(row, $UI/Root/Lobby/OnlineLabel.get_index())
+
+func _on_period_picked(i: int) -> void:
+	period = Period.NAMES.keys()[i]
+	_save_setting("display", "period", String(period))
+	Period.apply(self, period)
 
 ## 大廳「我想當恐龍」：對抗模式每局從勾的人裡抽一個操作尼諾拉（docs/規劃/2026-10-18-對抗模式.md）
 var want_dino := false
@@ -825,23 +844,16 @@ var _had_me := false    # 這局我已經生出來過；之後角色不見了就
 var _dead_ms := -1
 var saved_ips_path := "user://saved_ips.cfg"   # 測試會換成別的檔，不動到真的清單
 
-var settings_path := "user://settings.cfg"      # 玩家自己的設定（瞄準按住／切換）
+var settings_path := "user://settings.cfg"      # 玩家自己的設定（settings.gd 的設定視窗）
 
 func _load_settings() -> void:
 	var cfg := ConfigFile.new()
 	cfg.load(settings_path)   # 第一次開沒有檔案，用預設值
 	Viewmodel.aim_toggle = cfg.get_value("controls", "aim_toggle", false)
-	$UI/Root/Menu/Box/AimToggleBtn.set_pressed_no_signal(Viewmodel.aim_toggle)
-	var caps: OptionButton = $UI/Root/Menu/Box/FpsCapBtn
-	caps.clear()
-	var hz := _refresh_hz()
-	for label: String in [FPS_CAPS[0], FPS_CAPS[1] % hz, FPS_CAPS[2] % (hz / 2)]:
-		caps.add_item(label)
 	vsync = cfg.get_value("display", "vsync", true)
 	fps_cap = cfg.get_value("display", "fps_cap", 0)
-	$UI/Root/Menu/Box/VsyncBtn.set_pressed_no_signal(vsync)
-	caps.select(fps_cap)
 	_apply_display()
+	Settings.load_from(cfg)
 
 func _save_setting(section: String, key: String, value: Variant) -> void:
 	var cfg := ConfigFile.new()

@@ -64,6 +64,7 @@ func _process(_delta: float) -> bool:
 		_case_arena_walls()
 		_case_boss()
 		_case_compass()
+		_case_settings()
 		_case_dedicated_round()
 		_case_cowboy_voice()
 		_case_versus()
@@ -526,11 +527,11 @@ func _case_hunt_weapons() -> void:
 	m._set_menu(true)
 	var info: GridContainer = m.menu.get_node(^"WeaponInfo")
 	_ck(info.visible and info.get_child_count() == (revolver.info_rows().size() + 1) * (vm._weapons.size() + 1), "Esc 選單要有每把槍的武器介紹")
-	var ctl: AcceptDialog = m.menu.get_node(^"ControlsDialog")
+	var ctl: Settings = m.settings
 	m.menu.get_node(^"Box/ControlsBtn").pressed.emit()
-	_ck(ctl.visible and m.CONTROLS.size() > 10, "Esc 選單按「操作說明」要彈出操作表")
+	_ck(ctl.visible and ctl.tabs.get_current_tab_control().name == &"按鍵" and m.CONTROLS.size() > 10, "Esc 選單按「操作說明」要彈出設定的按鍵頁")
 	m._set_menu(false)
-	_ck(not ctl.visible, "關掉選單時操作說明也要一起關（不然一局結束會擋住畫面）")
+	_ck(not ctl.visible, "關掉選單時設定視窗也要一起關（不然一局結束會擋住畫面）")
 
 	# 瞄準按住／切換：玩家的設定要存起來，下次開遊戲還在
 	m.settings_path = "user://test_settings.cfg"
@@ -585,6 +586,7 @@ func _case_hunt_weapons() -> void:
 	var gun: Weapon = vm1.weapon
 	var rnd := gun.recoil_pitch_random
 	gun.recoil_pitch_random = 0.0
+	Settings.v[&"mouse_sens"] = 2.0   # 靈敏度只乘滑鼠：調高了後座力也不能跟著變大（下面的度數照舊）
 	vm1._apply_recoil()
 	for i in 6:
 		vm1._update_recoil(DT)
@@ -592,6 +594,7 @@ func _case_hunt_weapons() -> void:
 	for i in 120:
 		vm1._update_recoil(DT)
 	gun.recoil_pitch_random = rnd
+	Settings.v[&"mouse_sens"] = 1.0
 	var want := deg_to_rad(gun.recoil_pitch) * 2.0 * (1.0 - gun.recoil_return_ratio)
 	_ck(vm1._kicks.is_empty() and absf((me.head.rotation.x - pitch0) - want) < 0.001,
 		"連開兩發後座力要疊起來，最後留 %.2f 度（留了 %.2f）" % [rad_to_deg(want), rad_to_deg(me.head.rotation.x - pitch0)])
@@ -1475,6 +1478,44 @@ func _case_versus() -> void:
 	m._pick_pilot()
 	_ck(b.pilot == 0, "這局已經抽過：斷線後電腦接手到局末，不再抽別人")
 	_end(m)
+
+## 主選單兩層、設定視窗（docs/規劃/2026-10-18-玩家設定.md）
+func _case_settings() -> void:
+	var m: Node = load("res://main.tscn").instantiate()
+	m.settings_path = "user://test_settings.cfg"
+	root.add_child(m)
+	_ck(m.lobby_page == &"home" and m.get_node(^"UI/Root/Lobby/HomeOnline").visible and not m.get_node(^"UI/Root/Lobby/HostBtn").visible, "一開是首頁：只有四顆大按鈕")
+	m.get_node(^"UI/Root/Lobby/HomeOnline").pressed.emit()
+	_ck(m.get_node(^"UI/Root/Lobby/HostBtn").visible and m.get_node(^"UI/Root/Lobby/BackBtn").visible, "按「連線對戰」看得到開房和返回")
+	var esc := InputEventKey.new()
+	esc.keycode = KEY_ESCAPE
+	esc.pressed = true
+	m._unhandled_input(esc)
+	_ck(m.lobby_page == &"home", "大廳第二層按 Esc 回首頁")
+	m.get_node(^"UI/Root/Lobby/HomeSettings").pressed.emit()
+	_ck(m.settings.visible, "首頁按「設定」要打開設定視窗")
+	m._unhandled_input(esc)
+	_ck(not m.settings.visible and m.lobby.visible, "設定開著按 Esc 只關設定")
+	# 靈敏度、反轉乘在滑鼠位移上；視野、音量改了馬上套用，重開還在
+	m.settings.set_value(&"mouse_sens", 2.0)
+	m.settings.set_value(&"invert_y", true)
+	_ck(Settings.look(Vector2(3, 4)) == Vector2(6, -8), "靈敏度 2 倍、上下反轉（現在 %s）" % Settings.look(Vector2(3, 4)))
+	m.settings.set_value(&"fov", 110.0)
+	m.settings.set_value(&"volume", 0.0)
+	_ck(AudioServer.is_bus_mute(0), "音量拉到 0 要靜音")
+	Settings.v.clear()
+	m._load_settings()
+	_ck(Settings.v[&"mouse_sens"] == 2.0 and Settings.v[&"invert_y"] and is_equal_approx(Settings.h_fov(Settings.v[&"fov"]), 110.0),
+		"設定要存起來，重開照樣讀回來")
+	_ck(is_equal_approx(roundf(Settings.h_fov(70.0)), 102.0), "預設視野（垂直 70）顯示成水平 102")
+	m.settings.tabs.current_tab = 0
+	m.settings.tabs.get_child(0).get_child(-1).pressed.emit()   # 操作頁「恢復預設」
+	m.settings.tabs.get_child(2).get_child(-1).pressed.emit()   # 聲音頁
+	m.settings.tabs.get_child(1).get_child(-1).pressed.emit()   # 畫面頁
+	_ck(Settings.v[&"mouse_sens"] == 1.0 and not Settings.v[&"invert_y"] and Settings.v[&"fov"] == 70.0 and not AudioServer.is_bus_mute(0),
+		"每頁的恢復預設要回到原本的手感")
+	m.free()
+	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://test_settings.cfg"))
 
 ## 方位條：0 = 北（-Z），順時針，東 = 90
 func _case_compass() -> void:

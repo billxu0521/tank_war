@@ -160,6 +160,7 @@ var _fire_hold := 0.0       # 開火鍵這一次已經按住多久
 
 
 func _ready() -> void:
+	hip_fov = Settings.v.get(&"fov", hip_fov)   # 設定視窗的視野；舉槍的 ads_fov 固定，放大倍率大家一樣
 	for scene in weapon_scenes:
 		var w: Weapon = scene.instantiate()
 		add_child(w)
