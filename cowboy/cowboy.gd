@@ -183,6 +183,10 @@ func _ready() -> void:
 
 	_skin()
 	died.connect(_drop_corpse)
+	_voice = AudioStreamPlayer3D.new()
+	_voice.position = Vector3(0, 1.6, 0)   # 嘴巴的高度
+	_voice.max_distance = 45.0
+	add_child(_voice)
 	if is_local:
 		# 第一人稱看不到自己的軀幹和臉，但影子要在（地上看得到自己的影子，像 Hunt 那樣）。
 		# 腿照樣畫：低頭看得到自己的靴子
@@ -225,10 +229,22 @@ var _hp_lag_wait := 0.0      # 掉血後殘影先停這麼久才開始縮
 var _kick := Vector2.ZERO    # 鏡頭被打歪多少（弧度：x 上下、y 左右），每幀彈回來
 var fire_punch := Vector3.ZERO   # 開槍畫面撞一下（弧度：上、左右、側歪），viewmodel 每幀填
 
-## 被打了：畫面四周閃紅、準心外圍標出打你的方向、鏡頭抖一下（傷越重抖越大）
+## 叫聲（assets/audio/cowboy，~/project/moss-sfx 生的）：被打會叫、死掉會慘叫。每台都播，別人聽得到
+const HURT_VOICES := [preload("res://assets/audio/cowboy/hurt_1.wav"), preload("res://assets/audio/cowboy/hurt_2.wav"),
+	preload("res://assets/audio/cowboy/hurt_3.wav"), preload("res://assets/audio/cowboy/hurt_4.wav")]
+const DEATH_VOICES := [preload("res://assets/audio/cowboy/death_1.wav"), preload("res://assets/audio/cowboy/death_2.wav"),
+	preload("res://assets/audio/cowboy/death_3.wav")]
+var _voice: AudioStreamPlayer3D
+
+## 被打了：叫一聲；自己的話畫面四周閃紅、準心外圍標出打你的方向、鏡頭抖一下（傷越重抖越大）
 func _on_hurt(amount: int, from: Vector3) -> void:
 	if _rig:
 		_rig.hit()
+	if hp - amount <= 0:
+		_death_cry()
+	elif not _voice.playing:   # 散彈一次十幾顆彈丸各扣一次血：還在叫就不重來
+		_voice.stream = HURT_VOICES.pick_random()
+		_voice.play()
 	if not is_local or _hurt_hud == null:
 		return
 	var frac := float(amount) / max_hp
@@ -667,6 +683,19 @@ func deal_damage(target: Node, amount: int, head := false) -> void:
 func _match() -> Node:
 	return get_tree().get_first_node_in_group(&"match")
 
+
+## 死前的慘叫：角色馬上會被刪掉，聲音另外放在場上，播完自己刪
+func _death_cry() -> void:
+	var g := _match()
+	if g == null or g.get(&"_dedicated"):
+		return
+	var snd := AudioStreamPlayer3D.new()
+	snd.stream = DEATH_VOICES.pick_random()
+	snd.max_distance = _voice.max_distance
+	g.add_child(snd)
+	snd.global_position = _voice.global_position
+	snd.play()
+	snd.finished.connect(snd.queue_free)
 
 ## 死掉時每台各自留一具會癱倒的屍體（corpse.gd）。專用伺服器沒人看，不做
 func _drop_corpse(_killer: Node) -> void:
