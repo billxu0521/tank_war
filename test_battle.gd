@@ -1521,13 +1521,16 @@ func _case_settings() -> void:
 	var g := _offline_match()
 	var c: Node = g._add_player(g.COWBOY, 1)
 	c._kick = Vector2(0.05, 0.03)
+	var shake0: float = Settings.v.get(&"shake", 1.0)
 	Settings.v[&"shake"] = 0.0
 	c._process(DT)
 	c.viewmodel.spread = 0.0
 	var dir: Vector3 = c.viewmodel._spread_direction(c._camera)
-	Settings.v[&"shake"] = 1.0
-	_ck(c._camera.rotation.is_zero_approx() and dir.dot(-c._camera.global_basis.z) < 0.9995,
-		"鏡頭晃動 0：畫面不歪，子彈還是照被打歪的方向飛")
+	var throw_dir: Vector3 = (c.viewmodel._throw_start()[1] - Vector3.UP * 2.5 - c.velocity).normalized()
+	Settings.v[&"shake"] = shake0
+	_ck(c._camera.rotation.is_zero_approx() and dir.dot(-c._camera.global_basis.z) < 0.9995
+		and throw_dir.dot(-c._camera.global_basis.z) < 0.9995,
+		"鏡頭晃動 0：畫面不歪，子彈、炸藥、槍托還是照被打歪的方向")
 	_end(g)
 
 ## 方位條：0 = 北（-Z），順時針，東 = 90
