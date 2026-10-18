@@ -216,6 +216,12 @@ func apply_brightness() -> void:
 				mat.albedo_color = Color(c.r * brightness + lift, c.g * brightness + lift, c.b * brightness + lift * 1.3, c.a)
 
 ## 把 root 底下所有不透明材質的粗糙度改成 mark，給 outline.gdshader 認
+## 別人、恐龍、靶標成「目標」（描線用的記號）。沒畫面（專用伺服器、測試）就不標：標的時候每個角色會複製一份材質，
+## headless 的假算圖在刪角色時會為每一份報「Parameter "material" is null」，一局結束就洗滿伺服器紀錄和問題回報
+static func mark_target(root: Node) -> void:
+	if DisplayServer.get_name() != "headless":
+		mark_meshes(root, TARGET_MARK)
+
 static func mark_meshes(root: Node, mark: float) -> void:
 	for mi: MeshInstance3D in root.find_children("*", "MeshInstance3D", true, false):
 		if mi.mesh == null:

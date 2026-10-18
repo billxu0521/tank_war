@@ -66,6 +66,7 @@ func _process(_delta: float) -> bool:
 		_case_compass()
 		_case_dedicated_round()
 		_case_cowboy_voice()
+		_case_versus()
 		_start_gun_case()
 		return false
 	# 剩下的要跨好幾個 frame 才驗得到。總幀數設上限：腳本編譯壞掉時各階段等不到條件，
@@ -1169,7 +1170,7 @@ func _case_modes() -> void:
 ## 大廳的對局模式：搶蛋、死鬥（重生 3 次、剩一人贏）、恐龍決鬥（重生 5 次、打死恐龍大家贏）
 func _case_match_rules() -> void:
 	var m := _offline_match()
-	_ck(m.mode_pick.item_count == 3, "大廳要能選三種模式（現在 %d）" % m.mode_pick.item_count)
+	_ck(m.mode_pick.item_count == m.RULES.size(), "大廳要能選每一種模式（現在 %d）" % m.mode_pick.item_count)
 	# 死鬥：沒有蛋，每人重生 3 次，用完出局，剩一個人贏
 	m._on_mode_picked(m.RULES.keys().find(&"deathmatch"))
 	m._apply_rules()
@@ -1400,6 +1401,79 @@ func _case_cowboy_voice() -> void:
 	c.take_damage(500)
 	var after := m.get_children().filter(func(n: Node) -> bool: return n is AudioStreamPlayer3D and n.stream in c.DEATH_VOICES).size()
 	_ck(after == 1 and before == 0, "死掉要在場上留一聲慘叫")
+	_end(m)
+
+## 對抗模式：玩家操作尼諾拉（docs/規劃/2026-10-18-對抗模式.md）
+func _case_versus() -> void:
+	var m := _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"versus"))
+	m._apply_rules()
+	m._add_player(m.COWBOY, 1)
+	m._add_player(m.COWBOY, 2)
+	var b: Node = m.spawn_boss()
+	b.global_position = m._on_ground(Vector3(0, 4.2, 40))   # 整平的路上，前面沒東西擋
+	b.rotation.y = 0.0
+	m._pick_pilot()
+	_ck(b.pilot == 0, "沒人勾「我想當恐龍」：尼諾拉還是電腦")
+	m.want_dino = true
+	m._sandbox = true
+	m._pick_pilot()
+	_ck(b.pilot == 0, "沙盒、單人打恐龍：大廳選了對抗也不抽人")
+	m._sandbox = false
+	m.want_dino = false
+	m.want_dino = true
+	m._pick_pilot()
+	_ck(b.pilot == 1 and not m.players.has_node(^"1"), "勾了就抽來當尼諾拉，自己的牛仔收掉")
+	_ck(m._me() == b, "操作尼諾拉時「自己」就是尼諾拉（畫面資訊、體力條用）")
+	# 往前跑：照輸入動、跑吃體力、轉身有限速
+	for i in 60:   # 測試在第一格跑，物理還沒開始算、位置不會動：看速度
+		b.pilot_input(Vector2(0, -1), 0.0, 0.0, b.PIN_RUN)
+		b.think(1.0 / 60.0)
+	_ck(b.running and b.velocity.z < -b.RUN * 0.8 and absf(b.velocity.x) < 0.5,
+		"駕駛往前推＋Shift：尼諾拉往前跑（速度 %s）" % b.velocity)
+	var y0: float = b.rotation.y
+	b.pilot_input(Vector2.ZERO, PI * 0.9, 0.0, 0)
+	b.think(0.1)
+	_ck(absf(wrapf(b.rotation.y - y0, -PI, PI)) <= b.TURN * 0.1 + 0.01, "身體轉向鏡頭有限速（繞著牠跑有用）")
+	# 三招
+	b.rotation.y = 0.0
+	b.pilot_input(Vector2.ZERO, 0.0, 0.0, b.PIN_BITE)
+	b.think(1.0 / 60.0)
+	_ck(b.act == b.ACT_BITE_WIND, "左鍵：咬的預備（有預備動作和吼聲）")
+	for i in 120:
+		b.pilot_input(Vector2.ZERO, 0.0, 0.0, 0)
+		b.think(1.0 / 60.0)
+	_ck(b.act == b.ACT_NONE, "咬完收招回到可以動")
+	b._attack_gap = 0.0
+	b.pilot_input(Vector2.ZERO, 0.0, 0.0, b.PIN_POUNCE)
+	b.think(1.0 / 60.0)
+	_ck(b.act == b.ACT_POUNCE_WIND, "右鍵：撲擊的預備")
+	b.act = b.ACT_NONE
+	b._attack_gap = 0.0
+	b.pilot_input(Vector2.ZERO, 0.0, 0.0, b.PIN_SWEEP)
+	b.think(1.0 / 60.0)
+	_ck(b.act == b.ACT_CHARGE_WIND, "Space：蓄力甩尾的預備")
+	b.act = b.ACT_NONE
+	# 網路斷斷續續：太久沒輸入就當放開
+	b.pilot_input(Vector2(0, -1), 0.0, 0.0, 0)
+	for i in 60:
+		b.think(1.0 / 60.0)
+	_ck(b._pin_move == Vector2.ZERO, "超過 %.1f 秒沒收到輸入就停下來" % b.PILOT_STALE)
+	# 牛仔撿不到…尼諾拉也撿不到蛋（同搶蛋）；時間到沒人撤離 → 尼諾拉贏
+	m._time_left = 0.0
+	m._physics_process(1.0 / 60.0)
+	_ck(m._over and m.get_node(^"UI/Root/Result/Box/Text").text.contains("尼諾拉獲勝"), "對抗模式時間到：尼諾拉贏")
+	# 下一局：上一局的尼諾拉變回牛仔、重抽
+	m.want_dino = false
+	m._new_round()
+	_ck(b.pilot == 0 and m.players.has_node(^"1"), "下一局：操作尼諾拉的人先變回牛仔")
+	# 操作的人斷線：電腦接手
+	m.want_dino = true
+	m._pick_pilot()
+	m._despawn(1)
+	_ck(b.pilot == 0, "操作尼諾拉的人離線：電腦接手")
+	m._pick_pilot()
+	_ck(b.pilot == 0, "這局已經抽過：斷線後電腦接手到局末，不再抽別人")
 	_end(m)
 
 ## 方位條：0 = 北（-Z），順時針，東 = 90
@@ -1688,6 +1762,9 @@ func _case_trex_lean() -> void:
 	var m := _new_offline_game()
 	var t: Node = m.players.get_node(^"2").get_node(^"Trex")
 	var d: Node3D = m.players.get_node(^"2")
+	# 放在整平的沙盒靶場路上：出生點是隨機的，落在坡上時兩腳高低差會吃掉側傾，偶爾只量到 -0.028（門檻 -0.03）
+	d.global_position = m._on_ground(Vector3(0, 4.2, 40))
+	d.reset_physics_interpolation()
 	for i in 120:   # 先站穩，記下站著的側傾（坡上會往低的那隻腳斜一點，身體跟著腳的高度）
 		t._last_pos = t.global_position
 		t._process(1.0 / 60.0)
@@ -1937,6 +2014,9 @@ func _case_bug_report() -> void:
 	push_error("bug 收集器測試：這是錯誤")
 	push_error("bug 收集器測試：這是錯誤")
 	_ck(r.error_count() == before + 1 and r.take_new_error(), "錯誤要記下來、跳提示，同一個只記一次")
+	push_error("Node not found: \"Main/Players/123456/Sync\" (relative to \"/root\").")
+	push_error("Node not found: \"Main/Players/987654/Sync\" (relative to \"/root\").")
+	_ck(r.error_count() == before + 2 and not r.take_new_error(), "玩家加入的時間差錯誤要併成一筆、不跳提示")
 	var path: String = m.report_bug()
 	_ck(path != "" and FileAccess.file_exists(path), "F8 要存出回報檔（%s）" % path)
 	var text := FileAccess.get_file_as_string(path)
