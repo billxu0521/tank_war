@@ -228,6 +228,7 @@ var _hp_lag := -1.0          # 殘影現在畫到的血量
 var _hp_lag_wait := 0.0      # 掉血後殘影先停這麼久才開始縮
 var _kick := Vector2.ZERO    # 鏡頭被打歪多少（弧度：x 上下、y 左右），每幀彈回來
 var fire_punch := Vector3.ZERO   # 開槍畫面撞一下（弧度：上、左右、側歪），viewmodel 每幀填
+var aim_rot := Vector3.ZERO      # 鏡頭該歪多少（沒乘鏡頭晃動設定），子彈方向照這個算
 
 ## 叫聲（assets/audio/cowboy，~/project/moss-sfx 生的）：被打會叫、死掉會慘叫。每台都播，別人聽得到
 const HURT_VOICES := [preload("res://assets/audio/cowboy/hurt_1.wav"), preload("res://assets/audio/cowboy/hurt_2.wav"),
@@ -370,7 +371,10 @@ func _process(delta: float) -> void:
 	# 翻越：鏡頭往下點頭、往側邊歪一下，看得出自己撐過去了
 	var v := sin(PI * vault_t)
 	_update_hurt(delta)
-	_camera.rotation = Vector3(-0.22 * v + _kick.x, _kick.y, 0.12 * v + _kick.y * 0.5) + fire_punch
+	# 被打歪、開槍撞一下也會讓子彈偏（viewmodel 的 _spread_direction 用 aim_rot）：
+	# 「鏡頭晃動」設定只縮畫面，子彈照原本的歪法，調到 0 不會比別人準
+	aim_rot = Vector3(-0.22 * v + _kick.x, _kick.y, 0.12 * v + _kick.y * 0.5) + fire_punch
+	_camera.rotation = aim_rot * Settings.v.get(&"shake", 1.0)
 	# 相機位置用補間後的（移動不抖），朝向用現在的（轉頭零延遲）：
 	# 相機掛在頭底下，差多少就往回挪多少。瞬移後補間會重設，這個差就是 0
 	var lag := head.get_global_transform_interpolated().origin - head.global_position
@@ -406,10 +410,15 @@ func _draw_spread_marks() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	# mouse_look 擋掉卡頓時累積湧進來的位移（見 fighter.gd 的 after_hitch）
-	var rel := mouse_look(event) * mouse_sensitivity
+	var rel := mouse_look(event) * mouse_sensitivity * _ads_sens()
 	if rel != Vector2.ZERO:
 		rotate_view(rel)
 		_look_delta += rel
+
+
+## 舉槍時靈敏度再乘的倍率（設定視窗），跟著舉槍進度慢慢變，不會一下跳
+func _ads_sens() -> float:
+	return lerpf(1.0, Settings.v.get(&"ads_sens", 1.0), viewmodel.ads) if viewmodel else 1.0
 
 
 func _physics_process(delta: float) -> void:
@@ -422,7 +431,8 @@ func _physics_process(delta: float) -> void:
 	# 滑鼠是事件驅動的，手把要自己每 frame 讀
 	var look := Input.get_vector("look_left", "look_right", "look_up", "look_down")
 	if look != Vector2.ZERO:
-		rotate_view(look * joypad_sensitivity * delta)
+		look.y *= -1.0 if Settings.v.get(&"invert_y", false) else 1.0
+		rotate_view(look * joypad_sensitivity * Settings.v.get(&"pad_sens", 1.0) * _ads_sens() * delta)
 
 	# 翻越期間位置由 Tween 接管，只留視角給玩家轉
 	if vaulting:

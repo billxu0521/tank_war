@@ -160,6 +160,7 @@ var _fire_hold := 0.0       # 開火鍵這一次已經按住多久
 
 
 func _ready() -> void:
+	hip_fov = Settings.v.get(&"fov", hip_fov)   # 設定視窗的視野；舉槍的 ads_fov 固定，放大倍率大家一樣
 	for scene in weapon_scenes:
 		var w: Weapon = scene.instantiate()
 		add_child(w)
@@ -420,7 +421,7 @@ func try_melee(heavy := false) -> void:
 	_player.spend_stamina(heavy_stamina if heavy else melee_stamina)
 	_anim_lock = weapon.play(&"melee", blend)
 	var from := _camera.global_position
-	var to := from - _camera.global_transform.basis.z * melee_range
+	var to := from - _aim_basis().z * melee_range
 	var q := PhysicsRayQueryParameters3D.create(from, to, hit_mask, [_player.get_rid()])
 	var hit := get_world_3d().direct_space_state.intersect_ray(q)
 	var target: Object = hit.get("collider")
@@ -603,10 +604,15 @@ func cancel_reload() -> void:
 	weapon.stop_reload()
 
 
+## 開槍、丟炸藥、槍托往哪打：不用鏡頭的朝向，鏡頭乘過「鏡頭晃動」設定，調 0 會比別人準
+func _aim_basis() -> Basis:
+	return (_camera.get_parent() as Node3D).global_basis * Basis.from_euler(_player.aim_rot)
+
+
 ## 在正前方為軸的圓錐內隨機取一個方向。sqrt 是為了讓落點在圓面上均勻，
 ## 不加的話會過度集中在中心。
 func _spread_direction(cam: Camera3D, extra := 0.0) -> Vector3:
-	var basis := cam.global_transform.basis
+	var basis := _aim_basis()
 	var forward := -basis.z
 	var total := spread + extra
 	if _first_shot_perfect():
@@ -801,8 +807,9 @@ func _update_cook(delta: float) -> void:
 
 ## 炸藥從哪丟出去、初速多少：[位置, 速度]。丟出去和預測的拋物線共用，兩個才會一樣
 func _throw_start() -> Array:
-	var fwd := -_camera.global_basis.z
-	var from := _camera.global_position + fwd * 0.5 + _camera.global_basis.x * 0.15
+	var aim := _aim_basis()
+	var fwd := -aim.z
+	var from := _camera.global_position + fwd * 0.5 + aim.x * 0.15
 	return [from, fwd * THROW_SPEED + Vector3.UP * 2.5 + _player.velocity]
 
 
