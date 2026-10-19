@@ -10,6 +10,7 @@ extends RefCounted
 ##   - 不能擺到場外
 ##   - 型號要存在（打錯字會變成看不見的空氣）
 ##   - 建築不能高過「恐龍爬得到的上限」（圍牆就是照這個高度算的）
+##   - 出生點（spawn、dino_spawn）不能卡在會擋人的東西裡
 
 const Main := preload("res://main.gd")
 const SHRINK := 0.05   # 貼在一起不算重疊（木桶並排、草捆疊起來）
@@ -53,6 +54,7 @@ static func run(recs: Array, lane: Variant = Main.SANDBOX_RANGE) -> Array:
 	var half := Main.ARENA * 0.5
 	var meshes := Main.meshes()
 	var placed := []   # [名字, 佔的空間]
+	var spawns := []   # [名字, 那一筆]
 	for i in recs.size():
 		var rec: Dictionary = recs[i]
 		var name: String = rec.get("node", "%s#%d" % [rec.kind, i])
@@ -68,6 +70,8 @@ static func run(recs: Array, lane: Variant = Main.SANDBOX_RANGE) -> Array:
 				problems.append([name, "穀倉太高（屋頂 %.1f 公尺，上限 %.0f）" % [top, Main.BUILDING_MAX_H]])
 		if rec.kind == &"silo" and rec.h + 1.6 > Main.BUILDING_MAX_H:
 			problems.append([name, "筒倉太高（%.1f 公尺，上限 %.0f）" % [rec.h + 1.6, Main.BUILDING_MAX_H]])
+		if rec.kind == &"gb_safe" and rec.size.y > Main.BUILDING_MAX_H:
+			problems.append([name, "安全屋太高（%.1f 公尺，上限 %.0f）" % [rec.size.y, Main.BUILDING_MAX_H]])
 		if rec.kind == &"gb_house":
 			if rec.floors * rec.size.y > Main.BUILDING_MAX_H:
 				problems.append([name, "灰盒房子太高（%.1f 公尺，上限 %.0f）" % [rec.floors * rec.size.y, Main.BUILDING_MAX_H]])
@@ -77,6 +81,9 @@ static func run(recs: Array, lane: Variant = Main.SANDBOX_RANGE) -> Array:
 				problems.append([name, "灰盒房子太窄，斜坡旁邊沒有樓板（寬 %.1f）" % rec.size.x])
 			if rec.big and rec.size.y < Greybox.BIG_DOOR.y + 0.5:
 				problems.append([name, "大門要每層高 %.1f 以上，不然恐龍進不去（現在 %.1f）" % [Greybox.BIG_DOOR.y + 0.5, rec.size.y]])
+		if rec.kind == &"spawn" or rec.kind == &"dino_spawn":   # 出生點：最後再比，要跟所有會擋人的東西比
+			spawns.append([name, rec])
+			continue
 		var fp := footprint(rec)
 		if fp.is_empty():
 			continue
@@ -89,4 +96,11 @@ static func run(recs: Array, lane: Variant = Main.SANDBOX_RANGE) -> Array:
 			if overlap(fp, other[1]):
 				problems.append([name, "跟「%s」重疊" % other[0]])
 		placed.append([name, fp])
+	for sp: Array in spawns:   # 出生點當成一個人站的大小（恐龍的照恐龍半徑）
+		var r: float = 2.4 if sp[1].kind == &"dino_spawn" else 0.5
+		var fp := {c = Vector2(sp[1].pos.x, sp[1].pos.z), half = Vector2(r, r), yaw = 0.0,
+			box = Rect2(sp[1].pos.x - r, sp[1].pos.z - r, r * 2, r * 2), y0 = 0.0, y1 = TALL}
+		for other: Array in placed:
+			if overlap(fp, other[1]):
+				problems.append([sp[0], "出生點卡在「%s」裡" % other[0]])
 	return problems

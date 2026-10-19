@@ -117,6 +117,8 @@ var _exit_pads: Array[Node3D] = []   # 撤離區的地面標示：沒有蛋的�
 var _props := {}   # 物件名 -> Mesh，從 props.glb 拿出來共用
 var _terrain: Terrain
 var _level: Array[Dictionary] = []   # 擺設清單：場地上每樣東西一筆（見 _build_level）
+var spawn_points: Array[Vector3] = []   # 牛仔出生／重生候選點（擺設種類 spawn，派對模式用）；空的就用 _spawn_point()
+var dino_spawn := Vector3.ZERO           # 恐龍出生點（擺設種類 dino_spawn）；沒放就是場地中央貼地
 ## 手調過的場景檔（在 Godot 編輯器裡改，見 docs/素材流水線/場景編輯.md）。烘焙工具設成空的：不讀場景檔，自動擺一份初稿
 ## 目前的地圖：&"" 是主地圖（連線、沙盒），&"range" 是靶場。靜態的：換地圖要重載整個場景，重載後還記得
 static var mode := &""
@@ -1677,7 +1679,7 @@ const SHOP_HALF := {&"Saloon": Vector2(5.3, 9.5), &"Store": Vector2(4.8, 9.0), &
 ## 出生點要再離多遠（穀倉的在清單那一筆自己帶，大穀倉和小棚子不一樣）
 const CLEARANCE := {&"house": SPAWN_CLEARANCE, &"silo": 3.0, &"hay_shed": 2.0, &"windmill": 2.0, &"tree": 1.5,
 	&"hay_bale": 1.0, &"rock": 1.5, &"fence": 0.6, &"shop": SPAWN_CLEARANCE, &"water_tower": 2.0,
-	&"gb_house": 3.0, &"gb_block": 1.0}
+	&"gb_house": 3.0, &"gb_block": 1.0, &"gb_safe": 3.0}
 
 ## 這一筆在地面上佔的半寬；沒有碰撞的（灌木、碎石、只有外觀的東西）回傳 ZERO
 static func footprint_half(rec: Dictionary) -> Vector2:
@@ -1696,7 +1698,7 @@ static func footprint_half(rec: Dictionary) -> Vector2:
 				return Vector2.ZERO
 			var r: Vector3 = meshes()[rec.mesh].get_aabb().size * rec.s
 			return Vector2(r.x, r.z) * 0.5
-		&"gb_house", &"gb_block":
+		&"gb_house", &"gb_block", &"gb_safe":
 			return Vector2(rec.size.x, rec.size.z) * 0.5
 	return FOOTPRINT.get(rec.kind, Vector2.ZERO)
 
@@ -1736,6 +1738,7 @@ func _reserve(rec: Dictionary) -> void:
 ## 照擺設清單把東西蓋出來。順序跟清單一樣（門的名字 Door0、Door1… 照蓋的順序，每台機器要一樣）
 func _build_level() -> void:
 	var bushes: Array[Transform3D] = []
+	dino_spawn = _on_ground(Vector3.ZERO)
 	for rec: Dictionary in _level:
 		var p: Vector3 = rec.pos
 		match rec.kind:
@@ -1755,6 +1758,12 @@ func _build_level() -> void:
 			&"water_tower": _water_tower(p, rec.yaw)
 			&"gb_house": _place_greybox(Greybox.house(rec.size, rec.floors, rec.big), p, rec.yaw)
 			&"gb_block": _place_greybox(Greybox.block(rec.size), p, rec.yaw)
+			&"gb_safe":   # 安全屋：一層的小灰盒房，門窗恐龍擠不進。拆不掉（不進 destructible）
+				var safe := Greybox.house(rec.size, 1)
+				safe.add_to_group(&"safe_house")
+				_place_greybox(safe, p, rec.yaw)
+			&"spawn": spawn_points.append(_on_ground(p))
+			&"dino_spawn": dino_spawn = _on_ground(p)
 			&"tree": _tree(rec)
 			&"rock": _rock(rec.mesh, p, rec.s, rec.yaw, rec.solid)
 			&"prop": _prop(rec.name, _on_ground(p)).rotation.y = rec.yaw
