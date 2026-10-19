@@ -107,12 +107,16 @@ const RULES := {
 		desc = "搶蛋，但尼諾拉由玩家操作（勾「我想當恐龍」的人每局抽一個，沒人勾就是電腦）。帶蛋撤離的牛仔贏，時間到沒人撤離就是尼諾拉贏。"},
 	&"dino_duel": {name = "恐龍決鬥", lives = 5, dino = true, egg = false, timer = false,
 		desc = "所有牛仔合力打一隻恐龍，打死牠大家一起贏。每人可以重生 5 次，全部出局就是恐龍贏。小心，打到隊友一樣會扣血。"},
+	# 規則本體在 party.gd（命數、計時、計分自己管，不走上面的 lives／timer）
+	&"party": {name = "派對", lives = 3, dino = true, egg = true, timer = true,
+		desc = "四個人輪流當恐龍，四回合加總比分數（不到四人用電腦補）。恐龍先花 15 秒藏蛋，牛仔每回合 3 條命，帶蛋撤離就贏這回合。"},
 }
 const DUEL_BOSS_HP := 3000   # 恐龍決鬥的恐龍血量（搶蛋模式打不死、900 血會倒地）
 var rules := &"egg"
 var _lives := {}   # 牛仔的連線編號 -> 還能重生幾次。只有用得到次數的模式有；主機算，廣播給大家（_sync_lives）
 var _out := {}     # 出局的牛仔：連線編號 -> 是不是 bot（新的一局要生回來）
 var _exit_pads: Array[Node3D] = []   # 撤離區的地面標示：沒有蛋的模式藏起來
+var party: Party   # 派對模式的回合、計分（party.gd）；不是派對模式是 null
 
 var _props := {}   # 物件名 -> Mesh，從 props.glb 拿出來共用
 var _terrain: Terrain
@@ -147,7 +151,6 @@ var _blocked: Array[Rect2] = []  # 建築物在 XZ 平面佔的範圍
 var _drift: Node3D   # 落葉飛蟲，跟著鏡頭走（Fx.drift）
 var _bushes: Array[Vector3] = []  # 灌木叢的根部位置（bot 判斷人是不是躲在裡面）
 var _exits: Array[Vector3] = []  # 四個撤離區的中心
-var party: Node = null   # 派對模式的 Party 節點（gameplay 建），不是派對模式為 null；畫面在 party_hud.gd
 var _cowboys := 0
 var _offline := false
 var _dedicated := false   # 專用伺服器（測試站）：主機自己不是玩家
@@ -657,6 +660,17 @@ func _apply_rules() -> void:
 	egg.visible = has_egg
 	for pad in _exit_pads:
 		pad.visible = has_egg
+	if party:   # 換模式、回大廳都重來一份
+		party.free()
+		party = null
+	if rules == &"party":
+		party = Party.new()
+		party.name = &"Party"
+		add_child(party)
+
+## 派對模式的準備、結算階段：牛仔不能動、不能開槍，誰都不扣血（cowboy.gd、viewmodel.gd、fighter.gd 問這個）
+func party_frozen() -> bool:
+	return party != null and party.phase in [&"prep", &"result", &"final"]
 
 ## 這局有沒有重生次數（沙盒、靶場不算）
 func _uses_lives() -> bool:
@@ -1193,6 +1207,9 @@ func _on_died(killer: Node, who: Node) -> void:
 	_died_at[id] = [Time.get_ticks_msec(), who.global_position]   # 同歸於盡用（request_damage）
 	if not as_dino:
 		_cowboys -= 1
+	if party and not _sandbox:
+		party.on_died(killer, who)
+		return
 	if who.is_in_group(&"boss") and rules == &"dino_duel" and not _sandbox:
 		_end_round()
 		_finish.rpc("恐龍倒下了，所有牛仔獲勝！")
@@ -1290,6 +1307,9 @@ func _physics_process(delta: float) -> void:
 	if _sandbox:
 		# 沒有時間限制，但重生是用剩餘秒數排的，時間還是要走（不會歸零結束）
 		_time_left -= delta
+		return
+	if party:   # 派對模式的計時、蛋、重生、勝負都在 party.gd
+		party.step(delta)
 		return
 	_time_left -= delta   # 沒有時限的模式也要走：重生是用剩餘秒數排的
 	if not RULES[rules].timer:
@@ -1389,6 +1409,9 @@ func _egg_step(delta: float) -> void:
 	if _dist_to_exit(egg.global_position) < EXIT_RADIUS:
 		egg.extract += delta
 		if egg.extract >= EXTRACT_SECONDS:
+			if party:   # 派對模式：回合結束、計分，不跳勝負畫面
+				party.extracted(egg.carrier)
+				return
 			_over = true
 			_next_round = NEXT_ROUND_DELAY
 			_finish_egg.rpc(egg.carrier)

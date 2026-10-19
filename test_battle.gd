@@ -75,6 +75,7 @@ func _process(_delta: float) -> bool:
 		_case_party_map()
 		_case_party_destruction()
 		_case_party_hud()
+		_case_party_gameplay()
 		_start_gun_case()
 		return false
 	# 剩下的要跨好幾個 frame 才驗得到。總幀數設上限：腳本編譯壞掉時各階段等不到條件，
@@ -2552,26 +2553,11 @@ func _case_party_map() -> void:
 	Main.level_file = keep
 
 
-## 派對畫面（party_hud.gd）：用假的 Party（同名屬性＋changed 訊號）驗各階段文字、分數板排序、選重生點
+## 派對畫面（party_hud.gd）：用沒放進場景樹的 Party（只裝值，request_respawn_at 改成記下來）驗各階段文字、分數板排序、選重生點
 func _case_party_hud() -> void:
 	var fake := GDScript.new()
-	fake.source_code = """extends Node
-signal changed
-var rounds := 4
-var round_index := 0
-var phase := &"prep"
-var time_left := 15.0
-var scores := {}
-var round_scores := {}
-var lives := {}
-var dino_id := 0
-var names := {}
-var last_result := ""
+	fake.source_code = """extends Party
 var asked: Array = []
-func ranking() -> Array:
-	var ids := scores.keys()
-	ids.sort_custom(func(a, b): return scores[a] > scores[b])
-	return ids
 func request_respawn_at(i: int) -> void:
 	asked.append(i)
 """
@@ -2581,7 +2567,9 @@ func request_respawn_at(i: int) -> void:
 	hud._process(0.0)
 	_ck(not hud.visible, "不是派對模式（party 是 null）整個畫面要藏起來")
 	var me: int = m.multiplayer.get_unique_id()
-	var p: Node = fake.new()
+	var p: Party = fake.new()   # 不放進場景樹：自己不跑規則，只拿來裝值
+	p.phase = &"prep"
+	p.time_left = 15.0
 	p.names = {me: "阿明", 2: "小華", 3: "大雄", 4: "胖虎"}
 	p.scores = {me: 3, 2: 12, 3: 7, 4: 0}
 	p.round_scores = {me: 1, 2: 10, 3: 2, 4: 0}
@@ -2639,4 +2627,102 @@ func request_respawn_at(i: int) -> void:
 		"最終排名第一名要放大顯示（現在：%s）" % hud.popup_champ.text)
 	m.party = null
 	p.free()
+
+
+## 派對模式（party.gd）：輪流當恐龍、計分、命數、蛋。舊模式不受影響
+func _case_party_gameplay() -> void:
+	var m := _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"party"))
+	m._apply_rules()
+	var p: Party = m.party
+	_ck(p != null and m.get_node_or_null(^"Party") == p, "派對模式 main 底下要有 $Party")
+	m._physics_process(DT)   # 第一幀開場
+	_ck(p.phase == &"prep" and p.round_index == 0 and p.time_left == p.PREP_SECONDS, "開場是第一回合的準備階段")
+	_ck(p.scores.size() == 4 and p.scores.has(-3), "不到四人用電腦補到四個")
+	_ck(p.dino_id == 1, "第一回合由編號最小的真人（主機 1）當恐龍")
+	var b: Node3D = m._boss()
+	_ck(b != null and b.pilot == 1 and not m.players.has_node(^"1"), "真人當恐龍：操作尼諾拉，自己的牛仔收掉")
+	var bots: Array = [-1, -2, -3].map(func(id: int) -> Node: return m.players.get_node_or_null(NodePath(str(id))))
+	_ck(not bots.has(null) and bots.all(func(c: Node) -> bool: return c.bot), "其他三個是牛仔 bot")
+	_ck(m.party_frozen() and bots[0].frozen(), "準備階段牛仔不能動、不能開槍")
+	var hp0: int = bots[0].hp
+	bots[0].take_damage(30, b)
+	_ck(bots[0].hp == hp0, "準備階段不扣血")
+	# 準備階段恐龍按 F 放蛋
+	b.global_position = m._on_ground(Vector3(0, 4.2, 40))
+	p.place_egg()
+	_ck(p.egg_placed and Vector2(m.egg.global_position.x - 0, m.egg.global_position.z - 40).length() < 0.1, "恐龍按 F 蛋放在腳下")
+	for c: Node3D in bots:
+		c.global_position = Vector3(0, 800, 0)   # 牛仔閃遠一點
+	p.time_left = 0.0
+	m._physics_process(DT)
+	_ck(p.phase == &"play" and p.time_left == p.PLAY_SECONDS and not m.party_frozen(), "準備時間到進遊戲時間，牛仔能動了")
+	for i in 30:
+		m._physics_process(DT)
+	_ck(m.egg.carrier == 0, "恐龍站在蛋上也撿不到")
+	b.take_damage(b.max_hp + 10)
+	_ck(is_instance_valid(b) and not b.is_queued_for_deletion(), "派對模式恐龍不會死")
+	# 帶蛋的被恐龍殺：恐龍 +1、扣一條命、10 秒後重生、蛋掉在原地
+	var c1: Node3D = bots[0]
+	c1.global_position = m._on_ground(Vector3(-30, 1.0, 20))
+	m.egg.carrier = -1
+	m._physics_process(DT)
+	c1.take_damage(9999, b)
+	m.players.remove_child(c1)
+	c1.free()
+	m._physics_process(DT)
+	_ck(m.egg.carrier == 0 and m.egg.global_position.distance_to(m._on_ground(Vector3(-30, 0.5, 20))) < 0.1, "帶蛋的死了，蛋掉在原地的地上")
+	_ck(int(p.scores[1]) == 1 and int(p.lives[-1]) == 2 and p._waiting.has(-1), "恐龍殺一個 +1、牛仔扣一條命、排重生")
+	p._waiting[-1][0] = 0.0
+	m._physics_process(DT)
+	_ck(m.players.has_node(^"-1"), "重生時間到生回來")
+	# 牛仔的命全部用完 → 恐龍贏（守蛋 +10）
+	for id in [-1, -2, -3]:
+		p.lives[id] = 1
+		var c: Node = m.players.get_node(NodePath(str(id)))
+		c.take_damage(9999, b)
+		m.players.remove_child(c)
+		c.free()
+	_ck(p._waiting.is_empty(), "最後一條命死了不排重生")
+	m._physics_process(DT)
+	_ck(p.phase == &"result" and int(p.scores[1]) == 14, "命用完恐龍贏：4 殺 + 守蛋 10 = 14（現在 %s）" % p.scores)
+	_ck(not m.result.visible and not m._over, "回合之間不跳舊的勝負畫面")
+	# 第二回合換人當恐龍：電腦（-1）當，主機變回牛仔
+	p.time_left = 0.0
+	m._physics_process(DT)
+	_ck(p.round_index == 1 and p.phase == &"prep" and p.dino_id == -1, "第二回合由第二個人當恐龍")
+	_ck(b.pilot == 0 and m.players.has_node(^"1") and not m.players.has_node(^"-1"), "電腦當恐龍：boss 自己跑，主機變回牛仔")
+	_ck(int(p.lives[1]) == p.LIVES and p.round_scores.is_empty(), "新回合命補滿、本回合分數歸零")
+	p.time_left = 0.0
+	m._physics_process(DT)
+	# 帶蛋撤離 → 回合馬上結束：撤離的 8 + 活著 2，其他活著的 2
+	var me: Node3D = m.players.get_node(^"1")
+	for id in [-2, -3]:
+		m.players.get_node(NodePath(str(id))).global_position = Vector3(0, 800, 0)
+	me.global_position = m._exits[0] + Vector3(0, 1, 0)
+	m.egg.carrier = 1
+	m.egg.extract = m.EXTRACT_SECONDS - DT * 0.5
+	m._physics_process(DT)
+	_ck(p.phase == &"result" and int(p.round_scores.get(1, 0)) == 10 and int(p.round_scores.get(-2, 0)) == 2
+		and int(p.round_scores.get(-1, 0)) == 0, "帶蛋撤離 10 分、其他活著的 2 分、恐龍沒守住 0 分（%s）" % p.round_scores)
+	_ck(not m.result.visible and not m._over, "撤離也不跳舊的勝負畫面")
+	# 第三回合時間到：恐龍守蛋 +10、活著的牛仔 +2
+	p.time_left = 0.0
+	m._physics_process(DT)
+	_ck(p.dino_id == -2, "第三回合由第三個人當恐龍")
+	p.time_left = 0.0
+	m._physics_process(DT)
+	p.time_left = 0.0
+	m._physics_process(DT)
+	_ck(p.phase == &"result" and int(p.round_scores.get(-2, 0)) == 10 and int(p.round_scores.get(1, 0)) == 2, "時間到：恐龍 10、活著的牛仔 2（%s）" % p.round_scores)
+	# 四回合後排名
+	p.round_index = 3
+	p.time_left = 0.0
+	m._physics_process(DT)
+	_ck(p.phase == &"final" and p.ranking()[0] == 1 and int(p.scores[1]) == 26, "四回合結束、照總分排名（%s）" % p.scores)
+	_end(m)
+	m = _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"egg"))
+	m._apply_rules()
+	_ck(m.party == null and not m.party_frozen(), "其他模式沒有 $Party")
 	_end(m)

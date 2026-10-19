@@ -5,7 +5,7 @@ extends SceneTree
 var _f := 0
 var _main: Node
 var _hud: PartyHud
-var _p: Node
+var _p: Party
 
 
 func _initialize() -> void:
@@ -13,29 +13,19 @@ func _initialize() -> void:
 	root.add_child(_main)
 
 
-func _fake_party() -> Node:
-	var s := GDScript.new()
-	s.source_code = """extends Node
-signal changed
-var rounds := 4
-var round_index := 1
-var phase := &"prep"
-var time_left := 12.0
-var scores := {1: 13, 2: 21, 3: 9, 4: 4}
-var round_scores := {1: 2, 2: 1, 3: 0, 4: 10}
-var lives := {1: 2, 2: 3, 3: 1}
-var dino_id := 4
-var names := {1: "阿明", 2: "小華", 3: "大雄", 4: "胖虎"}
-var last_result := "牛仔 小華 帶蛋撤離"
-func ranking() -> Array:
-	var ids := scores.keys()
-	ids.sort_custom(func(a, b): return scores[a] > scores[b])
-	return ids
-func request_respawn_at(_i: int) -> void:
-	pass
-"""
-	s.reload()
-	return s.new()
+## 沒放進場景樹的 Party：自己不跑規則，只拿來裝畫面要的值
+func _fake_party() -> Party:
+	var p := Party.new()
+	p.round_index = 1
+	p.phase = &"prep"
+	p.time_left = 12.0
+	p.scores = {1: 13, 2: 21, 3: 9, 4: 4}
+	p.round_scores = {1: 2, 2: 1, 3: 0, 4: 10}
+	p.lives = {1: 2, 2: 3, 3: 1}
+	p.dino_id = 4
+	p.names = {1: "阿明", 2: "小華", 3: "大雄", 4: "胖虎"}
+	p.last_result = "牛仔 小華 帶蛋撤離"
+	return p
 
 
 func _process(_delta: float) -> bool:
@@ -75,10 +65,7 @@ func _process(_delta: float) -> bool:
 			me.get_parent().remove_child(me)
 			me.free()
 	if _f == 92:
-		var k := InputEventKey.new()
-		k.pressed = true
-		k.physical_keycode = KEY_3
-		_hud._unhandled_input(k)
+		_hud.picked = 2   # 選了第 3 個（Party 沒放進場景樹，不能真的送 request_respawn_at）
 	if _f == 100:
 		_save("4_選重生點")
 	if _f == 101:
