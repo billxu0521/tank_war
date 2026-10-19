@@ -71,6 +71,7 @@ func _process(_delta: float) -> bool:
 		_case_dedicated_round()
 		_case_cowboy_voice()
 		_case_versus()
+		_case_party_boss()
 		_start_gun_case()
 		return false
 	# 剩下的要跨好幾個 frame 才驗得到。總幀數設上限：腳本編譯壞掉時各階段等不到條件，
@@ -1508,6 +1509,40 @@ func _case_versus() -> void:
 	_ck(b.pilot == 0, "操作尼諾拉的人離線：電腦接手")
 	m._pick_pilot()
 	_ck(b.pilot == 0, "這局已經抽過：斷線後電腦接手到局末，不再抽別人")
+	_end(m)
+
+## 派對模式的尼諾拉：打不死，倒地 15 秒原地起身，起身後 3 秒無敵；玩家操作的倒地時不能動、不能出招
+func _case_party_boss() -> void:
+	var m := _offline_match()
+	m.rules = &"party"
+	var b: Node3D = m.spawn_boss()
+	b.global_position = m._on_ground(Vector3(0, 4.2, 40))
+	b.pilot = 1
+	var got := []
+	b.knocked_down.connect(func() -> void: got.append(&"down"))
+	b.got_up.connect(func() -> void: got.append(&"up"))
+	b.take_damage(b.max_hp + 100)
+	b._process(DT)
+	_ck(b.downed and b.down_left == b.PARTY_KNOCK_TIME and b.hp == b.max_hp and got == [&"down"],
+		"派對模式血打光：倒地 %.0f 秒、血補滿、發 knocked_down（%s）" % [b.down_left, got])
+	var at: Vector3 = b.global_position
+	for i in int((b.PARTY_KNOCK_TIME - 0.1) * 60):
+		b.pilot_input(Vector2(0, -1), 0.0, 0.0, b.PIN_RUN | b.PIN_BITE)
+		b.think(1.0 / 60.0)
+	_ck(b.downed and b.act == b.ACT_NONE and Vector2(b.velocity.x, b.velocity.z).length() < 0.5, "倒地時玩家操作的尼諾拉不能動、不能出招（act=%d 速度 %s）" % [b.act, b.velocity])
+	for i in 12:
+		b.think(1.0 / 60.0)
+	b._process(DT)
+	_ck(not b.downed and b.invulnerable and got == [&"down", &"up"] and b.global_position.distance_to(at) < 0.5,
+		"15 秒後原地起身、發 got_up、進入無敵（%s）" % [got])
+	b.take_damage(100)
+	_ck(b.hp == b.max_hp, "起身後無敵期間不扣血")
+	for i in int(b.GET_UP_GUARD * 60) + 2:
+		b.think(1.0 / 60.0)
+	b._process(DT)
+	_ck(not b.invulnerable and b.get_node(^"Trex").visible, "%.0f 秒後無敵結束、不再閃" % b.GET_UP_GUARD)
+	b.take_damage(100)
+	_ck(b.hp == b.max_hp - 100, "無敵結束後會扣血（%d）" % b.hp)
 	_end(m)
 
 ## 主選單兩層、設定視窗（docs/規劃/2026-10-18-玩家設定.md）
