@@ -1,0 +1,10 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_item.gd" id="1_3bdiq"]
+
+[node name="灰盒_大倉庫" type="Node3D" unique_id=822228556]
+script = ExtResource("1_3bdiq")
+kind = "gb_house"
+size = Vector3(18, 9, 24)
+amount = 1.0
+flag = true

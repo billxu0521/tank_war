@@ -31,6 +31,8 @@ func _wait(secs: float) -> void:
 func _run() -> void:
 	seed(20261005)
 	Engine.time_scale = 4.0
+	var Main: GDScript = load("res://main.gd")
+	Main.level_file = Main.RANCH_LEVEL   # 這支是照牧場寫的（主地圖改灰盒了）
 	m = load("res://main.tscn").instantiate()
 	root.add_child(m)
 	m.multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()

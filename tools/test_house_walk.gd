@@ -9,6 +9,8 @@ var _runs: Array = []   # [名字, 膠囊, 起點]
 var _t := 0.0
 
 func _initialize() -> void:
+	var Main: GDScript = load("res://main.gd")
+	Main.level_file = Main.RANCH_LEVEL   # 這支是照牧場寫的（主地圖改灰盒了）
 	_main = load("res://main.tscn").instantiate()
 	root.add_child(_main)
 

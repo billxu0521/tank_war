@@ -1,0 +1,9 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_item.gd" id="1_rkkut"]
+
+[node name="灰盒_一層房" type="Node3D" unique_id=1264325739]
+script = ExtResource("1_rkkut")
+kind = "gb_house"
+size = Vector3(8, 3.2, 10)
+amount = 1.0

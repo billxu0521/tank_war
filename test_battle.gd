@@ -24,6 +24,9 @@ func _ck(ok: bool, msg: String) -> void:
 func _process(_delta: float) -> bool:
 	_frames += 1
 	if _frames == 1:
+		var Main: GDScript = load("res://main.gd")
+		Main.level_file = Main.RANCH_LEVEL   # 舊案例都是照牧場寫的（穀倉門、柵欄、農舍）；灰盒另外測（_case_greybox）
+		_case_greybox()
 		_case_timeout()
 		_case_dino_death()
 		_case_attacks()
@@ -122,7 +125,7 @@ func _done() -> bool:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與左輪扳擊錘換彈動作音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰一條體力、沙盒、鄉村柵欄灌木貼圖、著彈碎屑與煙囪煙、地形起伏、F 開門爬梯子、翻柵欄和窗台、手腳、只剩連線和沙盒、遊戲局控制、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、恐龍攻擊開關、介面（大廳存 IP、勝負畫面、倒數）、中彈踉蹌、恐龍 boss 行為樹（導演、三招預備動作、導航網格）、方位條、測試站自動開下一局、問題回報、滑鼠鎖定不凍視角都正常")
+		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與左輪扳擊錘換彈動作音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰一條體力、沙盒、鄉村柵欄灌木貼圖、著彈碎屑與煙囪煙、地形起伏、F 開門爬梯子、翻柵欄和窗台、手腳、只剩連線和沙盒、遊戲局控制、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、恐龍攻擊開關、介面（大廳存 IP、勝負畫面、倒數）、中彈踉蹌、恐龍 boss 行為樹（導演、三招預備動作、導航網格）、方位條、測試站自動開下一局、問題回報、滑鼠鎖定不凍視角、灰盒地圖都正常")
 	return true
 
 # --- 共用 ---
@@ -835,7 +838,7 @@ func _case_range() -> void:
 	var me: Node3D = m.players.get_node(^"1")
 	var far: Node3D = m.players.get_node(NodePath(str(2 + m.RANGE_TARGETS.size())))
 	_ck(absf(-(far.global_position - me.global_position).z - 150.0) < 1.0, "最遠的靶在 150 公尺")
-	var probs := LevelCheck.run(m._level, false)
+	var probs := LevelCheck.run(m._level, null)
 	_ck(probs.is_empty(), "靶場擺設檢查有問題：%s" % [probs.slice(0, 5)])
 	var before: int = m.get_node(^"Arena").get_child_count()
 	m.hit_popup(far.global_position, 42, 150.0, false)
@@ -2175,6 +2178,94 @@ func _case_sprint_skill() -> void:
 	# 咬要吃體力。牛仔兩口就死，一管體力咬得完——這是刻意的，被咬到就該跑
 	_ck(d.BITE_COST > 0.0, "咬要吃體力")
 	_end(m)
+
+## 灰盒地圖（預設的主地圖）：擺設乾淨、固定正午不開像素風；牛仔進得了一般門、恐龍只進得了大門；斜坡上得了二樓
+func _case_greybox() -> void:
+	var Main: GDScript = load("res://main.gd")
+	var keep: String = Main.level_file
+	Main.level_file = ""
+	var m := _offline_match()
+	_ck(m.level_path == Main.GREYBOX_LEVEL and m.greybox, "主地圖要是灰盒")
+	_ck(m.period == &"noon" and not m.get_node(^"PixelStyle").on, "灰盒固定正午、不開像素風")
+	var probs := LevelCheck.run(m._level, Main.lane_of(m.level_path))
+	_ck(probs.is_empty(), "灰盒擺設檢查有問題：%s" % [probs.slice(0, 5)])
+	var c: Node3D = m._add_player(m.COWBOY, 2)
+	var cow: CapsuleShape3D = c.get_node(^"CollisionShape3D").shape
+	var boss: Node = m.BOSS.instantiate()
+	var dino: CapsuleShape3D = boss.get_node(^"CollisionShape3D").shape
+	boss.free()
+	var ground: StaticBody3D = m.get_tree().get_first_node_in_group(&"ground")
+	var space: PhysicsDirectSpaceState3D = m.get_viewport().world_3d.direct_space_state
+	## 膠囊站在這棟的前門正中間（地板上）會不會卡到東西
+	var stuck := func(body: Node3D, rec: Dictionary, cap: CapsuleShape3D) -> bool:
+		var q := PhysicsShapeQueryParameters3D.new()
+		q.shape = cap
+		q.exclude = [ground.get_rid()]
+		q.transform = Transform3D(body.global_basis, body.global_transform * Vector3(0, cap.height * 0.5 + 0.05, rec.size.z * 0.5 - Greybox.T * 0.5))
+		return not space.intersect_shape(q, 1).is_empty()
+	var small := 0
+	var big := 0
+	for rec: Dictionary in m._level:
+		if rec.kind != &"gb_house":
+			continue
+		var body: Node3D = null
+		for n in m.get_node(^"Arena").get_children():
+			if n is StaticBody3D and n.global_position.is_equal_approx(m._on_ground(rec.pos)):
+				body = n
+		_ck(not stuck.call(body, rec, cow), "牛仔要走得過灰盒房子的前門（%s）" % rec.pos)
+		if rec.big:
+			big += 1
+			_ck(not stuck.call(body, rec, dino), "恐龍要走得過大門（%s）" % rec.pos)
+		else:
+			small += 1
+			_ck(stuck.call(body, rec, dino), "恐龍不能擠進一般門（%s）" % rec.pos)
+			# 門寬就是 DOOR.x：比門寬 0.2 的薄板放在門洞會碰到兩邊的牆（膠囊只證明門比恐龍窄）
+			var q := PhysicsShapeQueryParameters3D.new()
+			var slab := BoxShape3D.new()
+			slab.size = Vector3(Greybox.DOOR.x + 0.2, 1.0, 0.05)
+			q.shape = slab
+			q.transform = Transform3D(body.global_basis, body.global_transform * Vector3(0, 1.0, rec.size.z * 0.5 - Greybox.T * 0.5))
+			_ck(not space.intersect_shape(q, 1).is_empty(), "一般門要是 %.1f 公尺寬（%s）" % [Greybox.DOOR.x, rec.pos])
+		if rec.floors > 1:   # 斜坡中段：往下打得到坡面（高度在樓高一半），往上不能撞到樓板（頭頂要空）
+			var s: Vector3 = rec.size
+			var mid := Vector3(-s.x * 0.5 + Greybox.T + Greybox.RAMP_W * 0.5, 0, s.z * 0.5 - Greybox.T - 1.0 - s.y / tan(deg_to_rad(Greybox.RAMP_DEG)) * 0.5)
+			var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(body.global_transform * (mid + Vector3.UP * (s.y - 0.5)), body.global_transform * (mid + Vector3.DOWN)))
+			_ck(not hit.is_empty() and absf(hit.position.y - body.global_position.y - s.y * 0.5) < 0.3, "上樓的斜坡中段要在樓高一半（%s）" % rec.pos)
+			var head := space.intersect_ray(PhysicsRayQueryParameters3D.create(body.global_transform * (mid + Vector3.UP * (s.y * 0.5 + 0.1)), body.global_transform * (mid + Vector3.UP * (s.y * 0.5 + 2.0))))
+			_ck(head.is_empty(), "斜坡上頭頂要空著（%s）" % rec.pos)
+	_ck(small >= 10 and big >= 2, "灰盒要有一般房子和恐龍進得去的大建築（%d、%d）" % [small, big])
+	# 灰盒房子、方塊只有中心貼地、整塊水平：佔地四角的地面不能高過中心太多（埋掉）或低過埋深（浮起來），不平就要加整平區
+	var tilted := []
+	for rec: Dictionary in m._level:
+		if rec.kind != &"gb_house" and rec.kind != &"gb_block":
+			continue
+		var y0: float = m._terrain.height(rec.pos.x, rec.pos.z)
+		var basis := Basis(Vector3.UP, rec.yaw)
+		for corner: Vector3 in [Vector3(1, 0, 1), Vector3(-1, 0, 1), Vector3(1, 0, -1), Vector3(-1, 0, -1)]:
+			var at: Vector3 = rec.pos + basis * (corner * rec.size * 0.5)
+			var dy: float = m._terrain.height(at.x, at.z) - y0
+			# 房子門口要平（0.3）；小方塊埋掉三分之一以內還看得出來、翻得過
+			if dy > (0.3 if rec.kind == &"gb_house" else rec.size.y * 0.35) or dy < -Greybox.BURY + 0.1:
+				tilted.append("%s %.1f" % [rec.pos, dy])
+				break
+	_ck(tilted.is_empty(), "灰盒物件底下的地不平（中心位置、高低差）：%s" % [tilted])
+	# 柵欄一段只有兩端貼地、中間是直的：沿線的地面不能比柵欄底部低（中段懸空能從底下鑽過）或高太多（埋掉）
+	var hanging := []
+	for rec: Dictionary in m._level:
+		if rec.kind != &"fence":
+			continue
+		var dir: Vector3 = Basis(Vector3.UP, rec.yaw) * Vector3.RIGHT * rec.length * 0.5
+		var a: Vector3 = m._on_ground(rec.pos - dir)
+		var b: Vector3 = m._on_ground(rec.pos + dir)
+		for i in 11:
+			var at := a.lerp(b, i / 10.0)
+			var dy: float = m._terrain.height(at.x, at.z) - at.y
+			if dy < -0.3 or dy > 0.5:
+				hanging.append("%s %.1f" % [rec.pos, dy])
+				break
+	_ck(hanging.is_empty(), "灰盒的柵欄要貼著地（中心位置、地面減柵欄底）：%s" % [hanging])
+	_end(m)
+	Main.level_file = keep
 
 ## 場地四周要有牆，而且要高過恐龍「跳 + 爬」能到的高度
 func _case_arena_walls() -> void:

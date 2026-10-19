@@ -191,7 +191,8 @@ func fast_color(x: float, z: float) -> Color:
 ## 蓋出地面：畫面是頂點上色的 ArrayMesh，碰撞是同一份格點的 HeightMapShape3D。
 ## color_at(x, z, h) -> Color 由呼叫的人決定（路、麥田、草地）
 ## mix_at(x, z, h) -> Color：四種地面材質的權重（r 碎石、g 乾裂土、b 濕泥、a 岩盤），沒給就全 0
-func build(color_at: Callable, mix_at := Callable()) -> StaticBody3D:
+## mat：換掉地面材質（灰盒地圖用 Greybox.ground_material）；不給就是平常的泥土草地
+func build(color_at: Callable, mix_at := Callable(), mat: Material = null) -> StaticBody3D:
 	var n := int(size / cell) + 1
 	var heights := PackedFloat32Array()
 	heights.resize(n * n)
@@ -227,13 +228,15 @@ func build(color_at: Callable, mix_at := Callable()) -> StaticBody3D:
 			st.add_index(i + n)
 	st.generate_normals()
 	# 地面紋理（tools/make_ground_tex.py）：灰階，跟頂點顏色相乘；頂點顏色的透明度是路的濃度（見 terrain.gdshader）
-	var mat := ShaderMaterial.new()
-	mat.shader = preload("res://terrain.gdshader")
-	mat.set_shader_parameter(&"detail_tex", preload("res://assets/textures/pixel/grass.png"))
-	mat.set_shader_parameter(&"macro_tex", preload("res://assets/textures/ground_macro.png"))
-	mat.set_shader_parameter(&"path_tex", preload("res://assets/textures/pixel/dirt.png"))
-	for k: String in ["gravel", "clay", "mud", "outcrop"]:
-		mat.set_shader_parameter(StringName(k + "_tex"), load("res://assets/textures/pixel/%s.png" % k))
+	if mat == null:
+		var sm := ShaderMaterial.new()
+		sm.shader = preload("res://terrain.gdshader")
+		sm.set_shader_parameter(&"detail_tex", preload("res://assets/textures/pixel/grass.png"))
+		sm.set_shader_parameter(&"macro_tex", preload("res://assets/textures/ground_macro.png"))
+		sm.set_shader_parameter(&"path_tex", preload("res://assets/textures/pixel/dirt.png"))
+		for k: String in ["gravel", "clay", "mud", "outcrop"]:
+			sm.set_shader_parameter(StringName(k + "_tex"), load("res://assets/textures/pixel/%s.png" % k))
+		mat = sm
 	st.set_material(mat)
 
 	var body := StaticBody3D.new()

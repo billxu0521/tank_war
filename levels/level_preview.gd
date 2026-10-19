@@ -1,6 +1,7 @@
 class_name LevelPreview
 extends RefCounted
 ## 編輯器裡 LevelItem 長什麼樣：照 main.gd 蓋東西的擺法放一樣的模型（只有外觀，沒有碰撞、門、燈）。
+## 例外：灰盒（Greybox）直接放遊戲裡那個 StaticBody3D，有碰撞也無妨（貼地照地形算，不打射線）
 ## 位置、朝向、縮放跟著 LevelItem 節點本身，這裡只放「相對於節點」的零件。
 
 const Main := preload("res://main.gd")
@@ -85,5 +86,9 @@ static func build(it: LevelItem, root: Node3D) -> void:
 			_add(root, &"Lantern", Main.SHED_LANTERN)
 		"hitch":
 			_add(root, &"HitchRail")
+		"gb_house":
+			root.add_child(Greybox.house(it.size, int(it.amount), it.flag))
+		"gb_block":
+			root.add_child(Greybox.block(it.size))
 		"wheel":
 			_add(root, &"Wheel", Main.WHEEL_POSE.origin, Vector3.ONE, Main.WHEEL_POSE.basis)
