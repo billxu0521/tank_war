@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_item.gd" id="1_ld11a"]
+
+[node name="灰盒_矮牆" type="Node3D" unique_id=927271738]
+script = ExtResource("1_ld11a")
+kind = "gb_block"
+size = Vector3(10, 1, 0.2)

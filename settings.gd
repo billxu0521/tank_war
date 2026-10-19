@@ -70,8 +70,8 @@ func _init(m: Node) -> void:
 		_reset([&"fov", &"shake"])
 		m._on_vsync_toggled(true)
 		m._on_fps_cap_selected(0)
-		m.get_node(^"PixelStyle").set_on(true)
-		m._on_period_picked(Period.NAMES.keys().find(&"sunset")))
+		m.get_node(^"PixelStyle").set_on(not m.greybox)   # 灰盒地圖的預設是正午、不開像素風
+		m._on_period_picked(Period.NAMES.keys().find(&"noon" if m.greybox else &"sunset")))
 	_page("聲音", [_slider(&"volume", "主音量（%）", 0.0, 100.0, 1.0)], func() -> void: _reset([&"volume"]))
 	var keys := RichTextLabel.new()
 	keys.name = &"按鍵"

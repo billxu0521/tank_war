@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_item.gd" id="1_nu85s"]
+
+[node name="灰盒_箱子" type="Node3D" unique_id=796276594]
+script = ExtResource("1_nu85s")
+kind = "gb_block"
+size = Vector3(3, 2, 3)

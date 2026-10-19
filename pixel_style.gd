@@ -69,7 +69,7 @@ func _ready() -> void:
 		_grade_default[k] = get(k)
 	var cfg := ConfigFile.new()
 	cfg.load(get_parent().settings_path)
-	on = cfg.get_value("display", "pixel_style", true)
+	on = cfg.get_value("display", "pixel_style", true) and not get_parent().greybox   # 灰盒地圖不開（設定裡還是能打開，下次開遊戲又關掉）
 	get_viewport().size_changed.connect(_rescale)   # 拉視窗只改縮放，不重算查色表（GDScript 算一次要一點時間）
 	apply()
 

@@ -16,6 +16,8 @@ var _rec := {}   # 這個角度量到的每一幀
 var _last_us := 0
 
 func _initialize() -> void:
+	var Main: GDScript = load("res://main.gd")
+	Main.level_file = Main.RANCH_LEVEL   # 這支是照牧場寫的（主地圖改灰盒了）
 	_main = load("res://main.tscn").instantiate()
 	root.add_child(_main)
 

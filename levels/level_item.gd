@@ -22,10 +22,12 @@ extends Node3D
 ##   bush     灌木，大小用節點的縮放
 ##   shop     城鎮店面，variant = Saloon / Store / Sheriff（正面朝自己的 +Z，轉向用節點的朝向）
 ##   road     另外鋪的土路（城鎮主街），size 的 X、Z = 長、寬（不轉向）
+##   gb_house 灰盒房子（greybox.gd），size = 寬 × 每層高 × 深，amount = 層數，flag = 前門換成恐龍進得去的大門。正面朝自己的 +Z
+##   gb_block 灰盒方塊（半身牆、木箱、平台），size = 寬 × 高 × 深
 ##   windmill 風車、hay_shed 倉庫、hitch 繫柱架、wheel 靠牆的車輪、water_tower 水塔：只看位置和朝向
 
 @export_enum("flat", "wheat", "barn", "house", "silo", "fence", "gate", "hay_bale", "kit", "prop",
-	"tree", "rock", "bush", "windmill", "hay_shed", "hitch", "wheel", "shop", "road", "water_tower") var kind := "kit":
+	"tree", "rock", "bush", "windmill", "hay_shed", "hitch", "wheel", "shop", "road", "water_tower", "gb_house", "gb_block") var kind := "kit":
 	set(v):
 		kind = v
 		_refresh()
@@ -80,6 +82,11 @@ func to_record() -> Dictionary:
 			rec.s = sc.x
 			rec.solid = flag
 		"bush": rec.size = sc
+		"gb_house":
+			rec.size = size
+			rec.floors = maxi(int(amount), 1)
+			rec.big = flag
+		"gb_block": rec.size = size
 	return rec
 
 
@@ -114,6 +121,11 @@ static func from_record(rec: Dictionary) -> LevelItem:
 			it.scale = Vector3.ONE * rec.s
 			it.flag = rec.solid
 		"bush": it.scale = rec.size
+		"gb_house":
+			it.size = rec.size
+			it.amount = rec.floors
+			it.flag = rec.big
+		"gb_block": it.size = rec.size
 	return it
 
 

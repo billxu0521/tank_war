@@ -118,10 +118,24 @@ var _props := {}   # 物件名 -> Mesh，從 props.glb 拿出來共用
 var _terrain: Terrain
 var _level: Array[Dictionary] = []   # 擺設清單：場地上每樣東西一筆（見 _build_level）
 ## 手調過的場景檔（在 Godot 編輯器裡改，見 docs/素材流水線/場景編輯.md）。烘焙工具設成空的：不讀場景檔，自動擺一份初稿
-## 目前的地圖：&"" 是牧場（連線、沙盒），&"range" 是靶場。靜態的：換地圖要重載整個場景，重載後還記得
+## 目前的地圖：&"" 是主地圖（連線、沙盒），&"range" 是靶場。靜態的：換地圖要重載整個場景，重載後還記得
 static var mode := &""
 const RANGE_LEVEL := "res://levels/range.tscn"
-var level_path := RANGE_LEVEL if mode == &"range" else "res://levels/ranch.tscn"
+## 主地圖是灰盒（素模，greybox.gd）：先專心調玩法。舊的牧場留著，測試和 level_file 指定時才用
+const GREYBOX_LEVEL := "res://levels/greybox.tscn"
+const RANCH_LEVEL := "res://levels/ranch.tscn"
+static var level_file := ""   # 指定主地圖（測試切回牧場用）；空的就是灰盒
+var level_path := RANGE_LEVEL if mode == &"range" else (level_file if level_file != "" else GREYBOX_LEVEL)
+## 灰盒地圖：地面換格線、不長草不撒碎物、固定正午、不開像素風（pixel_style.gd）
+var greybox: bool:
+	get: return level_path == GREYBOX_LEVEL
+
+## 沙盒靶道要空著的範圍（擺設檢查 LevelCheck 用）：靶場地圖沒有（null）；灰盒只留靶子那一條（中央要放東西）
+const GREYBOX_LANE := Rect2(-7, -30, 14, 112)
+static func lane_of(path: String) -> Variant:
+	if path == RANGE_LEVEL:
+		return null
+	return GREYBOX_LANE if path == GREYBOX_LEVEL else SANDBOX_RANGE
 var _houses_built := 0   # 第幾棟農舍：三種輪流蓋（不用亂數，後面擺的東西位置才不會跟著變）
 var _doors: Array[Door] = []   # 晚加入的人連進來時，把開著的門補送給他
 var _wheat_fields: Array[Rect2] = []   # 地形上色要知道哪裡是麥田
@@ -534,6 +548,8 @@ func _load_period() -> void:
 	var cfg := ConfigFile.new()
 	cfg.load(settings_path)
 	period = StringName(cfg.get_value("display", "period", "sunset"))
+	if greybox:
+		period = &"noon"   # 灰盒固定白天，不分心（要換還是能在設定裡換，重開回正午）
 	var args := OS.get_cmdline_user_args()
 	var pi := args.find("--period")
 	if pi >= 0 and pi + 1 < args.size():
@@ -1567,13 +1583,13 @@ func _update_crosshair(me: Node) -> void:
 
 func _build_arena() -> void:
 	# 擺設清單：有手調過的場景檔就照它，沒有就自動擺一份初稿（見 docs/素材流水線/場景編輯.md）
-	Trails.enabled = mode != &"range"   # 自動擺設、地面上色、草都會查小路，最先設
+	Trails.enabled = mode != &"range" and not greybox   # 自動擺設、地面上色、草都會查小路，最先設
 	if _level.is_empty():
 		_generate_level()
 	# 地形要在擺任何東西之前定案：整平區（農莊、倉庫、牧場的房子……）在清單裡
 	_terrain = make_terrain(_level.filter(func(r: Dictionary) -> bool: return r.kind == &"flat") \
 		.map(func(r: Dictionary) -> Array: return [Vector2(r.pos.x, r.pos.z), r.r]))
-	var ground := _terrain.build(_ground_color, _ground_mix)
+	var ground := _terrain.build(_ground_color, _ground_mix, Greybox.ground_material() if greybox else null)
 	ground.add_to_group(&"ground")   # 子彈打到噴土（Bullet.surface_of）
 	$Arena.add_child(ground)
 
@@ -1586,15 +1602,17 @@ func _build_arena() -> void:
 			[Vector3(e, WALL_H * 0.5, 0), Vector3(WALL_T, WALL_H, long)],
 			[Vector3(-e, WALL_H * 0.5, 0), Vector3(WALL_T, WALL_H, long)]]:
 		_solid_box(w[0], w[1]).add_to_group(&"arena_wall")
-	$Arena.add_child(FarLand.build(_terrain, _ground_color, [_props[&"TreeOakM"], _props[&"TreeOakS"], _props[&"Bush"],
+	var far_color := (func(_x: float, _z: float, _h: float) -> Color: return Color(0.42, 0.44, 0.4)) if greybox else _ground_color   # 灰盒：場外跟地面一樣灰
+	$Arena.add_child(FarLand.build(_terrain, far_color, [_props[&"TreeOakM"], _props[&"TreeOakS"], _props[&"Bush"],
 		_props[&"TreePine2"], _props[&"Saguaro"]],
 		_props[&"FenceRail"], FENCE_SEG))
 
 	_build_level()
-	_clutter_field()   # 有碰撞：伺服器也要擺，固定種子每台一樣
+	if not greybox:   # ponytail: 灰盒不撒碎物、草、野花、風滾草；只留擺設清單裡的樹、灌木、石頭當遮蔽
+		_clutter_field()   # 有碰撞：伺服器也要擺，固定種子每台一樣
 
 	# 草地：畫面用的，伺服器沒畫面就不長（測試會直接呼叫 _grass_field 檢查）
-	if DisplayServer.get_name() != "headless":
+	if DisplayServer.get_name() != "headless" and not greybox:   # 灰盒也不分區調光（Ambience 的區域是照牧場劃的）
 		_grass_field()
 		_groundcover_field()
 		_flora_field()
@@ -1658,7 +1676,8 @@ const FOOTPRINT := {&"house": Vector2(6.0, 6.5), &"silo": Vector2(3.0, 3.0), &"h
 const SHOP_HALF := {&"Saloon": Vector2(5.3, 9.5), &"Store": Vector2(4.8, 9.0), &"Sheriff": Vector2(4.3, 8.4)}
 ## 出生點要再離多遠（穀倉的在清單那一筆自己帶，大穀倉和小棚子不一樣）
 const CLEARANCE := {&"house": SPAWN_CLEARANCE, &"silo": 3.0, &"hay_shed": 2.0, &"windmill": 2.0, &"tree": 1.5,
-	&"hay_bale": 1.0, &"rock": 1.5, &"fence": 0.6, &"shop": SPAWN_CLEARANCE, &"water_tower": 2.0}
+	&"hay_bale": 1.0, &"rock": 1.5, &"fence": 0.6, &"shop": SPAWN_CLEARANCE, &"water_tower": 2.0,
+	&"gb_house": 3.0, &"gb_block": 1.0}
 
 ## 這一筆在地面上佔的半寬；沒有碰撞的（灌木、碎石、只有外觀的東西）回傳 ZERO
 static func footprint_half(rec: Dictionary) -> Vector2:
@@ -1677,6 +1696,8 @@ static func footprint_half(rec: Dictionary) -> Vector2:
 				return Vector2.ZERO
 			var r: Vector3 = meshes()[rec.mesh].get_aabb().size * rec.s
 			return Vector2(r.x, r.z) * 0.5
+		&"gb_house", &"gb_block":
+			return Vector2(rec.size.x, rec.size.z) * 0.5
 	return FOOTPRINT.get(rec.kind, Vector2.ZERO)
 
 ## 加一筆到擺設清單
@@ -1732,6 +1753,8 @@ func _build_level() -> void:
 			&"hitch": _hitch(p)
 			&"shop": _shop(p, rec.variant, rec.yaw)
 			&"water_tower": _water_tower(p, rec.yaw)
+			&"gb_house": _place_greybox(Greybox.house(rec.size, rec.floors, rec.big), p, rec.yaw)
+			&"gb_block": _place_greybox(Greybox.block(rec.size), p, rec.yaw)
 			&"tree": _tree(rec)
 			&"rock": _rock(rec.mesh, p, rec.s, rec.yaw, rec.solid)
 			&"prop": _prop(rec.name, _on_ground(p)).rotation.y = rec.yaw
@@ -1739,6 +1762,12 @@ func _build_level() -> void:
 				# 埋一點，斜坡下坡那側才不會懸空。灌木幾百叢，用 MultiMesh 一次畫完
 				bushes.append(Transform3D(Basis(Vector3.UP, rec.yaw).scaled(rec.size), _on_ground(p) + Vector3.DOWN * 0.15))
 	_scatter(&"Bush", bushes, true)
+
+## 灰盒的房子、方塊：貼地擺好。網格合併過，一棟一次繪製
+func _place_greybox(body: StaticBody3D, p: Vector3, yaw: float) -> void:
+	body.position = _on_ground(p)
+	body.rotation.y = yaw
+	$Arena.add_child(body)
 
 ## 自動擺一份初稿：固定種子的亂數，每台機器擺出來一樣。手調過的場景檔存在時不會跑這個
 func _generate_level() -> void:

@@ -47,8 +47,8 @@ static func _radius(f: Dictionary, ax: Vector2) -> float:
 		+ absf(Vector2(sin(f.yaw), cos(f.yaw)).dot(ax)) * maxf(h.y, 0.0)
 
 
-## ranch：牧場才要檢查沙盒靶道和撤離區（靶場地圖沒有這兩樣）
-static func run(recs: Array, ranch := true) -> Array:
+## lane：沙盒靶道要空著的範圍（Main.lane_of）；null 是靶場地圖，沒有靶道和撤離區
+static func run(recs: Array, lane: Variant = Main.SANDBOX_RANGE) -> Array:
 	var problems := []
 	var half := Main.ARENA * 0.5
 	var meshes := Main.meshes()
@@ -68,12 +68,21 @@ static func run(recs: Array, ranch := true) -> Array:
 				problems.append([name, "穀倉太高（屋頂 %.1f 公尺，上限 %.0f）" % [top, Main.BUILDING_MAX_H]])
 		if rec.kind == &"silo" and rec.h + 1.6 > Main.BUILDING_MAX_H:
 			problems.append([name, "筒倉太高（%.1f 公尺，上限 %.0f）" % [rec.h + 1.6, Main.BUILDING_MAX_H]])
+		if rec.kind == &"gb_house":
+			if rec.floors * rec.size.y > Main.BUILDING_MAX_H:
+				problems.append([name, "灰盒房子太高（%.1f 公尺，上限 %.0f）" % [rec.floors * rec.size.y, Main.BUILDING_MAX_H]])
+			if rec.floors > 1 and rec.size.z < Greybox.ramp_depth(rec.size.y):
+				problems.append([name, "灰盒房子太淺，放不下上樓的斜坡（深 %.1f，至少 %.1f）" % [rec.size.z, Greybox.ramp_depth(rec.size.y)]])
+			if rec.floors > 1 and rec.size.x < Greybox.RAMP_W + 2 * Greybox.T + 2.0:
+				problems.append([name, "灰盒房子太窄，斜坡旁邊沒有樓板（寬 %.1f）" % rec.size.x])
+			if rec.big and rec.size.y < Greybox.BIG_DOOR.y + 0.5:
+				problems.append([name, "大門要每層高 %.1f 以上，不然恐龍進不去（現在 %.1f）" % [Greybox.BIG_DOOR.y + 0.5, rec.size.y]])
 		var fp := footprint(rec)
 		if fp.is_empty():
 			continue
-		if ranch and Main.SANDBOX_RANGE.grow(-SHRINK).intersects(fp.box):
+		if lane != null and (lane as Rect2).grow(-SHRINK).intersects(fp.box):
 			problems.append([name, "擋到沙盒靶場"])
-		for e: Vector2 in Main.exit_spots() if ranch else []:
+		for e: Vector2 in Main.exit_spots() if lane != null else []:
 			if (fp.c as Vector2).distance_to(e) < Main.EXIT_RADIUS:
 				problems.append([name, "擋在撤離區裡"])
 		for other: Array in placed:

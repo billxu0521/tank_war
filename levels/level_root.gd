@@ -41,13 +41,14 @@ func rebuild_terrain() -> void:
 			wheat.append(Rect2(p.x - it.amount * 0.5, p.z - it.amount * 0.5, it.amount, it.amount))
 		elif it.kind == "road":
 			roads.append(Rect2(p.x - it.size.x * 0.5, p.z - it.size.z * 0.5, it.size.x, it.size.z))
-	Trails.enabled = scene_file_path != Main.RANGE_LEVEL   # 彎曲小路只有牧場有
+	Trails.enabled = scene_file_path == Main.RANCH_LEVEL   # 彎曲小路只有牧場有
 	terrain = Main.make_terrain(flats)
 	var old := get_node_or_null(^"_terrain_preview")
 	if old:
 		old.free()
 	var t := terrain
-	var body := terrain.build(func(x: float, z: float, h: float) -> Color: return Main.ground_color(t, wheat, roads, x, z, h))
+	var body := terrain.build(func(x: float, z: float, h: float) -> Color: return Main.ground_color(t, wheat, roads, x, z, h),
+		Callable(), Greybox.ground_material() if scene_file_path == Main.GREYBOX_LEVEL else null)
 	body.name = "_terrain_preview"
 	add_child(body)   # 不設 owner：不存進場景檔
 	for it in all:
@@ -70,7 +71,7 @@ func check() -> Array:
 	var problems := LevelCheck.run(all.map(func(it: LevelItem) -> Dictionary:
 		var rec := it.to_record()
 		rec.node = String(it.name)
-		return rec), scene_file_path != Main.RANGE_LEVEL)
+		return rec), Main.lane_of(scene_file_path))
 	# 有問題的物件頭上放一個紅色方塊（不存進場景檔），修好再按一次就消失
 	var bad := {}
 	for p: Array in problems:
