@@ -74,6 +74,7 @@ func _process(_delta: float) -> bool:
 		_case_party_boss()
 		_case_party_map()
 		_case_party_destruction()
+		_case_party_hud()
 		_start_gun_case()
 		return false
 	# 剩下的要跨好幾個 frame 才驗得到。總幀數設上限：腳本編譯壞掉時各階段等不到條件，
@@ -2549,3 +2550,93 @@ func _case_party_map() -> void:
 		"恐龍出生點要在中央、貼地（%s）" % m.dino_spawn)
 	_end(m)
 	Main.level_file = keep
+
+
+## 派對畫面（party_hud.gd）：用假的 Party（同名屬性＋changed 訊號）驗各階段文字、分數板排序、選重生點
+func _case_party_hud() -> void:
+	var fake := GDScript.new()
+	fake.source_code = """extends Node
+signal changed
+var rounds := 4
+var round_index := 0
+var phase := &"prep"
+var time_left := 15.0
+var scores := {}
+var round_scores := {}
+var lives := {}
+var dino_id := 0
+var names := {}
+var last_result := ""
+var asked: Array = []
+func ranking() -> Array:
+	var ids := scores.keys()
+	ids.sort_custom(func(a, b): return scores[a] > scores[b])
+	return ids
+func request_respawn_at(i: int) -> void:
+	asked.append(i)
+"""
+	fake.reload()
+	var m := _offline_match()
+	var hud: PartyHud = m.get_node("UI/Root").get_children().filter(func(n: Node) -> bool: return n is PartyHud).front()
+	hud._process(0.0)
+	_ck(not hud.visible, "不是派對模式（party 是 null）整個畫面要藏起來")
+	var me: int = m.multiplayer.get_unique_id()
+	var p: Node = fake.new()
+	p.names = {me: "阿明", 2: "小華", 3: "大雄", 4: "胖虎"}
+	p.scores = {me: 3, 2: 12, 3: 7, 4: 0}
+	p.round_scores = {me: 1, 2: 10, 3: 2, 4: 0}
+	p.lives = {me: 3, 3: 3, 4: 3}
+	p.dino_id = 2
+	m.party = p
+	hud._process(0.0)
+	_ck(hud.visible, "派對模式要顯示")
+	_ck(hud.top.text.begins_with("第 1／4 回合　　準備 0:15"), "上方要寫回合和準備倒數（現在：%s）" % hud.top.text)
+	_ck("恐龍：小華" in hud.top.text and "你剩 3 條命" in hud.top.text, "上方要寫誰是恐龍、自己剩幾條命（現在：%s）" % hud.top.text)
+	_ck(hud.hint.text == "看恐龍把蛋藏去哪", "準備階段牛仔的提示（現在：%s）" % hud.hint.text)
+	p.dino_id = me
+	hud._process(0.0)
+	_ck("F" in hud.hint.text and "命" not in hud.top.text, "準備階段恐龍要提示按 F 放蛋、不顯示命（現在：%s／%s）" % [hud.hint.text, hud.top.text])
+	p.dino_id = 2
+	p.phase = &"play"
+	p.time_left = 210.0
+	p.changed.emit()
+	hud._process(0.0)
+	_ck("遊戲 3:30" in hud.top.text, "遊戲階段倒數 3:30（現在：%s）" % hud.top.text)
+	# 分數板：照總分排（表頭 4 格之後，每列 4 格：名次、名字、本回合、總分）
+	var names := []
+	var cells := hud.board_rows.get_children()
+	for i in range(5, cells.size(), 4):
+		names.append(cells[i].text)
+	_ck(names == ["小華", "大雄", "阿明（你）", "胖虎"], "分數板要照總分排（現在：%s）" % [names])
+	# 選重生點：自己死了（場上沒有自己）才有
+	m.spawn_points.assign([Vector3(0, 0, -50), Vector3(60, 0, 0), Vector3(0, 0, 40)])
+	var mine: Node = m._me()
+	if mine:
+		mine.get_parent().remove_child(mine)
+		mine.free()
+	hud._process(0.0)
+	_ck(hud.hint.text.begins_with("按 1～3 選重生點"), "死了要提示按 1～3 選重生點（現在：%s）" % hud.hint.text)
+	var key := InputEventKey.new()
+	key.pressed = true
+	key.physical_keycode = KEY_2
+	hud._unhandled_input(key)
+	key.physical_keycode = KEY_9   # 超過點數的鍵不理
+	hud._unhandled_input(key)
+	_ck(p.asked == [1], "按 2 要呼叫 request_respawn_at(1)（現在：%s）" % [p.asked])
+	# 回合結算：中間顯示怎麼結束的，幾秒後自動消失
+	p.phase = &"result"
+	p.last_result = "時間到，恐龍守住蛋"
+	p.changed.emit()
+	hud._process(0.0)
+	_ck(hud.popup.visible and hud.popup_title.text == p.last_result, "結算要顯示怎麼結束的")
+	hud._process(hud.RESULT_SHOW + 0.1)
+	_ck(not hud.popup.visible, "結算框幾秒後要自己消失")
+	# 四回合結束：冠軍放大
+	p.phase = &"final"
+	p.changed.emit()
+	hud._process(0.0)
+	_ck(hud.popup.visible and hud.popup_champ.visible and "小華" in hud.popup_champ.text,
+		"最終排名第一名要放大顯示（現在：%s）" % hud.popup_champ.text)
+	m.party = null
+	p.free()
+	_end(m)

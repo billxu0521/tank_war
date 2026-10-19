@@ -147,6 +147,7 @@ var _blocked: Array[Rect2] = []  # 建築物在 XZ 平面佔的範圍
 var _drift: Node3D   # 落葉飛蟲，跟著鏡頭走（Fx.drift）
 var _bushes: Array[Vector3] = []  # 灌木叢的根部位置（bot 判斷人是不是躲在裡面）
 var _exits: Array[Vector3] = []  # 四個撤離區的中心
+var party: Node = null   # 派對模式的 Party 節點（gameplay 建），不是派對模式為 null；畫面在 party_hud.gd
 var _cowboys := 0
 var _offline := false
 var _dedicated := false   # 專用伺服器（測試站）：主機自己不是玩家
@@ -171,6 +172,9 @@ func _ready() -> void:
 	if DisplayServer.get_name() != "headless" and get_window().size == base:
 		get_window().set_deferred(&"mode", Window.MODE_MAXIMIZED)
 	_add_report_button()
+	var party_hud := PartyHud.new()   # 派對模式的畫面（party_hud.gd），party 是 null 時自己藏起來
+	party_hud.main = self
+	$UI/Root.add_child(party_hud)
 	_flatten_models()
 	_use_cjk_font()
 	_add_settings()
