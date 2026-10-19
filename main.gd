@@ -138,6 +138,7 @@ static func lane_of(path: String) -> Variant:
 	return GREYBOX_LANE if path == GREYBOX_LEVEL else SANDBOX_RANGE
 var _houses_built := 0   # 第幾棟農舍：三種輪流蓋（不用亂數，後面擺的東西位置才不會跟著變）
 var _doors: Array[Door] = []   # 晚加入的人連進來時，把開著的門補送給他
+var _wrecks: Array[Destructible] = []   # 甩尾拆得掉的地形（destructible.gd）：晚加入的人連進來時，把打過的補送給他
 var _wheat_fields: Array[Rect2] = []   # 地形上色要知道哪裡是麥田
 var _roads: Array[Rect2] = []          # 城鎮主街這類另外鋪的土路（地形上色）；彎彎曲曲的荒地小路在 Trails（trails.gd）
 var _blocked: Array[Rect2] = []  # 建築物在 XZ 平面佔的範圍
@@ -952,8 +953,10 @@ func _far_from_cowboys() -> Vector3:
 ## 讀場景要在主執行緒，烘本身丟背景（幾百毫秒），烘好之前 boss 退回直線追。一個場地只烘一次。
 ## 恐龍很大（半徑 2.4），進不了房子、擠不過柵欄的缺口——網格自己就會繞開這些地方
 var _nav_region: NavigationRegion3D
-func bake_nav() -> void:
-	if is_instance_valid(_nav_region) or not multiplayer.is_server():
+## rebake：地形被甩尾拆掉（destructible.gd）時重烘，烘好之前照舊的網格走。
+## ponytail: 整張圖重烘（背景幾百毫秒，甩尾冷卻 20 秒才一次）；連續拆好幾樣時，晚開始的烘可能先烘完被舊的蓋掉，真的發生再排隊
+func bake_nav(rebake := false) -> void:
+	if not multiplayer.is_server() or is_instance_valid(_nav_region) != rebake:
 		return
 	var nm := NavigationMesh.new()
 	nm.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS
@@ -965,9 +968,10 @@ func bake_nav() -> void:
 	nm.cell_height = 0.25
 	var src := NavigationMeshSourceGeometryData3D.new()
 	NavigationServer3D.parse_source_geometry_data(nm, src, $Arena)
-	_nav_region = NavigationRegion3D.new()
-	_nav_region.name = "DinoNav"
-	$Arena.add_child(_nav_region)
+	if not rebake:
+		_nav_region = NavigationRegion3D.new()
+		_nav_region.name = "DinoNav"
+		$Arena.add_child(_nav_region)
 	var region: WeakRef = weakref(_nav_region)   # 烘完之前回大廳、場地被刪掉的話，不要抓著已經不在的節點
 	NavigationServer3D.bake_from_source_geometry_data_async(nm, src, func() -> void:
 		var r: Object = region.get_ref()
@@ -1096,6 +1100,9 @@ func _spawn(id: int) -> void:
 		for d in _doors:   # 門的開關不走同步器，晚來的人要補送一次
 			if d.is_open:
 				d._set_open.rpc_id(id, true)
+		for w in _wrecks:
+			if w.hits > 0:
+				w._set_hits.rpc_id(id, w.hits, Vector3.ZERO, true)
 
 func _add_player(scene: PackedScene, id: int) -> Node3D:
 	var p: Node3D = scene.instantiate()
@@ -1753,7 +1760,7 @@ func _build_level() -> void:
 			&"hitch": _hitch(p)
 			&"shop": _shop(p, rec.variant, rec.yaw)
 			&"water_tower": _water_tower(p, rec.yaw)
-			&"gb_house": _place_greybox(Greybox.house(rec.size, rec.floors, rec.big), p, rec.yaw)
+			&"gb_house": _place_greybox(_destructible(Greybox.house(rec.size, rec.floors, rec.big), 2), p, rec.yaw)
 			&"gb_block": _place_greybox(Greybox.block(rec.size), p, rec.yaw)
 			&"tree": _tree(rec)
 			&"rock": _rock(rec.mesh, p, rec.s, rec.yaw, rec.solid)
@@ -1768,6 +1775,17 @@ func _place_greybox(body: StaticBody3D, p: Vector3, yaw: float) -> void:
 	body.position = _on_ground(p)
 	body.rotation.y = yaw
 	$Arena.add_child(body)
+
+## 甩尾拆得掉（destructible.gd，打 hits 下倒）：照蓋的順序取名 Wreck0、Wreck1…，每台一樣，RPC 才找得到同一個
+func _destructible(body: StaticBody3D, hits: int, visual: Node3D = null) -> StaticBody3D:
+	body.set_script(Destructible)
+	var w: Destructible = body
+	w.name = "Wreck%d" % _wrecks.size()
+	w.hits_needed = hits
+	w.visual = visual
+	w.add_to_group(&"destructible")
+	_wrecks.append(w)
+	return w
 
 ## 自動擺一份初稿：固定種子的亂數，每台機器擺出來一樣。手調過的場景檔存在時不會跑這個
 func _generate_level() -> void:
@@ -2977,13 +2995,16 @@ func _hay_bale(p: Vector3, yaw: float) -> StaticBody3D:
 func _tree(rec: Dictionary) -> void:
 	var p := _on_ground(rec.pos) + Vector3.DOWN * 0.3   # 往下埋一點：斜坡上樹根的下坡那側才不會懸空
 	var s: float = rec.s
+	var body: StaticBody3D
 	if rec.mesh == &"TreePine":
 		var h := s * TREE_BASE_TRUNK
-		_solid_cyl(p + Vector3(0, h * 0.5, 0), 0.35, h)
+		body = _solid_cyl(p + Vector3(0, h * 0.5, 0), 0.35, h)
 	else:
 		var trunk: Array = TREE_KINDS[rec.mesh]
-		_solid_cyl(p + Vector3(0, trunk[1] * s * 0.5, 0), trunk[0] * s, trunk[1] * s)
-	_prop(rec.mesh, p, Vector3.ONE * s).rotation.y = rec.yaw
+		body = _solid_cyl(p + Vector3(0, trunk[1] * s * 0.5, 0), trunk[0] * s, trunk[1] * s)
+	var mi := _prop(rec.mesh, p, Vector3.ONE * s)
+	mi.rotation.y = rec.yaw
+	_destructible(body, 1, mi)   # 甩一下就倒
 
 ## 人字屋頂的碰撞：兩片斜板。斜度在 45 度以內，恐龍爬上來站得住。
 ## 外觀在 Blender 的模型裡（blender/props.py 的 gable_roof() 照這個擺法建的）
