@@ -793,10 +793,27 @@ func stop_reload() -> void:
 
 ## 名稱對應場景裡的 AudioStreamPlayer 子節點（ShootSound / ReloadSound / EmptySound）。
 ## 沒放就不出聲，不會爆。
-func play_sound(name: StringName) -> void:
+## spatial：別人（遠端玩家、bot）的槍，改用有位置的播放器，聽得出槍聲從哪個方向、多遠來。
+## 自己的槍照原本的播（貼在耳邊，不用分左右）
+func play_sound(name: StringName, spatial := false) -> void:
 	var node := get_node_or_null(String(name) + "Sound")
-	if node is AudioStreamPlayer:
+	if not node is AudioStreamPlayer:
+		return
+	if not spatial:
 		node.play()
+		return
+	var node3 := get_node_or_null(String(name) + "Sound3D") as AudioStreamPlayer3D
+	if node3 == null:
+		node3 = AudioStreamPlayer3D.new()
+		node3.name = String(name) + "Sound3D"
+		node3.stream = node.stream
+		node3.pitch_scale = node.pitch_scale
+		node3.volume_db = node.volume_db
+		node3.max_polyphony = node.max_polyphony
+		node3.max_db = 0.0   # 預設 +3：近距離別人的槍會比自己的大聲
+		node3.unit_size = 20.0 if name == &"Shoot" else 3.0   # 槍聲整張地圖都聽得到；換彈、空膛只有附近聽得到
+		add_child(node3)
+	node3.play()
 
 
 # --- 程式動作（Blender 建的槍沒有動畫） ---

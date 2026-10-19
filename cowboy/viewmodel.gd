@@ -455,14 +455,14 @@ func try_fire(fanning := false) -> void:
 		_fire_queued = true
 		return
 	if weapon.mag == 0:
-		weapon.play_sound(&"Empty")   # 硬派：打空不自動換彈，自己按 R
+		weapon.play_sound(&"Empty", not _player.is_local)   # 硬派：打空不自動換彈，自己按 R
 		return
 
 	weapon.mag -= 1
 	_refresh_ammo()
 	# 擊發間隔和扳擊錘／拉栓同時起算，兩個都結束才能開下一槍。搧擊錘是手掌拍擊錘，沒有另外的上膛動作
 	_fire_cooldown = weapon.fan_interval if fanning else maxf(weapon.fire_interval, weapon.cycle_time)
-	weapon.play_sound(&"Shoot")
+	weapon.play_sound(&"Shoot", not _player.is_local)
 	# 最後一發用 _EMPTY 版本（手槍滑套後定）
 	var action := &"fire"
 	if weapon.mag == 0 and weapon.has_action(&"fire_EMPTY"):
@@ -496,7 +496,7 @@ func _remote_shot(index: int, from: Vector3, dirs: PackedVector3Array, ammo: int
 	if index < 0 or index >= _weapons.size():
 		return
 	remote_shots += 1
-	_weapons[index].play_sound(&"Shoot")
+	_weapons[index].play_sound(&"Shoot", not _player.is_local)
 	_muzzle_flash(_weapons[index])
 	_launch(index, from, dirs, true, clampi(ammo, 0, Weapon.AMMO_NAMES.size() - 1))
 	_alert_boss(from)
@@ -559,7 +559,7 @@ func try_reload() -> void:
 	_reload_id += 1
 	var id := _reload_id
 	_reloading = true
-	weapon.play_sound(&"Reload")
+	weapon.play_sound(&"Reload", not _player.is_local)
 
 	if weapon.reload_type == Weapon.Reload.WHOLE:
 		weapon.play(&"reload", blend, weapon.reload_time)

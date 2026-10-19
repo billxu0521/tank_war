@@ -1408,6 +1408,33 @@ func _case_cowboy_voice() -> void:
 	c.take_damage(500)
 	var after := m.get_children().filter(func(n: Node) -> bool: return n is AudioStreamPlayer3D and n.stream in c.DEATH_VOICES).size()
 	_ck(after == 1 and before == 0, "死掉要在場上留一聲慘叫")
+	# 別人（bot）的槍聲要有位置，聽得出方向；自己的貼在耳邊
+	var bot: Node = m._add_player(m.COWBOY, 3)
+	var bw: Node = bot.viewmodel._weapons[0]
+	bot.viewmodel._remote_shot(0, bot.global_position, PackedVector3Array([Vector3.FORWARD]), 0)
+	var s3 := bw.get_node_or_null(^"ShootSound3D") as AudioStreamPlayer3D
+	_ck(s3 != null and s3.playing and not bw.get_node(^"ShootSound").playing, "別人的槍聲要用有位置的播放器")
+	# 別人的腳步聲：照量到的速度踩，有位置；站著不動不踩
+	var hit: Dictionary = bot._ray(bot.global_position + Vector3.UP * 50.0, bot.global_position + Vector3.DOWN * 50.0)
+	_ck(not hit.is_empty(), "bot 腳下要找得到地")
+	if hit:
+		bot.global_position = hit.position   # 剛生出來還沒落地
+	bot._speed = 5.0
+	bot._remote_footsteps(1.0)
+	_ck(bot._step_sound3 != null and bot._step_sound3.playing, "別人走路要有腳步聲，而且有位置")
+	bot._step_sound3.stop()
+	bot._speed = 0.0
+	bot._remote_footsteps(1.0)
+	_ck(not bot._step_sound3.playing, "別人站著不動不能有腳步聲")
+	bot._speed = 5.0
+	bot.global_position.y += 20.0
+	bot._remote_footsteps(1.0)
+	_ck(not bot._step_sound3.playing, "別人跳在空中不能有腳步聲")
+	var me: Node = m._add_player(m.COWBOY, 1)
+	me.viewmodel.weapon.mag = 1
+	me.viewmodel._fire_cooldown = 0.0
+	me.viewmodel.try_fire()
+	_ck(me.viewmodel.weapon.get_node_or_null(^"ShootSound3D") == null, "自己的槍聲貼在耳邊，不用有位置")
 	_end(m)
 
 ## 對抗模式：玩家操作尼諾拉（docs/規劃/2026-10-18-對抗模式.md）

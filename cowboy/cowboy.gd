@@ -102,6 +102,7 @@ const MODEL_OLD := preload("res://models/cowboy.glb")
 @onready var _step_sound: AudioStreamPlayer = get_node_or_null("StepSound")
 @onready var _jump_sound: AudioStreamPlayer = get_node_or_null("JumpSound")
 @onready var _land_sound: AudioStreamPlayer = get_node_or_null("LandSound")
+var _step_sound3: AudioStreamPlayer3D   # 別人的腳步聲（_remote_footsteps），用到才建
 
 ## 這個節點是不是「我自己」。false 代表它是別人的角色（或 bot），
 ## 輸入、HUD、相機都關掉。單機時恆為 true。
@@ -274,9 +275,11 @@ func _swing_legs(delta: float) -> void:
 	var speed := Vector2(moved.x, moved.z).length() / maxf(delta, 0.0001)
 	# 抹平再給骨架挑動作：主機收別人的位置一秒 40 次、畫面 60 幀以上，有些幀量到 0，不抹會在站和走之間一直切
 	var k := 1.0 - exp(-10.0 * delta)
-	_speed = lerpf(_speed, speed if speed <= 20.0 else 0.0, k)
+	# 瞬移用「這幀動多遠」判斷，不用速度：別人的位置一秒只來 40 次，高幀數時一幀跳 0.2 公尺算出來會超過 20 m/s
+	var warp := moved.length() > 1.0
+	_speed = lerpf(_speed, 0.0 if warp else speed, k)
 	_vy = lerpf(_vy, moved.y / maxf(delta, 0.0001) if absf(moved.y) < 1.0 else 0.0, k)   # 一幀動一公尺以上是瞬移
-	if speed > 20.0 or vaulting or _ladder:
+	if warp or vaulting or _ladder:
 		speed = 0.0   # 瞬移（重生、爬到頂）和翻越、爬梯子時不擺
 	_stride += speed * delta * STRIDE_RATE
 	var amp := clampf(speed / walk_speed, 0.0, 1.4) * 0.45
@@ -364,9 +367,8 @@ func _process(delta: float) -> void:
 				_held.transform = _rig.gun_transform()
 	if not is_local:
 		# 遠端角色拿同步過來的蹲下狀態重跑一次姿勢
-		# ponytail: 腳步聲和落地聲沒有同步，聽不到別人走路。要做就把 AudioStreamPlayer
-		# 換成 AudioStreamPlayer3D 再加一條 RPC。
 		_apply_crouch(sync_crouching, delta)
+		_remote_footsteps(delta)
 		return
 	# 翻越：鏡頭往下點頭、往側邊歪一下，看得出自己撐過去了
 	var v := sin(PI * vault_t)
@@ -765,6 +767,38 @@ func climb_step(delta: float, up: float, let_go: bool) -> void:
 
 
 # --- 以下是 FNE 原本的移動系統 ---
+
+## 別人（遠端玩家、bot）的腳步聲：用量到的速度在自己這台踩，不用另外同步。
+## 有位置，聽得出從哪個方向靠近；蹲著走比較小聲。
+## ponytail: 別人的跳躍、落地聲沒做，要做再照 _vy 的變化補
+func _remote_footsteps(delta: float) -> void:
+	if _speed < 1.0 or sync_act == CowboyRig.ACT_VAULT or sync_act == CowboyRig.ACT_LADDER:
+		_step_timer = 0.0
+		return
+	var interval := step_walk_interval
+	if sync_crouching:
+		interval = step_crouch_interval
+	elif _speed > (walk_speed + sprint_speed) * 0.5:
+		interval = step_sprint_interval
+	_step_timer += delta
+	if _step_timer < interval or not _step_sound:
+		return
+	_step_timer = 0.0
+	# 要踩的那一下才看腳下有沒有地（不看垂直速度：上 30 度斜坡也要有聲音，跳在空中不能有）
+	if _ray(global_position + Vector3.UP * 0.3, global_position + Vector3.DOWN * 0.3).is_empty():
+		return
+	var g := _match()
+	if g and g.get(&"_dedicated"):   # 專用伺服器沒人聽
+		return
+	if not _step_sound3:
+		_step_sound3 = AudioStreamPlayer3D.new()
+		_step_sound3.stream = _step_sound.stream
+		_step_sound3.unit_size = 3.0      # 二、三十公尺內聽得到
+		_step_sound3.max_distance = 35.0
+		add_child(_step_sound3)
+	_step_sound3.volume_db = _step_sound.volume_db - (8.0 if sync_crouching else 0.0)
+	_step_sound3.play()
+
 
 func _update_footsteps(moving: bool, crouching: bool, delta: float) -> void:
 	if not is_on_floor() or not moving:
