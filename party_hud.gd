@@ -117,14 +117,18 @@ func update_live() -> void:
 	var p := _party
 	var me := my_id()
 	var t := ceili(maxf(p.time_left, 0.0))
-	var lines := ["第 %d／%d 回合　　%s %d:%02d" % [p.round_index + 1, p.rounds, PHASES.get(p.phase, ""), t / 60, t % 60],
+	# final 時 round_index 已經加到 rounds：停在最後一回合
+	var lines := ["第 %d／%d 回合　　%s %d:%02d" % [mini(p.round_index + 1, p.rounds), p.rounds, PHASES.get(p.phase, ""), t / 60, t % 60],
 		"恐龍：%s" % name_of(p.dino_id)]
-	if me != p.dino_id and p.lives.has(me):
+	if me != p.dino_id and p.lives.has(me) and p.phase in [&"prep", &"play"]:
 		lines.append("你剩 %d 條命" % int(p.lives[me]))
 	top.text = "\n".join(lines)
 	hint.text = ""
 	if p.phase == &"prep":
-		hint.text = "按 F 把蛋放在腳下" if me == p.dino_id else "看恐龍把蛋藏去哪"
+		if me != p.dino_id:
+			hint.text = "看恐龍把蛋藏去哪"
+		else:
+			hint.text = "蛋放好了，等牛仔進場" if p.egg_placed else "按 F 把蛋放在腳下"
 	elif waiting_respawn():
 		hint.text = respawn_text()
 

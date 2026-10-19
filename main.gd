@@ -1999,8 +1999,10 @@ func _update_compass() -> void:
 	if _party_hud and _party_hud.visible and _party_hud.waiting_respawn():   # 派對模式等重生：標出能選的重生點
 		var pts := _party_hud.spawn_points()
 		for i in pts.size():
-			marks.append({"deg": Compass.bearing(at, pts[i]), "dist": at.distance_to(pts[i]),
-				"color": Compass.EGG_COLOR if i == _party_hud.picked else Color(0.4, 0.9, 0.5), "label": "重生 %d" % (i + 1)})
+			if i == _party_hud.picked:
+				marks.append({"deg": Compass.bearing(at, pts[i]), "dist": at.distance_to(pts[i]), "color": Compass.EGG_COLOR, "label": "重生點 %d" % (i + 1)})
+			elif _party_hud.picked < 0:   # 還沒選：只寫編號（九個都寫距離會疊在一起，距離看中間的清單）
+				marks.append({"deg": Compass.bearing(at, pts[i]), "color": Color(0.4, 0.9, 0.5), "label": str(i + 1)})
 	if _solo_dino and boss:   # 測恐龍行為：標出恐龍在哪
 		marks.append({"deg": Compass.bearing(at, boss.global_position), "dist": at.distance_to(boss.global_position),
 			"color": Color(1, 0.35, 0.3), "label": "恐龍"})

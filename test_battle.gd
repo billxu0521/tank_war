@@ -2621,8 +2621,10 @@ func request_respawn_at(i: int) -> void:
 	_ck(not hud.popup.visible, "結算框幾秒後要自己消失")
 	# 四回合結束：冠軍放大
 	p.phase = &"final"
+	p.round_index = 4   # 跟 party.gd 一樣：final 時已經加到 rounds
 	p.changed.emit()
 	hud._process(0.0)
+	_ck(hud.top.text.begins_with("第 4／4 回合") and "命" not in hud.top.text, "結束時停在第 4／4 回合、不顯示命（現在：%s）" % hud.top.text)
 	_ck(hud.popup.visible and hud.popup_champ.visible and "小華" in hud.popup_champ.text,
 		"最終排名第一名要放大顯示（現在：%s）" % hud.popup_champ.text)
 	m.party = null
@@ -2685,6 +2687,7 @@ func _case_party_gameplay() -> void:
 		m.players.remove_child(c)
 		c.free()
 	_ck(p._waiting.is_empty(), "最後一條命死了不排重生")
+	_ck(m._is_out(-1) and not m._is_out(1), "命用完算出局（接觀戰鏡頭），恐龍不算")
 	m._physics_process(DT)
 	_ck(p.phase == &"result" and int(p.scores[1]) == 14, "命用完恐龍贏：4 殺 + 守蛋 10 = 14（現在 %s）" % p.scores)
 	_ck(not m.result.visible and not m._over, "回合之間不跳舊的勝負畫面")

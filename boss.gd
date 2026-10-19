@@ -789,7 +789,7 @@ func _go(to: Vector3, want_run: bool, delta: float) -> void:
 	_move(-global_basis.z * clampf(cos(off), 0.15, 1.0), want_run, delta)
 
 ## p 可能已經被刪掉（預備出招時目標剛好死掉）：參數不寫型別，先檢查再用
-func _turn_to(p: Object, speed: float, delta: float) -> void:
+func _turn_to(p: Variant, speed: float, delta: float) -> void:
 	if not is_instance_valid(p):
 		return
 	var d: Vector3 = (p as Node3D).global_position - global_position
