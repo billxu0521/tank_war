@@ -79,6 +79,7 @@ const SWEEP_RADIUS := 9.5
 const SWEEP_DAMAGE := 70
 const SWEEP_RECOVER := 0.6
 const SWEEP_CD := 8.0
+const SWEEP_CD_PARTY := 20.0   # 派對模式：甩尾拆得掉地形（destructible.gd），冷卻拉長，不然掩體一下就拆光
 const STUN_TIME := 2.5       # 蓄力被打斷暈多久
 # 撲擊：中距離正前方、路線沒東西擋。蹲低，起跳那刻方向鎖死
 const POUNCE_MIN := 11.0
@@ -303,7 +304,7 @@ func _pilot_step(delta: float) -> void:
 			_begin(ACT_BITE_WIND, BITE_WIND)
 			return
 		if _pin_buttons & PIN_SWEEP and _sweep_cd <= 0.0:
-			_sweep_cd = SWEEP_CD
+			_sweep_cd = _sweep_cd_time()
 			_begin(ACT_CHARGE_WIND, CHARGE_WIND)
 			return
 		if _pin_buttons & PIN_POUNCE and _pounce_cd <= 0.0:
@@ -483,7 +484,7 @@ func _start_attack() -> bool:
 			return true
 	# 蓄力甩尾：身邊有人在側面或背後，或身邊不只一個人
 	if _sweep_cd <= 0.0 and (near.size() >= 2 or near.any(func(p: Node3D) -> bool: return not _in_front(p.global_position, 0.5))):
-		_sweep_cd = SWEEP_CD
+		_sweep_cd = _sweep_cd_time()
 		_begin(ACT_CHARGE_WIND, CHARGE_WIND)
 		return true
 	# 撲擊：中距離正前方看得到、路線上沒東西擋
@@ -592,6 +593,27 @@ func _strike_bite() -> void:
 
 func _strike_sweep() -> void:
 	_hit_around(global_position, SWEEP_RADIUS, SWEEP_DAMAGE)   # 掃起的一圈土是各台自己播（trex.gd 的 _act_fx）
+	if _party():
+		_wreck_around(global_position, SWEEP_RADIUS)
+
+func _sweep_cd_time() -> float:
+	return SWEEP_CD_PARTY if _party() else SWEEP_CD
+
+## 派對模式：甩尾掃到的地形（群組 destructible：樹、灰盒房子；安全屋不在裡面）各挨一下，倒不倒它自己算
+func _wreck_around(at: Vector3, radius: float) -> void:
+	var sphere := SphereShape3D.new()
+	sphere.radius = radius
+	var q := PhysicsShapeQueryParameters3D.new()
+	q.shape = sphere
+	q.transform = Transform3D(Basis(), at)
+	q.exclude = [get_rid()]
+	var done := {}
+	# ponytail: 一棟房子幾十塊碰撞各算一筆，上限給大一點；房子擠成一團漏掉幾個再加
+	for r: Dictionary in get_world_3d().direct_space_state.intersect_shape(q, 256):
+		var c: Object = r.collider
+		if c is Node and (c as Node).is_in_group(&"destructible") and not done.has(c):
+			done[c] = true
+			c.tail_hit(at)
 
 ## 判定點附近的牛仔扣血（一招每人最多一次、中間隔著東西打不到）
 func _hit_around(at: Vector3, radius: float, damage: int) -> void:

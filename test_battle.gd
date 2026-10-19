@@ -73,6 +73,7 @@ func _process(_delta: float) -> bool:
 		_case_versus()
 		_case_party_boss()
 		_case_party_map()
+		_case_party_destruction()
 		_start_gun_case()
 		return false
 	# 剩下的要跨好幾個 frame 才驗得到。總幀數設上限：腳本編譯壞掉時各階段等不到條件，
@@ -2340,6 +2341,49 @@ func _case_greybox() -> void:
 				hanging.append("%s %.1f" % [rec.pos, dy])
 				break
 	_ck(hanging.is_empty(), "灰盒的柵欄要貼著地（中心位置、地面減柵欄底）：%s" % [hanging])
+	_end(m)
+	Main.level_file = keep
+
+## 派對模式甩尾拆地形（destructible.gd）：樹一下倒、灰盒房子兩下倒、不在群組裡的（安全屋）不倒、倒了碰撞沒了
+func _case_party_destruction() -> void:
+	var Main: GDScript = load("res://main.gd")
+	var keep: String = Main.level_file
+	Main.level_file = ""
+	var m := _offline_match()
+	var tree: Destructible = null
+	var house: Destructible = null
+	for w: Destructible in m._wrecks:
+		if w.hits_needed == 1 and tree == null:
+			tree = w
+		elif w.hits_needed == 2 and house == null:
+			house = w
+	_ck(tree != null and house != null, "灰盒地圖的樹、房子要拆得掉（%d 樣）" % m._wrecks.size())
+	if tree == null or house == null:
+		_end(m)
+		Main.level_file = keep
+		return
+	var b: Node3D = m.spawn_boss()
+	_ck(b._sweep_cd_time() == b.SWEEP_CD, "其他模式甩尾冷卻不變")
+	m.rules = &"party"   # ponytail: RULES 的 party 是 gameplay 加的，這裡只借 rules 這個值
+	_ck(b._sweep_cd_time() == 20.0, "派對模式甩尾冷卻 20 秒")
+	# 恐龍站在樹旁邊甩尾，旁邊擺一間沒進群組的安全屋
+	var base := Vector3(tree.global_position.x, 0, tree.global_position.z)
+	b.global_position = m._on_ground(base + Vector3(4, 4.2, 0))
+	var safe := Greybox.house(Vector3(5, 3, 5), 1)
+	safe.add_to_group(&"safe_house")
+	m._place_greybox(safe, b.global_position * Vector3(1, 0, 1) + Vector3(0, 0, 6), 0.0)
+	var space: PhysicsDirectSpaceState3D = m.get_viewport().world_3d.direct_space_state
+	var ray := PhysicsRayQueryParameters3D.create(tree.global_position + Vector3(-3, 0, 0), tree.global_position + Vector3(3, 0, 0))
+	_ck(space.intersect_ray(ray).get(&"collider") == tree, "倒之前樹幹擋得住")
+	b._strike_sweep()
+	_ck(tree.hits == 1 and tree.collision_layer == 0 and not tree.is_in_group(&"destructible"), "樹甩一下就倒")
+	_ck(space.intersect_ray(ray).get(&"collider") != tree, "倒了的樹沒有碰撞")
+	_ck(safe.collision_layer != 0, "不在群組裡的東西（安全屋）甩不倒")
+	house.tail_hit(Vector3.ZERO)
+	_ck(house.hits == 1 and house.collision_layer != 0, "房子甩一下還站著")
+	house.tail_hit(Vector3.ZERO)
+	_ck(house.hits == 2 and house.collision_layer == 0, "房子甩兩下倒了、碰撞沒了")
+	m.rules = &"egg"
 	_end(m)
 	Main.level_file = keep
 
