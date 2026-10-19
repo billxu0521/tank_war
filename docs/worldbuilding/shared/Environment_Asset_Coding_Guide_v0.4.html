@@ -1,0 +1,320 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>環境資產編碼與組成規則 v0.4</title><style>:root{color-scheme:light;--ink:#293e36;--muted:#65736a;--line:#d6ddd1;--accent:#436d59}*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:82px}body{margin:0;color:var(--ink);background:#e8ece6;font:16px/1.7 -apple-system,BlinkMacSystemFont,'PingFang TC','Heiti TC',sans-serif}nav{position:sticky;top:0;z-index:9;padding:10px 22px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:center;background:#f1f4eefa;border-bottom:1px solid var(--line)}nav a{font-size:13px;white-space:nowrap}nav select{font:inherit;font-size:13px;max-width:50vw;padding:5px;border:1px solid #b8c7b8;background:white;color:var(--ink)}main{max-width:1370px;margin:26px auto}article{background:#fffef9;margin:0 0 28px;padding:26px 44px 18px;min-height:780px;border:1px solid var(--line);box-shadow:0 4px 16px #23382d08;scroll-margin-top:82px;display:flex;flex-direction:column}.running{font-size:12px;letter-spacing:.08em;color:var(--muted);border-bottom:1px solid var(--line);padding-bottom:10px;display:flex;justify-content:space-between;gap:15px}.content{flex:1}h1{font-size:28px;line-height:1.4;margin:23px 0 17px}h2{font-size:23px;line-height:1.4;margin:23px 0 16px}h3{font-size:19px;line-height:1.5;margin:24px 0 12px}p{margin:12px 0}a{color:#356a59;text-underline-offset:3px}table{border-collapse:collapse;width:100%;table-layout:auto;font-size:14px;line-height:1.6;margin:8px 0 21px}th,td{padding:10px 11px;border:1px solid var(--line);vertical-align:top;text-align:left;overflow-wrap:anywhere}th{background:#e8eee3;font-weight:600}tr:nth-child(even){background:#f5f7f0}td:first-child{min-width:100px;font-variant-numeric:tabular-nums}table.register{table-layout:fixed}table.register td:first-child{width:10%}table.register th:nth-child(2){width:17%}table.register th:nth-child(3){width:21%}table.register th:nth-child(4){width:11%}table.register th:nth-child(5){width:20%}table.spec td:first-child{width:15%;white-space:nowrap}small{font-size:12px;color:var(--muted);line-height:1.4;display:inline-block;margin-top:4px}.table-caption{font-size:13px;color:var(--muted);font-weight:600;margin:18px 0 4px}figure{margin:15px 0 22px}figure img{display:block;width:100%;height:auto}figcaption{font-size:13px;text-align:center;color:var(--muted);margin-top:6px}.footnote{margin-top:24px;border-top:1px solid #bfc9bb;padding-top:9px;font-size:12px;line-height:1.6;color:#58695e}footer{margin-top:22px;border-top:1px solid var(--line);padding-top:9px;display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}.ref-code{white-space:nowrap;overflow-wrap:normal;word-break:normal}code{font-size:.88em;background:#edf1e8;padding:2px 4px;overflow-wrap:anywhere}li{margin:8px 0}sup{font-size:11px}section{scroll-margin-top:80px}.place-index{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px 18px;font-size:14px}.place-index a{display:block;padding:4px 0}.place-index b{font-variant-numeric:tabular-nums;margin-right:5px}article[id^='place-']:not(#place-descriptions) .content{max-width:980px;width:100%;margin:0 auto}article[id^='place-'] p{line-height:1.85}article[id^='place-'] li{margin:13px 0}@media(max-width:800px){.place-index{grid-template-columns:repeat(2,minmax(0,1fr))}article{padding:18px 14px;min-height:0}main{margin:12px 6px}table{font-size:12px;line-height:1.55}th,td{padding:7px 5px}table.register{table-layout:auto}h1{font-size:24px}h2{font-size:21px}nav{gap:7px;padding:8px}nav select{max-width:95vw}.running{font-size:10px}td:first-child{min-width:65px}}@media print{nav{display:none}body{background:white}main{max-width:none;margin:0}article{break-after:page;box-shadow:none;border:0;padding:0;margin:0;min-height:0}tr,figure,.footnote{break-inside:avoid}footer{margin-top:18px}h2,h3,.table-caption{break-after:avoid}a{color:inherit}}</style></head><body><nav><a href="#s1">1. Structure</a><a href="#s2">2. Geometry</a><a href="#s3">3. Categories</a><a href="#s4">4. Variants</a><a href="#s5">5. Places</a><a href="#s6">6. Registration</a><a href="#test-namespace">7. Test</a><label>Page <select aria-label="跳至閱讀頁" onchange="location.hash=this.value"><option value="s1">1 · 1. Structure 識別結構</option><option value="s2">2 · 2. Geometry and Materials 模型與材質</option><option value="s3">3 · 3. Categories 分類與衝突處理</option><option value="s4">4 · 4. Variants and Composition 變體與組成</option><option value="s5">5 · 5. Places and Revisions 場所與修訂</option><option value="s6">6 · 6. Registration 登錄與依賴</option><option value="test-namespace">7 · 7. Test Assets 內部測試資產</option></select></label></nav><main><article id="s1" data-page="1"><div class="running"><span>環境資產編碼與組成規則 v0.4</span><span>DRAFT FOR REVIEW</span></div><div class="content"><h2>1. Structure 識別結構</h2><p>Version 0.4 · October 19, 2026 · Draft for Review</p>
+<p>本規則適用於環境模型、構件、材質、表面圖樣與組合，統一資產身分、可重用配置及地圖引用。資產內容查<a href="Environment_Asset_Catalog_v0.3.html">製作目錄</a>，製作與驗收依<a href="Environment_Asset_Production_Guide_v0.3.html">交接準則</a>。</p>
+<p><strong>資產碼：<code><span class="ref-code">PRP-0001</span></code>。配置碼：<code>PRP-0001_V00_L00_CRMC_CD-GBB</code>。</strong></p>
+<p>讀法為「資產＿形體變體＿材質搭配＿組織客製＿地域風格」。底線分隔五欄，連字號保留在欄位內。此格式用於可放入場景的模型／組合配置；MAT、DEC 等被引用資源使用自己的穩定資產碼與修訂，不硬套五欄。</p>
+<p class="table-caption">Table 1. 固定欄位與預設值</p>
+
+<table class="standard">
+<thead>
+<tr>
+<th>欄位</th>
+<th>示例</th>
+<th>預設值及範圍</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>資產</td>
+<td><span class="ref-code">PRP-0001</span></td>
+<td>必填；三字母分類＋四位流水號</td>
+</tr>
+<tr>
+<td>形體變體</td>
+<td>V01</td>
+<td>V00 為基準形體；按各資產查表</td>
+</tr>
+<tr>
+<td>材質搭配</td>
+<td>L01</td>
+<td>L00 為基準搭配；L 取自 Look，按各資產查表</td>
+</tr>
+<tr>
+<td>組織客製</td>
+<td>CRMC</td>
+<td>NONE 表示無組織客製；不表示無主</td>
+</tr>
+<tr>
+<td>地域風格</td>
+<td>CD-GBB</td>
+<td>STD 表示不再加入地域調整，保留前面已選內容</td>
+</tr>
+</tbody></table>
+<p>V00、L00、NONE、STD 都是有效且需有定義的值。TBD 表示尚未決定，只可留在需求草稿，不能當成完成配置。完整碼不省略中間欄位。地域風格描述外觀方案的來源，不等於目前放置地點；同一考爾德木箱可由多張圖引用。</p>
+<p>基礎資產碼描述製作單位；完整配置碼描述一個可辨識的選用組合。編號登錄不代表模型已製作完成。V00、L00 須有該資產的實際形體與部位搭配定義，不能用預設字串代替缺漏資料。</p>
+</div><footer><span>October 19, 2026</span><span>Page 1 of 7</span></footer></article><article id="s2" data-page="2"><div class="running"><span>環境資產編碼與組成規則 v0.4</span><span>DRAFT FOR REVIEW</span></div><div class="content"><h2>2. Geometry and Materials 模型與材質</h2><p>模型負責形狀、尺寸與表面分區；材質負責這些表面的顏色、粗糙度及其他表現。材質搭配則記錄「哪個部位使用哪份材質」，因此一個模型可以配多套材質，一套材質也可以被不同模型引用。Godot 提供模型實例與分表面材質覆寫，支持這種分工；交付配置仍須核對實際匯入結果。¹</p>
+<p class="table-caption">Table 2. 同箱體的兩套材質搭配示例</p>
+
+<table class="standard">
+<thead>
+<tr>
+<th>搭配</th>
+<th>BODY 箱板</th>
+<th>HARDWARE 鐵件</th>
+<th>引用模型</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>L00 未塗裝 Unpainted</td>
+<td><span class="ref-code">MAT-0001</span> 舊木</td>
+<td><span class="ref-code">MAT-0002</span> 暗鐵</td>
+<td><span class="ref-code">PRP-0001</span> 的 V00</td>
+</tr>
+<tr>
+<td>L01 塗漆 Painted</td>
+<td><span class="ref-code">MAT-0003</span> 塗漆木面</td>
+<td>同一 <span class="ref-code">MAT-0002</span></td>
+<td>同一 <span class="ref-code">PRP-0001</span> 的 V00</td>
+</tr>
+</tbody></table>
+<p>L00／L01 是該資產的材質搭配表，不是新的模型或一張貼圖。MAT 是可重用材質資源；所依賴的貼圖、遮罩、著色器與參數需列路徑、版本及來源，初期不另替每張圖片增加一層資產碼。各模型材質區域使用穩定名稱，匯入時再核對其實際表面索引，不能只假定「第 0 面永遠是木頭」。</p>
+<p><strong>相容性需檢查。</strong> 包含貼圖座標、紋理尺度、表面分區、透明／雙面需求及辨識標記的位置。特定模型烘焙出的法線或遮罩不應直接當所有模型通用。材質替換若需要不同 UV 排列，需補相容配置或來源變體；不只因外形相同就認定可直接換。²</p>
+<p>微小色差、粗糙度調整不必各造新 MAT；在搭配表保存具體參數。需要長期獨立重用、可並存且具獨立表面意義的材質才另登錄。單純修正同一材質則增加修訂，不假裝是新的選項。</p>
+<p>換木紋不改 V；側板缺失、增加有厚度的鐵箍等改變幾何的需求，選相容 V 或引用獨立構件。材質可以改善裂紋表現，但不能因此宣稱輪廓、通孔或碰撞已改好。修改共用材質時也要檢查其他引用者，局部效果不得無聲改掉所有箱子。</p>
+<aside class="footnote">
+
+<ol>
+<li>Godot Engine, “MeshInstance3D,” Description and set_surface_override_material, accessed October 19, 2026, <a href="https://docs.godotengine.org/en/stable/classes/class_meshinstance3d.html">https://docs.godotengine.org/en/stable/classes/class_meshinstance3d.html</a>. 借鑑資源與實例分離；五欄碼是本案約定。</li>
+<li>Godot Engine, “Standard Material 3D and ORM Material 3D,” Detail and UV1 and UV2, accessed October 19, 2026, <a href="https://docs.godotengine.org/en/stable/tutorials/3d/standard_material_3d.html">https://docs.godotengine.org/en/stable/tutorials/3d/standard_material_3d.html</a>. 本文相容性清單為依工具能力整理的製作判準，非已完成的引擎驗證。</aside></li>
+</ol>
+</div><footer><span>October 19, 2026</span><span>Page 2 of 7</span></footer></article><article id="s3" data-page="3"><div class="running"><span>環境資產編碼與組成規則 v0.4</span><span>DRAFT FOR REVIEW</span></div><div class="content"><h2>3. Categories 分類與衝突處理</h2><p class="table-caption">Table 3. 七類資產及邊界</p>
+
+<table class="standard">
+<thead>
+<tr>
+<th>碼</th>
+<th>名稱</th>
+<th>收錄範圍與邊界</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>VEG</td>
+<td>Vegetation 植被</td>
+<td>草、樹、灌叢及普通枯木形體；成群草叢仍可是一個 VEG 資產</td>
+</tr>
+<tr>
+<td>PRP</td>
+<td>Prop 道具物件</td>
+<td>箱、桶、工具、文件、車輛等有完整用途的物件</td>
+</tr>
+<tr>
+<td>MOD</td>
+<td>Module 組裝構件</td>
+<td>反覆拼裝的板、柱、框及牆段；MOD 不指全部模型</td>
+</tr>
+<tr>
+<td>NAT</td>
+<td>Natural Forms 自然形體</td>
+<td>岩塊、石化木、骨片等非普通植被自然形體</td>
+</tr>
+<tr>
+<td>MAT</td>
+<td>Material 表面材質</td>
+<td>被模型或搭配表引用的材質資源</td>
+</tr>
+<tr>
+<td>DEC</td>
+<td>Decal 表面圖樣</td>
+<td>可獨立重用的表面標記／圖樣；具體以投射、貼面或其他方式實作另記</td>
+</tr>
+<tr>
+<td>ASM</td>
+<td>Assembly 組合</td>
+<td>有獨立重用價值、需保存子資產引用與相對配置的組合</td>
+</tr>
+</tbody></table>
+<p class="table-caption">Table 4. 分類邊界案例</p>
+
+<table class="standard">
+<thead>
+<tr>
+<th>容易重疊的情況</th>
+<th>登錄方式</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>一只木箱由多片板組成</td>
+<td>整箱仍 PRP；被獨立重用的板另為 MOD。物件內有多個 mesh 不自動變 ASM。</td>
+</tr>
+<tr>
+<td>多只箱子組成可反覆擺放的貨堆</td>
+<td>若需保留各箱引用與排法，登錄 ASM；只在一處隨手擺放則留地圖配置。</td>
+</tr>
+<tr>
+<td>完整棚架／可重用建築外殼</td>
+<td>需獨立管理構件組裝者為 ASM；場內那棟建物仍有 BLD 身分。</td>
+</tr>
+<tr>
+<td>枯木、石化木與人工木料</td>
+<td>普通枯木 VEG；石化木 NAT；切製組裝木料 MOD。木面材質另為 MAT。</td>
+</tr>
+<tr>
+<td>植被、落屑可能用幾何，也可能用表面效果</td>
+<td>先確定製作方式；形體依內容分類，純表面覆層為 DEC／MAT。不因植物題材把所有檔案都塞入 VEG。</td>
+</tr>
+<tr>
+<td>標誌貼在箱上／掛一塊實體牌</td>
+<td>表面圖樣 DEC；有厚度且需單獨製作的牌為 PRP／MOD，依用途選定，不重複登錄同件。</td>
+</tr>
+<tr>
+<td>土面、坡地、裂縫</td>
+<td>表面材質 MAT；可重用地形形塊 NAT；實際高程／分區屬地圖；模型裂口與表面裂紋分開。</td>
+</tr>
+</tbody></table>
+<p>類別依「這筆登錄實際交付什麼」決定，允許以組成關係連接不同類別，不把關聯誤當衝突。一筆資產只有一個主要類別；組織、異常性、地域及真實／虛構屬屬性。既有編號不因臨時用途改變而重發。</p>
+<p>七類僅涵蓋環境製作，不擴及角色、動畫與聲音。無法合理歸類的新交付物才增類；一筆資產一個主要類別，名稱、用途與組成關係隨碼登錄。已發布的識別碼不重新指派給另一件資產。</p>
+</div><footer><span>October 19, 2026</span><span>Page 3 of 7</span></footer></article><article id="s4" data-page="4"><div class="running"><span>環境資產編碼與組成規則 v0.4</span><span>DRAFT FOR REVIEW</span></div><div class="content"><h2>4. Variants and Composition 變體與組成</h2><p class="table-caption">Table 5. 同資產配置示例</p>
+
+<table class="standard">
+<thead>
+<tr>
+<th>配置碼</th>
+<th>所選內容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PRP-0001_V00_L00_NONE_STD</td>
+<td>基準箱體、未塗裝搭配、無組織客製、無地域調整</td>
+</tr>
+<tr>
+<td>PRP-0001_V00_L01_NONE_STD</td>
+<td>同箱體改為塗漆搭配，模型不複製</td>
+</tr>
+<tr>
+<td>PRP-0001_V00_L00_CRMC_STD</td>
+<td>可跨圖引用的考爾德箱子</td>
+</tr>
+<tr>
+<td>PRP-0001_V00_L00_CRMC_CD-GBB</td>
+<td>同一考爾德箱子，加上 GBB 外觀調整</td>
+</tr>
+<tr>
+<td>PRP-0001_V01_L00_CRMC_CD-GBB</td>
+<td>改用開蓋形體；其內面必須支援指定搭配</td>
+</tr>
+</tbody></table>
+<p>V、L 都以各資產為範圍，V01／L01 不在全庫表示同一種變化。資產名稱採中英對照；變體與方案表列明差異及相容項；未登錄的組合不能僅憑碼型正確就判定可用。V01 的開蓋可以是靜態外形，本規則不自動定義互動行為。</p>
+<p>組織方案 CRMC 記錄辨識圖樣、指定顏色及必要配件；地域方案記錄可重用的塵土、色調或濕潤差異。它們引用 L／MAT／DEC 或相容構件，不各複製整套模型。組織成員的私人物件與受託找回的客戶物件，不因相關委託便加上組織標記。</p>
+<p>若同一組織有兩種互斥的客製方案，可在該欄使用登錄過的 <code>CRMC-02</code>；地域也可有 <code>CD-GBB-02</code>。不另加第六欄或以連續底線省略。無尾號的方案定義後保持其身分；修正沿修訂管理，不將同一代碼同時解讀成兩個互斥方案。</p>
+<p><strong>每一組完整碼及其配置修訂，必須指向一份明確的組成清單。</strong> 清單固定所用模型修訂、各部位材質修訂、組織圖樣、地域差異及允許的參數範圍。層次順序便於閱讀，不是「最後者任意覆蓋」；必要標記與功能界面須受保護。若兩層都要改同一參數，需明定哪個生效或標不相容；不得悄悄忽略其中一層。</p>
+<p>L00 不代表沒有材質，STD 不清除 CRMC，NONE 不清除材質。材質搭配與組織／地域方案的資訊不可重複定義在兩處：一般底材在 L，組織差異在組織方案，當地差異在地域方案，最終配置保存確定引用。</p>
+<p>完整配置的登錄欄位見第 6 節；目錄中的配置是製作要求，實作後填入可讀回的來源路徑及修訂，才可標為已完成配置。</p>
+</div><footer><span>October 19, 2026</span><span>Page 4 of 7</span></footer></article><article id="s5" data-page="5"><div class="running"><span>環境資產編碼與組成規則 v0.4</span><span>DRAFT FOR REVIEW</span></div><div class="content"><h2>5. Places and Revisions 場所與修訂</h2><p class="table-caption">Table 6. 互相引用而不互相取代的識別</p>
+
+<table class="standard">
+<thead>
+<tr>
+<th>識別</th>
+<th>責任</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><span class="ref-code">CD-GBB-BLD-06</span></td>
+<td>石林邊泵房這個場所，換模型不換場所碼</td>
+</tr>
+<tr>
+<td><span class="ref-code">CD-GBB-LOC-03</span></td>
+<td>石化林場所，不等同單一石化木模型</td>
+</tr>
+<tr>
+<td><span class="ref-code">CD-GBB-ZON-05</span></td>
+<td>地表與植被配置分區</td>
+</tr>
+<tr>
+<td><span class="ref-code">CD-GBB-RTE-01</span></td>
+<td>坡道等連接段的接面與高程</td>
+</tr>
+<tr>
+<td>CD-GBB-INS-001</td>
+<td>按需追蹤的一件場內個體，引用配置碼及修訂</td>
+</tr>
+<tr>
+<td><span class="ref-code">PRP-0001</span>／<span class="ref-code">MAT-0001</span></td>
+<td>跨圖資產與材質；各自保存修訂</td>
+</tr>
+</tbody></table>
+<p>地圖網格 A1 等只負責定位。散布植物可以記分區、密度、排除區及配置來源，不逐株編 INS。單件的移動、旋轉與允許的縮放也不一定需要新配置碼；需要獨立重用、相互比較的設計選項才登錄。</p>
+<p>修訂與變體分開：V01、L01 是可並存的選擇；r003 是某份來源或配置的修正歷程。已核可配置固定依賴版本，資產變動不使所有地圖無聲跟隨最新。</p>
+<p class="table-caption">Table 7. 檔名與依賴示例</p>
+
+<table class="standard">
+<thead>
+<tr>
+<th>對象</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>共用形體來源</td>
+<td>prp_0001_v00_shipping_crate_r003.blend</td>
+</tr>
+<tr>
+<td>共用材質</td>
+<td>mat_0001_weathered_wood_r002.tres</td>
+</tr>
+<tr>
+<td>完整配置記錄</td>
+<td>prp_0001_v00_l00_crmc_cd_gbb_r001.json</td>
+</tr>
+<tr>
+<td>地圖個體記錄</td>
+<td>CD-GBB-INS-001，引用上述配置修訂與位置</td>
+</tr>
+</tbody></table>
+<p>檔名採英文與半形數字，底線分詞；來源封存可加修訂尾碼，工程中的穩定匯出路徑不因每次修訂而任意更名。沿既有工程穩定路徑與 UID 規則，來源歷程另保存。不同外觀不應為了湊完整檔名而各複製一份相同模型；自包含交付需要打包時，列明來源及依賴。</p>
+<p>登錄需保留作者／來源與使用條件、檔案路徑、適用範圍、製作與核可狀態。以現有物件表銜接正式生產，不另設兩份競爭的權威清單。各地圖另記資產的採用範圍；能重用的模型不代表其異常設定也自動適用其他地圖。</p>
+<p>BLD、LOC、ZON、RTE 在各圖、各類別內獨立起編，以兩位數起列；INS 以三位數起列。移位或同一項目的尺寸調整不換碼；拆成不同項目或合併成新項目時另編。停用碼不回收；超出原位數時擴位，不重排既有號碼。已公開引用的身分若變更，在獨立修訂紀錄列明受影響項目。</p>
+</div><footer><span>October 19, 2026</span><span>Page 5 of 7</span></footer></article><article id="s6" data-page="6"><div class="running"><span>環境資產編碼與組成規則 v0.4</span><span>DRAFT FOR REVIEW</span></div><div class="content"><h2>6. Registration 登錄與依賴</h2><p>資產目錄管理製作單位與設計定義；<a href="../../%E7%B4%A0%E6%9D%90%E6%B5%81%E6%B0%B4%E7%B7%9A/%E7%89%A9%E4%BB%B6%E8%A1%A8.md">專案物件表</a>管理製作狀態與認領。兩者以資產碼連結，不另維護互相競爭的完成狀態。</p>
+<p class="table-caption">Table 8. 資產與配置的必要紀錄</p>
+
+<table class="standard">
+<thead>
+<tr>
+<th>紀錄</th>
+<th>必填內容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>資產</td>
+<td>穩定 ID、中英文名稱、用途、形態／尺寸範圍、類別、來源與使用條件。</td>
+</tr>
+<tr>
+<td>形體 V</td>
+<td>所屬資產、形體差異、尺寸、局部原點與方向、可拆件、材質部位；完成後填來源修訂。</td>
+</tr>
+<tr>
+<td>搭配 L</td>
+<td>所屬資產、各部位對應的 MAT／DEC、參數及可用 V；明記 UV 或遮罩限制。</td>
+</tr>
+<tr>
+<td>組織／地域方案</td>
+<td>登錄鍵、適用資產、標記或外觀差異、引用資源、保護部位及衝突處理。</td>
+</tr>
+<tr>
+<td>完整配置</td>
+<td>五欄碼、配置修訂、各層引用、最終部位搭配、允許參數及相容性結果；完成後填檔案路徑。</td>
+</tr>
+<tr>
+<td>ASM 組合</td>
+<td>子資產配置與修訂、相對變換、接點及可變範圍；引用不得形成循環。</td>
+</tr>
+<tr>
+<td>地圖實例／散布</td>
+<td>配置與修訂、BLD／LOC／ZON／RTE 參照、位置／朝向／尺度，或散布範圍、密度及排除區。</td>
+</tr>
+</tbody></table>
+<h3>6.1 Registration Checks 登錄檢查</h3>
+<ol>
+<li>先查既有製作單位；能用搭配、形體或配置表達差異時，沿用基礎 ID。</li>
+<li>檢查 ID 唯一、各欄已登錄、依賴存在、組合無循環，並確認所選形體具有需要的材質部位。</li>
+<li>組織與地域若修改同一參數，記錄明確合成方式；無法同時成立的組合標為不相容。</li>
+<li>完成資產時鎖定來源、匯出與依賴修訂，依製作準則讀回驗證。依賴更新時列受影響的配置，不讓所有地圖自動跟隨最新檔案。</li>
+</ol>
+<p>尚未建立模型的目錄項仍可用來分工與估算；其配置定義、完成資產與遊戲內驗收是不同階段。</p>
+</div><footer><span>October 19, 2026</span><span>Page 6 of 7</span></footer></article><article id="test-namespace" data-page="7"><div class="running"><span>環境資產編碼與組成規則 v0.4</span><span>DRAFT FOR REVIEW</span></div><div class="content"><h2>7. Test Assets 內部測試資產</h2><p>TST 是內部測試的作用域前綴，置於既有類別之前；例如 <code><span class="ref-code">TST-PRP-0001</span></code>。它不是第八類資產，也不代表某張地圖。各類別的測試流水號獨立起編，不占用無前綴的常規資產號碼。</p>
+<p>配置仍使用五欄：<code>TST-PRP-0001_V00_L00_NONE_STD</code>。整個 <code><span class="ref-code">TST-PRP-0001</span></code> 是第一欄；後四欄、空碼、形體／材質分工及相容性規則不變。TST 不授予任意匯入第三方素材的使用權。</p>
+<h3>7.1 Registration and Reuse 登錄與重用</h3>
+<p>測試資產登錄於<a href="Environment_Asset_Catalog_v0.3.html#test-assets">製作目錄第 11 節</a>，與常規項目清楚分組；條目、配置及組合均標記 internal_test。可重用既有 MAT 等資源，局部外觀調整保存在測試搭配，不能改寫共用底材。</p>
+<p>地圖 BLD／LOC 引用套件並記錄實際位置。組合內以 <span class="ref-code">INST-01</span> 等局部名稱辨認子物件；它們只在該組合內唯一，不取代第 5 節的地圖 INS。移至別圖時沿用資產與組合碼，另記地圖落點。</p>
+<h3>7.2 Status and Release 狀態與發布</h3>
+<p>登錄不表示模型完成或已核可進入正式遊戲；製作狀態仍由專案物件表管理。文件可收錄測試項，正式遊戲資產打包需依採用清單選入，不因目錄存在便自動包含。</p>
+<p>若測試成果日後成為常規資產，依其可重用製作單位登錄常規 ID，在獨立修訂紀錄保留來源關係，逐一更新採用者；不得直接去掉 TST 前綴後假定身分、來源條件或所有引用都已處理。</p>
+</div><footer><span>October 19, 2026</span><span>Page 7 of 7</span></footer></article></main></body></html>

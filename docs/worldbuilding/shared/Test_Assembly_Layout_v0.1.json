@@ -1,0 +1,647 @@
+{
+  "asset": "TST-ASM-0001",
+  "version": "v0.1",
+  "configuration": "TST-ASM-0001_V00_L00_NONE_STD",
+  "scope": "internal_test",
+  "units": "m",
+  "origin": "圍場西南角地坪；X 向東、Y 向北、Z 向上",
+  "extent_xy_m": [
+    64,
+    72
+  ],
+  "source": "https://steamcommunity.com/sharedfiles/filedetails/?id=122443683",
+  "scale_status": "依公開圖像改編；尺寸為設計值，非原圖測繪",
+  "children": [
+    {
+      "instance": "INST-01",
+      "configuration": "TST-PRP-0001_V00_L00_NONE_STD",
+      "bounds_min_local_m": [
+        13,
+        11,
+        0
+      ],
+      "size_m": [
+        3,
+        3,
+        2.8
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "INST-02",
+      "configuration": "TST-PRP-0001_V01_L00_NONE_STD",
+      "bounds_min_local_m": [
+        17,
+        11,
+        0
+      ],
+      "size_m": [
+        3,
+        3,
+        1.4
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "INST-03",
+      "configuration": "TST-PRP-0001_V02_L00_NONE_STD",
+      "bounds_min_local_m": [
+        20,
+        15,
+        0
+      ],
+      "size_m": [
+        2,
+        2,
+        1.1
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "INST-04",
+      "configuration": "TST-PRP-0001_V03_L00_NONE_STD",
+      "bounds_min_local_m": [
+        28,
+        20,
+        0
+      ],
+      "size_m": [
+        3,
+        3,
+        1.5
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "INST-05",
+      "configuration": "TST-PRP-0001_V04_L00_NONE_STD",
+      "bounds_min_local_m": [
+        32,
+        21,
+        0
+      ],
+      "size_m": [
+        3,
+        3,
+        2.6
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "INST-06",
+      "configuration": "TST-PRP-0001_V03_L00_NONE_STD",
+      "bounds_min_local_m": [
+        37,
+        20,
+        0
+      ],
+      "size_m": [
+        3,
+        3,
+        1.5
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "INST-07",
+      "configuration": "TST-PRP-0001_V03_L00_NONE_STD",
+      "bounds_min_local_m": [
+        46,
+        12,
+        0
+      ],
+      "size_m": [
+        3,
+        3,
+        1.5
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "INST-08",
+      "configuration": "TST-PRP-0001_V05_L00_NONE_STD",
+      "bounds_min_local_m": [
+        50,
+        13,
+        0
+      ],
+      "size_m": [
+        3,
+        3,
+        2.7
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "INST-09",
+      "configuration": "TST-PRP-0001_V02_L00_NONE_STD",
+      "bounds_min_local_m": [
+        46,
+        21,
+        0
+      ],
+      "size_m": [
+        2,
+        2,
+        1.1
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "INST-10",
+      "configuration": "TST-PRP-0001_V00_L00_NONE_STD",
+      "bounds_min_local_m": [
+        48,
+        58,
+        0
+      ],
+      "size_m": [
+        3,
+        3,
+        2.8
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "INST-11",
+      "configuration": "TST-PRP-0001_V01_L00_NONE_STD",
+      "bounds_min_local_m": [
+        44,
+        58,
+        0
+      ],
+      "size_m": [
+        3,
+        3,
+        1.4
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "INST-12",
+      "configuration": "TST-PRP-0001_V02_L00_NONE_STD",
+      "bounds_min_local_m": [
+        42,
+        55,
+        0
+      ],
+      "size_m": [
+        2,
+        2,
+        1.1
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "INST-13",
+      "configuration": "TST-PRP-0001_V03_L00_NONE_STD",
+      "bounds_min_local_m": [
+        33,
+        49,
+        0
+      ],
+      "size_m": [
+        3,
+        3,
+        1.5
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "INST-14",
+      "configuration": "TST-PRP-0001_V04_L00_NONE_STD",
+      "bounds_min_local_m": [
+        29,
+        48,
+        0
+      ],
+      "size_m": [
+        3,
+        3,
+        2.6
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "INST-15",
+      "configuration": "TST-PRP-0001_V03_L00_NONE_STD",
+      "bounds_min_local_m": [
+        24,
+        49,
+        0
+      ],
+      "size_m": [
+        3,
+        3,
+        1.5
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "INST-16",
+      "configuration": "TST-PRP-0001_V03_L00_NONE_STD",
+      "bounds_min_local_m": [
+        15,
+        57,
+        0
+      ],
+      "size_m": [
+        3,
+        3,
+        1.5
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "INST-17",
+      "configuration": "TST-PRP-0001_V05_L00_NONE_STD",
+      "bounds_min_local_m": [
+        11,
+        56,
+        0
+      ],
+      "size_m": [
+        3,
+        3,
+        2.7
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "INST-18",
+      "configuration": "TST-PRP-0001_V02_L00_NONE_STD",
+      "bounds_min_local_m": [
+        16,
+        49,
+        0
+      ],
+      "size_m": [
+        2,
+        2,
+        1.1
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "INST-19",
+      "configuration": "TST-PRP-0001_V06_L00_NONE_STD",
+      "bounds_min_local_m": [
+        7,
+        3,
+        1.2
+      ],
+      "size_m": [
+        2.2,
+        2,
+        1.3
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "INST-20",
+      "configuration": "TST-PRP-0001_V06_L00_NONE_STD",
+      "bounds_min_local_m": [
+        19,
+        3,
+        1.2
+      ],
+      "size_m": [
+        2.2,
+        2,
+        1.3
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "INST-21",
+      "configuration": "TST-PRP-0001_V06_L00_NONE_STD",
+      "bounds_min_local_m": [
+        45,
+        3,
+        1.2
+      ],
+      "size_m": [
+        2.2,
+        2,
+        1.3
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "INST-22",
+      "configuration": "TST-PRP-0001_V06_L00_NONE_STD",
+      "bounds_min_local_m": [
+        8,
+        65,
+        1.2
+      ],
+      "size_m": [
+        2.2,
+        2,
+        1.3
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "INST-23",
+      "configuration": "TST-PRP-0001_V06_L00_NONE_STD",
+      "bounds_min_local_m": [
+        42,
+        65,
+        1.2
+      ],
+      "size_m": [
+        2.2,
+        2,
+        1.3
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "INST-24",
+      "configuration": "TST-PRP-0001_V06_L00_NONE_STD",
+      "bounds_min_local_m": [
+        54,
+        65,
+        1.2
+      ],
+      "size_m": [
+        2.2,
+        2,
+        1.3
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "WALL-01",
+      "configuration": "TST-MOD-0001_V00_L00_NONE_STD",
+      "bounds_min_local_m": [
+        0,
+        0,
+        0
+      ],
+      "size_m": [
+        0.6,
+        32,
+        4.4
+      ],
+      "long_axis": "Y"
+    },
+    {
+      "instance": "WALL-02",
+      "configuration": "TST-MOD-0001_V00_L00_NONE_STD",
+      "bounds_min_local_m": [
+        0,
+        40,
+        0
+      ],
+      "size_m": [
+        0.6,
+        32,
+        4.4
+      ],
+      "long_axis": "Y"
+    },
+    {
+      "instance": "WALL-03",
+      "configuration": "TST-MOD-0001_V00_L00_NONE_STD",
+      "bounds_min_local_m": [
+        63.4,
+        0,
+        0
+      ],
+      "size_m": [
+        0.6,
+        32,
+        4.4
+      ],
+      "long_axis": "Y"
+    },
+    {
+      "instance": "WALL-04",
+      "configuration": "TST-MOD-0001_V00_L00_NONE_STD",
+      "bounds_min_local_m": [
+        63.4,
+        40,
+        0
+      ],
+      "size_m": [
+        0.6,
+        32,
+        4.4
+      ],
+      "long_axis": "Y"
+    },
+    {
+      "instance": "WALL-05",
+      "configuration": "TST-MOD-0001_V00_L00_NONE_STD",
+      "bounds_min_local_m": [
+        0,
+        0,
+        0
+      ],
+      "size_m": [
+        28,
+        0.6,
+        4.4
+      ],
+      "long_axis": "X"
+    },
+    {
+      "instance": "WALL-06",
+      "configuration": "TST-MOD-0001_V00_L00_NONE_STD",
+      "bounds_min_local_m": [
+        36,
+        0,
+        0
+      ],
+      "size_m": [
+        28,
+        0.6,
+        4.4
+      ],
+      "long_axis": "X"
+    },
+    {
+      "instance": "WALL-07",
+      "configuration": "TST-MOD-0001_V00_L00_NONE_STD",
+      "bounds_min_local_m": [
+        0,
+        71.4,
+        0
+      ],
+      "size_m": [
+        28,
+        0.6,
+        4.4
+      ],
+      "long_axis": "X"
+    },
+    {
+      "instance": "WALL-08",
+      "configuration": "TST-MOD-0001_V00_L00_NONE_STD",
+      "bounds_min_local_m": [
+        36,
+        71.4,
+        0
+      ],
+      "size_m": [
+        28,
+        0.6,
+        4.4
+      ],
+      "long_axis": "X"
+    },
+    {
+      "instance": "PLATFORM-01",
+      "configuration": "TST-MOD-0002_V00_L00_NONE_STD",
+      "bounds_min_local_m": [
+        4,
+        3,
+        0
+      ],
+      "size_m": [
+        24,
+        4,
+        1.2
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "PLATFORM-02",
+      "configuration": "TST-MOD-0002_V00_L00_NONE_STD",
+      "bounds_min_local_m": [
+        36,
+        3,
+        0
+      ],
+      "size_m": [
+        24,
+        4,
+        1.2
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "PLATFORM-03",
+      "configuration": "TST-MOD-0002_V00_L00_NONE_STD",
+      "bounds_min_local_m": [
+        4,
+        65,
+        0
+      ],
+      "size_m": [
+        24,
+        4,
+        1.2
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "PLATFORM-04",
+      "configuration": "TST-MOD-0002_V00_L00_NONE_STD",
+      "bounds_min_local_m": [
+        36,
+        65,
+        0
+      ],
+      "size_m": [
+        24,
+        4,
+        1.2
+      ],
+      "rotation_z_deg": 0
+    },
+    {
+      "instance": "RAMP-01",
+      "configuration": "TST-MOD-0003_V00_L00_NONE_STD",
+      "bounds_min_local_m": [
+        4,
+        7,
+        0
+      ],
+      "size_m": [
+        6,
+        6,
+        1.2
+      ],
+      "rise_direction": "-Y"
+    },
+    {
+      "instance": "RAMP-02",
+      "configuration": "TST-MOD-0003_V00_L00_NONE_STD",
+      "bounds_min_local_m": [
+        54,
+        7,
+        0
+      ],
+      "size_m": [
+        6,
+        6,
+        1.2
+      ],
+      "rise_direction": "-Y"
+    },
+    {
+      "instance": "RAMP-03",
+      "configuration": "TST-MOD-0003_V00_L00_NONE_STD",
+      "bounds_min_local_m": [
+        4,
+        59,
+        0
+      ],
+      "size_m": [
+        6,
+        6,
+        1.2
+      ],
+      "rise_direction": "+Y"
+    },
+    {
+      "instance": "RAMP-04",
+      "configuration": "TST-MOD-0003_V00_L00_NONE_STD",
+      "bounds_min_local_m": [
+        54,
+        59,
+        0
+      ],
+      "size_m": [
+        6,
+        6,
+        1.2
+      ],
+      "rise_direction": "+Y"
+    }
+  ],
+  "placement_semantics": "bounds_min_local_m 是轉向後包絡的最小角，不是任意模型轉軸；牆依 long_axis 排列、坡道依 rise_direction 升高。直角牆端可相交 .6 m，合件時去除內部重疊面。",
+  "gates": [
+    {
+      "side": "W",
+      "range_y_m": [
+        32,
+        40
+      ]
+    },
+    {
+      "side": "E",
+      "range_y_m": [
+        32,
+        40
+      ]
+    },
+    {
+      "side": "S",
+      "range_x_m": [
+        28,
+        36
+      ]
+    },
+    {
+      "side": "N",
+      "range_x_m": [
+        28,
+        36
+      ]
+    }
+  ]
+}

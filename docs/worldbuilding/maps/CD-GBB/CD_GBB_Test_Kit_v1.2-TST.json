@@ -1,0 +1,426 @@
+{
+  "namespace": "TST",
+  "version": "v1.2-TST",
+  "scope": "內部測試套件的 CD-GBB 落點；資產定義與局部組合由共通目錄管理",
+  "assets": [
+    {
+      "id": "TST-ASM-0001",
+      "definition_source": "../../shared/Asset_Catalog_v0.3.json"
+    },
+    {
+      "id": "TST-PRP-0001",
+      "definition_source": "../../shared/Asset_Catalog_v0.3.json"
+    },
+    {
+      "id": "TST-MOD-0001",
+      "definition_source": "../../shared/Asset_Catalog_v0.3.json"
+    },
+    {
+      "id": "TST-MOD-0002",
+      "definition_source": "../../shared/Asset_Catalog_v0.3.json"
+    },
+    {
+      "id": "TST-MOD-0003",
+      "definition_source": "../../shared/Asset_Catalog_v0.3.json"
+    }
+  ],
+  "instances": [
+    {
+      "instance": "INST-01",
+      "asset": "TST-PRP-0001",
+      "local_xyz_m": [
+        13,
+        11,
+        0
+      ],
+      "x": 107,
+      "y": 68,
+      "w": 3,
+      "d": 3,
+      "h": 2.8,
+      "base_h": 1,
+      "variant": "V00"
+    },
+    {
+      "instance": "INST-02",
+      "asset": "TST-PRP-0001",
+      "local_xyz_m": [
+        17,
+        11,
+        0
+      ],
+      "x": 111,
+      "y": 68,
+      "w": 3,
+      "d": 3,
+      "h": 1.4,
+      "base_h": 1,
+      "variant": "V01"
+    },
+    {
+      "instance": "INST-03",
+      "asset": "TST-PRP-0001",
+      "local_xyz_m": [
+        20,
+        15,
+        0
+      ],
+      "x": 114,
+      "y": 72,
+      "w": 2,
+      "d": 2,
+      "h": 1.1,
+      "base_h": 1,
+      "variant": "V02"
+    },
+    {
+      "instance": "INST-04",
+      "asset": "TST-PRP-0001",
+      "local_xyz_m": [
+        28,
+        20,
+        0
+      ],
+      "x": 122,
+      "y": 77,
+      "w": 3,
+      "d": 3,
+      "h": 1.5,
+      "base_h": 1,
+      "variant": "V03"
+    },
+    {
+      "instance": "INST-05",
+      "asset": "TST-PRP-0001",
+      "local_xyz_m": [
+        32,
+        21,
+        0
+      ],
+      "x": 126,
+      "y": 78,
+      "w": 3,
+      "d": 3,
+      "h": 2.6,
+      "base_h": 1,
+      "variant": "V04"
+    },
+    {
+      "instance": "INST-06",
+      "asset": "TST-PRP-0001",
+      "local_xyz_m": [
+        37,
+        20,
+        0
+      ],
+      "x": 131,
+      "y": 77,
+      "w": 3,
+      "d": 3,
+      "h": 1.5,
+      "base_h": 1,
+      "variant": "V03"
+    },
+    {
+      "instance": "INST-07",
+      "asset": "TST-PRP-0001",
+      "local_xyz_m": [
+        46,
+        12,
+        0
+      ],
+      "x": 140,
+      "y": 69,
+      "w": 3,
+      "d": 3,
+      "h": 1.5,
+      "base_h": 1,
+      "variant": "V03"
+    },
+    {
+      "instance": "INST-08",
+      "asset": "TST-PRP-0001",
+      "local_xyz_m": [
+        50,
+        13,
+        0
+      ],
+      "x": 144,
+      "y": 70,
+      "w": 3,
+      "d": 3,
+      "h": 2.7,
+      "base_h": 1,
+      "variant": "V05"
+    },
+    {
+      "instance": "INST-09",
+      "asset": "TST-PRP-0001",
+      "local_xyz_m": [
+        46,
+        21,
+        0
+      ],
+      "x": 140,
+      "y": 78,
+      "w": 2,
+      "d": 2,
+      "h": 1.1,
+      "base_h": 1,
+      "variant": "V02"
+    },
+    {
+      "instance": "INST-10",
+      "asset": "TST-PRP-0001",
+      "local_xyz_m": [
+        48,
+        58,
+        0
+      ],
+      "x": 142,
+      "y": 115,
+      "w": 3,
+      "d": 3,
+      "h": 2.8,
+      "base_h": 1,
+      "variant": "V00"
+    },
+    {
+      "instance": "INST-11",
+      "asset": "TST-PRP-0001",
+      "local_xyz_m": [
+        44,
+        58,
+        0
+      ],
+      "x": 138,
+      "y": 115,
+      "w": 3,
+      "d": 3,
+      "h": 1.4,
+      "base_h": 1,
+      "variant": "V01"
+    },
+    {
+      "instance": "INST-12",
+      "asset": "TST-PRP-0001",
+      "local_xyz_m": [
+        42,
+        55,
+        0
+      ],
+      "x": 136,
+      "y": 112,
+      "w": 2,
+      "d": 2,
+      "h": 1.1,
+      "base_h": 1,
+      "variant": "V02"
+    },
+    {
+      "instance": "INST-13",
+      "asset": "TST-PRP-0001",
+      "local_xyz_m": [
+        33,
+        49,
+        0
+      ],
+      "x": 127,
+      "y": 106,
+      "w": 3,
+      "d": 3,
+      "h": 1.5,
+      "base_h": 1,
+      "variant": "V03"
+    },
+    {
+      "instance": "INST-14",
+      "asset": "TST-PRP-0001",
+      "local_xyz_m": [
+        29,
+        48,
+        0
+      ],
+      "x": 123,
+      "y": 105,
+      "w": 3,
+      "d": 3,
+      "h": 2.6,
+      "base_h": 1,
+      "variant": "V04"
+    },
+    {
+      "instance": "INST-15",
+      "asset": "TST-PRP-0001",
+      "local_xyz_m": [
+        24,
+        49,
+        0
+      ],
+      "x": 118,
+      "y": 106,
+      "w": 3,
+      "d": 3,
+      "h": 1.5,
+      "base_h": 1,
+      "variant": "V03"
+    },
+    {
+      "instance": "INST-16",
+      "asset": "TST-PRP-0001",
+      "local_xyz_m": [
+        15,
+        57,
+        0
+      ],
+      "x": 109,
+      "y": 114,
+      "w": 3,
+      "d": 3,
+      "h": 1.5,
+      "base_h": 1,
+      "variant": "V03"
+    },
+    {
+      "instance": "INST-17",
+      "asset": "TST-PRP-0001",
+      "local_xyz_m": [
+        11,
+        56,
+        0
+      ],
+      "x": 105,
+      "y": 113,
+      "w": 3,
+      "d": 3,
+      "h": 2.7,
+      "base_h": 1,
+      "variant": "V05"
+    },
+    {
+      "instance": "INST-18",
+      "asset": "TST-PRP-0001",
+      "local_xyz_m": [
+        16,
+        49,
+        0
+      ],
+      "x": 110,
+      "y": 106,
+      "w": 2,
+      "d": 2,
+      "h": 1.1,
+      "base_h": 1,
+      "variant": "V02"
+    },
+    {
+      "instance": "INST-19",
+      "asset": "TST-PRP-0001",
+      "local_xyz_m": [
+        7,
+        3,
+        1.2
+      ],
+      "x": 101,
+      "y": 60,
+      "w": 2.2,
+      "d": 2,
+      "h": 1.3,
+      "base_h": 2.2,
+      "variant": "V06"
+    },
+    {
+      "instance": "INST-20",
+      "asset": "TST-PRP-0001",
+      "local_xyz_m": [
+        19,
+        3,
+        1.2
+      ],
+      "x": 113,
+      "y": 60,
+      "w": 2.2,
+      "d": 2,
+      "h": 1.3,
+      "base_h": 2.2,
+      "variant": "V06"
+    },
+    {
+      "instance": "INST-21",
+      "asset": "TST-PRP-0001",
+      "local_xyz_m": [
+        45,
+        3,
+        1.2
+      ],
+      "x": 139,
+      "y": 60,
+      "w": 2.2,
+      "d": 2,
+      "h": 1.3,
+      "base_h": 2.2,
+      "variant": "V06"
+    },
+    {
+      "instance": "INST-22",
+      "asset": "TST-PRP-0001",
+      "local_xyz_m": [
+        8,
+        65,
+        1.2
+      ],
+      "x": 102,
+      "y": 122,
+      "w": 2.2,
+      "d": 2,
+      "h": 1.3,
+      "base_h": 2.2,
+      "variant": "V06"
+    },
+    {
+      "instance": "INST-23",
+      "asset": "TST-PRP-0001",
+      "local_xyz_m": [
+        42,
+        65,
+        1.2
+      ],
+      "x": 136,
+      "y": 122,
+      "w": 2.2,
+      "d": 2,
+      "h": 1.3,
+      "base_h": 2.2,
+      "variant": "V06"
+    },
+    {
+      "instance": "INST-24",
+      "asset": "TST-PRP-0001",
+      "local_xyz_m": [
+        54,
+        65,
+        1.2
+      ],
+      "x": 148,
+      "y": 122,
+      "w": 2.2,
+      "d": 2,
+      "h": 1.3,
+      "base_h": 2.2,
+      "variant": "V06"
+    }
+  ],
+  "placement_frame": {
+    "map": "CD-GBB",
+    "location": "LOC-11",
+    "assembly_origin_m": [
+      94,
+      57,
+      1
+    ],
+    "axes": "X 向東、Y 向北、H 向上；表列位置為本圖西南角座標",
+    "local_coordinates": "local_xyz_m 相對組合原點；跨圖時以新原點平移"
+  },
+  "catalog_reference": "../../shared/Asset_Catalog_v0.3.json",
+  "assembly_reference": "../../shared/Test_Assembly_Layout_v0.1.json"
+}
