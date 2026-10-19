@@ -2627,6 +2627,7 @@ func request_respawn_at(i: int) -> void:
 		"最終排名第一名要放大顯示（現在：%s）" % hud.popup_champ.text)
 	m.party = null
 	p.free()
+	_end(m)
 
 
 ## 派對模式（party.gd）：輪流當恐龍、計分、命數、蛋。舊模式不受影響
