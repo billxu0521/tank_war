@@ -1,0 +1,1167 @@
+{
+  "status": "design_catalog",
+  "version": "v0.3",
+  "assets": [
+    {
+      "id": "VEG-0001",
+      "name": "藍格馬草 Blue Grama",
+      "spec": "叢高 0.15 至 0.30 m；雨季綠葉夾少量枯葉，低疏叢。",
+      "keywords": "Bouteloua gracilis rain season；取梳狀穗與基叢，不做整片高牧草。"
+    },
+    {
+      "id": "VEG-0002",
+      "name": "高草叢 Tall Grass Tuft",
+      "spec": "0.4 至 0.65 m；葉叢疏密三變體；種未定。",
+      "keywords": "southwest bunchgrass tuft；取叢生形態，不由照片補學名。"
+    },
+    {
+      "id": "VEG-0003",
+      "name": "四翅濱藜 Fourwing Saltbush",
+      "spec": "矮型 0.6 至 1.2 m、高型 2.0 至 2.5 m；灰綠多枝低冠。",
+      "keywords": "Atriplex canescens shrub；形體取自然不規則冠，高型候選需樣本對照。"
+    },
+    {
+      "id": "VEG-0004",
+      "name": "矮松 Pinyon Pine",
+      "spec": "高 2.8、3.8、4.8 m；冠寬 2.8、3.8、4.6 m；短幹團冠，最低枝葉約 0.5 m。",
+      "keywords": "Pinus edulis open grown；不取高瘦密林松。"
+    },
+    {
+      "id": "VEG-0005",
+      "name": "低枝檜叢 Low-Branched Juniper",
+      "spec": "高 2、2.5、3 m；冠寬 2.4、3.2、3.8 m；最低枝葉約 0.25 m。",
+      "keywords": "Juniperus monosperma shrub form；取低枝與不規則冠，不做球形園藝修剪。"
+    },
+    {
+      "id": "VEG-0006",
+      "name": "濕緣莎草叢 Wet-Margin Tuft",
+      "spec": "高 0.35 至 0.7 m；只在小水盆及近水邊，種未定。",
+      "keywords": "rush sedge clump muddy edge；取挺葉叢，不擴成蘆葦沼澤。"
+    },
+    {
+      "id": "VEG-0007",
+      "name": "普通枯枝 Dead Branch",
+      "spec": "長 0.6 至 2 m；有木纖維斷口；不可與石化木共用表面。",
+      "keywords": "weathered dead branch wood fibres。"
+    },
+    {
+      "id": "VEG-0008",
+      "name": "普通倒木 Dead Log",
+      "spec": "長 2 至 4 m、徑 0.2 至 0.45 m；殘皮、縱向裂紋。",
+      "keywords": "fallen pinyon juniper log；不取石質橫裂。"
+    },
+    {
+      "id": "NAT-0001",
+      "name": "石化殘幹 Petrified Upright Trunk",
+      "spec": "高 3、4.5、6 m，徑 0.6 至 0.9 m；無完整枝冠；底部需埋土／岩座。",
+      "keywords": "petrified conifer trunk natural fracture；滅絕針葉樹型候選，非現生松種。"
+    },
+    {
+      "id": "NAT-0002",
+      "name": "石化倒幹 Petrified Fallen Log",
+      "spec": "長 3、5、7 m，徑 0.55 至 0.85 m；自然橫斷、低彩礦物斷面。",
+      "keywords": "petrified logs natural surface；不拋光、不作鋸切均勻圓柱。"
+    },
+    {
+      "id": "NAT-0003",
+      "name": "石化樹樁 Petrified Stump",
+      "spec": "高 0.4、0.8、1.2 m；一側低埋，根頸不必完整。",
+      "keywords": "petrified stump broken top。"
+    },
+    {
+      "id": "NAT-0004",
+      "name": "石木碎塊 Petrified Fragment",
+      "spec": "長 0.25 至 1.2 m；只做幾種可辨的斷面，不做寶石簇。",
+      "keywords": "petrified wood fragment rough exterior。"
+    },
+    {
+      "id": "NAT-0005",
+      "name": "砂岩層塊 Sandstone Ledge",
+      "spec": "長 3 至 8 m、露高 1 至 3 m；層厚 0.2 至 0.6 m；至少一面可拼接。",
+      "keywords": "bedded sandstone ledge weathering。"
+    },
+    {
+      "id": "NAT-0006",
+      "name": "砂岩散塊 Sandstone Rubble",
+      "spec": "長 0.3 至 1.2 m；與層塊共享岩色、斷面不同。",
+      "keywords": "angular sandstone rubble。"
+    },
+    {
+      "id": "NAT-0007",
+      "name": "泥岩坡片 Mudstone Slope Piece",
+      "spec": "長 2 至 6 m；可接坡，細碎頁狀層理。",
+      "keywords": "mudstone weathered slope bedding。"
+    },
+    {
+      "id": "NAT-0008",
+      "name": "泥岩碎片 Mudstone Chips",
+      "spec": "長 0.05 至 0.25 m；薄片混粗粒，避免石板鋪地感。",
+      "keywords": "mudstone chips talus。"
+    },
+    {
+      "id": "NAT-0009",
+      "name": "崩積礫塊 Talus Stone",
+      "spec": "長 0.03 至 0.4 m，少量 0.6 m；群配另由 ASM 控制。",
+      "keywords": "sandstone talus size mixture。"
+    },
+    {
+      "id": "NAT-0010",
+      "name": "巨骨殘段 Giant Bone Fragment",
+      "spec": "高起彎段、厚根、斷端與低骨板；輪廓以集中破碎、非人型動物骨骸為方向；不同段不按等距成對排列。",
+      "keywords": "large animal bone cortex fracture；只取骨皮／斷端結構，不複製完整骨架。"
+    },
+    {
+      "id": "NAT-0011",
+      "name": "小標本岩塊 Fossil-Bearing Block",
+      "spec": "約 0.4 至 1.1 m；骨與圍岩分層；對應採集包覆殼。",
+      "keywords": "fossil matrix block plaster jacket。"
+    },
+    {
+      "id": "MOD-0001",
+      "name": "土坯牆段 Adobe Wall Module",
+      "spec": "牆厚基準 0.45 m；長度以 1、2、4 m 候選；門窗分件，不拉伸洞口。",
+      "keywords": "historic adobe wall thickness repair。"
+    },
+    {
+      "id": "MOD-0002",
+      "name": "砂岩基腳 Stone Foundation Module",
+      "spec": "高 0.2、0.4、0.6 m；轉角與直段分型；貼地端可延伸。",
+      "keywords": "sandstone rubble foundation adobe。"
+    },
+    {
+      "id": "MOD-0003",
+      "name": "木柱 Timber Post",
+      "spec": "截面 0.16 至 0.25 m；長 2.4、3、4 m；基腳獨立。",
+      "keywords": "timber post framing hand tool marks。"
+    },
+    {
+      "id": "MOD-0004",
+      "name": "木梁 Timber Beam",
+      "spec": "截面約 0.18 × 0.25 m；長 2、4、6 m；節點端保留接合。",
+      "keywords": "timber beam simple shed framing。"
+    },
+    {
+      "id": "MOD-0005",
+      "name": "斜撐 Timber Brace",
+      "spec": "截面約 0.10 × 0.15 m；長 0.8 至 1.8 m；不可當主梁。",
+      "keywords": "timber knee brace shed。"
+    },
+    {
+      "id": "MOD-0006",
+      "name": "木板 Plank",
+      "spec": "厚 0.025 至 0.05 m、寬 0.15 至 0.3 m；長 1、2、3 m；斷板另設形體。",
+      "keywords": "rough sawn plank edge grain。"
+    },
+    {
+      "id": "MOD-0007",
+      "name": "金屬屋面片 Metal Roof Sheet",
+      "spec": "約 0.6 × 1.8 m；可重疊接縫；實際型式待年代細設。",
+      "keywords": "historic metal sheet roof seam；不套現代彩鋼型錄。"
+    },
+    {
+      "id": "MOD-0008",
+      "name": "土屋屋頂邊 Adobe Roof Edge",
+      "spec": "木梁頭、土屋頂邊與排水口分型；控制於逐棟高度。",
+      "keywords": "adobe roof vigas canales；取構造，不整套複製特定建築。"
+    },
+    {
+      "id": "MOD-0009",
+      "name": "木欄構件 Fence Module",
+      "spec": "欄高 1.2 至 1.4 m；2 至 3 道橫桿；直段／圈門／斷段。",
+      "keywords": "timber cattle pen fence gate。"
+    },
+    {
+      "id": "MOD-0010",
+      "name": "木門及門框 Door Module",
+      "spec": "單門、雙門依各棟淨開口；門框厚度向牆內扣，鉸側獨立。",
+      "keywords": "historic plank door strap hinge。"
+    },
+    {
+      "id": "MOD-0011",
+      "name": "木窗及窗框 Window Module",
+      "spec": "依逐棟淨開口；固定窗、百葉、封板三型。",
+      "keywords": "timber sash fixed window shutter。"
+    },
+    {
+      "id": "MOD-0012",
+      "name": "石階與短坡 Step and Ramp Module",
+      "spec": "踏面深、高度需依入口高差量體確認；石邊與表面可拆。",
+      "keywords": "stone doorstep ramp masonry。"
+    },
+    {
+      "id": "PRP-0001",
+      "name": "木運輸箱 Shipping Crate",
+      "spec": "基準長 0.8 × 寬 0.5 × 高 0.5 m；蓋、箱身與扣件分件。",
+      "keywords": "nineteenth century wooden shipping crate；不採現代棧板規格。"
+    },
+    {
+      "id": "PRP-0002",
+      "name": "糧袋 Grain Sack",
+      "spec": "約 0.55 × 0.35 × 0.8 m；滿袋／半袋形體；標記另層。",
+      "keywords": "grain sack hand sewn stencilled。"
+    },
+    {
+      "id": "PRP-0003",
+      "name": "木桶 Wooden Barrel",
+      "spec": "直徑約 0.55 m、高 0.8 m；桶箍獨立材質區。",
+      "keywords": "wooden stave barrel iron hoops。"
+    },
+    {
+      "id": "PRP-0004",
+      "name": "手推車 Handcart",
+      "spec": "約 1.5 × 0.7 m；車輪、把手、斗體分件。",
+      "keywords": "historic wooden handcart iron wheel。"
+    },
+    {
+      "id": "PRP-0005",
+      "name": "農用車 Farm Wagon",
+      "spec": "約 3.2 × 1.6 m；軸與輪分件；不可由外觀尺寸直接判定轉彎半徑。",
+      "keywords": "nineteenth century farm wagon wooden undercarriage。"
+    },
+    {
+      "id": "PRP-0006",
+      "name": "檔案盒 File Box",
+      "spec": "約 0.4 × 0.3 × 0.25 m；紙頁另件，組織識別獨立。",
+      "keywords": "archival document box ledger wooden dispatch case。"
+    },
+    {
+      "id": "PRP-0007",
+      "name": "款箱 Cash Box",
+      "spec": "約 0.45 × 0.3 × 0.25 m；金屬角、提把、鎖，無奇幻裝飾。",
+      "keywords": "nineteenth century cash strong box。"
+    },
+    {
+      "id": "PRP-0008",
+      "name": "包覆殼 Plaster Jacket",
+      "spec": "長約 0.5 至 1.2 m；與 NAT-0011 對應凹模，破邊形體另列。",
+      "keywords": "fossil field plaster jacket burlap。"
+    },
+    {
+      "id": "PRP-0009",
+      "name": "岩芯托盤 Core Tray",
+      "spec": "槽長約 1 m；托盤、岩芯、編號分件；槽號是場內文字。",
+      "keywords": "geological core sample wooden tray。"
+    },
+    {
+      "id": "PRP-0010",
+      "name": "岩芯 Core Sample",
+      "spec": "直徑候選 0.04 至 0.08 m；完整段與白色夾層形體共用，表面分層。",
+      "keywords": "rock core sedimentary bedding。"
+    },
+    {
+      "id": "PRP-0011",
+      "name": "小銅燈 Copper Lamp",
+      "spec": "高約 0.25 m；桌上小物，穩定微亮另作材質／燈光參數。",
+      "keywords": "small copper oil lamp hooded；紅銅色表面引用 MAT-0021。"
+    },
+    {
+      "id": "PRP-0012",
+      "name": "礦片匣 Mineral Case",
+      "spec": "約 0.35 × 0.25 × 0.15 m；格間、襯布與蓋。",
+      "keywords": "mineral specimen wooden case velvet lining。"
+    },
+    {
+      "id": "PRP-0013",
+      "name": "水泵 Pump Assembly",
+      "spec": "約 1.4 × 0.8 × 1.2 m 候選；泵體、支座與可接管口分件。",
+      "keywords": "historic reciprocating water pump cast iron；只取機械外觀，動力配置待細設。"
+    },
+    {
+      "id": "PRP-0014",
+      "name": "銅閥 Brass Valve",
+      "spec": "輪徑約 0.25 m；三銼痕另層；接管直徑與泵件一致。",
+      "keywords": "brass gate valve handwheel antique。"
+    },
+    {
+      "id": "PRP-0015",
+      "name": "管段 Pipe Section",
+      "spec": "徑約 0.08 至 0.15 m；直管、彎頭、法蘭及支架分型。",
+      "keywords": "riveted iron pipe flange historic water works。"
+    },
+    {
+      "id": "PRP-0016",
+      "name": "絞盤 Winch",
+      "spec": "約 1.8 × 1.4 m；鼓、支座、搖柄、出索點分件。",
+      "keywords": "manual winch timber mining winding drum。"
+    },
+    {
+      "id": "PRP-0017",
+      "name": "繩索 Rope",
+      "spec": "直徑約 0.02 至 0.05 m；繩本身／盤繩形體，綁結配置另組。",
+      "keywords": "hemp rope coil splice。"
+    },
+    {
+      "id": "PRP-0018",
+      "name": "吊鉤與滑輪 Hoist Hardware",
+      "spec": "鉤長約 0.3 m；鉤、輪與軸分件；承重玩法尚未驗證。",
+      "keywords": "historic block and tackle iron hook。"
+    },
+    {
+      "id": "PRP-0019",
+      "name": "木滑橇 Wooden Sled",
+      "spec": "約 2.4 × 1.2 m；底橇、臺面、拖點分件。",
+      "keywords": "stone hauling timber sled。"
+    },
+    {
+      "id": "PRP-0020",
+      "name": "工作桌 Workbench",
+      "spec": "約 1.8 × 0.7 × 0.85 m；抽屜及虎鉗視用途增配。",
+      "keywords": "historic carpenters workbench simple timber。"
+    },
+    {
+      "id": "PRP-0021",
+      "name": "採集刷 Field Brush",
+      "spec": "長約 0.2 至 0.3 m；木柄與刷毛分材質；不是鑿或撬槓的變體。",
+      "keywords": "fossil excavation hand tools brush chisel；無電動工具。"
+    },
+    {
+      "id": "PRP-0022",
+      "name": "工具掛架 Tool Rack",
+      "spec": "約 1.2 × 0.15 × 0.8 m；壁掛與立架分型。",
+      "keywords": "wooden hand tool rack。"
+    },
+    {
+      "id": "PRP-0023",
+      "name": "飼槽 Feeding Trough",
+      "spec": "約 1.5 × 0.45 × 0.4 m；木槽磨損集中上沿。",
+      "keywords": "timber cattle feeding trough。"
+    },
+    {
+      "id": "PRP-0024",
+      "name": "床架 Bed Frame",
+      "spec": "約 1.9 × 0.8 m；簡單木架、床面與床卷分件。",
+      "keywords": "historic simple camp cot timber bed。"
+    },
+    {
+      "id": "PRP-0025",
+      "name": "床卷 Bedroll",
+      "spec": "長約 1.8 m；展開／捲起形體；毯面獨立材質。",
+      "keywords": "canvas bedroll wool blanket。"
+    },
+    {
+      "id": "PRP-0026",
+      "name": "木凳 Stool",
+      "spec": "約 0.35 × 0.35 × 0.45 m；磨損集中座沿。",
+      "keywords": "rough timber stool historic。"
+    },
+    {
+      "id": "PRP-0027",
+      "name": "衣箱 Trunk",
+      "spec": "約 0.8 × 0.45 × 0.5 m；箱身、蓋與把手分件。",
+      "keywords": "nineteenth century travel trunk wooden。"
+    },
+    {
+      "id": "PRP-0028",
+      "name": "灶體 Hearth",
+      "spec": "約 1.2 × 0.7 m；石土座、灶口與煙道分件。",
+      "keywords": "adobe hearth historic farmhouse。"
+    },
+    {
+      "id": "PRP-0029",
+      "name": "馬具 Harness",
+      "spec": "吊掛形體候選，皮帶與扣件分材質；由房間尺度決定長度。",
+      "keywords": "nineteenth century horse harness tack。"
+    },
+    {
+      "id": "PRP-0030",
+      "name": "生皮 Hide",
+      "spec": "寬約 1 至 1.6 m；掛架／折疊形體，非動物屍體模型。",
+      "keywords": "cattle hide drying frame historic。"
+    },
+    {
+      "id": "PRP-0031",
+      "name": "測量三腳架 Survey Tripod",
+      "spec": "高約 1.4 m；三腳、儀器與測繪板分件。",
+      "keywords": "historic surveyor plane table tripod。"
+    },
+    {
+      "id": "PRP-0032",
+      "name": "標樁 Marker Stake",
+      "spec": "高 0.4 至 0.8 m；編號另層，普通與重號是配置差別。",
+      "keywords": "wooden survey stakes hand numbered。"
+    },
+    {
+      "id": "PRP-0033",
+      "name": "鑽頭 Drill Bit",
+      "spec": "長約 0.25 至 0.8 m；獨立金屬件，與手鑽及鑽桿分開。",
+      "keywords": "historic prospecting drill hand equipment；不採現代鑽機。"
+    },
+    {
+      "id": "PRP-0034",
+      "name": "壓力表 Pressure Gauge",
+      "spec": "盤徑約 0.12 至 0.2 m；玻璃、盤面、外殼分材質。",
+      "keywords": "antique pressure gauge brass face。"
+    },
+    {
+      "id": "PRP-0035",
+      "name": "車輪 Wagon Wheel",
+      "spec": "直徑約 1 至 1.3 m；輪、軸分件，輪緣鐵圈。",
+      "keywords": "wooden wagon wheel iron tyre。"
+    },
+    {
+      "id": "PRP-0036",
+      "name": "油布 Canvas Tarp",
+      "spec": "長 1 至 3 m；展開、折疊、蓋箱三型；濕色為材質搭配。",
+      "keywords": "waxed canvas tarp patch stitch。"
+    },
+    {
+      "id": "PRP-0037",
+      "name": "低鐘 Small Bell",
+      "spec": "高約 0.35 m；掛在低梁下，附鐘繩；非鐘塔。",
+      "keywords": "small historic chapel bell yoke。"
+    },
+    {
+      "id": "NAT-0012",
+      "name": "恐龍卵 Dinosaur Egg",
+      "spec": "長 0.25 至 0.35 m；完整與殼片；物種與確切卵形待生物設計。",
+      "keywords": "形體為創作候選，不從照片定種。"
+    },
+    {
+      "id": "PRP-0039",
+      "name": "風輪 Wind Wheel",
+      "spec": "直徑 2.5 m；葉片、軸、拉件分件；一葉片修補。",
+      "keywords": "historic farm windmill wheel timber tower。"
+    },
+    {
+      "id": "PRP-0040",
+      "name": "低型貨車廂 Boxcar Shell",
+      "spec": "12 × 4 m；近水平板殼、低拱頂、門軌、輪架分件；本案頂高另列。",
+      "keywords": "historic wooden boxcar underframe；車型未定，不直接借現代貨車。"
+    },
+    {
+      "id": "PRP-0041",
+      "name": "原紙頁與冊頁 Paper Sheet",
+      "spec": "約 0.2 × 0.3 m；平頁、折頁、薄冊；文字另層。",
+      "keywords": "historic ledger field notebook paper。"
+    },
+    {
+      "id": "MAT-0004",
+      "name": "土坯表面 Adobe Surface",
+      "spec": "泥抹、剝落露磚與修補三搭配；非新的牆模型。",
+      "keywords": "adobe plaster repair texture。"
+    },
+    {
+      "id": "MAT-0005",
+      "name": "砂岩表面 Sandstone Surface",
+      "spec": "暖灰層理，濕面較深、反光略增，保留粗粒。",
+      "keywords": "weathered sandstone wet dry surface。"
+    },
+    {
+      "id": "MAT-0006",
+      "name": "泥岩表面 Mudstone Surface",
+      "spec": "灰褐細層；濕面變暗，不改成黏滑油漆。",
+      "keywords": "mudstone fine bedding surface。"
+    },
+    {
+      "id": "MAT-0001",
+      "name": "木面 Timber Surface",
+      "spec": "舊灰棕、較新黃棕、局部濕黑；磨耗隨部位。",
+      "keywords": "weathered rough sawn timber grain。"
+    },
+    {
+      "id": "MAT-0007",
+      "name": "屋面鐵皮 Roof Metal",
+      "spec": "偏冷灰、接縫局部氧化；鏽不均勻蓋滿。",
+      "keywords": "weathered sheet metal roof patina。"
+    },
+    {
+      "id": "MAT-0002",
+      "name": "暗色鐵材 Ferrous Metal",
+      "spec": "暗灰底、磨亮邊與局部鏽；鑄件粗面和鍛製扣件分別在搭配中記表面細度。",
+      "keywords": "aged ferrous metal cast iron wrought iron surface；依部位區分鑄面與鍛面。"
+    },
+    {
+      "id": "MAT-0008",
+      "name": "黃銅 Brass",
+      "spec": "黃褐底、局部深綠斑；閥的手握處較亮，三銼痕可辨。",
+      "keywords": "aged brass copper patina。"
+    },
+    {
+      "id": "MAT-0009",
+      "name": "粗帆布 Canvas",
+      "spec": "粗織帆布、縫線和補片；油布可用不同材質搭配，毛毯另列。",
+      "keywords": "coarse canvas weave seams patches；毛毯引用 MAT-0022。"
+    },
+    {
+      "id": "MAT-0010",
+      "name": "皮革 Leather",
+      "spec": "暗褐、受拉／折處磨白；不套木紋。",
+      "keywords": "aged harness leather worn edge。"
+    },
+    {
+      "id": "MAT-0011",
+      "name": "玻璃 Glass",
+      "spec": "微混濁、薄髒污；窗、表面透光需求另核對。",
+      "keywords": "historic glass slight distortion。"
+    },
+    {
+      "id": "MAT-0012",
+      "name": "礦化木 Petrified Wood Surface",
+      "spec": "低飽和礦物斷面、外圈深褐，保留少量木質紋理辨識。",
+      "keywords": "petrified wood rough fracture unpolished。"
+    },
+    {
+      "id": "MAT-0013",
+      "name": "巨骨表面 Bone Surface",
+      "spec": "暖灰白、霧面骨皮，斷端孔隙，裂縫與埋入端沾同地層土。",
+      "keywords": "large fossil bone cortical porous fracture。"
+    },
+    {
+      "id": "MAT-0014",
+      "name": "草地土面 Grassy Soil",
+      "spec": "綠草碎葉與褐土透出；不以純綠地毯代替草叢。",
+      "keywords": "semiarid grassland monsoon soil。"
+    },
+    {
+      "id": "MAT-0015",
+      "name": "工作道路 Work Road",
+      "spec": "壓實深淺土帶，邊沿漸混草，中心少草。",
+      "keywords": "farm dirt track wheel rut after rain。"
+    },
+    {
+      "id": "MAT-0016",
+      "name": "採掘棄土 Excavation Spoil",
+      "spec": "礫土混合、刷理面與棄堆有差；雨後不成全面亮泥。",
+      "keywords": "fossil quarry spoil pile damp soil。"
+    },
+    {
+      "id": "MAT-0017",
+      "name": "乾縮泥面 Drying Mud",
+      "spec": "小片 1 至 3 m；雨後仍可留在高處乾燥斑，面積受分區限制。",
+      "keywords": "drying mud cracks small patch。"
+    },
+    {
+      "id": "MAT-0018",
+      "name": "濕土 Wet Soil",
+      "spec": "近水暗色、細小泥邊；混回一般土面需漸變。",
+      "keywords": "seep muddy margin wet soil。"
+    },
+    {
+      "id": "MAT-0019",
+      "name": "淺水面 Shallow Water",
+      "spec": "薄水盆、低反光；岸界和水面是不同幾何；不含天候系統。",
+      "keywords": "shallow stock water muddy edge。"
+    },
+    {
+      "id": "MAT-0020",
+      "name": "樹脂狀表面 Resin-Like Surface",
+      "spec": "琥珀色小條痕；僅石木異常變體使用。",
+      "keywords": "amber resin streak；創作異常，不作石化過程事實。"
+    },
+    {
+      "id": "DEC-0001",
+      "name": "濕緣薄苔斑 Moss Film",
+      "spec": "只在有光濕邊；暗洞深處不用發光苔。",
+      "keywords": "thin moss algae film wet stone。"
+    },
+    {
+      "id": "DEC-0002",
+      "name": "落葉碎屑 Leaf Litter",
+      "spec": "少量在背風邊，與草碎、木屑分開。",
+      "keywords": "leaf litter sparse ground scatter。"
+    },
+    {
+      "id": "DEC-0003",
+      "name": "枯草碎屑 Dry Grass Litter",
+      "spec": "飼槽／圈外／路邊分布，非全面覆蓋。",
+      "keywords": "dry grass straw litter。"
+    },
+    {
+      "id": "DEC-0004",
+      "name": "工作木屑 Wood Shavings",
+      "spec": "集中鋸架和刨檯，遠離工位迅速減少。",
+      "keywords": "carpentry wood shavings hand plane。"
+    },
+    {
+      "id": "DEC-0005",
+      "name": "組織標記 Organization Mark",
+      "spec": "清單按組織鍵指定文字與位置；未定徽章先用簡寫占位。",
+      "keywords": "lettering stencil cargo mark；不借用真實商標。"
+    },
+    {
+      "id": "DEC-0006",
+      "name": "採集編號 Collection Number",
+      "spec": "箱號、岩芯槽號、測量樁號分文字內容，底材不共用錯誤比例。",
+      "keywords": "field collection number tag handwritten。"
+    },
+    {
+      "id": "DEC-0007",
+      "name": "使用與濕痕 Use and Water Trace",
+      "spec": "泥印、輪痕、水線以位置／方向配置，材質分層可減弱。",
+      "keywords": "mud footprint wheel rut water stain。"
+    },
+    {
+      "id": "DEC-0008",
+      "name": "白色夾層 White Interlayer",
+      "spec": "岩芯與一處露頭共用層色及厚度 0.01 至 0.05 m；不發光。",
+      "keywords": "創作夾層；只取 sedimentary thin white layer 的視覺結構。"
+    },
+    {
+      "id": "ASM-0001",
+      "name": "貨物堆 Cargo Stack",
+      "spec": "引用箱、袋、托木，排出中央搬運空隙；單箱仍 PRP。",
+      "keywords": "組合候選，不重建同件箱模型。"
+    },
+    {
+      "id": "ASM-0002",
+      "name": "石化木碎段群 Petrified Log Group",
+      "spec": "引用 NAT-0002／0004；每群 2 至 4 主段，一側沉入土。",
+      "keywords": "群間留 4 至 8 m 不規則空地。"
+    },
+    {
+      "id": "ASM-0003",
+      "name": "施工散屑 Work Debris Patch",
+      "spec": "引用石塊、土坯、斷板、薄金屬；按作業位置選子件。",
+      "keywords": "不是一張混合來源無法拆分的貼圖。"
+    },
+    {
+      "id": "ASM-0004",
+      "name": "草巢 Nest Assembly",
+      "spec": "直徑 1.4 m、高約 0.25 m；草材與 3 顆卵分件，單一主巢。",
+      "keywords": "恐龍物種待定；保留可替換卵模型。"
+    },
+    {
+      "id": "ASM-0005",
+      "name": "測繪工作點 Survey Station",
+      "spec": "三腳架、板、標樁、箱、凳按臺面配置，朝向骨床。",
+      "keywords": "引用既有單件，留 2 m 觀測帶。"
+    },
+    {
+      "id": "ASM-0006",
+      "name": "低樹叢組 Low Cover Cluster",
+      "spec": "2 至 4 株檜叢搭矮灌木，冠緣相接但不連成牆；枝葉自下部開始。",
+      "keywords": "遮蔽功能待尼諾拉實際試位。"
+    },
+    {
+      "id": "VEG-0009",
+      "name": "立枯樹 Standing Dead Tree",
+      "spec": "高 2 至 3 m；灰木縱裂、尖纖維斷端；配置數量與落點由地圖指定。",
+      "keywords": "standing dead juniper snag；與石化殘幹分形分材質。"
+    },
+    {
+      "id": "PRP-0042",
+      "name": "採集鑿 Field Chisel",
+      "spec": "長約 0.2 至 0.4 m；金屬刃與握柄分件，普通與嵌石配置共享單件。",
+      "keywords": "fossil excavation hand chisel。"
+    },
+    {
+      "id": "PRP-0043",
+      "name": "撬槓 Pry Bar",
+      "spec": "長約 0.8 至 1.2 m；彎端與磨亮接觸面。",
+      "keywords": "historic iron pry bar。"
+    },
+    {
+      "id": "PRP-0044",
+      "name": "手鑽 Hand Drill",
+      "spec": "長約 0.3 至 0.5 m；握把、曲柄、夾頭獨立，鑽頭引用 PRP-0033。",
+      "keywords": "historic hand brace drill。"
+    },
+    {
+      "id": "MAT-0021",
+      "name": "銅 Copper",
+      "spec": "銅燈偏紅棕，接觸處略亮，局部氧化；與黃銅閥分開。",
+      "keywords": "copper oil lamp patina。"
+    },
+    {
+      "id": "MAT-0022",
+      "name": "毛毯 Wool Blanket",
+      "spec": "粗毛織物低反光、邊縫與折痕；床卷用，非帆布。",
+      "keywords": "historic wool blanket texture。"
+    },
+    {
+      "id": "MAT-0003",
+      "name": "塗漆木面 Painted Timber",
+      "spec": "保留木紋與邊緣磨漆；與 MAT-0001 木面共用相容 UV，塗色作搭配參數。",
+      "keywords": "painted wooden shipping crate worn paint。"
+    },
+    {
+      "id": "TST-ASM-0001",
+      "name": "經典決鬥圍場 Classic Duel Yard",
+      "spec": "64 × 72 m 圍場；四側 8 m 開口；24 箱、8 牆段、4 平台與4 坡道；局部原點為西南角地坪。",
+      "keywords": "classic aim arena crates；僅取簡單輪廓與配置語彙，表面自行製作。",
+      "scope": "internal_test",
+      "source": "https://steamcommunity.com/sharedfiles/filedetails/?id=122443683",
+      "use_conditions": "內部測試設計；未匯入第三方資產，非原圖精確測繪；正式遊戲採用另核來源與使用條件。"
+    },
+    {
+      "id": "TST-PRP-0001",
+      "name": "決鬥木箱 Duel Crate",
+      "spec": "閉合粗板箱；寬面板、淺斜撐；七種尺寸見變體表，無開蓋或互動。",
+      "keywords": "classic aim arena crates；僅取簡單輪廓與配置語彙，表面自行製作。",
+      "scope": "internal_test",
+      "source": "https://steamcommunity.com/sharedfiles/filedetails/?id=122443683",
+      "use_conditions": "內部測試設計；未匯入第三方資產，非原圖精確測繪；正式遊戲採用另核來源與使用條件。"
+    },
+    {
+      "id": "TST-MOD-0001",
+      "name": "圍場牆段 Yard Wall",
+      "spec": "基準長 1 m、厚 0.6 m、高 4.4 m；沿長向拼接或調整至 32 m，截面固定；貼圖尺度不隨長向拉伸。",
+      "keywords": "classic aim arena crates；僅取簡單輪廓與配置語彙，表面自行製作。",
+      "scope": "internal_test",
+      "source": "https://steamcommunity.com/sharedfiles/filedetails/?id=122443683",
+      "use_conditions": "內部測試設計；未匯入第三方資產，非原圖精確測繪；正式遊戲採用另核來源與使用條件。"
+    },
+    {
+      "id": "TST-MOD-0002",
+      "name": "端部平台 End Platform",
+      "spec": "24 × 4 × 1.2 m 土臺；四側立面完整，踏面平整；本型不附欄杆。",
+      "keywords": "classic aim arena crates；僅取簡單輪廓與配置語彙，表面自行製作。",
+      "scope": "internal_test",
+      "source": "https://steamcommunity.com/sharedfiles/filedetails/?id=122443683",
+      "use_conditions": "內部測試設計；未匯入第三方資產，非原圖精確測繪；正式遊戲採用另核來源與使用條件。"
+    },
+    {
+      "id": "TST-MOD-0003",
+      "name": "平台坡道 Platform Ramp",
+      "spec": "6 × 6 m 坡道，升高 1.2 m；實體側面與下部閉合，基準向局部 +Y 升高。",
+      "keywords": "classic aim arena crates；僅取簡單輪廓與配置語彙，表面自行製作。",
+      "scope": "internal_test",
+      "source": "https://steamcommunity.com/sharedfiles/filedetails/?id=122443683",
+      "use_conditions": "內部測試設計；未匯入第三方資產，非原圖精確測繪；正式遊戲採用另核來源與使用條件。"
+    }
+  ],
+  "organization_keys": [
+    {
+      "key": "NHIS",
+      "name": "自然史院",
+      "items": "標本箱、包覆殼、標籤、採集記錄",
+      "assets": "PRP-0001、PRP-0008、PRP-0041",
+      "presentation": "箱側採集記號與紙頁批次號對應；只在採集、儲放、運輸關係成立處使用。"
+    },
+    {
+      "key": "VL",
+      "name": "隱燈會",
+      "items": "礦片匣、遮光布、小銅燈、密封包裹",
+      "assets": "PRP-0012、PRP-0036、PRP-0011",
+      "presentation": "多數外表普通；識別置於匣內小記號，銅燈仍只出現於 BLD-11。"
+    },
+    {
+      "key": "HM",
+      "name": "黑爾與默瑟偵探社",
+      "items": "文件盒、帳冊、款箱、借用工作車",
+      "assets": "PRP-0006、PRP-0041、PRP-0007、PRP-0005",
+      "presentation": "文件封套可有 HM 簡寫；車輛用可拆箱牌，不把每輛車永久烙滿徽章。"
+    },
+    {
+      "key": "RANC",
+      "name": "牧業聯盟",
+      "items": "抵押貨袋、封條、牲畜用具、運貨箱",
+      "assets": "PRP-0002、PRP-0029、PRP-0001",
+      "presentation": "較新封條覆在舊袋記旁；允許與水土同盟的舊記號在同一物件共存。"
+    },
+    {
+      "key": "LAND",
+      "name": "水土同盟",
+      "items": "家庭寄存袋、互助運輸箱、共用設備修理牌",
+      "assets": "PRP-0002、PRP-0001、PRP-0013",
+      "presentation": "各戶簡記可不同，互助記號較小；設備舊牌保留，不能被新公司牌完全蓋掉。"
+    },
+    {
+      "key": "CRMC",
+      "name": "考爾德鐵路礦業公司",
+      "items": "機具銘牌、岩芯箱、新管支架、零件運輸箱",
+      "assets": "PRP-0013、PRP-0009、PRP-0015、PRP-0001",
+      "presentation": "銘牌、批次號和新漆色形成一套辨識；不需在每件小工具印大商標。"
+    }
+  ],
+  "configurations": [
+    {
+      "asset": "PRP-0001",
+      "shape": "V00",
+      "look": "L00",
+      "description": "基準木箱；木板 MAT-0001、扣件 MAT-0002。",
+      "organization": "NONE",
+      "region": "STD",
+      "id": "PRP-0001_V00_L00_NONE_STD"
+    },
+    {
+      "asset": "PRP-0001",
+      "shape": "V00",
+      "look": "L01",
+      "description": "同一箱模型；箱板換 MAT-0003 塗漆木面，鐵件仍 MAT-0002。",
+      "organization": "NONE",
+      "region": "STD",
+      "id": "PRP-0001_V00_L01_NONE_STD"
+    },
+    {
+      "asset": "PRP-0001",
+      "shape": "V00",
+      "look": "L02",
+      "description": "同一箱模型；較深雨後木面搭配，保持扣件區。",
+      "organization": "NONE",
+      "region": "STD",
+      "id": "PRP-0001_V00_L02_NONE_STD"
+    },
+    {
+      "asset": "PRP-0001",
+      "shape": "V01",
+      "look": "L00",
+      "description": "開蓋形體；內外箱板 MAT-0001、扣件 MAT-0002。",
+      "organization": "CRMC",
+      "region": "CD-GBB",
+      "id": "PRP-0001_V01_L00_CRMC_CD-GBB"
+    },
+    {
+      "asset": "PRP-0001",
+      "shape": "V00",
+      "look": "L00",
+      "description": "同一木箱；考爾德箱側標記，不改幾何。",
+      "organization": "CRMC",
+      "region": "STD",
+      "id": "PRP-0001_V00_L00_CRMC_STD"
+    },
+    {
+      "asset": "PRP-0001",
+      "shape": "V00",
+      "look": "L00",
+      "description": "上列考爾德箱加 GBB 泥色；跨圖時引用 CRMC 層，另換地域層。",
+      "organization": "CRMC",
+      "region": "CD-GBB",
+      "id": "PRP-0001_V00_L00_CRMC_CD-GBB"
+    },
+    {
+      "asset": "NAT-0002",
+      "shape": "V00",
+      "look": "L00",
+      "description": "普通礦化倒幹；MAT-0012。",
+      "organization": "NONE",
+      "region": "STD",
+      "id": "NAT-0002_V00_L00_NONE_STD"
+    },
+    {
+      "asset": "NAT-0002",
+      "shape": "V00",
+      "look": "L01",
+      "description": "相同形體，指定斷面加 MAT-0020 樹脂狀條痕；在 CD-GBB 中僅用於 BLD-19 的指定單件。",
+      "organization": "NONE",
+      "region": "CD-GBB",
+      "id": "NAT-0002_V00_L01_NONE_CD-GBB"
+    },
+    {
+      "asset": "PRP-0002",
+      "shape": "V00",
+      "look": "L00",
+      "description": "滿糧袋；家庭舊記號與牧業新封記同時保留。",
+      "organization": "LAND-RANC",
+      "region": "CD-GBB",
+      "id": "PRP-0002_V00_L00_LAND-RANC_CD-GBB"
+    },
+    {
+      "id": "TST-ASM-0001_V00_L00_NONE_STD",
+      "asset": "TST-ASM-0001",
+      "shape": "V00",
+      "look": "L00",
+      "organization": "NONE",
+      "region": "STD",
+      "scope": "internal_test",
+      "description": "本節登錄的形體與 L00；無組織客製，無額外地域處理。"
+    },
+    {
+      "id": "TST-PRP-0001_V00_L00_NONE_STD",
+      "asset": "TST-PRP-0001",
+      "shape": "V00",
+      "look": "L00",
+      "organization": "NONE",
+      "region": "STD",
+      "scope": "internal_test",
+      "description": "本節登錄的形體與 L00；無組織客製，無額外地域處理。"
+    },
+    {
+      "id": "TST-PRP-0001_V01_L00_NONE_STD",
+      "asset": "TST-PRP-0001",
+      "shape": "V01",
+      "look": "L00",
+      "organization": "NONE",
+      "region": "STD",
+      "scope": "internal_test",
+      "description": "本節登錄的形體與 L00；無組織客製，無額外地域處理。"
+    },
+    {
+      "id": "TST-PRP-0001_V02_L00_NONE_STD",
+      "asset": "TST-PRP-0001",
+      "shape": "V02",
+      "look": "L00",
+      "organization": "NONE",
+      "region": "STD",
+      "scope": "internal_test",
+      "description": "本節登錄的形體與 L00；無組織客製，無額外地域處理。"
+    },
+    {
+      "id": "TST-PRP-0001_V03_L00_NONE_STD",
+      "asset": "TST-PRP-0001",
+      "shape": "V03",
+      "look": "L00",
+      "organization": "NONE",
+      "region": "STD",
+      "scope": "internal_test",
+      "description": "本節登錄的形體與 L00；無組織客製，無額外地域處理。"
+    },
+    {
+      "id": "TST-PRP-0001_V04_L00_NONE_STD",
+      "asset": "TST-PRP-0001",
+      "shape": "V04",
+      "look": "L00",
+      "organization": "NONE",
+      "region": "STD",
+      "scope": "internal_test",
+      "description": "本節登錄的形體與 L00；無組織客製，無額外地域處理。"
+    },
+    {
+      "id": "TST-PRP-0001_V05_L00_NONE_STD",
+      "asset": "TST-PRP-0001",
+      "shape": "V05",
+      "look": "L00",
+      "organization": "NONE",
+      "region": "STD",
+      "scope": "internal_test",
+      "description": "本節登錄的形體與 L00；無組織客製，無額外地域處理。"
+    },
+    {
+      "id": "TST-PRP-0001_V06_L00_NONE_STD",
+      "asset": "TST-PRP-0001",
+      "shape": "V06",
+      "look": "L00",
+      "organization": "NONE",
+      "region": "STD",
+      "scope": "internal_test",
+      "description": "本節登錄的形體與 L00；無組織客製，無額外地域處理。"
+    },
+    {
+      "id": "TST-MOD-0001_V00_L00_NONE_STD",
+      "asset": "TST-MOD-0001",
+      "shape": "V00",
+      "look": "L00",
+      "organization": "NONE",
+      "region": "STD",
+      "scope": "internal_test",
+      "description": "本節登錄的形體與 L00；無組織客製，無額外地域處理。"
+    },
+    {
+      "id": "TST-MOD-0002_V00_L00_NONE_STD",
+      "asset": "TST-MOD-0002",
+      "shape": "V00",
+      "look": "L00",
+      "organization": "NONE",
+      "region": "STD",
+      "scope": "internal_test",
+      "description": "本節登錄的形體與 L00；無組織客製，無額外地域處理。"
+    },
+    {
+      "id": "TST-MOD-0003_V00_L00_NONE_STD",
+      "asset": "TST-MOD-0003",
+      "shape": "V00",
+      "look": "L00",
+      "organization": "NONE",
+      "region": "STD",
+      "scope": "internal_test",
+      "description": "本節登錄的形體與 L00；無組織客製，無額外地域處理。"
+    }
+  ],
+  "shape_definitions": [
+    {
+      "asset": "PRP-0001",
+      "key": "V00",
+      "definition": "完整閉合板箱；BODY 箱板與 HARDWARE 鐵件分區。"
+    },
+    {
+      "asset": "PRP-0001",
+      "key": "V01",
+      "definition": "同尺度開蓋箱；補內壁、箱底與蓋板內面，保留 BODY／HARDWARE。此配置不含開關動畫。"
+    },
+    {
+      "asset": "NAT-0002",
+      "key": "V00",
+      "definition": "礦化倒幹；外皮、礦化木質與斷面分區，斷面允許獨立材質處理。"
+    },
+    {
+      "asset": "PRP-0002",
+      "key": "V00",
+      "definition": "裝滿並束口的粗布糧袋，袋面與束繩分區，兩側保留記號區。"
+    },
+    {
+      "asset": "TST-ASM-0001",
+      "key": "V00",
+      "definition": "64 × 72 m 圍場；四側 8 m 開口；24 箱、8 牆段、4 平台與4 坡道；局部原點為西南角地坪。",
+      "origin": "包絡西南底角；X 向右、Y 向前、Z 向上；組合內轉向另記。"
+    },
+    {
+      "asset": "TST-PRP-0001",
+      "key": "V00",
+      "definition": "3 × 3 × 2.8 m",
+      "origin": "包絡西南底角；X 向右、Y 向前、Z 向上；組合內轉向另記。"
+    },
+    {
+      "asset": "TST-PRP-0001",
+      "key": "V01",
+      "definition": "3 × 3 × 1.4 m",
+      "origin": "包絡西南底角；X 向右、Y 向前、Z 向上；組合內轉向另記。"
+    },
+    {
+      "asset": "TST-PRP-0001",
+      "key": "V02",
+      "definition": "2 × 2 × 1.1 m",
+      "origin": "包絡西南底角；X 向右、Y 向前、Z 向上；組合內轉向另記。"
+    },
+    {
+      "asset": "TST-PRP-0001",
+      "key": "V03",
+      "definition": "3 × 3 × 1.5 m",
+      "origin": "包絡西南底角；X 向右、Y 向前、Z 向上；組合內轉向另記。"
+    },
+    {
+      "asset": "TST-PRP-0001",
+      "key": "V04",
+      "definition": "3 × 3 × 2.6 m",
+      "origin": "包絡西南底角；X 向右、Y 向前、Z 向上；組合內轉向另記。"
+    },
+    {
+      "asset": "TST-PRP-0001",
+      "key": "V05",
+      "definition": "3 × 3 × 2.7 m",
+      "origin": "包絡西南底角；X 向右、Y 向前、Z 向上；組合內轉向另記。"
+    },
+    {
+      "asset": "TST-PRP-0001",
+      "key": "V06",
+      "definition": "2.2 × 2 × 1.3 m",
+      "origin": "包絡西南底角；X 向右、Y 向前、Z 向上；組合內轉向另記。"
+    },
+    {
+      "asset": "TST-MOD-0001",
+      "key": "V00",
+      "definition": "基準長 1 m、厚 0.6 m、高 4.4 m；沿長向拼接或調整至 32 m，截面固定；貼圖尺度不隨長向拉伸。",
+      "origin": "包絡西南底角；X 向右、Y 向前、Z 向上；組合內轉向另記。"
+    },
+    {
+      "asset": "TST-MOD-0002",
+      "key": "V00",
+      "definition": "24 × 4 × 1.2 m 土臺；四側立面完整，踏面平整；本型不附欄杆。",
+      "origin": "包絡西南底角；X 向右、Y 向前、Z 向上；組合內轉向另記。"
+    },
+    {
+      "asset": "TST-MOD-0003",
+      "key": "V00",
+      "definition": "6 × 6 m 坡道，升高 1.2 m；實體側面與下部閉合，基準向局部 +Y 升高。",
+      "origin": "包絡西南底角；X 向右、Y 向前、Z 向上；組合內轉向另記。"
+    }
+  ],
+  "look_definitions": [
+    {
+      "asset": "PRP-0001",
+      "key": "L00",
+      "materials": [
+        "MAT-0001",
+        "MAT-0002"
+      ],
+      "definition": "BODY 舊灰棕木面；HARDWARE 暗鐵。"
+    },
+    {
+      "asset": "PRP-0001",
+      "key": "L01",
+      "materials": [
+        "MAT-0003",
+        "MAT-0002"
+      ],
+      "definition": "BODY 低彩度灰綠塗漆木面、邊角露底；HARDWARE 暗鐵。"
+    },
+    {
+      "asset": "PRP-0001",
+      "key": "L02",
+      "materials": [
+        "MAT-0001",
+        "MAT-0002"
+      ],
+      "definition": "BODY 雨後深灰棕木面，濕暗由板端與下緣向上減弱；HARDWARE 保留金屬區，不整體染成黑箱。"
+    },
+    {
+      "asset": "NAT-0002",
+      "key": "L00",
+      "materials": [
+        "MAT-0012"
+      ],
+      "definition": "普通礦化外皮、木質與斷面；分部位調色，不使用樹脂異常。"
+    },
+    {
+      "asset": "NAT-0002",
+      "key": "L01",
+      "materials": [
+        "MAT-0012",
+        "MAT-0020"
+      ],
+      "definition": "外皮與木質 MAT-0012，僅指定斷面條痕使用 MAT-0020；不改成全株活木或透明晶體。"
+    },
+    {
+      "asset": "PRP-0002",
+      "key": "L00",
+      "materials": [
+        "MAT-0009"
+      ],
+      "definition": "粗布袋面與束繩保留各自織／纖維方向，允許同底材調整粗糙度與色差。"
+    },
+    {
+      "asset": "TST-ASM-0001",
+      "key": "L00",
+      "materials": [],
+      "definition": "引用本節子件的 L00，不加整體染色或第二套組織標記。"
+    },
+    {
+      "asset": "TST-PRP-0001",
+      "key": "L00",
+      "materials": [
+        "MAT-0001"
+      ],
+      "definition": "BODY 與 BRACE 皆用 MAT-0001；寬木紋及少量深淺色塊，斜撐保留可見邊緣；不另加鐵件、封條或文字。"
+    },
+    {
+      "asset": "TST-MOD-0001",
+      "key": "L00",
+      "materials": [
+        "MAT-0004",
+        "MAT-0005"
+      ],
+      "definition": "PLASTER 用 MAT-0004，底部 0.3 m BASE 用 MAT-0005；泥抹灰土色、牆腳局部深色，無全面苔面。"
+    },
+    {
+      "asset": "TST-MOD-0002",
+      "key": "L00",
+      "materials": [
+        "MAT-0015"
+      ],
+      "definition": "TOP 與 SIDE 用 MAT-0015，臺緣以色階分面；無積水或草被。"
+    },
+    {
+      "asset": "TST-MOD-0003",
+      "key": "L00",
+      "materials": [
+        "MAT-0015"
+      ],
+      "definition": "RAMP 與 SIDE 用 MAT-0015；保留坡頂、坡腳界線，無突起石塊。"
+    }
+  ],
+  "regional_schemes": [
+    {
+      "key": "STD",
+      "definition": "不加地域處理。"
+    },
+    {
+      "key": "CD-GBB",
+      "definition": "暖灰褐泥痕集中接地邊、下緣與凹處，濕暗局部；保持材質種類、組織識別及物證可辨。NAT-0002 只處理接地邊，斷面樹脂由 L01 定義。"
+    }
+  ],
+  "compound_schemes": [
+    {
+      "key": "LAND-RANC",
+      "definition": "糧袋保留 LAND 家庭舊記與 RANC 較新封條；兩者均可辨，不用覆蓋移除舊記。"
+    }
+  ],
+  "registration_note": "製作要求的登錄，不代表已完成模型。來源檔、材質資源及數值參數在製作時按此定義完成並鎖定修訂。",
+  "assembly_definitions": [
+    {
+      "asset": "TST-ASM-0001",
+      "shape": "V00",
+      "layout": "Test_Assembly_Layout_v0.1.json",
+      "children_count": 40,
+      "materials_inherited_from_children": true
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+*.pdf binary
+*.html linguist-generated=true
+*.pages.json linguist-generated=true
