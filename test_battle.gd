@@ -72,6 +72,7 @@ func _process(_delta: float) -> bool:
 		_case_cowboy_voice()
 		_case_versus()
 		_case_party_boss()
+		_case_party_map()
 		_start_gun_case()
 		return false
 	# 剩下的要跨好幾個 frame 才驗得到。總幀數設上限：腳本編譯壞掉時各階段等不到條件，
@@ -2445,3 +2446,62 @@ func _check_melee_hits() -> void:
 	hp0 = _dino.hp
 	vm.try_melee(true)
 	_ck(hp0 - _dino.hp == vm.heavy_damage, "體力見底照樣重擊（打出 %d）" % (hp0 - _dino.hp))
+
+
+## 派對模式的地圖（灰盒）：安全屋兩間（牛仔進得去、恐龍擠不進）、牛仔出生點散在四周、恐龍在中央出生
+func _case_party_map() -> void:
+	var Main: GDScript = load("res://main.gd")
+	var keep: String = Main.level_file
+	Main.level_file = ""
+	var m := _offline_match()
+	var probs := LevelCheck.run(m._level, Main.lane_of(m.level_path))
+	_ck(probs.is_empty(), "派對地圖擺設檢查有問題：%s" % [probs.slice(0, 5)])
+	var safes: Array = m.get_tree().get_nodes_in_group(&"safe_house")
+	_ck(safes.size() == 2, "安全屋要 2 間（%d）" % safes.size())
+	var c: Node3D = m._add_player(m.COWBOY, 2)
+	var cow: CapsuleShape3D = c.get_node(^"CollisionShape3D").shape
+	var boss: Node = m.BOSS.instantiate()
+	var dino: CapsuleShape3D = boss.get_node(^"CollisionShape3D").shape
+	boss.free()
+	var ground: StaticBody3D = m.get_tree().get_first_node_in_group(&"ground")
+	var space: PhysicsDirectSpaceState3D = m.get_viewport().world_3d.direct_space_state
+	## 膠囊站在安全屋裡 at（房子自己的座標，地板上）會不會卡到東西
+	var stuck := func(body: Node3D, at: Vector3, cap: CapsuleShape3D) -> bool:
+		var q := PhysicsShapeQueryParameters3D.new()
+		q.shape = cap
+		q.exclude = [ground.get_rid()]
+		q.transform = Transform3D(body.global_basis, body.global_transform * (at + Vector3.UP * (cap.height * 0.5 + Greybox.FLOOR + 0.05)))
+		return not space.intersect_shape(q, 1).is_empty()
+	var exits: Array = Main.exit_spots()
+	for rec: Dictionary in m._level:
+		if rec.kind != &"gb_safe":
+			continue
+		var inner: Vector3 = rec.size - Vector3.ONE * Greybox.T * 2.0
+		_ck(inner.x * inner.z > 14.0 and inner.x * inner.z < 20.0, "安全屋內部要約 5 坪（%.1f 平方公尺）" % (inner.x * inner.z))
+		var body: Node3D = null
+		for b: Node3D in safes:
+			if b.global_position.is_equal_approx(m._on_ground(rec.pos)):
+				body = b
+		_ck(body != null, "安全屋 %s 要有蓋出來的房子" % rec.pos)
+		if body == null:
+			continue
+		var door := Vector3(0, 0, rec.size.z * 0.5 - Greybox.T * 0.5)
+		_ck(not stuck.call(body, door, cow) and not stuck.call(body, Vector3.ZERO, cow), "牛仔要走得進安全屋（%s）" % rec.pos)
+		_ck(stuck.call(body, door, dino) and stuck.call(body, -door, dino), "恐龍不能擠進安全屋的門（%s）" % rec.pos)
+		var xz := Vector2(rec.pos.x, rec.pos.z)
+		_ck(xz.length() > 50.0 and exits.all(func(e: Vector2) -> bool: return xz.distance_to(e) > 40.0),
+			"安全屋要離蛋區和撤離區有一段路（%s）" % rec.pos)
+		var y0: float = m._terrain.height(rec.pos.x, rec.pos.z)
+		for corner: Vector3 in [Vector3(1, 0, 1), Vector3(-1, 0, 1), Vector3(1, 0, -1), Vector3(-1, 0, -1)]:
+			var at: Vector3 = rec.pos + Basis(Vector3.UP, rec.yaw) * (corner * rec.size * 0.5)
+			_ck(absf(m._terrain.height(at.x, at.z) - y0) < 0.3, "安全屋底下的地要平（%s）" % rec.pos)
+	_ck(m.spawn_points.size() >= 6, "牛仔出生點至少 6 個（%d）" % m.spawn_points.size())
+	var sides := {}
+	for p: Vector3 in m.spawn_points:
+		_ck(m._is_clear(Vector2(p.x, p.z)), "出生點不能在建築裡（%s）" % p)
+		sides[Vector2i(signi(roundi(p.x / 40.0)), signi(roundi(p.z / 40.0)))] = true
+	_ck(sides.size() >= 5, "出生點要散在地圖四周（只在 %d 個方向）" % sides.size())
+	_ck(Vector2(m.dino_spawn.x, m.dino_spawn.z).length() < 10.0 and absf(m.dino_spawn.y - m._terrain.height(m.dino_spawn.x, m.dino_spawn.z)) < 0.01,
+		"恐龍出生點要在中央、貼地（%s）" % m.dino_spawn)
+	_end(m)
+	Main.level_file = keep

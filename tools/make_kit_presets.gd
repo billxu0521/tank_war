@@ -45,6 +45,7 @@ const PRESETS := [
 	["灰盒_箱子", "gb_block", &"", Vector3(3, 2, 3), 0.0, false, 1.0],
 	["灰盒_矮牆", "gb_block", &"", Vector3(10, 1.0, 0.2), 0.0, false, 1.0],
 	["灰盒_平台", "gb_block", &"", Vector3(6, 3, 6), 0.0, false, 1.0],
+	["灰盒_安全屋", "gb_safe", &"", Vector3(4.6, 3, 4.6), 0.0, false, 1.0],
 	["麥田", "wheat", &"", Vector3.ONE, 40.0, false, 1.0],
 	["酒館", "shop", &"Saloon", Vector3.ONE, 0.0, false, 1.0],
 	["雜貨店", "shop", &"Store", Vector3.ONE, 0.0, false, 1.0],

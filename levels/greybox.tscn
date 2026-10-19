@@ -1064,3 +1064,795 @@ script = ExtResource("2_wwx2q")
 kind = "rock"
 variant = &"Rock05"
 flag = true
+
+[node name="派對_安全屋" type="Node3D" parent="." unique_id=656855258]
+
+[node name="整平安全屋0" type="Node3D" parent="派對_安全屋" unique_id=1468490612]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 66, 0, -64)
+script = ExtResource("2_wwx2q")
+kind = "flat"
+amount = 6.0
+
+[node name="安全屋0" type="Node3D" parent="派對_安全屋" unique_id=87609346]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 66, 0, -64)
+script = ExtResource("2_wwx2q")
+kind = "gb_safe"
+size = Vector3(4.6, 3, 4.6)
+
+[node name="整平安全屋1" type="Node3D" parent="派對_安全屋" unique_id=1495600389]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -70, 0, 64)
+script = ExtResource("2_wwx2q")
+kind = "flat"
+amount = 6.0
+
+[node name="安全屋1" type="Node3D" parent="派對_安全屋" unique_id=835913222]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -70, 0, 64)
+script = ExtResource("2_wwx2q")
+kind = "gb_safe"
+size = Vector3(4.6, 3, 4.6)
+
+[node name="派對_出生點" type="Node3D" parent="." unique_id=1459738859]
+
+[node name="恐龍出生" type="Node3D" parent="派對_出生點" unique_id=1917029735]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+script = ExtResource("2_wwx2q")
+kind = "dino_spawn"
+
+[node name="牛仔出生0" type="Node3D" parent="派對_出生點" unique_id=862579901]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -79)
+script = ExtResource("2_wwx2q")
+kind = "spawn"
+
+[node name="牛仔出生1" type="Node3D" parent="派對_出生點" unique_id=1239290170]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60, 0, -80)
+script = ExtResource("2_wwx2q")
+kind = "spawn"
+
+[node name="牛仔出生2" type="Node3D" parent="派對_出生點" unique_id=979472446]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60, 0, -80)
+script = ExtResource("2_wwx2q")
+kind = "spawn"
+
+[node name="牛仔出生3" type="Node3D" parent="派對_出生點" unique_id=1477289160]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 0, -38)
+script = ExtResource("2_wwx2q")
+kind = "spawn"
+
+[node name="牛仔出生4" type="Node3D" parent="派對_出生點" unique_id=1391792969]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 0, -48)
+script = ExtResource("2_wwx2q")
+kind = "spawn"
+
+[node name="牛仔出生5" type="Node3D" parent="派對_出生點" unique_id=69151441]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 0, 46)
+script = ExtResource("2_wwx2q")
+kind = "spawn"
+
+[node name="牛仔出生6" type="Node3D" parent="派對_出生點" unique_id=1903800542]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 0, 42)
+script = ExtResource("2_wwx2q")
+kind = "spawn"
+
+[node name="牛仔出生7" type="Node3D" parent="派對_出生點" unique_id=1075556613]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 0, 80)
+script = ExtResource("2_wwx2q")
+kind = "spawn"
+
+[node name="牛仔出生8" type="Node3D" parent="派對_出生點" unique_id=774742875]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -42, 0, 81)
+script = ExtResource("2_wwx2q")
+kind = "spawn"
+
+[node name="派對_遮蔽" type="Node3D" parent="." unique_id=2009628998]
+
+[node name="樹0" type="Node3D" parent="派對_遮蔽" unique_id=1912406943]
+transform = Transform3D(0.399565, 0, 0.87706, 0, 0.963788, 0, -0.87706, 0, 0.399565, -39.2, 0, -13.1)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOak"
+
+[node name="樹1" type="Node3D" parent="派對_遮蔽" unique_id=176836109]
+transform = Transform3D(0.791913, 0, -0.447497, 0, 0.909604, 0, 0.447497, 0, 0.791913, -43.1, 0, -12.3)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeMaple"
+
+[node name="樹2" type="Node3D" parent="派對_遮蔽" unique_id=530131622]
+transform = Transform3D(0.815276, 0, -0.519507, 0, 0.966728, 0, 0.519507, 0, 0.815276, -39.1, 0, -5.1)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreePine"
+
+[node name="樹3" type="Node3D" parent="派對_遮蔽" unique_id=1270667944]
+transform = Transform3D(1.15418, 0, -0.288589, 0, 1.18971, 0, 0.288589, 0, 1.15418, -42.3, 0, -8.4)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOak"
+
+[node name="樹4" type="Node3D" parent="派對_遮蔽" unique_id=1343112973]
+transform = Transform3D(-0.462089, 0, 1.08076, 0, 1.1754, 0, -1.08076, 0, -0.462089, -37.3, 0, -8.4)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreePine"
+
+[node name="樹5" type="Node3D" parent="派對_遮蔽" unique_id=1174013467]
+transform = Transform3D(0.96251, 0, 0.408979, 0, 1.0458, 0, -0.408979, 0, 0.96251, -35.2, 0, -4.9)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreePine"
+
+[node name="樹6" type="Node3D" parent="派對_遮蔽" unique_id=488156427]
+transform = Transform3D(-0.654691, 0, -0.958608, 0, 1.16084, 0, 0.958608, 0, -0.654691, -44.8, 0, 11)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreePine"
+
+[node name="樹7" type="Node3D" parent="派對_遮蔽" unique_id=903821732]
+transform = Transform3D(0.226949, 0, 0.977217, 0, 1.00322, 0, -0.977217, 0, 0.226949, -38.8, 0, 13.9)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreePine2"
+
+[node name="樹8" type="Node3D" parent="派對_遮蔽" unique_id=23343433]
+transform = Transform3D(0.78742, 0, 0.855083, 0, 1.16241, 0, -0.855083, 0, 0.78742, -36.6, 0, 10.8)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeMaple"
+
+[node name="樹9" type="Node3D" parent="派對_遮蔽" unique_id=835486626]
+transform = Transform3D(0.870573, 0, -0.787517, 0, 1.17392, 0, 0.787517, 0, 0.870573, -39.6, 0, 7.9)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOakS"
+
+[node name="樹10" type="Node3D" parent="派對_遮蔽" unique_id=1624345305]
+transform = Transform3D(0.339589, 0, 1.05108, 0, 1.10458, 0, -1.05108, 0, 0.339589, -39.8, 0, 4.1)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOakM"
+
+[node name="樹11" type="Node3D" parent="派對_遮蔽" unique_id=1238577904]
+transform = Transform3D(-0.514431, 0, -1.04005, 0, 1.16032, 0, 1.04005, 0, -0.514431, -43.6, 0, 14.4)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreePine2"
+
+[node name="樹12" type="Node3D" parent="派對_遮蔽" unique_id=755371214]
+transform = Transform3D(-1.10426, 0, -0.368873, 0, 1.16425, 0, 0.368873, 0, -1.10426, -20.1, 0, -20.5)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeMaple"
+
+[node name="樹13" type="Node3D" parent="派對_遮蔽" unique_id=936848461]
+transform = Transform3D(0.78883, 0, -0.46286, 0, 0.914599, 0, 0.46286, 0, 0.78883, -24.5, 0, -24.5)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeMaple"
+
+[node name="樹14" type="Node3D" parent="派對_遮蔽" unique_id=1564039260]
+transform = Transform3D(-0.850578, 0, 0.84105, 0, 1.19618, 0, -0.84105, 0, -0.850578, -20.5, 0, -27.6)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreePine2"
+
+[node name="樹15" type="Node3D" parent="派對_遮蔽" unique_id=777288578]
+transform = Transform3D(-0.995693, 0, -0.438772, 0, 1.08808, 0, 0.438772, 0, -0.995693, -27.6, 0, -27.6)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOak"
+
+[node name="樹16" type="Node3D" parent="派對_遮蔽" unique_id=1169013208]
+transform = Transform3D(0.965266, 0, -0.264805, 0, 1.00093, 0, 0.264805, 0, 0.965266, -29.4, 0, -22.6)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreePine"
+
+[node name="樹17" type="Node3D" parent="派對_遮蔽" unique_id=2119594284]
+transform = Transform3D(-1.04149, 0, 0.291243, 0, 1.08144, 0, -0.291243, 0, -1.04149, 36.5, 0, 11.1)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreePine"
+
+[node name="樹18" type="Node3D" parent="派對_遮蔽" unique_id=1142348742]
+transform = Transform3D(0.839142, 0, -0.736035, 0, 1.1162, 0, 0.736035, 0, 0.839142, 33.4, 0, 7.4)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreePine"
+
+[node name="樹19" type="Node3D" parent="派對_遮蔽" unique_id=338849755]
+transform = Transform3D(0.912896, 0, -0.193047, 0, 0.933084, 0, 0.193047, 0, 0.912896, 32.9, 0, 1.6)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreePine"
+
+[node name="樹20" type="Node3D" parent="派對_遮蔽" unique_id=1429802226]
+transform = Transform3D(-0.553044, 0, 0.758667, 0, 0.938847, 0, -0.758667, 0, -0.553044, 40.1, 0, 9.4)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeMaple"
+
+[node name="樹21" type="Node3D" parent="派對_遮蔽" unique_id=783205919]
+transform = Transform3D(0.117477, 0, -1.1482, 0, 1.15419, 0, 1.1482, 0, 0.117477, 26.9, 0, -27.6)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreePine"
+
+[node name="樹22" type="Node3D" parent="派對_遮蔽" unique_id=1246511867]
+transform = Transform3D(-0.960696, 0, 0.475801, 0, 1.07207, 0, -0.475801, 0, -0.960696, 32.3, 0, -26.4)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOak"
+
+[node name="樹23" type="Node3D" parent="派對_遮蔽" unique_id=1512113060]
+transform = Transform3D(-0.252203, 0, 0.869, 0, 0.904858, 0, -0.869, 0, -0.252203, 32.9, 0, -22.8)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOakM"
+
+[node name="樹24" type="Node3D" parent="派對_遮蔽" unique_id=339901653]
+transform = Transform3D(0.437841, 0, 1.09386, 0, 1.17823, 0, -1.09386, 0, 0.437841, 37.5, 0, -27.1)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreePine2"
+
+[node name="樹25" type="Node3D" parent="派對_遮蔽" unique_id=324026958]
+transform = Transform3D(-0.121918, 0, 1.08943, 0, 1.09623, 0, -1.08943, 0, -0.121918, 29.2, 0, -20.8)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOakM"
+
+[node name="樹26" type="Node3D" parent="派對_遮蔽" unique_id=1580915782]
+transform = Transform3D(0.0387327, 0, -1.062, 0, 1.0627, 0, 1.062, 0, 0.0387327, 45.1, 0, 30.4)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOak"
+
+[node name="樹27" type="Node3D" parent="派對_遮蔽" unique_id=1802368005]
+transform = Transform3D(-0.0653878, 0, -1.14614, 0, 1.148, 0, 1.14614, 0, -0.0653878, 43.2, 0, 36.1)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOakM"
+
+[node name="樹28" type="Node3D" parent="派對_遮蔽" unique_id=887710536]
+transform = Transform3D(0.867362, 0, 0.601938, 0, 1.05577, 0, -0.601938, 0, 0.867362, 49.2, 0, 35.9)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreePine2"
+
+[node name="樹29" type="Node3D" parent="派對_遮蔽" unique_id=2142002602]
+transform = Transform3D(0.848765, 0, -0.571227, 0, 1.02308, 0, 0.571227, 0, 0.848765, 42, 0, 32.6)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreePine"
+
+[node name="樹30" type="Node3D" parent="派對_遮蔽" unique_id=914141470]
+transform = Transform3D(0.057085, 0, -1.02871, 0, 1.03029, 0, 1.02871, 0, 0.057085, -14.7, 0, -21)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreePine2"
+
+[node name="樹31" type="Node3D" parent="派對_遮蔽" unique_id=1360897434]
+transform = Transform3D(-0.751901, 0, 0.793945, 0, 1.09348, 0, -0.793945, 0, -0.751901, -15.6, 0, -25.1)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOakS"
+
+[node name="樹32" type="Node3D" parent="派對_遮蔽" unique_id=871853748]
+transform = Transform3D(0.774084, 0, -0.644159, 0, 1.00705, 0, 0.644159, 0, 0.774084, 20, 0, -20.6)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreePine"
+
+[node name="樹33" type="Node3D" parent="派對_遮蔽" unique_id=155589505]
+transform = Transform3D(-0.582886, 0, -0.797444, 0, 0.987762, 0, 0.797444, 0, -0.582886, 18.4, 0, -24.7)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreePine"
+
+[node name="樹34" type="Node3D" parent="派對_遮蔽" unique_id=1599250987]
+transform = Transform3D(0.921699, 0, 0.595068, 0, 1.0971, 0, -0.595068, 0, 0.921699, 22, 0, -23.9)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOakS"
+
+[node name="樹35" type="Node3D" parent="派對_遮蔽" unique_id=592888122]
+transform = Transform3D(-1.00025, 0, 0.219423, 0, 1.02404, 0, -0.219423, 0, -1.00025, 19.9, 0, 32)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOakS"
+
+[node name="樹36" type="Node3D" parent="派對_遮蔽" unique_id=568187615]
+transform = Transform3D(-1.05698, 0, -0.301377, 0, 1.09911, 0, 0.301377, 0, -1.05698, 16.3, 0, 32.3)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOakM"
+
+[node name="樹37" type="Node3D" parent="派對_遮蔽" unique_id=680973532]
+transform = Transform3D(1.04961, 0, 0.120012, 0, 1.05645, 0, -0.120012, 0, 1.04961, 11.7, 0, 33.1)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOak"
+
+[node name="樹38" type="Node3D" parent="派對_遮蔽" unique_id=882973585]
+transform = Transform3D(0.318171, 0, -0.993379, 0, 1.04309, 0, 0.993379, 0, 0.318171, 11.5, 0, 28.2)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOakS"
+
+[node name="樹39" type="Node3D" parent="派對_遮蔽" unique_id=1512300264]
+transform = Transform3D(1.14235, 0, 0.306818, 0, 1.18283, 0, -0.306818, 0, 1.14235, 20.3, 0, 36.2)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOakM"
+
+[node name="樹40" type="Node3D" parent="派對_遮蔽" unique_id=571878533]
+transform = Transform3D(-0.452024, 0, -0.966822, 0, 1.06727, 0, 0.966822, 0, -0.452024, 16.6, 0, 37.6)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOakM"
+
+[node name="樹41" type="Node3D" parent="派對_遮蔽" unique_id=475972911]
+transform = Transform3D(0.927702, 0, 0.169028, 0, 0.942975, 0, -0.169028, 0, 0.927702, 16.3, 0, 28.3)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeMaple"
+
+[node name="樹42" type="Node3D" parent="派對_遮蔽" unique_id=28336920]
+transform = Transform3D(-1.02697, 0, -0.145519, 0, 1.03722, 0, 0.145519, 0, -1.02697, -33.9, 0, 21.1)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreePine2"
+
+[node name="樹43" type="Node3D" parent="派對_遮蔽" unique_id=525798586]
+transform = Transform3D(0.952294, 0, 0.489956, 0, 1.07094, 0, -0.489956, 0, 0.952294, -26.5, 0, 18.6)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOakS"
+
+[node name="樹44" type="Node3D" parent="派對_遮蔽" unique_id=372995219]
+transform = Transform3D(-0.491703, 0, 0.905106, 0, 1.03004, 0, -0.905106, 0, -0.491703, -27.9, 0, 22)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOakM"
+
+[node name="樹45" type="Node3D" parent="派對_遮蔽" unique_id=1780831852]
+transform = Transform3D(0.617277, 0, 0.918639, 0, 1.10676, 0, -0.918639, 0, 0.617277, -32.9, 0, 26.3)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreePine2"
+
+[node name="樹46" type="Node3D" parent="派對_遮蔽" unique_id=817355100]
+transform = Transform3D(0.648062, 0, -0.79444, 0, 1.02524, 0, 0.79444, 0, 0.648062, -27.9, 0, 25.6)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOak"
+
+[node name="樹47" type="Node3D" parent="派對_遮蔽" unique_id=562808067]
+transform = Transform3D(-0.97178, 0, -0.319682, 0, 1.02301, 0, 0.319682, 0, -0.97178, 37.2, 0, 52.4)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOakM"
+
+[node name="樹48" type="Node3D" parent="派對_遮蔽" unique_id=926711505]
+transform = Transform3D(-0.652081, 0, -0.869809, 0, 1.0871, 0, 0.869809, 0, -0.652081, -16.6, 0, 6.8)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOakS"
+
+[node name="樹49" type="Node3D" parent="派對_遮蔽" unique_id=198726473]
+transform = Transform3D(-0.316195, 0, -1.12372, 0, 1.16735, 0, 1.12372, 0, -0.316195, -17.2, 0, 12.5)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreePine"
+
+[node name="樹50" type="Node3D" parent="派對_遮蔽" unique_id=997619950]
+transform = Transform3D(0.642877, 0, -0.6308, 0, 0.900666, 0, 0.6308, 0, 0.642877, 17.8, 0, -12.5)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOakM"
+
+[node name="樹51" type="Node3D" parent="派對_遮蔽" unique_id=1310778349]
+transform = Transform3D(0.808716, 0, -0.757949, 0, 1.10838, 0, 0.757949, 0, 0.808716, 13.7, 0, -13)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOakM"
+
+[node name="樹52" type="Node3D" parent="派對_遮蔽" unique_id=1800890786]
+transform = Transform3D(-0.322163, 0, 1.09765, 0, 1.14395, 0, -1.09765, 0, -0.322163, 18.1, 0, 12.6)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeMaple"
+
+[node name="樹53" type="Node3D" parent="派對_遮蔽" unique_id=1438418109]
+transform = Transform3D(-0.946741, 0, -0.249779, 0, 0.979136, 0, 0.249779, 0, -0.946741, 16.1, 0, 16.2)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOak"
+
+[node name="樹54" type="Node3D" parent="派對_遮蔽" unique_id=1725760622]
+transform = Transform3D(-0.933934, 0, 0.467906, 0, 1.04459, 0, -0.467906, 0, -0.933934, -19.6, 0, -12.3)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeMaple"
+
+[node name="樹55" type="Node3D" parent="派對_遮蔽" unique_id=714717844]
+transform = Transform3D(-1.02193, 0, -0.100761, 0, 1.02689, 0, 0.100761, 0, -1.02193, -14.8, 0, -12.6)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreePine"
+
+[node name="樹56" type="Node3D" parent="派對_遮蔽" unique_id=1948152929]
+transform = Transform3D(0.431988, 0, -0.827976, 0, 0.933894, 0, 0.827976, 0, 0.431988, -60, 0, -58.3)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOakM"
+
+[node name="樹57" type="Node3D" parent="派對_遮蔽" unique_id=2006002580]
+transform = Transform3D(0.663366, 0, -0.849356, 0, 1.07771, 0, 0.849356, 0, 0.663366, -56.9, 0, -60.3)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOakS"
+
+[node name="樹58" type="Node3D" parent="派對_遮蔽" unique_id=1735073919]
+transform = Transform3D(-1.11793, 0, 0.207836, 0, 1.13709, 0, -0.207836, 0, -1.11793, -53.1, 0, -62.8)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreePine"
+
+[node name="樹59" type="Node3D" parent="派對_遮蔽" unique_id=1924614042]
+transform = Transform3D(0.556604, 0, -1.01198, 0, 1.15495, 0, 1.01198, 0, 0.556604, 55, 0, -54.2)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeMaple"
+
+[node name="樹60" type="Node3D" parent="派對_遮蔽" unique_id=1467144936]
+transform = Transform3D(0.37635, 0, 1.09508, 0, 1.15795, 0, -1.09508, 0, 0.37635, 51.3, 0, -52.7)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreePine2"
+
+[node name="樹61" type="Node3D" parent="派對_遮蔽" unique_id=1011061730]
+transform = Transform3D(0.202542, 0, 0.956977, 0, 0.978176, 0, -0.956977, 0, 0.202542, 58.5, 0, -48.4)
+script = ExtResource("2_wwx2q")
+kind = "tree"
+variant = &"TreeOakS"
+
+[node name="草叢0" type="Node3D" parent="派對_遮蔽" unique_id=988430497]
+transform = Transform3D(1.15079, 0, -0.172706, 0, 1.16368, 0, 0.172706, 0, 1.15079, -43.4, 0, -4.9)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢1" type="Node3D" parent="派對_遮蔽" unique_id=1295840927]
+transform = Transform3D(-0.879082, 0, -0.72479, 0, 1.13934, 0, 0.72479, 0, -0.879082, -44.8, 0, -7.9)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢2" type="Node3D" parent="派對_遮蔽" unique_id=553938272]
+transform = Transform3D(0.647272, 0, 0.680694, 0, 0.939311, 0, -0.680694, 0, 0.647272, -43.5, 0, -10.2)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢3" type="Node3D" parent="派對_遮蔽" unique_id=1471223219]
+transform = Transform3D(-0.664107, 0, -0.830618, 0, 1.06347, 0, 0.830618, 0, -0.664107, -38.9, 0, -2.7)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢4" type="Node3D" parent="派對_遮蔽" unique_id=1373648918]
+transform = Transform3D(-0.553535, 0, 0.768778, 0, 0.947323, 0, -0.768778, 0, -0.553535, -37.3, 0, -6.2)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢5" type="Node3D" parent="派對_遮蔽" unique_id=231467382]
+transform = Transform3D(-0.877395, 0, 0.289148, 0, 0.923812, 0, -0.289148, 0, -0.877395, -41.3, 0, 13.8)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢6" type="Node3D" parent="派對_遮蔽" unique_id=793084141]
+transform = Transform3D(0.51147, 0, 0.801633, 0, 0.950903, 0, -0.801633, 0, 0.51147, -36.2, 0, 6.4)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢7" type="Node3D" parent="派對_遮蔽" unique_id=1443640849]
+transform = Transform3D(-0.610862, 0, 0.812114, 0, 1.01621, 0, -0.812114, 0, -0.610862, -40.9, 0, 15.8)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢8" type="Node3D" parent="派對_遮蔽" unique_id=1194337067]
+transform = Transform3D(-0.166811, 0, 1.07058, 0, 1.0835, 0, -1.07058, 0, -0.166811, -41, 0, 10.3)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢9" type="Node3D" parent="派對_遮蔽" unique_id=778025639]
+transform = Transform3D(-0.259642, 0, 0.96181, 0, 0.996239, 0, -0.96181, 0, -0.259642, -39.3, 0, 11.9)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢10" type="Node3D" parent="派對_遮蔽" unique_id=1338357745]
+transform = Transform3D(0.922091, 0, -0.560239, 0, 1.07894, 0, 0.560239, 0, 0.922091, -23.9, 0, -20.7)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢11" type="Node3D" parent="派對_遮蔽" unique_id=1396169848]
+transform = Transform3D(-0.915439, 0, -0.0626, 0, 0.917577, 0, 0.0626, 0, -0.915439, -27.7, 0, -23.7)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢12" type="Node3D" parent="派對_遮蔽" unique_id=543607970]
+transform = Transform3D(-0.734448, 0, -0.71872, 0, 1.02761, 0, 0.71872, 0, -0.734448, -18.3, 0, -25.2)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢13" type="Node3D" parent="派對_遮蔽" unique_id=1345516980]
+transform = Transform3D(-0.821638, 0, -0.544094, 0, 0.985458, 0, 0.544094, 0, -0.821638, -21.7, 0, -22.3)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢14" type="Node3D" parent="派對_遮蔽" unique_id=1264291435]
+transform = Transform3D(-0.970686, 0, -0.573706, 0, 1.12755, 0, 0.573706, 0, -0.970686, 33.8, 0, 11)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢15" type="Node3D" parent="派對_遮蔽" unique_id=1806581950]
+transform = Transform3D(-1.03068, 0, -0.227034, 0, 1.05539, 0, 0.227034, 0, -1.03068, 35.7, 0, 7.8)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢16" type="Node3D" parent="派對_遮蔽" unique_id=385280237]
+transform = Transform3D(-0.982328, 0, 0.664115, 0, 1.18576, 0, -0.664115, 0, -0.982328, 32.2, 0, 4.5)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢17" type="Node3D" parent="派對_遮蔽" unique_id=41371122]
+transform = Transform3D(1.01277, 0, -0.585439, 0, 1.16981, 0, 0.585439, 0, 1.01277, 36.7, 0, 0.2)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢18" type="Node3D" parent="派對_遮蔽" unique_id=826092108]
+transform = Transform3D(-0.280015, 0, 0.984945, 0, 1.02398, 0, -0.984945, 0, -0.280015, 31.6, 0, 10)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢19" type="Node3D" parent="派對_遮蔽" unique_id=454159418]
+transform = Transform3D(0.618874, 0, -0.960359, 0, 1.14249, 0, 0.960359, 0, 0.618874, 34.2, 0, -28.5)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢20" type="Node3D" parent="派對_遮蔽" unique_id=320769619]
+transform = Transform3D(-0.671506, 0, 0.702009, 0, 0.971461, 0, -0.702009, 0, -0.671506, 32.1, 0, -29.2)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢21" type="Node3D" parent="派對_遮蔽" unique_id=2025558960]
+transform = Transform3D(0.984881, 0, -0.320915, 0, 1.03585, 0, 0.320915, 0, 0.984881, 34.5, 0, -25.6)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢22" type="Node3D" parent="派對_遮蔽" unique_id=397572136]
+transform = Transform3D(-0.451423, 0, -1.08653, 0, 1.17657, 0, 1.08653, 0, -0.451423, 27.3, 0, -22.9)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢23" type="Node3D" parent="派對_遮蔽" unique_id=209197765]
+transform = Transform3D(-0.229145, 0, 0.937284, 0, 0.964888, 0, -0.937284, 0, -0.229145, 45.6, 0, 33.2)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢24" type="Node3D" parent="派對_遮蔽" unique_id=248461361]
+transform = Transform3D(-0.793679, 0, 0.625648, 0, 1.01062, 0, -0.625648, 0, -0.793679, 45.7, 0, 38.8)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢25" type="Node3D" parent="派對_遮蔽" unique_id=724782276]
+transform = Transform3D(1.00783, 0, 0.343834, 0, 1.06487, 0, -0.343834, 0, 1.00783, 47, 0, 29.7)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢26" type="Node3D" parent="派對_遮蔽" unique_id=1835288450]
+transform = Transform3D(-0.954907, 0, 0.486616, 0, 1.07175, 0, -0.486616, 0, -0.954907, -17.6, 0, -18.1)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢27" type="Node3D" parent="派對_遮蔽" unique_id=1009433362]
+transform = Transform3D(-1.04886, 0, 0.35225, 0, 1.10643, 0, -0.35225, 0, -1.04886, -20.2, 0, -23.9)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢28" type="Node3D" parent="派對_遮蔽" unique_id=1915728695]
+transform = Transform3D(-0.587199, 0, -0.921356, 0, 1.09257, 0, 0.921356, 0, -0.587199, -19.6, 0, -18.4)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢29" type="Node3D" parent="派對_遮蔽" unique_id=602918453]
+transform = Transform3D(-1.07281, 0, 0.181078, 0, 1.08798, 0, -0.181078, 0, -1.07281, -16, 0, -23.1)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢30" type="Node3D" parent="派對_遮蔽" unique_id=2077229673]
+transform = Transform3D(0.741222, 0, 0.63345, 0, 0.975023, 0, -0.63345, 0, 0.741222, 16.4, 0, -21.7)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢31" type="Node3D" parent="派對_遮蔽" unique_id=919777138]
+transform = Transform3D(-0.767983, 0, -0.862438, 0, 1.15481, 0, 0.862438, 0, -0.767983, 18.3, 0, -27.4)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢32" type="Node3D" parent="派對_遮蔽" unique_id=612145514]
+transform = Transform3D(-0.912289, 0, 0.679482, 0, 1.13753, 0, -0.679482, 0, -0.912289, 18.6, 0, -22.6)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢33" type="Node3D" parent="派對_遮蔽" unique_id=2141588226]
+transform = Transform3D(-1.10617, 0, 0.159889, 0, 1.11767, 0, -0.159889, 0, -1.10617, 20.5, 0, -25.7)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢34" type="Node3D" parent="派對_遮蔽" unique_id=1801107655]
+transform = Transform3D(-0.503535, 0, -0.797768, 0, 0.943389, 0, 0.797768, 0, -0.503535, 19.9, 0, 29)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢35" type="Node3D" parent="派對_遮蔽" unique_id=1901379885]
+transform = Transform3D(-0.782817, 0, 0.680347, 0, 1.03715, 0, -0.680347, 0, -0.782817, 22.7, 0, 33)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢36" type="Node3D" parent="派對_遮蔽" unique_id=926927210]
+transform = Transform3D(0.891799, 0, 0.31867, 0, 0.947025, 0, -0.31867, 0, 0.891799, 14.8, 0, 25.3)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢37" type="Node3D" parent="派對_遮蔽" unique_id=635017881]
+transform = Transform3D(0.541321, 0, 0.998389, 0, 1.1357, 0, -0.998389, 0, 0.541321, 18.5, 0, 33.8)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢38" type="Node3D" parent="派對_遮蔽" unique_id=1067886023]
+transform = Transform3D(-0.145369, 0, 0.956318, 0, 0.967304, 0, -0.956318, 0, -0.145369, 20.7, 0, 34)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢39" type="Node3D" parent="派對_遮蔽" unique_id=1628189521]
+transform = Transform3D(-1.17341, 0, -0.0913428, 0, 1.17696, 0, 0.0913428, 0, -1.17341, -31.7, 0, 17.4)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢40" type="Node3D" parent="派對_遮蔽" unique_id=933147191]
+transform = Transform3D(0.840006, 0, 0.589472, 0, 1.0262, 0, -0.589472, 0, 0.840006, -28.7, 0, 16.9)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢41" type="Node3D" parent="派對_遮蔽" unique_id=1229874668]
+transform = Transform3D(0.962564, 0, 0.184017, 0, 0.979996, 0, -0.184017, 0, 0.962564, -31.9, 0, 22.6)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢42" type="Node3D" parent="派對_遮蔽" unique_id=228021174]
+transform = Transform3D(0.155159, 0, -1.13961, 0, 1.15012, 0, 1.13961, 0, 0.155159, -35.1, 0, 19.2)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢43" type="Node3D" parent="派對_遮蔽" unique_id=2141876153]
+transform = Transform3D(0.0833037, 0, -1.10349, 0, 1.10663, 0, 1.10349, 0, 0.0833037, 40, 0, 50)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢44" type="Node3D" parent="派對_遮蔽" unique_id=1877062771]
+transform = Transform3D(-0.0472988, 0, 0.960101, 0, 0.961266, 0, -0.960101, 0, -0.0472988, 38.6, 0, 54.8)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢45" type="Node3D" parent="派對_遮蔽" unique_id=1172831813]
+transform = Transform3D(0.998576, 0, 0.180506, 0, 1.01476, 0, -0.180506, 0, 0.998576, 38.4, 0, 48.4)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢46" type="Node3D" parent="派對_遮蔽" unique_id=482420299]
+transform = Transform3D(0.101521, 0, -1.17634, 0, 1.18072, 0, 1.17634, 0, 0.101521, -18.2, 0, 9.8)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢47" type="Node3D" parent="派對_遮蔽" unique_id=1301869392]
+transform = Transform3D(-0.52982, 0, 0.78511, 0, 0.947158, 0, -0.78511, 0, -0.52982, -15.9, 0, 10.3)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢48" type="Node3D" parent="派對_遮蔽" unique_id=834786252]
+transform = Transform3D(0.921785, 0, 0.140389, 0, 0.932414, 0, -0.140389, 0, 0.921785, -14.5, 0, 12.7)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢49" type="Node3D" parent="派對_遮蔽" unique_id=158418440]
+transform = Transform3D(1.1208, 0, -0.224152, 0, 1.143, 0, 0.224152, 0, 1.1208, -14.3, 0, 8)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢50" type="Node3D" parent="派對_遮蔽" unique_id=1208917545]
+transform = Transform3D(-0.494215, 0, -0.794563, 0, 0.935724, 0, 0.794563, 0, -0.494215, 17.9, 0, -7.5)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢51" type="Node3D" parent="派對_遮蔽" unique_id=670595533]
+transform = Transform3D(-1.01769, 0, -0.0781889, 0, 1.02069, 0, 0.0781889, 0, -1.01769, 16.7, 0, -9.7)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢52" type="Node3D" parent="派對_遮蔽" unique_id=1953644403]
+transform = Transform3D(-0.524078, 0, -0.739193, 0, 0.906126, 0, 0.739193, 0, -0.524078, 15.7, 0, -7.8)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢53" type="Node3D" parent="派對_遮蔽" unique_id=1558576823]
+transform = Transform3D(0.689455, 0, -0.856049, 0, 1.09917, 0, 0.856049, 0, 0.689455, 19.8, 0, -9.9)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢54" type="Node3D" parent="派對_遮蔽" unique_id=28259634]
+transform = Transform3D(-0.679315, 0, 0.754337, 0, 1.01513, 0, -0.754337, 0, -0.679315, 17.6, 0, 14.6)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢55" type="Node3D" parent="派對_遮蔽" unique_id=1920398198]
+transform = Transform3D(-1.0849, 0, -0.367121, 0, 1.14533, 0, 0.367121, 0, -1.0849, 14.7, 0, 12.1)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢56" type="Node3D" parent="派對_遮蔽" unique_id=1893894037]
+transform = Transform3D(-0.313021, 0, -1.13969, 0, 1.18189, 0, 1.13969, 0, -0.313021, 12.3, 0, 12.9)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢57" type="Node3D" parent="派對_遮蔽" unique_id=946581294]
+transform = Transform3D(0.77114, 0, -0.697347, 0, 1.03969, 0, 0.697347, 0, 0.77114, 13.2, 0, 15.4)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢58" type="Node3D" parent="派對_遮蔽" unique_id=233383460]
+transform = Transform3D(1.11292, 0, 0.41932, 0, 1.1893, 0, -0.41932, 0, 1.11292, -16.9, 0, -16.2)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢59" type="Node3D" parent="派對_遮蔽" unique_id=2128027952]
+transform = Transform3D(-0.0250804, 0, -1.17578, 0, 1.17605, 0, 1.17578, 0, -0.0250804, -17.3, 0, -12.9)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢60" type="Node3D" parent="派對_遮蔽" unique_id=763819599]
+transform = Transform3D(-0.941984, 0, 0.39928, 0, 1.02311, 0, -0.39928, 0, -0.941984, -14.6, 0, -16.8)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢61" type="Node3D" parent="派對_遮蔽" unique_id=737500256]
+transform = Transform3D(0.766351, 0, -0.695414, 0, 1.03484, 0, 0.695414, 0, 0.766351, -12.4, 0, -13.9)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢62" type="Node3D" parent="派對_遮蔽" unique_id=688894269]
+transform = Transform3D(1.13576, 0, -0.0555904, 0, 1.13712, 0, 0.0555904, 0, 1.13576, -60.1, 0, -63.5)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢63" type="Node3D" parent="派對_遮蔽" unique_id=528759787]
+transform = Transform3D(0.414934, 0, 0.845867, 0, 0.942157, 0, -0.845867, 0, 0.414934, -59.6, 0, -61)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢64" type="Node3D" parent="派對_遮蔽" unique_id=1107184814]
+transform = Transform3D(-1.14106, 0, 0.143172, 0, 1.15, 0, -0.143172, 0, -1.14106, -55.7, 0, -64.3)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢65" type="Node3D" parent="派對_遮蔽" unique_id=1471626738]
+transform = Transform3D(0.968787, 0, 0.598384, 0, 1.13869, 0, -0.598384, 0, 0.968787, 54.8, 0, -46.9)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢66" type="Node3D" parent="派對_遮蔽" unique_id=543220104]
+transform = Transform3D(0.206566, 0, 1.12081, 0, 1.13968, 0, -1.12081, 0, 0.206566, 55.6, 0, -49)
+script = ExtResource("2_wwx2q")
+kind = "bush"
+
+[node name="草叢67" type="Node3D" parent="派對_遮蔽" unique_id=1386782714]
+transform = Transform3D(1.1241, 0, 0.0884542, 0, 1.12757, 0, -0.0884542, 0, 1.1241, 52.5, 0, -49.5)
+script = ExtResource("2_wwx2q")
+kind = "bush"

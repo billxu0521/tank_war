@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://levels/level_item.gd" id="1_73r77"]
+
+[node name="灰盒_安全屋" type="Node3D" unique_id=209089638]
+script = ExtResource("1_73r77")
+kind = "gb_safe"
+size = Vector3(4.6, 3, 4.6)
