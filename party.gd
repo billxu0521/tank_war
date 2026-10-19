@@ -191,15 +191,16 @@ func _start_round() -> void:
 	egg.carrier = 0
 	egg.pickup = 0.0
 	egg.extract = 0.0
+	var spots := range(main.spawn_points.size())
+	spots.shuffle()   # 準備階段牛仔隨機出生，各站一個點不擠在一起
 	for id: int in _roster:
 		if id != dino_id and _present(id):
-			_spawn_cowboy(id, id < 0, -1)
+			_spawn_cowboy(id, id < 0, spots.pop_back() if not spots.is_empty() else -1)
 	var b: Node3D = main._boss()
 	if b == null:
 		b = main.spawn_boss()
 	b.pilot = 0
-	var at: Variant = main.get(&"dino_spawn")   # 地圖中央（map 放的擺設）；沒有就正中央
-	var c: Vector3 = at if at is Vector3 else Vector3.ZERO
+	var c: Vector3 = main.dino_spawn   # 地圖中央（擺設種類 dino_spawn）；沒放就是正中央
 	b.global_position = main._on_ground(Vector3(c.x, 4.2, c.z))
 	b.reset_physics_interpolation()
 	b.hp = b.max_hp
@@ -270,10 +271,10 @@ func _spawn_cowboy(id: int, bot: bool, index: int) -> void:
 
 ## 牛仔出生／重生點：選了就用選的，沒選就隨機；地圖沒放（spawn_points 空的）就退回 main._spawn_point
 func _spawn_spot(index: int) -> Vector3:
-	var pts: Variant = main.get(&"spawn_points")
-	if pts == null or (pts as Array).is_empty():
+	var pts: Array[Vector3] = main.spawn_points
+	if pts.is_empty():
 		return main._spawn_point()
-	return pts[index] if index >= 0 and index < (pts as Array).size() else (pts as Array).pick_random()
+	return pts[index] if index >= 0 and index < pts.size() else pts.pick_random()
 
 
 ## 帶蛋的人不見了（死了或離線）：蛋掉在他最後的位置，落到地上

@@ -107,8 +107,8 @@ const RULES := {
 		desc = "搶蛋，但尼諾拉由玩家操作（勾「我想當恐龍」的人每局抽一個，沒人勾就是電腦）。帶蛋撤離的牛仔贏，時間到沒人撤離就是尼諾拉贏。"},
 	&"dino_duel": {name = "恐龍決鬥", lives = 5, dino = true, egg = false, timer = false,
 		desc = "所有牛仔合力打一隻恐龍，打死牠大家一起贏。每人可以重生 5 次，全部出局就是恐龍贏。小心，打到隊友一樣會扣血。"},
-	# 規則本體在 party.gd（命數、計時、計分自己管，不走上面的 lives／timer）
-	&"party": {name = "派對", lives = 3, dino = true, egg = true, timer = true,
+	# 規則本體在 party.gd（命數、計時、計分自己管，不走上面的 lives／timer；lives 填 -1 讓舊的命數系統不插手）
+	&"party": {name = "派對", lives = -1, dino = true, egg = true, timer = true,
 		desc = "四個人輪流當恐龍，四回合加總比分數（不到四人用電腦補）。恐龍先花 15 秒藏蛋，牛仔每回合 3 條命，帶蛋撤離就贏這回合。"},
 }
 const DUEL_BOSS_HP := 3000   # 恐龍決鬥的恐龍血量（搶蛋模式打不死、900 血會倒地）
@@ -117,6 +117,7 @@ var _lives := {}   # 牛仔的連線編號 -> 還能重生幾次。只有用得�
 var _out := {}     # 出局的牛仔：連線編號 -> 是不是 bot（新的一局要生回來）
 var _exit_pads: Array[Node3D] = []   # 撤離區的地面標示：沒有蛋的模式藏起來
 var party: Party   # 派對模式的回合、計分（party.gd）；不是派對模式是 null
+var _party_hud: PartyHud   # 派對模式的畫面（方位條要問它是不是在選重生點）
 
 var _props := {}   # 物件名 -> Mesh，從 props.glb 拿出來共用
 var _terrain: Terrain
@@ -175,9 +176,9 @@ func _ready() -> void:
 	if DisplayServer.get_name() != "headless" and get_window().size == base:
 		get_window().set_deferred(&"mode", Window.MODE_MAXIMIZED)
 	_add_report_button()
-	var party_hud := PartyHud.new()   # 派對模式的畫面（party_hud.gd），party 是 null 時自己藏起來
-	party_hud.main = self
-	$UI/Root.add_child(party_hud)
+	_party_hud = PartyHud.new()   # 派對模式的畫面（party_hud.gd），party 是 null 時自己藏起來
+	_party_hud.main = self
+	$UI/Root.add_child(_party_hud)
 	_flatten_models()
 	_use_cjk_font()
 	_add_settings()
@@ -1467,6 +1468,9 @@ func _process(delta: float) -> void:
 		hud.text = "沙盒    我的血量：%s    恐龍靶血量：%s" % [mine, dino.hp if dino else "重生中"]
 		return
 	var my_id := multiplayer.get_unique_id()
+	if party:   # 回合、倒數、命數在左上（party_hud.gd）
+		hud.text = "我的血量：%s    蛋：%s" % [mine, egg_state]
+		return
 	if _uses_lives():
 		var left := "出局" if _out.has(my_id) else "剩 %d 次" % int(_lives.get(my_id, 0))
 		hud.text = "%s    我的血量：%s    重生：%s    場上還有 %d 名牛仔" % [RULES[rules].name, mine, left, _remaining().size()]
@@ -1478,11 +1482,15 @@ func _process(delta: float) -> void:
 		players.get_child_count() - (1 if dino else 0),
 		egg_state]
 
+## 出局了（只能觀戰）：派對模式看 Party 的命數（每回合補滿），其他模式看 _out
+func _is_out(id: int) -> bool:
+	return int(party.lives.get(id, 1)) <= 0 if party else _out.has(id)
+
 ## 出局之後觀戰：鏡頭跟在一個還在場上的牛仔後上方（左鍵換人）
 var _spectator: Camera3D
 var _watch := 0
 func _update_spectator(me: Node) -> void:
-	var out := me == null and _out.has(multiplayer.get_unique_id())
+	var out := me == null and _is_out(multiplayer.get_unique_id())
 	if not out:
 		if _spectator and _spectator.current:
 			_spectator.current = false
@@ -1529,12 +1537,13 @@ func _update_center_info(me: Node) -> void:
 	elif _had_me and _dead_ms < 0:
 		_dead_ms = now
 	var t := ""
-	if result.visible:
+	if result.visible or (party and party.phase != &"play"):
 		t = ""
-	elif me == null and _out.has(multiplayer.get_unique_id()):
+	elif me == null and _is_out(multiplayer.get_unique_id()):
 		t = "你出局了，觀戰中"
 	elif me == null and _dead_ms >= 0:
-		t = "%d 秒後重生" % maxi(1, ceili(RESPAWN_DELAY - (now - _dead_ms) / 1000.0))
+		var delay := Party.RESPAWN_SECONDS if party else RESPAWN_DELAY
+		t = "%d 秒後重生" % maxi(1, ceili(delay - (now - _dead_ms) / 1000.0))
 	elif egg.extract > 0.0:
 		var who := "你" if egg.carrier == multiplayer.get_unique_id() else "牛仔 %d" % egg.carrier
 		t = "%s撤離中：還剩 %.1f 秒" % [who, maxf(EXTRACT_SECONDS - egg.extract, 0.0)]
@@ -1987,6 +1996,11 @@ func _update_compass() -> void:
 		marks.append({"deg": Compass.bearing(at, e), "dist": at.distance_to(e),
 			"color": Compass.EXIT_COLOR, "label": "撤離"})
 	var boss := get_tree().get_first_node_in_group(&"boss") as Node3D
+	if _party_hud and _party_hud.visible and _party_hud.waiting_respawn():   # 派對模式等重生：標出能選的重生點
+		var pts := _party_hud.spawn_points()
+		for i in pts.size():
+			marks.append({"deg": Compass.bearing(at, pts[i]), "dist": at.distance_to(pts[i]),
+				"color": Compass.EGG_COLOR if i == _party_hud.picked else Color(0.4, 0.9, 0.5), "label": "重生 %d" % (i + 1)})
 	if _solo_dino and boss:   # 測恐龍行為：標出恐龍在哪
 		marks.append({"deg": Compass.bearing(at, boss.global_position), "dist": at.distance_to(boss.global_position),
 			"color": Color(1, 0.35, 0.3), "label": "恐龍"})

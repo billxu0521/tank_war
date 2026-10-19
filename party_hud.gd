@@ -146,7 +146,7 @@ func waiting_respawn() -> bool:
 
 
 func spawn_points() -> Array:
-	var pts: Array = main.get(&"spawn_points") if &"spawn_points" in main else []
+	var pts: Array = main.spawn_points
 	return pts.slice(0, 9)   # 數字鍵只有 1～9
 
 
