@@ -252,7 +252,7 @@ func _process(delta: float) -> void:
 	if not _player.is_local:
 		return
 	# 滑鼠放開（Esc）時不接受開火，不然在選單狀態亂點也會射。爬梯子兩手都在梯子上，也不能開槍
-	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not _player.is_climbing():
+	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not _player.is_climbing() and not _player.frozen():
 		if _melee_held >= 0.0 or _cook >= 0.0:
 			pass   # 蓄力近戰中、拿著點燃的炸藥：不能開槍、換彈、換槍
 		elif Input.is_action_just_pressed("fire"):
