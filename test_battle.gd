@@ -2201,7 +2201,7 @@ func _case_greybox() -> void:
 		var q := PhysicsShapeQueryParameters3D.new()
 		q.shape = cap
 		q.exclude = [ground.get_rid()]
-		q.transform = Transform3D(body.global_basis, body.global_transform * Vector3(0, cap.height * 0.5 + 0.05, rec.size.z * 0.5 - Greybox.T * 0.5))
+		q.transform = Transform3D(body.global_basis, body.global_transform * Vector3(0, cap.height * 0.5 + Greybox.FLOOR + 0.05, rec.size.z * 0.5 - Greybox.T * 0.5))
 		return not space.intersect_shape(q, 1).is_empty()
 	var small := 0
 	var big := 0
@@ -2249,6 +2249,19 @@ func _case_greybox() -> void:
 				tilted.append("%s %.1f" % [rec.pos, dy])
 				break
 	_ck(tilted.is_empty(), "灰盒物件底下的地不平（中心位置、高低差）：%s" % [tilted])
+	# 畫出來的地形（格點內插，fast_height）不能高過一樓地板：會從地板穿出來一塊塊閃（2026-10-19 回報的室內反光）
+	var poke := []
+	for rec: Dictionary in m._level:
+		if rec.kind != &"gb_house":
+			continue
+		var top: float = m._terrain.height(rec.pos.x, rec.pos.z) + Greybox.FLOOR - 0.01
+		var basis := Basis(Vector3.UP, rec.yaw)
+		for i in 81:
+			var at: Vector3 = rec.pos + basis * Vector3((i % 9 / 8.0 - 0.5) * rec.size.x, 0, (i / 9 / 8.0 - 0.5) * rec.size.z)
+			if m._terrain.fast_height(at.x, at.z) > top:
+				poke.append(rec.pos)
+				break
+	_ck(poke.is_empty(), "地形從灰盒房子的地板穿出來：%s" % [poke])
 	# 柵欄一段只有兩端貼地、中間是直的：沿線的地面不能比柵欄底部低（中段懸空能從底下鑽過）或高太多（埋掉）
 	var hanging := []
 	for rec: Dictionary in m._level:

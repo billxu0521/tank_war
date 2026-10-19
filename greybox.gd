@@ -12,6 +12,7 @@ const WINDOW := Vector3(1.2, 1.0, 2.1)   # 寬、窗台高、窗頂高。窗台 
 const RAMP_W := 1.4            # 上樓的斜坡：貼著左牆，從前面往後爬
 const RAMP_DEG := 30.0
 const SLAB := 0.2              # 樓板厚
+const FLOOR := 0.05            # 一樓地板比地面高一點：整平過的地面剛好跟地板一樣高時，地面的三角形會從地板穿出來一塊塊閃
 
 static var _mat: ShaderMaterial
 static var _ground_mat: ShaderMaterial
@@ -55,7 +56,7 @@ static func house(size: Vector3, floors: int, big := false) -> StaticBody3D:
 	var hz := size.z * 0.5
 	var h := size.y
 	floors = maxi(floors, 1)
-	_box(p, Vector3(0, -BURY * 0.5, 0), Vector3(size.x, BURY, size.z))   # 地板（實心埋進地下）
+	_box(p, Vector3(0, (FLOOR - BURY) * 0.5, 0), Vector3(size.x, BURY + FLOOR, size.z))   # 地板（實心埋進地下）
 	_box(p, Vector3(0, h * floors + T * 0.5, 0), Vector3(size.x, T, size.z))   # 屋頂
 	var run := h / tan(deg_to_rad(RAMP_DEG))
 	var z0 := hz - T - 1.0                 # 斜坡起點（低的那端）
