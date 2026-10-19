@@ -134,6 +134,13 @@ func step(delta: float) -> void:
 
 ## 開新的一場：分數歸零、排參賽者、開第一回合
 func start() -> void:
+	var fixed := false
+	for w: Destructible in main._wrecks:   # 上一場拆掉的地形立回來
+		if w.hits > 0:
+			w.restore.rpc()
+			fixed = true
+	if fixed:
+		main.bake_nav(true)
 	scores.clear()
 	names.clear()
 	round_index = 0
@@ -206,9 +213,13 @@ func _start_round() -> void:
 	b.hp = b.max_hp
 	if &"down_left" in b:
 		b.down_left = 0.0
+		b.guard_left = 0.0
 	main._announce.rpc("第 %d 回合：%s 當恐龍" % [round_index + 1, names.get(dino_id, "")])
 	if dino_id > 0 and _present(dino_id):
 		main.make_pilot(dino_id)   # 真人：操作尼諾拉（對抗模式那套）；電腦：boss 自己跑
+	else:   # 電腦不會藏蛋：開場就放在中央（不然蛋跟著牠追到站著不動的牛仔旁邊）
+		_drop_egg_at(b.global_position)
+		egg_placed = true
 	_sync()
 
 
@@ -219,13 +230,13 @@ func _refresh_roster() -> void:
 		if _roster.has(h):
 			continue
 		var slot := -1
-		for i in range(round_index + 1, _roster.size()):
+		for i in range(round_index, _roster.size()):   # 這回合那格的電腦也還沒當過
 			if _roster[i] < 0:
 				slot = i
 				break
 		var n := _roster.size() - _roster.filter(func(id: int) -> bool: return id < 0).size() + 1
 		names[h] = "玩家 %d" % n
-		scores[h] = 0
+		scores[h] = int(scores.get(h, 0))   # 中途加入那回合賺的分留著
 		if slot >= 0:
 			scores.erase(_roster[slot])
 			names.erase(_roster[slot])
@@ -257,8 +268,7 @@ func _respawn_step(delta: float) -> void:
 		var bot: bool = _waiting[id][1]
 		_waiting.erase(id)
 		if _present(id) and not main.players.has_node(NodePath(str(id))):
-			_spawn_cowboy(id, bot, int(_pick.get(id, -1)))
-			_pick.erase(id)
+			_spawn_cowboy(id, bot, int(_pick.get(id, -1)))   # 選的點整回合有效（畫面也一直亮著那個）
 
 
 func _spawn_cowboy(id: int, bot: bool, index: int) -> void:

@@ -13,6 +13,7 @@ var hits_needed := 1
 var hits := 0
 ## 外觀不在這個 body 底下的（樹的模型是另外擺的），倒的時候一起動、一起藏
 var visual: Node3D
+var _home: Array = []   # 第一次挨打前的樣子 [自己的 transform, 外觀的 transform, 碰撞層]，restore 用
 
 
 func tail_hit(from: Vector3) -> void:
@@ -22,6 +23,8 @@ func tail_hit(from: Vector3) -> void:
 
 @rpc("authority", "call_local", "reliable")
 func _set_hits(n: int, from: Vector3, instant: bool) -> void:
+	if _home.is_empty():
+		_home = [transform, visual.transform if visual else Transform3D(), collision_layer]
 	hits = n
 	if n < hits_needed:
 		if not instant:
@@ -75,6 +78,22 @@ func _collapse() -> void:
 	t.tween_property(self, "position", position + Vector3.DOWN * (h + 1.0), 1.5) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	t.tween_callback(_hide_all)
+
+
+## 新的一場（party.gd 的 start）：拆過的全部立回來。導航網格由呼叫的人重烘一次
+@rpc("authority", "call_local", "reliable")
+func restore() -> void:
+	if _home.is_empty():
+		return
+	# ponytail: 不管還在播的倒下動畫：動畫 5 秒內播完，新的一場在 final 30 秒之後
+	hits = 0
+	transform = _home[0]
+	if visual:
+		visual.transform = _home[1]
+		visual.show()
+	collision_layer = _home[2]
+	add_to_group(&"destructible")
+	show()
 
 
 func _hide_all() -> void:

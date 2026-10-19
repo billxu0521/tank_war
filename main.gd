@@ -459,6 +459,9 @@ func _to_lobby(msg: String) -> void:
 	if Period.current != period:   # 時段也是
 		Period.apply(self, period)
 	_apply_rules()
+	if party:   # 大廳選的是派對：開局時才建（不然畫面會疊在大廳上）
+		party.free()
+		party = null
 	egg.visible = true
 	for n in get_tree().get_nodes_in_group(&"sandbox_prop"):
 		n.free()
@@ -478,8 +481,10 @@ func _to_lobby(msg: String) -> void:
 	hud.text = ""
 	status.text = msg
 	_show_cursor()
-	# 靶場是另一張地圖：回大廳就重載回牧場（測試自己組的場景不是 current_scene，不重載）
-	if mode == &"range":
+	# 靶場是另一張地圖：回大廳就重載回牧場（測試自己組的場景不是 current_scene，不重載）。
+	# 甩尾拆過東西也重載：下一局（或加入別人的房間）場地要是完整的
+	var wrecked := _wrecks.any(func(w: Destructible) -> bool: return w.hits > 0)
+	if mode == &"range" or wrecked:
 		mode = &""
 		if get_tree().current_scene == self:
 			get_tree().reload_current_scene.call_deferred()
@@ -1989,18 +1994,19 @@ func _update_compass() -> void:
 	_compass.set_view(cam)
 	var at := cam.global_position
 	var marks := []
-	if egg.visible and egg.carrier != multiplayer.get_unique_id():
+	# 派對模式蛋是恐龍藏的：沒人拿起來之前不標
+	if egg.visible and egg.carrier != multiplayer.get_unique_id() and (party == null or egg.carrier != 0):
 		marks.append({"deg": Compass.bearing(at, egg.global_position), "dist": at.distance_to(egg.global_position),
 			"color": Compass.EGG_COLOR, "label": "蛋"})
 	for e: Vector3 in (_exits if RULES[rules].egg and not _solo_dino else []):
 		marks.append({"deg": Compass.bearing(at, e), "dist": at.distance_to(e),
 			"color": Compass.EXIT_COLOR, "label": "撤離"})
 	var boss := get_tree().get_first_node_in_group(&"boss") as Node3D
-	if _party_hud and _party_hud.visible and _party_hud.waiting_respawn():   # 派對模式等重生：標出能選的重生點
+	if party and _party_hud._party == party and _party_hud.waiting_respawn():   # 畫面還沒換到新的 Party 時別問它   # 派對模式等重生：標出能選的重生點
 		var pts := _party_hud.spawn_points()
 		for i in pts.size():
 			if i == _party_hud.picked:
-				marks.append({"deg": Compass.bearing(at, pts[i]), "dist": at.distance_to(pts[i]), "color": Compass.EGG_COLOR, "label": "重生點 %d" % (i + 1)})
+				marks.append({"deg": Compass.bearing(at, pts[i]), "dist": at.distance_to(pts[i]), "color": Color(0.4, 0.9, 0.5), "label": "重生點 %d" % (i + 1)})
 			elif _party_hud.picked < 0:   # 還沒選：只寫編號（九個都寫距離會疊在一起，距離看中間的清單）
 				marks.append({"deg": Compass.bearing(at, pts[i]), "color": Color(0.4, 0.9, 0.5), "label": str(i + 1)})
 	if _solo_dino and boss:   # 測恐龍行為：標出恐龍在哪

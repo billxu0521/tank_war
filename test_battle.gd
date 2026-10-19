@@ -2385,6 +2385,9 @@ func _case_party_destruction() -> void:
 	_ck(house.hits == 1 and house.collision_layer != 0, "房子甩一下還站著")
 	house.tail_hit(Vector3.ZERO)
 	_ck(house.hits == 2 and house.collision_layer == 0, "房子甩兩下倒了、碰撞沒了")
+	var layer0: int = tree.get(&"_home")[2]
+	house.restore()
+	_ck(house.hits == 0 and house.collision_layer == layer0 and house.visible and house.is_in_group(&"destructible"), "新的一場：倒掉的房子立回來")
 	m.rules = &"egg"
 	_end(m)
 	Main.level_file = keep

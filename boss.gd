@@ -447,7 +447,7 @@ func _game() -> Node:
 
 func _party() -> bool:
 	var g := _game()
-	return g != null and g.rules == &"party"
+	return g != null and g.rules == &"party" and not g._sandbox   # 大廳選了派對再按沙盒：照沙盒
 
 func _flat_dist(at: Vector3) -> float:
 	return Vector2(at.x - global_position.x, at.z - global_position.z).length()

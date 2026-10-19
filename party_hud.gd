@@ -95,7 +95,7 @@ func _grid(parent: Control) -> GridContainer:
 
 func _process(delta: float) -> void:
 	var p: Node = main.get(&"party") if main else null
-	visible = p != null
+	visible = p != null and not main.lobby.visible
 	if p != _party:
 		if _party and is_instance_valid(_party):
 			_party.changed.disconnect(refresh)
