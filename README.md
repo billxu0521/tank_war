@@ -201,7 +201,11 @@ godot --headless --quit --editor         # 新增 class_name 後重建型別快�
 
 | 檔案 | 做什麼 |
 |---|---|
-| `main.gd/tscn` | 大廳、連線、場地、蛋與撤離、勝負、HUD |
+| `main.gd/tscn` | 大廳、連線、蛋與撤離、勝負、一局流程 |
+| `arena_map.gd` | 蓋場地：地形、建築、柵欄、草和灌木、撤離區、靶場（掛在 main.tscn 的 Arena 節點，main 用 `map.` 讀） |
+| `model_materials.gd` | 模型材質：平面著色、換成共用的 facet 材質、像素和紋理規則（全部靜態） |
+| `match_hud.gd` | 局內畫面資訊：方位條、倒數、準心、boss 條、觀戰鏡頭、左上和右上那行字（main 的 `_process` 每幀呼叫） |
+| `match_rules.gd` | 遊戲模式表：每個模式的命數、有沒有蛋和恐龍、怎麼判勝負，main 查表 |
 | `terrain.gd` | 丘陵地形：高度、整平區、畫面網格和碰撞（同一份高度） |
 | `interact/` | F 互動的東西：`door.gd`（開關走主機、晚加入補送）、`ladder.gd`（爬的邏輯在 cowboy.gd）、`accent.gd`（固定強調色，看著時更亮） |
 | `lantern.gd` | 油燈：打破會潑油燒起來（`oil_fire.gd`）。場上所有的燈都是它：繫馬柱、穀倉、農舍、店面模型上做死的燈，載入時挖掉換成這個（`replace_baked`） |
