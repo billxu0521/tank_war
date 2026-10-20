@@ -20,7 +20,7 @@ func _physics_process(delta: float) -> bool:
 		_main._on_sandbox_pressed()
 	if _f == 40:
 		for mi: MeshInstance3D in _main.find_children("*", "MeshInstance3D", true, false):
-			for kind: StringName in _main.HOUSE_KINDS:
+			for kind: StringName in ArenaMap.HOUSE_KINDS:
 				if mi.mesh == _main._props.get(kind):
 					var body := CharacterBody3D.new()
 					var cs := CollisionShape3D.new()

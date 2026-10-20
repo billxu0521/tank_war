@@ -2,7 +2,7 @@
 class_name LevelRoot
 extends Node3D
 ## 場景檔（levels/ranch.tscn）的根節點。在 Godot 編輯器裡：
-##   - 畫出地形（跟遊戲同一支 Main.make_terrain 算），物件拖到哪就自動貼著地面
+##   - 畫出地形（跟遊戲同一支 ArenaMap.make_terrain 算），物件拖到哪就自動貼著地面
 ##   - 「重算地形」：改了整平區（flat）的位置或大小之後按一下
 ##   - 「檢查擺設」：貼地、重疊、柵欄穿房子、撤離區、出生點……有問題的列在下面的「輸出」面板，物件頭上標紅
 ## 遊戲裡不跑這些（main.gd 只讀每個 LevelItem 的資料）。
@@ -42,12 +42,12 @@ func rebuild_terrain() -> void:
 		elif it.kind == "road":
 			roads.append(Rect2(p.x - it.size.x * 0.5, p.z - it.size.z * 0.5, it.size.x, it.size.z))
 	Trails.enabled = scene_file_path == Main.RANCH_LEVEL   # 彎曲小路只有牧場有
-	terrain = Main.make_terrain(flats)
+	terrain = ArenaMap.make_terrain(flats)
 	var old := get_node_or_null(^"_terrain_preview")
 	if old:
 		old.free()
 	var t := terrain
-	var body := terrain.build(func(x: float, z: float, h: float) -> Color: return Main.ground_color(t, wheat, roads, x, z, h),
+	var body := terrain.build(func(x: float, z: float, h: float) -> Color: return ArenaMap.ground_color(t, wheat, roads, x, z, h),
 		Callable(), Greybox.ground_material() if scene_file_path == Main.GREYBOX_LEVEL else null)
 	body.name = "_terrain_preview"
 	add_child(body)   # 不設 owner：不存進場景檔

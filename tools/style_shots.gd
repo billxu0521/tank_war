@@ -36,7 +36,7 @@ func _process(_d: float) -> bool:
 		for kv in OS.get_environment("SHADER").split(",", false):
 			mat.set_shader_parameter(kv.get_slice("=", 0), kv.get_slice("=", 1).to_float())
 		# FACET="ramp_steps=0"：共用材質（facet.gdshader）的參數，每個換過的材質都改
-		for f: ShaderMaterial in _main.get_script()._facet_of.values():
+		for f: ShaderMaterial in ModelMaterials._facet_of.values():
 			for kv in OS.get_environment("FACET").split(",", false):
 				f.set_shader_parameter(kv.get_slice("=", 0), kv.get_slice("=", 1).to_float())
 	if _f > 40 and (_f - 40) % 30 == 0:
@@ -91,9 +91,9 @@ func _plan() -> void:
 		bmi.global_position = _ground(bspot + off)
 	_views.append(["bush", bspot + Vector3(0, 1.6, 6.5), bspot + up * 0.8])
 	# 場上撒的灌木（MultiMesh 那批）：挑離農莊最近的一叢，從 6 公尺外、背光和順光各拍一張
-	if not _main._bushes.is_empty():
-		var fb: Vector3 = _main._bushes[0]
-		for b: Vector3 in _main._bushes:
+	if not _main.map._bushes.is_empty():
+		var fb: Vector3 = _main.map._bushes[0]
+		for b: Vector3 in _main.map._bushes:
 			if b.length() < fb.length():
 				fb = b
 		fb = _ground(fb)
@@ -101,7 +101,7 @@ func _plan() -> void:
 		_views.append(["field_bush_b", fb + Vector3(-6, 1.6, 0), fb + up * 0.6])
 	# 環境小物件（main.gd _clutter_field）：每種挑第一個，從 6 公尺外眼睛高度看
 	var seen := {}
-	for c: Array in _main.clutter_spots:
+	for c: Array in _main.map.clutter_spots:
 		if seen.has(c[0]):
 			continue
 		seen[c[0]] = true
@@ -118,7 +118,7 @@ func _plan() -> void:
 	var cover := [0, 0, 0, 0]
 	for gx in range(-80, 81, 3):
 		for gz in range(-80, 81, 3):
-			var w: Color = _main._ground_mix(gx, gz, _main._terrain.height(gx, gz))
+			var w: Color = _main.map._ground_mix(gx, gz, _main._terrain.height(gx, gz))
 			var arr := [w.r, w.g, w.b, w.a]
 			for k in 4:
 				if arr[k] > 0.5:
@@ -135,7 +135,7 @@ func _plan() -> void:
 	var gcs := {}
 	for mmi: MultiMeshInstance3D in _main.get_node(^"Arena").find_children("*", "MultiMeshInstance3D", true, false):
 		var mesh: Mesh = mmi.multimesh.mesh
-		if mmi.material_override == null or (mmi.material_override as ShaderMaterial).shader != _main.GROUNDCOVER_SHADER or mmi.multimesh.instance_count < 20:
+		if mmi.material_override == null or (mmi.material_override as ShaderMaterial).shader != ArenaMap.GROUNDCOVER_SHADER or mmi.multimesh.instance_count < 20:
 			continue
 		var k := mesh.get_instance_id()
 		var p: Vector3 = mmi.position + mmi.multimesh.get_instance_transform(0).origin

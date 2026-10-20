@@ -83,7 +83,7 @@ func _blast_falloff(near: Node3D, far: Node3D) -> void:
 
 
 func _wall_blocks(near: Node3D) -> void:
-	m._solid_box(near.global_position + Vector3(-1.0, 1.5, 0), Vector3(0.3, 3.0, 3.0))
+	m.map._solid_box(near.global_position + Vector3(-1.0, 1.5, 0), Vector3(0.3, 3.0, 3.0))
 	await _frames_pass()
 	vm._explode(near.global_position + Vector3(-2.0, 0.9, 0), Viewmodel.KIND_DYNAMITE)
 	_ck(near.hp == near.max_hp, "隔著牆炸不到（扣了 %d）" % (near.max_hp - near.hp))

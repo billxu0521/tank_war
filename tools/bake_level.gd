@@ -41,7 +41,7 @@ func _process(_d: float) -> bool:
 			group.name = g[0]
 			level.add_child(group)
 			group.owner = level
-			for rec: Dictionary in _m._level:
+			for rec: Dictionary in _m.map._level:
 				if not String(rec.kind) in g[1]:
 					continue
 				var it := LevelItem.from_record(rec)
@@ -56,6 +56,6 @@ func _process(_d: float) -> bool:
 		var packed := PackedScene.new()
 		packed.pack(level)
 		var err := ResourceSaver.save(packed, OUT)
-		print("烘焙 %d 筆 -> %s（%s）" % [_m._level.size(), OUT, "OK" if err == OK else "失敗 %d" % err])
+		print("烘焙 %d 筆 -> %s（%s）" % [_m.map._level.size(), OUT, "OK" if err == OK else "失敗 %d" % err])
 		quit(0 if err == OK else 1)
 	return false

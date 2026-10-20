@@ -28,11 +28,11 @@ var wear_spots: Array[Vector2] = []
 var noise := FastNoiseLite.new()
 
 func install(m: Node) -> void:
-	town_zone = m.ZONE_TOWN
-	for rec: Dictionary in m._level:
+	town_zone = ArenaMap.ZONE_TOWN
+	for rec: Dictionary in m.map._level:
 		var p := Vector2(rec.pos.x, rec.pos.z)
 		if rec.kind == &"hay_shed":
-			shed_aprons.append(m._shed_rect(rec.pos))
+			shed_aprons.append(m.map._shed_rect(rec.pos))
 		elif rec.kind == &"wheat":
 			fields.append(Rect2(p - Vector2.ONE * rec.size * 0.5, Vector2.ONE * rec.size))
 		elif rec.kind == &"road":
@@ -40,14 +40,14 @@ func install(m: Node) -> void:
 			roads.append(r)
 			if rec.size.z > 3.0 and rec.size.x > rec.size.z * 4.0:
 				town_road = r
-	for rec: Dictionary in m._level:
+	for rec: Dictionary in m.map._level:
 		var p := Vector2(rec.pos.x, rec.pos.z)
 		if not town_road.grow(19.0).has_point(p):
 			continue
 		if rec.kind == &"shop" or rec.kind == &"house":
 			var yaw: float = rec.get("yaw", 0.0)
 			var front := Vector2(sin(yaw), cos(yaw))
-			var depth: float = m.SHOP_HALF.get(rec.get("variant", &""), Vector2(6, 6.5)).y
+			var depth: float = ArenaMap.SHOP_HALF.get(rec.get("variant", &""), Vector2(6, 6.5)).y
 			var a := p + front * (depth - 0.5)
 			var b := Vector2(a.x, town_road.get_center().y)
 			entries.append([a, b, 1.15 + fmod(absf(p.x), 3.0) * 0.15])
@@ -80,12 +80,12 @@ func install(m: Node) -> void:
 	candidate.set_shader_parameter(&"detail_mask", ImageTexture.create_from_image(detail_mask))
 	if not fields.is_empty():
 		candidate.set_shader_parameter(&"row_origin", fields[0].position.x + 0.5)
-	farm_zone = m.ZONE_FARM
-	forest_zone = m.ZONE_FOREST
+	farm_zone = ArenaMap.ZONE_FARM
+	forest_zone = ArenaMap.ZONE_FOREST
 	arena_size = m.ARENA
 	landscape_mask = Image.create(RESOLUTION, RESOLUTION, false, Image.FORMAT_RGBA8)
 	condition_mask = Image.create(RESOLUTION, RESOLUTION, false, Image.FORMAT_RGBA8)
-	for rec: Dictionary in m._level:
+	for rec: Dictionary in m.map._level:
 		var p := Vector2(rec.pos.x, rec.pos.z)
 		if rec.kind == &"tree":
 			tree_count += 1
