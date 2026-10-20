@@ -1212,7 +1212,7 @@ func _case_match_rules() -> void:
 	m._add_player(m.COWBOY, 2)
 	var b: Node = m.spawn_boss()
 	_ck(int(m._lives[1]) == 5, "恐龍決鬥每人可以重生 5 次")
-	_ck(b.max_hp == m.DUEL_BOSS_HP and b.hp == m.DUEL_BOSS_HP, "決鬥的恐龍血量 %d" % m.DUEL_BOSS_HP)
+	_ck(b.max_hp == MatchRules.RULES[&"dino_duel"].boss_hp and b.hp == MatchRules.RULES[&"dino_duel"].boss_hp, "決鬥的恐龍血量 %d" % MatchRules.RULES[&"dino_duel"].boss_hp)
 	var c2: Node = m.players.get_node(^"2")
 	c2.take_damage(30, m.players.get_node(^"1"))
 	_ck(c2.hp == c2.max_hp - 30, "隊友火力：打到隊友會扣血")
