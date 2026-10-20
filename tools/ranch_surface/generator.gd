@@ -32,7 +32,7 @@ func install(main:Node)->void:
 	initial_shape=base.ground_mesh.get_parent().get_child(1).shape
 	gen.m=m;gen.ground=base.ground_mesh;gen.terrain=m._terrain
 	gen.noise.seed=gen.SEED;gen.noise.frequency=0.23
-	for rec:Dictionary in m._level:
+	for rec:Dictionary in m.map._level:
 		var p:=Vector2(rec.pos.x,rec.pos.z)
 		if rec.kind==&"tree" and gen.PATCH.grow(8).has_point(p):gen.trees.append(p)
 	for node:Node in m.get_node(^"Arena").find_children("*","MultiMeshInstance3D",true,false):

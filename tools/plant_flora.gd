@@ -25,9 +25,9 @@ func _initialize() -> void:
 		if v == &"TreePine":
 			v = &"TreePine2"
 		elif String(v).begins_with("TreeOak"):
-			if Main.ZONE_FOREST.has_point(p):
+			if ArenaMap.ZONE_FOREST.has_point(p):
 				v = &"TreeMaple" if roll < 0.25 else (&"TreeWillow" if roll < 0.33 else v)
-			elif Main.ZONE_FARM.has_point(p):
+			elif ArenaMap.ZONE_FARM.has_point(p):
 				v = &"TreeMaple" if roll < 0.15 else v
 			elif roll < 0.08:
 				v = &"TreeDead"
@@ -54,7 +54,7 @@ func _initialize() -> void:
 		var p := Vector2(rng.randf_range(12, 82), z)
 		if p.distance_to(Vector2(78, -78)) < 6.0 or taken.any(func(q: Vector2) -> bool: return q.distance_to(p) < 5.0) \
 				or Main.SANDBOX_RANGE.grow(4.0).has_point(p) \
-				or Main.exit_spots().any(func(e: Vector2) -> bool: return e.distance_to(p) < Main.EXIT_RADIUS + 8.0):   # 靶場、撤離區要空著
+				or ArenaMap.exit_spots().any(func(e: Vector2) -> bool: return e.distance_to(p) < Main.EXIT_RADIUS + 8.0):   # 靶場、撤離區要空著
 			continue
 		var r := rng.randf()
 		var k: Array = kinds[-1]

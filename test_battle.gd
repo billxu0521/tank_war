@@ -483,7 +483,7 @@ func _case_hunt_weapons() -> void:
 
 	# 設計原則：原地平地跳不能超過柵欄高度（過柵欄要翻越）
 	var jump_h: float = me.jump_velocity * me.jump_velocity / (2.0 * ProjectSettings.get_setting("physics/3d/default_gravity"))
-	_ck(jump_h < m.FENCE_H, "原地跳 %.2f 公尺不能超過柵欄 %.2f 公尺" % [jump_h, m.FENCE_H])
+	_ck(jump_h < ArenaMap.FENCE_H, "原地跳 %.2f 公尺不能超過柵欄 %.2f 公尺" % [jump_h, ArenaMap.FENCE_H])
 
 	# 換彈會放下槍回腰射：舉滿時按 R，按著右鍵也舉不起來；換完才舉回去
 	revolver.mag = 3
@@ -843,7 +843,7 @@ func _case_range() -> void:
 	var me: Node3D = m.players.get_node(^"1")
 	var far: Node3D = m.players.get_node(NodePath(str(2 + m.RANGE_TARGETS.size())))
 	_ck(absf(-(far.global_position - me.global_position).z - 150.0) < 1.0, "最遠的靶在 150 公尺")
-	var probs := LevelCheck.run(m._level, null)
+	var probs := LevelCheck.run(m.map._level, null)
 	_ck(probs.is_empty(), "靶場擺設檢查有問題：%s" % [probs.slice(0, 5)])
 	var before: int = m.get_node(^"Arena").get_child_count()
 	m.hit_popup(far.global_position, 42, 150.0, false)
@@ -887,12 +887,12 @@ func _case_sandbox() -> void:
 func _case_rural() -> void:
 	var m := _new_game()
 	var c: Node = m.players.get_node(^"2")
-	_ck(m.FENCE_H >= c.vault_min_height and m.FENCE_H <= c.vault_max_height,
-		"柵欄 %.1f 公尺要在翻越範圍 %.1f~%.1f 內" % [m.FENCE_H, c.vault_min_height, c.vault_max_height])
+	_ck(ArenaMap.FENCE_H >= c.vault_min_height and ArenaMap.FENCE_H <= c.vault_max_height,
+		"柵欄 %.1f 公尺要在翻越範圍 %.1f~%.1f 內" % [ArenaMap.FENCE_H, c.vault_min_height, c.vault_max_height])
 	# 灌木叢：夠多、不長在建築裡和路上；蹲在裡面才藏得住（站著頭會露出來）
-	_ck(m._bushes.size() > m.ARENA * m.ARENA / 500.0, "要有灌木叢可以躲（現在 %d 叢）" % m._bushes.size())   # 每 500 平方公尺至少一叢
+	_ck(m.map._bushes.size() > m.ARENA * m.ARENA / 500.0, "要有灌木叢可以躲（現在 %d 叢）" % m.map._bushes.size())   # 每 500 平方公尺至少一叢
 	var bad := 0
-	for b: Vector3 in m._bushes:
+	for b: Vector3 in m.map._bushes:
 		if not m._is_clear(Vector2(b.x, b.z)) or Trails.edge(b.x, b.z) < 0.0:
 			bad += 1
 	_ck(bad == 0, "灌木不能長在建築裡或路上（%d 叢）" % bad)
@@ -910,12 +910,12 @@ func _case_rural() -> void:
 		var q := PhysicsShapeQueryParameters3D.new()
 		q.shape = cap
 		q.exclude = [d.get_rid()]
-		var mid: Vector3 = d.global_position + Vector3(m.BARN_BACK_W * 0.5 * sc.x, cap.height * 0.5 + 0.05, 0)
+		var mid: Vector3 = d.global_position + Vector3(ArenaMap.BARN_BACK_W * 0.5 * sc.x, cap.height * 0.5 + 0.05, 0)
 		q.transform = Transform3D(Basis(), mid)
 		var hits := m.get_viewport().world_3d.direct_space_state.intersect_shape(q, 4)
 		_ck(hits.is_empty(), "穀倉後門要過得去（縮放 %.2f × %.2f，%s 卡住）" % [sc.x, sc.y, "站著" if sc.y > 0.8 else "蹲著"])
 	_ck(backs > 0, "場上要有穀倉後門")
-	c.global_position = m._bushes[0] + Vector3(0.3, 0.2, 0)
+	c.global_position = m.map._bushes[0] + Vector3(0.3, 0.2, 0)
 	c.sync_crouching = false
 	_ck(not m.hidden_in_bush(c), "站在灌木裡頭會露出來，不算藏住")
 	c.sync_crouching = true
@@ -949,7 +949,7 @@ func _case_rural() -> void:
 					floating.append("%s %.1f" % [kind, above])
 	_ck(floating.is_empty(), "場景小物件要貼地（離地多少公尺：%s）" % [floating])
 	# 擺設檢查（編輯器的「檢查擺設」按鈕跑的同一支）：場景檔要乾淨；檢查本身要抓得到重疊
-	var probs := LevelCheck.run(m._level)
+	var probs := LevelCheck.run(m.map._level)
 	_ck(probs.is_empty(), "擺設檢查有問題：%s" % [probs.slice(0, 5)])
 	_ck(not LevelCheck.run([{kind = &"kit", name = &"Crate", pos = Vector3(3, 0, 40), yaw = 0.0},
 		{kind = &"fence", pos = Vector3(3, 0, 40), length = 10.0, yaw = 0.3}]).is_empty(), "擺設檢查要抓得到木箱卡在柵欄裡")
@@ -958,7 +958,7 @@ func _case_rural() -> void:
 	_ck(LevelCheck.run([{kind = &"fence", pos = Vector3(60, 0, 40), length = 10.0, yaw = 0.0},   # 離開沙盒靶場
 		{kind = &"fence", pos = Vector3(65, 0, 45), length = 10.0, yaw = -PI * 0.5},
 		{kind = &"kit", name = &"HayBlock", pos = Vector3(63, 0, 30), yaw = 0.0},
-		{kind = &"kit", name = &"HayBlock", pos = Vector3(63, m.HAY_BLOCK.y, 30), yaw = 0.0}]).is_empty(), "柵欄在轉角接起來、草捆疊高不算重疊")
+		{kind = &"kit", name = &"HayBlock", pos = Vector3(63, ArenaMap.HAY_BLOCK.y, 30), yaw = 0.0}]).is_empty(), "柵欄在轉角接起來、草捆疊高不算重疊")
 	_ck(m.level_path != "" and ResourceLoader.exists(m.level_path), "場地要照場景檔 levels/ranch.tscn 蓋")
 	# 柵欄不能穿過農舍（牧場的房子以前跨到隔壁格，隔壁農莊的圍欄從房子中間穿過去）
 	var houses: Array[Vector3] = []
@@ -1020,7 +1020,7 @@ func _case_terrain() -> void:
 	_ck(steep < 1.0 - cos(deg_to_rad(40.0)), "最陡的坡要在 40 度內（現在 %.0f 度）" % rad_to_deg(acos(1.0 - steep)))
 
 	# 穀倉底下要是平的。沙盒靶場不整平了（以前的十字路改成有起伏的丘陵）；量距離準不準去靶場地圖（levels/range.tscn）
-	var b: Rect2 = m._blocked[0]
+	var b: Rect2 = m.map._blocked[0]
 	var c := b.get_center()
 	var spread := 0.0
 	for dx in [-8.0, 0.0, 8.0]:
@@ -1050,7 +1050,7 @@ func _case_interact() -> void:
 	# 草不能長進屋裡
 	var inside := 0
 	var spots := []
-	m._grass_field(spots)   # 沒畫面時 _build_arena 不長草，這裡直接長一次，拿位置清單來檢查
+	m.map._grass_field(spots)   # 沒畫面時 _build_arena 不長草，這裡直接長一次，拿位置清單來檢查
 	for s: Vector2 in spots:
 		if not m._is_clear(s):
 			inside += 1
@@ -1147,9 +1147,9 @@ func _case_vault() -> void:
 	me.vaulting = false
 
 	# 穀倉的牆 8 公尺：翻不過去
-	var b: Rect2 = m._blocked[0]
+	var b: Rect2 = m.map._blocked[0]
 	var c := b.get_center()
-	var wall_x: float = c.x + (b.size.x - 2.0 * m.SPAWN_CLEARANCE) * 0.5
+	var wall_x: float = c.x + (b.size.x - 2.0 * ArenaMap.SPAWN_CLEARANCE) * 0.5
 	me.global_position = m._on_ground(Vector3(wall_x + 0.7, 0, c.y + 3.0))
 	me.rotation = Vector3(0, PI * 0.5, 0)   # 面向 -X，對著穀倉右牆
 	me.stamina = me.max_stamina
@@ -1352,7 +1352,7 @@ func _case_cover() -> void:
 	var t: Node = m.players.get_node(^"2")
 	m.players.get_node(^"3").global_position = Vector3(0, 500, 0)  # 閃遠一點別干擾
 
-	var b: Rect2 = m._blocked[0]        # 第一棟建築（含 8 公尺出生淨空）在 XZ 的範圍
+	var b: Rect2 = m.map._blocked[0]        # 第一棟建築（含 8 公尺出生淨空）在 XZ 的範圍
 	var c := b.get_center()
 	var d_side := b.size.y * 0.5 + 2.0  # Rect2 的 size.y 是 Z 方向
 	d.global_position = m._on_ground(Vector3(c.x, 2.0, c.y + d_side))   # 穀倉在整平的農莊裡，兩側一樣高
@@ -2253,7 +2253,7 @@ func _case_greybox() -> void:
 	var m := _offline_match()
 	_ck(m.level_path == Main.GREYBOX_LEVEL and m.greybox, "主地圖要是灰盒")
 	_ck(m.period == &"noon" and not m.get_node(^"PixelStyle").on, "灰盒固定正午、不開像素風")
-	var probs := LevelCheck.run(m._level, Main.lane_of(m.level_path))
+	var probs := LevelCheck.run(m.map._level, Main.lane_of(m.level_path))
 	_ck(probs.is_empty(), "灰盒擺設檢查有問題：%s" % [probs.slice(0, 5)])
 	var c: Node3D = m._add_player(m.COWBOY, 2)
 	var cow: CapsuleShape3D = c.get_node(^"CollisionShape3D").shape
@@ -2271,7 +2271,7 @@ func _case_greybox() -> void:
 		return not space.intersect_shape(q, 1).is_empty()
 	var small := 0
 	var big := 0
-	for rec: Dictionary in m._level:
+	for rec: Dictionary in m.map._level:
 		if rec.kind != &"gb_house":
 			continue
 		var body: Node3D = null
@@ -2302,7 +2302,7 @@ func _case_greybox() -> void:
 	_ck(small >= 10 and big >= 2, "灰盒要有一般房子和恐龍進得去的大建築（%d、%d）" % [small, big])
 	# 灰盒房子、方塊只有中心貼地、整塊水平：佔地四角的地面不能高過中心太多（埋掉）或低過埋深（浮起來），不平就要加整平區
 	var tilted := []
-	for rec: Dictionary in m._level:
+	for rec: Dictionary in m.map._level:
 		if rec.kind != &"gb_house" and rec.kind != &"gb_block":
 			continue
 		var y0: float = m._terrain.height(rec.pos.x, rec.pos.z)
@@ -2317,7 +2317,7 @@ func _case_greybox() -> void:
 	_ck(tilted.is_empty(), "灰盒物件底下的地不平（中心位置、高低差）：%s" % [tilted])
 	# 畫出來的地形（格點內插，fast_height）不能高過一樓地板：會從地板穿出來一塊塊閃（2026-10-19 回報的室內反光）
 	var poke := []
-	for rec: Dictionary in m._level:
+	for rec: Dictionary in m.map._level:
 		if rec.kind != &"gb_house":
 			continue
 		var top: float = m._terrain.height(rec.pos.x, rec.pos.z) + Greybox.FLOOR - 0.01
@@ -2330,7 +2330,7 @@ func _case_greybox() -> void:
 	_ck(poke.is_empty(), "地形從灰盒房子的地板穿出來：%s" % [poke])
 	# 柵欄一段只有兩端貼地、中間是直的：沿線的地面不能比柵欄底部低（中段懸空能從底下鑽過）或高太多（埋掉）
 	var hanging := []
-	for rec: Dictionary in m._level:
+	for rec: Dictionary in m.map._level:
 		if rec.kind != &"fence":
 			continue
 		var dir: Vector3 = Basis(Vector3.UP, rec.yaw) * Vector3.RIGHT * rec.length * 0.5
@@ -2386,7 +2386,7 @@ func _case_party_destruction() -> void:
 	b.global_position = m._on_ground(base + Vector3(4, 4.2, 0))
 	var safe := Greybox.house(Vector3(5, 3, 5), 1)
 	safe.add_to_group(&"safe_house")
-	m._place_greybox(safe, b.global_position * Vector3(1, 0, 1) + Vector3(0, 0, 6), 0.0)
+	m.map._place_greybox(safe, b.global_position * Vector3(1, 0, 1) + Vector3(0, 0, 6), 0.0)
 	var space: PhysicsDirectSpaceState3D = m.get_viewport().world_3d.direct_space_state
 	var ray := PhysicsRayQueryParameters3D.create(tree.global_position + Vector3(-3, 0, 0), tree.global_position + Vector3(3, 0, 0))
 	_ck(space.intersect_ray(ray).get(&"collider") == tree, "倒之前樹幹擋得住")
@@ -2411,10 +2411,10 @@ func _case_arena_walls() -> void:
 	var d: Node = m.players.get_node(^"1")
 	# 圍牆不給爬，所以恐龍能到的最高點 = 站上最高的屋頂再跳一下
 	var jump_h: float = d.JUMP_SPEED * d.JUMP_SPEED / (2.0 * d.GRAVITY)
-	var reach: float = Terrain.AMP + m.BUILDING_MAX_H + jump_h
-	_ck(m.WALL_H > reach,
+	var reach: float = Terrain.AMP + ArenaMap.BUILDING_MAX_H + jump_h
+	_ck(ArenaMap.WALL_H > reach,
 		"圍牆 %.0f 公尺要高過「最高的地 %.0f + 最高屋頂 %.0f + 跳 %.1f」= %.1f 公尺"
-		% [m.WALL_H, Terrain.AMP, m.BUILDING_MAX_H, jump_h, reach])
+		% [ArenaMap.WALL_H, Terrain.AMP, ArenaMap.BUILDING_MAX_H, jump_h, reach])
 
 	# 建築不能蓋超過上限，不然上面那條就白算了
 	var tallest := 0.0
@@ -2424,8 +2424,8 @@ func _case_arena_walls() -> void:
 		for mi in c.get_children():
 			if mi is MeshInstance3D:
 				tallest = maxf(tallest, mi.get_aabb().size.y)
-	_ck(tallest <= m.BUILDING_MAX_H + 0.01,
-		"最高的建築 %.1f 不能超過上限 %.0f" % [tallest, m.BUILDING_MAX_H])
+	_ck(tallest <= ArenaMap.BUILDING_MAX_H + 0.01,
+		"最高的建築 %.1f 不能超過上限 %.0f" % [tallest, ArenaMap.BUILDING_MAX_H])
 
 	var walls := m.get_tree().get_nodes_in_group(&"arena_wall")
 	_ck(walls.size() == 4, "四面都要有圍牆（現在 %d 面）" % walls.size())
@@ -2516,7 +2516,7 @@ func _case_party_map() -> void:
 	var keep: String = Main.level_file
 	Main.level_file = ""
 	var m := _offline_match()
-	var probs := LevelCheck.run(m._level, Main.lane_of(m.level_path))
+	var probs := LevelCheck.run(m.map._level, Main.lane_of(m.level_path))
 	_ck(probs.is_empty(), "派對地圖擺設檢查有問題：%s" % [probs.slice(0, 5)])
 	var safes: Array = m.get_tree().get_nodes_in_group(&"safe_house")
 	_ck(safes.size() == 2, "安全屋要 2 間（%d）" % safes.size())
@@ -2534,8 +2534,8 @@ func _case_party_map() -> void:
 		q.exclude = [ground.get_rid()]
 		q.transform = Transform3D(body.global_basis, body.global_transform * (at + Vector3.UP * (cap.height * 0.5 + Greybox.FLOOR + 0.05)))
 		return not space.intersect_shape(q, 1).is_empty()
-	var exits: Array = Main.exit_spots()
-	for rec: Dictionary in m._level:
+	var exits: Array = ArenaMap.exit_spots()
+	for rec: Dictionary in m.map._level:
 		if rec.kind != &"gb_safe":
 			continue
 		var inner: Vector3 = rec.size - Vector3.ONE * Greybox.T * 2.0

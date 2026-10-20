@@ -138,7 +138,7 @@ static func _targets(main: Node) -> Dictionary:
 	var env: Environment = (main.get_node(^"Arena/WorldEnvironment") as WorldEnvironment).environment
 	return {"sun": main.get_node(^"Arena/Sun"), "env": env, "sky": env.sky.sky_material,
 		"outline": (main.get_node(^"Arena/Outline") as MeshInstance3D).mesh.material,
-		"wheat": main.wheat_card().surface_get_material(0)}
+		"wheat": ArenaMap.wheat_card().surface_get_material(0)}
 
 
 ## shader 參數沒設過時 get_shader_parameter 拿到 null，要去 shader 裡讀預設值

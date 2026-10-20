@@ -19,13 +19,13 @@ const TALL := 100.0    # 不是小物件的東西，高度當成從地面一路�
 
 ## 這一筆佔的空間：{c 中心, half 半寬, yaw, box 轉過之後的外框, y0, y1 高度範圍}；沒有碰撞的回傳空的
 static func footprint(rec: Dictionary) -> Dictionary:
-	var half := Main.footprint_half(rec)
+	var half := ArenaMap.footprint_half(rec)
 	if half == Vector2.ZERO:
 		return {}
 	var p: Vector3 = rec.pos
 	var yaw: float = rec.get("yaw", 0.0)
 	var ext := Vector2(absf(cos(yaw)) * half.x + absf(sin(yaw)) * half.y, absf(sin(yaw)) * half.x + absf(cos(yaw)) * half.y)
-	var height: float = Main.KIT_SIZE.get(rec.get("name", &""), Vector3.ONE * TALL).y if rec.kind == &"kit" else TALL
+	var height: float = ArenaMap.KIT_SIZE.get(rec.get("name", &""), Vector3.ONE * TALL).y if rec.kind == &"kit" else TALL
 	return {c = Vector2(p.x, p.z), half = half, yaw = yaw, box = Rect2(Vector2(p.x, p.z) - ext, ext * 2.0),
 		y0 = p.y, y1 = p.y + height}
 
@@ -52,7 +52,7 @@ static func _radius(f: Dictionary, ax: Vector2) -> float:
 static func run(recs: Array, lane: Variant = Main.SANDBOX_RANGE) -> Array:
 	var problems := []
 	var half := Main.ARENA * 0.5
-	var meshes := Main.meshes()
+	var meshes := ArenaMap.meshes()
 	var placed := []   # [名字, 佔的空間]
 	var spawns := []   # [名字, 那一筆]
 	for i in recs.size():
@@ -65,16 +65,16 @@ static func run(recs: Array, lane: Variant = Main.SANDBOX_RANGE) -> Array:
 			if rec.has(key) and not meshes.has(rec[key]):
 				problems.append([name, "沒有「%s」這個模型（打錯字？）" % rec[key]])
 		if rec.kind == &"barn":
-			var top: float = rec.size.y + rec.size.x * 0.5 * tan(Main.BARN_PITCH)
-			if top > Main.BUILDING_MAX_H:
-				problems.append([name, "穀倉太高（屋頂 %.1f 公尺，上限 %.0f）" % [top, Main.BUILDING_MAX_H]])
-		if rec.kind == &"silo" and rec.h + 1.6 > Main.BUILDING_MAX_H:
-			problems.append([name, "筒倉太高（%.1f 公尺，上限 %.0f）" % [rec.h + 1.6, Main.BUILDING_MAX_H]])
-		if rec.kind == &"gb_safe" and rec.size.y > Main.BUILDING_MAX_H:
-			problems.append([name, "安全屋太高（%.1f 公尺，上限 %.0f）" % [rec.size.y, Main.BUILDING_MAX_H]])
+			var top: float = rec.size.y + rec.size.x * 0.5 * tan(ArenaMap.BARN_PITCH)
+			if top > ArenaMap.BUILDING_MAX_H:
+				problems.append([name, "穀倉太高（屋頂 %.1f 公尺，上限 %.0f）" % [top, ArenaMap.BUILDING_MAX_H]])
+		if rec.kind == &"silo" and rec.h + 1.6 > ArenaMap.BUILDING_MAX_H:
+			problems.append([name, "筒倉太高（%.1f 公尺，上限 %.0f）" % [rec.h + 1.6, ArenaMap.BUILDING_MAX_H]])
+		if rec.kind == &"gb_safe" and rec.size.y > ArenaMap.BUILDING_MAX_H:
+			problems.append([name, "安全屋太高（%.1f 公尺，上限 %.0f）" % [rec.size.y, ArenaMap.BUILDING_MAX_H]])
 		if rec.kind == &"gb_house":
-			if rec.floors * rec.size.y > Main.BUILDING_MAX_H:
-				problems.append([name, "灰盒房子太高（%.1f 公尺，上限 %.0f）" % [rec.floors * rec.size.y, Main.BUILDING_MAX_H]])
+			if rec.floors * rec.size.y > ArenaMap.BUILDING_MAX_H:
+				problems.append([name, "灰盒房子太高（%.1f 公尺，上限 %.0f）" % [rec.floors * rec.size.y, ArenaMap.BUILDING_MAX_H]])
 			if rec.floors > 1 and rec.size.z < Greybox.ramp_depth(rec.size.y):
 				problems.append([name, "灰盒房子太淺，放不下上樓的斜坡（深 %.1f，至少 %.1f）" % [rec.size.z, Greybox.ramp_depth(rec.size.y)]])
 			if rec.floors > 1 and rec.size.x < Greybox.RAMP_W + 2 * Greybox.T + 2.0:
@@ -89,7 +89,7 @@ static func run(recs: Array, lane: Variant = Main.SANDBOX_RANGE) -> Array:
 			continue
 		if lane != null and (lane as Rect2).grow(-SHRINK).intersects(fp.box):
 			problems.append([name, "擋到沙盒靶場"])
-		for e: Vector2 in Main.exit_spots() if lane != null else []:
+		for e: Vector2 in ArenaMap.exit_spots() if lane != null else []:
 			if (fp.c as Vector2).distance_to(e) < Main.EXIT_RADIUS:
 				problems.append([name, "擋在撤離區裡"])
 		for other: Array in placed:

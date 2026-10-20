@@ -35,7 +35,7 @@ func setup(main: Node) -> void:
 	_sun = main.get_node(^"Arena/Sun")
 	_env = (main.get_node(^"Arena/WorldEnvironment") as WorldEnvironment).environment
 	rebase()
-	_zones = {&"forest": main.ZONE_FOREST, &"town": main.ZONE_TOWN, &"wheat": main.ZONE_WHEAT}
+	_zones = {&"forest": ArenaMap.ZONE_FOREST, &"town": ArenaMap.ZONE_TOWN, &"wheat": ArenaMap.ZONE_WHEAT}
 	var mesh := _weed_mesh()
 	for i in WEEDS:
 		var w := MeshInstance3D.new()

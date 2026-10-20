@@ -47,8 +47,8 @@ func valid(p:Vector2)->bool:
 	# This explicit outside-house yard strip admits tiny decorative leaves/chips;
 	# core travel suppression and actual ground-only ray still protect functionality.
 	var yard:=Rect2(49,54.5,6,8.5).has_point(p)
-	if not yard and m._blocked.any(func(r:Rect2)->bool:return r.grow(0.40).has_point(p)):return false
-	for rec:Dictionary in m._level:
+	if not yard and m.map._blocked.any(func(r:Rect2)->bool:return r.grow(0.40).has_point(p)):return false
+	for rec:Dictionary in m.map._level:
 		if rec.kind in [&"flat",&"wheat",&"road"]:continue
 		if p.distance_to(Vector2(rec.pos.x,rec.pos.z))<0.70:return false
 	if cover.any(func(q:Vector2)->bool:return q.distance_to(p)<0.22):return false
@@ -63,7 +63,7 @@ func _load_meshes()->void:
 		var mesh:Mesh=n.mesh.duplicate()
 		for j in mesh.get_surface_count():
 			var old:StandardMaterial3D=mesh.surface_get_material(j)
-			var material:ShaderMaterial=m._to_facet(old).duplicate()
+			var material:ShaderMaterial=ModelMaterials._to_facet(old).duplicate()
 			material.set_shader_parameter(&"use_vcol",true)
 			material.set_shader_parameter(&"roughness",0.95)
 			var color:Color=old.albedo_color.srgb_to_linear()*0.45
