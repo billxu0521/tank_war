@@ -1260,7 +1260,7 @@ func _case_solo_dino() -> void:
 		m._time_left -= m.RESPAWN_DELAY + 1.0
 		m._respawn_step()
 	_ck(m.players.has_node(^"1") and m._continues == 3 and not m._over, "接關無限：死了一直回來（接關 %d 次）" % m._continues)
-	_ck(m._boss_debug().begins_with("恐龍："), "畫面要顯示恐龍在做什麼")
+	_ck(m._match_hud._boss_debug().begins_with("恐龍："), "畫面要顯示恐龍在做什麼")
 	_end(m)
 
 ## 遊戲局控制：移動標靶來回走、不開槍、死了照樣生回標靶；bot 在沙盒找玩家；清除清乾淨
@@ -1621,7 +1621,7 @@ func _case_boss() -> void:
 	_ck(b.WALK < c.walk_speed and b.RUN > c.sprint_speed,
 		"boss 走路要比牛仔慢（%.1f vs %.1f）、跑步要比牛仔快（%.1f vs %.1f）" % [b.WALK, c.walk_speed, b.RUN, c.sprint_speed])
 	_ck(is_instance_valid(m._nav_region), "生 boss 要順便烘導航網格")
-	_ck(m.BOSS_ACTS.size() == b.ACT_SPOT + 1, "每個動作狀態都要有除錯名稱（BOSS_ACTS 有 %d 個）" % m.BOSS_ACTS.size())
+	_ck(m._match_hud.BOSS_ACTS.size() == b.ACT_SPOT + 1, "每個動作狀態都要有除錯名稱（BOSS_ACTS 有 %d 個）" % m._match_hud.BOSS_ACTS.size())
 	# 視力：放在沙盒靶場那條路上（整平、沒蓋東西，視線不會被擋）
 	b.global_position = m._on_ground(Vector3(0, 4.2, 40))
 	b.rotation.y = 0.0   # 面向 -Z
@@ -2185,18 +2185,18 @@ func _case_ui() -> void:
 
 	# boss 體力條：牛仔看不到
 	var boss: Node = m.spawn_boss()
-	m._update_boss_bar(m.players.get_node(^"2"))
-	_ck(not m._boss_bar.visible, "當牛仔時不該看到 boss 體力條")
+	m._match_hud._update_boss_bar(m.players.get_node(^"2"))
+	_ck(not m._match_hud._boss_bar.visible, "當牛仔時不該看到 boss 體力條")
 
 	# 倒數：死了之後方位條下面出現重生倒數；撤離中出現撤離倒數
 	var me: Node = m.players.get_node(^"2")
-	m._update_center_info(me)
-	m._update_center_info(null)
+	m._match_hud._update_center_info(me)
+	m._match_hud._update_center_info(null)
 	_ck(m.center_info.text.contains("秒後重生"), "死了要顯示重生倒數（現在「%s」）" % m.center_info.text)
-	m._update_center_info(me)
+	m._match_hud._update_center_info(me)
 	m.egg.carrier = 3
 	m.egg.extract = 2.0
-	m._update_center_info(me)
+	m._match_hud._update_center_info(me)
 	_ck(m.center_info.text.contains("還剩 3.0"), "撤離要倒數（現在「%s」）" % m.center_info.text)
 	m.egg.extract = 0.0
 	m.egg.carrier = 0
@@ -2211,11 +2211,11 @@ func _case_ui() -> void:
 	m._on_restart_pressed()
 	_ck(not m.result.visible and not m._over, "重開一局後勝負畫面要收掉、比賽重新開始")
 	_ck(m.players.get_node(NodePath(bot_id)).bot, "重開一局後 bot 還是 bot")
-	m._update_net_info()
+	m._match_hud._update_net_info()
 	_ck(m.net_info.text.contains("本機 IP") and m.net_info.text.contains("FPS"), "右上角要有本機 IP 和 FPS（現在「%s」）" % m.net_info.text)
 	_ck(m.get_tree().get_nodes_in_group(&"exit_pipe").size() == m._exits.size() * 2, "每個撤離點中間都要有綠色水管")
 	m._to_lobby("")
-	_ck(not m.result.visible and not m._boss_bar.visible, "回大廳後勝負畫面和 boss 體力條都要收掉")
+	_ck(not m.result.visible and not m._match_hud._boss_bar.visible, "回大廳後勝負畫面和 boss 體力條都要收掉")
 	_end(m)
 
 func _case_sprint_skill() -> void:
@@ -2373,14 +2373,14 @@ func _case_party_destruction() -> void:
 	_ck(sync.replication_config.has_property(^".:sweep_left"), "甩尾冷卻要同步出去")
 	b.pilot = 1
 	b.sweep_left = 12.3
-	m._update_boss_bar(b)
-	_ck(m._boss_label.text.ends_with("甩尾 13 秒"), "操作恐龍要看得到甩尾還剩幾秒（現在「%s」）" % m._boss_label.text)
+	m._match_hud._update_boss_bar(b)
+	_ck(m._match_hud._boss_label.text.ends_with("甩尾 13 秒"), "操作恐龍要看得到甩尾還剩幾秒（現在「%s」）" % m._match_hud._boss_label.text)
 	b.sweep_left = 0.0
-	m._update_boss_bar(b)
-	_ck(m._boss_label.text.ends_with("甩尾 可用"), "冷卻好了要寫可用")
+	m._match_hud._update_boss_bar(b)
+	_ck(m._match_hud._boss_label.text.ends_with("甩尾 可用"), "冷卻好了要寫可用")
 	b.pilot = 0
-	m._update_boss_bar(b)
-	_ck(not "甩尾" in m._boss_label.text, "別人操作（或電腦）的恐龍不顯示甩尾冷卻")
+	m._match_hud._update_boss_bar(b)
+	_ck(not "甩尾" in m._match_hud._boss_label.text, "別人操作（或電腦）的恐龍不顯示甩尾冷卻")
 	# 恐龍站在樹旁邊甩尾，旁邊擺一間沒進群組的安全屋
 	var base := Vector3(tree.global_position.x, 0, tree.global_position.z)
 	b.global_position = m._on_ground(base + Vector3(4, 4.2, 0))
