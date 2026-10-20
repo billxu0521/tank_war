@@ -1,5 +1,9 @@
 # Worldbuilding 世界觀與場景設計
 
+## Worldbuilding Background 世界觀背景設定
+
+[WBP v1.5 討險人世界觀背景設定企劃](WBP/WBP_main_theme1_CD_v1.5.docx)為可編輯的 Word 定稿，涵蓋「討險人、財寶、異常」的共通架構，並展開「牛仔與恐龍」主題，供背景故事、地圖場所與後續設計參照。文件內仍標為候選的名稱與地域，依原文狀態保留。
+
 ## Map Documents 地圖文件
 
 | 版本 | 用途與範圍 | 閱讀版 |
