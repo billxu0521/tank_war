@@ -103,6 +103,7 @@ var _out := {}     # 出局的牛仔：連線編號 -> 是不是 bot（新的一
 var _exit_pads: Array[Node3D] = []   # 撤離區的地面標示：沒有蛋的模式藏起來
 var party: Party   # 派對模式的回合、計分（party.gd）；不是派對模式是 null
 var _party_hud: PartyHud   # 派對模式的畫面（方位條要問它是不是在選重生點）
+var _match_hud: MatchHud   # 局內的畫面資訊（match_hud.gd）：方位條、倒數、準心、boss 條、左上角那行字
 
 var _props := {}   # 物件名 -> Mesh，從 props.glb 拿出來共用
 var _terrain: Terrain
@@ -191,6 +192,7 @@ func _ready() -> void:
 	_add_dino_volunteer()
 	_build_home()
 	Period.apply(self, period)
+	_match_hud = MatchHud.new(self)
 	multiplayer.peer_connected.connect(_spawn)
 	multiplayer.peer_disconnected.connect(_despawn)
 	multiplayer.connected_to_server.connect(func() -> void:
@@ -423,15 +425,8 @@ func _to_lobby(msg: String) -> void:
 	egg.carrier = 0
 	menu.hide()
 	result.hide()
-	center_info.text = ""
-	if _boss_bar:
-		_boss_bar.hide()
-		_boss_label.hide()
-	_had_me = false
-	crosshair.hide()
-	stamina_bar.hide()
+	_match_hud.reset()
 	lobby.show()
-	hud.text = ""
 	status.text = msg
 	_show_cursor()
 	# 靶場是另一張地圖：回大廳就重載回牧場（測試自己組的場景不是 current_scene，不重載）。
@@ -825,19 +820,6 @@ func hit_popup(pos: Vector3, dmg: int, dist: float, head: bool) -> void:
 
 var _last_hit := "—"
 
-## 準星指到多遠：從鏡頭中心往前掃 400 公尺，撞到什麼就量到那裡
-func _aim_distance(me: Node3D) -> String:
-	var cam := get_viewport().get_camera_3d()
-	if cam == null or me == null:
-		return "—"
-	var from := cam.global_position
-	var mine: Array[RID] = [me.get_rid()]   # 自己身上的碰撞（頭、身體的判定區）和看不見的圍牆都不算
-	for n in me.find_children("*", "CollisionObject3D", true, false) + get_tree().get_nodes_in_group(&"arena_wall"):
-		mine.append(n.get_rid())
-	var q := PhysicsRayQueryParameters3D.create(from, from - cam.global_basis.z * 400.0, 1, mine)
-	var hit := get_world_3d().direct_space_state.intersect_ray(q)
-	return "—" if hit.is_empty() else "%.1f m" % from.distance_to(hit["position"])
-
 # --- 遊戲局控制（Esc 選單，只有主機） ---
 
 func _on_add_walker_pressed() -> void:
@@ -852,8 +834,6 @@ func _on_clear_bots_pressed() -> void:
 ## 選單的「恐龍攻擊」開關：關掉時恐龍咬、踩、火球都打不痛（fighter.take_damage 擋），測恐龍行為用
 var dino_attacks := true
 var _ips := ""          # 本機 IP，開遊戲時查一次就好
-var _had_me := false    # 這局我已經生出來過；之後角色不見了就是死了，開始重生倒數
-var _dead_ms := -1
 var saved_ips_path := "user://saved_ips.cfg"   # 測試會換成別的檔，不動到真的清單
 
 var settings_path := "user://settings.cfg"      # 玩家自己的設定（settings.gd 的設定視窗）
@@ -1326,8 +1306,7 @@ func _new_round() -> void:
 func _announce(msg: String) -> void:
 	status.text = msg
 	result.hide()
-	_had_me = false
-	_dead_ms = -1   # 不然死過的人在新角色同步到之前會閃一下「重生倒數」
+	_match_hud.on_announce()
 	if not lobby.visible:
 		Fighter.lock_mouse()
 
@@ -1365,165 +1344,32 @@ func _egg_step(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	Fighter._frame_ms = Time.get_ticks_msec()   # 給 Fighter.after_hitch 判斷卡頓
-	_track_frame_time(delta)
+	_match_hud.track_frame_time(delta)
 	_diag_print(delta)
 	if BugReport.instance.take_new_error():
 		status.text = "遊戲記到一個錯誤，按 F8 存成回報檔（會複製到剪貼簿）"
 	var cam := get_viewport().get_camera_3d()
 	if _drift and cam:
 		_drift.global_position = cam.global_position
-	_update_net_info()
-	if _compass:
-		_compass.visible = not lobby.visible
+	_match_hud.update_always()
 	# 連線還沒建立好就問 id 會噴錯
 	if lobby.visible or multiplayer.multiplayer_peer == null \
 			or multiplayer.multiplayer_peer.get_connection_status() != MultiplayerPeer.CONNECTION_CONNECTED:
 		return
 	var me := _me()
-	var dino := get_tree().get_first_node_in_group(&"dino")
 	# 保險：遊戲中、沒開選單和勝負畫面，游標卻沒鎖住（系統自己放掉的，0.8.1 回饋「舉槍後跑出游標」），就鎖回去。
 	# 視窗沒焦點時鎖不住，等切回來再鎖
 	if not menu.visible and not result.visible and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED \
 			and get_window().has_focus():
 		Fighter.lock_mouse()
-	_update_center_info(me)
-	_update_spectator(me)
-	_update_crosshair(me)
-	_update_boss_bar(me)
-	_update_compass()
-	stamina_bar.visible = me != null and me == dino
-	if stamina_bar.visible:
-		stamina_bar.value = me.stamina
-		stamina_bar.modulate = Color(1, 0.35, 0.3) if me.exhausted else Color.WHITE
-	var egg_state := "無人持有"
-	if egg.carrier == multiplayer.get_unique_id():
-		egg_state = "在你身上！帶去撤離區"
-	elif egg.carrier != 0:
-		egg_state = "被牛仔 %d 拿走了" % egg.carrier
-	var mine := str(me.hp) if me != null else "陣亡"
-	if mode == &"range":
-		hud.text = "靶場    準星距離：%s    上一發：%s" % [_aim_distance(me), _last_hit]
-		return
-	if _solo_dino:
-		hud.text = "單人打恐龍    我的血量：%s    接關 %d 次\n%s" % [mine, _continues, _boss_debug()]
-		return
-	if _sandbox:
-		hud.text = "沙盒    我的血量：%s    恐龍靶血量：%s" % [mine, dino.hp if dino else "重生中"]
-		return
-	var my_id := multiplayer.get_unique_id()
-	if party:   # 回合、倒數、命數在左上（party_hud.gd）
-		hud.text = "我的血量：%s    蛋：%s" % [mine, egg_state]
-		return
-	if _uses_lives():
-		var left := "出局" if _out.has(my_id) else "剩 %d 次" % int(_lives.get(my_id, 0))
-		hud.text = "%s    我的血量：%s    重生：%s    場上還有 %d 名牛仔" % [RULES[rules].name, mine, left, _remaining().size()]
-		return
-	hud.text = "⏱ %d:%02d    我的血量：%s    %s存活牛仔：%d    蛋：%s" % [
-		maxi(_clock, 0) / 60, maxi(_clock, 0) % 60,
-		mine,
-		("恐龍血量：%d    " % dino.hp) if dino else "",
-		players.get_child_count() - (1 if dino else 0),
-		egg_state]
+	_match_hud.update_match(me)
+	_match_hud.update_text(me)
 
 ## 出局了（只能觀戰）：派對模式看 Party 的命數（每回合補滿），其他模式看 _out
 func _is_out(id: int) -> bool:
 	return int(party.lives.get(id, 1)) <= 0 if party else _out.has(id)
 
-## 出局之後觀戰：鏡頭跟在一個還在場上的牛仔後上方（左鍵換人）
-var _spectator: Camera3D
-var _watch := 0
-func _update_spectator(me: Node) -> void:
-	var out := me == null and _is_out(multiplayer.get_unique_id())
-	if not out:
-		if _spectator and _spectator.current:
-			_spectator.current = false
-		return
-	var alive := players.get_children().filter(func(p: Node) -> bool: return not p.is_in_group(&"dino"))
-	if alive.is_empty():
-		return
-	if _spectator == null:
-		_spectator = Camera3D.new()
-		add_child(_spectator)
-	if Input.is_action_just_pressed(&"fire"):
-		_watch += 1
-	var p: Node3D = alive[_watch % alive.size()]
-	var back := p.global_basis.z
-	back.y = 0.0
-	_spectator.look_at_from_position(p.global_position + back.normalized() * 6.0 + Vector3.UP * 4.0, p.global_position + Vector3.UP * 1.5)
-	_spectator.current = true
-
-## 單人打恐龍的除錯資訊：導演在哪個階段、威脅值、恐龍在做什麼
-const BOSS_ACTS := ["", "咬（預備）", "咬！", "蓄力甩尾（打頭打斷）", "甩尾！", "撲擊（預備）", "撲擊！", "收招", "被打斷", "發現你了（吼）"]
-func _boss_debug() -> String:
-	var b := get_tree().get_first_node_in_group(&"boss")
-	if b == null:
-		return "恐龍：不在場上"
-	var d: Director = b.director
-	var phase: String = ["醞釀", "退開", "放鬆"][d.phase]
-	var doing: String = "倒地" if b.down_left > 0.0 else BOSS_ACTS[b.act]
-	if doing == "":
-		doing = "追人" if b._sees_now else ("盯著（還不確定）" if b._glimpse else ("找最後看到的地方" if b._seen_left > 0.0 else ("查聲音" if b._noise_left > 0.0
-			else ("照導演的方向找" if b._hint != Vector3.INF else "閒逛"))))
-	var extra := "　剩 %d 秒" % ceili(d.phase_left) if d.phase != Director.Phase.BUILD else "　威脅 %d / %d" % [roundi(d.menace), roundi(Director.MENACE_MAX)]
-	return "恐龍：%s%s　｜　%s　｜　距離 %d m" % [phase, extra, doing, _dist_to_boss(b)]
-
-func _dist_to_boss(b: Node3D) -> int:
-	var me := players.get_node_or_null(^"1") as Node3D
-	return roundi(me.global_position.distance_to(b.global_position)) if me else -1
-
-## 方位條下面的倒數：重生、撤離、撿蛋。重生倒數用自己這台的時間算（主機的重生佇列客戶端看不到）
-func _update_center_info(me: Node) -> void:
-	var now := Time.get_ticks_msec()
-	if me != null:
-		_had_me = true
-		_dead_ms = -1
-	elif _had_me and _dead_ms < 0:
-		_dead_ms = now
-	var t := ""
-	if result.visible or (party and party.phase != &"play"):
-		t = ""
-	elif me == null and _is_out(multiplayer.get_unique_id()):
-		t = "你出局了，觀戰中"
-	elif me == null and _dead_ms >= 0:
-		var delay := Party.RESPAWN_SECONDS if party else RESPAWN_DELAY
-		t = "%d 秒後重生" % maxi(1, ceili(delay - (now - _dead_ms) / 1000.0))
-	elif egg.extract > 0.0:
-		var who := "你" if egg.carrier == multiplayer.get_unique_id() else "牛仔 %d" % egg.carrier
-		t = "%s撤離中：還剩 %.1f 秒" % [who, maxf(EXTRACT_SECONDS - egg.extract, 0.0)]
-	elif egg.pickup > 0.0:
-		t = "有人在撿蛋：還剩 %.1f 秒" % maxf(PICKUP_SECONDS - egg.pickup, 0.0)
-	center_info.text = t
-
-## 最近一秒最慢的一幀。平均 FPS 看不出卡頓：60 FPS 裡夾幾幀 50 毫秒，數字照樣是 60
-var _slow := 0.0
-var _slow_shown := 0.0
-var _slow_since := 0
-
-func _track_frame_time(delta: float) -> void:
-	_slow = maxf(_slow, delta * 1000.0)
-	var now := Time.get_ticks_msec()
-	if now - _slow_since >= 1000:
-		_slow_shown = _slow
-		_slow = 0.0
-		_slow_since = now
-
-## 右上角：本機 IP（開房的人報給朋友用）、連線延遲、每秒畫面數、最慢一幀。
-## 遊戲中是開發資訊，平常收起來，F3 打開（2026-10-10 FPS 角度評估 #5）
-var debug_hud := false
-func _update_net_info() -> void:
-	net_info.visible = lobby.visible or debug_hud
-	var parts: Array[String] = ["本機 IP：" + _ips]
-	var peer := multiplayer.multiplayer_peer as ENetMultiplayerPeer
-	if not lobby.visible and peer and not multiplayer.is_server() \
-			and peer.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED:
-		var p := peer.get_peer(1)
-		if p:
-			parts.append("延遲 %d ms" % p.get_statistic(ENetPacketPeer.PEER_ROUND_TRIP_TIME))
-			# 掉包率：ENet 的統計是乘了 PACKET_LOSS_SCALE（65536）的比例
-			parts.append("掉包 %.1f%%" % (100.0 * p.get_statistic(ENetPacketPeer.PEER_PACKET_LOSS) / ENetPacketPeer.PACKET_LOSS_SCALE))
-	if not lobby.visible:
-		parts.append("%d FPS（最慢一幀 %.0f ms）" % [Engine.get_frames_per_second(), _slow_shown])
-	net_info.text = "　".join(parts)
+var debug_hud := false   # F3 開關右上角的開發資訊（match_hud.gd 的 update_always）
 
 ## 大廳存過的 IP：「＋」把目前的存起來，「⋯」選一個填回去
 func _load_saved_ips() -> void:
@@ -1553,19 +1399,6 @@ func _dist_to_exit(p: Vector3) -> float:
 	for e: Vector3 in _exits:
 		best = minf(best, Vector2(p.x - e.x, p.z - e.z).length())
 	return best
-
-## 準心畫在「火球會落到哪」，不是螢幕正中央——抬頭時看得出彈道往上跑。
-## 牛仔的準心在自己的 HUD 裡（子彈是直線，畫正中央就對），沒有 aim_point，這裡就不顯示。
-func _update_crosshair(me: Node) -> void:
-	var cam := get_viewport().get_camera_3d()
-	if me == null or cam == null or not me.has_method("aim_point") or me.is_in_group(&"boss"):   # 操作尼諾拉時沒有火球，不畫準心
-		crosshair.hide()
-		return
-	# 打中人準心閃紅。遠距離看不出血條掉，這是唯一的命中確認
-	crosshair.modulate = Color(1, 0.3, 0.25) if me.hit_until > Time.get_ticks_msec() else Color.WHITE
-	var p: Vector3 = me.aim_point()
-	crosshair.visible = not cam.is_position_behind(p)
-	crosshair.position = cam.unproject_position(p) - crosshair.size * 0.5
 
 # --- 場地 ---
 
@@ -1918,93 +1751,6 @@ func _use_outline() -> void:
 	mi.extra_cull_margin = 16384.0
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	$Arena.add_child(mi)
-
-## 上方的方位條：看著的方向、蛋在哪、兩個撤離區在哪（都附距離）。
-## 蛋在自己身上就不標蛋；沙盒沒有蛋也不標
-var _compass: Compass
-func _update_compass() -> void:
-	var cam := get_viewport().get_camera_3d()
-	if _compass == null:
-		_compass = Compass.new()
-		$UI/Root.add_child(_compass)
-	if cam == null:
-		return
-	_compass.set_view(cam)
-	var at := cam.global_position
-	var marks := []
-	# 派對模式蛋是恐龍藏的：沒人拿起來之前不標
-	if egg.visible and egg.carrier != multiplayer.get_unique_id() and (party == null or egg.carrier != 0):
-		marks.append({"deg": Compass.bearing(at, egg.global_position), "dist": at.distance_to(egg.global_position),
-			"color": Compass.EGG_COLOR, "label": "蛋"})
-	for e: Vector3 in (_exits if RULES[rules].egg and not _solo_dino else []):
-		marks.append({"deg": Compass.bearing(at, e), "dist": at.distance_to(e),
-			"color": Compass.EXIT_COLOR, "label": "撤離"})
-	var boss := get_tree().get_first_node_in_group(&"boss") as Node3D
-	if party and _party_hud._party == party and _party_hud.waiting_respawn():   # 畫面還沒換到新的 Party 時別問它   # 派對模式等重生：標出能選的重生點
-		var pts := _party_hud.spawn_points()
-		for i in pts.size():
-			if i == _party_hud.picked:
-				marks.append({"deg": Compass.bearing(at, pts[i]), "dist": at.distance_to(pts[i]), "color": Color(0.4, 0.9, 0.5), "label": "重生點 %d" % (i + 1)})
-			elif _party_hud.picked < 0:   # 還沒選：只寫編號（九個都寫距離會疊在一起，距離看中間的清單）
-				marks.append({"deg": Compass.bearing(at, pts[i]), "color": Color(0.4, 0.9, 0.5), "label": str(i + 1)})
-	if _solo_dino and boss:   # 測恐龍行為：標出恐龍在哪
-		marks.append({"deg": Compass.bearing(at, boss.global_position), "dist": at.distance_to(boss.global_position),
-			"color": Color(1, 0.35, 0.3), "label": "恐龍"})
-	_compass.marks = marks
-	_compass.queue_redraw()
-
-## boss 的體力條（畫面上方中間，每個人都看得到）：看牠還跑不跑得動，決定現在要逃還是要躲。
-## 跑不動（力竭）變紅、倒地變灰
-var _boss_bar: ProgressBar
-var _boss_label: Label
-func _update_boss_bar(me: Node) -> void:
-	var b := get_tree().get_first_node_in_group(&"boss")
-	# 當牛仔時不顯示（0.8.1 回饋）。沙盒是測恐龍行為的地方，留著
-	var duel := rules == &"dino_duel" and not _sandbox and mode != &"range"
-	if not _sandbox and not duel and not (me != null and me.is_in_group(&"dino")):
-		b = null
-	if _boss_bar == null:
-		_boss_bar = ProgressBar.new()
-		_boss_bar.show_percentage = false
-		_boss_bar.set_anchors_preset(Control.PRESET_CENTER_TOP)
-		_boss_bar.offset_left = -160
-		_boss_bar.offset_right = 160
-		_boss_bar.offset_top = 140   # 在方位條（compass.gd）和倒數（CenterInfo）下面
-		_boss_bar.offset_bottom = 154
-		_boss_bar.add_theme_stylebox_override(&"background", stamina_bar.get_theme_stylebox(&"background"))
-		_boss_bar.add_theme_stylebox_override(&"fill", stamina_bar.get_theme_stylebox(&"fill"))
-		_boss_label = Label.new()
-		_boss_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
-		_boss_label.offset_left = -240   # 比體力條寬：操作恐龍時後面多「甩尾 N 秒」
-		_boss_label.offset_right = 240
-		_boss_label.offset_top = 116
-		_boss_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		$UI/Root.add_child(_boss_label)
-		$UI/Root.add_child(_boss_bar)
-	_boss_bar.visible = b != null
-	_boss_label.visible = b != null
-	if b == null:
-		return
-	if duel:   # 恐龍決鬥：大家要看的是牠還剩多少血
-		_boss_bar.max_value = b.max_hp
-		_boss_bar.value = b.hp
-		_boss_bar.modulate = Color(1, 0.45, 0.35)
-		_boss_label.text = "恐龍　%d / %d" % [b.hp, b.max_hp]
-		return
-	_boss_bar.max_value = 100
-	_boss_bar.value = b.stamina
-	var state := "奔跑中" if b.running else "走路"
-	if b.down_left > 0.0:
-		state = "倒地 %d 秒" % ceili(b.down_left)
-		_boss_bar.modulate = Color(0.6, 0.6, 0.6)
-	elif b.exhausted:
-		state = "跑不動了！"
-		_boss_bar.modulate = Color(1, 0.35, 0.3)
-	else:
-		_boss_bar.modulate = Color.WHITE
-	_boss_label.text = "恐龍 boss　體力（%s）" % state
-	if b.pilot == multiplayer.get_unique_id():   # 自己操作的恐龍才看得到甩尾冷卻（牛仔看不到）
-		_boss_label.text += "　甩尾 %s" % ("可用" if b.sweep_left <= 0.0 else "%d 秒" % ceili(b.sweep_left))
 
 ## 天空換成 sky.gdshader（有雲、有太陽盤）。霧只蓋一點點天空，不然雲全被霧洗掉
 func _use_sky() -> void:
