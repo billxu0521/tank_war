@@ -303,38 +303,6 @@ func _add_report_button() -> void:
 	box.add_child(b)
 	box.move_child(b, $UI/Root/Menu/Box/QuitBtn.get_index())
 
-## Esc 選單裡的「操作說明」，放在「繼續遊戲」下面；按了彈出鍵盤／手把對照表。
-## 按鍵照 project.godot 的輸入設定寫，改了按鍵要回來改這張表
-const CONTROLS := [
-	["移動", "WASD", "左搖桿"],
-	["看", "滑鼠", "右搖桿"],
-	["開槍", "左鍵", "RT"],
-	["舉槍", "右鍵（設定可改成按一下切換）", "LT"],
-	["換彈", "R", "X"],
-	["換子彈（輕／中／重）", "B", "十字鍵右"],
-	["換槍", "1 左輪　2 散彈　3 步槍　4 炸彈長矛　或滾輪", "LB／RB"],
-	["槍托", "V（按住＝重擊）", "按右搖桿"],
-	["炸藥", "G：按住點燃、放開丟（太久會在手上爆）", "十字鍵下"],
-	["跑", "左 Shift", "按左搖桿"],
-	["閉氣（舉槍時）", "左 Shift", "按左搖桿"],
-	["蹲", "C 切換／左 Ctrl 按住", "Y 切換／B 按住"],
-	["跳", "Space", "A"],
-	["翻越", "往前頂著矮牆、柵欄按 Space", "往前推＋A"],
-	["互動", "F：開門、爬梯子、補給箱", "十字鍵上"],
-	["梯子上", "W／S 上下，Space 或 F 放手", "左搖桿上下，A 或十字鍵上放手"],
-	["選單", "Esc", "—"],
-	["回報問題", "F8", "—"],
-	["像素風開關", "F9", "—"],
-	["試畫面風格", "F10（輪流切換，比較用，不存）", "—"],
-]
-
-## 設定視窗的「按鍵」頁
-func controls_table() -> String:
-	var rows := "[table=3][cell][color=#e8b04a]動作[/color]　[/cell][cell][color=#e8b04a]鍵盤滑鼠[/color]　[/cell][cell][color=#e8b04a]手把[/color][/cell]"
-	for r: Array in CONTROLS:
-		rows += "[cell]%s　[/cell][cell]%s　[/cell][cell]%s[/cell]" % r
-	return rows + "[/table]\n\n[color=#bbbbbb]沒有準心，靠槍身瞄；舉槍會晃，閉氣穩住但吃體力。跑起來會自動站起來、放下槍。[/color]"
-
 ## 設定視窗（settings.gd）：主選單和 Esc 選單共用。Esc 選單放「設定」和「操作說明」（直接開按鍵頁）
 var settings: Settings
 
@@ -905,9 +873,9 @@ func _load_settings() -> void:
 	var cfg := ConfigFile.new()
 	cfg.load(settings_path)   # 第一次開沒有檔案，用預設值
 	Viewmodel.aim_toggle = cfg.get_value("controls", "aim_toggle", false)
-	vsync = cfg.get_value("display", "vsync", true)
-	fps_cap = cfg.get_value("display", "fps_cap", 0)
-	_apply_display()
+	settings.vsync = cfg.get_value("display", "vsync", true)
+	settings.fps_cap = cfg.get_value("display", "fps_cap", 0)
+	settings._apply_display()
 	Settings.load_from(cfg)
 
 func _save_setting(section: String, key: String, value: Variant) -> void:
@@ -915,36 +883,6 @@ func _save_setting(section: String, key: String, value: Variant) -> void:
 	cfg.load(settings_path)
 	cfg.set_value(section, key, value)
 	cfg.save(settings_path)
-
-## 選單的「瞄準：按一下切換」：關掉是按住右鍵才舉槍
-func _on_aim_toggle_toggled(on: bool) -> void:
-	Viewmodel.aim_toggle = on
-	_save_setting("controls", "aim_toggle", on)
-
-## 畫面設定：垂直同步、幀率上限。上限只給跟螢幕刷新率對得上的數字（刷新率、一半）：
-## 隨便填一個（例如 60Hz 螢幕鎖 50）每幀間隔會長短不一，平均幀數對了看起來還是卡
-const FPS_CAPS := ["幀率上限：不限", "幀率上限：跟螢幕一樣（%d）", "幀率上限：螢幕的一半（%d）"]
-var vsync := true
-var fps_cap := 0
-
-func _refresh_hz() -> int:
-	var hz := roundi(DisplayServer.screen_get_refresh_rate())
-	return hz if hz > 0 else 60   # 查不到（無頭模式、某些系統）當 60
-
-func _apply_display() -> void:
-	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync else DisplayServer.VSYNC_DISABLED)
-	var hz := _refresh_hz()
-	Engine.max_fps = [0, hz, hz / 2][fps_cap]
-
-func _on_vsync_toggled(on: bool) -> void:
-	vsync = on
-	_apply_display()
-	_save_setting("display", "vsync", on)
-
-func _on_fps_cap_selected(i: int) -> void:
-	fps_cap = i
-	_apply_display()
-	_save_setting("display", "fps_cap", i)
 
 func _on_dino_attack_toggled(on: bool) -> void:
 	dino_attacks = on
