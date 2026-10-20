@@ -95,23 +95,8 @@ const BOSS_ID := -999   # 負數＝電腦（主機操控）；固定編號，場
 @onready var mode_pick: OptionButton = $UI/Root/Lobby/ModeRow/ModePick
 
 ## 連線對戰的模式：開房的人在大廳選，加入的人照主機的（連進來時主機會送 _set_rules）。
-## lives：每個牛仔能重生幾次（-1 不限）；用完就出局、不再回場。dino：有沒有恐龍 boss。
-## egg：有沒有蛋和撤離。timer：有沒有四分鐘時限。
-## 牛仔之間本來就打得到（PvP），恐龍決鬥的「隊友火力」不用另外開
-const RULES := {
-	&"egg": {name = "搶蛋", lives = -1, dino = true, egg = true, timer = true,
-		desc = "先把蛋帶進撤離區的人贏，一局四分鐘。場上有一隻恐龍，死了五秒後重生（不限次數）。"},
-	&"deathmatch": {name = "死鬥", lives = 3, dino = false, egg = false, timer = false,
-		desc = "沒有恐龍、沒有蛋。每個人可以重生 3 次，用完就出局，最後剩下的一個人獲勝。"},
-	&"versus": {name = "對抗", lives = -1, dino = true, egg = true, timer = true,
-		desc = "搶蛋，但尼諾拉由玩家操作（勾「我想當恐龍」的人每局抽一個，沒人勾就是電腦）。帶蛋撤離的牛仔贏，時間到沒人撤離就是尼諾拉贏。"},
-	&"dino_duel": {name = "恐龍決鬥", lives = 5, dino = true, egg = false, timer = false,
-		desc = "所有牛仔合力打一隻恐龍，打死牠大家一起贏。每人可以重生 5 次，全部出局就是恐龍贏。小心，打到隊友一樣會扣血。"},
-	# 規則本體在 party.gd（命數、計時、計分自己管，不走上面的 lives／timer；lives 填 -1 讓舊的命數系統不插手）
-	&"party": {name = "派對", lives = -1, dino = true, egg = true, timer = true,
-		desc = "四個人輪流當恐龍，四回合加總比分數（不到四人用電腦補）。恐龍先花 15 秒藏蛋，牛仔每回合 3 條命，帶蛋撤離就贏這回合。"},
-}
-const DUEL_BOSS_HP := 3000   # 恐龍決鬥的恐龍血量（搶蛋模式打不死、900 血會倒地）
+## 模式表在 match_rules.gd（欄位說明也在那裡）
+const RULES := MatchRules.RULES
 var rules := &"egg"
 var _lives := {}   # 牛仔的連線編號 -> 還能重生幾次。只有用得到次數的模式有；主機算，廣播給大家（_sync_lives）
 var _out := {}     # 出局的牛仔：連線編號 -> 是不是 bot（新的一局要生回來）
@@ -612,7 +597,7 @@ func _pick_pilot() -> void:
 	var b := _boss()
 	# 一局只抽一次：駕駛中途斷線就讓電腦接手到這局結束，不然會把別人正在玩的牛仔（和身上的蛋）收掉。
 	# 沙盒、單人打恐龍、靶場的 rules 還是大廳選的那個，不能誤抽
-	if rules != &"versus" or b == null or b.pilot != 0 or _pilot_picked or _sandbox or mode == &"range":
+	if not RULES[rules].pilot or b == null or b.pilot != 0 or _pilot_picked or _practice():
 		return
 	var pool: Array = _volunteers.keys().filter(func(id: int) -> bool: return multiplayer.get_peers().has(id))
 	if want_dino and not _dedicated:   # 開房的人自己勾的（他不用送 _volunteer）
@@ -669,7 +654,7 @@ func _apply_rules() -> void:
 	if party:   # 換模式、回大廳都重來一份
 		party.free()
 		party = null
-	if rules == &"party":
+	if RULES[rules].party:
 		party = Party.new()
 		party.name = &"Party"
 		add_child(party)
@@ -678,9 +663,13 @@ func _apply_rules() -> void:
 func party_frozen() -> bool:
 	return party != null and party.phase in [&"prep", &"result", &"final"]
 
+## 練習場（沙盒、靶場）：沒有蛋、沒有計時、不算勝負，大廳選的模式也不作數
+func _practice() -> bool:
+	return _sandbox or mode == &"range"
+
 ## 這局有沒有重生次數（沙盒、靶場不算）
 func _uses_lives() -> bool:
-	return not _sandbox and mode != &"range" and int(RULES[rules].lives) >= 0
+	return not _practice() and int(RULES[rules].lives) >= 0
 
 @rpc("authority", "call_local", "reliable")
 func _sync_lives(lives: Dictionary, out: Array) -> void:
@@ -702,13 +691,13 @@ func _check_lives_end() -> void:
 	if _over or not _uses_lives():
 		return
 	var left := _remaining()
-	if rules == &"deathmatch" and _lives.size() >= 2 and left.size() <= 1:
+	if RULES[rules].end == &"last_standing" and _lives.size() >= 2 and left.size() <= 1:
 		_end_round()
 		if left.is_empty():
 			_finish.rpc("最後兩個人同歸於盡，沒有贏家")
 		else:
 			_finish_winner.rpc(left[0])
-	elif rules == &"dino_duel" and not _lives.is_empty() and left.is_empty():
+	elif RULES[rules].end == &"all_out_dino_wins" and not _lives.is_empty() and left.is_empty():
 		_end_round()
 		_finish.rpc("牛仔全部出局，恐龍獲勝")
 
@@ -963,9 +952,10 @@ func spawn_boss() -> Node3D:
 	if _sandbox and me and not _solo_dino:   # 沙盒：生在前方 40 公尺方便看；單人打恐龍：離你最遠，要自己找過來
 		at = me.global_position - me.global_basis.z * 40.0
 	b.global_position = _on_ground(Vector3(at.x, 4.2, at.z))
-	if rules == &"dino_duel" and not _sandbox:
-		b.max_hp = DUEL_BOSS_HP   # 決鬥要打得死，血多一點（大家一起打）
-		b.hp = DUEL_BOSS_HP
+	var boss_hp: int = RULES[rules].boss_hp
+	if boss_hp > 0 and not _sandbox:
+		b.max_hp = boss_hp   # 決鬥要打得死，血多一點（大家一起打）
+		b.hp = boss_hp
 	bake_nav()
 	return b
 
@@ -1226,7 +1216,7 @@ func _on_died(killer: Node, who: Node) -> void:
 	if party and not _sandbox:
 		party.on_died(killer, who)
 		return
-	if who.is_in_group(&"boss") and rules == &"dino_duel" and not _sandbox:
+	if who.is_in_group(&"boss") and RULES[rules].boss_kill_wins and not _sandbox:
 		_end_round()
 		_finish.rpc("恐龍倒下了，所有牛仔獲勝！")
 		return
@@ -1337,7 +1327,7 @@ func _physics_process(delta: float) -> void:
 	if _time_left <= 0.0:
 		_over = true
 		_next_round = NEXT_ROUND_DELAY
-		_finish.rpc("時間到，尼諾拉守住了蛋，尼諾拉獲勝！" if rules == &"versus" else "時間到，沒有人把蛋帶走")
+		_finish.rpc(RULES[rules].timeout_msg)
 
 ## 開下一局（開房的人按「重開一局」、或專用伺服器自動）：時間和蛋歸位、重生次數補滿，
 ## 每個牛仔重生（刪掉重生，客戶端的位置才會跟著換），出局的人也回來；boss 回到離大家最遠的地方
