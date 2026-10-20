@@ -1743,7 +1743,7 @@ func _case_boss() -> void:
 	# 蓄力甩尾：人在背後就蓄力；打中頭打斷，暈一陣子、不會掃出去
 	b.act = b.ACT_NONE
 	b._attack_gap = 0.0
-	b._sweep_cd = 0.0
+	b.sweep_left = 0.0
 	c.global_position = m._on_ground(Vector3(0, 0.1, 46))   # 背後 6 公尺
 	b.think(1.0 / 60.0)
 	_ck(b.act == b.ACT_CHARGE_WIND, "人在背後要蓄力甩尾（現在 act=%d）" % b.act)
@@ -1755,7 +1755,7 @@ func _case_boss() -> void:
 	# 沒打斷就整圈掃開
 	b.act = b.ACT_NONE
 	b._attack_gap = 0.0
-	b._sweep_cd = 0.0
+	b.sweep_left = 0.0
 	b.think(1.0 / 60.0)
 	for i in int(b.CHARGE_WIND * 60) + 3:
 		b.think(1.0 / 60.0)
@@ -1764,7 +1764,7 @@ func _case_boss() -> void:
 	c.hp = c.max_hp
 	b.act = b.ACT_NONE
 	b._attack_gap = 0.0
-	b._sweep_cd = 99.0
+	b.sweep_left = 99.0
 	b._pounce_cd = 0.0
 	b.global_position = m._on_ground(Vector3(0, 4.2, 60))
 	b.rotation.y = 0.0
@@ -2368,6 +2368,19 @@ func _case_party_destruction() -> void:
 	_ck(b._sweep_cd_time() == b.SWEEP_CD, "其他模式甩尾冷卻不變")
 	m.rules = &"party"   # ponytail: RULES 的 party 是 gameplay 加的，這裡只借 rules 這個值
 	_ck(b._sweep_cd_time() == 20.0, "派對模式甩尾冷卻 20 秒")
+	# 自己操作恐龍時，畫面上看得到甩尾冷卻；冷卻要同步給操作的客戶端（冷卻在主機算）
+	var sync: MultiplayerSynchronizer = b.find_children("*", "MultiplayerSynchronizer")[0]
+	_ck(sync.replication_config.has_property(^".:sweep_left"), "甩尾冷卻要同步出去")
+	b.pilot = 1
+	b.sweep_left = 12.3
+	m._update_boss_bar(b)
+	_ck(m._boss_label.text.ends_with("甩尾 13 秒"), "操作恐龍要看得到甩尾還剩幾秒（現在「%s」）" % m._boss_label.text)
+	b.sweep_left = 0.0
+	m._update_boss_bar(b)
+	_ck(m._boss_label.text.ends_with("甩尾 可用"), "冷卻好了要寫可用")
+	b.pilot = 0
+	m._update_boss_bar(b)
+	_ck(not "甩尾" in m._boss_label.text, "別人操作（或電腦）的恐龍不顯示甩尾冷卻")
 	# 恐龍站在樹旁邊甩尾，旁邊擺一間沒進群組的安全屋
 	var base := Vector3(tree.global_position.x, 0, tree.global_position.z)
 	b.global_position = m._on_ground(base + Vector3(4, 4.2, 0))

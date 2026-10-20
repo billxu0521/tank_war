@@ -2047,8 +2047,8 @@ func _update_boss_bar(me: Node) -> void:
 		_boss_bar.add_theme_stylebox_override(&"fill", stamina_bar.get_theme_stylebox(&"fill"))
 		_boss_label = Label.new()
 		_boss_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
-		_boss_label.offset_left = -160
-		_boss_label.offset_right = 160
+		_boss_label.offset_left = -240   # 比體力條寬：操作恐龍時後面多「甩尾 N 秒」
+		_boss_label.offset_right = 240
 		_boss_label.offset_top = 116
 		_boss_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		$UI/Root.add_child(_boss_label)
@@ -2075,6 +2075,8 @@ func _update_boss_bar(me: Node) -> void:
 	else:
 		_boss_bar.modulate = Color.WHITE
 	_boss_label.text = "恐龍 boss　體力（%s）" % state
+	if b.pilot == multiplayer.get_unique_id():   # 自己操作的恐龍才看得到甩尾冷卻（牛仔看不到）
+		_boss_label.text += "　甩尾 %s" % ("可用" if b.sweep_left <= 0.0 else "%d 秒" % ceili(b.sweep_left))
 
 ## 天空換成 sky.gdshader（有雲、有太陽盤）。霧只蓋一點點天空，不然雲全被霧洗掉
 func _use_sky() -> void:

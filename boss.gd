@@ -108,6 +108,7 @@ const SNIFF := preload("res://assets/audio/dino/sniff.wav")
 @export var act := ACT_NONE
 @export var mood := MOOD_ROAM
 @export var guard_left := 0.0   # 派對模式起身後的無敵還剩幾秒
+@export var sweep_left := 0.0   # 甩尾冷卻還剩幾秒：同步出去，玩家操作恐龍時畫面上看得到
 ## 派對模式用（docs/企劃/派對玩法.md）：倒地中、起身後無敵中。各台都看得到（照同步的值算）
 var downed: bool:
 	get: return down_left > 0.0
@@ -143,7 +144,6 @@ var _retreat_to := Vector3.INF
 var _last_pos := {}           # 牛仔 → 上一幀的位置（算誰在跑）
 var _act_left := 0.0          # 這個動作狀態還剩多久
 var _attack_gap := 0.0
-var _sweep_cd := 0.0
 var _pounce_cd := 0.0
 var _pounce_dir := Vector3.ZERO
 var _pounce_left := 0.0
@@ -251,7 +251,7 @@ func think(delta: float) -> void:
 	_seen_left = maxf(_seen_left - delta, 0.0)
 	_noise_left = maxf(_noise_left - delta, 0.0)
 	_attack_gap = maxf(_attack_gap - delta, 0.0)
-	_sweep_cd = maxf(_sweep_cd - delta, 0.0)
+	sweep_left = maxf(sweep_left - delta, 0.0)
 	_pounce_cd = maxf(_pounce_cd - delta, 0.0)
 	guard_left = maxf(guard_left - delta, 0.0)
 	if pilot != 0:
@@ -303,8 +303,8 @@ func _pilot_step(delta: float) -> void:
 		if _pin_buttons & PIN_BITE:
 			_begin(ACT_BITE_WIND, BITE_WIND)
 			return
-		if _pin_buttons & PIN_SWEEP and _sweep_cd <= 0.0:
-			_sweep_cd = _sweep_cd_time()
+		if _pin_buttons & PIN_SWEEP and sweep_left <= 0.0:
+			sweep_left = _sweep_cd_time()
 			_begin(ACT_CHARGE_WIND, CHARGE_WIND)
 			return
 		if _pin_buttons & PIN_POUNCE and _pounce_cd <= 0.0:
@@ -483,8 +483,8 @@ func _start_attack() -> bool:
 			_begin(ACT_BITE_WIND, BITE_WIND)
 			return true
 	# 蓄力甩尾：身邊有人在側面或背後，或身邊不只一個人
-	if _sweep_cd <= 0.0 and (near.size() >= 2 or near.any(func(p: Node3D) -> bool: return not _in_front(p.global_position, 0.5))):
-		_sweep_cd = _sweep_cd_time()
+	if sweep_left <= 0.0 and (near.size() >= 2 or near.any(func(p: Node3D) -> bool: return not _in_front(p.global_position, 0.5))):
+		sweep_left = _sweep_cd_time()
 		_begin(ACT_CHARGE_WIND, CHARGE_WIND)
 		return true
 	# 撲擊：中距離正前方看得到、路線上沒東西擋
