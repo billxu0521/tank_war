@@ -439,6 +439,9 @@ func _physics_process(delta: float) -> void:
 	# 翻越期間位置由 Tween 接管，只留視角給玩家轉
 	if vaulting:
 		return
+	if frozen():
+		_hold_still(delta)
+		return
 
 	# 爬梯子：W 上、S 下，Space 或 F 放手。這一幀不處理其他移動和互動
 	if _ladder:
@@ -554,6 +557,9 @@ func _hurt_self(amount: int) -> void:
 ## ponytail: 不翻越、不蹲，沒有尋路。卡牆就沿牆繞一段，場地都是大方塊，夠用；
 ## 場地變複雜（巷弄、室內）再換 NavigationAgent3D，FNE 那邊已經有烘 navmesh 的做法。
 func _bot_step(delta: float) -> void:
+	if frozen():
+		_hold_still(delta)
+		return
 	var g := get_tree().get_first_node_in_group(&"match")
 	if not is_on_floor():
 		velocity += get_gravity() * delta
@@ -690,6 +696,19 @@ func deal_damage(target: Node, amount: int, head := false) -> void:
 		target.take_damage(amount, self)
 	else:
 		_match().request_damage.rpc_id(1, name.to_int(), target.get_path(), amount, _camera.global_position, head)
+
+
+## 派對模式的準備、結算階段：不能動、不能開槍（只能轉視角），見 Main.party_frozen
+func frozen() -> bool:
+	var g := _match()
+	return g != null and g.party_frozen()
+
+
+## 站著不動，但還是會落地
+func _hold_still(delta: float) -> void:
+	if not is_on_floor():
+		velocity += get_gravity() * delta
+	_move_flat(Vector3.ZERO, delta)
 
 
 func _match() -> Node:

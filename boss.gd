@@ -55,6 +55,8 @@ const SNIFF_EVERY := Vector2(2.5, 4.5)   # 找人時多久嗅一次（秒）
 const SEARCH_TIME := 8.0     # 走到導演給的點之後，在附近繞著找這麼久
 const SEARCH_RADIUS := 10.0
 const KNOCK_TIME := 6.0
+const PARTY_KNOCK_TIME := 15.0   # 派對模式倒地比較久：牛仔打倒恐龍就有這段時間偷蛋、撤離
+const GET_UP_GUARD := 3.0        # 派對模式：起身後這麼久打不動（身體閃爍）
 const TURN := 3.0            # 轉身速度（弧度／秒）：大隻轉得慢，繞著牠跑有用
 const ARRIVE := 2.5
 const RETREAT_DIST := 50.0   # 退開時往離最近的人這麼遠的地方跑
@@ -77,6 +79,7 @@ const SWEEP_RADIUS := 9.5
 const SWEEP_DAMAGE := 70
 const SWEEP_RECOVER := 0.6
 const SWEEP_CD := 8.0
+const SWEEP_CD_PARTY := 20.0   # 派對模式：甩尾拆得掉地形（destructible.gd），冷卻拉長，不然掩體一下就拆光
 const STUN_TIME := 2.5       # 蓄力被打斷暈多久
 # 撲擊：中距離正前方、路線沒東西擋。蹲低，起跳那刻方向鎖死
 const POUNCE_MIN := 11.0
@@ -104,6 +107,14 @@ const SNIFF := preload("res://assets/audio/dino/sniff.wav")
 @export var running := false
 @export var act := ACT_NONE
 @export var mood := MOOD_ROAM
+@export var guard_left := 0.0   # 派對模式起身後的無敵還剩幾秒
+## 派對模式用（docs/企劃/派對玩法.md）：倒地中、起身後無敵中。各台都看得到（照同步的值算）
+var downed: bool:
+	get: return down_left > 0.0
+var invulnerable: bool:
+	get: return guard_left > 0.0
+signal knocked_down   # 各台：倒地那一刻
+signal got_up         # 各台：起身那一刻
 ## 對抗模式：玩家操作尼諾拉（docs/規劃/2026-10-18-對抗模式.md）。0 = 電腦。有駕駛時行為樹不跑，照駕駛送來的輸入動，
 ## 出招、預備動作、叫聲、體力、倒地、同步都跟電腦版一樣。駕駛斷線 main.gd 會清回 0，電腦接手
 @export var pilot := 0
@@ -198,7 +209,10 @@ func _process(delta: float) -> void:
 		var w: Node = get_tree().get_first_node_in_group(&"arena")
 		if w:
 			Fx.dust_ring(w, global_position + Vector3.DOWN * 3.5, 4.0, 40, 9.0, 1.2)
-	_was_down = down_left > 0.0
+	if downed != _was_down:
+		(knocked_down if downed else got_up).emit()
+	_was_down = downed
+	$Trex.visible = guard_left <= 0.0 or fmod(guard_left, 0.2) < 0.12   # 無敵中閃爍
 	$Trex.act = act
 	if act != _shown_act:
 		_shown_act = act
@@ -239,6 +253,7 @@ func think(delta: float) -> void:
 	_attack_gap = maxf(_attack_gap - delta, 0.0)
 	_sweep_cd = maxf(_sweep_cd - delta, 0.0)
 	_pounce_cd = maxf(_pounce_cd - delta, 0.0)
+	guard_left = maxf(guard_left - delta, 0.0)
 	if pilot != 0:
 		_pilot_step(delta)
 		return
@@ -289,7 +304,7 @@ func _pilot_step(delta: float) -> void:
 			_begin(ACT_BITE_WIND, BITE_WIND)
 			return
 		if _pin_buttons & PIN_SWEEP and _sweep_cd <= 0.0:
-			_sweep_cd = SWEEP_CD
+			_sweep_cd = _sweep_cd_time()
 			_begin(ACT_CHARGE_WIND, CHARGE_WIND)
 			return
 		if _pin_buttons & PIN_POUNCE and _pounce_cd <= 0.0:
@@ -430,6 +445,10 @@ func _cowboys() -> Array:
 func _game() -> Node:
 	return get_tree().get_first_node_in_group(&"match")
 
+func _party() -> bool:
+	var g := _game()
+	return g != null and g.rules == &"party" and not g._sandbox   # 大廳選了派對再按沙盒：照沙盒
+
 func _flat_dist(at: Vector3) -> float:
 	return Vector2(at.x - global_position.x, at.z - global_position.z).length()
 
@@ -465,7 +484,7 @@ func _start_attack() -> bool:
 			return true
 	# 蓄力甩尾：身邊有人在側面或背後，或身邊不只一個人
 	if _sweep_cd <= 0.0 and (near.size() >= 2 or near.any(func(p: Node3D) -> bool: return not _in_front(p.global_position, 0.5))):
-		_sweep_cd = SWEEP_CD
+		_sweep_cd = _sweep_cd_time()
 		_begin(ACT_CHARGE_WIND, CHARGE_WIND)
 		return true
 	# 撲擊：中距離正前方看得到、路線上沒東西擋
@@ -574,6 +593,27 @@ func _strike_bite() -> void:
 
 func _strike_sweep() -> void:
 	_hit_around(global_position, SWEEP_RADIUS, SWEEP_DAMAGE)   # 掃起的一圈土是各台自己播（trex.gd 的 _act_fx）
+	if _party():
+		_wreck_around(global_position, SWEEP_RADIUS)
+
+func _sweep_cd_time() -> float:
+	return SWEEP_CD_PARTY if _party() else SWEEP_CD
+
+## 派對模式：甩尾掃到的地形（群組 destructible：樹、灰盒房子；安全屋不在裡面）各挨一下，倒不倒它自己算
+func _wreck_around(at: Vector3, radius: float) -> void:
+	var sphere := SphereShape3D.new()
+	sphere.radius = radius
+	var q := PhysicsShapeQueryParameters3D.new()
+	q.shape = sphere
+	q.transform = Transform3D(Basis(), at)
+	q.exclude = [get_rid()]
+	var done := {}
+	# ponytail: 一棟房子幾十塊碰撞各算一筆，上限給大一點；房子擠成一團漏掉幾個再加
+	for r: Dictionary in get_world_3d().direct_space_state.intersect_shape(q, 256):
+		var c: Object = r.collider
+		if c is Node and (c as Node).is_in_group(&"destructible") and not done.has(c):
+			done[c] = true
+			c.tail_hit(at)
 
 ## 判定點附近的牛仔扣血（一招每人最多一次、中間隔著東西打不到）
 func _hit_around(at: Vector3, radius: float, damage: int) -> void:
@@ -618,6 +658,8 @@ func head_position() -> Vector3:
 
 func _act_down(delta: float) -> int:
 	down_left = maxf(down_left - delta, 0.0)
+	if down_left <= 0.0 and _party():
+		guard_left = GET_UP_GUARD
 	_move(Vector3.ZERO, false, delta)
 	return BT.RUNNING
 
@@ -747,7 +789,7 @@ func _go(to: Vector3, want_run: bool, delta: float) -> void:
 	_move(-global_basis.z * clampf(cos(off), 0.15, 1.0), want_run, delta)
 
 ## p 可能已經被刪掉（預備出招時目標剛好死掉）：參數不寫型別，先檢查再用
-func _turn_to(p: Object, speed: float, delta: float) -> void:
+func _turn_to(p: Variant, speed: float, delta: float) -> void:
 	if not is_instance_valid(p):
 		return
 	var d: Vector3 = (p as Node3D).global_position - global_position
@@ -774,9 +816,9 @@ func _move(dir: Vector3, want_run: bool, delta: float) -> void:
 # --- 受傷 ---
 
 ## 打不死：血打光就倒地 KNOCK_TIME 秒、血補滿，起來先退開（導演的高峰）。倒地時打不動。
-## 恐龍決鬥模式例外：打得死（死了大家贏，見 Main._on_died）
+## 恐龍決鬥模式例外：打得死（死了大家贏，見 Main._on_died）。派對模式起身後還有 GET_UP_GUARD 秒打不動
 func take_damage(amount: int, source: Node = null) -> void:
-	if down_left > 0.0 or hp <= 0:
+	if down_left > 0.0 or guard_left > 0.0 or hp <= 0:
 		return
 	var g := _game()
 	if hp - amount > 0 or (g and g.rules == &"dino_duel" and not g._sandbox):
@@ -788,7 +830,7 @@ func take_damage(amount: int, source: Node = null) -> void:
 func _knock() -> void:
 	if multiplayer.get_remote_sender_id() != 1:
 		return
-	down_left = KNOCK_TIME
+	down_left = PARTY_KNOCK_TIME if _party() else KNOCK_TIME
 	hp = max_hp
 	act = ACT_NONE
 	_target = null

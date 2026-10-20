@@ -87,7 +87,7 @@ func _draw() -> void:
 				Vector2(x - s * 5, HEIGHT * 0.5 - 8), Vector2(x - s * 5, HEIGHT * 0.5 + 8)])
 			draw_colored_polygon(tri, c)
 			draw_polyline(tri + PackedVector2Array([tri[0]]), Color(0.12, 0.07, 0.05), 1.5)
-		var t := "%s %dm" % [m["label"], int(m["dist"])]
+		var t: String = "%s %dm" % [m["label"], int(m["dist"])] if m.has("dist") else m["label"]   # 沒給距離只寫名字（一排重生點）
 		var w := font.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x
 		var tx := clampf(x - w * 0.5, 0.0, WIDTH - w)
 		_text(font, Vector2(tx, HEIGHT + 36), t, 16, c)

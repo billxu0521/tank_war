@@ -107,16 +107,23 @@ const RULES := {
 		desc = "搶蛋，但尼諾拉由玩家操作（勾「我想當恐龍」的人每局抽一個，沒人勾就是電腦）。帶蛋撤離的牛仔贏，時間到沒人撤離就是尼諾拉贏。"},
 	&"dino_duel": {name = "恐龍決鬥", lives = 5, dino = true, egg = false, timer = false,
 		desc = "所有牛仔合力打一隻恐龍，打死牠大家一起贏。每人可以重生 5 次，全部出局就是恐龍贏。小心，打到隊友一樣會扣血。"},
+	# 規則本體在 party.gd（命數、計時、計分自己管，不走上面的 lives／timer；lives 填 -1 讓舊的命數系統不插手）
+	&"party": {name = "派對", lives = -1, dino = true, egg = true, timer = true,
+		desc = "四個人輪流當恐龍，四回合加總比分數（不到四人用電腦補）。恐龍先花 15 秒藏蛋，牛仔每回合 3 條命，帶蛋撤離就贏這回合。"},
 }
 const DUEL_BOSS_HP := 3000   # 恐龍決鬥的恐龍血量（搶蛋模式打不死、900 血會倒地）
 var rules := &"egg"
 var _lives := {}   # 牛仔的連線編號 -> 還能重生幾次。只有用得到次數的模式有；主機算，廣播給大家（_sync_lives）
 var _out := {}     # 出局的牛仔：連線編號 -> 是不是 bot（新的一局要生回來）
 var _exit_pads: Array[Node3D] = []   # 撤離區的地面標示：沒有蛋的模式藏起來
+var party: Party   # 派對模式的回合、計分（party.gd）；不是派對模式是 null
+var _party_hud: PartyHud   # 派對模式的畫面（方位條要問它是不是在選重生點）
 
 var _props := {}   # 物件名 -> Mesh，從 props.glb 拿出來共用
 var _terrain: Terrain
 var _level: Array[Dictionary] = []   # 擺設清單：場地上每樣東西一筆（見 _build_level）
+var spawn_points: Array[Vector3] = []   # 牛仔出生／重生候選點（擺設種類 spawn，派對模式用）；空的就用 _spawn_point()
+var dino_spawn := Vector3.ZERO           # 恐龍出生點（擺設種類 dino_spawn）；沒放就是場地中央貼地
 ## 手調過的場景檔（在 Godot 編輯器裡改，見 docs/素材流水線/場景編輯.md）。烘焙工具設成空的：不讀場景檔，自動擺一份初稿
 ## 目前的地圖：&"" 是主地圖（連線、沙盒），&"range" 是靶場。靜態的：換地圖要重載整個場景，重載後還記得
 static var mode := &""
@@ -138,6 +145,7 @@ static func lane_of(path: String) -> Variant:
 	return GREYBOX_LANE if path == GREYBOX_LEVEL else SANDBOX_RANGE
 var _houses_built := 0   # 第幾棟農舍：三種輪流蓋（不用亂數，後面擺的東西位置才不會跟著變）
 var _doors: Array[Door] = []   # 晚加入的人連進來時，把開著的門補送給他
+var _wrecks: Array[Destructible] = []   # 甩尾拆得掉的地形（destructible.gd）：晚加入的人連進來時，把打過的補送給他
 var _wheat_fields: Array[Rect2] = []   # 地形上色要知道哪裡是麥田
 var _roads: Array[Rect2] = []          # 城鎮主街這類另外鋪的土路（地形上色）；彎彎曲曲的荒地小路在 Trails（trails.gd）
 var _blocked: Array[Rect2] = []  # 建築物在 XZ 平面佔的範圍
@@ -168,6 +176,9 @@ func _ready() -> void:
 	if DisplayServer.get_name() != "headless" and get_window().size == base:
 		get_window().set_deferred(&"mode", Window.MODE_MAXIMIZED)
 	_add_report_button()
+	_party_hud = PartyHud.new()   # 派對模式的畫面（party_hud.gd），party 是 null 時自己藏起來
+	_party_hud.main = self
+	$UI/Root.add_child(_party_hud)
 	_flatten_models()
 	_use_cjk_font()
 	_add_settings()
@@ -448,6 +459,9 @@ func _to_lobby(msg: String) -> void:
 	if Period.current != period:   # 時段也是
 		Period.apply(self, period)
 	_apply_rules()
+	if party:   # 大廳選的是派對：開局時才建（不然畫面會疊在大廳上）
+		party.free()
+		party = null
 	egg.visible = true
 	for n in get_tree().get_nodes_in_group(&"sandbox_prop"):
 		n.free()
@@ -467,8 +481,10 @@ func _to_lobby(msg: String) -> void:
 	hud.text = ""
 	status.text = msg
 	_show_cursor()
-	# 靶場是另一張地圖：回大廳就重載回牧場（測試自己組的場景不是 current_scene，不重載）
-	if mode == &"range":
+	# 靶場是另一張地圖：回大廳就重載回牧場（測試自己組的場景不是 current_scene，不重載）。
+	# 甩尾拆過東西也重載：下一局（或加入別人的房間）場地要是完整的
+	var wrecked := _wrecks.any(func(w: Destructible) -> bool: return w.hits > 0)
+	if mode == &"range" or wrecked:
 		mode = &""
 		if get_tree().current_scene == self:
 			get_tree().reload_current_scene.call_deferred()
@@ -650,6 +666,17 @@ func _apply_rules() -> void:
 	egg.visible = has_egg
 	for pad in _exit_pads:
 		pad.visible = has_egg
+	if party:   # 換模式、回大廳都重來一份
+		party.free()
+		party = null
+	if rules == &"party":
+		party = Party.new()
+		party.name = &"Party"
+		add_child(party)
+
+## 派對模式的準備、結算階段：牛仔不能動、不能開槍，誰都不扣血（cowboy.gd、viewmodel.gd、fighter.gd 問這個）
+func party_frozen() -> bool:
+	return party != null and party.phase in [&"prep", &"result", &"final"]
 
 ## 這局有沒有重生次數（沙盒、靶場不算）
 func _uses_lives() -> bool:
@@ -736,6 +763,16 @@ func _on_solo_dino_pressed() -> void:
 	var me := _add_player(COWBOY, 1)
 	me.global_position = _on_ground(SANDBOX_START)
 	me.viewmodel.set_infinite()
+	spawn_boss()
+
+## 單人派對：不開房（離線），派對模式自己會用電腦補到 4 人，一個人就能測完整四回合
+func _on_solo_party_pressed() -> void:
+	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	_offline = true
+	_on_mode_picked(RULES.keys().find(&"party"))
+	_enter_game("單人派對：你和 3 個電腦輪流當恐龍。Esc 回大廳")
+	_apply_rules()
+	_spawn(1)
 	spawn_boss()
 
 ## 靶場：另一張平地地圖（levels/range.tscn），專門測手感。打中跳傷害數字，畫面上有準星距離。
@@ -952,8 +989,10 @@ func _far_from_cowboys() -> Vector3:
 ## 讀場景要在主執行緒，烘本身丟背景（幾百毫秒），烘好之前 boss 退回直線追。一個場地只烘一次。
 ## 恐龍很大（半徑 2.4），進不了房子、擠不過柵欄的缺口——網格自己就會繞開這些地方
 var _nav_region: NavigationRegion3D
-func bake_nav() -> void:
-	if is_instance_valid(_nav_region) or not multiplayer.is_server():
+## rebake：地形被甩尾拆掉（destructible.gd）時重烘，烘好之前照舊的網格走。
+## ponytail: 整張圖重烘（背景幾百毫秒，甩尾冷卻 20 秒才一次）；連續拆好幾樣時，晚開始的烘可能先烘完被舊的蓋掉，真的發生再排隊
+func bake_nav(rebake := false) -> void:
+	if not multiplayer.is_server() or is_instance_valid(_nav_region) != rebake:
 		return
 	var nm := NavigationMesh.new()
 	nm.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS
@@ -965,9 +1004,10 @@ func bake_nav() -> void:
 	nm.cell_height = 0.25
 	var src := NavigationMeshSourceGeometryData3D.new()
 	NavigationServer3D.parse_source_geometry_data(nm, src, $Arena)
-	_nav_region = NavigationRegion3D.new()
-	_nav_region.name = "DinoNav"
-	$Arena.add_child(_nav_region)
+	if not rebake:
+		_nav_region = NavigationRegion3D.new()
+		_nav_region.name = "DinoNav"
+		$Arena.add_child(_nav_region)
 	var region: WeakRef = weakref(_nav_region)   # 烘完之前回大廳、場地被刪掉的話，不要抓著已經不在的節點
 	NavigationServer3D.bake_from_source_geometry_data_async(nm, src, func() -> void:
 		var r: Object = region.get_ref()
@@ -1096,6 +1136,9 @@ func _spawn(id: int) -> void:
 		for d in _doors:   # 門的開關不走同步器，晚來的人要補送一次
 			if d.is_open:
 				d._set_open.rpc_id(id, true)
+		for w in _wrecks:
+			if w.hits > 0:
+				w._set_hits.rpc_id(id, w.hits, Vector3.ZERO, true)
 
 func _add_player(scene: PackedScene, id: int) -> Node3D:
 	var p: Node3D = scene.instantiate()
@@ -1180,6 +1223,9 @@ func _on_died(killer: Node, who: Node) -> void:
 	_died_at[id] = [Time.get_ticks_msec(), who.global_position]   # 同歸於盡用（request_damage）
 	if not as_dino:
 		_cowboys -= 1
+	if party and not _sandbox:
+		party.on_died(killer, who)
+		return
 	if who.is_in_group(&"boss") and rules == &"dino_duel" and not _sandbox:
 		_end_round()
 		_finish.rpc("恐龍倒下了，所有牛仔獲勝！")
@@ -1277,6 +1323,9 @@ func _physics_process(delta: float) -> void:
 	if _sandbox:
 		# 沒有時間限制，但重生是用剩餘秒數排的，時間還是要走（不會歸零結束）
 		_time_left -= delta
+		return
+	if party:   # 派對模式的計時、蛋、重生、勝負都在 party.gd
+		party.step(delta)
 		return
 	_time_left -= delta   # 沒有時限的模式也要走：重生是用剩餘秒數排的
 	if not RULES[rules].timer:
@@ -1376,6 +1425,9 @@ func _egg_step(delta: float) -> void:
 	if _dist_to_exit(egg.global_position) < EXIT_RADIUS:
 		egg.extract += delta
 		if egg.extract >= EXTRACT_SECONDS:
+			if party:   # 派對模式：回合結束、計分，不跳勝負畫面
+				party.extracted(egg.carrier)
+				return
 			_over = true
 			_next_round = NEXT_ROUND_DELAY
 			_finish_egg.rpc(egg.carrier)
@@ -1431,6 +1483,9 @@ func _process(delta: float) -> void:
 		hud.text = "沙盒    我的血量：%s    恐龍靶血量：%s" % [mine, dino.hp if dino else "重生中"]
 		return
 	var my_id := multiplayer.get_unique_id()
+	if party:   # 回合、倒數、命數在左上（party_hud.gd）
+		hud.text = "我的血量：%s    蛋：%s" % [mine, egg_state]
+		return
 	if _uses_lives():
 		var left := "出局" if _out.has(my_id) else "剩 %d 次" % int(_lives.get(my_id, 0))
 		hud.text = "%s    我的血量：%s    重生：%s    場上還有 %d 名牛仔" % [RULES[rules].name, mine, left, _remaining().size()]
@@ -1442,11 +1497,15 @@ func _process(delta: float) -> void:
 		players.get_child_count() - (1 if dino else 0),
 		egg_state]
 
+## 出局了（只能觀戰）：派對模式看 Party 的命數（每回合補滿），其他模式看 _out
+func _is_out(id: int) -> bool:
+	return int(party.lives.get(id, 1)) <= 0 if party else _out.has(id)
+
 ## 出局之後觀戰：鏡頭跟在一個還在場上的牛仔後上方（左鍵換人）
 var _spectator: Camera3D
 var _watch := 0
 func _update_spectator(me: Node) -> void:
-	var out := me == null and _out.has(multiplayer.get_unique_id())
+	var out := me == null and _is_out(multiplayer.get_unique_id())
 	if not out:
 		if _spectator and _spectator.current:
 			_spectator.current = false
@@ -1493,12 +1552,13 @@ func _update_center_info(me: Node) -> void:
 	elif _had_me and _dead_ms < 0:
 		_dead_ms = now
 	var t := ""
-	if result.visible:
+	if result.visible or (party and party.phase != &"play"):
 		t = ""
-	elif me == null and _out.has(multiplayer.get_unique_id()):
+	elif me == null and _is_out(multiplayer.get_unique_id()):
 		t = "你出局了，觀戰中"
 	elif me == null and _dead_ms >= 0:
-		t = "%d 秒後重生" % maxi(1, ceili(RESPAWN_DELAY - (now - _dead_ms) / 1000.0))
+		var delay := Party.RESPAWN_SECONDS if party else RESPAWN_DELAY
+		t = "%d 秒後重生" % maxi(1, ceili(delay - (now - _dead_ms) / 1000.0))
 	elif egg.extract > 0.0:
 		var who := "你" if egg.carrier == multiplayer.get_unique_id() else "牛仔 %d" % egg.carrier
 		t = "%s撤離中：還剩 %.1f 秒" % [who, maxf(EXTRACT_SECONDS - egg.extract, 0.0)]
@@ -1677,7 +1737,7 @@ const SHOP_HALF := {&"Saloon": Vector2(5.3, 9.5), &"Store": Vector2(4.8, 9.0), &
 ## 出生點要再離多遠（穀倉的在清單那一筆自己帶，大穀倉和小棚子不一樣）
 const CLEARANCE := {&"house": SPAWN_CLEARANCE, &"silo": 3.0, &"hay_shed": 2.0, &"windmill": 2.0, &"tree": 1.5,
 	&"hay_bale": 1.0, &"rock": 1.5, &"fence": 0.6, &"shop": SPAWN_CLEARANCE, &"water_tower": 2.0,
-	&"gb_house": 3.0, &"gb_block": 1.0}
+	&"gb_house": 3.0, &"gb_block": 1.0, &"gb_safe": 3.0}
 
 ## 這一筆在地面上佔的半寬；沒有碰撞的（灌木、碎石、只有外觀的東西）回傳 ZERO
 static func footprint_half(rec: Dictionary) -> Vector2:
@@ -1696,7 +1756,7 @@ static func footprint_half(rec: Dictionary) -> Vector2:
 				return Vector2.ZERO
 			var r: Vector3 = meshes()[rec.mesh].get_aabb().size * rec.s
 			return Vector2(r.x, r.z) * 0.5
-		&"gb_house", &"gb_block":
+		&"gb_house", &"gb_block", &"gb_safe":
 			return Vector2(rec.size.x, rec.size.z) * 0.5
 	return FOOTPRINT.get(rec.kind, Vector2.ZERO)
 
@@ -1736,6 +1796,7 @@ func _reserve(rec: Dictionary) -> void:
 ## 照擺設清單把東西蓋出來。順序跟清單一樣（門的名字 Door0、Door1… 照蓋的順序，每台機器要一樣）
 func _build_level() -> void:
 	var bushes: Array[Transform3D] = []
+	dino_spawn = _on_ground(Vector3.ZERO)
 	for rec: Dictionary in _level:
 		var p: Vector3 = rec.pos
 		match rec.kind:
@@ -1753,8 +1814,14 @@ func _build_level() -> void:
 			&"hitch": _hitch(p)
 			&"shop": _shop(p, rec.variant, rec.yaw)
 			&"water_tower": _water_tower(p, rec.yaw)
-			&"gb_house": _place_greybox(Greybox.house(rec.size, rec.floors, rec.big), p, rec.yaw)
+			&"gb_house": _place_greybox(_destructible(Greybox.house(rec.size, rec.floors, rec.big), 2), p, rec.yaw)
 			&"gb_block": _place_greybox(Greybox.block(rec.size), p, rec.yaw)
+			&"gb_safe":   # 安全屋：一層的小灰盒房，門窗恐龍擠不進。拆不掉（不進 destructible）
+				var safe := Greybox.house(rec.size, 1)
+				safe.add_to_group(&"safe_house")
+				_place_greybox(safe, p, rec.yaw)
+			&"spawn": spawn_points.append(_on_ground(p))
+			&"dino_spawn": dino_spawn = _on_ground(p)
 			&"tree": _tree(rec)
 			&"rock": _rock(rec.mesh, p, rec.s, rec.yaw, rec.solid)
 			&"prop": _prop(rec.name, _on_ground(p)).rotation.y = rec.yaw
@@ -1768,6 +1835,17 @@ func _place_greybox(body: StaticBody3D, p: Vector3, yaw: float) -> void:
 	body.position = _on_ground(p)
 	body.rotation.y = yaw
 	$Arena.add_child(body)
+
+## 甩尾拆得掉（destructible.gd，打 hits 下倒）：照蓋的順序取名 Wreck0、Wreck1…，每台一樣，RPC 才找得到同一個
+func _destructible(body: StaticBody3D, hits: int, visual: Node3D = null) -> StaticBody3D:
+	body.set_script(Destructible)
+	var w: Destructible = body
+	w.name = "Wreck%d" % _wrecks.size()
+	w.hits_needed = hits
+	w.visual = visual
+	w.add_to_group(&"destructible")
+	_wrecks.append(w)
+	return w
 
 ## 自動擺一份初稿：固定種子的亂數，每台機器擺出來一樣。手調過的場景檔存在時不會跑這個
 func _generate_level() -> void:
@@ -1926,13 +2004,21 @@ func _update_compass() -> void:
 	_compass.set_view(cam)
 	var at := cam.global_position
 	var marks := []
-	if egg.visible and egg.carrier != multiplayer.get_unique_id():
+	# 派對模式蛋是恐龍藏的：沒人拿起來之前不標
+	if egg.visible and egg.carrier != multiplayer.get_unique_id() and (party == null or egg.carrier != 0):
 		marks.append({"deg": Compass.bearing(at, egg.global_position), "dist": at.distance_to(egg.global_position),
 			"color": Compass.EGG_COLOR, "label": "蛋"})
 	for e: Vector3 in (_exits if RULES[rules].egg and not _solo_dino else []):
 		marks.append({"deg": Compass.bearing(at, e), "dist": at.distance_to(e),
 			"color": Compass.EXIT_COLOR, "label": "撤離"})
 	var boss := get_tree().get_first_node_in_group(&"boss") as Node3D
+	if party and _party_hud._party == party and _party_hud.waiting_respawn():   # 畫面還沒換到新的 Party 時別問它   # 派對模式等重生：標出能選的重生點
+		var pts := _party_hud.spawn_points()
+		for i in pts.size():
+			if i == _party_hud.picked:
+				marks.append({"deg": Compass.bearing(at, pts[i]), "dist": at.distance_to(pts[i]), "color": Color(0.4, 0.9, 0.5), "label": "重生點 %d" % (i + 1)})
+			elif _party_hud.picked < 0:   # 還沒選：只寫編號（九個都寫距離會疊在一起，距離看中間的清單）
+				marks.append({"deg": Compass.bearing(at, pts[i]), "color": Color(0.4, 0.9, 0.5), "label": str(i + 1)})
 	if _solo_dino and boss:   # 測恐龍行為：標出恐龍在哪
 		marks.append({"deg": Compass.bearing(at, boss.global_position), "dist": at.distance_to(boss.global_position),
 			"color": Color(1, 0.35, 0.3), "label": "恐龍"})
@@ -2977,13 +3063,16 @@ func _hay_bale(p: Vector3, yaw: float) -> StaticBody3D:
 func _tree(rec: Dictionary) -> void:
 	var p := _on_ground(rec.pos) + Vector3.DOWN * 0.3   # 往下埋一點：斜坡上樹根的下坡那側才不會懸空
 	var s: float = rec.s
+	var body: StaticBody3D
 	if rec.mesh == &"TreePine":
 		var h := s * TREE_BASE_TRUNK
-		_solid_cyl(p + Vector3(0, h * 0.5, 0), 0.35, h)
+		body = _solid_cyl(p + Vector3(0, h * 0.5, 0), 0.35, h)
 	else:
 		var trunk: Array = TREE_KINDS[rec.mesh]
-		_solid_cyl(p + Vector3(0, trunk[1] * s * 0.5, 0), trunk[0] * s, trunk[1] * s)
-	_prop(rec.mesh, p, Vector3.ONE * s).rotation.y = rec.yaw
+		body = _solid_cyl(p + Vector3(0, trunk[1] * s * 0.5, 0), trunk[0] * s, trunk[1] * s)
+	var mi := _prop(rec.mesh, p, Vector3.ONE * s)
+	mi.rotation.y = rec.yaw
+	_destructible(body, 1, mi)   # 甩一下就倒
 
 ## 人字屋頂的碰撞：兩片斜板。斜度在 45 度以內，恐龍爬上來站得住。
 ## 外觀在 Blender 的模型裡（blender/props.py 的 gable_roof() 照這個擺法建的）
