@@ -45,6 +45,9 @@ properties/10/replication_mode = 2
 properties/11/path = NodePath(".:guard_left")
 properties/11/spawn = true
 properties/11/replication_mode = 1
+properties/12/path = NodePath(".:sweep_left")
+properties/12/spawn = true
+properties/12/replication_mode = 1
 
 [node name="Boss" type="CharacterBody3D" groups=["dino", "boss"]]
 script = ExtResource("1")
