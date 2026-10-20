@@ -219,6 +219,7 @@ godot --headless --quit --editor         # 新增 class_name 後重建型別快�
 | `levels/` | 場地的場景檔 `ranch.tscn`（在 Godot 編輯器裡拖曳調整，見 [場景編輯](docs/素材流水線/場景編輯.md)）、物件庫、擺設檢查 |
 | `bug_report.gd` | 問題回報：攔下錯誤，F8 存成報告並複製到剪貼簿（見 [問題回報](docs/流程/問題回報.md)） |
 | `test_battle.gd` | 自我檢查 |
+| `tests/` | 自我檢查的案例，依主題分檔（`base.gd` 共用輔助，其餘逐層 `extends` 上一檔） |
 
 坦克版的程式和模型在 git 歷史裡（`d59b432` 之前）。大廳的「檢視模型」可以單獨看牛仔、三把槍和暴龍；按 5「素材庫」會自動列出 `models/` 裡每個 `.glb`（← → 換檔、L 排開），新素材丟進去就看得到。
 
