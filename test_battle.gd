@@ -2641,6 +2641,14 @@ func _case_party_gameplay() -> void:
 	var solo: Node = load("res://main.tscn").instantiate()
 	root.add_child(solo)
 	_ck(solo.has_node(^"UI/Root/Lobby/SoloPartyBtn"), "大廳要有單人派對")
+	# 大廳的東西都要登記在某一頁（LOBBY_PAGES），沒登記的換頁時會被藏掉、玩家看不到
+	var listed := []
+	for pg: Array in solo.LOBBY_PAGES.values():
+		listed.append_array(pg)
+	var unlisted: Array = solo.lobby.get_children().map(func(c: Node) -> String: return String(c.name)).filter(func(n: String) -> bool: return not n in listed)
+	_ck(unlisted.is_empty(), "大廳的按鈕都要登記在 LOBBY_PAGES（漏了 %s）" % [unlisted])
+	solo.lobby_go(&"practice")
+	_ck(solo.get_node(^"UI/Root/Lobby/SoloPartyBtn").visible, "單人練習那頁要看得到單人派對")
 	solo._on_solo_party_pressed()
 	solo._physics_process(DT)
 	_ck(solo.rules == &"party" and solo._offline and solo.party != null and solo.party.phase == &"prep"
