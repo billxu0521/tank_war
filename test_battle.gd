@@ -537,27 +537,27 @@ func _case_hunt_weapons() -> void:
 	_ck(info.visible and info.get_child_count() == (revolver.info_rows().size() + 1) * (vm._weapons.size() + 1), "Esc 選單要有每把槍的武器介紹")
 	var ctl: Settings = m.settings
 	m.menu.get_node(^"Box/ControlsBtn").pressed.emit()
-	_ck(ctl.visible and ctl.tabs.get_current_tab_control().name == &"按鍵" and m.CONTROLS.size() > 10, "Esc 選單按「操作說明」要彈出設定的按鍵頁")
+	_ck(ctl.visible and ctl.tabs.get_current_tab_control().name == &"按鍵" and Settings.CONTROLS.size() > 10, "Esc 選單按「操作說明」要彈出設定的按鍵頁")
 	m._set_menu(false)
 	_ck(not ctl.visible, "關掉選單時設定視窗也要一起關（不然一局結束會擋住畫面）")
 
 	# 瞄準按住／切換：玩家的設定要存起來，下次開遊戲還在
 	m.settings_path = "user://test_settings.cfg"
-	m._on_aim_toggle_toggled(true)
+	m.settings._on_aim_toggle_toggled(true)
 	Viewmodel.aim_toggle = false
 	m._load_settings()
 	_ck(Viewmodel.aim_toggle, "瞄準切換的設定要存起來")
-	m._on_fps_cap_selected(2)
-	_ck(Engine.max_fps == m._refresh_hz() / 2, "幀率上限選「螢幕的一半」要鎖在刷新率一半（現在 %d）" % Engine.max_fps)
-	m._on_vsync_toggled(false)
-	m.fps_cap = 0
-	m.vsync = true
+	m.settings._on_fps_cap_selected(2)
+	_ck(Engine.max_fps == m.settings._refresh_hz() / 2, "幀率上限選「螢幕的一半」要鎖在刷新率一半（現在 %d）" % Engine.max_fps)
+	m.settings._on_vsync_toggled(false)
+	m.settings.fps_cap = 0
+	m.settings.vsync = true
 	m._load_settings()
-	_ck(m.fps_cap == 2 and not m.vsync and Engine.max_fps == m._refresh_hz() / 2, "畫面設定要存起來，重開照樣套用")
-	m._on_fps_cap_selected(0)
-	m._on_vsync_toggled(true)
+	_ck(m.settings.fps_cap == 2 and not m.settings.vsync and Engine.max_fps == m.settings._refresh_hz() / 2, "畫面設定要存起來，重開照樣套用")
+	m.settings._on_fps_cap_selected(0)
+	m.settings._on_vsync_toggled(true)
 	_ck(Engine.max_fps == 0, "選「不限」要拿掉上限")
-	m._on_aim_toggle_toggled(false)
+	m.settings._on_aim_toggle_toggled(false)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(m.settings_path))
 	for w in vm._weapons:
 		_ck(w.reserve > 0, "%s 的備彈要有限（Hunt 的子彈要省著用）" % w.display_name)
