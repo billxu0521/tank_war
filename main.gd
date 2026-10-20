@@ -529,7 +529,7 @@ func _start_dedicated() -> void:
 const LOBBY_PAGES := {
 	&"home": ["Title", "HomeOnline", "HomePractice", "HomeSettings", "HomeQuit"],
 	&"online": ["Title", "OnlineLabel", "ModeRow", "DinoVolunteer", "ModeDesc", "HostBtn", "JoinBtn", "IPRow", "TestServerBtn", "BackBtn"],
-	&"practice": ["Title", "PracticeLabel", "SandboxBtn", "SoloDinoBtn", "RangeBtn", "ViewerBtn", "BackBtn"],
+	&"practice": ["Title", "PracticeLabel", "SandboxBtn", "SoloDinoBtn", "SoloPartyBtn", "RangeBtn", "ViewerBtn", "BackBtn"],
 }
 var lobby_page := &"home"
 
