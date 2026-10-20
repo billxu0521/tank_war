@@ -2637,6 +2637,15 @@ func request_respawn_at(i: int) -> void:
 
 ## 派對模式（party.gd）：輪流當恐龍、計分、命數、蛋。舊模式不受影響
 func _case_party_gameplay() -> void:
+	# 大廳的單人派對：離線、一個人就開得了，電腦補到四個
+	var solo: Node = load("res://main.tscn").instantiate()
+	root.add_child(solo)
+	_ck(solo.has_node(^"UI/Root/Lobby/SoloPartyBtn"), "大廳要有單人派對")
+	solo._on_solo_party_pressed()
+	solo._physics_process(DT)
+	_ck(solo.rules == &"party" and solo._offline and solo.party != null and solo.party.phase == &"prep"
+		and solo.party.scores.size() == 4, "單人派對要直接開第一回合，電腦補到四人")
+	_end(solo)
 	var m := _offline_match()
 	m._on_mode_picked(m.RULES.keys().find(&"party"))
 	m._apply_rules()

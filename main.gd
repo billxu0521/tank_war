@@ -765,6 +765,16 @@ func _on_solo_dino_pressed() -> void:
 	me.viewmodel.set_infinite()
 	spawn_boss()
 
+## 單人派對：不開房（離線），派對模式自己會用電腦補到 4 人，一個人就能測完整四回合
+func _on_solo_party_pressed() -> void:
+	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	_offline = true
+	_on_mode_picked(RULES.keys().find(&"party"))
+	_enter_game("單人派對：你和 3 個電腦輪流當恐龍。Esc 回大廳")
+	_apply_rules()
+	_spawn(1)
+	spawn_boss()
+
 ## 靶場：另一張平地地圖（levels/range.tscn），專門測手感。打中跳傷害數字，畫面上有準星距離。
 ## 大廳按鈕只是切地圖、重載場景，重載完 _autostart 看到 mode 就會進來這裡
 func _on_range_pressed() -> void:
