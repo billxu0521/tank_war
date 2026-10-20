@@ -1,7 +1,7 @@
 shader_type spatial;
 float hash2(vec2 p) {return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 // 地面（terrain.gd build() 用）：頂點顏色 × 灰階紋理。以前是 StandardMaterial3D，為了多一張「荒地小路」紋理換成自己寫：
-// 頂點顏色的透明度 = 路的濃度（main.gd ground_color 填 Trails.weight），濃的地方近看紋理換成 path_dirt（踩實的乾土、龜裂、碎石），
+// 頂點顏色的透明度 = 路的濃度（arena_map.gd ground_color 填 Trails.weight），濃的地方近看紋理換成 path_dirt（踩實的乾土、龜裂、碎石），
 // 草地的紋理（碎石、草梗）淡出去。三張紋理都用世界座標從正上方投影，不用另外算 UV（坡最陡 40 度，拉長看不出來）。
 // 粗糙度 0.95：outline.gdshader 拿粗糙度當記號，地面不能撞到草（0.5）、遠山（0.75）、槍（0.65）、目標（0.87）
 
@@ -18,7 +18,7 @@ uniform float dust_amount = 0.32;   // 森林裡樹幹後面要有亮的地面�
 uniform float bottom_dark = 0.88;   // 畫面最下面四分之一的地面再暗一點：城鎮的路面是一大片亮色，前景壓不下來。只動地面，牆和人不受影響  // 近處細紋理的強度（美術風格評估：第一人稱腳邊像撒胡椒）
 
 // 四種地面材質（tools/make_pixel_tex.py 的 gravel、clay、mud、outcrop；GPT 建議，docs/image/ground/）：
-// 權重在頂點的 CUSTOM0（main.gd ground_mix 算：坡、高度、植被、區域、雜訊），每種一張灰階像素圖 × 自己的顏色
+// 權重在頂點的 CUSTOM0（arena_map.gd ground_mix 算：坡、高度、植被、區域、雜訊），每種一張灰階像素圖 × 自己的顏色
 uniform sampler2D gravel_tex : source_color, filter_nearest_mipmap, repeat_enable;
 uniform sampler2D clay_tex : source_color, filter_nearest_mipmap, repeat_enable;
 uniform sampler2D mud_tex : source_color, filter_nearest_mipmap, repeat_enable;

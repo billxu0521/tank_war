@@ -115,7 +115,7 @@ static func gun_smoke(world: Node, at: Vector3, forward: Vector3, amount := 1.0)
 
 
 ## 塵土：大東西（恐龍）踩地、出招揚起的一團土。dir 是往哪邊噴（腳步是往後上方），size 是一片多大
-const DUST := Color(0.63, 0.5, 0.36, 0.55)   # 跟沙土路（main.gd 的 DIRT）同色系、亮一點
+const DUST := Color(0.63, 0.5, 0.36, 0.55)   # 跟沙土路（arena_map.gd 的 DIRT）同色系、亮一點
 static func dust(world: Node, at: Vector3, dir: Vector3, size := 0.7, amount := 6, speed := 2.5, life := 1.6) -> void:
 	var p := _emitter(_card(size, DUST), amount, life)
 	_spin(p)

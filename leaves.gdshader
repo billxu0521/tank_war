@@ -1,6 +1,6 @@
 shader_type spatial;
 // 樹的葉片卡（blender/tree.py、grove.py 的 leafcard 材質）：透明底挖空、不接收影子，加上風吹。
-// main.gd 的 _flatten_models 開場時把 leafcard 材質換成這個，貼圖沿用 glb 裡的。
+// model_materials.gd 的 _flatten_models 開場時把 leafcard 材質換成這個，貼圖沿用 glb 裡的。
 // 風跟草地（grass.gdshader）同一個方向、同一波：整棵樹冠跟著陣風慢慢晃，每片葉子再各自細細抖；
 // 越高晃越多（樹根附近不動），樹幹沒有晃，所以幅度要小，不然葉子會跟枝條脫開。
 render_mode cull_back, specular_disabled, shadows_disabled, world_vertex_coords;
@@ -16,7 +16,7 @@ uniform float crown_height = 3.5;   // 樹冠中心離樹根幾公尺（照模�
 uniform float crown_round = 0.45;    // 球面法線佔幾成：1 = 完全當球，0 = 卡片原本的法線。0.85 時夕陽從樹後面來，朝鏡頭那半顆整片變暗變灰（第 76 版）
 
 // 樹冠分三段明暗（Shader 美術改善規格第 9 節：Light / Mid / Dark 大塊面）：太陽打光分段（包覆打光，背光那半邊不會沉成一片深灰），
-// 再加跟 facet.gdshader 一樣的天空光（樹冠朝天的半顆亮、底下暗），也分段。暗部偏冷綠、受光偏黃綠（main.gd 的 FACET_TINTS 植物）
+// 再加跟 facet.gdshader 一樣的天空光（樹冠朝天的半顆亮、底下暗），也分段。暗部偏冷綠、受光偏黃綠（model_materials.gd 的 FACET_TINTS 植物）
 uniform float leaf_steps = 3.0;
 uniform float leaf_wrap = 0.5;
 uniform float leaf_fill = 0.35;

@@ -1,11 +1,11 @@
 @tool
 class_name LevelItem
 extends Node3D
-## 場景檔（levels/ranch.tscn）裡的一樣東西。遊戲開始時 main.gd 把每個 LevelItem 換成擺設清單的一筆，照清單蓋出來。
+## 場景檔（levels/ranch.tscn）裡的一樣東西。遊戲開始時 arena_map.gd 把每個 LevelItem 換成擺設清單的一筆，照清單蓋出來。
 ##
 ## 在 Godot 編輯器裡：拖曳移動、轉向（只看水平方向）、縮放（樹、石頭、灌木）；其他參數在右邊屬性面板改。
 ## 高度不用管：編輯器裡會自動貼著地形（LevelRoot），要疊高（例如草捆疊第二層）改 lift。
-## 種類跟參數的對應（main.gd 的 _build_level 照這個蓋）：
+## 種類跟參數的對應（arena_map.gd 的 _build_level 照這個蓋）：
 ##   flat     整平區，amount = 半徑（公尺）
 ##   wheat    麥田，amount = 邊長
 ##   barn     穀倉，size = 寬 × 牆高 × 長（公尺），amount = 出生點要離多遠
@@ -56,7 +56,7 @@ extends Node3D
 		_refresh()
 
 
-## 變成擺設清單的一筆（main.gd 的 _put）。要在場景樹裡才讀得到整體位置（群組節點可以整組搬）
+## 變成擺設清單的一筆（arena_map.gd 的 _put）。要在場景樹裡才讀得到整體位置（群組節點可以整組搬）
 func to_record() -> Dictionary:
 	var g := global_transform
 	var rec := {kind = StringName(kind), pos = Vector3(g.origin.x, lift, g.origin.z), yaw = global_rotation.y}

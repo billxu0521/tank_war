@@ -6,7 +6,7 @@
 #       --python blender/tree.py -- --out models/trees.glb --preview /tmp/tree.png
 # 反覆修改時用 tools/model_iter.sh tree <版號>：建模、存預覽、做成跟參考圖上下對照的圖
 #
-# 跟遊戲的約定（main.gd _tree() 的 TREE_KINDS）：原點在樹根、尺寸就是實際公尺，遊戲只做 ±10% 的隨機縮放。
+# 跟遊戲的約定（arena_map.gd _tree() 的 TREE_KINDS）：原點在樹根、尺寸就是實際公尺，遊戲只做 ±10% 的隨機縮放。
 # 碰撞圓柱的半徑和高度照各棵的樹幹粗細、分叉高度寫在 TREE_KINDS，這裡改了樹幹那邊要跟著改。
 import bpy, bmesh, math, os, random, sys
 from mathutils import Vector, Matrix, Euler, noise

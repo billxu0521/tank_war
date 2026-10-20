@@ -12,7 +12,7 @@
 #   WindmillRotor   風車的葉輪，原點在輪轂（遊戲裡轉它），葉面朝 -Y
 #   HayShed         倉庫／圍棚：直條板、正面大門敞開、裡面堆方草捆，原點在地面中央；HayShedCol 是碰撞
 #
-# 跟 main.gd 共用的數字：FENCE_H、FENCE_SEG（柵欄）、WINDMILL_HUB（葉輪掛在哪）、SHED（圍棚大小）
+# 跟 arena_map.gd 共用的數字：FENCE_H、FENCE_SEG（柵欄）、WINDMILL_HUB（葉輪掛在哪）、SHED（圍棚大小）
 # 背景跑：tools/model_iter.sh kit <版號>（參考圖用 docs/image/kit.png = house.png）
 import bpy, bmesh, math, os, random, sys
 from mathutils import Vector, Matrix

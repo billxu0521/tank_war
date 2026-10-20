@@ -1,6 +1,6 @@
 class_name LevelPreview
 extends RefCounted
-## 編輯器裡 LevelItem 長什麼樣：照 main.gd 蓋東西的擺法放一樣的模型（只有外觀，沒有碰撞、門、燈）。
+## 編輯器裡 LevelItem 長什麼樣：照 arena_map.gd 蓋東西的擺法放一樣的模型（只有外觀，沒有碰撞、門、燈）。
 ## 例外：灰盒（Greybox）直接放遊戲裡那個 StaticBody3D，有碰撞也無妨（貼地照地形算，不打射線）
 ## 位置、朝向、縮放跟著 LevelItem 節點本身，這裡只放「相對於節點」的零件。
 

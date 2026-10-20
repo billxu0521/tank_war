@@ -34,7 +34,7 @@ KINDS = {
     "roof":   ("wooden roof shingles, overlapping rows", 0),
     "hay":    ("dry hay straw, tangled stalks", 0),
     "metal":  ("rusty iron surface, rust blotches, scratches and pitting, no ridges, no rivets", 0),   # 波浪板鋪開像條碼
-    # 房子外牆（橫板、直板共用一個材質，見 main.gd PIXEL_RULES）：不能有方向的紋路，只要舊木頭的斑駁
+    # 房子外牆（橫板、直板共用一個材質，見 model_materials.gd PIXEL_RULES）：不能有方向的紋路，只要舊木頭的斑駁
     "weathered": ("weathered old wood board surface seen up close, faint long vertical grain streaks, a few small knots and nail holes, low contrast, no plank seams", 0, {"LO": 0.6, "MED": 0.72}),   # 第三輪：沒方向的高對比方塊斑像磚、像花崗岩
     # 草（grass.gdshader 的草葉、flora 的草叢）：直的細葉一根根並排
     "blades": ("dry prairie grass blades close-up, many thin vertical blades side by side, some lighter tips", 0, {"LO": 0.6}),

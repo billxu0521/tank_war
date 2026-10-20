@@ -1,5 +1,5 @@
 shader_type sky;
-// 黃昏的天空：上藍下橘的漸層、太陽和光暈、會慢慢飄的雲（main.gd 的 _use_sky 套上去）。
+// 黃昏的天空：上藍下橘的漸層、太陽和光暈、會慢慢飄的雲（arena_map.gd 的 _use_sky 套上去）。
 // 反射／環境光的那一趟（AT_CUBEMAP_PASS）不畫雲和太陽盤：雲每幀在動，那一趟要是也算就每幀重算一次，很貴
 
 uniform vec3 mid_color : source_color = vec3(0.71, 0.46, 0.37);   // 中段的粉紫

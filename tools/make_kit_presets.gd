@@ -1,6 +1,6 @@
 extends SceneTree
 ## 產生物件庫：levels/物件庫/ 底下每種東西一個小場景檔。在 Godot 編輯器裡從「檔案系統」面板拖進 ranch.tscn 就是新增一個。
-## 新增了物件種類（main.gd 的 _build_level、LevelItem）就在下面加一行，再跑一次：
+## 新增了物件種類（arena_map.gd 的 _build_level、LevelItem）就在下面加一行，再跑一次：
 ##   godot --headless --path . --script tools/make_kit_presets.gd
 
 const DIR := "res://levels/物件庫/"

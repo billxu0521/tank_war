@@ -1,5 +1,5 @@
 shader_type spatial;
-// 草地（main.gd 的 _grass_field）：一叢一個 instance，顏色是地面顏色（sRGB）。
+// 草地（arena_map.gd 的 _grass_field）：一叢一個 instance，顏色是地面顏色（sRGB）。
 // 風一波一波掃過、葉尖抖動；鏡頭腳邊的草往外倒；遠處壓進地面（不用透明，顏色本來就跟地面一樣）
 render_mode cull_disabled, specular_disabled, world_vertex_coords;
 
