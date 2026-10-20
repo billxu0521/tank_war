@@ -4,7 +4,7 @@ extends Control
 ## 看著的方向在正中間，左右各看得到 COVER/2 度。
 ## 上面標蛋和撤離區的方向＋距離；在視野外的就貼在兩端，箭頭指往那邊轉。
 ##
-## main.gd 每幀呼叫 set_view() 並填 marks（蛋、撤離區），這裡只負責畫。
+## match_hud.gd 每幀呼叫 set_view() 並填 marks（蛋、撤離區），這裡只負責畫。
 
 const COVER := 180.0          # 方位條總共涵蓋幾度
 const WIDTH := 640.0

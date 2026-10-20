@@ -4,7 +4,7 @@
 #   TreeJoshua  約書亞樹：粗短樹幹一路 Y 字分叉，每個枝端一球放射狀的尖葉
 #   TreeDead    枯樹：扭轉的樹幹、一路分叉到細尖的枝，沒有葉子
 #   TreeWillow  柳樹：彎的樹幹、圓頂樹冠、一串串往下垂的葉簾
-# 原點在樹根、尺寸是實際公尺（遊戲的碰撞圓柱寫在 main.gd 的 TREE_KINDS）。
+# 原點在樹根、尺寸是實際公尺（遊戲的碰撞圓柱寫在 arena_map.gd 的 TREE_KINDS）。
 # 背景跑：REF=docs/image/tree_list.png tools/model_iter.sh grove <版號>（預覽照參考圖的 3×2 排，闊葉樹也放進來對照）
 import bpy, bmesh, math, os, random, sys
 import numpy as np
@@ -408,7 +408,7 @@ def preview(obs, oak, path):
         c.scale = (s, s, s)
         c.location = (x, 0, z)
         c.rotation_euler = (0, 0, math.radians(20))
-        # 有葉片卡的樹不投影子：遊戲裡葉片卡不接收影子（main.gd 的 _flatten_models），不然一層層互遮，整個樹冠裡面全黑
+        # 有葉片卡的樹不投影子：遊戲裡葉片卡不接收影子（model_materials.gd 的 _flatten_models），不然一層層互遮，整個樹冠裡面全黑
         c.visible_shadow = not any('leafcard' in m.name for m in o.data.materials)
     for o in [oak] + obs:
         o.hide_render = True

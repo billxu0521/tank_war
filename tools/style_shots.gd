@@ -71,7 +71,7 @@ func _plan() -> void:
 	_views.append(["wheat", _ground(Vector3(-22, 0, 78)) + up * 3, _ground(Vector3(-55, 0, 36)) + up * 2])
 	_views.append(["forest", _ground(Vector3(61, 0, 63)) + up * 3, _ground(Vector3(52, 0, 48)) + up * 3])
 	_views.append(["forest_edge", _ground(Vector3(12, 0, 12)) + up * 3, _ground(Vector3(45, 0, 40)) + up * 4])
-	# 城鎮店面後面的荒漠植被（tools/plant_flora.gd 種的仙人掌、約書亞樹，main.gd _flora_field 撒的草叢）
+	# 城鎮店面後面的荒漠植被（tools/plant_flora.gd 種的仙人掌、約書亞樹，arena_map.gd _flora_field 撒的草叢）
 	_views.append(["desert_n", _ground(Vector3(66, 0, -80)) + up * 2.5, _ground(Vector3(20, 0, -76)) + up * 2])
 	_views.append(["desert_s", _ground(Vector3(14, 0, -12)) + up * 2.5, _ground(Vector3(60, 0, -16)) + up * 2])
 	# 葉片卡的樹近看（blender/grove.py）：場上的都被別的樹擋住，在空的靶場臨時種一棵楓樹、一棵闊葉樹並排拍
@@ -99,7 +99,7 @@ func _plan() -> void:
 		fb = _ground(fb)
 		_views.append(["field_bush_a", fb + Vector3(6, 1.6, 0), fb + up * 0.6])
 		_views.append(["field_bush_b", fb + Vector3(-6, 1.6, 0), fb + up * 0.6])
-	# 環境小物件（main.gd _clutter_field）：每種挑第一個，從 6 公尺外眼睛高度看
+	# 環境小物件（arena_map.gd _clutter_field）：每種挑第一個，從 6 公尺外眼睛高度看
 	var seen := {}
 	for c: Array in _main.map.clutter_spots:
 		if seen.has(c[0]):
@@ -113,7 +113,7 @@ func _plan() -> void:
 		if c[0] == &"DinoSkull":   # 頭骨另外從側面（自己的 +X 方向，模型沿 X 長）近拍
 			var side := Vector3(cos(yaw), 0, -sin(yaw))
 			_views.append(["clutter_DinoSkull_side", _ground(at - side.cross(Vector3.UP) * 4.5) + up * 1.2, at + up * 0.6])
-	# 地面材質（main.gd _ground_mix）：每種找一塊權重最高的地，從 6 公尺外、2.5 公尺高往下看
+	# 地面材質（arena_map.gd _ground_mix）：每種找一塊權重最高的地，從 6 公尺外、2.5 公尺高往下看
 	var best := [[-1.0, Vector2()], [-1.0, Vector2()], [-1.0, Vector2()], [-1.0, Vector2()]]
 	var cover := [0, 0, 0, 0]
 	for gx in range(-80, 81, 3):
@@ -131,7 +131,7 @@ func _plan() -> void:
 		var g: Vector2 = best[k][1]
 		var at := _ground(Vector3(g.x, 0, g.y))
 		_views.append(["ground_" + names[k], at + Vector3(2.5, 3.5, 2.5), at])   # 往下約 45 度
-	# 地被（main.gd _groundcover_field）：每種挑最靠近場中央的一塊，蹲高 1 公尺、3 公尺外往下看
+	# 地被（arena_map.gd _groundcover_field）：每種挑最靠近場中央的一塊，蹲高 1 公尺、3 公尺外往下看
 	var gcs := {}
 	for mmi: MultiMeshInstance3D in _main.get_node(^"Arena").find_children("*", "MultiMeshInstance3D", true, false):
 		var mesh: Mesh = mmi.multimesh.mesh

@@ -1,6 +1,6 @@
 shader_type spatial;
 // 共用材質（規格 docs/美術/Western_Faceted_FPS_Shader_美術改善規格.docx 的「Western_Faceted_Master」）：
-// 模型匯進來的標準材質，在 main.gd 的 _flatten_models 一律換成這個，參數照抄（顏色、紋理、粗糙度記號、自發光）。
+// 模型匯進來的標準材質，在 model_materials.gd 的 _flatten_models 一律換成這個，參數照抄（顏色、紋理、粗糙度記號、自發光）。
 // 跟標準材質只差打光：照到多少光（受光角度 × 影子）不連續漸變，而是分成幾段固定亮度（規格第 4 節），
 // 低面數模型每一面朝的方向不同，就會落在不同段，一面一面看得出來。
 render_mode cull_disabled, specular_disabled;
@@ -8,7 +8,7 @@ render_mode cull_disabled, specular_disabled;
 uniform vec4 albedo : source_color = vec4(1.0);
 uniform sampler2D albedo_tex : source_color, filter_linear_mipmap, repeat_enable;
 uniform bool use_tex = false;
-uniform bool use_triplanar = false;   // 紋理用物件自己的座標三面投影（main.gd 的 _add_grain）
+uniform bool use_triplanar = false;   // 紋理用物件自己的座標三面投影（model_materials.gd 的 _add_grain）
 uniform bool use_vcol = false;
 uniform vec3 uv_scale = vec3(1.0);
 uniform vec3 uv_offset = vec3(0.0);
@@ -27,14 +27,14 @@ uniform vec3 fill_dir = vec3(-0.45, 1.0, -0.21);   // 天空光從哪來：朝�
 uniform float fill_steps = 3.0;
 
 // 材質分色（規格第 14 節）：木頭、石頭、植物、金屬各有自己的暗部和受光色調（乘在顏色上，接近 1 的小偏移）。
-// main.gd 的 FACET_TYPES 照材質名字設。暗部 = 環境光照的部分，受光 = 太陽照的部分
+// model_materials.gd 的 FACET_TYPES 照材質名字設。暗部 = 環境光照的部分，受光 = 太陽照的部分
 uniform vec3 shade_tint = vec3(1.0);
 uniform vec3 lit_tint = vec3(1.0);
 uniform float value = 1.0;            // 整體明度：屋頂比牆暗一段（規格第 10 節）
 // 夕陽很橘，直接乘上去每樣東西都變成同一種橘。太陽光的顏色先抽掉一些，材質自己的色相才留得住（規格第 5 節）
 uniform float sun_neutral = 0.3;
 
-// 像素材質（tools/make_pixel_tex.py、main.gd 的 PIXEL_RULES）：16×16 灰階、最近點取樣，跟顏色相乘。
+// 像素材質（tools/make_pixel_tex.py、model_materials.gd 的 PIXEL_RULES）：16×16 灰階、最近點取樣，跟顏色相乘。
 // 物件自己的座標，一張鋪 1 / pixel_scale 公尺；三面投影但不混合，只取最正對的那一面（混合會出現半透明的疊格，不像像素）
 uniform sampler2D pixel_tex : source_color, filter_nearest_mipmap, repeat_enable;
 uniform bool use_pixel = false;

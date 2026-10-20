@@ -1,5 +1,5 @@
 shader_type spatial;
-// 穀倉裡從木板縫透進來的夕陽光柱（2026-10-10 環境感，main.gd _barn_light）。
+// 穀倉裡從木板縫透進來的夕陽光柱（2026-10-10 環境感，arena_map.gd _barn_light）。
 // 加亮、不吃光、不寫深度；寬度方向兩邊柔、頭尾淡進淡出，靠近牆地面也淡（不切出硬邊）
 render_mode unshaded, blend_add, cull_disabled, depth_draw_never, shadows_disabled;
 

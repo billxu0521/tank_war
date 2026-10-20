@@ -1,7 +1,7 @@
 # 鄉村場景物件：穀倉、筒倉、柵欄、乾草捲、兩種樹、灌木叢、麥子、草叢、蛋、篷車。
 #
 # 座標用 Blender 的：X 右、Y 前（= Godot -Z）、Z 上。單位公尺。
-# 每個物件都以「自己的原點」為準建在世界原點（匯出後 main.gd 直接拿 mesh 擺）：
+# 每個物件都以「自己的原點」為準建在世界原點（匯出後 arena_map.gd 直接拿 mesh 擺）：
 #   Barn        牆身，原點在地面中央。基準尺寸 14 寬 × 20 長 × 8 高（牆），遊戲裡照實際大小縮放
 #   BarnRoof    屋頂＋山牆三角，原點在牆頂中央。遊戲裡 X、高度用同一個倍率縮，斜度才不會變
 #   SiloBody    筒倉筒身，原點在地面中央，基準高 15（遊戲裡只縮高度）
@@ -10,9 +10,9 @@
 #   TreePine          原點在樹根，基準樹幹高 5（闊葉樹在 tree.py）
 #   Bush        灌木叢，原點在地面中央，約 2.2 寬 1.5 高（沒有碰撞，只擋視線）
 #
-# 跟 main.gd 共用的數字（改一邊要改另一邊）：
-#   BARN / BARN_PITCH = main.gd _barn() 的基準大小和 _roof() 的 0.55
-#   BARN_DOOR_*、BARN_BACK_X、BARN_LOFT、BARN_LADDER_X = main.gd 擺門和梯子的位置
+# 跟 arena_map.gd 共用的數字（改一邊要改另一邊）：
+#   BARN / BARN_PITCH = arena_map.gd _barn() 的基準大小和 _roof() 的 0.55
+#   BARN_DOOR_*、BARN_BACK_X、BARN_LOFT、BARN_LADDER_X = arena_map.gd 擺門和梯子的位置
 #   BarnCol 是碰撞形狀（遊戲裡看不見），牆和開口在這裡定義一次就好
 #   農舍在 house.py（另外輸出成 houses.glb）
 #
@@ -327,7 +327,7 @@ pine = finish('TreePine', bevel=0.0, seg=1)
 import random
 from tree import core as _core, on_core as _on_core, card_material as _card_material, apply_card_normals as _card_normals
 BUSH_DARK = mat('p_bush', (0.13, 0.15, 0.03), 0.9)   # 芯：接近葉子的中間色（樹的芯也是）；太暗的話卡片之間看進去是一顆顆黑石頭
-BUSH_CARD = _card_material('p_bush_leafcard', 'leaf_oak.png')   # 名字有 leafcard：main.gd 換成會隨風擺的葉子材質
+BUSH_CARD = _card_material('p_bush_leafcard', 'leaf_oak.png')   # 名字有 leafcard：model_materials.gd 換成會隨風擺的葉子材質
 _br = random.Random(11)
 _lumps = [(0, 0, 0.75, 0.80, 0.85), (0.65, 0.25, 0.55, 0.62, 0.8), (-0.60, 0.30, 0.58, 0.65, 0.8), (0.15, -0.60, 0.52, 0.60, 0.8),
           (-0.25, 0.65, 0.50, 0.55, 0.8), (0.55, -0.35, 0.95, 0.48, 0.9), (-0.45, -0.40, 0.90, 0.50, 0.9), (0.10, 0.20, 1.15, 0.50, 0.85),

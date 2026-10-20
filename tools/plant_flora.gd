@@ -2,7 +2,7 @@ extends SceneTree
 ## 種植被（blender/grove.py、flora.py 的新樹和仙人掌）到手調過的 levels/ranch.tscn：
 ##   1. 舊松樹 TreePine 全換成 TreePine2；森林區的闊葉樹 25% 換楓樹、8% 換柳樹；農社區 15% 換楓樹；其他地方 8% 換枯樹
 ##   2. 城鎮區（荒漠）店面後面兩條空地，種一個「植被」群組：柱狀仙人掌大小、約書亞樹、枯樹（都有碰撞，是 tree 類）
-## 草叢、小仙人掌、灌木沒有碰撞，不進場景檔，遊戲開場時撒（main.gd 的 _flora_field）。
+## 草叢、小仙人掌、灌木沒有碰撞，不進場景檔，遊戲開場時撒（arena_map.gd 的 _flora_field）。
 ## 重跑會先刪掉舊的「植被」群組，換樹種的規則只換還是闊葉樹／舊松樹的，所以重跑結果一樣。
 ##   godot --headless --path . --script tools/plant_flora.gd
 const PATH := "res://levels/ranch.tscn"

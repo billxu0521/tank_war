@@ -6,8 +6,8 @@
 #   CollapsedShed 倒塌的小屋：矮牆殘段、斜塌的屋頂板、散落的木板。中掩體（3.5 × 2.5 × 1.4）
 #   DinoSkull     半埋的恐龍頭骨：大顱骨、吻、眼窩、上下排牙，下半埋在沙堆裡。掩體（約 3.2 × 1.7 × 1.6）
 #   MineCart      礦車＋一小段鐵軌：梯形車斗、四個輪子、軌道和枕木。低掩體（1.2 × 0.8 × 0.9，軌道 3 公尺）
-# 原點在地面中央、Blender X 右 Y 前 Z 上，公尺。材質沿用 house.py 的（h_wood、h_post、h_iron…），遊戲裡自動套像素材質（main.gd PIXEL_RULES）。
-# 擺放：main.gd 的 _clutter_field（照雜訊的密度撒，CLUTTER 表）
+# 原點在地面中央、Blender X 右 Y 前 Z 上，公尺。材質沿用 house.py 的（h_wood、h_post、h_iron…），遊戲裡自動套像素材質（model_materials.gd PIXEL_RULES）。
+# 擺放：arena_map.gd 的 _clutter_field（照雜訊的密度撒，CLUTTER 表）
 #   /Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup --python blender/clutter.py -- --out models/clutters.glb --preview /tmp/c.png
 import bpy, bmesh, math, os, random, sys
 from mathutils import Vector

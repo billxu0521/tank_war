@@ -48,7 +48,7 @@ func _init(arena_size: float, seed_value: int) -> void:
 ## 植被密度 0～1：一樣是 Simplex + fBm，但頻率高一點（一片約 50 公尺）。
 ## 高的地方是「濕地」：樹林、高草、灌木叢擠在一起；低的地方是「旱地」：裸土、石頭、仙人掌、矮灌木。
 ## 樹、草、石頭都問這支，彼此才對得上（樹林底下草多、旱地上石頭多），不會各撒各的一片均勻。
-## 靜態的：場地自動擺設（main.gd _generate_level）在地形蓋好之前就要用
+## 靜態的：場地自動擺設（arena_map.gd _generate_level）在地形蓋好之前就要用
 static var _veg: FastNoiseLite
 static func vegetation(x: float, z: float) -> float:
 	if _veg == null:
