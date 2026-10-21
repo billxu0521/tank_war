@@ -11,6 +11,8 @@ var _a: Node   # 客戶端 A 的牛仔（兩邊都找得到：名字是連線編
 var _b: Node
 var _dir := 1.0      # 客戶端 A 現在往哪跑（±X）
 var _turn := 0.0     # 還剩幾秒換方向
+var _hit_at := -100000   # A 上次送扣血的時刻（毫秒）
+var _ok_at := 0          # 成功的時刻（毫秒）；之後再等 5 秒才離開，不然先走的會讓另一邊拿到 Freed
 
 
 func _initialize() -> void:
@@ -20,6 +22,8 @@ func _initialize() -> void:
 
 func _process(_d: float) -> bool:
 	_f += 1
+	if _ok_at > 0:   # 已經成功：等另一邊也收完才離開
+		return Time.get_ticks_msec() - _ok_at >= 5000
 	if _f == 2:   # 等 Main 的 _ready 跑完（ip_edit 那些節點才拿得到）
 		var join := OS.get_environment("JOIN")   # LAG=1 時指到轉送程式，例如 127.0.0.1:24681
 		_m.ip_edit.text = join if join != "" else "127.0.0.1"
@@ -29,9 +33,9 @@ func _process(_d: float) -> bool:
 		print("NET FAIL: 逾時（%s）連線狀態 %s、我是 %d、場上 %s、A=%s B=%s%s" % [_role,
 			mp.get_connection_status() if mp else -1, _m.multiplayer.get_unique_id(),
 			_m.players.get_children().map(func(p: Node) -> String: return p.name), _a, _b,
-			"、B 血 %d、A 開槍 %d" % [_b.hp, _a.viewmodel.remote_shots] if _a and _b else ""])
+			"、B 血 %d、A 開槍 %d" % [_b.hp, _a.viewmodel.remote_shots] if is_instance_valid(_a) and is_instance_valid(_b) else ""])
 		return true
-	if _a == null or _b == null:
+	if not is_instance_valid(_a) or not is_instance_valid(_b):   # 角色死了重生就是新節點，要重找
 		_find()
 		return false
 	var want := OS.get_environment("MODE")   # 伺服器用 --mode 開的話，客戶端要收到同一個模式和重生次數
@@ -44,16 +48,18 @@ func _process(_d: float) -> bool:
 			_dir = -_dir
 			_turn = 3.0
 		_a.global_position.x += _dir * _a.sprint_speed * 0.95 * _d
-		if _f % 60 == 0 and _b.hp == _b.max_hp:
+		var now := Time.get_ticks_msec()
+		if _b.hp == _b.max_hp and now - _hit_at >= 2000:   # 隔 2 秒重送：第一發可能被主機拒絕（網路慢）
+			_hit_at = now
 			_a.deal_damage(_b, 30)   # 一發合理的傷害：主機要扣
 			_a.viewmodel.try_fire()  # 一槍：B 要聽得到
-		if _b.hp == _b.max_hp - 30:
+		if _b.hp < _b.max_hp:
 			print("NET OK（A 看到 B 被扣到 %d，模式 %s，重生次數 %s）" % [_b.hp, _m.rules, _m._lives])
-			return true
+			_ok_at = now
 	else:
-		if _b.hp == _b.max_hp - 30 and _a.viewmodel.remote_shots > 0:
+		if _b.hp < _b.max_hp and _a.viewmodel.remote_shots > 0:
 			print("NET OK（B 自己的血 %d，收到 A 的槍 %d 發）" % [_b.hp, _a.viewmodel.remote_shots])
-			return true
+			_ok_at = Time.get_ticks_msec()
 	return false
 
 

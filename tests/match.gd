@@ -156,6 +156,17 @@ func _case_net_check() -> void:
 		jt += 25.0
 		ok = ok and dn.net_accept(Vector3(dx, 6.5 * (i + 1) / 29.0, 0), jt)
 	_ck(ok, "恐龍跳 6.5 公尺要接受")
+	# 開槍位置：1 秒前走過的位置（現在離它約 8.5 公尺）在最近 1.5 秒的歷史裡，要算數；沒去過的遠處要擋
+	var rc: Node3D = _net_fresh(m, 15)
+	jt = 1000.0
+	var rx := 0.0
+	for i in 40:
+		jt += 25.0
+		rx += rc.sprint_speed * 0.025
+		rc.net_accept(Vector3(rx, 0, 0), jt)
+	rc.global_position = Vector3(rx, 0, 0)
+	_ck(rc.near_recent(Vector3.ZERO, 5.0), "1 秒前的位置（在歷史裡）開槍要算數")
+	_ck(not rc.near_recent(Vector3(50, 0, 0), 5.0), "沒去過的遠處開槍要擋")
 
 	# 傷害額度：正常射速（左輪每 0.45 秒一發 50）全部算數
 	var all := true
