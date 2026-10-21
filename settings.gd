@@ -40,6 +40,68 @@ var main: Node
 var tabs := TabContainer.new()
 var _widgets := {}   # 鍵 -> 控制項，refresh() 拿來對回現在的值
 
+## Esc 選單裡的「操作說明」，放在「繼續遊戲」下面；按了彈出鍵盤／手把對照表。
+## 按鍵照 project.godot 的輸入設定寫，改了按鍵要回來改這張表
+const CONTROLS := [
+	["移動", "WASD", "左搖桿"],
+	["看", "滑鼠", "右搖桿"],
+	["開槍", "左鍵", "RT"],
+	["舉槍", "右鍵（設定可改成按一下切換）", "LT"],
+	["換彈", "R", "X"],
+	["換子彈（輕／中／重）", "B", "十字鍵右"],
+	["換槍", "1 左輪　2 散彈　3 步槍　4 炸彈長矛　或滾輪", "LB／RB"],
+	["槍托", "V（按住＝重擊）", "按右搖桿"],
+	["炸藥", "G：按住點燃、放開丟（太久會在手上爆）", "十字鍵下"],
+	["跑", "左 Shift", "按左搖桿"],
+	["閉氣（舉槍時）", "左 Shift", "按左搖桿"],
+	["蹲", "C 切換／左 Ctrl 按住", "Y 切換／B 按住"],
+	["跳", "Space", "A"],
+	["翻越", "往前頂著矮牆、柵欄按 Space", "往前推＋A"],
+	["互動", "F：開門、爬梯子、補給箱", "十字鍵上"],
+	["梯子上", "W／S 上下，Space 或 F 放手", "左搖桿上下，A 或十字鍵上放手"],
+	["選單", "Esc", "—"],
+	["回報問題", "F8", "—"],
+	["像素風開關", "F9", "—"],
+	["試畫面風格", "F10（輪流切換，比較用，不存）", "—"],
+]
+
+## 設定視窗的「按鍵」頁
+func controls_table() -> String:
+	var rows := "[table=3][cell][color=#e8b04a]動作[/color]　[/cell][cell][color=#e8b04a]鍵盤滑鼠[/color]　[/cell][cell][color=#e8b04a]手把[/color][/cell]"
+	for r: Array in CONTROLS:
+		rows += "[cell]%s　[/cell][cell]%s　[/cell][cell]%s[/cell]" % r
+	return rows + "[/table]\n\n[color=#bbbbbb]沒有準心，靠槍身瞄；舉槍會晃，閉氣穩住但吃體力。跑起來會自動站起來、放下槍。[/color]"
+
+## 選單的「瞄準：按一下切換」：關掉是按住右鍵才舉槍
+func _on_aim_toggle_toggled(on: bool) -> void:
+	Viewmodel.aim_toggle = on
+	main._save_setting("controls", "aim_toggle", on)
+
+## 畫面設定：垂直同步、幀率上限。上限只給跟螢幕刷新率對得上的數字（刷新率、一半）：
+## 隨便填一個（例如 60Hz 螢幕鎖 50）每幀間隔會長短不一，平均幀數對了看起來還是卡
+const FPS_CAPS := ["幀率上限：不限", "幀率上限：跟螢幕一樣（%d）", "幀率上限：螢幕的一半（%d）"]
+var vsync := true
+var fps_cap := 0
+
+func _refresh_hz() -> int:
+	var hz := roundi(DisplayServer.screen_get_refresh_rate())
+	return hz if hz > 0 else 60   # 查不到（無頭模式、某些系統）當 60
+
+func _apply_display() -> void:
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync else DisplayServer.VSYNC_DISABLED)
+	var hz := _refresh_hz()
+	Engine.max_fps = [0, hz, hz / 2][fps_cap]
+
+func _on_vsync_toggled(on: bool) -> void:
+	vsync = on
+	_apply_display()
+	main._save_setting("display", "vsync", on)
+
+func _on_fps_cap_selected(i: int) -> void:
+	fps_cap = i
+	_apply_display()
+	main._save_setting("display", "fps_cap", i)
+
 func _init(m: Node) -> void:
 	main = m
 	name = &"Settings"
@@ -48,35 +110,35 @@ func _init(m: Node) -> void:
 	theme = m.get_node(^"UI/Root").theme   # 視窗不吃 UI 的字型，要自己帶
 	tabs.custom_minimum_size = Vector2(760, 440)
 	add_child(tabs)
-	var hz: int = m._refresh_hz()
+	var hz: int = _refresh_hz()
 	_page("操作", [
 		_slider(&"mouse_sens", "滑鼠靈敏度", 0.1, 3.0, 0.01),
 		_slider(&"ads_sens", "舉槍時靈敏度倍率", 0.2, 2.0, 0.01),
 		_slider(&"pad_sens", "手把靈敏度", 0.3, 3.0, 0.01),
 		_check(&"invert_y", "上下反轉"),
-		_check(&"aim_toggle", "瞄準：按一下切換（關＝按住右鍵）", func(on: bool) -> void: m._on_aim_toggle_toggled(on)),
+		_check(&"aim_toggle", "瞄準：按一下切換（關＝按住右鍵）", func(on: bool) -> void: _on_aim_toggle_toggled(on)),
 	], func() -> void:
 		_reset([&"mouse_sens", &"ads_sens", &"pad_sens", &"invert_y"])
-		m._on_aim_toggle_toggled(false))
+		_on_aim_toggle_toggled(false))
 	_page("畫面", [
 		_slider(&"fov", "視野（水平角）", 90.0, 110.0, 1.0),
 		_slider(&"shake", "鏡頭晃動（%）", 0.0, 100.0, 1.0),
-		_check(&"vsync", "垂直同步（關掉畫面可能撕裂，延遲稍低）", func(on: bool) -> void: m._on_vsync_toggled(on)),
-		_option(&"fps_cap", "幀率上限", [m.FPS_CAPS[0], m.FPS_CAPS[1] % hz, m.FPS_CAPS[2] % (hz / 2)],
-			func(i: int) -> void: m._on_fps_cap_selected(i)),
+		_check(&"vsync", "垂直同步（關掉畫面可能撕裂，延遲稍低）", func(on: bool) -> void: _on_vsync_toggled(on)),
+		_option(&"fps_cap", "幀率上限", [FPS_CAPS[0], FPS_CAPS[1] % hz, FPS_CAPS[2] % (hz / 2)],
+			func(i: int) -> void: _on_fps_cap_selected(i)),
 		_check(&"pixel_style", "像素風（F9）", func(on: bool) -> void: m.get_node(^"PixelStyle").set_on(on)),
 		_option(&"period", "時段", Period.NAMES.values(), func(i: int) -> void: m._on_period_picked(i)),
 	], func() -> void:
 		_reset([&"fov", &"shake"])
-		m._on_vsync_toggled(true)
-		m._on_fps_cap_selected(0)
+		_on_vsync_toggled(true)
+		_on_fps_cap_selected(0)
 		m.get_node(^"PixelStyle").set_on(not m.greybox)   # 灰盒地圖的預設是正午、不開像素風
 		m._on_period_picked(Period.NAMES.keys().find(&"noon" if m.greybox else &"sunset")))
 	_page("聲音", [_slider(&"volume", "主音量（%）", 0.0, 100.0, 1.0)], func() -> void: _reset([&"volume"]))
 	var keys := RichTextLabel.new()
 	keys.name = &"按鍵"
 	keys.bbcode_enabled = true
-	keys.text = m.controls_table()
+	keys.text = controls_table()
 	tabs.add_child(keys)
 	about_to_popup.connect(refresh)
 
@@ -169,8 +231,8 @@ func refresh() -> void:
 	_put(&"volume", v[&"volume"] * 100.0)
 	_widgets[&"invert_y"].set_pressed_no_signal(v[&"invert_y"])
 	_widgets[&"aim_toggle"].set_pressed_no_signal(Viewmodel.aim_toggle)
-	_widgets[&"vsync"].set_pressed_no_signal(main.vsync)
-	_widgets[&"fps_cap"].select(main.fps_cap)
+	_widgets[&"vsync"].set_pressed_no_signal(vsync)
+	_widgets[&"fps_cap"].select(fps_cap)
 	_widgets[&"pixel_style"].set_pressed_no_signal(main.get_node(^"PixelStyle").on)
 	_widgets[&"period"].select(Period.NAMES.keys().find(main.period))
 

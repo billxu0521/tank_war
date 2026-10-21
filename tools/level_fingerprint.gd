@@ -46,10 +46,10 @@ func _process(_d: float) -> bool:
 		for i in 200:
 			h += m._terrain.height(-90.0 + i * 0.9, -80.0 + i * 0.8)
 		lines.append("terrain %.3f" % h)
-		for r: Rect2 in m._blocked:
+		for r: Rect2 in m.map._blocked:
 			lines.append("blocked %s %s" % [r.position.snapped(Vector2.ONE * 0.001), r.size.snapped(Vector2.ONE * 0.001)])
-		lines.append("bushes %d" % m._bushes.size())
-		for r: Rect2 in m._wheat_fields:
+		lines.append("bushes %d" % m.map._bushes.size())
+		for r: Rect2 in m.map._wheat_fields:
 			lines.append("wheat %s" % str(r))
 		lines.sort()
 		var f := FileAccess.open(OS.get_environment("OUT"), FileAccess.WRITE)

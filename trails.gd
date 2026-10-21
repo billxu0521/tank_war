@@ -7,7 +7,7 @@ extends RefCounted
 ## （大彎裡有小扭動，不是圓規畫的弧）→ 路寬也跟著雜訊變寬變窄。
 ## 算好之後蓋成一張 1 公尺一格的「離路邊多遠」表，地面上色、草、樹、石頭都查這張表（全場幾十萬次，要快）。
 ##
-## 靜態、固定 seed：場地自動擺設（main.gd _generate_level）在地形蓋好之前就要用，每台機器算出來一樣。
+## 靜態、固定 seed：場地自動擺設（arena_map.gd _generate_level）在地形蓋好之前就要用，每台機器算出來一樣。
 ## ponytail: 路經點手寫的，不是自動尋路。要「路自己繞開山丘」再換成在地形上找坡度最小的路線（A*）
 
 const CELL := 1.0
@@ -23,7 +23,7 @@ const ROUTES := [
 const WANDER := 2.5   # 路往兩側最多推幾公尺
 const FAR := 12.0     # 表裡只記這麼近的，再遠一律當很遠
 
-## 只有牧場有這些路；靶場是另一張地圖，蓋之前關掉（main.gd _build_arena、編輯器 level_root.gd）。
+## 只有牧場有這些路；靶場是另一張地圖，蓋之前關掉（arena_map.gd _build_arena、編輯器 level_root.gd）。
 ## ponytail: 全域開關，一次只會有一張地圖
 static var enabled := true
 static var _edge := PackedFloat32Array()   # 每格「離路邊多遠」（在路上是負的）

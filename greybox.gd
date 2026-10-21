@@ -1,7 +1,7 @@
 class_name Greybox
 extends RefCounted
 ## 灰盒（素模）：灰色方塊拼的房子和掩體，先專心調玩法（docs/規劃/2026-10-19-灰盒地圖.md）。
-## 遊戲（main.gd 的 _build_level）和編輯器預覽（LevelPreview）共用：回傳一個 StaticBody3D，
+## 遊戲（arena_map.gd 的 _build_level）和編輯器預覽（LevelPreview）共用：回傳一個 StaticBody3D，
 ## 裡面是合併好的一個網格＋每一塊各自的碰撞。原點在地面中央，正面朝 +Z。
 
 const T := 0.3                 # 牆厚

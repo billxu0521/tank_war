@@ -1,5 +1,5 @@
 shader_type spatial;
-// 地被（main.gd 的 _groundcover_field：荒地乾穗草、鼠尾草叢、匍匐藤；GPT 建議，docs/image/ground/）。
+// 地被（arena_map.gd 的 _groundcover_field：荒地乾穗草、鼠尾草叢、匍匐藤；GPT 建議，docs/image/ground/）。
 // 顏色在網格的頂點色；頂點色透明度 1 的是「穗頭」，改用每叢自己的顏色（INSTANCE_CUSTOM，一叢一色）。
 // 風跟草地（grass.gdshader）同一波；遠處壓進地面、貼臉的縮掉
 render_mode cull_disabled, specular_disabled, world_vertex_coords;

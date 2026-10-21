@@ -1,5 +1,5 @@
 shader_type spatial;
-// 麥子卡片（main.gd wheat_card）：以前是 StandardMaterial3D（只繞垂直軸轉的看板），為了近處變少、穗尖不那麼跳改成自己寫。
+// 麥子卡片（arena_map.gd wheat_card）：以前是 StandardMaterial3D（只繞垂直軸轉的看板），為了近處變少、穗尖不那麼跳改成自己寫。
 // 美術風格評估：麥田近景一根根亮黃色的穗尖跟暗地面明度差太大，整片變成細雜訊
 render_mode cull_disabled, specular_disabled;
 

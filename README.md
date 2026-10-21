@@ -155,7 +155,7 @@ Space 跳；頂著矮牆、柵欄按 Space＝翻越
 恐龍
 WASD 移動   滑鼠 轉身抬頭   左鍵 吐火球   F 咬   Space 跳   Shift 衝刺   貼牆按 W 爬
 
-Esc 開選單（繼續遊戲／操作說明／回到大廳／離開遊戲）；「操作說明」彈出鍵盤和手把對照表（main.gd 的 CONTROLS，改按鍵要跟著改）
+Esc 開選單（繼續遊戲／操作說明／回到大廳／離開遊戲）；「操作說明」彈出鍵盤和手把對照表（settings.gd 的 CONTROLS，改按鍵要跟著改）
 ```
 
 ## 連線
@@ -201,7 +201,11 @@ godot --headless --quit --editor         # 新增 class_name 後重建型別快�
 
 | 檔案 | 做什麼 |
 |---|---|
-| `main.gd/tscn` | 大廳、連線、場地、蛋與撤離、勝負、HUD |
+| `main.gd/tscn` | 大廳、連線、蛋與撤離、勝負、一局流程 |
+| `arena_map.gd` | 蓋場地：地形、建築、柵欄、草和灌木、撤離區、靶場（掛在 main.tscn 的 Arena 節點，main 用 `map.` 讀） |
+| `model_materials.gd` | 模型材質：平面著色、換成共用的 facet 材質、像素和紋理規則（全部靜態） |
+| `match_hud.gd` | 局內畫面資訊：方位條、倒數、準心、boss 條、觀戰鏡頭、左上和右上那行字（main 的 `_process` 每幀呼叫） |
+| `match_rules.gd` | 遊戲模式表：每個模式的命數、有沒有蛋和恐龍、怎麼判勝負，main 查表 |
 | `terrain.gd` | 丘陵地形：高度、整平區、畫面網格和碰撞（同一份高度） |
 | `interact/` | F 互動的東西：`door.gd`（開關走主機、晚加入補送）、`ladder.gd`（爬的邏輯在 cowboy.gd）、`accent.gd`（固定強調色，看著時更亮） |
 | `lantern.gd` | 油燈：打破會潑油燒起來（`oil_fire.gd`）。場上所有的燈都是它：繫馬柱、穀倉、農舍、店面模型上做死的燈，載入時挖掉換成這個（`replace_baked`） |
@@ -215,6 +219,7 @@ godot --headless --quit --editor         # 新增 class_name 後重建型別快�
 | `levels/` | 場地的場景檔 `ranch.tscn`（在 Godot 編輯器裡拖曳調整，見 [場景編輯](docs/素材流水線/場景編輯.md)）、物件庫、擺設檢查 |
 | `bug_report.gd` | 問題回報：攔下錯誤，F8 存成報告並複製到剪貼簿（見 [問題回報](docs/流程/問題回報.md)） |
 | `test_battle.gd` | 自我檢查 |
+| `tests/` | 自我檢查的案例，依主題分檔（`base.gd` 共用輔助，其餘逐層 `extends` 上一檔） |
 
 坦克版的程式和模型在 git 歷史裡（`d59b432` 之前）。大廳的「檢視模型」可以單獨看牛仔、三把槍和暴龍；按 5「素材庫」會自動列出 `models/` 裡每個 `.glb`（← → 換檔、L 排開），新素材丟進去就看得到。
 

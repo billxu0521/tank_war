@@ -1,10 +1,10 @@
 class_name Destructible
 extends StaticBody3D
 ## 甩尾拆得掉的地形（派對模式，docs/企劃/派對玩法.md）：樹甩一次就倒，灰盒房子甩兩次才倒。
-## main.gd 蓋場地時把樹幹、灰盒房子的 body 換成這個腳本、加進群組 destructible（_destructible）。安全屋不加，拆不掉。
+## arena_map.gd 蓋場地時把樹幹、灰盒房子的 body 換成這個腳本、加進群組 destructible（_destructible）。安全屋不加，拆不掉。
 ##
 ## 主機說了算：boss.gd 的甩尾打中就呼叫 tail_hit，主機記次數、廣播給所有人（包括自己）。
-## 節點名字由 main.gd 依序取（Wreck0、Wreck1…），每台蓋出來一樣，RPC 才找得到同一個（同 Door）。
+## 節點名字由 arena_map.gd 依序取（Wreck0、Wreck1…），每台蓋出來一樣，RPC 才找得到同一個（同 Door）。
 ## 晚加入的人由 main.gd 在他連進來時補送被打過的（instant 直接到位）。
 ##
 ## ponytail: 倒了只是藏起來、碰撞拿掉，節點留著：晚加入補送、重複的 RPC 都還找得到它。bot 找掩體用的擺設清單（_level）不會跟著改

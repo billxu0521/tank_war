@@ -3,7 +3,7 @@ extends Node3D
 ## 環境感（2026-10-10，docs/image/style_check/評估_2026-10-10_FPS角度.md 的 #2 補充）：
 ##   一、每區自己的光：森林冷綠偏暗、城鎮暖橘、麥田金黃。照鏡頭在哪一區調太陽和環境光，跨區時照位置慢慢混，不會一下跳色
 ##   二、風滾草：鏡頭上風處生、順風滾過去，滾遠了或撞到東西就換個地方重生
-## 都只是畫面，不走網路，各台自己算。main.gd 在有畫面時才建（伺服器不建）。
+## 都只是畫面，不走網路，各台自己算。arena_map.gd 在有畫面時才建（伺服器不建）。
 
 const FEATHER := 10.0   # 公尺：進區多深才完全換成那區的光
 ## 區域 -> [太陽顏色, 太陽亮度倍數, 環境光顏色, 環境光亮度倍數]。顏色是照夕陽調的；換時段（period.gd）時
@@ -35,7 +35,7 @@ func setup(main: Node) -> void:
 	_sun = main.get_node(^"Arena/Sun")
 	_env = (main.get_node(^"Arena/WorldEnvironment") as WorldEnvironment).environment
 	rebase()
-	_zones = {&"forest": main.ZONE_FOREST, &"town": main.ZONE_TOWN, &"wheat": main.ZONE_WHEAT}
+	_zones = {&"forest": ArenaMap.ZONE_FOREST, &"town": ArenaMap.ZONE_TOWN, &"wheat": ArenaMap.ZONE_WHEAT}
 	var mesh := _weed_mesh()
 	for i in WEEDS:
 		var w := MeshInstance3D.new()

@@ -1,7 +1,7 @@
 class_name Accent
 ## 可互動物件（門、梯子、補給箱）的固定強調色：整個疊一層強調色 #C65A35 的加亮，看著時更亮。
 ## 美術風格指南 §11：這個顏色只給能按 F 的東西用，場景其他地方不要用（2026-10-10 FPS 角度評估 #7）。
-## 跟蛋的加亮（main.gd 的 _skin_egg）同一個做法
+## 跟蛋的加亮（arena_map.gd 的 _skin_egg）同一個做法
 
 const COLOR := Color(0.776, 0.353, 0.208)
 static var IDLE := _overlay(0.25)
