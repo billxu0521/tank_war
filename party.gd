@@ -329,6 +329,19 @@ func _humans() -> Array:
 func _present(id: int) -> bool:
 	return id < 0 or (id == 1 and not main._dedicated) or multiplayer.get_peers().has(id)
 
+## 斷線重連（main._reclaim）：舊編號的分數、名字、命數、名單位置都換成新編號
+func rekey(old: int, new: int) -> void:
+	for d: Dictionary in [scores, round_scores, lives, names, _waiting, _pick]:
+		if d.has(old):
+			d[new] = d[old]
+			d.erase(old)
+	var i := _roster.find(old)
+	if i >= 0:
+		_roster[i] = new
+	if dino_id == old:
+		dino_id = new
+	_sync()
+
 
 func _add(id: int, pts: int) -> void:
 	scores[id] = int(scores.get(id, 0)) + pts

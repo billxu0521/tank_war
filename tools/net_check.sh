@@ -2,7 +2,9 @@
 # 真的連線的檢查：本機開專用伺服器＋兩個客戶端（tools/net_check.gd），看扣血、血量同步、槍聲有沒有傳到。
 # 改了連線（RPC、同步器、主機檢查）之後跑一次：tools/net_check.sh；指定模式：MODE=deathmatch tools/net_check.sh
 # 假網路很差：LAG=1 tools/net_check.sh，可加 LAG_MS／JITTER_MS／LOSS（預設 150／40／0.05），客戶端會經過 tools/lag_proxy.py
+# 斷線重連：RECONNECT=1 tools/net_check.sh（B 被扣一條命後斷線再連回，看命數有沒有回來）
 cd "$(dirname "$0")/.."
+[ -n "$RECONNECT" ] && MODE=${MODE:-deathmatch}   # 重連檢查要有命數的模式
 LOG=$(mktemp -d)
 godot --headless --path . -- --server ${MODE:+--mode $MODE} > "$LOG/server.txt" 2>&1 &
 SERVER=$!
