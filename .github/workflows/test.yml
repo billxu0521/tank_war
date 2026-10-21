@@ -1,0 +1,73 @@
+name: 測試
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GODOT_VERSION: 4.7.1-stable
+    steps:
+      - uses: actions/checkout@v4
+
+      # Godot 執行檔（zip 依版本快取）
+      - name: 快取 Godot zip
+        id: godot-cache
+        uses: actions/cache@v4
+        with:
+          path: godot.zip
+          key: godot-${{ env.GODOT_VERSION }}-linux
+
+      - name: 下載 Godot
+        if: steps.godot-cache.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL -o godot.zip \
+            "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+
+      - name: 安裝 godot 到 PATH
+        run: |
+          mkdir -p "$HOME/godot-bin"
+          unzip -o -q godot.zip -d "$HOME/godot-bin"
+          mv "$HOME/godot-bin/Godot_v${GODOT_VERSION}_linux.x86_64" "$HOME/godot-bin/godot"
+          chmod +x "$HOME/godot-bin/godot"
+          echo "$HOME/godot-bin" >> "$GITHUB_PATH"
+
+      # 匯入快取（.godot/），import 檔有變才重建
+      - name: 快取 .godot 匯入資料
+        uses: actions/cache@v4
+        with:
+          path: .godot
+          key: godot-import-${{ env.GODOT_VERSION }}-${{ hashFiles('**/*.import') }}
+          restore-keys: |
+            godot-import-${{ env.GODOT_VERSION }}-
+
+      - name: 匯入資源
+        # 第一次匯入可能回非 0，忽略
+        run: godot --headless --import || true
+
+      - name: 跑測試
+        shell: bash
+        run: |
+          set -o pipefail
+          godot --headless --script test_battle.gd 2>&1 | tee test.log
+          # Godot 遇到語法錯誤也回 0，所以要看輸出內容
+          if ! grep -qE '^OK：' test.log; then
+            echo "::error::測試沒有輸出 OK 行"
+            exit 1
+          fi
+          if grep -nE 'SCRIPT ERROR|Parse Error|FAIL' test.log; then
+            echo "::error::測試輸出含錯誤"
+            exit 1
+          fi
+
+      - name: 上傳測試 log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-log
+          path: test.log
