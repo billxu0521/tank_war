@@ -13,6 +13,11 @@ var _dir := 1.0      # 客戶端 A 現在往哪跑（±X）
 var _turn := 0.0     # 還剩幾秒換方向
 var _hit_at := -100000   # A 上次送扣血的時刻（毫秒）
 var _ok_at := 0          # 成功的時刻（毫秒）；之後再等 5 秒才離開，不然先走的會讓另一邊拿到 Freed
+var _reconnect := OS.get_environment("RECONNECT") != ""   # 斷線重連檢查：B 被扣一條命後斷線再連回，看命數有沒有回來
+var _b_old := 0      # B：斷線前的編號
+var _rejoin_at := 0  # B：斷線的時刻（毫秒），隔 1 秒再連
+var _crash := OS.get_environment("RECONNECT") == "crash"   # B 不正常斷線（遊戲當掉、網路掉）：不送離開，舊連線只留參照、不 close、不 poll
+var _old_peer: MultiplayerPeer   # B：crash 時舊的連線（留著參照，讓它不被釋放）
 
 
 func _initialize() -> void:
@@ -22,24 +27,62 @@ func _initialize() -> void:
 
 func _process(_d: float) -> bool:
 	_f += 1
-	if _ok_at > 0:   # 已經成功：等另一邊也收完才離開
-		return Time.get_ticks_msec() - _ok_at >= 5000
+	if _ok_at > 0:   # 已經成功：等另一邊也收完才離開（重連檢查時 A 要撐到 B 連回來）
+		return Time.get_ticks_msec() - _ok_at >= (20000 if _reconnect and _role == "a" else 5000)
 	if _f == 2:   # 等 Main 的 _ready 跑完（ip_edit 那些節點才拿得到）
 		var join := OS.get_environment("JOIN")   # LAG=1 時指到轉送程式，例如 127.0.0.1:24681
 		_m.ip_edit.text = join if join != "" else "127.0.0.1"
+		_m.player_key = "net-" + _role   # 兩個客戶端在同一台、讀同一個 settings.cfg，不蓋掉會被當成同一個人
 		_m._on_join_pressed()
-	if _f > 60 * (40 if OS.get_environment("JOIN") != "" else 25):
+	if _f > 60 * ((40 if OS.get_environment("JOIN") != "" else 25) + (20 if _reconnect else 0)):
 		var mp: MultiplayerPeer = _m.multiplayer.multiplayer_peer
 		print("NET FAIL: 逾時（%s）連線狀態 %s、我是 %d、場上 %s、A=%s B=%s%s" % [_role,
 			mp.get_connection_status() if mp else -1, _m.multiplayer.get_unique_id(),
 			_m.players.get_children().map(func(p: Node) -> String: return p.name), _a, _b,
 			"、B 血 %d、A 開槍 %d" % [_b.hp, _a.viewmodel.remote_shots] if is_instance_valid(_a) and is_instance_valid(_b) else ""])
 		return true
+	if _reconnect and _role == "b" and _rejoin_at > 0:   # B 斷線中：1 秒後再連回來（大廳還看得到才按，只按一次）
+		if not _m.lobby.visible:   # 按了加入、大廳藏起來了：不用再等，照常找角色
+			_rejoin_at = 0
+		elif Time.get_ticks_msec() - _rejoin_at >= 1000:
+			_m._on_join_pressed()
+		if _rejoin_at > 0:
+			return false
 	if not is_instance_valid(_a) or not is_instance_valid(_b):   # 角色死了重生就是新節點，要重找
 		_find()
 		return false
 	var want := OS.get_environment("MODE")   # 伺服器用 --mode 開的話，客戶端要收到同一個模式和重生次數
 	if want != "" and (String(_m.rules) != want or _m._lives.size() < 2):
+		return false
+	if _reconnect:
+		# A 一直打 B（每 0.5 秒 30 點）直到 B 少一條命（3 -> 2）；B 扣掉一條命後斷線，連回來命數要是 2
+		var bid := _b.name.to_int()
+		if _role == "a":
+			if int(_m._lives.get(bid, 3)) >= 3 and _b.hp > 0 and Time.get_ticks_msec() - _hit_at >= 500:
+				_hit_at = Time.get_ticks_msec()
+				_a.deal_damage(_b, 30)
+			if int(_m._lives.get(bid, 3)) == 2:
+				print("NET OK（A 扣掉 B 一條命）")
+				_ok_at = Time.get_ticks_msec()
+		else:
+			var me := _m.multiplayer.get_unique_id()
+			if _b_old == 0 and int(_m._lives.get(me, 3)) == 2:   # 被扣一條命了：斷線
+				_b_old = me
+				_rejoin_at = Time.get_ticks_msec()
+				if _crash:
+					# 換掉 multiplayer_peer 前先設成 null：_to_lobby 看到 null 就不會 close 舊的，主機收不到離開
+					_old_peer = _m.multiplayer.multiplayer_peer
+					_m.multiplayer.multiplayer_peer = null
+				_m._to_lobby("")
+				_a = null
+				_b = null
+			elif _b_old != 0 and me != _b_old and _m._lives.has(me):
+				_rejoin_at = 0
+				if int(_m._lives[me]) == 2:
+					print("NET OK（B 重連：編號 %d -> %d，命數拿回 2）" % [_b_old, me])
+				else:
+					print("NET FAIL: B 重連後命數是 %d，應該是 2" % int(_m._lives[me]))
+				_ok_at = Time.get_ticks_msec()
 		return false
 	if _role == "a":
 		# 正常移動的玩家不能被主機拉回：沿 X 來回跑，速度 0.95 倍衝刺，每 3 秒換方向

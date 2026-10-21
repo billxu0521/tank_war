@@ -43,6 +43,10 @@ const RULES := MatchRules.RULES
 var rules := &"egg"
 var _lives := {}   # 牛仔的連線編號 -> 還能重生幾次。只有用得到次數的模式有；主機算，廣播給大家（_sync_lives）
 var _out := {}     # 出局的牛仔：連線編號 -> 是不是 bot（新的一局要生回來）
+var player_key := ""   # 這台電腦的玩家代號（斷線重連時主機靠它認人）。第一次連線時產生、存進 settings.cfg；net_check 會直接蓋掉
+const RECONNECT_MS := 60000   # 斷線後幾毫秒內連回來，還給他原本的命數和出局狀態
+var _key_of := {}   # 主機：在線上的人 連線編號 -> 玩家代號（版本檢查時送來的；沒送或重複就沒有）
+var _held := {}     # 主機：斷線的人 玩家代號 -> {id: 舊編號, at: 斷線時刻毫秒, lives: 剩幾次或 null, out: 是否出局}
 var _auth_failed := false   # 這次加入是版本檢查逾時（不是主機斷線），斷線時不要蓋掉逾時的字
 var party: Party   # 派對模式的回合、計分（party.gd）；不是派對模式是 null
 var _party_hud: PartyHud   # 派對模式的畫面（方位條要問它是不是在選重生點）
@@ -376,6 +380,8 @@ func _to_lobby(msg: String) -> void:
 	_solo_dino = false
 	_lives.clear()
 	_out.clear()
+	_key_of.clear()
+	_held.clear()
 	rules = RULES.keys()[mode_pick.selected]   # 加入別人的房間時被主機改過，回大廳換回自己選的
 	if Period.current != period:   # 時段也是
 		Period.apply(self, period)
@@ -407,9 +413,32 @@ func _to_lobby(msg: String) -> void:
 
 ## 版本檢查（Godot 內建的連線認證）：認證完成前不 spawn、不送 RPC，所以舊版本不會打架。
 ## 客戶端連上主機時先送自己的版本；主機比對，同版回 "ok" 放行，不同版回一句錯誤訊息，再斷線
+## 認證資料格式是「版本|玩家代號」（舊版只送版本，整串就是版本）
 func _on_peer_authenticating(id: int) -> void:
 	if not multiplayer.is_server():
-		multiplayer.send_auth(id, str(ProjectSettings.get_setting("application/config/version")).to_utf8_buffer())
+		multiplayer.send_auth(id, ("%s|%s" % [ProjectSettings.get_setting("application/config/version"), _player_key()]).to_utf8_buffer())
+
+## 玩家代號：第一次要用時才產生、存進 settings.cfg
+func _player_key() -> String:
+	if player_key == "":
+		var cfg := ConfigFile.new()
+		cfg.load(settings_path)
+		player_key = cfg.get_value("net", "player_key", "")
+		if player_key == "":
+			# ponytail: 代號是亂數、沒加密，知道別人代號的人可以冒用他的命數和分數；要防再改成主機發的憑證
+			player_key = Crypto.new().generate_random_bytes(8).hex_encode()
+			_save_setting("net", "player_key", player_key)
+	return player_key
+
+## 代號 key 的新連線 id 接手：同代號若還在線上，舊的當斷線處理，再斷掉舊連線。
+## 不用強制斷（force）：強制斷了 SceneMultiplayer 收不到 peer_disconnected，主機會一直以為舊的還在、RPC 一直噴錯
+func _claim_key(id: int, key: String) -> void:
+	var old: Variant = _key_of.find_key(key)
+	if old != null:
+		_despawn(old)   # 資料進 _held；之後 ENet 可能又送一次 peer_disconnected，_despawn 第二次會跳過
+		if old in multiplayer.get_peers():   # 正常送離開，ENet 逾時後會再送一次 peer_disconnected（_despawn 會跳過）
+			multiplayer.multiplayer_peer.disconnect_peer(old)
+	_key_of[id] = key
 
 func _on_auth(id: int, data: PackedByteArray) -> void:
 	var text := data.get_string_from_utf8()
@@ -419,14 +448,21 @@ func _on_auth(id: int, data: PackedByteArray) -> void:
 		else:
 			_to_lobby.call_deferred(text)
 		return
+	var ver := text.get_slice("|", 0)              # 舊客戶端只送版本：整串就是版本
+	var key := text.get_slice("|", 1).left(64)     # 沒有代號就是 ""
 	var mine := str(ProjectSettings.get_setting("application/config/version"))
-	if text == mine:
+	if ver == mine:
+		# 同一個代號已經在線上：同一個人重連。主機還沒發現舊連線斷了（ENet 要等幾秒到幾十秒逾時），
+		# 玩家就已經連回來。先把舊的當斷線處理（資料進 _held，RECONNECT_MS 內接得回來），再斷掉舊連線，新的照常放行
+		# ponytail: 同一台電腦開兩個客戶端連專用伺服器會共用 settings.cfg 的代號而互踢，測試工具要自己設不同的 player_key（net_check.gd 已經這樣做）
+		if key != "":
+			_claim_key(id, key)
 		multiplayer.send_auth(id, "ok".to_utf8_buffer())
 		multiplayer.complete_auth(id)
 		return
-	multiplayer.send_auth(id, ("版本不同：主機是 %s，你是 %s，請更新到一樣的版本" % [mine, text]).to_utf8_buffer())
+	multiplayer.send_auth(id, ("版本不同：主機是 %s，你是 %s，請更新到一樣的版本" % [mine, ver]).to_utf8_buffer())
 	if _dedicated:
-		print("擋下版本不同的客戶端（編號 %d）：他是 %s，主機是 %s" % [id, text, mine])
+		print("擋下版本不同的客戶端（編號 %d）：他是 %s，主機是 %s" % [id, ver, mine])
 	# 等 0.2 秒讓訊息送出再斷；這段內客戶端自己斷了也沒關係
 	get_tree().create_timer(0.2).timeout.connect(func() -> void:
 		if id in multiplayer.get_authenticating_peers():   # 客戶端已經自己斷了就不用踢（踢不存在的連線會報錯）
@@ -1036,7 +1072,11 @@ func _enter_game(msg: String) -> void:
 func _spawn(id: int) -> void:
 	if not multiplayer.is_server():
 		return  # 只有主機生，MultiplayerSpawner 會同步給大家
-	_add_player(COWBOY, id)
+	_reclaim(id)   # 斷線重連：先把舊編號的資料搬過來（要在 _add_player 前面，不然次數會補滿）
+	if party and party.dino_id == id and party.phase in [&"prep", &"play"]:
+		make_pilot(id)   # 這回合輪到他當恐龍：拿回尼諾拉
+	elif not _is_out(id):   # 出局的人連回來還是觀戰
+		_add_player(COWBOY, id)
 	if id != 1:
 		_set_rules.rpc_id(id, rules)
 		_set_period.rpc_id(id, Period.current)
@@ -1064,12 +1104,13 @@ func _add_player(scene: PackedScene, id: int) -> Node3D:
 func _despawn(id: int) -> void:
 	if not multiplayer.is_server():
 		return
+	_hold(id)   # 斷線先記下命數和出局狀態，RECONNECT_MS 內連回來還給他
 	_volunteers.erase(id)
 	var b := _boss()
 	if b and b.pilot == id:   # 操作尼諾拉的人走了：電腦接手
 		b.pilot = 0
 	var p := players.get_node_or_null(NodePath(str(id)))
-	if p:
+	if p and not p.is_queued_for_deletion():   # 重連時主機會先呼叫一次、ENet 之後又送一次 peer_disconnected：第二次不再減人數
 		p.queue_free()
 		if id != 1:
 			_cowboys -= 1
@@ -1078,6 +1119,37 @@ func _despawn(id: int) -> void:
 		_out.erase(id)
 		_broadcast_lives()
 		_check_lives_end()
+
+## 斷線：記下他的命數和出局狀態，RECONNECT_MS 內同一個代號連回來就還他（_reclaim）。
+## 派對的分數不用存：party.gd 本來就不刪離開的人，連回來時搬編號就好
+func _hold(id: int) -> void:
+	var key: String = _key_of.get(id, "")
+	_key_of.erase(id)
+	if key == "":
+		return
+	# ponytail: 過期的只在這裡順手清；專用伺服器一直開派對（不走 _new_round）也不會一直長
+	var now := Time.get_ticks_msec()
+	for k: String in _held.keys():
+		if now - int(_held[k].at) > RECONNECT_MS:
+			_held.erase(k)
+	_held[key] = {id = id, at = now, lives = _lives.get(id), out = _out.has(id)}
+
+## 連上來的人是不是剛斷線的那個：是就把舊編號的資料搬給新編號
+func _reclaim(id: int) -> void:
+	var key: String = _key_of.get(id, "")
+	if key == "" or not _held.has(key):
+		return
+	var h: Dictionary = _held[key]
+	_held.erase(key)
+	if Time.get_ticks_msec() - int(h.at) > RECONNECT_MS:
+		return
+	if h.lives != null:
+		_lives[id] = h.lives
+	if h.out:
+		_out[id] = false
+	if party:
+		party.rekey(int(h.id), id)
+	print("[重連] 玩家 %d 連回來，拿回編號 %d 的資料" % [id, int(h.id)])
 
 ## 客戶端打中東西，請主機扣血（Cowboy.deal_damage、摔落的 _hurt_self）。主機檢查合不合理才扣：
 ## - 只收開槍者本人送的（別人不能假冒）
@@ -1316,6 +1388,7 @@ func _new_round() -> void:
 	var comeback := _out.duplicate()   # 出局的人：還連著（或是 bot）就生回來
 	_lives.clear()
 	_out.clear()
+	_held.clear()   # 新的一局命數補滿，斷線時存的舊資料不能帶進來
 	_respawn_queue.clear()
 	var boss: Node3D = null
 	for p in players.get_children():

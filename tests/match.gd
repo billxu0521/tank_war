@@ -816,3 +816,64 @@ func _case_party_gameplay() -> void:
 	m._apply_rules()
 	_ck(m.party == null and not m.party_frozen(), "其他模式沒有 $Party")
 	_end(m)
+
+## 斷線重連：60 秒內同一個代號連回來，拿回命數、出局狀態、派對分數；過期、新局就當新人
+func _case_reconnect() -> void:
+	var m := _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"deathmatch"))
+	m._apply_rules()
+	for id in [1, 2, 3]:
+		m._add_player(m.COWBOY, id)
+	m._key_of[2] = "k2"
+	m._lives[2] = 1
+	m._despawn(2)
+	_ck(not m._lives.has(2) and m._held.has("k2"), "斷線：命數先拿掉、資料存起來")
+	m._key_of[9] = "k2"
+	m._reclaim(9)
+	_ck(int(m._lives.get(9, -1)) == 1 and not m._held.has("k2"), "同代號連回來拿回剩 1 次")
+	# 出局的人連回來還是出局
+	m._key_of[3] = "k3"
+	m._out[3] = false
+	m._despawn(3)
+	m._key_of[10] = "k3"
+	m._reclaim(10)
+	_ck(m._out.has(10) and m._is_out(10), "出局的人連回來還是出局")
+	# 過期
+	m._key_of[9] = "k2"   # 9 再斷一次
+	m._despawn(9)
+	m._held["k2"].at -= m.RECONNECT_MS + 1000
+	m._key_of[11] = "k2"
+	m._reclaim(11)
+	_ck(not m._lives.has(11), "超過時間連回來當新人")
+	# 同代號還在線上（主機還沒發現舊連線斷）：新編號接手，舊的當斷線；舊的之後再斷一次不重扣人數
+	m._add_player(m.COWBOY, 4)
+	m._key_of[4] = "k4"
+	m._lives[4] = 1
+	var n: int = m._cowboys
+	m._claim_key(12, "k4")
+	_ck(not m._key_of.has(4) and m._key_of.get(12) == "k4" and m._held.has("k4") and m._cowboys == n - 1,
+		"同代號在線上：舊的當斷線、資料進 _held、新的接手")
+	m._despawn(4)
+	_ck(m._cowboys == n - 1, "舊編號再斷一次不重扣人數")
+	m._reclaim(12)
+	_ck(int(m._lives.get(12, -1)) == 1 and m._held.is_empty(), "同代號在線上重連：命數接回 1")
+	# 新的一局清掉
+	m._key_of[11] = "k2"
+	m._despawn(11)
+	m._new_round()
+	_ck(m._held.is_empty(), "新的一局清掉斷線資料")
+	_end(m)
+	# 派對：分數、名字、名單位置搬到新編號
+	m = _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"party"))
+	m._apply_rules()
+	m.party.scores[5] = 7
+	m.party.names[5] = "玩家 2"
+	m.party._roster = [1, 5, -1, -2]
+	m._key_of[5] = "p5"
+	m._despawn(5)
+	m._key_of[6] = "p5"
+	m._reclaim(6)
+	_ck(int(m.party.scores.get(6, -1)) == 7 and m.party.names.get(6) == "玩家 2" and m.party._roster[1] == 6
+		and not m.party.scores.has(5), "派對：重連拿回分數、名字、名單位置")
+	_end(m)
