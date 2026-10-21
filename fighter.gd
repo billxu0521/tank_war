@@ -84,14 +84,15 @@ func _net_push(v: Array) -> void:
 
 # --- 主機檢查移動（別人的角色，主機收到位置時） ---
 # 用額度做，不逐包比速度：封包會擠在一起到，一包的距離超過這一包的時間算不準。
-# 每個角色一個水平額度和一個往上額度，每秒依「合法最快速度 × NET_REFILL」補，上限 NET_BURST 公尺；
+# 每個角色一個水平額度和一個往上額度，每秒依「合法最快速度 × NET_REFILL」補，上限 NET_BURST／NET_BURST_UP 公尺；
 # 每包扣掉跟上一個已接受位置的距離，額度不夠這包就不接受。時間用主機收到的時間，不信客戶端的。
-const NET_BURST := 4.0           # 額度上限（公尺）：卡住一下、一次來好幾包，夠吸收
+const NET_BURST := 8.0           # 額度上限（公尺）：衝刺中網路卡 0.9 秒內不會被拉回；再大會讓瞬移外掛一次跳更遠
+const NET_BURST_UP := 4.0        # 往上的額度上限（公尺）：跳、翻越一次用不到這麼多
 const NET_REFILL := 1.5          # 補速是合法最快速度的幾倍：正常玩家差很遠，超過才是作弊
 const NET_WALK_SLOPE := 0.84     # tan 40 度：地圖最陡的可走坡（main.gd 的 nav agent_max_slope）。沿坡走上去不算往上
 const NET_REJECT_LOG := 20       # 5 秒內被拒這麼多次，主機印一行（先不踢人）
 const NET_CORRECT_GAP := 500.0   # 拉回同一個人之後這麼久（毫秒）內不再拉，不然會洗版
-# ponytail: 網路整段斷掉（約 0.3 秒以上、正在衝刺）之後第一包會被拒、拉回。有人回報再改用送出時間算間隔
+# ponytail: 網路整段斷掉（約 0.9 秒以上、正在衝刺）之後第一包會被拒、拉回。有人回報再改用送出時間算間隔
 var _net_anchor := Vector3.ZERO     # 上一個接受的位置（主機）
 var _net_h := 0.0                   # 水平剩下的額度（公尺）
 var _net_v := 0.0                   # 往上剩下的額度（公尺）
@@ -112,13 +113,13 @@ func net_accept(p: Vector3, now: float) -> bool:
 	if _net_t < 0.0:   # 第一包（剛生出來、重生、新局）：直接當基準
 		_net_anchor = p
 		_net_h = NET_BURST
-		_net_v = NET_BURST
+		_net_v = NET_BURST_UP
 		_net_t = now
 		return true
 	var dt := maxf(now - _net_t, 0.0) / 1000.0
 	_net_t = now
 	_net_h = minf(NET_BURST, _net_h + net_max_speed() * NET_REFILL * dt)
-	_net_v = minf(NET_BURST, _net_v + net_max_up() * NET_REFILL * dt)
+	_net_v = minf(NET_BURST_UP, _net_v + net_max_up() * NET_REFILL * dt)
 	var dh := Vector2(p.x - _net_anchor.x, p.z - _net_anchor.z).length()
 	var up := maxf(p.y - _net_anchor.y - dh * NET_WALK_SLOPE, 0.0)
 	if dh > _net_h or up > _net_v:
