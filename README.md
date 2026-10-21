@@ -164,6 +164,7 @@ Godot 內建 ENet，**同區網直連**，連接埠 24680。大家都是牛仔�
 
 - 開槍打中是**開槍的人自己判定**，再請主機扣血（`Cowboy.deal_damage`）。不防作弊。
 - 跨網路（NAT 打洞）還沒做。
+- 連線時比對版本號（`project.godot` 的 `application/config/version`），不同版會被擋，客戶端會看到「版本不同」的訊息（`_on_auth`）。
 
 啟動參數，方便一台機器開兩個視窗：
 
