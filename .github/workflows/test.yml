@@ -47,8 +47,10 @@ jobs:
             godot-import-${{ env.GODOT_VERSION }}-
 
       - name: 匯入資源
+        # CI 沒有 Blender，Godot 遇到 .blend 會中斷匯入；遊戲不讀 blender/，讓它忽略
         # 第一次匯入時腳本會先預載還沒匯入的 .glb 而失敗，跑兩次才完整；非 0 忽略
         run: |
+          touch blender/.gdignore
           godot --headless --import || true
           godot --headless --import || true
 
