@@ -148,6 +148,8 @@ func _ready() -> void:
 	_build_home()
 	Period.apply(self, period)
 	_match_hud = MatchHud.new(self)
+	multiplayer.auth_callback = _on_auth   # 版本檢查（連線認證）；SceneMultiplayer 本身不換，_to_lobby 重設 peer 也不會清掉
+	multiplayer.peer_authenticating.connect(_on_peer_authenticating)
 	multiplayer.peer_connected.connect(_spawn)
 	multiplayer.peer_disconnected.connect(_despawn)
 	multiplayer.connected_to_server.connect(func() -> void:
@@ -393,6 +395,33 @@ func _to_lobby(msg: String) -> void:
 			get_tree().reload_current_scene.call_deferred()
 
 # --- 連線 ---
+
+## 版本檢查（Godot 內建的連線認證）：認證完成前不 spawn、不送 RPC，所以舊版本不會打架。
+## 客戶端連上主機時先送自己的版本；主機比對，同版回 "ok" 放行，不同版回一句錯誤訊息，再斷線
+func _on_peer_authenticating(id: int) -> void:
+	if not multiplayer.is_server():
+		multiplayer.send_auth(id, str(ProjectSettings.get_setting("application/config/version")).to_utf8_buffer())
+
+func _on_auth(id: int, data: PackedByteArray) -> void:
+	var text := data.get_string_from_utf8()
+	if not multiplayer.is_server():   # 客戶端：收到的是主機的回覆
+		if text == "ok":
+			multiplayer.complete_auth(id)
+		else:
+			_to_lobby.call_deferred(text)
+		return
+	var mine := str(ProjectSettings.get_setting("application/config/version"))
+	if text == mine:
+		multiplayer.send_auth(id, "ok".to_utf8_buffer())
+		multiplayer.complete_auth(id)
+		return
+	multiplayer.send_auth(id, ("版本不同：主機是 %s，你是 %s，請更新到一樣的版本" % [mine, text]).to_utf8_buffer())
+	if _dedicated:
+		print("擋下版本不同的客戶端（編號 %d）：他是 %s，主機是 %s" % [id, text, mine])
+	# 等 0.2 秒讓訊息送出再斷；這段內客戶端自己斷了也沒關係
+	get_tree().create_timer(0.2).timeout.connect(func() -> void:
+		if id in multiplayer.get_authenticating_peers():   # 客戶端已經自己斷了就不用踢（踢不存在的連線會報錯）
+			multiplayer.multiplayer_peer.disconnect_peer(id))
 
 func _on_host_pressed() -> void:
 	var peer := ENetMultiplayerPeer.new()
