@@ -785,6 +785,15 @@ func climb_step(delta: float, up: float, let_go: bool) -> void:
 		_prompt.text = ""
 
 
+## 主機檢查移動用：水平最快就是衝刺（翻越、爬梯子的水平位移都比它小）
+func net_max_speed() -> float:
+	return sprint_speed
+
+## 往上最快：跳、爬梯子、翻越（頂面再多 0.5 公尺當餘裕，曲線會略高）
+func net_max_up() -> float:
+	return maxf(maxf(jump_velocity, climb_speed), (vault_max_height + 0.5) / vault_time)
+
+
 # --- 以下是 FNE 原本的移動系統 ---
 
 ## 別人（遠端玩家、bot）的腳步聲：用量到的速度在自己這台踩，不用另外同步。
