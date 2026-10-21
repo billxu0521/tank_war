@@ -123,6 +123,13 @@ func move_step(delta: float, input: Vector3, want_sprint: bool,
 		try_jump()
 	move_and_slide()
 
+## 主機檢查移動用：水平最快是衝刺，往上最快是跳或爬牆
+func net_max_speed() -> float:
+	return SPEED * SPRINT_MULT
+
+func net_max_up() -> float:
+	return maxf(JUMP_SPEED, CLIMB_SPEED)
+
 ## 貼到的是不是「爬得上去」的牆。場地四周的圍牆不算——不然從高樓跳過去
 ## 再往上爬就翻出場外了。
 func _on_climbable_wall() -> bool:

@@ -1046,6 +1046,60 @@ const MAX_HIT := 60          # 單發最大傷害：步槍 60、重擊槍托 60�
 const MAX_SHOT_RANGE := 270.0   # 步槍射程 250 再加一點
 var _died_at := {}            # 牛仔的連線編號 -> [死的時刻（毫秒）, 位置]
 
+## 每秒傷害額度（主機）：散彈一發是很多個 request，所以限的是「每秒總傷害」，不是每秒幾次。
+## 數字從 cowboy/weapons/weapons.csv 算（Weapon.table()），改了表格自動跟著變。
+## 槍托重擊不在表裡，數字照 viewmodel.gd 的 heavy_damage（測試釘住，改了要跟著改）
+const MELEE_HEAVY := 60
+const DMG_REFILL := 1.5          # 補速是所有武器最高每秒傷害的幾倍（寬鬆）
+const KILL_GAP := 0.8            # 爆頭秒殺：每把最快間隔的這個倍數才准一次
+static var _fire_limits := {}
+var _dmg_quota := {}             # 開槍者的連線編號 -> {"left": 剩下的傷害, "at": 上次補的時刻, "kill_at": 上次秒殺的時刻}
+
+## 從表格算出：dps＝每秒最高傷害、shot＝單發最大總傷害（傷害×顆數，含槍托）、gap＝最短擊發間隔（含搧擊錘）。
+## 表格讀不到回傳空的，呼叫的人就不擋（寧可寬鬆）
+static func fire_limits() -> Dictionary:
+	if _fire_limits.is_empty():
+		var dps := 0.0
+		var shot := float(MELEE_HEAVY)
+		var gap := INF
+		for id: String in Weapon.table():
+			var v: Dictionary = Weapon.table()[id]
+			var one: float = v.get("damage", "0").to_float() * maxf(v.get("pellets", "1").to_float(), 1.0)
+			var iv := maxf(v.get("fire_interval", "0").to_float(), v.get("cycle_time", "0").to_float())
+			var fan: float = v.get("fan_interval", "0").to_float()   # 搧擊錘（左輪腰射按住連發）比擊發間隔快
+			if fan > 0.0:
+				iv = minf(iv, fan)
+			iv = maxf(iv, 0.01)
+			dps = maxf(dps, one / iv)
+			shot = maxf(shot, one)
+			gap = minf(gap, iv)
+		if gap == INF:
+			return {}
+		_fire_limits = {"dps": dps, "shot": shot, "gap": gap}
+	return _fire_limits
+
+## 這發傷害在額度內就扣掉回傳 true。kill＝傷害等於目標滿血（爆頭秒殺）：不走總傷害，另外每隔一段時間才一次。
+## now 是毫秒，測試可以自己給時間
+func _dmg_allowed(shooter_id: int, amount: int, kill: bool, now: float) -> bool:
+	var lim := fire_limits()
+	if lim.is_empty():
+		return true
+	var cap: float = lim["shot"] * 2.0
+	var q: Dictionary = _dmg_quota.get(shooter_id, {"left": cap, "at": now, "kill_at": -INF})
+	q["left"] = minf(cap, q["left"] + lim["dps"] * DMG_REFILL * maxf(now - q["at"], 0.0) / 1000.0)
+	q["at"] = now
+	var ok := true
+	if kill:
+		ok = now - q["kill_at"] >= lim["gap"] * KILL_GAP * 1000.0
+		if ok:
+			q["kill_at"] = now
+	else:
+		ok = amount <= q["left"]
+		if ok:
+			q["left"] -= amount
+	_dmg_quota[shooter_id] = q
+	return ok
+
 @rpc("any_peer", "call_remote", "reliable")
 func request_damage(shooter_id: int, target_path: NodePath, amount: int, from: Vector3, head := false) -> void:
 	if not multiplayer.is_server() or multiplayer.get_remote_sender_id() != shooter_id:
@@ -1069,6 +1123,8 @@ func apply_damage_request(shooter_id: int, target: Node, amount: int, from: Vect
 		return false
 	if from.distance_to(at) > 5.0 or (not self_hit and from.distance_to((target as Node3D).global_position) > MAX_SHOT_RANGE):
 		return false
+	if not self_hit and not _dmg_allowed(shooter_id, amount, amount == int(target.get(&"max_hp")), float(Time.get_ticks_msec())):
+		return false   # 每秒傷害超過額度（外掛狂送扣血）
 	if head and target.has_method(&"head_hit"):
 		target.head_hit()
 	target.take_damage(amount, shooter)

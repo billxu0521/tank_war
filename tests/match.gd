@@ -76,6 +76,120 @@ func _case_net_smooth() -> void:
 	_ck(c.position.x == 10.0, "新的還沒到就停在最後一筆，不要亂猜")
 	_end(m)
 
+## 主機檢查移動（Fighter.net_accept）和每秒傷害額度（Main._dmg_allowed）：正常的全放行，瞬移、狂送扣血要擋。
+## 直接給時間（毫秒）算，不靠真的等
+func _case_net_check() -> void:
+	var m := _offline_match()
+	# 第一包直接當基準；之後的包照額度算
+	var c: Node3D = m._add_player(m.COWBOY, 5)
+	var t := 1000.0
+	var p := Vector3.ZERO
+	c.net_accept(p, t)
+	var ok := true
+	for i in 200:   # 正常衝刺：每 25 毫秒走 8.5 × 0.025 公尺
+		t += 25.0
+		p.x += c.sprint_speed * 0.025
+		ok = ok and c.net_accept(p, t)
+	_ck(ok, "正常衝刺連續送位置要全部接受")
+	var base: Vector3 = c._net_anchor
+	_ck(not c.net_accept(p + Vector3(50, 0, 0), t + 25.0), "一包瞬移 50 公尺要擋")
+	_ck(c._net_anchor == base, "被擋的那包不能當新基準")
+	_ck(c.net_max_speed() == c.sprint_speed and c.net_max_up() >= c.jump_velocity, "牛仔的最快速度從衝刺和跳來的")
+	# 客戶端送來的位置走 net_state 進來：被擋就不套（時間是真的，這兩包幾乎同一毫秒）
+	var f: Node3D = _net_fresh(m, 11)
+	var f_before: Vector3 = f.position
+	f.net_state = [0, f_before + Vector3(50, 0, 0), Vector3.ZERO]
+	_ck(f.position == f_before, "net_state 送來瞬移的位置，主機不套")
+	# 封包擠在一起：同一毫秒來 3 包、合計 3 公尺（額度 4 公尺）要接受
+	var b: Node3D = _net_fresh(m, 6)
+	ok = true
+	for x in [1.0, 2.0, 3.0]:
+		ok = ok and b.net_accept(Vector3(x, 0, 0), 1000.0)
+	_ck(ok, "同一毫秒來 3 包、合計 3 公尺要全部接受")
+	# 掉落 30 公尺：往下不限
+	var d: Node3D = _net_fresh(m, 7)
+	_ck(d.net_accept(Vector3(0, -30, 0), 3000.0), "掉落 30 公尺要接受")
+	# 重生／新局後第一包在很遠的地方：新節點的第一包直接當基準
+	var r: Node3D = m._add_player(m.COWBOY, 8)
+	_ck(r.net_accept(Vector3(300, 0, -200), 5000.0), "新生出來的第一包不管在哪都要接受")
+	# 跳：0.3 秒往上 0.5 公尺，正常；往上飛（每秒 10 公尺）要被擋
+	var j: Node3D = _net_fresh(m, 12)
+	var jt := 1000.0
+	ok = true
+	for i in 12:
+		jt += 25.0
+		ok = ok and j.net_accept(Vector3(0, 0.025 * (i + 1) * 2.0 * 0.5, 0), jt)   # 0.3 秒內 0.5 公尺
+	_ck(ok, "跳起來的正常高度要接受")
+	var fl: Node3D = _net_fresh(m, 13)
+	var fy := 0.0
+	var fly_rej := 0
+	jt = 1000.0
+	for i in 40:
+		jt += 25.0
+		fy += 0.25
+		if not fl.net_accept(Vector3(0, fy, 0), jt):
+			fly_rej += 1
+	_ck(fly_rej > 0, "往上飛（每秒 10 公尺）要擋掉一部分")
+	# 沿 40 度的坡走上去：水平每走 1 公尺升 0.839 公尺，不算往上瞬移
+	var s: Node3D = _net_fresh(m, 14)
+	var sx := 0.0
+	jt = 1000.0
+	ok = true
+	for i in 200:
+		jt += 25.0
+		sx += c.sprint_speed * 0.025
+		ok = ok and s.net_accept(Vector3(sx, sx * 0.839, 0), jt)
+	_ck(ok, "沿 40 度的坡衝上去要全部接受")
+	# 恐龍：衝刺 11.7 公尺／秒、跳 6.5 公尺，正常都要過
+	var dn: Node3D = m._add_player(m.DINO, 9)
+	dn.net_accept(Vector3.ZERO, 1000.0)
+	ok = true
+	jt = 1000.0
+	var dx := 0.0
+	for i in 200:
+		jt += 25.0
+		dx += dn.net_max_speed() * 0.025
+		ok = ok and dn.net_accept(Vector3(dx, 0, 0), jt)
+	_ck(ok, "恐龍正常衝刺要接受")
+	ok = true
+	for i in 29:   # 跳到 6.5 公尺高，約 0.7 秒
+		jt += 25.0
+		ok = ok and dn.net_accept(Vector3(dx, 6.5 * (i + 1) / 29.0, 0), jt)
+	_ck(ok, "恐龍跳 6.5 公尺要接受")
+
+	# 傷害額度：正常射速（左輪每 0.45 秒一發 50）全部算數
+	var all := true
+	for i in 10:
+		all = all and m._dmg_allowed(7, 50, false, 1000.0 + i * 450.0)
+	_ck(all, "左輪正常射速的傷害要全部接受")
+	# 一秒內 20 次 60 傷害（同一毫秒）：大部分要擋
+	var acc := 0
+	for i in 20:
+		if m._dmg_allowed(8, 60, false, 1000.0):
+			acc += 1
+	_ck(acc < 10, "同一毫秒狂送 20 次 60 傷害，大部分要擋（現在放行 %d 次）" % acc)
+	# 散彈一發全中（10 顆 × 14）：要接受
+	all = true
+	for i in 10:
+		all = all and m._dmg_allowed(9, 14, false, 1000.0)
+	_ck(all, "散彈一發 10 顆全中要接受")
+	# 爆頭秒殺（傷害＝滿血）：每隔一段時間才一次，不走總傷害
+	_ck(m._dmg_allowed(10, 150, true, 1000.0), "第一次爆頭秒殺要接受")
+	_ck(not m._dmg_allowed(10, 150, true, 1050.0), "50 毫秒內再一次爆頭秒殺要擋")
+	_ck(m._dmg_allowed(10, 150, true, 1200.0), "隔 200 毫秒的爆頭秒殺要接受")
+	# 數字從表格來：散彈一發 140、最快間隔是左輪的搧擊錘 0.16 秒
+	var lim: Dictionary = m.fire_limits()
+	_ck(absf(float(lim["shot"]) - 140.0) < 0.01 and absf(float(lim["gap"]) - 0.16) < 0.001,
+		"傷害上限要從 weapons.csv 算（單發 %s、最快間隔 %s）" % [str(lim["shot"]), str(lim["gap"])])
+	_ck(c.viewmodel.heavy_damage == m.MELEE_HEAVY, "槍托重擊要跟 Main.MELEE_HEAVY 一樣（改了要一起改）")
+	_end(m)
+
+## 一個剛生出來、已經收過第一包（原點）的牛仔，給移動檢查的案例用
+func _net_fresh(m: Node, id: int) -> Node3D:
+	var n: Node3D = m._add_player(m.COWBOY, id)
+	n.net_accept(Vector3.ZERO, 1000.0)
+	return n
+
 ## 靶場：另一張地圖，靶照距離站好、擺設乾淨，打中跳字，回大廳就切回牧場
 func _case_range() -> void:
 	var Main: GDScript = load("res://main.gd")
