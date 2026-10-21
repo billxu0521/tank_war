@@ -664,7 +664,13 @@ func _on_test_server_pressed() -> void:
 
 func _on_join_pressed() -> void:
 	var peer := ENetMultiplayerPeer.new()
-	if peer.create_client(ip_edit.text, PORT) != OK:
+	# 可以寫 位址:埠，測試網路很差時連到轉送程式（tools/lag_proxy.py）
+	var addr := ip_edit.text
+	var port := PORT
+	if ":" in addr:
+		port = addr.get_slice(":", 1).to_int()
+		addr = addr.get_slice(":", 0)
+	if peer.create_client(addr, port) != OK:
 		status.text = "連線失敗，IP 格式不對？"
 		return
 	multiplayer.multiplayer_peer = peer

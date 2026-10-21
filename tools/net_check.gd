@@ -9,6 +9,8 @@ var _m: Node
 var _role := OS.get_environment("ROLE")
 var _a: Node   # 客戶端 A 的牛仔（兩邊都找得到：名字是連線編號）
 var _b: Node
+var _dir := 1.0      # 客戶端 A 現在往哪跑（±X）
+var _turn := 0.0     # 還剩幾秒換方向
 
 
 func _initialize() -> void:
@@ -19,9 +21,10 @@ func _initialize() -> void:
 func _process(_d: float) -> bool:
 	_f += 1
 	if _f == 2:   # 等 Main 的 _ready 跑完（ip_edit 那些節點才拿得到）
-		_m.ip_edit.text = "127.0.0.1"
+		var join := OS.get_environment("JOIN")   # LAG=1 時指到轉送程式，例如 127.0.0.1:24681
+		_m.ip_edit.text = join if join != "" else "127.0.0.1"
 		_m._on_join_pressed()
-	if _f > 60 * 25:
+	if _f > 60 * (40 if OS.get_environment("JOIN") != "" else 25):
 		var mp: MultiplayerPeer = _m.multiplayer.multiplayer_peer
 		print("NET FAIL: 逾時（%s）連線狀態 %s、我是 %d、場上 %s、A=%s B=%s%s" % [_role,
 			mp.get_connection_status() if mp else -1, _m.multiplayer.get_unique_id(),
@@ -35,6 +38,12 @@ func _process(_d: float) -> bool:
 	if want != "" and (String(_m.rules) != want or _m._lives.size() < 2):
 		return false
 	if _role == "a":
+		# 正常移動的玩家不能被主機拉回：沿 X 來回跑，速度 0.95 倍衝刺，每 3 秒換方向
+		_turn -= _d
+		if _turn <= 0.0:
+			_dir = -_dir
+			_turn = 3.0
+		_a.global_position.x += _dir * _a.sprint_speed * 0.95 * _d
 		if _f % 60 == 0 and _b.hp == _b.max_hp:
 			_a.deal_damage(_b, 30)   # 一發合理的傷害：主機要扣
 			_a.viewmodel.try_fire()  # 一槍：B 要聽得到
