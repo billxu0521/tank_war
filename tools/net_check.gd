@@ -16,6 +16,8 @@ var _ok_at := 0          # 成功的時刻（毫秒）；之後再等 5 秒才�
 var _reconnect := OS.get_environment("RECONNECT") != ""   # 斷線重連檢查：B 被扣一條命後斷線再連回，看命數有沒有回來
 var _b_old := 0      # B：斷線前的編號
 var _rejoin_at := 0  # B：斷線的時刻（毫秒），隔 1 秒再連
+var _crash := OS.get_environment("RECONNECT") == "crash"   # B 不正常斷線（遊戲當掉、網路掉）：不送離開，舊連線只留參照、不 close、不 poll
+var _old_peer: MultiplayerPeer   # B：crash 時舊的連線（留著參照，讓它不被釋放）
 
 
 func _initialize() -> void:
@@ -67,6 +69,10 @@ func _process(_d: float) -> bool:
 			if _b_old == 0 and int(_m._lives.get(me, 3)) == 2:   # 被扣一條命了：斷線
 				_b_old = me
 				_rejoin_at = Time.get_ticks_msec()
+				if _crash:
+					# 換掉 multiplayer_peer 前先設成 null：_to_lobby 看到 null 就不會 close 舊的，主機收不到離開
+					_old_peer = _m.multiplayer.multiplayer_peer
+					_m.multiplayer.multiplayer_peer = null
 				_m._to_lobby("")
 				_a = null
 				_b = null

@@ -19,6 +19,7 @@ func _process(_d: float) -> bool:
 	if _f == 2:
 		_m.want_dino = _role == "a"
 		_m.ip_edit.text = "127.0.0.1"
+		_m.player_key = "vs-" + _role   # 兩個客戶端在同一台、讀同一個 settings.cfg，不蓋掉會被當成同一個人（同代號會互踢）
 		_m._on_join_pressed()
 	if _f > 60 * 25:
 		var b: Node = _m._boss()

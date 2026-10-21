@@ -430,6 +430,16 @@ func _player_key() -> String:
 			_save_setting("net", "player_key", player_key)
 	return player_key
 
+## 代號 key 的新連線 id 接手：同代號若還在線上，舊的當斷線處理，再斷掉舊連線。
+## 不用強制斷（force）：強制斷了 SceneMultiplayer 收不到 peer_disconnected，主機會一直以為舊的還在、RPC 一直噴錯
+func _claim_key(id: int, key: String) -> void:
+	var old: Variant = _key_of.find_key(key)
+	if old != null:
+		_despawn(old)   # 資料進 _held；之後 ENet 可能又送一次 peer_disconnected，_despawn 第二次會跳過
+		if old in multiplayer.get_peers():   # 正常送離開，ENet 逾時後會再送一次 peer_disconnected（_despawn 會跳過）
+			multiplayer.multiplayer_peer.disconnect_peer(old)
+	_key_of[id] = key
+
 func _on_auth(id: int, data: PackedByteArray) -> void:
 	var text := data.get_string_from_utf8()
 	if not multiplayer.is_server():   # 客戶端：收到的是主機的回覆
@@ -442,9 +452,11 @@ func _on_auth(id: int, data: PackedByteArray) -> void:
 	var key := text.get_slice("|", 1).left(64)     # 沒有代號就是 ""
 	var mine := str(ProjectSettings.get_setting("application/config/version"))
 	if ver == mine:
-		# 同一個代號已經在線上（同一台開兩個視窗）：當新玩家，不記代號
-		if key != "" and not _key_of.values().has(key):
-			_key_of[id] = key
+		# 同一個代號已經在線上：同一個人重連。主機還沒發現舊連線斷了（ENet 要等幾秒到幾十秒逾時），
+		# 玩家就已經連回來。先把舊的當斷線處理（資料進 _held，RECONNECT_MS 內接得回來），再斷掉舊連線，新的照常放行
+		# ponytail: 同一台電腦開兩個客戶端連專用伺服器會共用 settings.cfg 的代號而互踢，測試工具要自己設不同的 player_key（net_check.gd 已經這樣做）
+		if key != "":
+			_claim_key(id, key)
 		multiplayer.send_auth(id, "ok".to_utf8_buffer())
 		multiplayer.complete_auth(id)
 		return
@@ -1098,7 +1110,7 @@ func _despawn(id: int) -> void:
 	if b and b.pilot == id:   # 操作尼諾拉的人走了：電腦接手
 		b.pilot = 0
 	var p := players.get_node_or_null(NodePath(str(id)))
-	if p:
+	if p and not p.is_queued_for_deletion():   # 重連時主機會先呼叫一次、ENet 之後又送一次 peer_disconnected：第二次不再減人數
 		p.queue_free()
 		if id != 1:
 			_cowboys -= 1

@@ -845,6 +845,18 @@ func _case_reconnect() -> void:
 	m._key_of[11] = "k2"
 	m._reclaim(11)
 	_ck(not m._lives.has(11), "超過時間連回來當新人")
+	# 同代號還在線上（主機還沒發現舊連線斷）：新編號接手，舊的當斷線；舊的之後再斷一次不重扣人數
+	m._add_player(m.COWBOY, 4)
+	m._key_of[4] = "k4"
+	m._lives[4] = 1
+	var n: int = m._cowboys
+	m._claim_key(12, "k4")
+	_ck(not m._key_of.has(4) and m._key_of.get(12) == "k4" and m._held.has("k4") and m._cowboys == n - 1,
+		"同代號在線上：舊的當斷線、資料進 _held、新的接手")
+	m._despawn(4)
+	_ck(m._cowboys == n - 1, "舊編號再斷一次不重扣人數")
+	m._reclaim(12)
+	_ck(int(m._lives.get(12, -1)) == 1 and m._held.is_empty(), "同代號在線上重連：命數接回 1")
 	# 新的一局清掉
 	m._key_of[11] = "k2"
 	m._despawn(11)

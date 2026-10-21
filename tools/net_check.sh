@@ -3,6 +3,7 @@
 # 改了連線（RPC、同步器、主機檢查）之後跑一次：tools/net_check.sh；指定模式：MODE=deathmatch tools/net_check.sh
 # 假網路很差：LAG=1 tools/net_check.sh，可加 LAG_MS／JITTER_MS／LOSS（預設 150／40／0.05），客戶端會經過 tools/lag_proxy.py
 # 斷線重連：RECONNECT=1 tools/net_check.sh（B 被扣一條命後斷線再連回，看命數有沒有回來）
+# 不正常斷線（不送離開，主機要等 ENet 逾時才知道）：RECONNECT=crash tools/net_check.sh
 cd "$(dirname "$0")/.."
 [ -n "$RECONNECT" ] && MODE=${MODE:-deathmatch}   # 重連檢查要有命數的模式
 LOG=$(mktemp -d)
