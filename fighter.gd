@@ -99,6 +99,8 @@ var _net_v := 0.0                   # 往上剩下的額度（公尺）
 var _net_t := -1.0                  # 上次算額度的時刻（毫秒）；-1＝還沒收過，第一包直接當基準
 var _net_rejects: Array = []        # 最近被拒的時刻（毫秒）
 var _net_corrected := -INF          # 上次拉回的時刻（毫秒）
+var _net_hist: Array = []           # 最近接受的位置 [時刻毫秒, 位置]，給 near_recent 用
+const NET_HIST_MS := 1500.0         # 只往回看這麼久
 
 ## 合法的最快水平速度（公尺／秒），各角色覆寫
 func net_max_speed() -> float:
@@ -115,6 +117,7 @@ func net_accept(p: Vector3, now: float) -> bool:
 		_net_h = NET_BURST
 		_net_v = NET_BURST_UP
 		_net_t = now
+		_net_remember(p, now)
 		return true
 	var dt := maxf(now - _net_t, 0.0) / 1000.0
 	_net_t = now
@@ -128,7 +131,25 @@ func net_accept(p: Vector3, now: float) -> bool:
 	_net_h -= dh
 	_net_v -= up
 	_net_anchor = p
+	_net_remember(p, now)
 	return true
+
+## 記下主機接受的位置（只留最近 NET_HIST_MS 毫秒）
+func _net_remember(p: Vector3, now: float) -> void:
+	_net_hist.append([now, p])
+	while float(_net_hist[0][0]) < now - NET_HIST_MS:
+		_net_hist.pop_front()
+
+## 現在位置，或最近 1.5 秒內主機接受過的位置，有一個離 p 在 r 公尺內就 true。
+## 給「開槍時的位置」用：客戶端的必達訊息可能晚到，衝刺中的人會比主機現在記的位置遠
+# ponytail: 只往回看 1.5 秒；卡更久的訊息還是會被丟。電腦（沒有歷史）只比現在位置
+func near_recent(p: Vector3, r: float) -> bool:
+	if global_position.distance_to(p) <= r:
+		return true
+	for h in _net_hist:
+		if (h[1] as Vector3).distance_to(p) <= r:
+			return true
+	return false
 
 func _net_reject(now: float) -> void:
 	_net_rejects.append(now)

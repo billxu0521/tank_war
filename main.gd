@@ -43,6 +43,7 @@ const RULES := MatchRules.RULES
 var rules := &"egg"
 var _lives := {}   # 牛仔的連線編號 -> 還能重生幾次。只有用得到次數的模式有；主機算，廣播給大家（_sync_lives）
 var _out := {}     # 出局的牛仔：連線編號 -> 是不是 bot（新的一局要生回來）
+var _auth_failed := false   # 這次加入是版本檢查逾時（不是主機斷線），斷線時不要蓋掉逾時的字
 var party: Party   # 派對模式的回合、計分（party.gd）；不是派對模式是 null
 var _party_hud: PartyHud   # 派對模式的畫面（方位條要問它是不是在選重生點）
 var _match_hud: MatchHud   # 局內的畫面資訊（match_hud.gd）：方位條、倒數、準心、boss 條、左上角那行字
@@ -148,6 +149,7 @@ func _ready() -> void:
 	_build_home()
 	Period.apply(self, period)
 	_match_hud = MatchHud.new(self)
+	multiplayer.auth_timeout = 15.0   # 預設 3 秒；網路差時版本檢查（掉包重送）來不及，會被當成主機斷線
 	multiplayer.auth_callback = _on_auth   # 版本檢查（連線認證）；SceneMultiplayer 本身不換，_to_lobby 重設 peer 也不會清掉
 	multiplayer.peer_authenticating.connect(_on_peer_authenticating)
 	multiplayer.peer_connected.connect(_spawn)
@@ -158,7 +160,14 @@ func _ready() -> void:
 	multiplayer.connection_failed.connect(
 		func() -> void: _to_lobby.call_deferred("連線失敗，檢查 IP 和防火牆"))
 	multiplayer.server_disconnected.connect(
-		func() -> void: _to_lobby.call_deferred("主機斷線了"))
+		func() -> void:
+			if not _auth_failed:
+				_to_lobby.call_deferred("主機斷線了"))
+	multiplayer.peer_authentication_failed.connect(
+		func() -> void:
+			if not multiplayer.is_server():   # 客戶端等主機回覆逾時：不是主機斷線（server_disconnected 可能跟著來，見上面）
+				_auth_failed = true
+				_to_lobby.call_deferred("連線太慢，連不上主機"))
 	_autostart.call_deferred()
 
 ## 啟動參數，方便在同一台機器開兩個視窗對打：
@@ -663,8 +672,15 @@ func _on_test_server_pressed() -> void:
 	_on_join_pressed()
 
 func _on_join_pressed() -> void:
+	_auth_failed = false
 	var peer := ENetMultiplayerPeer.new()
-	if peer.create_client(ip_edit.text, PORT) != OK:
+	# 可以寫 位址:埠，測試網路很差時連到轉送程式（tools/lag_proxy.py）
+	var addr := ip_edit.text
+	var port := PORT
+	if ":" in addr:
+		port = addr.get_slice(":", 1).to_int()
+		addr = addr.get_slice(":", 0)
+	if peer.create_client(addr, port) != OK:
 		status.text = "連線失敗，IP 格式不對？"
 		return
 	multiplayer.multiplayer_peer = peer
@@ -1150,7 +1166,9 @@ func apply_damage_request(shooter_id: int, target: Node, amount: int, from: Vect
 	var self_hit := target == shooter
 	if not self_hit and amount > MAX_HIT and amount != int(target.get(&"max_hp")):
 		return false
-	if from.distance_to(at) > 5.0 or (not self_hit and from.distance_to((target as Node3D).global_position) > MAX_SHOT_RANGE):
+	# 開槍位置用主機最近接受過的位置比（必達訊息晚到時，衝刺中的人會比現在記的位置遠）
+	var near := (shooter as Fighter).near_recent(from, 5.0) if shooter is Fighter else from.distance_to(at) <= 5.0
+	if not near or (not self_hit and from.distance_to((target as Node3D).global_position) > MAX_SHOT_RANGE):
 		return false
 	if not self_hit and not _dmg_allowed(shooter_id, amount, amount == int(target.get(&"max_hp")), float(Time.get_ticks_msec())):
 		return false   # 每秒傷害超過額度（外掛狂送扣血）
