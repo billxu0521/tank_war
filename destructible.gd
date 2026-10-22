@@ -15,6 +15,12 @@ var hits := 0
 var visual: Node3D
 var _home: Array = []   # 第一次挨打前的樣子 [自己的 transform, 外觀的 transform, 碰撞層]，restore 用
 
+## 挨打、倒下的回饋：鏡頭震（離本機鏡頭越遠越小）、操作恐龍的那台停一下、播音效。各台自己算，不另外送 RPC
+const SHAKE_RANGE := 25.0   # 離鏡頭超過這個距離（公尺）就不震
+const HIT_SOUND := "res://assets/audio/destruction/wood_crack.wav"
+const TREE_FALL_SOUND := "res://assets/audio/destruction/tree_fall.wav"
+const HOUSE_FALL_SOUND := "res://assets/audio/destruction/house_collapse.wav"
+
 
 func tail_hit(from: Vector3) -> void:
 	if multiplayer.is_server() and hits < hits_needed:
@@ -29,6 +35,7 @@ func _set_hits(n: int, from: Vector3, instant: bool) -> void:
 	if n < hits_needed:
 		if not instant:
 			_shake()
+			_smash_fx(false)
 		return
 	collision_layer = 0   # 碰撞馬上拿掉：人、子彈、恐龍都穿得過，重烘導航網格也不會算進去
 	remove_from_group(&"destructible")
@@ -39,9 +46,46 @@ func _set_hits(n: int, from: Vector3, instant: bool) -> void:
 	if instant:
 		_hide_all()
 	elif visual:
+		_smash_fx(true)
+		_sfx(TREE_FALL_SOUND, 80.0)
 		_topple(from)
 	else:
+		_smash_fx(true)
+		_sfx(HOUSE_FALL_SOUND, 80.0)
 		_collapse()
+
+
+## 挨打（down = 這一下把它打倒）：碎裂聲、鏡頭震、操作恐龍的那台停一下。回傳這台鏡頭震了多少（測試用）
+func _smash_fx(down: bool) -> float:
+	_sfx(HIT_SOUND, 40.0)
+	var cam := get_viewport().get_camera_3d()
+	if cam == null:
+		return 0.0
+	# 從鏡頭往上找第一個有 add_shake 的（牛仔的鏡頭在 Head 底下，恐龍的在 CamPivot 底下）
+	var who: Node = cam.get_parent()
+	while who and not who.has_method(&"add_shake"):
+		who = who.get_parent()
+	if who == null:
+		return 0.0
+	var k: float = clampf(1.0 - cam.global_position.distance_to(global_position) / SHAKE_RANGE, 0.0, 1.0) * Settings.v.get(&"shake", 1.0)
+	var amount: float = (0.08 if down else 0.03) * k
+	who.add_shake(amount)
+	if who.has_method(&"add_hitstop"):
+		who.add_hitstop(0.1 if down else 0.06)
+	return amount
+
+
+## 3D 音效播一次、播完自己收掉（照 shot_fx.gd 的 impact_sound）。檔案還沒放進來就安靜跳過
+func _sfx(path: String, max_dist: float) -> void:
+	if not ResourceLoader.exists(path):
+		return
+	var snd := AudioStreamPlayer3D.new()
+	get_parent().add_child(snd)
+	snd.stream = load(path)
+	snd.max_distance = max_dist
+	snd.global_position = global_position + Vector3.UP * _height() * 0.5
+	snd.play()
+	snd.finished.connect(snd.queue_free)
 
 
 ## 還沒倒：抖一下、掉一點灰（看得出來挨了一下）

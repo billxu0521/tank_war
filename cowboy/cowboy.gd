@@ -230,6 +230,7 @@ var _hp_lag_wait := 0.0      # 掉血後殘影先停這麼久才開始縮
 var _kick := Vector2.ZERO    # 鏡頭被打歪多少（弧度：x 上下、y 左右），每幀彈回來
 var fire_punch := Vector3.ZERO   # 開槍畫面撞一下（弧度：上、左右、側歪），viewmodel 每幀填
 var aim_rot := Vector3.ZERO      # 鏡頭該歪多少（沒乘鏡頭晃動設定），子彈方向照這個算
+var _quake := 0.0                # 甩尾打到可拆的東西：鏡頭隨機抖的幅度（弧度），每幀衰減（add_shake）
 
 ## 叫聲（assets/audio/cowboy，~/project/moss-sfx 生的）：被打會叫、死掉會慘叫。每台都播，別人聽得到
 const HURT_VOICES := [preload("res://assets/audio/cowboy/hurt_1.wav"), preload("res://assets/audio/cowboy/hurt_2.wav"),
@@ -266,6 +267,10 @@ func _update_hurt(delta: float) -> void:
 		_hp_lag = move_toward(_hp_lag, hp, max_hp * 0.8 * delta)
 	_hp_lost.size = Vector2((_hp_fill.get_parent() as Control).size.x * clampf(_hp_lag / max_hp, 0.0, 1.0), _hp_fill.size.y)
 
+
+## 鏡頭震一下（amount 是弧度，已乘過鏡頭晃動設定）。destructible 打到東西時呼叫
+func add_shake(amount: float) -> void:
+	_quake = minf(_quake + amount, 0.15)
 
 ## 走路時兩條腿繞髖關節前後擺，擺幅跟速度走。速度用位置差算：
 ## 遠端的人沒有 velocity（位置是同步器塞的），自己和 bot 用這個也一樣準
@@ -376,7 +381,8 @@ func _process(delta: float) -> void:
 	# 被打歪、開槍撞一下也會讓子彈偏（viewmodel 的 _spread_direction 用 aim_rot）：
 	# 「鏡頭晃動」設定只縮畫面，子彈照原本的歪法，調到 0 不會比別人準
 	aim_rot = Vector3(-0.22 * v + _kick.x, _kick.y, 0.12 * v + _kick.y * 0.5) + fire_punch
-	_camera.rotation = aim_rot * Settings.v.get(&"shake", 1.0)
+	_quake = lerpf(_quake, 0.0, 1.0 - exp(-10.0 * delta))
+	_camera.rotation = aim_rot * Settings.v.get(&"shake", 1.0) + Vector3(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0), 0.0) * _quake
 	# 相機位置用補間後的（移動不抖），朝向用現在的（轉頭零延遲）：
 	# 相機掛在頭底下，差多少就往回挪多少。瞬移後補間會重設，這個差就是 0
 	var lag := head.get_global_transform_interpolated().origin - head.global_position

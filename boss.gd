@@ -128,6 +128,7 @@ var _pin_age := 0.0
 var _cam_yaw := 0.0             # 駕駛那台：鏡頭的水平角（身體慢慢轉過來）
 var _cam_pitch := 0.0
 var _piloting := false          # 駕駛那台：現在是不是由我操作（變成駕駛、不再是駕駛的那一刻才換鏡頭）
+var _quake := 0.0               # 駕駛那台：甩尾打到可拆的東西，鏡頭抖的幅度（弧度），每幀衰減（add_shake）
 
 var director := Director.new()
 var _tree: BT.Task
@@ -204,6 +205,8 @@ func _process(delta: float) -> void:
 		_cam_yaw = rotation.y
 	if mine:
 		$CamPivot.rotation = Vector3(CAM_BASE + _cam_pitch + randf_range(-1.0, 1.0) * _stagger * 0.08 * Settings.v.get(&"shake", 1.0), _cam_yaw - rotation.y, 0.0)
+		_quake = lerpf(_quake, 0.0, 1.0 - exp(-10.0 * delta))
+		$CamPivot.rotation += Vector3(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0), 0.0) * _quake
 	$Trex.rotation.z = lerpf($Trex.rotation.z, 1.35 if down_left > 0.0 else 0.0, minf(delta * 4.0, 1.0))
 	if down_left > 0.0 and not _was_down:   # 倒地：整隻摔下去揚起一大圈土
 		var w: Node = get_tree().get_first_node_in_group(&"arena")
@@ -322,6 +325,15 @@ func _unhandled_input(e: InputEvent) -> void:
 	var rel := Settings.look((e as InputEventMouseMotion).screen_relative)
 	_cam_yaw -= rel.x * MOUSE_SENS * 0.5   # 玩家恐龍原本的靈敏度是給會瞬間轉身的身體用的；這隻轉得慢，鏡頭也放慢一點
 	_cam_pitch = clampf(_cam_pitch - rel.y * MOUSE_SENS * 0.5, PITCH_MIN, PITCH_MAX)
+
+## 甩尾打到可拆的東西（destructible.gd 呼叫）：鏡頭抖一下。只有操控的那台抖得到（鏡頭只在那台）
+func add_shake(amount: float) -> void:
+	_quake = minf(_quake + amount, 0.2)
+
+## 打擊停頓：只有操控牠的那台停，骨架凍住（trex.gd 的 hitstop）；別人看到的照常動
+func add_hitstop(sec: float) -> void:
+	if _is_my_pilot():
+		$Trex.hitstop = maxf($Trex.hitstop, sec)
 
 func _is_my_pilot() -> bool:
 	return pilot != 0 and multiplayer.multiplayer_peer != null and pilot == multiplayer.get_unique_id()
