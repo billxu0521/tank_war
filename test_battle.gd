@@ -30,6 +30,7 @@ func _process(_delta: float) -> bool:
 		_case_modes()
 		_case_match_rules()
 		_case_solo_dino()
+		_case_dino_sandbox()
 		_case_controller()
 		_case_back_to_lobby()
 		_case_cover()

@@ -110,6 +110,8 @@ var _over := false
 ## 沙盒：沒有時間限制、沒有蛋，靶打死會在原地重生，子彈無限
 var _sandbox := false
 var _solo_dino := false   # 單人打恐龍（測恐龍行為用）：沙盒的場地，只有自己和恐龍 boss，接關無限
+var _dino_sandbox := false   # 恐龍沙盒：自己當尼諾拉，按 H 叫獵人（bot）來打，獵人死了不重生
+const DINO_SANDBOX_MAX := 6   # 恐龍沙盒同時最多幾個獵人
 var _continues := 0       # 單人打恐龍：接關了幾次
 
 func _ready() -> void:
@@ -181,6 +183,7 @@ func _ready() -> void:
 ##   OvD.exe -- --range
 ##   OvD.exe -- --viewer
 ##   OvD.exe -- --solo-dino    單人打恐龍（測恐龍行為）
+##   OvD.exe -- --dino-sandbox    恐龍沙盒：自己當尼諾拉，按 H 叫獵人、J 清掉
 ##   OvD.exe -- --host --mode deathmatch    指定模式（egg、deathmatch、dino_duel）
 ##   OvD.exe -- --host --period midnight    指定時段（sunset、noon、midnight），不填用大廳上次選的
 ##   godot --headless -- --server    專用伺服器（測試站）：自己不下場，一局結束自動開下一局
@@ -203,6 +206,8 @@ func _autostart() -> void:
 		_on_sandbox_pressed()
 	elif args.has("--solo-dino"):
 		_on_solo_dino_pressed()
+	elif args.has("--dino-sandbox"):
+		_on_dino_sandbox_pressed()
 	elif args.has("--viewer"):
 		_on_viewer_pressed()
 	else:
@@ -235,6 +240,13 @@ func _unhandled_input(e: InputEvent) -> void:
 	if e is InputEventKey and e.pressed and not e.echo and e.keycode == KEY_F3:
 		debug_hud = not debug_hud
 		return
+	if _dino_sandbox and not menu.visible and e is InputEventKey and e.pressed and not e.echo:
+		if e.keycode == KEY_H:
+			_summon_hunter()
+			return
+		if e.keycode == KEY_J:
+			clear_bots()
+			return
 	var esc: bool = e is InputEventKey and e.pressed and e.keycode == KEY_ESCAPE
 	if esc and settings.visible:   # 設定開著：Esc 只關它，停在原本的畫面
 		settings.hide()
@@ -294,7 +306,7 @@ func _game_state() -> String:
 		return "在大廳"
 	var me := _me()
 	var role := "觀戰" if me == null else ("恐龍" if me.is_in_group(&"dino") else "牛仔")
-	var where := "單人打恐龍" if _solo_dino else ("沙盒" if _sandbox else ("靶場" if mode == &"range" else String(RULES.get(rules, {}).get("name", rules))))
+	var where := "單人打恐龍" if _solo_dino else ("恐龍沙盒" if _dino_sandbox else ("沙盒" if _sandbox else ("靶場" if mode == &"range" else String(RULES.get(rules, {}).get("name", rules)))))
 	var net := "離線" if _offline else ("專用伺服器" if _dedicated else ("主機" if multiplayer.is_server() else "連線中（編號 %d）" % multiplayer.get_unique_id()))
 	return "%s　當%s　%s　場上 %d 個角色" % [where, role, net, players.get_child_count()]
 
@@ -378,6 +390,7 @@ func _to_lobby(msg: String) -> void:
 	_offline = false
 	_sandbox = false
 	_solo_dino = false
+	_dino_sandbox = false
 	_lives.clear()
 	_out.clear()
 	_key_of.clear()
@@ -506,7 +519,7 @@ func _start_dedicated() -> void:
 const LOBBY_PAGES := {
 	&"home": ["Title", "HomeOnline", "HomePractice", "HomeSettings", "HomeQuit"],
 	&"online": ["Title", "OnlineLabel", "ModeRow", "DinoVolunteer", "ModeDesc", "HostBtn", "JoinBtn", "IPRow", "TestServerBtn", "BackBtn"],
-	&"practice": ["Title", "PracticeLabel", "SandboxBtn", "SoloDinoBtn", "SoloPartyBtn", "RangeBtn", "ViewerBtn", "BackBtn"],
+	&"practice": ["Title", "PracticeLabel", "SandboxBtn", "SoloDinoBtn", "DinoSandboxBtn", "SoloPartyBtn", "RangeBtn", "ViewerBtn", "BackBtn"],
 }
 var lobby_page := &"home"
 
@@ -753,6 +766,20 @@ func _on_solo_dino_pressed() -> void:
 	me.viewmodel.set_infinite()
 	spawn_boss()
 
+## 恐龍沙盒：自己當尼諾拉，場地跟沙盒一樣（蛋藏起來）。按 H 在尼諾拉前方叫一個獵人（bot 牛仔）來打，J 全部清掉。
+## 尼諾拉打不死（沙盒裡倒地會起來，見 boss.take_damage），獵人打死就移除、不重生（_on_died）
+func _on_dino_sandbox_pressed() -> void:
+	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	_offline = true
+	_sandbox = true
+	_dino_sandbox = true
+	egg.visible = false
+	var me := _add_player(COWBOY, 1)   # 先生一個編號 1：spawn_boss 才會生在它前方 40 公尺，make_pilot 再把它收掉
+	me.global_position = _on_ground(SANDBOX_START)
+	spawn_boss()
+	make_pilot(1)
+	_enter_game("恐龍沙盒：H 叫一個獵人、J 清掉所有獵人。Esc 回大廳")
+
 ## 單人派對：不開房（離線），派對模式自己會用電腦補到 4 人，一個人就能測完整四回合
 func _on_solo_party_pressed() -> void:
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
@@ -996,6 +1023,26 @@ func add_bot() -> Node3D:
 		var fwd := -me.global_basis.z
 		b.global_position = _on_ground(Vector3(me.global_position.x + fwd.x * 40.0, 0.5, me.global_position.z + fwd.z * 40.0))
 	return b
+
+## 恐龍沙盒：在尼諾拉前方 30 公尺、左右隨機偏 6 公尺叫一個獵人（bot 牛仔，會自己找恐龍打）。最多 DINO_SANDBOX_MAX 個
+func _summon_hunter() -> void:
+	var b: Node3D = _boss()
+	if b == null or not multiplayer.is_server():
+		return
+	if _hunters().size() >= DINO_SANDBOX_MAX:
+		_announce("獵人已經 %d 個了，按 J 清掉一些" % DINO_SANDBOX_MAX)
+		return
+	var fwd: Vector3 = -b.global_basis.z
+	fwd.y = 0.0
+	fwd = fwd.normalized()
+	var at: Vector3 = b.global_position + fwd * 30.0 + fwd.cross(Vector3.UP) * randf_range(-6.0, 6.0)
+	var h := add_bot()
+	h.global_position = _on_ground(Vector3(at.x, 0.5, at.z))
+	h.rotation.y = atan2(fwd.x, fwd.z)   # 面向尼諾拉
+
+## 場上的電腦（bot 牛仔、移動標靶），不含尼諾拉
+func _hunters() -> Array:
+	return players.get_children().filter(func(p: Node) -> bool: return Fighter.is_bot_id(p.name.to_int()) and not p.is_in_group(&"boss"))
 
 ## 清掉所有電腦（移動標靶和 bot），排隊等重生的也一起取消
 func clear_bots() -> void:
@@ -1261,6 +1308,8 @@ func _on_died(killer: Node, who: Node) -> void:
 	_died_at[id] = [Time.get_ticks_msec(), who.global_position]   # 同歸於盡用（request_damage）
 	if not as_dino:
 		_cowboys -= 1
+	if _dino_sandbox and not as_dino:   # 恐龍沙盒的獵人打死就移除，不排重生（下面的 _queue_respawn 會原地生回來）
+		return
 	if party and not _sandbox:
 		party.on_died(killer, who)
 		return

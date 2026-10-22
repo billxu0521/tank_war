@@ -189,6 +189,10 @@ text = "沙盒模式（牛仔練習場，打靶、練翻越）"
 layout_mode = 2
 text = "單人打恐龍（測恐龍行為，接關無限）"
 
+[node name="DinoSandboxBtn" type="Button" parent="UI/Root/Lobby" unique_id=1799944934]
+layout_mode = 2
+text = "恐龍沙盒（自己當尼諾拉，H 叫獵人來打）"
+
 [node name="SoloPartyBtn" type="Button" parent="UI/Root/Lobby" unique_id=1799944933]
 layout_mode = 2
 text = "單人派對（自己 + 3 個電腦，四回合輪流當恐龍）"
@@ -408,6 +412,7 @@ show_percentage = false
 [connection signal="pressed" from="UI/Root/Lobby/SandboxBtn" to="." method="_on_sandbox_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/RangeBtn" to="." method="_on_range_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/SoloDinoBtn" to="." method="_on_solo_dino_pressed"]
+[connection signal="pressed" from="UI/Root/Lobby/DinoSandboxBtn" to="." method="_on_dino_sandbox_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/SoloPartyBtn" to="." method="_on_solo_party_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/ViewerBtn" to="." method="_on_viewer_pressed"]
 [connection signal="pressed" from="UI/Root/Menu/Box/ResumeBtn" to="." method="_on_resume_pressed"]

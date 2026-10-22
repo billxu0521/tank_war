@@ -359,6 +359,40 @@ func _case_solo_dino() -> void:
 	_ck(m._match_hud._boss_debug().begins_with("恐龍："), "畫面要顯示恐龍在做什麼")
 	_end(m)
 
+## 恐龍沙盒：自己當尼諾拉（編號 1 操作），H 叫獵人（最多 6 個）、J 全清；獵人打死不重生；回大廳旗標清掉
+func _case_dino_sandbox() -> void:
+	var m: Node = load("res://main.tscn").instantiate()
+	root.add_child(m)
+	_ck(m.has_node(^"UI/Root/Lobby/DinoSandboxBtn"), "大廳要有恐龍沙盒")
+	m.lobby_go(&"practice")
+	_ck(m.get_node(^"UI/Root/Lobby/DinoSandboxBtn").visible, "單人練習那頁要看得到恐龍沙盒")
+	m._on_dino_sandbox_pressed()
+	var b: Node3D = m.players.get_node_or_null(NodePath(str(m.BOSS_ID)))
+	_ck(b != null and b.pilot == 1 and m._me() == b and not m.players.has_node(^"1"), "尼諾拉要生出來，編號 1 操作它")
+	_ck(m._dino_sandbox and m._offline and m._hunters().is_empty(), "進來時沒有獵人")
+
+	m._summon_hunter()
+	_ck(m._hunters().size() == 1, "按一次 H 多一個獵人")
+	for i in m.DINO_SANDBOX_MAX:
+		m._summon_hunter()
+	_ck(m._hunters().size() == m.DINO_SANDBOX_MAX, "獵人最多 %d 個" % m.DINO_SANDBOX_MAX)
+
+	m.clear_bots()
+	_ck(m._hunters().is_empty() and m.players.has_node(NodePath(str(m.BOSS_ID))), "按 J 清掉所有獵人，尼諾拉還在")
+
+	m._summon_hunter()
+	var h: Node = m._hunters()[0]
+	h.take_damage(9999)
+	h.free()
+	_ck(m._respawn_queue.is_empty(), "獵人打死不排重生")
+	m._time_left -= m.RESPAWN_DELAY + 1.0
+	m._respawn_step()
+	_ck(m._hunters().is_empty(), "獵人打死後不會回來")
+
+	m._to_lobby("")
+	_ck(not m._dino_sandbox, "回大廳要清掉恐龍沙盒的旗標")
+	_end(m)
+
 ## 回大廳要清乾淨，而且要能馬上重開一局
 func _case_back_to_lobby() -> void:
 	var m := _new_game()
