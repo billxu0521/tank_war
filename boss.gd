@@ -69,12 +69,14 @@ const ATTACK_GAP := 1.2      # 收招之後至少隔這麼久才出下一招
 # 咬：近距離正前方。站定、頭往後仰、低吼，再咬下去
 const BITE_TRIGGER := 7.5    # 嘴巴到人這麼近開始預備
 const BITE_WIND := 0.7
+const PILOT_BITE_WIND := 0.35   # 玩家操作：出招要跟手，預備比電腦短一半
 const BITE_RECOVER := 0.8
 const BITE_AT := 6.0         # 判定點在身體中心前方這麼遠（嘴巴的位置）
 const BITE_RADIUS := 3.2     # 判定點附近這麼近的人被咬到
 # 蓄力甩尾：身邊有人在側面或背後、或身邊不只一個人。站著仰頭長吼，這段時間打中頭就打斷
 const SWEEP_TRIGGER := 9.0
 const CHARGE_WIND := 1.6
+const PILOT_CHARGE_WIND := 0.8   # 玩家操作：搖動太久不好玩。打中頭打斷的機會也跟著變短
 const SWEEP_RADIUS := 9.5
 const SWEEP_DAMAGE := 70
 const SWEEP_RECOVER := 0.6
@@ -304,11 +306,11 @@ func _pilot_step(delta: float) -> void:
 	if _attack_gap <= 0.0:
 		_target = null   # 沒有目標：咬、撲擊都照面對的方向
 		if _pin_buttons & PIN_BITE:
-			_begin(ACT_BITE_WIND, BITE_WIND)
+			_begin(ACT_BITE_WIND, PILOT_BITE_WIND)
 			return
 		if _pin_buttons & PIN_SWEEP and sweep_left <= 0.0:
 			sweep_left = _sweep_cd_time()
-			_begin(ACT_CHARGE_WIND, CHARGE_WIND)
+			_begin(ACT_CHARGE_WIND, PILOT_CHARGE_WIND)
 			return
 		if _pin_buttons & PIN_POUNCE and _pounce_cd <= 0.0:
 			_pounce_cd = POUNCE_CD
