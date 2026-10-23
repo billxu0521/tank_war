@@ -648,7 +648,8 @@ func _bot_threat(g: Node) -> Node3D:
 	if g == null:
 		return null
 	if g._sandbox:
-		var me: Node3D = g.players.get_node_or_null(^"1")   # 沙盒裡只打玩家，不去打站樁的靶
+		# 沙盒裡只打玩家，不去打站樁的靶；恐龍沙盒的玩家是尼諾拉（boss）
+		var me: Node3D = g._boss() if g._dino_sandbox else g.players.get_node_or_null(^"1")
 		return null if me and _bush_hides(g, me) else me
 	var my_id := name.to_int()
 	if g.egg.carrier != 0 and g.egg.carrier != my_id:
