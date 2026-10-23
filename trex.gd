@@ -61,6 +61,7 @@ var _lunge := 0.0    # 撲出去：身體前衝、嘴張開
 var _stun := 0.0     # 被打斷：頭垂下來晃
 var _sweep := 0.0    # 甩尾：尾巴甩直、兩腳張開
 var _recover := 0.0  # 收招：甩頭、喘
+var _recover_shake := 1.0   # 收招要不要甩頭：咬完不甩（看起來像抽搐），甩尾、撲擊完才甩
 var _spot := 0.0     # 發現人：挺起來、頭抬高張嘴吼（不跺腳、不揮手，跟蓄力分得開）
 ## boss 的心情（boss.gd 的 MOOD_*：0 逛、1 找、2 追、3 退開，同步來的）。每個心情頭的高低、動法不一樣，玩家看得出牠在幹嘛。
 ## -1 = 不是 boss（玩家操控的恐龍），不套心情的姿勢
@@ -508,6 +509,8 @@ func _process_base(delta: float) -> void:
 	# 這副骨架俯仰是正的往上抬（跟 chomp 那幾行相反），看截圖確認過
 	if act != _last_act:
 		_act_fx(_last_act, act)
+		if act == 7:
+			_recover_shake = 0.0 if _last_act == 2 else 1.0   # 咬完收招不甩頭（看起來像抽搐），甩尾、撲擊完才甩
 		_last_act = act
 		_act_t = 0.0
 		if act == 2 or act == 6:
@@ -673,7 +676,7 @@ func _process_base(delta: float) -> void:
 		+ sin(_breath) * 0.030 * idle + _rear * 0.45 + _roar * 0.55 - _crouch * 0.15 - _stun * 0.45
 		- _snap * 0.45 * float(_snap_bite) + _spot * 0.55 + _search * MOOD_SEARCH_NECK - _hunt * 0.12 + roam * MOOD_ROAM_NECK - sniff * 0.45
 		+ _retreat * MOOD_RETREAT_NECK + toss * 0.25 + _run * RUN_NECK * (1.0 - _retreat),   # 退開時跑步不壓脖子
-		_spine_yaw[2] + shake + sin(_act_t * 11.0) * 0.25 * _recover + scan * 0.5 + toss * 0.3 * _toss_side + _retreat * MOOD_RETREAT_YAW * 0.5, _lean.x * 0.25)
+		_spine_yaw[2] + shake + sin(_act_t * 11.0) * 0.25 * _recover * _recover_shake + scan * 0.5 + toss * 0.3 * _toss_side + _retreat * MOOD_RETREAT_YAW * 0.5, _lean.x * 0.25)
 	_pose_pyr("head", 0.18 - chomp * 0.25 + look_pitch * 0.35 - _lean.y * 0.55 + _rear * 0.25 + _roar * 0.40 - _stun * 0.25
 		+ _spot * 0.30 + _hunt * 0.10 - sniff * 0.35 + toss * 0.2 + _run * RUN_HEAD * (1.0 - _retreat),
 		_spine_yaw[3] + sin(_breath * 0.31) * 0.10 * idle + shake + scan + toss * 0.4 * _toss_side + _retreat * MOOD_RETREAT_YAW * 0.5,
