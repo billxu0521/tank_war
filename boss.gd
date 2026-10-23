@@ -66,11 +66,13 @@ enum { ACT_NONE, ACT_BITE_WIND, ACT_BITE, ACT_CHARGE_WIND, ACT_SWEEP, ACT_POUNCE
 enum { MOOD_ROAM, MOOD_SEARCH, MOOD_HUNT, MOOD_RETREAT }
 const SPOT_TIME := 0.7       # 發現人：停下來吼一聲這麼久，玩家還有這段時間跑
 const ATTACK_GAP := 1.2      # 收招之後至少隔這麼久才出下一招
+const PILOT_ATTACK_GAP := 0.3   # 玩家操作：收招後很快能出下一招（電腦版留空檔給牛仔喘氣）
 # 咬：近距離正前方。站定、頭往後仰、低吼，再咬下去
 const BITE_TRIGGER := 7.5    # 嘴巴到人這麼近開始預備
 const BITE_WIND := 0.7
-const PILOT_BITE_WIND := 0.35   # 玩家操作：出招要跟手，預備比電腦短一半
+const PILOT_BITE_WIND := 0.25   # 玩家操作：出招要跟手，預備比電腦短一半
 const BITE_RECOVER := 0.8
+const PILOT_BITE_RECOVER := 0.3   # 玩家操作：咬完很快收回來
 const BITE_AT := 6.0         # 判定點在身體中心前方這麼遠（嘴巴的位置）
 const BITE_RADIUS := 3.2     # 判定點附近這麼近的人被咬到
 # 蓄力甩尾：身邊有人在側面或背後、或身邊不只一個人。站著仰頭長吼，這段時間打中頭就打斷
@@ -555,7 +557,7 @@ func _act_attack(delta: float) -> int:
 		ACT_BITE:
 			_move(Vector3.ZERO, false, delta)
 			if _act_left <= 0.0:
-				_next(ACT_RECOVER, BITE_RECOVER)
+				_next(ACT_RECOVER, PILOT_BITE_RECOVER if pilot != 0 else BITE_RECOVER)
 		ACT_CHARGE_WIND:
 			_move(Vector3.ZERO, false, delta)
 			if _act_left <= 0.0:
@@ -594,7 +596,7 @@ func _act_attack(delta: float) -> int:
 			_move(Vector3.ZERO, false, delta)
 			if _act_left <= 0.0:
 				act = ACT_NONE
-				_attack_gap = ATTACK_GAP
+				_attack_gap = PILOT_ATTACK_GAP if pilot != 0 else ATTACK_GAP
 				return BT.SUCCESS
 	return BT.RUNNING
 
