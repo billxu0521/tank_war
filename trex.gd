@@ -59,7 +59,7 @@ var _bite := 0.0        # 1 -> 0，咬擊動作的進度
 ## boss 的動作狀態（boss.gd 的 ACT_*，同步來的）：預備動作的姿勢從這裡來。0 = 沒在出招
 var act := 0
 # 幾個姿勢的份量（0~1），每幀往 act 要的值追，動作才不會一格一格跳
-var _rear := 0.0     # 咬的預備：頭往後仰、嘴微張
+var _rear := 0.0     # 咬的預備：嘴微張、身體微蹲（不仰頭，使用者要求）
 var _roar := 0.0     # 蓄力：仰頭張大嘴吼、頭甩
 var _crouch := 0.0   # 撲擊的預備：身體壓低、往前傾
 var _lunge := 0.0    # 撲出去：身體前衝、嘴張開
@@ -699,15 +699,15 @@ func _process_base(delta: float) -> void:
 	# -0.12：身體壓平（設定圖「保持水平重心」、參考動畫背是平的）；模型靜止姿勢胸口偏高
 	_propagate(_bite_pitch, _bite_pitch_v, _snap * float(_snap_bite), BITE_CHAIN_STIFF, BITE_CHAIN_DAMP, delta)
 	_pose_pyr("spine1", -0.12 + sin(_phase * 0.4) * 0.02 + _lean.y * 0.50 - _crouch * 0.30 - _lunge * 0.20 + _roar * 0.15
-		+ _rear * 0.12 - _bite_pitch[0] * 0.35 + _spot * 0.15 + _run * RUN_SPINE + _search * 0.15 - _hunt * 0.08,
+		- _bite_pitch[0] * 0.35 + _spot * 0.15 + _run * RUN_SPINE + _search * 0.15 - _hunt * 0.08,
 		_spine_yaw[0], _lean.x * 0.45)
 	_pose_pyr("spine2", _lean.y * 0.30, _spine_yaw[1], _lean.x * 0.35)
 	_pose_pyr("neck", -0.20 + sin(_phase) * 0.05 * stride + chomp * 0.35 + look_pitch * 0.45
-		+ sin(_breath) * 0.030 * idle + _rear * 0.45 + _roar * 0.55 - _crouch * 0.15 - _stun * 0.45
+		+ sin(_breath) * 0.030 * idle + _roar * 0.55 - _crouch * 0.15 - _stun * 0.45
 		- _bite_pitch[1] * 0.45 + _spot * 0.55 + _search * MOOD_SEARCH_NECK - _hunt * 0.12 + roam * MOOD_ROAM_NECK - sniff * 0.45
 		+ _retreat * MOOD_RETREAT_NECK + toss * 0.25 + _run * RUN_NECK * (1.0 - _retreat),   # 退開時跑步不壓脖子
 		_spine_yaw[2] + shake + sin(_act_t * 11.0) * 0.25 * _recover * _recover_shake + scan * 0.5 + toss * 0.3 * _toss_side + _retreat * MOOD_RETREAT_YAW * 0.5, _lean.x * 0.25)
-	_pose_pyr("head", 0.18 - chomp * 0.25 + look_pitch * 0.35 - _lean.y * 0.55 + _rear * 0.25 + _roar * 0.40 - _stun * 0.25 - _bite_pitch[2] * 0.30
+	_pose_pyr("head", 0.18 - chomp * 0.25 + look_pitch * 0.35 - _lean.y * 0.55 + _roar * 0.40 - _stun * 0.25 - _bite_pitch[2] * 0.30
 		+ _spot * 0.30 + _hunt * 0.10 - sniff * 0.35 + toss * 0.2 + _run * RUN_HEAD * (1.0 - _retreat),
 		_spine_yaw[3] + sin(_breath * 0.31) * 0.10 * idle + shake + scan + toss * 0.4 * _toss_side + _retreat * MOOD_RETREAT_YAW * 0.5,
 		-_lean.x * 0.75 + shake * 0.5)
