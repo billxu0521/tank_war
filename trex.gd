@@ -463,7 +463,13 @@ func flinch(push: Vector3, strength: float, head: bool) -> void:
 	_lean_v += Vector2(-push.x, push.z) * FLINCH_LEAN * strength   # 往右推就往右倒、從前面打就往後仰
 	_drift_v += Vector2(push.x, push.z) * FLINCH_DRIFT * strength
 
+var hitstop := 0.0   # 打擊停頓剩下幾秒：骨架整個不動（只有操控的那台設，boss.add_hitstop）
+
 func _process(delta: float) -> void:
+	if hitstop > 0.0:
+		hitstop -= delta
+		_last_pos = global_position   # 停的這段不算移動，醒來時不會被當成瞬移
+		return
 	_process_base(delta)
 	if skel == null:
 		return

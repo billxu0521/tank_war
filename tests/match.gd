@@ -618,6 +618,11 @@ func _case_party_destruction() -> void:
 	var layer0: int = tree.get(&"_home")[2]
 	house.restore()
 	_ck(house.hits == 0 and house.collision_layer == layer0 and house.visible and house.is_in_group(&"destructible"), "新的一場：倒掉的房子立回來")
+	# 挨打、倒下的回饋（音效檔還沒放進來，前面甩倒的時候已經跑過，不能報錯）：鏡頭晃動設 0 就不震
+	var old_shake: Variant = Settings.v.get(&"shake", 1.0)
+	Settings.v[&"shake"] = 0.0
+	_ck(house._smash_fx(false) == 0.0 and tree._smash_fx(true) == 0.0, "鏡頭晃動設 0 時不震")
+	Settings.v[&"shake"] = old_shake
 	m.rules = &"egg"
 	_end(m)
 	Main.level_file = keep
