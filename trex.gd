@@ -35,6 +35,11 @@ const TAIL_STIFF := 26.0   # 越大跟得越緊，延遲越短
 const TAIL_DAMP := 4.5     # 越小晃越久（過衝越明顯）
 const SPINE_STIFF := 55.0
 const SPINE_DAMP := 8.0
+const POSE_STIFF := 150.0   # 出招姿勢的彈簧：大約 0.2 秒到位
+const POSE_DAMP := 15.0     # 會衝過頭一點點（約一成）再回來，有重量感；越大越不晃
+# 咬下去的衝量沿脊椎、脖子、頭一節傳一節：比尾巴緊、比脊椎鬆，咬到底頭會多點一下
+const BITE_CHAIN_STIFF := 90.0
+const BITE_CHAIN_DAMP := 9.0
 
 # 側傾和位移延遲：身體是有重量的，方向一變不會馬上跟上
 const LEAN_STIFF := 16.0
@@ -54,7 +59,7 @@ var _bite := 0.0        # 1 -> 0，咬擊動作的進度
 ## boss 的動作狀態（boss.gd 的 ACT_*，同步來的）：預備動作的姿勢從這裡來。0 = 沒在出招
 var act := 0
 # 幾個姿勢的份量（0~1），每幀往 act 要的值追，動作才不會一格一格跳
-var _rear := 0.0     # 咬的預備：頭往後仰、嘴微張
+var _rear := 0.0     # 咬的預備：嘴微張、身體微蹲（不仰頭，使用者要求）
 var _roar := 0.0     # 蓄力：仰頭張大嘴吼、頭甩
 var _crouch := 0.0   # 撲擊的預備：身體壓低、往前傾
 var _lunge := 0.0    # 撲出去：身體前衝、嘴張開
@@ -63,6 +68,14 @@ var _sweep := 0.0    # 甩尾：尾巴甩直、兩腳張開
 var _recover := 0.0  # 收招：甩頭、喘
 var _recover_shake := 1.0   # 收招要不要甩頭：咬完不甩（看起來像抽搐），甩尾、撲擊完才甩
 var _spot := 0.0     # 發現人：挺起來、頭抬高張嘴吼（不跺腳、不揮手，跟蓄力分得開）
+# 出招姿勢的速度（彈簧用），每個權重各一個
+var _rear_v := 0.0
+var _roar_v := 0.0
+var _crouch_v := 0.0
+var _lunge_v := 0.0
+var _stun_v := 0.0
+var _recover_v := 0.0
+var _spot_v := 0.0
 ## boss 的心情（boss.gd 的 MOOD_*：0 逛、1 找、2 追、3 退開，同步來的）。每個心情頭的高低、動法不一樣，玩家看得出牠在幹嘛。
 ## -1 = 不是 boss（玩家操控的恐龍），不套心情的姿勢
 var mood := -1
@@ -83,6 +96,8 @@ var _act_t := 0.0    # 這個動作開始多久了（每台自己算，不同步
 var _last_act := 0
 var _snap := 0.0     # 出手那一下的衝量（咬下去、撲出去）：1 → 0
 var _snap_bite := false
+var _bite_pitch := [0.0, 0.0, 0.0]   # spine1, neck, head：咬下去那一下一節傳一節
+var _bite_pitch_v := [0.0, 0.0, 0.0]
 var _spin := 0.0     # 甩尾時整隻轉一圈：剩下還要轉的角度
 # 塵土特效（每台自己播，fx.gd）：上一幀兩隻腳的步伐相位、跺地相位，算「這一幀腳落地了沒」
 var _stomp_prev := [0.0, 0.0]
@@ -524,13 +539,27 @@ func _process_base(delta: float) -> void:
 	_spin = maxf(_spin - delta * TAU / 0.4, 0.0)   # 0.4 秒轉完
 	var k := 1.0 - exp(-10.0 * delta)
 	_sweep += (float(act == 4 or _spin > 0.0) - _sweep) * k
-	_recover += (float(act == 7) - _recover) * k
-	_rear += (float(act == 1) - _rear) * k
-	_roar += (float(act == 3) - _roar) * k
-	_crouch += (float(act == 5) - _crouch) * k
-	_lunge += (float(act == 6) - _lunge) * k
-	_stun += (float(act == 8) - _stun) * k
-	_spot += (float(act == 9) - _spot) * k
+	var sp := _spring(_recover, _recover_v, float(act == 7), delta)
+	_recover = sp.x
+	_recover_v = sp.y
+	sp = _spring(_rear, _rear_v, float(act == 1), delta)
+	_rear = sp.x
+	_rear_v = sp.y
+	sp = _spring(_roar, _roar_v, float(act == 3), delta)
+	_roar = sp.x
+	_roar_v = sp.y
+	sp = _spring(_crouch, _crouch_v, float(act == 5), delta)
+	_crouch = sp.x
+	_crouch_v = sp.y
+	sp = _spring(_lunge, _lunge_v, float(act == 6), delta)
+	_lunge = sp.x
+	_lunge_v = sp.y
+	sp = _spring(_stun, _stun_v, float(act == 8), delta)
+	_stun = sp.x
+	_stun_v = sp.y
+	sp = _spring(_spot, _spot_v, float(act == 9), delta)
+	_spot = sp.x
+	_spot_v = sp.y
 	var km := 1.0 - exp(-4.0 * delta)   # 心情換得慢一點，不是一格一格跳
 	_search += (float(mood == 1) - _search) * km
 	_hunt += (float(mood == 2) - _hunt) * km
@@ -668,16 +697,17 @@ func _process_base(delta: float) -> void:
 	# 側傾分散在幾節脊椎上（不放在 root，不然腿會跟著翻起來），
 	# 頭再反向轉回去——掠食者跑起來頭是穩的，這一下最像活的。
 	# -0.12：身體壓平（設定圖「保持水平重心」、參考動畫背是平的）；模型靜止姿勢胸口偏高
+	_propagate(_bite_pitch, _bite_pitch_v, _snap * float(_snap_bite), BITE_CHAIN_STIFF, BITE_CHAIN_DAMP, delta)
 	_pose_pyr("spine1", -0.12 + sin(_phase * 0.4) * 0.02 + _lean.y * 0.50 - _crouch * 0.30 - _lunge * 0.20 + _roar * 0.15
-		+ _rear * 0.12 - _snap * 0.35 * float(_snap_bite) + _spot * 0.15 + _run * RUN_SPINE + _search * 0.15 - _hunt * 0.08,
+		- _bite_pitch[0] * 0.35 + _spot * 0.15 + _run * RUN_SPINE + _search * 0.15 - _hunt * 0.08,
 		_spine_yaw[0], _lean.x * 0.45)
 	_pose_pyr("spine2", _lean.y * 0.30, _spine_yaw[1], _lean.x * 0.35)
 	_pose_pyr("neck", -0.20 + sin(_phase) * 0.05 * stride + chomp * 0.35 + look_pitch * 0.45
-		+ sin(_breath) * 0.030 * idle + _rear * 0.45 + _roar * 0.55 - _crouch * 0.15 - _stun * 0.45
-		- _snap * 0.45 * float(_snap_bite) + _spot * 0.55 + _search * MOOD_SEARCH_NECK - _hunt * 0.12 + roam * MOOD_ROAM_NECK - sniff * 0.45
+		+ sin(_breath) * 0.030 * idle + _roar * 0.55 - _crouch * 0.15 - _stun * 0.45
+		- _bite_pitch[1] * 0.45 + _spot * 0.55 + _search * MOOD_SEARCH_NECK - _hunt * 0.12 + roam * MOOD_ROAM_NECK - sniff * 0.45
 		+ _retreat * MOOD_RETREAT_NECK + toss * 0.25 + _run * RUN_NECK * (1.0 - _retreat),   # 退開時跑步不壓脖子
 		_spine_yaw[2] + shake + sin(_act_t * 11.0) * 0.25 * _recover * _recover_shake + scan * 0.5 + toss * 0.3 * _toss_side + _retreat * MOOD_RETREAT_YAW * 0.5, _lean.x * 0.25)
-	_pose_pyr("head", 0.18 - chomp * 0.25 + look_pitch * 0.35 - _lean.y * 0.55 + _rear * 0.25 + _roar * 0.40 - _stun * 0.25
+	_pose_pyr("head", 0.18 - chomp * 0.25 + look_pitch * 0.35 - _lean.y * 0.55 + _roar * 0.40 - _stun * 0.25 - _bite_pitch[2] * 0.30
 		+ _spot * 0.30 + _hunt * 0.10 - sniff * 0.35 + toss * 0.2 + _run * RUN_HEAD * (1.0 - _retreat),
 		_spine_yaw[3] + sin(_breath * 0.31) * 0.10 * idle + shake + scan + toss * 0.4 * _toss_side + _retreat * MOOD_RETREAT_YAW * 0.5,
 		-_lean.x * 0.75 + shake * 0.5)
@@ -849,6 +879,13 @@ func _propagate(ang: Array, vel: Array, driver: float,
 		vel[i] += (target - ang[i]) * stiff * delta
 		vel[i] *= exp(-damp * delta)   # 這樣寫才跟幀率無關
 		ang[i] += vel[i] * delta
+
+## 出招姿勢的彈簧：朝 target 追，會衝過頭一點再回來（POSE_STIFF / POSE_DAMP）。回傳 Vector2(x, v)
+func _spring(x: float, v: float, target: float, delta: float) -> Vector2:
+	v += (target - x) * POSE_STIFF * delta
+	v *= exp(-POSE_DAMP * delta)   # 同 _propagate，跟幀率無關
+	x += v * delta
+	return Vector2(x, v)
 
 func _pose_py(bone: String, pitch: float, yaw: float) -> void:
 	_pose_pyr(bone, pitch, yaw, 0.0)
