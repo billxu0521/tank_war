@@ -202,7 +202,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-01",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-01",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 82,
@@ -385,7 +385,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-02",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-02",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 82,
@@ -514,7 +514,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-03",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-03",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 102,
@@ -697,7 +697,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-04",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-04",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 68,
@@ -829,7 +829,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-05",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-05",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 108,
@@ -982,7 +982,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-06",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-06",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 60,
@@ -1110,7 +1110,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-07",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-07",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 62,
@@ -1268,7 +1268,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-08",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-08",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 74,
@@ -1451,7 +1451,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-09",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-09",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 62,
@@ -1606,7 +1606,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-10",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-10",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 118,
@@ -1759,7 +1759,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-11",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-11",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 104,
@@ -1888,7 +1888,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-12",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-12",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 72,
@@ -2014,7 +2014,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-13",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-13",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 98,
@@ -2197,7 +2197,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-14",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-14",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 78,
@@ -2436,7 +2436,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-15",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-15",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 96,
@@ -2563,7 +2563,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-17",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-17",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 66,
@@ -2719,7 +2719,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-18",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-18",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 56,
@@ -2846,7 +2846,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-19",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-19",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 78,
@@ -2970,7 +2970,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-20",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-20",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 104,
@@ -3125,7 +3125,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-21",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-21",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 70,
@@ -3280,7 +3280,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-22",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-22",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 102,
@@ -3433,7 +3433,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-23",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-23",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 26,
@@ -3562,7 +3562,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-24",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-24",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 108,
@@ -3716,7 +3716,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-25",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-25",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 52,
@@ -3872,7 +3872,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-26",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-26",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 90,
@@ -4000,7 +4000,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-27",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-27",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 99,
@@ -4127,7 +4127,7 @@
           ]
         }
       ],
-      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.html#spec-bld-28",
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-bld-28",
       "orientation": {
         "reference": "圖北 +Y，順時針",
         "u_azimuth_deg": 100,
@@ -4206,7 +4206,7 @@
       "label": "LOC-03",
       "grid_center": "B3",
       "ground_h": 8.268,
-      "design_reference": "CD_GBB_Map_Brief_v1.1-S.html#spec-loc-03"
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-loc-03"
     },
     {
       "id": "CD-GBB-LOC-04",
@@ -4216,7 +4216,7 @@
       "label": "LOC-04",
       "grid_center": "C6",
       "ground_h": 6.792,
-      "design_reference": "CD_GBB_Map_Brief_v1.1-S.html#spec-loc-04"
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-loc-04"
     },
     {
       "id": "CD-GBB-LOC-05",
@@ -4226,7 +4226,7 @@
       "label": "LOC-05",
       "grid_center": "F7",
       "ground_h": 6.558,
-      "design_reference": "CD_GBB_Map_Brief_v1.1-S.html#spec-loc-05"
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-loc-05"
     },
     {
       "id": "CD-GBB-LOC-06",
@@ -4236,7 +4236,7 @@
       "label": "LOC-06",
       "grid_center": "C5",
       "ground_h": 5.827,
-      "design_reference": "CD_GBB_Map_Brief_v1.1-S.html#spec-loc-06"
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-loc-06"
     },
     {
       "id": "CD-GBB-LOC-08",
@@ -4246,7 +4246,7 @@
       "label": "LOC-08",
       "grid_center": "L4",
       "ground_h": 10.1,
-      "design_reference": "CD_GBB_Map_Brief_v1.1-S.html#spec-loc-08"
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-loc-08"
     },
     {
       "id": "CD-GBB-LOC-09",
@@ -4256,7 +4256,7 @@
       "label": "LOC-09",
       "grid_center": "L7",
       "ground_h": 3.809,
-      "design_reference": "CD_GBB_Map_Brief_v1.1-S.html#spec-loc-09"
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-loc-09"
     },
     {
       "id": "CD-GBB-LOC-10",
@@ -4266,7 +4266,7 @@
       "label": "LOC-10",
       "grid_center": "A1",
       "ground_h": 10.158,
-      "design_reference": "CD_GBB_Map_Brief_v1.1-S.html#spec-loc-10"
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-loc-10"
     },
     {
       "id": "CD-GBB-LOC-11",
@@ -4276,7 +4276,7 @@
       "label": "LOC-11",
       "grid_center": "G4",
       "ground_h": 7.0,
-      "design_reference": "CD_GBB_Map_Brief_v1.1-S.html#spec-loc-11"
+      "design_reference": "CD_GBB_Map_Brief_v1.2-TST.md#spec-loc-11"
     }
   ],
   "terrain": {
