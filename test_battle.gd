@@ -47,6 +47,10 @@ func _process(_delta: float) -> bool:
 		_case_corpse()
 		_case_fireball()
 		_case_dino_attack_switch()
+		_case_light_cone()
+		_case_stomp()
+		_case_burn()
+		_case_boss_fireball()
 		_case_ui()
 		_case_bug_report()
 		_case_stagger()
@@ -101,12 +105,16 @@ func _process(_delta: float) -> bool:
 				_ck(false, "跳躍沒離地（只上升 %.1f 公尺）"
 					% (_dino.global_position.y - _jump_from))
 				_start_bot_case()
+		4:  # 火球的物理：要跨物理幀，見 dino.gd 的 _start_fireball_case
+			if _fb_step():
+				return _done()
 		3:  # 移動靶要真的跑起來（move_and_slide 只在物理幀有效，所以得跨幀等）
 			_bot_frames += 1
 			var now := _bot_cowboy.global_position
 			if _bot_from.distance_to(Vector2(now.x, now.z)) > 3.0:
 				_end(_bot_game)
-				return _done()
+				_start_fireball_case()   # 火球的物理要跨幀，接在後面（_phase 4）
+				return false
 			if _bot_frames > 500:
 				_ck(false, "牛仔 bot 沒有自己跑起來")
 				_end(_bot_game)

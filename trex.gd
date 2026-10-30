@@ -545,7 +545,7 @@ func _process_base(delta: float) -> void:
 	sp = _spring(_rear, _rear_v, float(act == 1), delta)
 	_rear = sp.x
 	_rear_v = sp.y
-	sp = _spring(_roar, _roar_v, float(act == 3), delta)
+	sp = _spring(_roar, _roar_v, float(act == 3 or act == 10), delta)   # 10 = ACT_SPIT_WIND（boss.gd，尼諾拉火球預備：仰頭張嘴）
 	_roar = sp.x
 	_roar_v = sp.y
 	sp = _spring(_crouch, _crouch_v, float(act == 5), delta)

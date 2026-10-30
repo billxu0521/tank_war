@@ -21,6 +21,12 @@ const HITCH_MS := 250   # 兩幀之間隔超過這麼久算卡頓（4 fps 以下
 @export var bot := false
 
 var hp := 0
+# 燃燒：被火球打中就燒一陣子，每秒扣一次，再中一次重設時間（不疊加）。只有主機算。以下從 balance.csv 讀
+static var BURN_DPS: int = Balance.whole("burn_dps")
+static var BURN_SECONDS: float = Balance.num("burn_seconds")
+var burn_left := 0.0       # 還剩幾秒會燒
+var _burn_acc := 0.0       # 距離下一次扣血，累積了幾秒
+var _burn_src: Node = null # 放火的人，扣血算他的
 var hit_until := 0  # 自己的彈打中人，準心閃紅到這個時刻（毫秒）
 var _last_hit_by: Node = null  # 只有主機需要，用來記誰殺了誰
 var last_from := Vector3.INF   # 最後一下從哪裡打來（每台都有）：屍體往反方向倒
@@ -204,10 +210,40 @@ func _notification(what: int) -> void:
 	# 牛仔、恐龍各有自己的 _process；這裡用通知，子類別不用記得呼叫
 	if what == NOTIFICATION_PROCESS and net_smooth:
 		net_step(float(Time.get_ticks_msec()))
+	if what == NOTIFICATION_PROCESS and burn_left > 0.0 and multiplayer.is_server():   # 沒在燒就不碰 multiplayer（沒有連線時會報錯）
+		burn_step(get_process_delta_time())
 
 ## 自己射出去的彈打中有血的東西時呼叫。純本機回饋，不走網路。
 func on_hit() -> void:
 	hit_until = Time.get_ticks_msec() + 350
+
+## 被火球打中（只有主機呼叫）：燒 BURN_SECONDS 秒，再中一次就重設時間
+func ignite(src: Node = null) -> void:
+	burn_left = BURN_SECONDS
+	_burn_src = src
+	_burn_notice.rpc(name.to_int())
+
+## 燃燒每幀（主機）：累積滿一秒扣一次 BURN_DPS，算在放火的人身上。測試直接呼叫這個
+func burn_step(delta: float) -> void:
+	if burn_left <= 0.0:
+		return
+	burn_left -= delta
+	_burn_acc += delta
+	if _burn_acc >= 1.0:
+		_burn_acc -= 1.0
+		take_damage(BURN_DPS, _burn_src)
+	if burn_left <= 0.0:
+		_burn_acc = 0.0
+
+## 燒起來：只有被燒的那台顯示「著火了！」（其他人畫面上的火焰以後再做）
+# ponytail: 別人身上的火焰特效以後再做
+@rpc("any_peer", "call_local", "reliable")
+func _burn_notice(id: int) -> void:
+	if multiplayer.get_remote_sender_id() != 1 or id != multiplayer.get_unique_id():
+		return
+	var g := get_tree().get_first_node_in_group(&"match")
+	if g:
+		g.status.text = "著火了！"
 
 ## 只有主機會呼叫這個。source 是誰打的，用來記錄擊殺者。
 func take_damage(amount: int, source: Node = null) -> void:
@@ -239,6 +275,7 @@ func _sync_hp(v: int, from := Vector3.INF) -> void:
 		_on_hurt(hp - v, from)
 	hp = v
 	if hp <= 0:
+		burn_left = 0.0   # 死了就不燒了
 		died.emit(_last_hit_by)
 		if multiplayer.is_server():
 			queue_free()  # MultiplayerSpawner 會同步移除其他人畫面上的它
