@@ -750,7 +750,7 @@ func _on_sandbox_pressed() -> void:
 	for off: Vector3 in [Vector3(7, 0, -7.5), Vector3(7.4, 0, -8.2), Vector3(-9, 0, -2.5)]:
 		OilLantern.place($Arena, _props.get(&"Lantern"), _on_ground(SANDBOX_START + off), false).add_to_group(&"sandbox_prop")
 
-## 單人打恐龍：測恐龍行為用。場地跟沙盒一樣，只有自己和一隻恐龍 boss（導演、三招、找路都照連線模式），
+## 單人打恐龍：測恐龍行為用。場地跟沙盒一樣，只有自己和一隻恐龍 boss（導演、兩招、找路都照連線模式），
 ## 子彈無限、接關無限：死了五秒後在地圖上隨機一個地方回來。恐龍生在離你最遠的地方，要靠導演給的方向找過來。
 ## 畫面上方顯示恐龍的導演階段、威脅值、正在出的招
 func _on_solo_dino_pressed() -> void:

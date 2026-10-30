@@ -53,7 +53,7 @@ func _case_party_boss() -> void:
 	_ck(b.hp == b.max_hp - 100, "無敵結束後會扣血（%d）" % b.hp)
 	_end(m)
 
-## 恐龍 boss：視力差、聽力好、跟蛋無關、導演只給大概方向、追太久會退開、三招都有預備動作、自己的體力、打不死
+## 恐龍 boss：視力差、聽力好、跟蛋無關、導演只給大概方向、追太久會退開、兩招都有預備動作、自己的體力、打不死
 func _case_boss() -> void:
 	var m := _offline_match()
 	var c: Node3D = m._add_player(m.COWBOY, 2)
