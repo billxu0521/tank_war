@@ -194,7 +194,7 @@ func _case_boss() -> void:
 	for i in int(b.CHARGE_WIND * 60) + 3:
 		b.think(1.0 / 60.0)
 	_ck(c.hp == c.max_hp, "被打斷就不會掃出去")
-	# 沒打斷就整圈掃開
+	# 沒打斷就掃出去
 	b.act = b.ACT_NONE
 	b._attack_gap = 0.0
 	b.sweep_left = 0.0
@@ -473,6 +473,48 @@ func _case_light_cone() -> void:
 	_ck(side.hp == side.max_hp, "側面 90 度不該中")
 	_ck(far.hp == far.max_hp, "前方 8 公尺超出扇形不該中")
 	_ck(late.hp == late.max_hp - 40, "出手時間內走進扇形也要中，而且只中一次（現在 %d）" % late.hp)
+	_end(m)
+
+## 甩尾半圈（草案 2.6）：以尾根為圓心（身體後方 sweep_root_back）、半徑 sweep_radius、只打後方 sweep_angle 度。
+## 後方 10 公尺中；正前方 5 公尺不中；後方邊界內（85 度）中、邊界外（95 度）不中；離尾根 12 公尺以外不中；
+## 判定期間走進範圍也中；同一招只中一次
+func _case_sweep_half() -> void:
+	var m := _offline_match()
+	var b: Node3D = m.spawn_boss()
+	b.pilot = 1
+	b.rotation.y = 0.0   # 面向 -Z，後方是 +Z；尾根在 (0, 43)
+	b.global_position = m._on_ground(Vector3(0, 4.1, 40))
+	var behind: Node3D = m._add_player(m.COWBOY, 2)
+	var front: Node3D = m._add_player(m.COWBOY, 3)
+	var edge_in: Node3D = m._add_player(m.COWBOY, 4)
+	var edge_out: Node3D = m._add_player(m.COWBOY, 5)
+	var far: Node3D = m._add_player(m.COWBOY, 6)
+	var late: Node3D = m._add_player(m.COWBOY, 7)
+	behind.global_position = m._on_ground(Vector3(0, 0, 50))
+	front.global_position = m._on_ground(Vector3(0, 0, 35))
+	edge_in.global_position = m._on_ground(Vector3(6.0 * sin(deg_to_rad(85.0)), 0, 43.0 + 6.0 * cos(deg_to_rad(85.0))))
+	edge_out.global_position = m._on_ground(Vector3(6.0 * sin(deg_to_rad(95.0)), 0, 43.0 + 6.0 * cos(deg_to_rad(95.0))))
+	far.global_position = m._on_ground(Vector3(0, 0, 57))
+	late.global_position = m._on_ground(Vector3(0, 0, 60))   # 甩尾出手後才走進來
+	b.act = b.ACT_NONE
+	b._attack_gap = 0.0
+	b.sweep_left = 0.0
+	var walked := false
+	for i in 300:
+		b.pilot_input(Vector2.ZERO, 0.0, 0.0, b.PIN_SWEEP if i == 0 else 0)
+		b.think(DT)
+		if b.act == b.ACT_SWEEP and not walked:
+			walked = true
+			late.global_position = m._on_ground(Vector3(-4, 0, 52))   # 尾根後方、約 10 公尺
+		if b.act == b.ACT_RECOVER:
+			break
+	_ck(walked, "甩尾要真的出手（進 ACT_SWEEP）")
+	_ck(behind.hp == behind.max_hp - b.SWEEP_DAMAGE, "後方 10 公尺要中（現在 %d）" % behind.hp)
+	_ck(front.hp == front.max_hp, "正前方 5 公尺不該中")
+	_ck(edge_in.hp == edge_in.max_hp - b.SWEEP_DAMAGE, "後方邊界內（85 度）要中（現在 %d）" % edge_in.hp)
+	_ck(edge_out.hp == edge_out.max_hp, "後方邊界外（95 度）不該中")
+	_ck(far.hp == far.max_hp, "離尾根 12 公尺以外不該中")
+	_ck(late.hp == late.max_hp - b.SWEEP_DAMAGE, "判定期間走進範圍也要中，而且只中一次（現在 %d）" % late.hp)
 	_end(m)
 
 ## 踩踏：移動中貼著牛仔走過去扣 30；1 秒內不再扣，超過 1 秒再扣；站著不動貼著不扣

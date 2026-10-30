@@ -637,6 +637,11 @@ func _case_party_destruction() -> void:
 	var space: PhysicsDirectSpaceState3D = m.get_viewport().world_3d.direct_space_state
 	var ray := PhysicsRayQueryParameters3D.create(tree.global_position + Vector3(-3, 0, 0), tree.global_position + Vector3(3, 0, 0))
 	_ck(space.intersect_ray(ray).get(&"collider") == tree, "倒之前樹幹擋得住")
+	# 只拆後方半圈：樹在正前方（背後朝 +X）甩不到，背後朝 -X 樹在後面才倒
+	b.rotation.y = PI * 0.5
+	b._strike_sweep()
+	_ck(tree.hits == 0 and tree.is_in_group(&"destructible"), "樹在正前方甩不到（只拆後方）")
+	b.rotation.y = -PI * 0.5
 	b._strike_sweep()
 	_ck(tree.hits == 1 and tree.collision_layer == 0 and not tree.is_in_group(&"destructible"), "樹甩一下就倒")
 	_ck(space.intersect_ray(ray).get(&"collider") != tree, "倒了的樹沒有碰撞")
