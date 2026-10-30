@@ -30,6 +30,12 @@ const TRIPO_JAW_CLOSE := 0.75   # Tripo 版下顎平常往上閉多少（弧度�
 const MODEL_LIFT := 0.0    # 腳底在模型原點（腿加長後，docs/企劃/尼諾拉.md）；走路時腳由 IK 踩在實際地面上
 const TAIL_N := 8          # 尾巴節數（舊骨架 4 節）。每節角度乘 TAIL_PER，整條彎的總量跟以前一樣
 const TAIL_PER := 0.5
+# 甩尾：尾巴整條（尾尖）從 +SWEEP_SWING 掃到 -SWEEP_SWING（弧度），每節比前一節晚 SWEEP_LAG 秒擺；身體反向扭 SWEEP_TWIST（弧度）。判定持續秒數跟 boss.gd 用同一個數字
+const SWEEP_SWING := 1.6
+const SWEEP_PULL := 0.8   # 預備（蓄力）時尾尖先拉向 + 那一側多少弧度，拉弓
+const SWEEP_LAG := 0.025
+const SWEEP_TWIST := 0.3
+static var SWEEP_ACTIVE: float = Balance.num("sweep_active")
 
 const TAIL_STIFF := 26.0   # 越大跟得越緊，延遲越短
 const TAIL_DAMP := 4.5     # 越小晃越久（過衝越明顯）
@@ -64,7 +70,8 @@ var _roar := 0.0     # 蓄力：仰頭張大嘴吼、頭甩
 var _crouch := 0.0   # 撲擊的預備：身體壓低、往前傾
 var _lunge := 0.0    # 撲出去：身體前衝、嘴張開
 var _stun := 0.0     # 被打斷：頭垂下來晃
-var _sweep := 0.0    # 甩尾：尾巴甩直、兩腳張開
+var _sweep := 0.0    # 甩尾的份量（0~1）：尾巴掃過去的那段才是 1
+var _sweep_t := 0.0  # 甩尾出手後多久（甩尾結束後停在最後那一刻，尾巴慢慢回來用）
 var _recover := 0.0  # 收招：甩頭、喘
 var _recover_shake := 1.0   # 收招要不要甩頭：咬完不甩（看起來像抽搐），甩尾、撲擊完才甩
 var _spot := 0.0     # 發現人：挺起來、頭抬高張嘴吼（不跺腳、不揮手，跟蓄力分得開）
@@ -98,7 +105,6 @@ var _snap := 0.0     # 出手那一下的衝量（咬下去、撲出去）：1 �
 var _snap_bite := false
 var _bite_pitch := [0.0, 0.0, 0.0]   # spine1, neck, head：咬下去那一下一節傳一節
 var _bite_pitch_v := [0.0, 0.0, 0.0]
-var _spin := 0.0     # 甩尾時整隻轉一圈：剩下還要轉的角度
 # 塵土特效（每台自己播，fx.gd）：上一幀兩隻腳的步伐相位、跺地相位，算「這一幀腳落地了沒」
 var _stomp_prev := [0.0, 0.0]
 var _fx_tick := 0.0   # 連續噴的特效（長吼的鼻息、撲擊的塵土尾巴）多久噴一次
@@ -200,8 +206,6 @@ var _body_h_v := 0.0
 var _body_h_fresh := true
 var _ext := [0.0, 0.0]
 var _air_land := 0.0
-var _spinning := false
-var _spin_local := [Vector3.ZERO, Vector3.ZERO]      # 每條腿伸直的程度（髖到踝 ÷ 腿長），上一幀的
 var _foot_tilt := 0.0       # 兩腳高低差帶來的側傾
 var _prev_ph := [0.0, 0.5]
 var _travel_s := 0.0
@@ -324,20 +328,6 @@ func _walk(delta: float, moved: Vector3, speed: float, yaw_rate: float, teleport
 	var air := act == 6
 	if air:
 		_air_land = 0.25
-	# 甩尾：0.4 秒整隻轉一圈，腳跟著身體一起轉（踩著地原地轉），不然腳釘在原地、腿扭成麻花（操控檢查量到一幀轉 28 度）
-	var spin := _spin > 0.0
-	if spin and not _spinning:
-		for i in 2:
-			_spin_local[i] = to_skel * (_plant[i] as Vector3)
-			_swing[i] = false
-	if _spinning and not spin:   # 轉完：腳從轉完的地方（可能還抬著，長吼時在跺地）慢慢放到地上，跟撲擊落地一樣
-		for i in 2:
-			_plant[i] = bone_pos("toe2_1" + ("_l" if i == 0 else "_r"))
-		_air_land = 0.3
-	_spinning = spin
-	if spin and _leg_out.size() == 2:
-		# 腿整副凍住跟著身體轉（0.4 秒一整圈只是表演，腳一步也來不及跨；用 IK 釘在地上會扭成麻花、穿地）
-		return _leg_out
 	var out := []
 	for i in 2:
 		var ph := fposmod(_gait + 0.5 * i, 1.0)
@@ -531,14 +521,12 @@ func _process_base(delta: float) -> void:
 		if act == 2 or act == 6:
 			_snap = 1.0
 			_snap_bite = act == 2   # 咬下去那一下的動作跟著 _snap 收完，不跟著 act 切掉（咬只有 0.15 秒，收招時腳還在空中）
-		if act == 4:
-			_spin = TAU   # 甩尾：整隻轉一圈，尾巴掃一整圈
 	_act_t += delta
 	_fx_step(delta, speed)   # 用最上面算好的速度：_last_pos 在那裡已經更新成這一幀了
 	_snap = maxf(_snap - delta * 3.0, 0.0)
-	_spin = maxf(_spin - delta * TAU / 0.4, 0.0)   # 0.4 秒轉完
-	var k := 1.0 - exp(-10.0 * delta)
-	_sweep += (float(act == 4 or _spin > 0.0) - _sweep) * k
+	if act == 4:
+		_sweep_t = _act_t
+	_sweep += (float(act == 4) - _sweep) * (1.0 - exp(-(25.0 if act == 4 else 6.0) * delta))   # 出手快、收手慢：尾巴掃完慢慢回來
 	var sp := _spring(_recover, _recover_v, float(act == 7), delta)
 	_recover = sp.x
 	_recover_v = sp.y
@@ -607,7 +595,7 @@ func _process_base(delta: float) -> void:
 
 	# 出招的腿部動作（疊在走路上）。thigh 正的是大腿往前抬、shin 負的是膝蓋彎、foot 正的是腳尖往下（看截圖確認過）
 	#   咬預備：重心往後坐（兩膝微彎）；咬下去：左腳往前踏一步
-	#   蓄力長吼：兩腳輪流跺地；甩尾：兩腳張開站穩
+	#   蓄力長吼：兩腳輪流跺地；甩尾：兩腳不動站穩
 	#   撲擊預備：深蹲；撲出去：大腿往後蹬直
 	#   被打斷：兩腳晃、站不穩
 	var stomp := _roar * 0.5
@@ -621,7 +609,7 @@ func _process_base(delta: float) -> void:
 			# 抬起來的腳用它要落的地方：下坡時腳還在空中，身體就先往下沉，落地那一刻腿才搆得到
 			var at: Vector3 = _land[i] if _swing[i] else _plant[i]
 			hs.append((to_me * at).y - (skel.transform * (_leg[i].neutral as Vector3)).y + skel.position.y)
-		var sink: float = minf(hs[0], hs[1]) if not _spinning else _body_h   # 甩尾轉圈時身體高度不動（腿凍住）
+		var sink: float = minf(hs[0], hs[1])
 		# 踩著的腿被拉過頭（坡上轉身時前腳又遠又高）：身體往下沉，沉多少照拉過頭的量（用 IK 上一幀量到的伸直度）
 		for i in 2:
 			if not _swing[i] and _ext[i] > 0.95:
@@ -641,9 +629,8 @@ func _process_base(delta: float) -> void:
 		_foot_tilt = lerpf(_foot_tilt, clampf(atan2(hs[0] - hs[1], 1.64), -0.35, 0.35), 1.0 - exp(-6.0 * delta))
 	# 身體隨步伐上下起伏，再疊上位移延遲和呼吸。要在腳的 IK 之前設：IK 照這一幀的骨架位置算，之後再動髖就對不上了
 	skel.position = Vector3(_drift.x,
-		_body_h + STAND_RISE * _lk - 0.05 * cos(_phase * 2.0) * minf(stride * 2.0, 1.0) + sin(_breath * 0.5) * 0.025 * idle - (_crouch * 0.38 + _rear * 0.15 + _run * RUN_LOW) * _lk,   # 甩尾不壓低身體：轉的時候腿是凍住的，身體一沉腳就穿地
+		_body_h + STAND_RISE * _lk - 0.05 * cos(_phase * 2.0) * minf(stride * 2.0, 1.0) + sin(_breath * 0.5) * 0.025 * idle - (_crouch * 0.38 + _rear * 0.15 + _run * RUN_LOW) * _lk,
 		_drift.y - _lunge * 0.3 - sin(PI * _snap) * 0.4 * float(_snap_bite))   # 咬下去往前一衝：前後都平順（以前一幀衝 0.4，腿抽 32 度）
-	skel.rotation.y = _spin   # 甩尾：整隻轉一圈
 
 	# 腳：踩在地上走（_walk 算 IK）。出招的腿部動作不再疊在關節角度上（那樣腳會離開踩著的地方，往後滑或穿地，
 	# 知識庫 IK 筆記指出的）：蹲、後坐、前衝靠上面移動身體，膝蓋由 IK 自己彎；跺地、咬下去踏一步、兩腳張開、站不穩，
@@ -679,29 +666,31 @@ func _process_base(delta: float) -> void:
 
 
 	# 尾巴：轉身往外甩 + 走路跟著擺，然後一節傳一節
-	# 出招時：長吼甩尾巴、甩尾時尾巴甩直往外、撲擊時打直、被打斷垂下來
+	# 出招時：長吼甩尾巴、預備時尾巴先拉向 + 那一側（拉弓）、甩尾時從一側掃到另一側、撲擊時打直、被打斷垂下來
+	var sweep_p := clampf(_act_t / SWEEP_ACTIVE, 0.0, 1.0)
 	var tail_yaw_drive := clampf(-yaw_rate * 0.20, -0.65, 0.65) + sin(_phase) * 0.09 * stride \
-		+ sin(_act_t * 9.0) * 0.55 * _roar + 0.9 * _sweep
+		+ sin(_act_t * 9.0) * 0.55 * _roar
 	var tail_pitch_drive := clampf(-moved.y * 0.035, -0.30, 0.30) + 0.09 \
 		- _rear * 0.20 - _roar * 0.35 - _snap * 0.30 + _crouch * 0.10 + _stun * 0.40 \
 		- _hunt * 0.06 - _spot * 0.25 + _run * RUN_TAIL + roam * 0.10 + _retreat * 0.30   # 尾巴俯仰正的是往下（看截圖確認過）；0.09：參考動畫尾巴是平的、尾尖微垂
 	_propagate(_tail_yaw, _tail_yaw_v, tail_yaw_drive, TAIL_STIFF, TAIL_DAMP, delta)
 	_propagate(_tail_pitch, _tail_pitch_v, tail_pitch_drive, TAIL_STIFF, TAIL_DAMP, delta)
 	for i in TAIL_N:
-		_pose_pyr("tail%d" % (i + 1), _tail_pitch[i] * TAIL_PER, _tail_yaw[i] * TAIL_PER, _lean.x * 0.12 * TAIL_PER)
+		_pose_pyr("tail%d" % (i + 1), _tail_pitch[i] * TAIL_PER, (_tail_yaw[i] + _sweep_yaw(i)) * TAIL_PER, _lean.x * 0.12 * TAIL_PER)
 	_tail_off_ground(delta)
 
 	# 脊椎到頭：同一套邏輯，但幅度小、追得緊，轉身時上半身會晚一點跟上
 	_propagate(_spine_yaw, _spine_yaw_v, clampf(-yaw_rate * 0.09, -0.28, 0.28),
 		SPINE_STIFF, SPINE_DAMP, delta)
+	var sweep_twist := sin(sweep_p * PI) * SWEEP_TWIST * float(act == 4)   # 甩尾：身體跟尾巴反向扭一下（sin 形：起手、收手都回正）
 	# 側傾分散在幾節脊椎上（不放在 root，不然腿會跟著翻起來），
 	# 頭再反向轉回去——掠食者跑起來頭是穩的，這一下最像活的。
 	# -0.12：身體壓平（設定圖「保持水平重心」、參考動畫背是平的）；模型靜止姿勢胸口偏高
 	_propagate(_bite_pitch, _bite_pitch_v, _snap * float(_snap_bite), BITE_CHAIN_STIFF, BITE_CHAIN_DAMP, delta)
 	_pose_pyr("spine1", -0.12 + sin(_phase * 0.4) * 0.02 + _lean.y * 0.50 - _crouch * 0.30 - _lunge * 0.20 + _roar * 0.15
 		- _bite_pitch[0] * 0.35 + _spot * 0.15 + _run * RUN_SPINE + _search * 0.15 - _hunt * 0.08,
-		_spine_yaw[0], _lean.x * 0.45)
-	_pose_pyr("spine2", _lean.y * 0.30, _spine_yaw[1], _lean.x * 0.35)
+		_spine_yaw[0] + sweep_twist, _lean.x * 0.45)
+	_pose_pyr("spine2", _lean.y * 0.30, _spine_yaw[1] + sweep_twist, _lean.x * 0.35)
 	_pose_pyr("neck", -0.20 + sin(_phase) * 0.05 * stride + chomp * 0.35 + look_pitch * 0.45
 		+ sin(_breath) * 0.030 * idle + _roar * 0.55 - _crouch * 0.15 - _stun * 0.45
 		- _bite_pitch[1] * 0.45 + _spot * 0.55 + _search * MOOD_SEARCH_NECK - _hunt * 0.12 + roam * MOOD_ROAM_NECK - sniff * 0.45
@@ -709,7 +698,7 @@ func _process_base(delta: float) -> void:
 		_spine_yaw[2] + shake + sin(_act_t * 11.0) * 0.25 * _recover * _recover_shake + scan * 0.5 + toss * 0.3 * _toss_side + _retreat * MOOD_RETREAT_YAW * 0.5, _lean.x * 0.25)
 	_pose_pyr("head", 0.18 - chomp * 0.25 + look_pitch * 0.35 - _lean.y * 0.55 + _roar * 0.40 - _stun * 0.25 - _bite_pitch[2] * 0.30
 		+ _spot * 0.30 + _hunt * 0.10 - sniff * 0.35 + toss * 0.2 + _run * RUN_HEAD * (1.0 - _retreat),
-		_spine_yaw[3] + sin(_breath * 0.31) * 0.10 * idle + shake + scan + toss * 0.4 * _toss_side + _retreat * MOOD_RETREAT_YAW * 0.5,
+		_spine_yaw[3] + sin(_breath * 0.31) * 0.10 * idle + shake + scan + toss * 0.4 * _toss_side + _retreat * MOOD_RETREAT_YAW * 0.5 - sweep_twist * 0.5,
 		-_lean.x * 0.75 + shake * 0.5)
 	_pose("jaw", Vector3.RIGHT, -0.12 - chomp * 0.65 - _rear * 0.30 - _roar * 0.75 - _lunge * 0.60 - _stun * 0.25
 		- _spot * 0.80 - _hunt * MOOD_HUNT_JAW)
@@ -797,11 +786,17 @@ func _tail_tip() -> Vector3:
 	var seg := g.origin.distance_to(skel.get_bone_global_pose(_idx["tail%d" % (TAIL_N - 1)]).origin)
 	return skel.to_global(g.origin + g.basis.y.normalized() * seg)
 
+## 蓄力拉弓和甩尾的額外偏航（第 i 節，弧度）：直接加在骨頭上，不走彈簧（彈簧一節傳一節太慢，0.4 秒掃不過去，殘留的慣性還會把收尾拖回右邊）。
+## 甩尾的擺動每節晚 SWEEP_LAG 秒，整條加起來正好是 SWEEP_SWING；拉弓整條是 SWEEP_PULL
+func _sweep_yaw(i: int) -> float:
+	var q := clampf((_sweep_t - i * SWEEP_LAG) / SWEEP_ACTIVE, 0.0, 1.0)
+	return (SWEEP_PULL * _roar + SWEEP_SWING * (1.0 - 2.0 * smoothstep(0.0, 1.0, q)) * _sweep) / (TAIL_N * TAIL_PER)
+
 ## 尾巴整條往上抬 total 弧度，按 8、7、6…1 的比例分給每一節
 func _tail_lift(total: float) -> void:
 	for i in TAIL_N:
 		var w := float(TAIL_N - i) / float(TAIL_N * (TAIL_N + 1) / 2)
-		_pose_pyr("tail%d" % (i + 1), _tail_pitch[i] * TAIL_PER - total * w, _tail_yaw[i] * TAIL_PER, _lean.x * 0.12 * TAIL_PER)
+		_pose_pyr("tail%d" % (i + 1), _tail_pitch[i] * TAIL_PER - total * w, (_tail_yaw[i] + _sweep_yaw(i)) * TAIL_PER, _lean.x * 0.12 * TAIL_PER)
 
 func _world() -> Node:
 	return get_tree().get_first_node_in_group(&"arena") if is_inside_tree() else null
@@ -858,8 +853,10 @@ func _act_fx(from: int, to: int) -> void:
 		2:   # 咬下去：踏出去那隻腳起土，嘴前地上一團
 			Fx.dust(w, bone_pos("foot_l"), Vector3.UP + fwd * 0.3, 0.7, 5, 2.5)
 			Fx.dust(w, Vector3(bone_pos("jaw").x, feet.y, bone_pos("jaw").z), Vector3.UP, 0.6, 5, 2.0, 1.2)
-		4:   # 甩尾：整圈掃開一大圈土
-			Fx.dust_ring(w, feet, 3.0, 36, 10.0, 1.1)
+		4:   # 甩尾：後方半圈掃起一排土（判定也只有後方半圈）
+			for i in 7:
+				var a := lerpf(-PI * 0.5, PI * 0.5, i / 6.0)
+				Fx.dust(w, feet + (-fwd).rotated(Vector3.UP, a) * 3.0, Vector3.UP, 1.1, 10, 6.0, 1.1)
 		6:   # 撲出去：起跳的地方炸一團
 			Fx.dust(w, feet, Vector3.UP - fwd * 0.6, 1.1, 10, 4.5)
 		8:   # 被打斷：踉蹌揚起一點土

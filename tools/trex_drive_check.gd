@@ -143,7 +143,6 @@ func _measure(_d: float) -> void:
 	_max_z = maxf(_max_z, t.global_position.z)
 	_max_h = maxf(_max_h, t.global_position.y)
 	var foot_h: float = t._leg[0].neutral.y * 1.5
-	var spin: bool = t.act == 4 or t._spin > 0.0   # 甩尾整隻轉一圈，腳一定在原地轉
 	for i in 2:
 		var ball := t.bone_pos("toe2_1" + ("_l" if i == 0 else "_r"))
 		var gap := ball.y - (_ground_y(ball) + foot_h)
@@ -152,10 +151,10 @@ func _measure(_d: float) -> void:
 		if -gap > _sink:
 			_sink = -gap
 			_sink_at = "t=%.1f %s 腳%d" % [_t, _phase, i]
-		if not lifted and not spin and gap > _float:   # 甩尾時腿凍住，可能有一隻正在跺地抬著
+		if not lifted and gap > _float:
 			_float = gap
 			_float_at = "t=%.1f %s 腳%d" % [_t, _phase, i]
-		if lifted or spin:
+		if lifted:
 			_from[i] = null
 		else:
 			if _from[i] == null:
