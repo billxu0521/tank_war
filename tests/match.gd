@@ -469,7 +469,7 @@ func _case_versus() -> void:
 	b.pilot_input(Vector2.ZERO, PI * 0.9, 0.0, 0)
 	b.think(0.1)
 	_ck(absf(wrapf(b.rotation.y - y0, -PI, PI)) <= b.TURN * 0.1 + 0.01, "身體轉向鏡頭有限速（繞著牠跑有用）")
-	# 三招
+	# 兩招
 	b.rotation.y = 0.0
 	b.pilot_input(Vector2.ZERO, 0.0, 0.0, b.PIN_BITE)
 	b.think(1.0 / 60.0)
@@ -479,14 +479,9 @@ func _case_versus() -> void:
 		b.think(1.0 / 60.0)
 	_ck(b.act == b.ACT_NONE, "咬完收招回到可以動")
 	b._attack_gap = 0.0
-	b.pilot_input(Vector2.ZERO, 0.0, 0.0, b.PIN_POUNCE)
-	b.think(1.0 / 60.0)
-	_ck(b.act == b.ACT_POUNCE_WIND, "右鍵：撲擊的預備")
-	b.act = b.ACT_NONE
-	b._attack_gap = 0.0
 	b.pilot_input(Vector2.ZERO, 0.0, 0.0, b.PIN_SWEEP)
 	b.think(1.0 / 60.0)
-	_ck(b.act == b.ACT_CHARGE_WIND, "Space：蓄力甩尾的預備")
+	_ck(b.act == b.ACT_CHARGE_WIND, "右鍵：蓄力甩尾的預備")
 	b.act = b.ACT_NONE
 	# 網路斷斷續續：太久沒輸入就當放開
 	b.pilot_input(Vector2(0, -1), 0.0, 0.0, 0)

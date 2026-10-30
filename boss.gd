@@ -7,7 +7,7 @@ extends "res://dino.gd"
 ##   2. 出招中        → 把這招做完（預備動作 → 出手 → 收招）
 ##   3. 導演叫牠退開  → 往離大家遠的地方跑
 ##   4. 剛確定看到人  → 停下來吼一聲（發現），之後才出招、追（太近的不吼，直接動手）
-##   5. 可以出招      → 咬／蓄力甩尾／撲擊
+##   5. 可以出招      → 咬／蓄力甩尾
 ##   6. 看得到人      → 追最近的
 ##   7. 瞄到人還不確定 → 停下來盯著、慢慢轉過去（不確定感，ARC Raiders 的做法）
 ##   8. 剛看丟了人    → 往最後看到的地方追
@@ -61,8 +61,8 @@ const TURN := 3.0            # 轉身速度（弧度／秒）：大隻轉得慢�
 const ARRIVE := 2.5
 const RETREAT_DIST := 50.0   # 退開時往離最近的人這麼遠的地方跑
 
-# --- 三招（時間都是秒、距離是公尺）---
-enum { ACT_NONE, ACT_BITE_WIND, ACT_BITE, ACT_CHARGE_WIND, ACT_SWEEP, ACT_POUNCE_WIND, ACT_POUNCE, ACT_RECOVER, ACT_STUN, ACT_SPOT }
+# --- 兩招（時間都是秒、距離是公尺）---
+enum { ACT_NONE, ACT_BITE_WIND, ACT_BITE, ACT_CHARGE_WIND, ACT_SWEEP, ACT_POUNCE_WIND, ACT_POUNCE, ACT_RECOVER, ACT_STUN, ACT_SPOT }  # ACT_POUNCE_WIND／ACT_POUNCE 已不用（撲擊拿掉，規則草案 10-28），留著是因為 trex.gd 用編號對動作
 enum { MOOD_ROAM, MOOD_SEARCH, MOOD_HUNT, MOOD_RETREAT }
 const SPOT_TIME := 0.7       # 發現人：停下來吼一聲這麼久，玩家還有這段時間跑
 const ATTACK_GAP := 1.2      # 收招之後至少隔這麼久才出下一招
@@ -85,21 +85,11 @@ const SWEEP_RECOVER := 0.6
 const SWEEP_CD := 8.0
 const SWEEP_CD_PARTY := 20.0   # 派對模式：甩尾拆得掉地形（destructible.gd），冷卻拉長，不然掩體一下就拆光
 const STUN_TIME := 2.5       # 蓄力被打斷暈多久
-# 撲擊：中距離正前方、路線沒東西擋。蹲低，起跳那刻方向鎖死
-const POUNCE_MIN := 11.0
-const POUNCE_MAX := 20.0
-const POUNCE_WIND := 0.5
-const POUNCE_SPEED := 24.0
-const POUNCE_RADIUS := 3.0   # 撲擊途中嘴巴附近這麼近的人被撲到
-const POUNCE_DAMAGE := 90
-const POUNCE_RECOVER := 1.2
-const POUNCE_CD := 6.0
 const STRIKE_SHOW := 0.15    # 出手那一下的動作狀態留這麼久（同步每秒 40 次，太短會漏）
 
 const SOUNDS := {
 	ACT_BITE_WIND: preload("res://assets/audio/dino/growl.wav"),
 	ACT_CHARGE_WIND: preload("res://assets/audio/dino/roar.wav"),
-	ACT_POUNCE_WIND: preload("res://assets/audio/dino/snarl.wav"),
 	ACT_STUN: preload("res://assets/audio/dino/yelp.wav"),
 	ACT_SPOT: preload("res://assets/audio/dino/bellow.wav"),
 }
@@ -123,7 +113,7 @@ signal got_up         # 各台：起身那一刻
 ## 對抗模式：玩家操作尼諾拉（docs/規劃/2026-10-18-對抗模式.md）。0 = 電腦。有駕駛時行為樹不跑，照駕駛送來的輸入動，
 ## 出招、預備動作、叫聲、體力、倒地、同步都跟電腦版一樣。駕駛斷線 main.gd 會清回 0，電腦接手
 @export var pilot := 0
-enum { PIN_BITE = 1, PIN_POUNCE = 2, PIN_SWEEP = 4, PIN_RUN = 8 }
+enum { PIN_BITE = 1, PIN_SWEEP = 4, PIN_RUN = 8 }
 const PILOT_STALE := 0.5     # 主機這麼久沒收到駕駛的輸入就當放開（網路斷斷續續時不要一直往前衝）
 var _pin_move := Vector2.ZERO   # 主機：駕駛最新的輸入（相對鏡頭，x 右、y 後）
 var _pin_yaw := 0.0
@@ -149,10 +139,7 @@ var _retreat_to := Vector3.INF
 var _last_pos := {}           # 牛仔 → 上一幀的位置（算誰在跑）
 var _act_left := 0.0          # 這個動作狀態還剩多久
 var _attack_gap := 0.0
-var _pounce_cd := 0.0
-var _pounce_dir := Vector3.ZERO
-var _pounce_left := 0.0
-var _hit_once := []           # 這一招已經打過的人（撲擊途中不重複扣）
+var _hit_once := []           # 這一招已經打過的人（一招內不重複扣）
 var _sees_now: Node3D = null
 var _path := PackedVector3Array()
 var _path_goal := Vector3.INF
@@ -259,7 +246,6 @@ func think(delta: float) -> void:
 	_noise_left = maxf(_noise_left - delta, 0.0)
 	_attack_gap = maxf(_attack_gap - delta, 0.0)
 	sweep_left = maxf(sweep_left - delta, 0.0)
-	_pounce_cd = maxf(_pounce_cd - delta, 0.0)
 	guard_left = maxf(guard_left - delta, 0.0)
 	if pilot != 0:
 		_pilot_step(delta)
@@ -301,22 +287,18 @@ func _pilot_step(delta: float) -> void:
 		_act_down(delta)
 		return
 	if act != ACT_NONE:
-		if act in [ACT_BITE_WIND, ACT_SPOT, ACT_POUNCE_WIND]:   # 預備時還能對準（跟電腦版一樣：咬半速、撲擊全速），起跳那刻方向就鎖死
-			rotation.y = rotate_toward(rotation.y, _pin_yaw, TURN * (1.0 if act == ACT_POUNCE_WIND else 0.5) * delta)
+		if act in [ACT_BITE_WIND, ACT_SPOT]:   # 預備時還能對準（跟電腦版一樣：咬、發現人都半速）
+			rotation.y = rotate_toward(rotation.y, _pin_yaw, TURN * 0.5 * delta)
 		_act_attack(delta)
 		return
 	if _attack_gap <= 0.0:
-		_target = null   # 沒有目標：咬、撲擊都照面對的方向
+		_target = null   # 沒有目標：咬照面對的方向
 		if _pin_buttons & PIN_BITE:
 			_begin(ACT_BITE_WIND, PILOT_BITE_WIND)
 			return
 		if _pin_buttons & PIN_SWEEP and sweep_left <= 0.0:
 			sweep_left = _sweep_cd_time()
 			_begin(ACT_CHARGE_WIND, PILOT_CHARGE_WIND)
-			return
-		if _pin_buttons & PIN_POUNCE and _pounce_cd <= 0.0:
-			_pounce_cd = POUNCE_CD
-			_begin(ACT_POUNCE_WIND, POUNCE_WIND)
 			return
 	rotation.y = rotate_toward(rotation.y, _pin_yaw, TURN * delta)   # 轉身限速：繞著牠跑有用
 	var dir := Basis(Vector3.UP, _pin_yaw) * Vector3(_pin_move.x, 0.0, _pin_move.y)
@@ -349,8 +331,7 @@ func _pilot_local() -> void:
 	var b := 0
 	if free:
 		b |= PIN_BITE if Input.is_action_pressed(&"fire") else 0
-		b |= PIN_POUNCE if Input.is_action_pressed(&"aim") else 0
-		b |= PIN_SWEEP if Input.is_action_pressed(&"jump") else 0
+		b |= PIN_SWEEP if Input.is_action_pressed(&"aim") else 0
 		b |= PIN_RUN if Input.is_action_pressed(&"sprint") else 0
 	if multiplayer.is_server():
 		pilot_input(mv, _cam_yaw, _cam_pitch, b)
@@ -503,14 +484,6 @@ func _start_attack() -> bool:
 		sweep_left = _sweep_cd_time()
 		_begin(ACT_CHARGE_WIND, CHARGE_WIND)
 		return true
-	# 撲擊：中距離正前方看得到、路線上沒東西擋
-	if _pounce_cd <= 0.0 and _sees_now and _in_front(_sees_now.global_position, 0.85):
-		var d := _flat_dist(_sees_now.global_position)
-		if d >= POUNCE_MIN and d <= POUNCE_MAX and pounce_clear(_sees_now.global_position):
-			_target = _sees_now
-			_pounce_cd = POUNCE_CD
-			_begin(ACT_POUNCE_WIND, POUNCE_WIND)
-			return true
 	return false
 
 func _begin(a: int, t: float) -> void:
@@ -518,7 +491,7 @@ func _begin(a: int, t: float) -> void:
 	_act_left = t
 	_hit_once.clear()
 	_spot_pending = false
-	if a in [ACT_BITE_WIND, ACT_CHARGE_WIND, ACT_POUNCE_WIND]:
+	if a in [ACT_BITE_WIND, ACT_CHARGE_WIND]:
 		director.attacked()
 
 ## 剛確定看到人：停下來吼一聲（_act_attack 的 ACT_SPOT）
@@ -526,22 +499,6 @@ func _start_spot() -> bool:
 	if not _spot_pending:
 		return false
 	_begin(ACT_SPOT, SPOT_TIME)
-	return true
-
-## 撲擊的路線會不會撞到東西：在腳邊和身體兩個高度往目標各拉一條線（不算牛仔）
-func pounce_clear(to: Vector3) -> bool:
-	var space := get_world_3d().direct_space_state
-	var ground := global_position.y - 4.0
-	for h: float in [1.2, 3.5]:
-		var a := Vector3(global_position.x, ground + h, global_position.z)
-		var b := Vector3(to.x, a.y, to.z) + (Vector3(to.x, 0, to.z) - Vector3(a.x, 0, a.z)).normalized() * 3.0
-		var q := PhysicsRayQueryParameters3D.create(a, b)
-		var skip: Array[RID] = [get_rid()]
-		for p: CollisionObject3D in _cowboys():
-			skip.append(p.get_rid())
-		q.exclude = skip
-		if not space.intersect_ray(q).is_empty():
-			return false
 	return true
 
 ## 一招的進行：預備 → 出手 → 收招。每個階段時間到就換下一個
@@ -567,25 +524,6 @@ func _act_attack(delta: float) -> int:
 			_move(Vector3.ZERO, false, delta)
 			if _act_left <= 0.0:
 				_next(ACT_RECOVER, SWEEP_RECOVER)
-		ACT_POUNCE_WIND:
-			_turn_to(_target, TURN, delta)
-			_move(Vector3.ZERO, false, delta)
-			if _act_left <= 0.0:
-				# 起跳：方向鎖在目標「這一刻」的位置，之後不再修正
-				var to := (_target.global_position if is_instance_valid(_target) else global_position - global_basis.z * POUNCE_MIN) - global_position
-				to.y = 0.0
-				_pounce_dir = to.normalized()
-				_pounce_left = minf((to.length() + 3.0) / POUNCE_SPEED, 1.0)
-				rotation.y = atan2(-_pounce_dir.x, -_pounce_dir.z)
-				_next(ACT_POUNCE, _pounce_left)
-		ACT_POUNCE:
-			velocity = Vector3(_pounce_dir.x * POUNCE_SPEED, velocity.y, _pounce_dir.z * POUNCE_SPEED)
-			_apply_gravity(delta)
-			move_and_slide()
-			_hit_around(mouth(), POUNCE_RADIUS, POUNCE_DAMAGE)
-			if _act_left <= 0.0 or is_on_wall():
-				velocity = Vector3(0, velocity.y, 0)
-				_next(ACT_RECOVER, POUNCE_RECOVER)
 		ACT_SPOT:
 			_turn_to(_target, TURN, delta)
 			_move(Vector3.ZERO, false, delta)
