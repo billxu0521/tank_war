@@ -27,20 +27,22 @@ extends "res://dino.gd"
 ## 一次只出一招。動作狀態 act 同步給大家，各台自己播骨架動作和叫聲（trex.gd、_process）。
 ##
 ## 移動：照導航網格的路徑走（main.gd 的 bake_nav，開場在主機上烘），繞得過建築；烘好之前退回直線追。
-## 走比牛仔慢、跑比牛仔快。跑步吃體力，見底只能走、回到 RECOVER_AT 才能再跑——牛仔拉開距離的機會就在這。
+## 走跟牛仔一樣、跑比牛仔快。跑步吃體力，見底只能走、回到 RECOVER_AT 才能再跑——牛仔拉開距離的機會就在這。
 
-const WALK := 4.0            # 牛仔走 5.0
-const RUN := 11.0            # 牛仔跑 8.5
-const RUN_DRAIN := 10.0      # 每秒；滿體力約跑 10 秒
-const REGEN := 12.0          # 沒在跑的時候每秒回
-const RECOVER_AT := 45.0     # 跑到見底之後，回到這麼多才能再跑
+# 以下從 balance.csv 讀（見 balance.gd），改數字去改表
+static var WALK: float = Balance.num("dino_walk")   # 牛仔走 4.0
+static var RUN: float = Balance.num("dino_run")   # 牛仔衝刺 6.8
+static var RUN_DRAIN: float = Balance.num("dino_run_drain")   # 每秒；滿體力約跑 10 秒
+static var REGEN: float = Balance.num("dino_regen")   # 沒在跑的時候每秒回
+static var RECOVER_AT: float = Balance.num("dino_recover_at")   # 跑到見底之後，回到這麼多才能再跑
 const SIGHT := 18.0          # 看得到多遠
 const SIGHT_CROUCH := 9.0    # 蹲著的人要更近才看得到
 const SIGHT_CONE := 0.5      # cos 60°：正前方左右各 60 度
 const FEEL := 5.0            # 這麼近不管方向都會發現
 const HEAR_GUN := 150.0      # 槍聲：場地 168 公尺，幾乎整張圖都聽得到
 const HEAR_RUN := 20.0       # 有人在附近跑步
-const RUN_SPEED_HEARD := 6.5 # 水平速度超過這個算在跑（牛仔走 5、跑 8.5）
+# 以下從 balance.csv 讀（見 balance.gd），改數字去改表
+static var RUN_SPEED_HEARD: float = Balance.num("dino_run_heard")   # 水平速度超過這個算在跑（牛仔走 4、衝刺 6.8）
 const MEMORY := 10.0         # 看丟之後，往最後看到的位置追這麼久
 const NOISE_FORGET := 12.0   # 聽到的聲音記多久
 const NOISE_FUZZ := 0.12     # 聲音的位置偏差：距離的這麼多倍……
@@ -57,7 +59,8 @@ const SEARCH_RADIUS := 10.0
 const KNOCK_TIME := 6.0
 const PARTY_KNOCK_TIME := 15.0   # 派對模式倒地比較久：牛仔打倒恐龍就有這段時間偷蛋、撤離
 const GET_UP_GUARD := 3.0        # 派對模式：起身後這麼久打不動（身體閃爍）
-const TURN := 3.0            # 轉身速度（弧度／秒）：大隻轉得慢，繞著牠跑有用
+# 以下從 balance.csv 讀（見 balance.gd），改數字去改表
+static var TURN: float = Balance.num("dino_turn")   # 轉身速度（弧度／秒）：大隻轉得慢，繞著牠跑有用
 const ARRIVE := 2.5
 const RETREAT_DIST := 50.0   # 退開時往離最近的人這麼遠的地方跑
 
@@ -65,26 +68,29 @@ const RETREAT_DIST := 50.0   # 退開時往離最近的人這麼遠的地方跑
 enum { ACT_NONE, ACT_BITE_WIND, ACT_BITE, ACT_CHARGE_WIND, ACT_SWEEP, ACT_POUNCE_WIND, ACT_POUNCE, ACT_RECOVER, ACT_STUN, ACT_SPOT }  # ACT_POUNCE_WIND／ACT_POUNCE 已不用（撲擊拿掉，規則草案 10-28），留著是因為 trex.gd 用編號對動作
 enum { MOOD_ROAM, MOOD_SEARCH, MOOD_HUNT, MOOD_RETREAT }
 const SPOT_TIME := 0.7       # 發現人：停下來吼一聲這麼久，玩家還有這段時間跑
-const ATTACK_GAP := 1.2      # 收招之後至少隔這麼久才出下一招
-const PILOT_ATTACK_GAP := 0.3   # 玩家操作：收招後很快能出下一招（電腦版留空檔給牛仔喘氣）
+# 以下從 balance.csv 讀（見 balance.gd），改數字去改表
+static var ATTACK_GAP: float = Balance.num("attack_gap")   # 收招之後至少隔這麼久才出下一招
+static var PILOT_ATTACK_GAP: float = Balance.num("pilot_attack_gap")   # 玩家操作：收招後很快能出下一招（電腦版留空檔給牛仔喘氣）
 # 咬：近距離正前方。站定、頭往後仰、低吼，再咬下去
 const BITE_TRIGGER := 7.5    # 嘴巴到人這麼近開始預備
-const BITE_WIND := 0.7
-const PILOT_BITE_WIND := 0.25   # 玩家操作：出招要跟手，預備比電腦短一半
-const BITE_RECOVER := 0.8
-const PILOT_BITE_RECOVER := 0.3   # 玩家操作：咬完很快收回來
+# 以下從 balance.csv 讀（見 balance.gd），改數字去改表
+static var BITE_WIND: float = Balance.num("bite_wind")
+static var PILOT_BITE_WIND: float = Balance.num("pilot_bite_wind")   # 玩家操作：出招要跟手，預備比電腦短一半
+static var BITE_RECOVER: float = Balance.num("bite_recover")
+static var PILOT_BITE_RECOVER: float = Balance.num("pilot_bite_recover")   # 玩家操作：咬完很快收回來
 const BITE_AT := 6.0         # 判定點在身體中心前方這麼遠（嘴巴的位置）
 const BITE_RADIUS := 3.2     # 判定點附近這麼近的人被咬到
 # 蓄力甩尾：身邊有人在側面或背後、或身邊不只一個人。站著仰頭長吼，這段時間打中頭就打斷
 const SWEEP_TRIGGER := 9.0
-const CHARGE_WIND := 1.6
-const PILOT_CHARGE_WIND := 0.8   # 玩家操作：搖動太久不好玩。打中頭打斷的機會也跟著變短
-const SWEEP_RADIUS := 9.5
-const SWEEP_DAMAGE := 70
-const SWEEP_RECOVER := 0.6
-const SWEEP_CD := 8.0
-const SWEEP_CD_PARTY := 20.0   # 派對模式：甩尾拆得掉地形（destructible.gd），冷卻拉長，不然掩體一下就拆光
-const STUN_TIME := 2.5       # 蓄力被打斷暈多久
+# 以下從 balance.csv 讀（見 balance.gd），改數字去改表
+static var CHARGE_WIND: float = Balance.num("charge_wind")
+static var PILOT_CHARGE_WIND: float = Balance.num("pilot_charge_wind")   # 玩家操作：搖動太久不好玩。打中頭打斷的機會也跟著變短
+static var SWEEP_RADIUS: float = Balance.num("sweep_radius")
+static var SWEEP_DAMAGE: int = Balance.whole("sweep_damage")
+static var SWEEP_RECOVER: float = Balance.num("sweep_recover")
+static var SWEEP_CD: float = Balance.num("sweep_cd")
+static var SWEEP_CD_PARTY: float = Balance.num("sweep_cd_party")   # 派對模式：甩尾拆得掉地形（destructible.gd），冷卻拉長，不然掩體一下就拆光
+static var STUN_TIME: float = Balance.num("stun_time")   # 蓄力被打斷暈多久
 const STRIKE_SHOW := 0.15    # 出手那一下的動作狀態留這麼久（同步每秒 40 次，太短會漏）
 
 const SOUNDS := {

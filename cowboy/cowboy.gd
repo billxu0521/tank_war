@@ -6,9 +6,10 @@ class_name Cowboy
 ## Hunt 刻意不做探頭（見 docs/企劃/Hunt操作機制分析.md），怕變成躲在看不到的角落對槍。
 
 @export_group("Movement")
-@export var walk_speed := 5.0
-@export var sprint_speed := 8.5
-@export var crouch_speed := 2.5
+# 以下三個從 balance.csv 讀（見 balance.gd），改數字去改表，所以不再 @export
+var walk_speed: float = Balance.num("cowboy_walk")
+var sprint_speed: float = Balance.num("cowboy_sprint")
+var crouch_speed: float = Balance.num("cowboy_crouch")
 ## 起跳速度。設計原則（2026-10-09 使用者）：原地平地跳的高度不能超過柵欄高度（arena_map.gd 的 FENCE_H），
 ## 過柵欄一定要翻越。3.1 → 腳離地約 0.49 公尺（v²/2g，重力 9.8）；以前 4.5 是 1.03 公尺，直接跳過 1 公尺的柵欄
 @export var jump_velocity := 3.1

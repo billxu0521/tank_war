@@ -157,9 +157,9 @@ func _update_center_info(me: Node) -> void:
 		t = "%d 秒後重生" % maxi(1, ceili(delay - (now - _dead_ms) / 1000.0))
 	elif main.egg.extract > 0.0:
 		var who := "你" if main.egg.carrier == main.multiplayer.get_unique_id() else "牛仔 %d" % main.egg.carrier
-		t = "%s撤離中：還剩 %.1f 秒" % [who, maxf(main.EXTRACT_SECONDS - main.egg.extract, 0.0)]
+		t = "%s撤離中：還剩 %.1f 秒" % [who, maxf(main.extract_seconds() - main.egg.extract, 0.0)]
 	elif main.egg.pickup > 0.0:
-		t = "有人在撿蛋：還剩 %.1f 秒" % maxf(main.PICKUP_SECONDS - main.egg.pickup, 0.0)
+		t = "有人在撿蛋：還剩 %.1f 秒" % maxf(main.pickup_seconds() - main.egg.pickup, 0.0)
 	main.center_info.text = t
 
 ## 最近一秒最慢的一幀。平均 FPS 看不出卡頓：60 FPS 裡夾幾幀 50 毫秒，數字照樣是 60
