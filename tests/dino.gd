@@ -503,3 +503,28 @@ func _case_stomp() -> void:
 		b.think(DT)
 	_ck(c.hp == c.max_hp, "站著不動貼著不扣（現在 %d）" % c.hp)
 	_end(m)
+
+## 燃燒：3 秒內共扣 30（每秒 10），之後停；燒的時候再中一次就重設時間
+func _case_burn() -> void:
+	var m := _offline_match()
+	var c: Node3D = m._add_player(m.COWBOY, 2)
+	var hp0: int = c.hp
+	c.ignite()
+	for i in 2:   # 0.5 秒一步，剛好 1 秒
+		c.burn_step(0.5)
+	_ck(c.hp == hp0 - 10, "燒滿 1 秒扣 10（現在 %d）" % c.hp)
+	for i in 4:
+		c.burn_step(0.5)
+	_ck(c.hp == hp0 - 30, "燒 3 秒共扣 30（現在 %d）" % c.hp)
+	for i in 2:
+		c.burn_step(0.5)
+	_ck(c.hp == hp0 - 30, "燒完就停（現在 %d）" % c.hp)
+	# 燒到一半再中一次：重設 3 秒，不疊加，從重設的那刻起算
+	c.ignite()
+	for i in 4:
+		c.burn_step(0.5)   # 燒了 2 秒，又扣 20
+	c.ignite()
+	for i in 6:
+		c.burn_step(0.5)   # 重設後再燒 3 秒，扣 30
+	_ck(c.hp == hp0 - 80, "再中一次重設時間（現在 %d，應為 %d）" % [c.hp, hp0 - 80])
+	_end(m)
