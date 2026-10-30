@@ -53,7 +53,7 @@ func _case_party_boss() -> void:
 	_ck(b.hp == b.max_hp - 100, "無敵結束後會扣血（%d）" % b.hp)
 	_end(m)
 
-## 恐龍 boss：視力差、聽力好、跟蛋無關、導演只給大概方向、追太久會退開、三招都有預備動作、自己的體力、打不死
+## 恐龍 boss：視力差、聽力好、跟蛋無關、導演只給大概方向、追太久會退開、兩招都有預備動作、自己的體力、打不死
 func _case_boss() -> void:
 	var m := _offline_match()
 	var c: Node3D = m._add_player(m.COWBOY, 2)
@@ -117,7 +117,6 @@ func _case_boss() -> void:
 		b.think(1.0 / 60.0)
 	_ck(b.act != b.ACT_SPOT and b._sees_now == c, "吼完要開始追或出招（現在 act=%d）" % b.act)
 	b.act = b.ACT_NONE
-	b._pounce_cd = 0.0
 	# 還沒確定就躲起來：去他剛才在的地方找
 	b._seen_left = 0.0
 	b._suspect = 0.0
@@ -204,25 +203,6 @@ func _case_boss() -> void:
 	for i in int(b.CHARGE_WIND * 60) + 3:
 		b.think(1.0 / 60.0)
 	_ck(c.hp == c.max_hp - b.SWEEP_DAMAGE, "蓄力完要掃到背後的人")
-	# 撲擊：起跳那一刻方向鎖死，之後閃開就撲不到
-	c.hp = c.max_hp
-	b.act = b.ACT_NONE
-	b._attack_gap = 0.0
-	b.sweep_left = 99.0
-	b._pounce_cd = 0.0
-	b.global_position = m._on_ground(Vector3(0, 4.2, 60))
-	b.rotation.y = 0.0
-	c.global_position = m._on_ground(Vector3(0, 0.1, 44))   # 正前方 16 公尺
-	_ck(b.pounce_clear(c.global_position), "靶場那條路上撲過去的路線要是空的")
-	b._seen_left = b.MEMORY   # 已經在追他了（剛看丟又看到的人不用重新確定）
-	b.think(1.0 / 60.0)
-	_ck(b.act == b.ACT_POUNCE_WIND, "中距離正前方要撲（現在 act=%d）" % b.act)
-	for i in int(b.POUNCE_WIND * 60) + 2:
-		b.think(1.0 / 60.0)
-	c.global_position = m._on_ground(Vector3(8, 0.1, 44))   # 起跳之後往旁邊閃
-	for i in 70:
-		b.think(1.0 / 60.0)
-	_ck(c.hp == c.max_hp, "起跳後方向鎖死，往旁邊閃要撲不到（%d）" % c.hp)
 	# 自己的體力：一直跑會見底，見底只能走，回到一定量才能再跑
 	c.global_position = Vector3(0, 500, 0)
 	b.act = b.ACT_NONE
