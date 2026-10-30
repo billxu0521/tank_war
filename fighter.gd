@@ -312,3 +312,43 @@ func _flash_red() -> void:
 		for mi: MeshInstance3D in meshes:
 			if is_instance_valid(mi):
 				mi.material_overlay = null)
+
+# --- 補血包（草案 3.2）：牛仔用，恐龍生出來也有但不按 3 ---
+## 補血包：每個回多少、補一次要多久（主機以 0.8 倍防狂送）。數值在 balance.csv
+static var medkit_heal: int = Balance.whole("medkit_heal")
+static var medkit_seconds: float = Balance.num("medkit_seconds")
+## 剩幾個。主機記帳；本人那台跟著主機回報（_medkit_left）。生出來就是滿的，重生、新的一局都是新節點
+var medkits: int = Balance.whole("medkit_count")
+signal medkits_changed
+var _medkit_ms := -100000000   # 主機記：上次補血的時刻（毫秒），防狂送
+
+## 本人補好了（時間到）：主機自己直接算，客戶端送給主機
+func request_heal() -> void:
+	if multiplayer.is_server():
+		_do_heal()
+	else:
+		_request_heal.rpc_id(1)
+
+## 來源一定要是這個角色的主人（節點名字就是連線編號）
+@rpc("any_peer", "call_remote", "reliable")
+func _request_heal() -> void:
+	if multiplayer.is_server() and multiplayer.get_remote_sender_id() == name.to_int():
+		_do_heal()
+
+## 只有主機算：有包、活著、沒滿，離上次補至少 medkit_seconds × 0.8 才算。扣包、加血，剩幾包回報給本人
+func _do_heal() -> void:
+	var now := Time.get_ticks_msec()
+	if medkits <= 0 or hp <= 0 or hp >= max_hp or now - _medkit_ms < medkit_seconds * 800.0:
+		return
+	_medkit_ms = now
+	medkits -= 1
+	medkits_changed.emit()
+	_sync_hp.rpc(mini(hp + medkit_heal, max_hp))   # 血變多，_sync_hp 不會當受傷
+	if name.to_int() != 1:   # 主機自己那台的包數就是 medkits，不用再送
+		_medkit_left.rpc_id(name.to_int(), medkits)
+
+@rpc("any_peer", "call_remote", "reliable")
+func _medkit_left(n: int) -> void:
+	if multiplayer.get_remote_sender_id() == 1:
+		medkits = n
+		medkits_changed.emit()

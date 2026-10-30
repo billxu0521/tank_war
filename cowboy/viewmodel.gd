@@ -119,6 +119,7 @@ const STICK_THROW := Vector3(0.0, -0.05, -0.60)
 const STICK_THROW_ROT := Vector3(-1.45, 0.0, 0.4)   # 出手：手腕往下壓（甩完的收尾，第二輪審查：以前看起來像伸食指指東西）
 const STICK_AWAY := Vector3(0.22, -0.34, -0.30)
 var _index := 0
+var _last_long := 1   # 上次拿的長槍（索引 1 以後）：1 鍵從左輪拿回來用
 ## 每把武器的腰射位置（場景檔的 position），ADS 過渡和切換時用。
 var _hip_positions: Array[Vector3] = []
 
@@ -157,6 +158,9 @@ var _reload_id := 0
 var _fire_queued := false   # 等槍好了自動射的那一發：裝填中按開火（槍回正後射），或 fire_buffer 開著時提早按的
 var _aim_latched := false   # aim_toggle 開著時：現在是不是舉著
 var _fire_hold := 0.0       # 開火鍵這一次已經按住多久
+# --- 補血包（3）：按一下開始補，補 medkit_seconds 秒，時間到扣一包、請主機加血。補的時候不能開槍、換槍、近戰、丟炸藥、換彈（一動就取消）；再按 3 取消，不扣包 ---
+var _heal_t := -1.0         # 補了多久，-1 = 沒在補
+var _heal_hud: Label        # 補血中：畫面中間（準心下面），沒在補就藏起來
 
 
 func _ready() -> void:
@@ -177,6 +181,19 @@ func _ready() -> void:
 	_mark_for_outline()
 	add_to_group(&"viewmodel")
 	apply_brightness()
+	_player.medkits_changed.connect(_refresh_ammo)
+	_heal_hud = Label.new()
+	_heal_hud.anchor_left = 0.0
+	_heal_hud.anchor_right = 1.0
+	_heal_hud.anchor_top = 0.5
+	_heal_hud.anchor_bottom = 0.5
+	_heal_hud.offset_top = 40.0
+	_heal_hud.offset_bottom = 80.0
+	_heal_hud.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_heal_hud.add_theme_font_size_override(&"font_size", 24)
+	_heal_hud.visible = false
+	if ammo_label:
+		ammo_label.get_parent().add_child(_heal_hud)
 
 
 ## 描線（outline.gdshader）認槍和手的記號：粗糙度剛好 OUTLINE_MARK。以前用「離鏡頭 1.5 公尺內」認，
@@ -271,16 +288,19 @@ func _process(delta: float) -> void:
 			switch_weapon((_index + 1) % _weapons.size())
 		elif Input.is_action_just_pressed("weapon_prev"):
 			switch_weapon((_index - 1 + _weapons.size()) % _weapons.size())
-		else:
-			for i in _weapons.size():
-				if Input.is_action_just_pressed("weapon_%d" % (i + 1)):
-					switch_weapon(i)
+		elif Input.is_action_just_pressed("weapon_1"):
+			switch_weapon(_main_pick())
+		elif Input.is_action_just_pressed("weapon_2"):
+			switch_weapon(0)
+		elif Input.is_action_just_pressed("heal"):
+			_heal_press()
 		_update_melee_input(delta)
+		_update_heal(delta)
 		if _cook < 0.0 and _melee_held < 0.0 and dynamite != 0 and Input.is_action_just_pressed("throw"):
 			_light_dynamite()
 	_update_cook(delta)
 	# 翻越、爬梯子、拿著炸藥時槍放低（手去撐東西了）
-	weapon.lower = move_toward(weapon.lower, 1.0 if (_player.vaulting or _player.is_climbing() or _cook >= 0.0) else 0.0, delta * 6.0)
+	weapon.lower = move_toward(weapon.lower, 1.0 if (_player.vaulting or _player.is_climbing() or _cook >= 0.0 or _heal_t >= 0.0) else 0.0, delta * 6.0)
 	weapon.aim = ads
 	_fire_hold = _fire_hold + delta if Input.is_action_pressed("fire") else 0.0
 	var wants_aim := Input.is_action_pressed("aim")
@@ -290,10 +310,17 @@ func _process(delta: float) -> void:
 		if _player.is_sprinting():
 			_aim_latched = false   # 衝刺會放下槍，切換模式也一樣
 		wants_aim = _aim_latched
-	_update_ads(wants_aim and _melee_held < 0.0, delta)
+	_update_ads(wants_aim and _melee_held < 0.0 and _heal_t < 0.0, delta)
 	_update_breath(Input.is_action_pressed("sprint"), delta)
 	_update_sway(delta)
 	_update_anim(delta)
+
+
+## 1 鍵（主武器）：拿著左輪就拿上次的長槍；已經拿著長槍再按，換下一把（散彈 → 步槍 → 長矛 → 散彈）
+func _main_pick() -> int:
+	if _index == 0:
+		return _last_long
+	return _index % (_weapons.size() - 1) + 1
 
 
 func switch_weapon(index: int) -> void:
@@ -301,9 +328,12 @@ func switch_weapon(index: int) -> void:
 		return
 	# 換槍等於放棄這輪裝填，排隊中的那一發也不射
 	cancel_reload()
+	cancel_heal()
 	_fire_queued = false
 	weapon.visible = false
 	_index = index
+	if index > 0:
+		_last_long = index
 	_player.gun = index   # 別人看到你手上換槍
 	weapon = _weapons[index]
 	weapon.visible = true
@@ -436,6 +466,9 @@ static func is_headshot(target: Object, at: Vector3) -> bool:
 
 
 func try_fire(fanning := false) -> void:
+	if _heal_t >= 0.0:   # 補血中按開火＝取消補血，這一下不射
+		cancel_heal()
+		return
 	if _fire_cooldown > 0.0:
 		return
 	if _reloading:
@@ -687,13 +720,52 @@ func _play_move(base: StringName) -> float:
 	return weapon.play(action, blend)
 
 
+## 按 3：沒在補、血沒滿、有包、沒在換彈／開槍／近戰／丟炸藥才開始。再按一次＝取消
+func _heal_press() -> void:
+	if _heal_t >= 0.0:
+		cancel_heal()
+		return
+	if _player.hp <= 0 or _player.hp >= _player.max_hp or _player.medkits <= 0:
+		return
+	if _reloading or _fire_cooldown > 0.0 or _anim_lock > 0.0 or _melee_cooldown > 0.0 or _melee_held >= 0.0 or _cook >= 0.0:
+		return
+	_fire_queued = false
+	_heal_t = 0.0
+	_refresh_ammo()
+
+
+func cancel_heal() -> void:
+	if _heal_t < 0.0:
+		return
+	_heal_t = -1.0
+	_refresh_ammo()
+
+
+## 補的時候每幀加時間；換彈、近戰、丟炸藥、死了就取消（不扣包）。時間到＝請主機加血（主機算，不在這裡扣）
+func _update_heal(delta: float) -> void:
+	if _heal_t < 0.0:
+		return
+	if _player.hp <= 0 or _reloading or _melee_held >= 0.0 or _cook >= 0.0:
+		cancel_heal()
+		return
+	_heal_t += delta
+	if _heal_t >= Fighter.medkit_seconds:
+		_heal_t = -1.0
+		_player.request_heal()
+	_refresh_ammo()
+
+
 func _refresh_ammo() -> void:
 	if ammo_label:
-		ammo_label.text = "%s%s  %d | %s    炸藥 %s" % [
+		ammo_label.text = "%s%s  %d | %s    炸藥 %s    補血包 ×%d" % [
 			weapon.display_name, "" if weapon.harpoon else "（%s型彈）" % Weapon.AMMO_NAMES[weapon.ammo], weapon.mag,
 			"∞" if weapon.reserve < 0 else str(weapon.reserve),
 			"∞" if dynamite < 0 else str(dynamite),
+			_player.medkits,
 		]
+	if _heal_hud:
+		_heal_hud.visible = _heal_t >= 0.0
+		_heal_hud.text = "補血中… %d%%" % roundi(_heal_t / Fighter.medkit_seconds * 100.0)
 
 
 ## 沙盒、靶場：子彈和炸藥都無限

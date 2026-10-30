@@ -240,6 +240,8 @@ func _case_balance() -> void:
 		_ck(rows > 0, "數值表要有參數")
 	_ck(Balance.whole("sweep_damage") == 60 and Balance.num("score_guard") == 12.0 and Balance.num("cowboy_walk") == 4.0,
 		"草案數字要照表：甩尾 60、守蛋 12、牛仔走 4.0")
+	_ck(Balance.whole("medkit_count") == 3 and Balance.whole("medkit_heal") == 75 and Balance.num("medkit_seconds") == 1.5,
+		"補血包：3 包、回 75、補 1.5 秒")
 	_ck(Balance.digest().length() == 8, "數值表雜湊要 8 碼")
 	var m := _offline_match()
 	_ck(Balance.missing.is_empty(), "載入主要場景後，數值表不能查不到參數（%s）" % str(Balance.missing))
