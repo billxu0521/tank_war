@@ -253,3 +253,65 @@ func _case_balance() -> void:
 	var tbl_diff: String = Main.auth_verdict("0.8.5+bb", "0.8.5+aa")
 	_ck(tbl_diff.contains("數值表不同") and tbl_diff.contains("aa") and tbl_diff.contains("bb"), "版本一樣、數值表不同：數值表不同的訊息（%s）" % tbl_diff)
 	_ck(Main.auth_verdict("0.8.5", "0.8.5+aa").contains("版本不同"), "舊客戶端只送版本：當作版本不同")
+
+## 派對選裝選單（buy_menu.gd）：準備階段自動開、B／Esc 關、B 再開、準備結束就關；恐龍和死掉的人開不了；
+## 數字鍵選槍、存進 pick、活著就換槍，並且標記已處理（party_hud 的選重生點不會跟著收到）。headless 的按鍵用 _unhandled_input 直接送
+func _case_buy_menu() -> void:
+	var m := _new_offline_game()   # 1 是自己的牛仔，2 是恐龍 bot
+	var p := Party.new()
+	m.party = p
+	p.phase = &"prep"
+	p.time_left = 12.0
+	p.dino_id = 2
+	var menu: BuyMenu = m.get_node(^"UI/Root").get_children().filter(func(n: Node) -> bool: return n is BuyMenu).front()
+	var vm: Viewmodel = m.players.get_node(^"1").viewmodel
+	var me := m.players.get_node(^"1") as Cowboy
+	Viewmodel.pick = -1
+	menu._process(0.0)
+	_ck(menu.visible and menu._title.text == "選裝（剩 12 秒）", "準備階段一開始自動打開，寫倒數（現在 %s）" % menu._title.text)
+	_ck(Input.mouse_mode == Input.MOUSE_MODE_VISIBLE, "選單開著要留游標")
+	_ck(menu._btns[2].text.begins_with("[2] 槓桿步槍") and menu._btns[2].text.ends_with("免費") and menu._btns[-1].text.contains("◀ 已選"),
+		"選單寫名字和免費，沒選的標示「不帶」已選（現在 %s）" % menu._btns[2].text)
+	var key := InputEventKey.new()
+	key.pressed = true
+	key.keycode = KEY_2
+	key.physical_keycode = KEY_2
+	menu._unhandled_input(key)
+	_ck(Viewmodel.pick == 2 and vm._index == 2, "按 2 選步槍：存進 pick，活著就換到步槍")
+	_ck(m.get_viewport().is_input_handled(), "數字鍵處理完要標記已處理")
+	key.keycode = KEY_ESCAPE
+	key.physical_keycode = KEY_ESCAPE
+	menu._unhandled_input(key)
+	_ck(not menu.visible, "Esc 關選單")
+	menu._process(0.0)
+	_ck(not menu.visible, "同一個準備階段關掉之後不會自動再開")
+	key.keycode = KEY_B
+	key.physical_keycode = KEY_B
+	menu._unhandled_input(key)
+	_ck(menu.visible, "準備階段按 B 再打開")
+	key.keycode = KEY_0
+	key.physical_keycode = KEY_0
+	menu._unhandled_input(key)
+	_ck(Viewmodel.pick == -1 and vm._index == 0, "按 0 不帶，換回左輪")
+	p.phase = &"play"
+	menu._process(0.0)
+	_ck(not menu.visible, "準備結束選單要自己關")
+	key.keycode = KEY_B
+	key.physical_keycode = KEY_B
+	menu._unhandled_input(key)
+	_ck(not menu.visible, "遊戲中按 B 不開選單（B 是換彈種）")
+	p.phase = &"prep"
+	menu._process(0.0)
+	_ck(menu.visible, "下一個準備階段又自動打開")
+	p.dino_id = 1
+	menu._process(0.0)
+	_ck(not menu.visible, "自己當恐龍（操作尼諾拉）開不了選單")
+	p.dino_id = 2
+	me.hp = 0
+	menu._process(0.0)
+	_ck(not menu.visible, "死掉的人開不了選單")
+	me.hp = me.max_hp
+	m.party = null
+	p.free()
+	Viewmodel.pick = -1
+	_end(m)

@@ -187,6 +187,69 @@ func _case_hunt_keys() -> void:
 	_ck(vm._main_pick() == 2, "按 2 去左輪後，按 1 要回到上次的長槍（步槍）")
 	_end(m)
 
+## 派對選裝（docs/規劃/2026-10-31-選裝.md）：派對模式只拿左輪和選的那把，其他模式照舊全帶。
+## 按鍵 headless 跑不到，直接測 _main_pick、_wheel_target（同上面的按鍵案例）
+func _case_loadout() -> void:
+	var m := _new_offline_game()
+	var vm: Viewmodel = m.players.get_node(^"1").viewmodel
+	var p := Party.new()   # 不放進場景樹：只讓 viewmodel 看到 party 不是 null
+	m.party = p
+	Viewmodel.pick = 2
+	var seen := []
+	vm.switch_weapon(vm._main_pick())
+	seen.append(vm._index)
+	vm.switch_weapon(0)   # 按 2
+	seen.append(vm._index)
+	vm.switch_weapon(vm._main_pick())
+	seen.append(vm._index)
+	vm.switch_weapon(vm._main_pick())   # 再按 1 還是步槍，不輪替
+	seen.append(vm._index)
+	_ck(seen == [2, 0, 2, 2], "派對、選步槍：1 拿步槍、2 去左輪、1 回步槍，再按 1 不換（現在 %s）" % [seen])
+	vm.switch_weapon(0)
+	_ck(vm._wheel_target(1) == 2 and vm._wheel_target(-1) == 2, "派對、選步槍：滾輪在左輪和步槍之間切")
+	vm.switch_weapon(2)
+	_ck(vm._wheel_target(1) == 0 and vm._wheel_target(-1) == 0, "派對、選步槍：拿著步槍滾輪回到左輪")
+	Viewmodel.pick = -1
+	vm.switch_weapon(0)
+	vm.switch_weapon(vm._main_pick())
+	_ck(vm._index == 0 and vm._wheel_target(1) == -1, "派對、沒選：1 鍵和滾輪都不做事，一直是左輪")
+	m.party = null
+	vm.switch_weapon(0)
+	seen = []
+	for i in 4:
+		vm.switch_weapon(vm._main_pick())
+		seen.append(vm._index)
+	_ck(seen == [2, 3, 1, 2], "非派對：照舊 1 鍵繞一圈，從上次的長槍（步槍）開始（現在 %s）" % [seen])
+	vm.switch_weapon(0)
+	_ck(vm._wheel_target(1) == 1 and vm._wheel_target(-1) == 3, "非派對：滾輪照舊繞一圈")
+	m.party = p
+	Viewmodel.pick = 2
+	var me: Node = m.players.get_node(^"1")
+	m.players.remove_child(me)
+	me.free()
+	m._add_player(m.COWBOY, 1)
+	_ck(Viewmodel.pick == 2, "死掉重生（新節點）之後選的槍還在")
+	Viewmodel.pick = -1
+	m.party = null
+	p.free()
+	_end(m)
+	# 電腦牛仔：派對第一回合的 bot 拿散彈或步槍（主機在 party.gd 的 _spawn_cowboy 決定）
+	var pm := _offline_match()
+	pm._on_mode_picked(pm.RULES.keys().find(&"party"))
+	pm._apply_rules()
+	pm._physics_process(DT)
+	var picks := []
+	for id in [-1, -2, -3]:
+		var b = pm.players.get_node_or_null(NodePath(str(id)))
+		if b:
+			picks.append(b.viewmodel._index)
+	_ck(picks.size() == 3 and picks.all(func(i: int) -> bool: return i == 1 or i == 2),
+		"派對電腦牛仔拿散彈或步槍（現在 %s）" % [picks])
+	_end(pm)
+	var tbl := Weapon.table()
+	_ck(["revolver", "shotgun", "rifle", "lance"].all(func(id: String) -> bool: return tbl.get(id, {}).get("price", "") == "0"),
+		"weapons.csv 四把槍的價格都要是 0")
+
 ## 補血包（草案 3.2）：3 補一包（+75，不超過上限），補到一半取消不扣包，三包用完不能再補，血滿不能補，重生回到 3 個。
 ## 主機那邊防狂送：間隔不到 medkit_seconds × 0.8 或包是 0 就不加血。headless 這裡是主機（離線），直接測主機的 _do_heal
 func _case_medkit() -> void:
