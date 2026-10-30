@@ -62,8 +62,7 @@ func _case_boss() -> void:
 	var b: Node3D = m.spawn_boss()
 	_ck(b != null and b.is_in_group(&"boss"), "要生得出恐龍 boss")
 	_ck(m.spawn_boss() == null, "boss 場上最多一隻")
-	_ck(b.WALK < c.walk_speed and b.RUN > c.sprint_speed,
-		"boss 走路要比牛仔慢（%.1f vs %.1f）、跑步要比牛仔快（%.1f vs %.1f）" % [b.WALK, c.walk_speed, b.RUN, c.sprint_speed])
+	_ck(b.RUN > c.sprint_speed, "恐龍跑步要比牛仔衝刺快（%.1f vs %.1f）" % [b.RUN, c.sprint_speed])
 	_ck(is_instance_valid(m._nav_region), "生 boss 要順便烘導航網格")
 	_ck(m._match_hud.BOSS_ACTS.size() == b.ACT_SPOT + 1, "每個動作狀態都要有除錯名稱（BOSS_ACTS 有 %d 個）" % m._match_hud.BOSS_ACTS.size())
 	# 視力：放在沙盒靶場那條路上（整平、沒蓋東西，視線不會被擋）

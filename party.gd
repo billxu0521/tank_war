@@ -11,16 +11,18 @@ signal changed
 
 const ROUNDS := 4
 const PLAYERS := 4            # 不到這麼多人用電腦補
-const PREP_SECONDS := 15.0
-const PLAY_SECONDS := 210.0   # 3 分 30 秒
+# 以下從 balance.csv 讀（見 balance.gd），改數字去改表
+static var PREP_SECONDS: float = Balance.num("party_prep_seconds")
+static var PLAY_SECONDS: float = Balance.num("party_play_seconds")   # 3 分 30 秒
 const RESULT_SECONDS := 8.0   # 回合結算停多久再開下一回合
 const FINAL_SECONDS := 30.0   # 四回合結束後停多久自動開新的一場
-const LIVES := 3              # 牛仔每回合幾條命
-const RESPAWN_SECONDS := 10.0
-const SCORE_SURVIVE := 2      # 回合結束時還活著
-const SCORE_EXTRACT := 8      # 帶蛋撤離（另外加，合計 10）
-const SCORE_KILL := 1         # 恐龍殺一個牛仔
-const SCORE_GUARD := 10       # 恐龍守住蛋（時間到、或牛仔的命用完）
+# 以下從 balance.csv 讀（見 balance.gd），改數字去改表
+static var LIVES: int = Balance.whole("party_lives")   # 牛仔每回合幾條命
+static var RESPAWN_SECONDS: float = Balance.num("party_respawn_seconds")
+static var SCORE_SURVIVE: int = Balance.whole("score_survive")   # 回合結束時還活著
+static var SCORE_EXTRACT: int = Balance.whole("score_extract")   # 帶蛋撤離（另外加，合計 10）
+static var SCORE_KILL: int = Balance.whole("score_kill")   # 恐龍殺一個牛仔
+static var SCORE_GUARD: int = Balance.whole("score_guard")   # 恐龍守住蛋（時間到、或牛仔的命用完）
 
 var rounds := ROUNDS
 var round_index := 0

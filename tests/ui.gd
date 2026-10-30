@@ -219,3 +219,35 @@ func _case_ui() -> void:
 	m._to_lobby("")
 	_ck(not m.result.visible and not m._match_hud._boss_bar.visible, "回大廳後勝負畫面和 boss 體力條都要收掉")
 	_end(m)
+
+## 數值表（balance.csv）：讀得到、每列的值都是數字、參數不重複；載入主要場景後沒有查不到的參數；版本檢查的訊息分得清楚
+func _case_balance() -> void:
+	var f := FileAccess.open(Balance.TABLE, FileAccess.READ)
+	_ck(f != null, "數值表 balance.csv 要讀得到")
+	if f != null:
+		f.get_csv_line()   # 標題列
+		var seen := {}
+		var rows := 0
+		while not f.eof_reached():
+			var row := f.get_csv_line()
+			if row.size() < 4 or row[0].strip_edges() == "":
+				continue
+			var key := row[0].strip_edges()
+			rows += 1
+			_ck(row[3].strip_edges().is_valid_float(), "數值表 %s 的值不是數字（%s）" % [key, row[3]])
+			_ck(not seen.has(key), "數值表參數重複：%s" % key)
+			seen[key] = true
+		_ck(rows > 0, "數值表要有參數")
+	_ck(Balance.whole("sweep_damage") == 60 and Balance.num("score_guard") == 12.0 and Balance.num("cowboy_walk") == 4.0,
+		"草案數字要照表：甩尾 60、守蛋 12、牛仔走 4.0")
+	_ck(Balance.digest().length() == 8, "數值表雜湊要 8 碼")
+	var m := _offline_match()
+	_ck(Balance.missing.is_empty(), "載入主要場景後，數值表不能查不到參數（%s）" % str(Balance.missing))
+	_end(m)
+	var Main: GDScript = load("res://main.gd")
+	_ck(Main.auth_verdict("0.8.5+aa", "0.8.5+aa") == "", "版本和數值表都一樣：放行")
+	var ver_diff: String = Main.auth_verdict("0.8.4+aa", "0.8.5+aa")
+	_ck(ver_diff.contains("版本不同") and not ver_diff.contains("aa"), "版本不同：只顯示版本，不顯示雜湊（%s）" % ver_diff)
+	var tbl_diff: String = Main.auth_verdict("0.8.5+bb", "0.8.5+aa")
+	_ck(tbl_diff.contains("數值表不同") and tbl_diff.contains("aa") and tbl_diff.contains("bb"), "版本一樣、數值表不同：數值表不同的訊息（%s）" % tbl_diff)
+	_ck(Main.auth_verdict("0.8.5", "0.8.5+aa").contains("版本不同"), "舊客戶端只送版本：當作版本不同")

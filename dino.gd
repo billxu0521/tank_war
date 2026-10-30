@@ -13,7 +13,8 @@ const SPRINT_TIME := 8.0
 const SPRINT_CD := 20.0
 const ACCEL := 22.0        # 這麼大一隻不該瞬間到全速
 const BRAKE := 32.0
-const STAMINA_MAX := 100.0
+# 以下從 balance.csv 讀（見 balance.gd），改數字去改表
+static var STAMINA_MAX: float = Balance.num("dino_stamina_max")
 const BITE_COST := 35.0        # 咬一口的體力，改成攻擊資源不是移動資源
 const CLIMB_DRAIN := 25.0      # 每秒；全滿約爬 4 秒 = 24 公尺，剛好爬得完最高的建築
 const REGEN_STILL := 16.0      # 站著不動每秒回

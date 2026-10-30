@@ -12,8 +12,9 @@ const SANDBOX_RANGE := Rect2(-20, -30, 40, 112)   # 靶在路兩側 4 公尺、�
 const SANDBOX_START := Vector3(0, 0.1, 76)   # y 是離地高度，用 _on_ground() 換成實際位置
 const SANDBOX_TARGETS := [10, 25, 50, 100]   # 牛仔靶的距離（公尺）：左輪、散彈、步槍各自的有效距離
 const PICKUP_RANGE := 3.0     # 牛仔靠這麼近就撿得到蛋
-const PICKUP_SECONDS := 2.0   # 撿蛋要連續待滿這麼久，不是碰到就拿
-const EXTRACT_SECONDS := 5.0  # 要在撤離區內連續待滿這麼久
+# 以下從 balance.csv 讀（見 balance.gd），改數字去改表
+static var PICKUP_SECONDS: float = Balance.num("pickup_seconds")   # 撿蛋要連續待滿這麼久，不是碰到就拿
+static var EXTRACT_SECONDS: float = Balance.num("extract_seconds")   # 要在撤離區內連續待滿這麼久
 const EGG_HOLD_HEIGHT := 2.4  # 蛋舉在牛仔頭上多高（腳底算起），低了會擋住自己的鏡頭
 const MATCH_SECONDS := 240.0  # 一局四分鐘
 const RESPAWN_DELAY := 5.0    # 死亡的代價是節奏，不是失去參賽資格
@@ -429,7 +430,22 @@ func _to_lobby(msg: String) -> void:
 ## 認證資料格式是「版本|玩家代號」（舊版只送版本，整串就是版本）
 func _on_peer_authenticating(id: int) -> void:
 	if not multiplayer.is_server():
-		multiplayer.send_auth(id, ("%s|%s" % [ProjectSettings.get_setting("application/config/version"), _player_key()]).to_utf8_buffer())
+		multiplayer.send_auth(id, ("%s|%s" % [_version_tag(), _player_key()]).to_utf8_buffer())
+
+## 版本檢查送的字串：版本＋數值表雜湊（balance.gd 的 digest）
+func _version_tag() -> String:
+	return "%s+%s" % [ProjectSettings.get_setting("application/config/version"), Balance.digest()]
+
+## 版本檢查的結論（純函式，tests 直接測）：回傳 "" 就放行，否則是要送給對方、也印在主機的訊息。
+## 字串格式是「版本+數值表雜湊」；舊客戶端只送版本、沒有 +，當作版本不同
+static func auth_verdict(theirs: String, mine: String) -> String:
+	if theirs == mine:
+		return ""
+	var tv := theirs.get_slice("+", 0)
+	var mv := mine.get_slice("+", 0)
+	if tv != mv or not theirs.contains("+"):
+		return "版本不同：主機是 %s，你是 %s，請更新到一樣的版本" % [mv, tv]
+	return "數值表不同：請更新到一樣的版本（主機 %s，你 %s）" % [mine.get_slice("+", 1), theirs.get_slice("+", 1)]
 
 ## 玩家代號：第一次要用時才產生、存進 settings.cfg
 func _player_key() -> String:
@@ -463,8 +479,8 @@ func _on_auth(id: int, data: PackedByteArray) -> void:
 		return
 	var ver := text.get_slice("|", 0)              # 舊客戶端只送版本：整串就是版本
 	var key := text.get_slice("|", 1).left(64)     # 沒有代號就是 ""
-	var mine := str(ProjectSettings.get_setting("application/config/version"))
-	if ver == mine:
+	var verdict := auth_verdict(ver, _version_tag())
+	if verdict == "":
 		# 同一個代號已經在線上：同一個人重連。主機還沒發現舊連線斷了（ENet 要等幾秒到幾十秒逾時），
 		# 玩家就已經連回來。先把舊的當斷線處理（資料進 _held，RECONNECT_MS 內接得回來），再斷掉舊連線，新的照常放行
 		# ponytail: 同一台電腦開兩個客戶端連專用伺服器會共用 settings.cfg 的代號而互踢，測試工具要自己設不同的 player_key（net_check.gd 已經這樣做）
@@ -473,9 +489,9 @@ func _on_auth(id: int, data: PackedByteArray) -> void:
 		multiplayer.send_auth(id, "ok".to_utf8_buffer())
 		multiplayer.complete_auth(id)
 		return
-	multiplayer.send_auth(id, ("版本不同：主機是 %s，你是 %s，請更新到一樣的版本" % [mine, ver]).to_utf8_buffer())
+	multiplayer.send_auth(id, verdict.to_utf8_buffer())
 	if _dedicated:
-		print("擋下版本不同的客戶端（編號 %d）：他是 %s，主機是 %s" % [id, ver, mine])
+		print("擋下客戶端（編號 %d）：%s" % [id, verdict])
 	# 等 0.2 秒讓訊息送出再斷；這段內客戶端自己斷了也沒關係
 	get_tree().create_timer(0.2).timeout.connect(func() -> void:
 		if id in multiplayer.get_authenticating_peers():   # 客戶端已經自己斷了就不用踢（踢不存在的連線會報錯）
@@ -1511,7 +1527,7 @@ func _egg_step(delta: float) -> void:
 	# 要在圈內連續待滿才算數。離開就歸零；敵人站在圈裡不會中斷。
 	if _dist_to_exit(egg.global_position) < EXIT_RADIUS:
 		egg.extract += delta
-		if egg.extract >= EXTRACT_SECONDS:
+		if egg.extract >= extract_seconds():
 			if party:   # 派對模式：回合結束、計分，不跳勝負畫面
 				party.extracted(egg.carrier)
 				return
@@ -1583,6 +1599,13 @@ func _dist_to_exit(p: Vector3) -> float:
 # --- 場地 ---
 
 
+## 撿蛋、撤離要待滿多久：派對模式用表裡的派對數字，其他模式用上面的常數
+func pickup_seconds() -> float:
+	return Balance.num("party_pickup_seconds") if party else PICKUP_SECONDS
+
+func extract_seconds() -> float:
+	return Balance.num("party_extract_seconds") if party else EXTRACT_SECONDS
+
 ## 撿蛋不是碰到就拿，要在旁邊連續待滿 PICKUP_SECONDS。
 ## 換人或走開就歸零——跟撤離同一個道理，讓拿蛋變成要承諾的動作。
 func _claim_step(delta: float) -> void:
@@ -1603,7 +1626,7 @@ func _claim_step(delta: float) -> void:
 		_claimer = id
 		egg.pickup = 0.0
 	egg.pickup += delta
-	if egg.pickup >= PICKUP_SECONDS:
+	if egg.pickup >= pickup_seconds():
 		egg.carrier = id
 		egg.pickup = 0.0
 		_claimer = 0

@@ -9,8 +9,9 @@ func _case_timeout() -> void:
 	_ck(bites == 2, "平衡目標：咬兩口死一個牛仔（現在是 %d 口）" % bites)
 
 	# 恐龍只比牛仔跑步快一點點：跑得掉一段，但不能永遠甩開。兩邊各自改都會被擋下來
+	# 規則草案 6.2：獵人移速 ×0.8、恐龍速度不動，比例因此拉大到約 1.32（已確認接受）
 	var ratio: float = d.SPEED / t2.sprint_speed
-	_ck(ratio > 1.0 and ratio < 1.15, "恐龍基礎速度要比牛仔跑步快 0~15%%（現在 %.2f 倍）" % ratio)
+	_ck(ratio > 1.0 and ratio < 1.35, "恐龍基礎速度要比牛仔衝刺快 0~35%%（現在 %.2f 倍）" % ratio)
 
 	# 無限重生，所以殺光牛仔不會結束回合
 	m.players.get_node(^"2").take_damage(9999)
@@ -613,7 +614,7 @@ func _case_party_destruction() -> void:
 	var b: Node3D = m.spawn_boss()
 	_ck(b._sweep_cd_time() == b.SWEEP_CD, "其他模式甩尾冷卻不變")
 	m.rules = &"party"   # ponytail: RULES 的 party 是 gameplay 加的，這裡只借 rules 這個值
-	_ck(b._sweep_cd_time() == 20.0, "派對模式甩尾冷卻 20 秒")
+	_ck(b._sweep_cd_time() == Balance.num("sweep_cd_party"), "派對模式甩尾冷卻照表（%s 秒）" % Balance.num("sweep_cd_party"))
 	# 自己操作恐龍時，畫面上看得到甩尾冷卻；冷卻要同步給操作的客戶端（冷卻在主機算）
 	var sync: MultiplayerSynchronizer = b.find_children("*", "MultiplayerSynchronizer")[0]
 	_ck(sync.replication_config.has_property(^".:sweep_left"), "甩尾冷卻要同步出去")
@@ -809,7 +810,7 @@ func _case_party_gameplay() -> void:
 	_ck(p._waiting.is_empty(), "最後一條命死了不排重生")
 	_ck(m._is_out(-1) and not m._is_out(1), "命用完算出局（接觀戰鏡頭），恐龍不算")
 	m._physics_process(DT)
-	_ck(p.phase == &"result" and int(p.scores[1]) == 14, "命用完恐龍贏：4 殺 + 守蛋 10 = 14（現在 %s）" % p.scores)
+	_ck(p.phase == &"result" and int(p.scores[1]) == 4 * p.SCORE_KILL + p.SCORE_GUARD, "命用完恐龍贏：4 殺 + 守蛋 %d（現在 %s）" % [p.SCORE_GUARD, p.scores])
 	_ck(not m.result.visible and not m._over, "回合之間不跳舊的勝負畫面")
 	# 第二回合換人當恐龍：電腦（-1）當，主機變回牛仔
 	p.time_left = 0.0
@@ -825,7 +826,7 @@ func _case_party_gameplay() -> void:
 		m.players.get_node(NodePath(str(id))).global_position = Vector3(0, 800, 0)
 	me.global_position = m._exits[0] + Vector3(0, 1, 0)
 	m.egg.carrier = 1
-	m.egg.extract = m.EXTRACT_SECONDS - DT * 0.5
+	m.egg.extract = m.extract_seconds() - DT * 0.5   # 派對模式的撤離時間（表裡的派對值，不是非派對的 EXTRACT_SECONDS）
 	m._physics_process(DT)
 	_ck(p.phase == &"result" and int(p.round_scores.get(1, 0)) == 10 and int(p.round_scores.get(-2, 0)) == 2
 		and int(p.round_scores.get(-1, 0)) == 0, "帶蛋撤離 10 分、其他活著的 2 分、恐龍沒守住 0 分（%s）" % p.round_scores)
@@ -838,12 +839,13 @@ func _case_party_gameplay() -> void:
 	m._physics_process(DT)
 	p.time_left = 0.0
 	m._physics_process(DT)
-	_ck(p.phase == &"result" and int(p.round_scores.get(-2, 0)) == 10 and int(p.round_scores.get(1, 0)) == 2, "時間到：恐龍 10、活著的牛仔 2（%s）" % p.round_scores)
+	_ck(p.phase == &"result" and int(p.round_scores.get(-2, 0)) == p.SCORE_GUARD and int(p.round_scores.get(1, 0)) == 2, "時間到：恐龍 %d、活著的牛仔 2（%s）" % [p.SCORE_GUARD, p.round_scores])
 	# 四回合後排名
 	p.round_index = 3
 	p.time_left = 0.0
 	m._physics_process(DT)
-	_ck(p.phase == &"final" and p.ranking()[0] == 1 and int(p.scores[1]) == 26, "四回合結束、照總分排名（%s）" % p.scores)
+	# 1 號的總分：第一回合當恐龍（4 殺＋守蛋）、第二回合撤離＋活著、第三回合活著
+	_ck(p.phase == &"final" and p.ranking()[0] == 1 and int(p.scores[1]) == 4 * p.SCORE_KILL + p.SCORE_GUARD + p.SCORE_EXTRACT + 2 * p.SCORE_SURVIVE, "四回合結束、照總分排名（%s）" % p.scores)
 	_end(m)
 	m = _offline_match()
 	m._on_mode_picked(m.RULES.keys().find(&"egg"))
