@@ -19,6 +19,7 @@ func _process(_delta: float) -> bool:
 		_case_mouse_lock()
 		_case_hunt_weapons()
 		_case_hunt_keys()
+		_case_medkit()
 		_case_sandbox()
 		_case_range()
 		_case_net_smooth()

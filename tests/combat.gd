@@ -187,6 +187,72 @@ func _case_hunt_keys() -> void:
 	_ck(vm._main_pick() == 2, "按 2 去左輪後，按 1 要回到上次的長槍（步槍）")
 	_end(m)
 
+## 補血包（草案 3.2）：3 補一包（+75，不超過上限），補到一半取消不扣包，三包用完不能再補，血滿不能補，重生回到 3 個。
+## 主機那邊防狂送：間隔不到 medkit_seconds × 0.8 或包是 0 就不加血。headless 這裡是主機（離線），直接測主機的 _do_heal
+func _case_medkit() -> void:
+	var m := _new_offline_game()
+	var me: Node = m.players.get_node(^"1")
+	var vm: Node = me.viewmodel
+	var mx: int = me.max_hp
+	var secs: float = Fighter.medkit_seconds
+	_ck(me.medkits == Balance.whole("medkit_count") and me.medkits == 3, "牛仔一開始 3 包（現在 %d）" % me.medkits)
+	_ck(me.hp == mx, "一開始血滿時不能補")
+	vm._heal_press()
+	_ck(vm._heal_t < 0.0, "血滿時按 3 不能開始補")
+	# 補一包：150 血打到 50 → 125 → 再補 150（不超過上限）
+	me.hp = 50
+	vm._heal_press()
+	_ck(vm._heal_t >= 0.0, "血沒滿、有包，按 3 開始補")
+	vm._update_heal(secs * 0.5)
+	_ck(me.medkits == 3 and me.hp == 50, "補到一半還沒扣包、沒加血")
+	vm._update_heal(secs * 0.6)
+	_ck(me.medkits == 2 and me.hp == mini(50 + Fighter.medkit_heal, mx), "補滿時間到：扣一包、加 %d（現在 血 %d 包 %d）" % [Fighter.medkit_heal, me.hp, me.medkits])
+	me._medkit_ms = -100000000   # 測試：假裝已經過了很久（主機防狂送的間隔）
+	me.hp = 100
+	vm._heal_press()
+	vm._update_heal(secs + 0.01)
+	_ck(me.medkits == 1 and me.hp == mx, "再補一包，血 100 補到上限 %d 不超過（現在 %d）" % [mx, me.hp])
+	me._medkit_ms = -100000000
+	me.hp = 50
+	vm._heal_press()
+	vm._update_heal(secs + 0.01)
+	_ck(me.medkits == 0 and me.hp == mini(50 + Fighter.medkit_heal, mx), "第三包用掉，剩 0")
+	me.hp = 50
+	vm._heal_press()
+	_ck(vm._heal_t < 0.0 and me.hp == 50, "包用完了，按 3 不能補")
+	# 補到一半取消：不扣包、不加血
+	me.medkits = 3
+	me.hp = 50
+	vm._heal_press()
+	vm._update_heal(secs * 0.5)
+	vm._heal_press()
+	_ck(vm._heal_t < 0.0 and me.medkits == 3 and me.hp == 50, "補到一半再按 3 取消，不扣包")
+	# 補到一半開槍：只取消、不射（不扣子彈）
+	vm._heal_press()
+	var mag: int = vm.weapon.mag
+	vm.try_fire()
+	_ck(vm._heal_t < 0.0 and vm.weapon.mag == mag and me.medkits == 3, "補血中開火只取消補血，不射、不扣包")
+	# 補血中換槍：取消
+	vm._heal_press()
+	vm.switch_weapon(2)
+	_ck(vm._heal_t < 0.0 and me.medkits == 3, "補血中換槍要取消，不扣包")
+	vm.switch_weapon(1)
+	# 主機拒絕：包是 0 不加血；連送兩次只加一次（間隔不到）
+	me.medkits = 0
+	me.hp = 50
+	me._do_heal()
+	_ck(me.hp == 50, "主機：包是 0 不加血")
+	me.medkits = 3
+	me._medkit_ms = -100000000
+	me._do_heal()
+	me._do_heal()
+	_ck(me.hp == mini(50 + Fighter.medkit_heal, mx) and me.medkits == 2, "主機：連送兩次只加一次（現在 血 %d 包 %d）" % [me.hp, me.medkits])
+	# 重生（新節點）回到滿的 3 個
+	me.medkits = 0
+	var again: Node = m._add_player(m.COWBOY, 5)
+	_ck(again.medkits == 3, "重生的牛仔回到 3 個（現在 %d）" % again.medkits)
+	_end(m)
+
 ## Hunt 式的三把槍和它們的規則
 func _case_hunt_weapons() -> void:
 	var m := _new_offline_game()
