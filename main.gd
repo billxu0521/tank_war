@@ -639,7 +639,7 @@ func make_pilot(id: int) -> void:
 		p.queue_free()
 		_cowboys -= 1
 	_respawn_queue = _respawn_queue.filter(func(r: Dictionary) -> bool: return int(r["id"]) != id)
-	var msg := "你是尼諾拉！左鍵 咬　右鍵 蓄力甩尾　Shift 跑"
+	var msg := "你是尼諾拉！左鍵 咬　右鍵 蓄力甩尾　Q 火球　Shift 跑"
 	if id == multiplayer.get_unique_id():
 		_announce(msg)
 	else:

@@ -65,7 +65,7 @@ const ARRIVE := 2.5
 const RETREAT_DIST := 50.0   # 退開時往離最近的人這麼遠的地方跑
 
 # --- 兩招（時間都是秒、距離是公尺）---
-enum { ACT_NONE, ACT_BITE_WIND, ACT_BITE, ACT_CHARGE_WIND, ACT_SWEEP, ACT_POUNCE_WIND, ACT_POUNCE, ACT_RECOVER, ACT_STUN, ACT_SPOT }  # ACT_POUNCE_WIND／ACT_POUNCE 已不用（撲擊拿掉，規則草案 10-28），留著是因為 trex.gd 用編號對動作
+enum { ACT_NONE, ACT_BITE_WIND, ACT_BITE, ACT_CHARGE_WIND, ACT_SWEEP, ACT_POUNCE_WIND, ACT_POUNCE, ACT_RECOVER, ACT_STUN, ACT_SPOT, ACT_SPIT_WIND, ACT_SPIT }  # ACT_POUNCE_WIND／ACT_POUNCE 已不用（撲擊拿掉，規則草案 10-28），留著是因為 trex.gd 用編號對動作
 enum { MOOD_ROAM, MOOD_SEARCH, MOOD_HUNT, MOOD_RETREAT }
 const SPOT_TIME := 0.7       # 發現人：停下來吼一聲這麼久，玩家還有這段時間跑
 # 以下從 balance.csv 讀（見 balance.gd），改數字去改表
@@ -102,6 +102,14 @@ static var SWEEP_CD: float = Balance.num("sweep_cd")
 static var SWEEP_CD_PARTY: float = Balance.num("sweep_cd_party")   # 派對模式：甩尾拆得掉地形（destructible.gd），冷卻拉長，不然掩體一下就拆光
 static var STUN_TIME: float = Balance.num("stun_time")   # 蓄力被打斷暈多久
 const STRIKE_SHOW := 0.15    # 出手那一下的動作狀態留這麼久（同步每秒 40 次，太短會漏）
+# 火球（Q，玩家操作）：站定、仰頭張嘴，吐出去。以下從 balance.csv 讀
+static var FIREBALL_WIND: float = Balance.num("fireball_wind")
+static var FIREBALL_RECOVER: float = Balance.num("fireball_recover")
+static var FIREBALL_CD: float = Balance.num("fireball_cd")
+static var FB_SPEED: float = Balance.num("fireball_speed")
+static var FB_SIZE: float = Balance.num("fireball_size")
+static var FB_RANGE: float = Balance.num("fireball_range")
+static var FB_DAMAGE: int = Balance.whole("fireball_damage")
 
 const SOUNDS := {
 	ACT_BITE_WIND: preload("res://assets/audio/dino/growl.wav"),
@@ -129,7 +137,7 @@ signal got_up         # 各台：起身那一刻
 ## 對抗模式：玩家操作尼諾拉（docs/規劃/2026-10-18-對抗模式.md）。0 = 電腦。有駕駛時行為樹不跑，照駕駛送來的輸入動，
 ## 出招、預備動作、叫聲、體力、倒地、同步都跟電腦版一樣。駕駛斷線 main.gd 會清回 0，電腦接手
 @export var pilot := 0
-enum { PIN_BITE = 1, PIN_SWEEP = 4, PIN_RUN = 8 }
+enum { PIN_BITE = 1, PIN_SWEEP = 4, PIN_RUN = 8, PIN_FIREBALL = 16 }
 const PILOT_STALE := 0.5     # 主機這麼久沒收到駕駛的輸入就當放開（網路斷斷續續時不要一直往前衝）
 var _pin_move := Vector2.ZERO   # 主機：駕駛最新的輸入（相對鏡頭，x 右、y 後）
 var _pin_yaw := 0.0
@@ -173,6 +181,7 @@ var _glimpse_at := Vector3.INF
 var _suspect := 0.0           # 確定的進度 0~1
 var _spot_pending := false    # 剛確定看到人，這一幀要吼
 var _look_left := 0.0         # 繞著找時停下來張望還剩多久
+var fireball_left := 0.0      # 火球冷卻還剩幾秒（只有主機算）
 var _stomp_clock := 0.0        # 踩踏的計時（只在主機用）
 var _stomp_at := {}           # 牛仔 → 上一次被踩的時刻；ponytail: 牛仔離線留下的項目不清，一局幾個人不會長大
 
@@ -264,6 +273,7 @@ func think(delta: float) -> void:
 	_noise_left = maxf(_noise_left - delta, 0.0)
 	_attack_gap = maxf(_attack_gap - delta, 0.0)
 	sweep_left = maxf(sweep_left - delta, 0.0)
+	fireball_left = maxf(fireball_left - delta, 0.0)
 	guard_left = maxf(guard_left - delta, 0.0)
 	_stomp(delta)
 	if pilot != 0:
@@ -321,7 +331,7 @@ func _pilot_step(delta: float) -> void:
 		_act_down(delta)
 		return
 	if act != ACT_NONE:
-		if act in [ACT_BITE_WIND, ACT_SPOT]:   # 預備時還能對準（跟電腦版一樣：咬、發現人都半速）
+		if act in [ACT_BITE_WIND, ACT_SPOT, ACT_SPIT_WIND]:   # 預備時還能對準（跟電腦版一樣：咬、發現人都半速；火球預備也是）
 			rotation.y = rotate_toward(rotation.y, _pin_yaw, TURN * 0.5 * delta)
 		_act_attack(delta)
 		return
@@ -333,6 +343,10 @@ func _pilot_step(delta: float) -> void:
 		if _pin_buttons & PIN_SWEEP and sweep_left <= 0.0:
 			sweep_left = _sweep_cd_time()
 			_begin(ACT_CHARGE_WIND, PILOT_CHARGE_WIND)
+			return
+		if _pin_buttons & PIN_FIREBALL and fireball_left <= 0.0:
+			fireball_left = FIREBALL_CD
+			_begin(ACT_SPIT_WIND, FIREBALL_WIND)
 			return
 	rotation.y = rotate_toward(rotation.y, _pin_yaw, TURN * delta)   # 轉身限速：繞著牠跑有用
 	var dir := Basis(Vector3.UP, _pin_yaw) * Vector3(_pin_move.x, 0.0, _pin_move.y)
@@ -366,6 +380,7 @@ func _pilot_local() -> void:
 	if free:
 		b |= PIN_BITE if Input.is_action_pressed(&"fire") else 0
 		b |= PIN_SWEEP if Input.is_action_pressed(&"aim") else 0
+		b |= PIN_FIREBALL if Input.is_action_pressed(&"dino_fireball") else 0
 		b |= PIN_RUN if Input.is_action_pressed(&"sprint") else 0
 	if multiplayer.is_server():
 		pilot_input(mv, _cam_yaw, _cam_pitch, b)
@@ -525,7 +540,7 @@ func _begin(a: int, t: float) -> void:
 	_act_left = t
 	_hit_once.clear()
 	_spot_pending = false
-	if a in [ACT_BITE_WIND, ACT_CHARGE_WIND]:
+	if a in [ACT_BITE_WIND, ACT_CHARGE_WIND, ACT_SPIT_WIND]:
 		director.attacked()
 
 ## 剛確定看到人：停下來吼一聲（_act_attack 的 ACT_SPOT）
@@ -558,6 +573,15 @@ func _act_attack(delta: float) -> int:
 			_move(Vector3.ZERO, false, delta)
 			if _act_left <= 0.0:
 				_next(ACT_RECOVER, SWEEP_RECOVER)
+		ACT_SPIT_WIND:
+			_move(Vector3.ZERO, false, delta)
+			if _act_left <= 0.0:
+				_spit_fire.rpc(_spit_dir(), _spit_muzzle())
+				_next(ACT_SPIT, STRIKE_SHOW)
+		ACT_SPIT:
+			_move(Vector3.ZERO, false, delta)
+			if _act_left <= 0.0:
+				_next(ACT_RECOVER, FIREBALL_RECOVER)
 		ACT_SPOT:
 			_turn_to(_target, TURN, delta)
 			_move(Vector3.ZERO, false, delta)
@@ -597,6 +621,25 @@ func _strike_sweep() -> void:
 	_hit_around(global_position, SWEEP_RADIUS, SWEEP_DAMAGE)   # 掃起的一圈土是各台自己播（trex.gd 的 _act_fx）
 	if _party():
 		_wreck_around(global_position, SWEEP_RADIUS)
+
+## 尼諾拉吐火球：方向跟鏡頭俯仰走（_spit_dir），各台都生一顆（dino.gd 的 _spit 沒有參數、設定不夠用，另寫一個）。
+## 扣血和燃燒只在主機（Fireball 裡 is_server 才算）
+@rpc("authority", "call_local", "reliable")
+func _spit_fire(dir: Vector3, muzzle: Vector3) -> void:
+	var f: Fireball = FIREBALL.instantiate()
+	f.speed = FB_SPEED
+	f.gravity = 0.0          # 直線飛
+	f.radius = FB_SIZE * 0.5
+	f.max_range = FB_RANGE
+	f.damage = FB_DAMAGE
+	f.burn = true
+	f.shooter = self
+	f.vel = dir * FB_SPEED
+	get_tree().get_first_node_in_group(&"arena").add_child(f)
+	f.global_position = muzzle
+	$Trex.bite()   # 順便張嘴
+	Fx.burst(get_tree().get_first_node_in_group(&"arena"), SphereMesh.new(),
+		Color(1, 0.55, 0.15, 0.9), muzzle, Vector3.ONE * 0.5, Vector3.ONE * 3.0, 0.18)
 
 func _sweep_cd_time() -> float:
 	return SWEEP_CD_PARTY if _party() else SWEEP_CD

@@ -528,3 +528,126 @@ func _case_burn() -> void:
 		c.burn_step(0.5)   # 重設後再燒 3 秒，扣 30
 	_ck(c.hp == hp0 - 80, "再中一次重設時間（現在 %d，應為 %d）" % [c.hp, hp0 - 80])
 	_end(m)
+
+## 尼諾拉火球（Q）：按下去進預備，預備完吐出一顆火球（直線、有半徑、飛 60 公尺、會燒）；冷卻中再按不出
+func _case_boss_fireball() -> void:
+	var m := _offline_match()
+	var b: Node3D = m.spawn_boss()
+	b.pilot = 1
+	b.global_position = m._on_ground(Vector3(0, 4.1, 60))
+	b.rotation.y = 0.0
+	var arena: Node = m.get_node(^"Arena")
+	var n0 := _fireball_count(arena)
+	b.pilot_input(Vector2.ZERO, 0.0, 0.0, b.PIN_FIREBALL)
+	b.think(DT)
+	_ck(b.act == b.ACT_SPIT_WIND, "按 Q 要進火球預備（現在 act=%d）" % b.act)
+	var i := 0
+	while b.act != b.ACT_NONE and i < 600:
+		b.pilot_input(Vector2.ZERO, 0.0, 0.0, 0)
+		b.think(DT)
+		i += 1
+	_ck(_fireball_count(arena) == n0 + 1, "預備完要吐出一顆火球（現在 %d 顆）" % _fireball_count(arena))
+	var ball: Fireball = null
+	for c in arena.get_children():
+		if c is Fireball:
+			ball = c
+	_ck(ball != null and ball.gravity == 0.0 and ball.radius == 1.0 and ball.max_range == 60.0 \
+		and ball.damage == 50 and ball.burn and ball.speed == 25.0, "火球設定：直線、半徑 1、60 公尺、50 點、會燒")
+	_ck(ball != null and absf(ball.vel.y) < 0.001 and ball.vel.z < -24.9, "恐龍水平看的時候火球朝前飛（vel %s）" % str(ball.vel if ball else Vector3.ZERO))
+	# 冷卻中再按 Q 不出
+	b.pilot_input(Vector2.ZERO, 0.0, 0.0, b.PIN_FIREBALL)
+	for j in 120:
+		b.think(DT)
+	_ck(b.act == b.ACT_NONE and _fireball_count(arena) == n0 + 1, "冷卻中再按 Q 不出")
+	_end(m)
+
+func _fireball_count(arena: Node) -> int:
+	var n := 0
+	for c in arena.get_children():
+		if c is Fireball:
+			n += 1
+	return n
+
+## 火球的物理（跨物理幀，_phase 4）：在一個只有假目標的小世界裡飛（不用整局，整局的預設角色會擋住火球）。
+## 中心偏 0.8 公尺擦過的目標中 50 並點著；直線飛；飛 60 公尺消失
+var _fb_world: Node3D
+var _fb_c   # 假目標（腳本在 _start_fireball_case 裡給）
+var _fb_a: Fireball
+var _fb_b: Fireball
+var _fb_hp0 := 0
+var _fb_frames := 0
+var _fb_a_y0 := 0.0
+var _fb_b_y0 := 0.0
+var _fb_b_max := 0.0
+var _fb_b_start := Vector3.ZERO
+var _fb_a_done := false
+var _fb_b_done := false
+
+func _start_fireball_case() -> void:
+	_phase = 4
+	root.multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()   # 扣血只在主機算，離線當主機（同 _offline_match）
+	_fb_world = Node3D.new()
+	_fb_world.add_to_group(&"arena")   # Fireball 的特效要掛在 arena 底下
+	root.add_child(_fb_world)
+	# 假目標：有 take_damage 和 ignite 就會被火球打到，記下扣了多少、燒不燒
+	var sc := GDScript.new()
+	sc.source_code = "extends CharacterBody3D\nvar hp := 150\nvar burn_left := 0.0\nfunc take_damage(a: int, _s: Node = null) -> void:\n\thp -= a\nfunc ignite(_s: Node = null) -> void:\n\tburn_left = 3.0\n"
+	sc.reload()
+	_fb_c = CharacterBody3D.new()
+	_fb_c.set_script(sc)
+	var cs := CollisionShape3D.new()
+	var cap := CapsuleShape3D.new()
+	cap.radius = 0.4
+	cap.height = 1.8
+	cs.shape = cap
+	_fb_c.add_child(cs)
+	_fb_world.add_child(_fb_c)
+	_fb_c.global_position = Vector3(500, 0.9, 444)   # 離遠一點：同一個物理世界裡還活著的靶場角色會擋（見 _start_gun_case）
+	_fb_hp0 = _fb_c.hp
+	_fb_a = _spawn_fb(Vector3(500.8, 0.9, 450.0))   # 從 6 公尺外朝它飛，中心偏 0.8 公尺
+	_fb_b_start = Vector3(520.0, 50.0, 560.0)   # 高空、另一條線，什麼都不擋
+	_fb_b = _spawn_fb(_fb_b_start)
+	_fb_a_y0 = _fb_a.global_position.y
+	_fb_b_y0 = _fb_b.global_position.y
+
+func _spawn_fb(at: Vector3) -> Fireball:
+	var f: Fireball = load("res://fireball.tscn").instantiate()
+	f.speed = 25.0
+	f.gravity = 0.0
+	f.radius = 1.0
+	f.max_range = 60.0
+	f.damage = 50
+	f.burn = true
+	f.vel = Vector3(0, 0, -25.0)
+	_fb_world.add_child(f)
+	f.global_position = at
+	return f
+
+## _phase 4 每幀呼叫，兩顆都飛完才回 true
+func _fb_step() -> bool:
+	_fb_frames += 1
+	if is_instance_valid(_fb_a):
+		_ck(absf(_fb_a.global_position.y - _fb_a_y0) < 0.001, "直線飛：高度不變")
+	elif not _fb_a_done:
+		_fb_a_done = true
+		_ck(_fb_c.hp == _fb_hp0 - 50, "擦過中心 0.8 公尺也要中，扣 50（現在 %d）" % _fb_c.hp)
+		_ck(_fb_c.burn_left > 0.0, "中了要點著")
+	if is_instance_valid(_fb_b):
+		_ck(absf(_fb_b.global_position.y - _fb_b_y0) < 0.001, "直線飛：B 高度不變")
+		_fb_b_max = maxf(_fb_b_max, _fb_b.global_position.distance_to(_fb_b_start))
+	elif not _fb_b_done:
+		_fb_b_done = true
+		_ck(_fb_b_max > 55.0 and _fb_b_max <= 60.5, "飛到 60 公尺左右就消失（最遠 %.1f 公尺）" % _fb_b_max)
+	if _fb_a_done and _fb_b_done:
+		_fb_end()
+		return true
+	if _fb_frames > 1500:
+		_ck(false, "火球物理超時（A 還在 %s，B 還在 %s）" % [is_instance_valid(_fb_a), is_instance_valid(_fb_b)])
+		_fb_end()
+		return true
+	return false
+
+func _fb_end() -> void:
+	root.remove_child(_fb_world)
+	_fb_world.free()
+	root.multiplayer.multiplayer_peer = null

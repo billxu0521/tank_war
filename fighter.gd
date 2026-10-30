@@ -210,7 +210,7 @@ func _notification(what: int) -> void:
 	# 牛仔、恐龍各有自己的 _process；這裡用通知，子類別不用記得呼叫
 	if what == NOTIFICATION_PROCESS and net_smooth:
 		net_step(float(Time.get_ticks_msec()))
-	if what == NOTIFICATION_PROCESS and multiplayer.is_server():
+	if what == NOTIFICATION_PROCESS and burn_left > 0.0 and multiplayer.is_server():   # 沒在燒就不碰 multiplayer（沒有連線時會報錯）
 		burn_step(get_process_delta_time())
 
 ## 自己射出去的彈打中有血的東西時呼叫。純本機回饋，不走網路。
