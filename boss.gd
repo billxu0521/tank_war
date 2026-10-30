@@ -100,6 +100,9 @@ static var SWEEP_DAMAGE: int = Balance.whole("sweep_damage")
 static var SWEEP_RECOVER: float = Balance.num("sweep_recover")
 static var SWEEP_CD: float = Balance.num("sweep_cd")
 static var SWEEP_CD_PARTY: float = Balance.num("sweep_cd_party")   # 派對模式：甩尾拆得掉地形（destructible.gd），冷卻拉長，不然掩體一下就拆光
+static var SWEEP_COS: float = cos(deg_to_rad(Balance.num("sweep_angle") * 0.5))   # 甩尾扇形（後方）半角的餘弦
+static var SWEEP_ROOT_BACK: float = Balance.num("sweep_root_back")   # 尾根在身體中心後方幾公尺，甩尾的圓心
+static var SWEEP_ACTIVE: float = Balance.num("sweep_active")   # 甩尾判定持續秒數，trex.gd 的甩尾動作也用這個
 static var STUN_TIME: float = Balance.num("stun_time")   # 蓄力被打斷暈多久
 const STRIKE_SHOW := 0.15    # 出手那一下的動作狀態留這麼久（同步每秒 40 次，太短會漏）
 # 火球（Q，玩家操作）：站定、仰頭張嘴，吐出去。以下從 balance.csv 讀
@@ -568,8 +571,9 @@ func _act_attack(delta: float) -> int:
 			_move(Vector3.ZERO, false, delta)
 			if _act_left <= 0.0:
 				_strike_sweep()
-				_next(ACT_SWEEP, STRIKE_SHOW * 2.0)
+				_next(ACT_SWEEP, SWEEP_ACTIVE)
 		ACT_SWEEP:
+			_sweep_hit()   # 整段出手時間每幀判，_hit_once 保證每人每招只中一次
 			_move(Vector3.ZERO, false, delta)
 			if _act_left <= 0.0:
 				_next(ACT_RECOVER, SWEEP_RECOVER)
@@ -601,26 +605,48 @@ func _next(a: int, t: float) -> void:
 	_act_left = t
 
 ## 輕攻擊的判定：胸前扇形，中心算到身體半徑＋light_reach 為止，夾角在 light_angle 以內。
-## 高度、擋牆跟 _hit_around 一樣
+## 高度、擋牆跟 _sweep_hit 一樣
 func _hit_cone() -> void:
 	var fwd := -global_basis.z
 	fwd.y = 0.0
 	fwd = fwd.normalized()
 	for p: Node3D in _cowboys():
-		if p in _hit_once:
-			continue
-		var to := p.global_position - global_position
-		to.y = 0.0
-		if to.length() >= BODY_RADIUS + LIGHT_REACH or fwd.dot(to.normalized()) < LIGHT_COS:
+		if p in _hit_once or not _in_fan(global_position, fwd, p.global_position, BODY_RADIUS + LIGHT_REACH, LIGHT_COS):
 			continue
 		if absf(p.global_position.y - (global_position.y - 4.0)) < 4.0 and not _blocked_by_wall(p):
 			_hit_once.append(p)
 			p.take_damage(LIGHT_DAMAGE, self)
 
+## 扇形判定（輕攻擊、甩尾共用）：at 在 from 往 dir 那邊（水平）、距離在 reach 以內、夾角 cos 在 cos_half 以上
+func _in_fan(from: Vector3, dir: Vector3, at: Vector3, reach: float, cos_half: float) -> bool:
+	var to := at - from
+	to.y = 0.0
+	return to.length() < reach and dir.dot(to.normalized()) >= cos_half
+
+## 甩尾的圓心：尾根（身體中心往後 SWEEP_ROOT_BACK 公尺）；後方方向是水平的
+func _sweep_root() -> Vector3:
+	return global_position + _back_dir() * SWEEP_ROOT_BACK
+
+func _back_dir() -> Vector3:
+	var b := global_basis.z
+	b.y = 0.0
+	return b.normalized()
+
+## 甩尾出手的那一下：只拆地形（每幀拆會一棟房子挨好幾下）。掃起的一圈土是各台自己播（trex.gd 的 _act_fx）
 func _strike_sweep() -> void:
-	_hit_around(global_position, SWEEP_RADIUS, SWEEP_DAMAGE)   # 掃起的一圈土是各台自己播（trex.gd 的 _act_fx）
 	if _party():
-		_wreck_around(global_position, SWEEP_RADIUS)
+		_wreck_around(_sweep_root(), _back_dir(), SWEEP_RADIUS, SWEEP_COS)
+
+## 甩尾的人：只打尾根後方半圈，高度、擋牆跟輕攻擊一樣。整段出手時間每幀判
+func _sweep_hit() -> void:
+	var root := _sweep_root()
+	var back := _back_dir()
+	for p: Node3D in _cowboys():
+		if p in _hit_once or not _in_fan(root, back, p.global_position, SWEEP_RADIUS, SWEEP_COS):
+			continue
+		if absf(p.global_position.y - (global_position.y - 4.0)) < 4.0 and not _blocked_by_wall(p):
+			_hit_once.append(p)
+			p.take_damage(SWEEP_DAMAGE, self)
 
 ## 尼諾拉吐火球：方向跟鏡頭俯仰走（_spit_dir），各台都生一顆（dino.gd 的 _spit 沒有參數、設定不夠用，另寫一個）。
 ## 扣血和燃燒只在主機（Fireball 裡 is_server 才算）
@@ -644,8 +670,8 @@ func _spit_fire(dir: Vector3, muzzle: Vector3) -> void:
 func _sweep_cd_time() -> float:
 	return SWEEP_CD_PARTY if _party() else SWEEP_CD
 
-## 派對模式：甩尾掃到的地形（群組 destructible：樹、灰盒房子；安全屋不在裡面）各挨一下，倒不倒它自己算
-func _wreck_around(at: Vector3, radius: float) -> void:
+## 派對模式：甩尾掃到的地形（群組 destructible：樹、灰盒房子；安全屋不在裡面）各挨一下，倒不倒它自己算。只算後方半圈（同 _sweep_hit）
+func _wreck_around(at: Vector3, dir: Vector3, radius: float, cos_half: float) -> void:
 	var sphere := SphereShape3D.new()
 	sphere.radius = radius
 	var q := PhysicsShapeQueryParameters3D.new()
@@ -656,19 +682,10 @@ func _wreck_around(at: Vector3, radius: float) -> void:
 	# ponytail: 一棟房子幾十塊碰撞各算一筆，上限給大一點；房子擠成一團漏掉幾個再加
 	for r: Dictionary in get_world_3d().direct_space_state.intersect_shape(q, 256):
 		var c: Object = r.collider
-		if c is Node and (c as Node).is_in_group(&"destructible") and not done.has(c):
+		if c is Node3D and (c as Node3D).is_in_group(&"destructible") and not done.has(c) \
+				and _in_fan(at, dir, (c as Node3D).global_position, radius, cos_half):
 			done[c] = true
 			c.tail_hit(at)
-
-## 判定點附近的牛仔扣血（一招每人最多一次、中間隔著東西打不到）
-func _hit_around(at: Vector3, radius: float, damage: int) -> void:
-	for p: Node3D in _cowboys():
-		if p in _hit_once:
-			continue
-		var d := Vector2(p.global_position.x - at.x, p.global_position.z - at.z).length()
-		if d < radius and absf(p.global_position.y - (global_position.y - 4.0)) < 4.0 and not _blocked_by_wall(p):
-			_hit_once.append(p)
-			p.take_damage(damage, self)
 
 ## 打中頭（Main.request_damage 帶 head 旗標進來）：蓄力中被打中頭就打斷、暈 STUN_TIME 秒
 func head_hit() -> void:
