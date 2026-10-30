@@ -47,6 +47,7 @@ func _process(_delta: float) -> bool:
 		_case_corpse()
 		_case_fireball()
 		_case_dino_attack_switch()
+		_case_light_cone()
 		_case_ui()
 		_case_bug_report()
 		_case_stagger()

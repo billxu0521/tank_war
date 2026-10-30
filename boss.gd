@@ -79,7 +79,11 @@ static var PILOT_BITE_WIND: float = Balance.num("pilot_bite_wind")   # 玩家操
 static var BITE_RECOVER: float = Balance.num("bite_recover")
 static var PILOT_BITE_RECOVER: float = Balance.num("pilot_bite_recover")   # 玩家操作：咬完很快收回來
 const BITE_AT := 6.0         # 判定點在身體中心前方這麼遠（嘴巴的位置）
-const BITE_RADIUS := 3.2     # 判定點附近這麼近的人被咬到
+const BODY_RADIUS := 2.4     # 身體碰撞膠囊的半徑（boss.tscn）
+# 輕攻擊（左鍵咬）：胸前扇形，從身體中心算。以下從 balance.csv 讀
+static var LIGHT_DAMAGE: int = Balance.whole("light_damage")
+static var LIGHT_REACH: float = Balance.num("light_reach")
+static var LIGHT_COS: float = cos(deg_to_rad(Balance.num("light_angle") * 0.5))   # 扇形半角的餘弦，判定用
 # 蓄力甩尾：身邊有人在側面或背後、或身邊不只一個人。站著仰頭長吼，這段時間打中頭就打斷
 const SWEEP_TRIGGER := 9.0
 # 以下從 balance.csv 讀（見 balance.gd），改數字去改表
@@ -515,9 +519,9 @@ func _act_attack(delta: float) -> int:
 			_turn_to(_target, TURN * 0.5, delta)   # 預備時慢慢對準，側移還是躲得掉
 			_move(Vector3.ZERO, false, delta)
 			if _act_left <= 0.0:
-				_strike_bite()
 				_next(ACT_BITE, STRIKE_SHOW)
 		ACT_BITE:
+			_hit_cone()   # 整段出手時間每幀判，_hit_once 保證每人每招只中一次
 			_move(Vector3.ZERO, false, delta)
 			if _act_left <= 0.0:
 				_next(ACT_RECOVER, PILOT_BITE_RECOVER if pilot != 0 else BITE_RECOVER)
@@ -548,8 +552,22 @@ func _next(a: int, t: float) -> void:
 	act = a
 	_act_left = t
 
-func _strike_bite() -> void:
-	_hit_around(mouth(), BITE_RADIUS, BITE_DAMAGE)
+## 輕攻擊的判定：胸前扇形，中心算到身體半徑＋light_reach 為止，夾角在 light_angle 以內。
+## 高度、擋牆跟 _hit_around 一樣
+func _hit_cone() -> void:
+	var fwd := -global_basis.z
+	fwd.y = 0.0
+	fwd = fwd.normalized()
+	for p: Node3D in _cowboys():
+		if p in _hit_once:
+			continue
+		var to := p.global_position - global_position
+		to.y = 0.0
+		if to.length() >= BODY_RADIUS + LIGHT_REACH or fwd.dot(to.normalized()) < LIGHT_COS:
+			continue
+		if absf(p.global_position.y - (global_position.y - 4.0)) < 4.0 and not _blocked_by_wall(p):
+			_hit_once.append(p)
+			p.take_damage(LIGHT_DAMAGE, self)
 
 func _strike_sweep() -> void:
 	_hit_around(global_position, SWEEP_RADIUS, SWEEP_DAMAGE)   # 掃起的一圈土是各台自己播（trex.gd 的 _act_fx）

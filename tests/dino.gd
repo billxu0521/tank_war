@@ -172,7 +172,7 @@ func _case_boss() -> void:
 	_ck(c.hp == hp0, "預備動作時還不能扣血")
 	for i in 6:
 		b.think(1.0 / 60.0)
-	_ck(c.hp == hp0 - b.BITE_DAMAGE, "預備完要咬下去（%d → %d）" % [hp0, c.hp])
+	_ck(c.hp == hp0 - b.LIGHT_DAMAGE, "預備完要咬下去（%d → %d）" % [hp0, c.hp])
 	# 預備時往旁邊閃開就咬不到
 	c.hp = c.max_hp
 	b.act = b.ACT_NONE
@@ -443,3 +443,34 @@ func _start_bot_case() -> void:
 	_bot_game = _dino_vs_bots()
 	_bot_cowboy = _bot_game.players.get_node(^"2")
 	_bot_from = Vector2(_bot_cowboy.global_position.x, _bot_cowboy.global_position.z)
+
+## 輕攻擊扇形：正前方 5 公尺中；側面 5 公尺（90 度）不中；前方 8 公尺（超出 2.4＋4.0）不中；
+## 出手時間內走進範圍也中；同一招只中一次
+func _case_light_cone() -> void:
+	var m := _offline_match()
+	var b: Node3D = m.spawn_boss()
+	b.pilot = 1
+	b.global_position = m._on_ground(Vector3(0, 4.1, 60))
+	var front: Node3D = m._add_player(m.COWBOY, 2)
+	var side: Node3D = m._add_player(m.COWBOY, 3)
+	var far: Node3D = m._add_player(m.COWBOY, 4)
+	var late: Node3D = m._add_player(m.COWBOY, 5)
+	front.global_position = m._on_ground(Vector3(0, 0, 55))   # 恐龍面向 -Z
+	side.global_position = m._on_ground(Vector3(5, 0, 60))
+	far.global_position = m._on_ground(Vector3(0, 0, 52))
+	late.global_position = m._on_ground(Vector3(0, 0, 52))   # 出手後才走進來
+	var walked := false
+	for i in 200:
+		b.pilot_input(Vector2.ZERO, 0.0, 0.0, b.PIN_BITE if i == 0 else 0)
+		b.think(DT)
+		if b.act == b.ACT_BITE and not walked:
+			walked = true
+			late.global_position = m._on_ground(Vector3(0, 0, 55))
+		if b.act == b.ACT_RECOVER:
+			break
+	_ck(walked, "咬要真的出手（進 ACT_BITE）")
+	_ck(front.hp == front.max_hp - 40, "正前方 5 公尺的牛仔扣 40（現在 %d）" % front.hp)
+	_ck(side.hp == side.max_hp, "側面 90 度不該中")
+	_ck(far.hp == far.max_hp, "前方 8 公尺超出扇形不該中")
+	_ck(late.hp == late.max_hp - 40, "出手時間內走進扇形也要中，而且只中一次（現在 %d）" % late.hp)
+	_end(m)
