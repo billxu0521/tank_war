@@ -474,3 +474,32 @@ func _case_light_cone() -> void:
 	_ck(far.hp == far.max_hp, "前方 8 公尺超出扇形不該中")
 	_ck(late.hp == late.max_hp - 40, "出手時間內走進扇形也要中，而且只中一次（現在 %d）" % late.hp)
 	_end(m)
+
+## 踩踏：移動中貼著牛仔走過去扣 30；1 秒內不再扣，超過 1 秒再扣；站著不動貼著不扣
+func _case_stomp() -> void:
+	var m := _offline_match()
+	var b: Node3D = m.spawn_boss()
+	b.pilot = 1
+	var spot: Vector3 = m._on_ground(Vector3(0, 4.1, 60))
+	var c: Node3D = m._add_player(m.COWBOY, 2)
+	var far: Node3D = m._add_player(m.COWBOY, 3)
+	c.global_position = m._on_ground(Vector3(3, 0, 60))   # 側面 3 公尺，在 2.4＋1.0 之內
+	far.global_position = m._on_ground(Vector3(40, 0, 60))
+	var hp0: int = c.hp
+	for i in 130:
+		b.global_position = spot
+		b.velocity = Vector3(0, 0, -6)
+		b.think(DT)
+		if i == 0:
+			_ck(c.hp == hp0 - b.STOMP_DAMAGE, "移動中貼著走過去要踩到（現在 %d）" % c.hp)
+		if i == 109:
+			_ck(c.hp == hp0 - b.STOMP_DAMAGE, "1 秒內不再踩（現在 %d）" % c.hp)
+	_ck(c.hp == hp0 - 2 * b.STOMP_DAMAGE, "超過 1 秒再踩一次（現在 %d）" % c.hp)
+	# 站著不動貼著：不扣
+	c.hp = c.max_hp
+	for i in 150:
+		b.global_position = spot
+		b.velocity = Vector3.ZERO
+		b.think(DT)
+	_ck(c.hp == c.max_hp, "站著不動貼著不扣（現在 %d）" % c.hp)
+	_end(m)

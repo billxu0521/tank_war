@@ -84,6 +84,12 @@ const BODY_RADIUS := 2.4     # 身體碰撞膠囊的半徑（boss.tscn）
 static var LIGHT_DAMAGE: int = Balance.whole("light_damage")
 static var LIGHT_REACH: float = Balance.num("light_reach")
 static var LIGHT_COS: float = cos(deg_to_rad(Balance.num("light_angle") * 0.5))   # 扇形半角的餘弦，判定用
+# 踩踏：移動中貼著牛仔走過去就踩，站著不動不踩。以下從 balance.csv 讀
+static var STOMP_DAMAGE: int = Balance.whole("stomp_damage")
+static var STOMP_REACH: float = Balance.num("stomp_reach")
+static var STOMP_INTERVAL: float = Balance.num("stomp_interval")
+static var STOMP_MIN_SPEED: float = Balance.num("stomp_min_speed")
+const STOMP_HEIGHT := 1.5    # 牛仔腳底在恐龍腳底上下這麼多以內才踩得到
 # 蓄力甩尾：身邊有人在側面或背後、或身邊不只一個人。站著仰頭長吼，這段時間打中頭就打斷
 const SWEEP_TRIGGER := 9.0
 # 以下從 balance.csv 讀（見 balance.gd），改數字去改表
@@ -167,6 +173,8 @@ var _glimpse_at := Vector3.INF
 var _suspect := 0.0           # 確定的進度 0~1
 var _spot_pending := false    # 剛確定看到人，這一幀要吼
 var _look_left := 0.0         # 繞著找時停下來張望還剩多久
+var _stomp_clock := 0.0        # 踩踏的計時（只在主機用）
+var _stomp_at := {}           # 牛仔 → 上一次被踩的時刻；ponytail: 牛仔離線留下的項目不清，一局幾個人不會長大
 
 
 func _ready() -> void:
@@ -257,6 +265,7 @@ func think(delta: float) -> void:
 	_attack_gap = maxf(_attack_gap - delta, 0.0)
 	sweep_left = maxf(sweep_left - delta, 0.0)
 	guard_left = maxf(guard_left - delta, 0.0)
+	_stomp(delta)
 	if pilot != 0:
 		_pilot_step(delta)
 		return
@@ -269,6 +278,21 @@ func think(delta: float) -> void:
 		_hint_reached = false
 	_tree.tick(delta)
 	mood = _mood()
+
+## 踩踏（主機每幀，電腦和駕駛都一樣）：水平速度夠快時，貼著走過去的牛仔扣血。倒地、出招中照樣算（只看速度）
+func _stomp(delta: float) -> void:
+	_stomp_clock += delta
+	if Vector2(velocity.x, velocity.z).length() <= STOMP_MIN_SPEED:
+		return
+	for p: Node3D in _cowboys():
+		var to := p.global_position - global_position
+		to.y = 0.0
+		if to.length() >= BODY_RADIUS + STOMP_REACH or absf(p.global_position.y - (global_position.y - 4.0)) >= STOMP_HEIGHT:
+			continue
+		if _stomp_clock - _stomp_at.get(p, -INF) < STOMP_INTERVAL:
+			continue
+		_stomp_at[p] = _stomp_clock
+		p.take_damage(STOMP_DAMAGE, self)
 
 # --- 對抗模式：玩家駕駛 ---
 
