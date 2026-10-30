@@ -167,6 +167,26 @@ func _case_cowboy() -> void:
 		"步槍要有兩隻手：右手在拉桿上、左手托護木")
 	_end(m)
 
+## 按鍵（草案 3.2）：1 主武器、2 副武器（左輪）、4 也丟炸藥。headless 鎖不住滑鼠，按鍵分派跑不到，所以綁定查 InputMap、換槍邏輯直接測 _main_pick
+func _case_hunt_keys() -> void:
+	var m := _new_offline_game()
+	var vm: Node = m.players.get_node(^"1").viewmodel
+	for pair in [["weapon_1", KEY_1], ["weapon_2", KEY_2], ["throw", KEY_4]]:
+		var bound := false
+		for e in InputMap.action_get_events(pair[0]):
+			bound = bound or (e is InputEventKey and e.physical_keycode == pair[1])
+		_ck(bound, "%s 要綁 %s 鍵" % [pair[0], OS.get_keycode_string(pair[1])])
+	vm.switch_weapon(0)
+	var seen: Array = []
+	for i in 4:
+		vm.switch_weapon(vm._main_pick())
+		seen.append(vm._index)
+	_ck(seen == [1, 2, 3, 1], "拿左輪按 1 拿上次的長槍（預設散彈），再按換下一把，繞一圈（現在 %s）" % [seen])
+	vm.switch_weapon(2)   # 滾輪換到步槍，再按 2 去左輪，再按 1 要回到步槍
+	vm.switch_weapon(0)
+	_ck(vm._main_pick() == 2, "按 2 去左輪後，按 1 要回到上次的長槍（步槍）")
+	_end(m)
+
 ## Hunt 式的三把槍和它們的規則
 func _case_hunt_weapons() -> void:
 	var m := _new_offline_game()

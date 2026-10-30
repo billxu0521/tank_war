@@ -119,6 +119,7 @@ const STICK_THROW := Vector3(0.0, -0.05, -0.60)
 const STICK_THROW_ROT := Vector3(-1.45, 0.0, 0.4)   # 出手：手腕往下壓（甩完的收尾，第二輪審查：以前看起來像伸食指指東西）
 const STICK_AWAY := Vector3(0.22, -0.34, -0.30)
 var _index := 0
+var _last_long := 1   # 上次拿的長槍（索引 1 以後）：1 鍵從左輪拿回來用
 ## 每把武器的腰射位置（場景檔的 position），ADS 過渡和切換時用。
 var _hip_positions: Array[Vector3] = []
 
@@ -271,10 +272,10 @@ func _process(delta: float) -> void:
 			switch_weapon((_index + 1) % _weapons.size())
 		elif Input.is_action_just_pressed("weapon_prev"):
 			switch_weapon((_index - 1 + _weapons.size()) % _weapons.size())
-		else:
-			for i in _weapons.size():
-				if Input.is_action_just_pressed("weapon_%d" % (i + 1)):
-					switch_weapon(i)
+		elif Input.is_action_just_pressed("weapon_1"):
+			switch_weapon(_main_pick())
+		elif Input.is_action_just_pressed("weapon_2"):
+			switch_weapon(0)
 		_update_melee_input(delta)
 		if _cook < 0.0 and _melee_held < 0.0 and dynamite != 0 and Input.is_action_just_pressed("throw"):
 			_light_dynamite()
@@ -296,6 +297,13 @@ func _process(delta: float) -> void:
 	_update_anim(delta)
 
 
+## 1 鍵（主武器）：拿著左輪就拿上次的長槍；已經拿著長槍再按，換下一把（散彈 → 步槍 → 長矛 → 散彈）
+func _main_pick() -> int:
+	if _index == 0:
+		return _last_long
+	return _index % (_weapons.size() - 1) + 1
+
+
 func switch_weapon(index: int) -> void:
 	if index == _index or index < 0 or index >= _weapons.size():
 		return
@@ -304,6 +312,8 @@ func switch_weapon(index: int) -> void:
 	_fire_queued = false
 	weapon.visible = false
 	_index = index
+	if index > 0:
+		_last_long = index
 	_player.gun = index   # 別人看到你手上換槍
 	weapon = _weapons[index]
 	weapon.visible = true
