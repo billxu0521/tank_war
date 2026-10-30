@@ -31,10 +31,10 @@ const MODEL_LIFT := 0.0    # 腳底在模型原點（腿加長後，docs/企劃/
 const TAIL_N := 8          # 尾巴節數（舊骨架 4 節）。每節角度乘 TAIL_PER，整條彎的總量跟以前一樣
 const TAIL_PER := 0.5
 # 甩尾：尾巴整條（尾尖）從 +SWEEP_SWING 掃到 -SWEEP_SWING（弧度），每節比前一節晚 SWEEP_LAG 秒擺；身體反向扭 SWEEP_TWIST（弧度）。判定持續秒數跟 boss.gd 用同一個數字
-const SWEEP_SWING := 1.6
+const SWEEP_SWING := 2.0
 const SWEEP_PULL := 0.8   # 預備（蓄力）時尾尖先拉向 + 那一側多少弧度，拉弓
 const SWEEP_LAG := 0.025
-const SWEEP_TWIST := 0.3
+const SWEEP_TWIST := 0.2
 static var SWEEP_ACTIVE: float = Balance.num("sweep_active")
 
 const TAIL_STIFF := 26.0   # 越大跟得越緊，延遲越短
