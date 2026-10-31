@@ -151,19 +151,37 @@ func _case_boss_fixes() -> void:
 	_ck(m.egg.carrier == 2, "恐龍站在蛋上，貼著身體（水平 %.2f）的牛仔撿得到（撿到的是 %d；蛋 %s，牛仔 %s，撿了 %.2f 秒）" % [b.BODY_RADIUS + 0.4, m.egg.carrier, m.egg.global_position, picker.global_position, m.egg.pickup])
 	_end(m)
 
-	# 4. 電腦咬的觸發：在咬的扇形外 0.5 公尺內才起咬，打不到的距離不空咬
+	# 4. 電腦咬的觸發：扇形（輕攻擊的範圍）再外面 0.5 公尺內才起咬，超出就不空咬
 	m = _offline_match()
 	b = m.spawn_boss()
 	b.global_position = m._on_ground(Vector3(0, b.LIFT, 60))
 	b.rotation.y = 0.0   # 面向 -Z
+	var reach: float = b.BODY_RADIUS + b.LIGHT_REACH
+	_ck(b.BITE_TRIGGER <= reach + 0.5 + 0.001, "電腦咬的觸發距離不能比輕攻擊扇形多 0.5 公尺以上（現在 %.2f，上限 %.2f）" % [b.BITE_TRIGGER, reach + 0.5])
 	var near_c: Node3D = m._add_player(m.COWBOY, 2)
-	near_c.global_position = m._on_ground(Vector3(0, 0, 60 - b.BITE_TRIGGER + 0.3))
+	near_c.global_position = m._on_ground(Vector3(0, 0, 60 - (reach - 0.3)))
 	b._attack_gap = 0.0
-	_ck(b._start_attack() and b.act == b.ACT_BITE_WIND, "電腦：正前方在咬的範圍內就起咬（觸發距離 %.2f）" % b.BITE_TRIGGER)
+	_ck(b._start_attack() and b.act == b.ACT_BITE_WIND, "電腦：正前方在扇形內（離邊緣 0.3 公尺）就起咬")
 	b.act = b.ACT_NONE
 	b._attack_gap = 0.0
-	near_c.global_position = m._on_ground(Vector3(0, 0, 60 - b.BITE_TRIGGER - 1.5))
-	_ck(not b._start_attack() and b.act == b.ACT_NONE, "電腦：超出觸發距離不空咬")
+	near_c.global_position = m._on_ground(Vector3(0, 0, 60 - (reach + 1.5)))
+	_ck(not b._start_attack() and b.act == b.ACT_NONE, "電腦：超出扇形（再外面 1.5 公尺）不空咬")
+	_end(m)
+
+	# 4b. 電腦甩尾起招：只看後半圈的扇形（同 _sweep_hit）。正前方的人（就算兩個）不起甩尾；身後的人才起
+	m = _offline_match()
+	b = m.spawn_boss()
+	b.global_position = m._on_ground(Vector3(0, b.LIFT, 60))
+	b.rotation.y = 0.0
+	var f1: Node3D = m._add_player(m.COWBOY, 2)
+	var f2: Node3D = m._add_player(m.COWBOY, 3)
+	f1.global_position = m._on_ground(Vector3(1.5, 0, 50))   # 正前方 10 公尺：咬夠不到，後半圈也沒有
+	f2.global_position = m._on_ground(Vector3(-1.5, 0, 50))
+	b._attack_gap = 0.0
+	b.sweep_left = 0.0
+	_ck(not b._start_attack() and b.act == b.ACT_NONE, "電腦：兩個人都在正前方不起甩尾（不空甩）")
+	f2.global_position = m._on_ground(Vector3(0, 0, 60 + 8.0))   # 身後 8 公尺：後半圈的扇形裡
+	_ck(b._start_attack() and b.act == b.ACT_CHARGE_WIND, "電腦：身後的人在扇形裡就起甩尾")
 	_end(m)
 
 	# 5. 火球俯角：往下看到 BOSS_PITCH_MIN，正前方貼身（BODY_RADIUS + LIGHT_REACH）的地面牛仔在火球半徑內能打到
@@ -172,7 +190,7 @@ func _case_boss_fixes() -> void:
 	b.global_position = m._on_ground(Vector3(0, b.LIFT, 60))
 	b.rotation.y = 0.0
 	var terr5: float = m._terrain.height(0, 60)
-	var chest := Vector3(0, terr5 + 1.0, 60 - b.BODY_RADIUS - b.LIGHT_REACH)
+	var chest := Vector3(0, terr5 + 1.0, 60 - (b.BODY_RADIUS + 0.5))   # 身體外 0.5 公尺、胸口高：舊的 -0.75 打不到
 	var best := INF
 	var best_p := 0.0
 	for k in 200:
@@ -185,26 +203,27 @@ func _case_boss_fixes() -> void:
 			best = d
 			best_p = b.look_pitch
 	_ck(best <= b.FB_SIZE * 0.5 + 0.4, "火球能打到正前方貼身的地面牛仔（最近 %.2f 公尺，俯角 %.2f 弧度）" % [best, best_p])
+	# 操作俯角：火球的 look_pitch 限在 BOSS_PITCH_MIN；鏡頭另外限在 CAM_PITCH_MIN（更往下）
+	b.pilot = 1
+	b.pilot_input(Vector2.ZERO, 0.0, -1.45, 0)
+	_ck(absf(b.look_pitch + 1.2) < 0.001, "操作：火球俯角限在 -1.2 弧度（現在 %.3f）" % b.look_pitch)
+	_ck(absf(b._clamp_cam_pitch(-1.6) - b.CAM_PITCH_MIN) < 0.001 and absf(b._clamp_cam_pitch(-1.4) + 1.4) < 0.001,
+		"鏡頭往下看限在 CAM_PITCH_MIN（-1.6 → %.3f，-1.4 → %.3f）" % [b._clamp_cam_pitch(-1.6), b._clamp_cam_pitch(-1.4)])
+	b.pilot = 0
 	b.look_pitch = 0.0
 	_end(m)
 
-	# 6. 甩尾拆地形：查詢球心放腳底，貼地 11 公尺（水平）的樹也拆得到
+	# 6. 甩尾拆地形：查詢球心在腳底。矮的可拆方塊（1.2 公尺）在尾根水平 11.5 公尺：球心在身體中心時打不到，腳底才打得到
 	m = _offline_match()
 	m.rules = &"party"
-	var tree: Destructible = null
-	for w: Destructible in m._wrecks:   # 樹或房子都行：看的是查詢球心，不是哪一種東西（樹現在要甩兩下，hits 比對的是次數）
-		tree = w
-		break
-	if tree != null:
-		b = m.spawn_boss()
-		b.rotation.y = 0.0   # 後方是 +Z
-		var root_pos: Vector3 = tree.global_position + Vector3(0, 0, -11.0)
-		b.global_position = m._on_ground(Vector3(root_pos.x, b.LIFT, root_pos.z - b.SWEEP_ROOT_BACK))
-		var hits0: int = tree.hits
-		b._strike_sweep()
-		_ck(tree.hits == hits0 + 1, "甩尾拆地形：貼地 11 公尺（水平）的樹要拆得到（hits %d → %d）" % [hits0, tree.hits])
-	else:
-		_ck(false, "灰盒地圖要有可以甩倒的樹")
+	var blk: StaticBody3D = m.map._destructible(Greybox.block(Vector3(4.0, 1.2, 0.4)), 1)
+	m.map._place_greybox(blk, Vector3(0, 0, 60 + 11.7), 0.0)   # 長邊朝 X，最近的一點離尾根 11.5 公尺
+	b = m.spawn_boss()
+	b.rotation.y = 0.0   # 後方是 +Z
+	b.global_position = m.boss_on_ground(Vector3(0, 0, 60 - b.SWEEP_ROOT_BACK))
+	var hits0: int = blk.hits
+	b._strike_sweep()
+	_ck(blk.hits == hits0 + 1, "甩尾拆地形：矮的可拆方塊（尾根水平 11.5 公尺、高 1.2）要拆得到（hits %d → %d）" % [hits0, blk.hits])
 	m.rules = &"match"
 	_end(m)
 

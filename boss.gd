@@ -147,6 +147,7 @@ signal got_up         # 各台：起身那一刻
 @export var pilot := 0
 enum { PIN_BITE = 1, PIN_SWEEP = 4, PIN_RUN = 8, PIN_FIREBALL = 16 }
 const BOSS_PITCH_MIN := -1.2   # 尼諾拉往下看的極限（約 69 度）：dino.gd 的 PITCH_MIN（43 度）打不到貼身的牛仔，火球平射會從頭上過
+const CAM_PITCH_MIN := -1.45   # 鏡頭往下看的極限（約 83 度）：只限鏡頭，火球的 look_pitch 還是 BOSS_PITCH_MIN
 const PILOT_STALE := 0.5     # 主機這麼久沒收到駕駛的輸入就當放開（網路斷斷續續時不要一直往前衝）
 var _pin_move := Vector2.ZERO   # 主機：駕駛最新的輸入（相對鏡頭，x 右、y 後）
 var _pin_yaw := 0.0
@@ -368,7 +369,11 @@ func _unhandled_input(e: InputEvent) -> void:
 		return
 	var rel := Settings.look((e as InputEventMouseMotion).screen_relative)
 	_cam_yaw -= rel.x * MOUSE_SENS * 0.5   # 玩家恐龍原本的靈敏度是給會瞬間轉身的身體用的；這隻轉得慢，鏡頭也放慢一點
-	_cam_pitch = clampf(_cam_pitch - rel.y * MOUSE_SENS * 0.5, BOSS_PITCH_MIN, PITCH_MAX)
+	_cam_pitch = _clamp_cam_pitch(_cam_pitch - rel.y * MOUSE_SENS * 0.5)
+
+## 鏡頭的俯仰限制（只給鏡頭；火球的俯角走 pilot_input 的 BOSS_PITCH_MIN）
+func _clamp_cam_pitch(v: float) -> float:
+	return clampf(v, CAM_PITCH_MIN, PITCH_MAX)
 
 ## 甩尾打到可拆的東西（destructible.gd 呼叫）：鏡頭抖一下。只有操控的那台抖得到（鏡頭只在那台）
 func add_shake(amount: float) -> void:
@@ -550,8 +555,10 @@ func _start_attack() -> bool:
 			_target = p
 			_begin(ACT_BITE_WIND, BITE_WIND)
 			return true
-	# 蓄力甩尾：身邊有人在側面或背後，或身邊不只一個人
-	if sweep_left <= 0.0 and (near.size() >= 2 or near.any(func(p: Node3D) -> bool: return not _in_front(p.global_position, 0.5))):
+	# 蓄力甩尾：後半圈的扇形（同 _sweep_hit）裡有人才起招，不空甩；正前方的人不算
+	var sr := _sweep_root()
+	var back := _back_dir()
+	if sweep_left <= 0.0 and near.any(func(p: Node3D) -> bool: return _in_fan(sr, back, p.global_position, SWEEP_RADIUS, SWEEP_COS)):
 		sweep_left = _sweep_cd_time()
 		_begin(ACT_CHARGE_WIND, CHARGE_WIND)
 		return true
