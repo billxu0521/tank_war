@@ -948,6 +948,17 @@ func _save_setting(section: String, key: String, value: Variant) -> void:
 func _on_dino_attack_toggled(on: bool) -> void:
 	dino_attacks = on
 
+## 選單的「恐龍碰撞物件」開關（預設關）：關掉尼諾拉穿過房子、樹、柵欄，只站地形、撞牛仔（boss.gd 的 _sync_mask）。只有主機能按，同步給大家
+var dino_collide := false
+
+func _on_dino_collide_toggled(on: bool) -> void:
+	dino_collide = on
+	_set_dino_collide.rpc(on)   # 主機自己先記下，其他人收 rpc（離線測試沒有連線，rpc 不會送到自己這台）
+
+@rpc("authority", "call_remote", "reliable")
+func _set_dino_collide(on: bool) -> void:
+	dino_collide = on
+
 func _on_add_boss_pressed() -> void:
 	spawn_boss()
 
@@ -1183,6 +1194,7 @@ func _spawn(id: int) -> void:
 	if id != 1:
 		_set_rules.rpc_id(id, rules)
 		_set_period.rpc_id(id, Period.current)
+		_set_dino_collide.rpc_id(id, dino_collide)   # 晚來的人也要拿到碰撞開關的狀態
 		_broadcast_lives()
 		for d in _doors:   # 門的開關不走同步器，晚來的人要補送一次
 			if d.is_open:

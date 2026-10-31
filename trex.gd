@@ -248,6 +248,7 @@ func _ground(p: Vector3) -> Vector3:
 	var body := get_parent() as CollisionObject3D
 	if body:
 		q.exclude = [body.get_rid()]
+		q.collision_mask = body.collision_mask   # 腳只踩身體撞得到的東西：尼諾拉關碰撞物件時穿過房子，腳不踩上屋頂
 	var hit := w.direct_space_state.intersect_ray(q)
 	# 打到會動的角色（牛仔、別隻恐龍）不算地：不然人走到腳下、尾巴下，腳和尾巴會一下子踩上去
 	for _i in 3:

@@ -14,6 +14,9 @@ signal died(killer: Node)
 
 const GRAVITY := 25.0
 const HITCH_MS := 250   # 兩幀之間隔超過這麼久算卡頓（4 fps 以下）；見 after_hitch
+# 第 5 層（值 16）：地形、場地圍牆、牛仔和恐龍的身體都在這層，同時仍在第 1 層（所以舊的遮罩照樣全看得到）。
+# 尼諾拉關掉「碰撞物件」時遮罩只留這層：房子、樹、柵欄（只在第 1 層）穿過去，站地形、撞牛仔照舊（boss.gd 的 _sync_mask）
+const SOLID_LAYER := 16
 
 @export var max_hp := 100
 ## true = 電腦操控。不讀鍵盤，自己照優先序決策。
@@ -65,6 +68,7 @@ func _enter_tree() -> void:
 
 func _ready() -> void:
 	hp = max_hp
+	collision_layer |= SOLID_LAYER
 	# 物理插值（project.godot 開著）：畫面在前後兩個物理步之間補，高刷新率螢幕才不會一頓一頓。
 	# 生出來之後呼叫的人才擺位置，等這一幀結束再重設，不然第一幀會從原點滑過去
 	reset_physics_interpolation.call_deferred()

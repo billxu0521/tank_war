@@ -96,6 +96,7 @@ func _build_arena() -> void:
 		.map(func(r: Dictionary) -> Array: return [Vector2(r.pos.x, r.pos.z), r.r]))
 	var ground := _terrain.build(_ground_color, _ground_mix, Greybox.ground_material() if greybox else null)
 	ground.add_to_group(&"ground")   # 子彈打到噴土（Bullet.surface_of）
+	ground.collision_layer |= Fighter.SOLID_LAYER   # 地形：關碰撞物件時尼諾拉還是站在上面
 	add_child(ground)
 
 	# 四周圍牆，東西才不會掉出場外。內側牆面剛好貼齊地板邊緣，不留縫。
@@ -106,7 +107,9 @@ func _build_arena() -> void:
 			[Vector3(0, WALL_H * 0.5, -e), Vector3(long, WALL_H, WALL_T)],
 			[Vector3(e, WALL_H * 0.5, 0), Vector3(WALL_T, WALL_H, long)],
 			[Vector3(-e, WALL_H * 0.5, 0), Vector3(WALL_T, WALL_H, long)]]:
-		_solid_box(w[0], w[1]).add_to_group(&"arena_wall")
+		var wall := _solid_box(w[0], w[1])
+		wall.add_to_group(&"arena_wall")
+		wall.collision_layer |= Fighter.SOLID_LAYER   # 場地圍牆不算建築：關碰撞物件也擋，尼諾拉不會走出場外
 	var far_color := (func(_x: float, _z: float, _h: float) -> Color: return Color(0.42, 0.44, 0.4)) if greybox else _ground_color   # 灰盒：場外跟地面一樣灰
 	add_child(FarLand.build(_terrain, far_color, [_props[&"TreeOakM"], _props[&"TreeOakS"], _props[&"Bush"],
 		_props[&"TreePine2"], _props[&"Saguaro"]],

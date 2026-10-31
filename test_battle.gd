@@ -114,7 +114,8 @@ func _process(_delta: float) -> bool:
 				_start_bot_case()
 		4:  # 火球的物理：要跨物理幀，見 dino.gd 的 _start_fireball_case
 			if _fb_step():
-				return _done()
+				_start_noclip_case()   # 恐龍碰撞物件也要跨物理幀，接在後面（_phase 5，由 MainLoop 的 _physics_process 推，見 dino.gd）
+				return false
 		3:  # 移動靶要真的跑起來（move_and_slide 只在物理幀有效，所以得跨幀等）
 			_bot_frames += 1
 			var now := _bot_cowboy.global_position
