@@ -58,14 +58,37 @@ func _process(_d: float) -> bool:
 		return true
 	return false
 
-## 恐龍站在地圖中央附近一塊平地（離房子遠），牛仔在它右邊 9 公尺；鏡頭在側面 30 公尺
+## 恐龍站在一塊平地上（腳底正好貼地，HALF_H 不是 LIFT），鏡頭平視（離地 1.6 公尺）、在側面（±X）某個距離，
+## 牛仔在恐龍尾巴那一側 8 公尺，面向鏡頭，當比例尺。依序試 ±X 兩邊、幾個距離，挑第一個恐龍和牛仔都看得到的
 func _place_side() -> void:
 	var at := _flat_spot()
-	_boss.global_position = at
+	var ground: float = at.y - _boss.LIFT
+	_boss.global_position = Vector3(at.x, ground + _boss.HALF_H, at.z)
 	_boss.rotation.y = 0.0
-	_cow.global_position = _m._on_ground(Vector3(at.x, 0, at.z + 12.0))   # 恐龍的尾巴那一側，鏡頭看得到
-	_cow.rotation.y = -PI * 0.5   # 面向 +X（鏡頭那邊）
-	_cam_at(at + Vector3(28, 3.0, 0), at + Vector3(0, 1.0, 0))
+	var cow_pos: Vector3 = _m._on_ground(Vector3(at.x, 0, at.z + 8.0))
+	_cow.global_position = cow_pos
+	var space := _boss.get_world_3d().direct_space_state
+	var ex := [_boss.get_rid(), _cow.get_rid()]
+	var target := Vector3(at.x, ground + 4.0, at.z)
+	var cam_pos := Vector3(at.x + 26.0, ground + 1.6, at.z)
+	var sx := 1.0
+	var found := false
+	for side in [-1.0, 1.0]:
+		for dist in [26.0, 18.0, 34.0, 40.0]:
+			var c := Vector3(at.x + side * dist, ground + 1.6, at.z)
+			var seen := space.intersect_ray(PhysicsRayQueryParameters3D.create(c, target, 1, ex)).is_empty() \
+				and space.intersect_ray(PhysicsRayQueryParameters3D.create(c, cow_pos + Vector3(0, 1.0, 0), 1, ex)).is_empty()
+			if seen:
+				cam_pos = c
+				sx = side
+				found = true
+				break
+		if found:
+			break
+	if not found:
+		push_error("找不到側面看得到恐龍和牛仔的鏡頭位置，照預設拍")
+	_cow.rotation.y = atan2(-(cam_pos.x - cow_pos.x), -(cam_pos.z - cow_pos.z))   # 面向鏡頭
+	_cam_at(cam_pos, target)
 
 ## 恐龍站在一棟灰盒房子正前方 10 公尺，面向房子；鏡頭斜上方
 func _place_house() -> void:
