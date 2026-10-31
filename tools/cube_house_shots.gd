@@ -46,7 +46,7 @@ func _process(_d: float) -> bool:
 		return false
 	# 甩一下之前先拍完整的
 	if _shot == 0:
-		_aim(Vector3(-12, 24, -14), Vector3(0, 0.5, 0))
+		_aim(Vector3(7, 13, 22), Vector3(0, 1.5, 0))
 		_settle += 1
 		if _settle >= 4:
 			_save("house_full")
@@ -55,7 +55,7 @@ func _process(_d: float) -> bool:
 			_sweep()
 		return false
 	if _shot == 1:
-		_aim(Vector3(-12, 24, -14), Vector3(0, 0.5, 0))
+		_aim(Vector3(7, 13, 22), Vector3(0, 1.5, 0))
 		_settle += 1
 		if _settle >= 180:   # 倒塌動畫 1.5 秒，等它落完再拍
 			_save("house_after_sweep")

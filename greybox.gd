@@ -37,11 +37,13 @@ static func ground_material() -> ShaderMaterial:
 
 
 ## 方塊房子（派對模式，規則草案 4.1 試驗屋）：一格 1.5 公尺的方塊，4×4 格＝6 公尺見方、一層樓。
-## 回傳 [[中心（相對房子中心、地面高 0）, 等級], ...]，共 56 塊：地基（外圈，最底下一層，等級 3）12 塊、
-## 地板（裡面，2）4 塊、柱子（四角，2）8 塊、牆（外圈其他，1）16 塊、屋頂（16 塊，1）。
-## 門是正面（+Z）靠左那一格的牆，等級 1、關著：要甩破或炸破才進得去。窗就是普通的牆，同樣等級 1。
+## 回傳 [[中心（相對房子中心、地面高 0）, 等級], ...]，共 53 塊：地基（外圈，最底下一層，等級 3）12 塊、
+## 地板（裡面，2）4 塊、柱子（四角，2）8 塊、牆（外圈其他，1）13 塊、屋頂（16 塊，1）。
+## 門口：正面（+Z）靠左那一格，牆的兩層都不放，人走得進去。窗：左側（-X）牆中間那格，窗台（第 0 層）留著、窗頂以上不放。
 ## ponytail: 懸空的方塊不會掉下來（拆掉下面的柱子，上面的牆還站著），以後做連通檢查再說
 const CUBE := 1.5
+const DOOR_CELL := Vector2i(1, 3)     # 格子座標（i 沿 X、j 沿 Z，0..3）
+const WINDOW_CELL := Vector2i(0, 1)
 static func cube_house() -> Array:
 	var cells := []
 	for layer in [-1, 0, 1, 2]:   # -1：地基和地板，整層在地面以下（頂面跟地面齊平）；0、1：牆；2：屋頂
@@ -49,12 +51,13 @@ static func cube_house() -> Array:
 			for i in 4:
 				var ring := i == 0 or i == 3 or j == 0 or j == 3
 				var corner := (i == 0 or i == 3) and (j == 0 or j == 3)
+				var cell := Vector2i(i, j)
 				var level := 0
 				if layer == -1:
 					level = 3 if ring else 2
 				elif layer == 2:
 					level = 1
-				elif ring:
+				elif ring and cell != DOOR_CELL and not (layer == 1 and cell == WINDOW_CELL):
 					level = 2 if corner else 1
 				if level > 0:
 					cells.append([Vector3(-3.0 + (i + 0.5) * CUBE, (layer + 0.5) * CUBE, -3.0 + (j + 0.5) * CUBE), level])

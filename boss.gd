@@ -678,7 +678,12 @@ func _wreck_around(at: Vector3, dir: Vector3, radius: float, cos_half: float) ->
 	var q := PhysicsShapeQueryParameters3D.new()
 	q.shape = sphere
 	q.transform = Transform3D(Basis(), at)
-	q.exclude = [get_rid()]
+	# 地面（地形）不要算：一個半徑 12 公尺的球會切到好幾百個地形面，把查詢的上限 256 佔滿，後面的樹和房子就漏掉了
+	var skip: Array[RID] = [get_rid()]
+	for g in get_tree().get_nodes_in_group(&"ground"):
+		if g is CollisionObject3D:
+			skip.append((g as CollisionObject3D).get_rid())
+	q.exclude = skip
 	var done := {}
 	# ponytail: 一棟房子幾十塊碰撞各算一筆，上限給大一點；房子擠成一團漏掉幾個再加
 	for r: Dictionary in get_world_3d().direct_space_state.intersect_shape(q, 256):

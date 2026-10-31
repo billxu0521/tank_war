@@ -666,8 +666,8 @@ func _case_party_destruction() -> void:
 	_end(m)
 	Main.level_file = keep
 
-## 派對方塊房子（草案 4.1、4.2）：只在派對模式看得到；56 塊、等級數對；名字照蓋的順序；
-## 甩尾（tail_hit）、火球（Fireball.wreck）、炸藥（Viewmodel._explode）各照等級拆；子彈穿材質照等級
+## 派對方塊房子（草案 4.1、4.2）：只在派對模式看得到；53 塊、等級數對、門口和窗戶留空；名字照蓋的順序；
+## 甩尾（tail_hit）、火球（boss._spit_fire 設旗標）、炸藥（viewmodel._explode）各照等級拆；子彈穿材質照等級
 func _case_party_cubes() -> void:
 	var Main: GDScript = load("res://main.gd")
 	var keep: String = Main.level_file
@@ -684,7 +684,10 @@ func _case_party_cubes() -> void:
 	for w: Destructible in blocks:
 		by[w.level] += 1
 		_ck(w.name == "Wreck%d" % m.map._wrecks.find(w), "方塊名字要照蓋的順序（%s）" % w.name)
-	_ck(blocks.size() == 56 and by == {1: 32, 2: 12, 3: 12}, "方塊房子 56 塊、等級 1、2、3 各 32、12、12（現在 %d 塊 %s）" % [blocks.size(), by])
+	_ck(blocks.size() == 53 and by == {1: 29, 2: 12, 3: 12}, "方塊房子 53 塊、等級 1、2、3 各 29、12、12（現在 %d 塊 %s）" % [blocks.size(), by])
+	# 門口（正面靠左那一格）兩層都空；窗戶（左側牆中間那格）只留窗台
+	_ck(_block_at(blocks, Vector3(-0.75, 0.75, 2.25)) == null and _block_at(blocks, Vector3(-0.75, 2.25, 2.25)) == null, "門口兩層都空")
+	_ck(_block_at(blocks, Vector3(-2.25, 0.75, -0.75)) != null and _block_at(blocks, Vector3(-2.25, 2.25, -0.75)) == null, "窗戶只留窗台、窗頂以上空")
 	_ck(m.map._party_at.is_finite() and m.map.spawn_points.all(func(s: Vector3) -> bool: return Vector2(s.x - m.map._party_at.x, s.z - m.map._party_at.z).length() > 6.0), "方塊房子離出生點要有距離")
 	# 不是派對：整棟藏起來，碰撞和群組都拿掉
 	_ck(not house.visible and blocks.all(func(w: Destructible) -> bool: return w.collision_layer == 0 and not w.is_in_group(&"destructible")), "非派對模式房子藏起來、沒有碰撞")
@@ -704,46 +707,71 @@ func _case_party_cubes() -> void:
 	for i in 5:
 		three.tail_hit(Vector3.ZERO)
 	_ck(three.hits == 0 and three.collision_layer != 0, "等級 3 的方塊甩五下還是不倒")
-	# 火球從房子後面（-Z 那側）往前打，先確認射線真的先打到目標（打不到就是場景擺錯，不算數）
-	var space: PhysicsDirectSpaceState3D = m.get_viewport().world_3d.direct_space_state
+	# 火球：走 boss._spit_fire（它照 _party() 設 wreck）
+	var boss: Node3D = m.spawn_boss()
 	var lone := _block_at(blocks, Vector3(-0.75, 3.75, -2.25))   # 屋頂，等級 1
-	var lone2 := _block_at(blocks, Vector3(0.75, 3.75, -2.25))   # 屋頂，等級 1，給沒有 wreck 的火球用
+	var lone2 := _block_at(blocks, Vector3(0.75, 3.75, -2.25))   # 屋頂，等級 1，給非派對那發打
 	var b3 := _block_at(blocks, Vector3(-0.75, -0.75, -2.25))    # 地基，等級 3
-	var arena: Node3D = m.get_node(^"Arena")
-	for c: Array in [[lone, true, 1], [b3, true, 0], [lone2, false, 0]]:
-		var target: Destructible = c[0]
-		var start: Vector3 = house.global_position + target.position + Vector3(0, 0, -4.0)
-		var pre := space.intersect_ray(PhysicsRayQueryParameters3D.create(start, start + Vector3(0, 0, 6.0)))
-		_ck(pre.get(&"collider") == target, "火球的射線要先打到目標（%s）" % target.name)
-		var fb := Fireball.new()
-		fb.wreck = c[1]
-		fb.vel = Vector3(0, 0, 60)
-		arena.add_child(fb)
-		fb.global_position = start
-		fb._physics_process(0.1)
-	_ck(lone.hits == 1 and lone.collision_layer == 0, "尼諾拉的火球打中等級 1 的方塊：扣一下、倒")
+	_spit_at(m, boss, house, lone)
+	_ck(lone.hits == 1 and lone.collision_layer == 0, "派對模式尼諾拉的火球打中等級 1 的方塊：扣一下、倒")
+	_spit_at(m, boss, house, b3)
 	_ck(b3.hits == 0 and b3.collision_layer != 0, "火球打中等級 3 的方塊不扣")
-	_ck(lone2.hits == 0, "沒有 wreck 的火球（舊恐龍、非派對）穿過去不拆")
-	# 炸藥：爆炸中心在房子正中間（距離 6 公尺內的等級 1 全倒），等級 2、3 不受影響；非派對不拆；炸的人要活著
-	var player: Node3D = m._add_player(m.COWBOY, 1)
-	player.global_position = m._on_ground(house.global_position + Vector3(8, 0, 0))
-	var vm = player.viewmodel
-	var blast := house.global_position + Vector3(0, 1.5, 0)   # 房子正中間，屋頂和牆都在範圍內
+	# 非派對：碰撞留著（火球真的會打到），火球照打過去也不拆，是 _spit_fire 的旗標擋下的
 	m.rules = &"egg"
-	m.map.set_party_house(m.party_mode())
-	vm._explode(blast, Viewmodel.KIND_DYNAMITE)
-	_ck(blocks.filter(func(w: Destructible) -> bool: return w.level == 1 and w.hits == 0).size() == 30, "非派對模式炸藥不拆方塊")
+	m.map.set_party_house(true)
+	_spit_at(m, boss, house, lone2)
+	_ck(lone2.hits == 0 and lone2.collision_layer != 0, "非派對模式尼諾拉的火球不拆方塊")
 	m.rules = &"party"
-	m.map.set_party_house(m.party_mode())
-	var lvl2 := blocks.filter(func(w: Destructible) -> bool: return w.level == 2 and w.hits == 0).size()
-	var lvl3 := blocks.filter(func(w: Destructible) -> bool: return w.level == 3 and w.hits == 0).size()
-	vm._explode(blast, Viewmodel.KIND_DYNAMITE)
-	_ck(blocks.filter(func(w: Destructible) -> bool: return w.level == 1 and w.hits == 0).is_empty(), "派對模式炸藥炸倒範圍內所有等級 1 的方塊")
-	_ck(blocks.filter(func(w: Destructible) -> bool: return w.level == 2 and w.hits == 0).size() == lvl2 and blocks.filter(func(w: Destructible) -> bool: return w.level == 3 and w.hits == 0).size() == lvl3, "炸藥不影響等級 2、3")
+	m.map.set_party_house(true)
+	# 炸藥：爆炸點在房子前面（-Z）4 公尺，範圍 6 公尺內的等級 1 要拆
+	var at := house.global_position + Vector3(0, 1.5, -4.0)
+	var player: Node3D = m._add_player(m.COWBOY, 1)
+	player.global_position = m._on_ground(Vector3(house.global_position.x, 0, house.global_position.z - 8.0))
+	var vm = player.viewmodel
+	# (a) 非派對：房子還在群組裡、還有碰撞，炸藥不拆，是 viewmodel 的模式檢查擋下的
+	m.rules = &"egg"
+	m.map.set_party_house(true)
+	var before := _standing(blocks, 1).size()
+	vm._explode(at, Viewmodel.KIND_DYNAMITE)
+	_ck(_standing(blocks, 1).size() == before, "非派對模式炸藥不拆方塊")
+	# (b) 派對、丟的人被自己炸死（扣血前活著）：範圍內等級 1 照拆
+	m.rules = &"party"
+	m.map.set_party_house(true)
+	player.hp = 1
+	var inside := _standing(blocks, 1).filter(func(w: Destructible) -> bool: return w.global_position.distance_to(at) < 6.0)
+	before = _standing(blocks, 1).size()
+	vm._explode(at, Viewmodel.KIND_DYNAMITE)
+	_ck(player.hp <= 0, "丟的人被自己的炸藥炸死（前提）")
+	_ck(not inside.is_empty() and inside.all(func(w: Destructible) -> bool: return w.hits > 0), "丟的人自己被炸死，範圍內等級 1 的方塊照拆")
+	_ck(_standing(blocks, 1).size() == before - inside.size(), "範圍外的等級 1 不拆")
+	# (c) 丟的人是恐龍（沒有獵人身分）：不拆
+	var dino_thrower: Node3D = m._add_player(m.COWBOY, 5)
+	dino_thrower.global_position = m._on_ground(Vector3(house.global_position.x, 0, house.global_position.z + 8.0))
+	dino_thrower.add_to_group(&"dino")
+	var at2 := house.global_position + Vector3(0, 1.5, 4.0)
+	before = _standing(blocks, 1).size()
+	dino_thrower.viewmodel._explode(at2, Viewmodel.KIND_DYNAMITE)
+	_ck(_standing(blocks, 1).size() == before, "丟的人是恐龍，炸藥不拆方塊")
+	# 等級 2、3 不受炸藥影響（前面 (b) 炸的範圍裡有等級 2 的柱子、地板）
+	_ck(blocks.filter(func(w: Destructible) -> bool: return w.level == 3 and w.hits == 0).size() == 12, "炸藥不影響等級 3")
 	# 子彈穿材質：木板（等級 1）力量 1 穿得過，雙層（2）要 2，金屬（3）要 3
 	_ck(Bullet.pierces(one, 1) and not Bullet.pierces(two, 1) and Bullet.pierces(two, 2) and not Bullet.pierces(three, 2) and Bullet.pierces(three, 3), "方塊的子彈穿透照等級")
 	_end(m)
 	Main.level_file = keep
+
+## 還站著、等級 level 的方塊（hits 為 0）
+func _standing(blocks: Array, level: int) -> Array:
+	return blocks.filter(func(w: Destructible) -> bool: return w.level == level and w.hits == 0)
+
+## 尼諾拉從房子後面（-Z）吐一顆火球打 target（boss._spit_fire 照它的規則設 wreck）。先確認射線真的先打到目標
+func _spit_at(m: Node, boss: Node3D, house: Node3D, target: Destructible) -> void:
+	var start: Vector3 = house.global_position + target.position + Vector3(0, 0, -4.0)
+	var space: PhysicsDirectSpaceState3D = m.get_viewport().world_3d.direct_space_state
+	var pre := space.intersect_ray(PhysicsRayQueryParameters3D.create(start, start + Vector3(0, 0, 7.5)))
+	_ck(pre.get(&"collider") == target, "火球的射線要先打到目標（%s）" % target.name)
+	boss._spit_fire(Vector3(0, 0, 1), start)
+	var fb: Fireball = m.get_node(^"Arena").get_children().filter(func(c: Node) -> bool: return c is Fireball).back()
+	fb._physics_process(0.3)   # 25 公尺／秒 × 0.3 秒 = 7.5 公尺，剛好打到目標
 
 ## 房子裡某一塊（用房子的本地座標找）
 func _block_at(blocks: Array, local: Vector3) -> Destructible:

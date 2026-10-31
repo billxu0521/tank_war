@@ -308,8 +308,9 @@ func set_party_house(on: bool) -> void:
 		var w := c as Destructible
 		if w == null:
 			continue
-		w.collision_layer = 1 if on else 0
-		if on:
+		var up := on and w.hits < w.hits_needed   # 已經倒的不復活碰撞（新的一場 party.gd 的 restore 會立回來）
+		w.collision_layer = 1 if up else 0
+		if up:
 			w.add_to_group(&"destructible")
 		else:
 			w.remove_from_group(&"destructible")
