@@ -707,7 +707,7 @@ func _wreck_around(at: Vector3, dir: Vector3, radius: float, cos_half: float) ->
 	q.exclude = skip
 	var done := {}
 	# ponytail: 一棟房子幾十塊碰撞各算一筆，上限給大一點；房子擠成一團漏掉幾個再加
-	for r: Dictionary in get_world_3d().direct_space_state.intersect_shape(q, 1024):
+	for r: Dictionary in get_world_3d().direct_space_state.intersect_shape(q, 256):
 		var c: Object = r.collider
 		if c is Node3D and (c as Node3D).is_in_group(&"destructible") and not done.has(c) \
 				and _in_fan(at, dir, (c as Node3D).global_position, radius, cos_half):

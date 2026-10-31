@@ -192,10 +192,9 @@ func _case_boss_fixes() -> void:
 	m = _offline_match()
 	m.rules = &"party"
 	var tree: Destructible = null
-	for w: Destructible in m._wrecks:
-		if w.hits_needed == 1:
-			tree = w
-			break
+	for w: Destructible in m._wrecks:   # 樹或房子都行：看的是查詢球心，不是哪一種東西（樹現在要甩兩下，hits 比對的是次數）
+		tree = w
+		break
 	if tree != null:
 		b = m.spawn_boss()
 		b.rotation.y = 0.0   # 後方是 +Z
