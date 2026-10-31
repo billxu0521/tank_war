@@ -413,6 +413,8 @@ func _case_hunt_weapons() -> void:
 	_ck(is_equal_approx(rifle.damage, 77.0), "改參數表要生效")
 	table["rifle"]["damage"] = old_dmg
 	rifle.apply_table()
+	_ck(rifle.capacity == 16 and shotgun.starting_reserve == 12 and int(table["lance"]["starting_reserve"]) == 12,
+		"彈藥照草案 7.2：步槍裝 16 發、散彈備彈 12、長矛備彈 12")
 
 	# 武器介紹的射速：用規格第 07 節的例子——裝 3 發、每發拉栓 2 秒、整組裝填 9 秒 -> 不含裝填 30、含裝填 12 發／分
 	var ex: Weapon = Weapon.new()
