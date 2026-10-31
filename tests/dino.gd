@@ -584,6 +584,128 @@ func _case_dino_attack_switch() -> void:
 	_ck(m.get_node(^"UI/Root/Menu/Box/Controller/DinoAttackBtn").button_pressed, "選單開關預設是開的")
 	_end(m)
 
+## 恐龍碰撞物件開關（預設關）：關掉尼諾拉穿過房子和樹、還是站在地上、牛仔照樣撞得到；打開就撞牆停，腳也不踩上屋頂。
+## 要跨物理幀（move_and_slide 在一般幀裡不會動），接在火球的物理後面（_phase 5，見 test_battle.gd）。
+## 由 MainLoop 的 _physics_process 每個物理幀推一步，boss 自己的思考和移動關掉（set_physics_process false）
+var _nc_m: Node
+var _nc_b: Node3D
+var _nc_cow: Node3D
+var _nc_btn: CheckButton
+var _nc_stage := 0
+var _nc_n := 0.0   # 這一段已經跑了幾秒（物理時間，不數幀：物理頻率不是 60）
+
+func _start_noclip_case() -> void:
+	_phase = 5
+	# 前面的案例可能留著沒收掉的對局。boss 讀開關用 group match 的第一個，會讀到舊的，所以先全收掉
+	for old: Node in root.get_children():
+		if old.is_in_group(&"match"):
+			root.remove_child(old)
+			old.free()
+	_nc_m = _offline_match()
+	_nc_b = _nc_m.spawn_boss()
+	_nc_b.set_physics_process(false)
+	_nc_btn = _nc_m.get_node(^"UI/Root/Menu/Box/Controller/DinoCollideBtn")
+	# 房子和樹只在第 1 層（跟建築一樣）：房子擋在 z=30，樹幹在 z=20；牛仔站在 z=33（關掉碰撞時也要撞得到）
+	_solid_piece(_nc_m, _nc_m._on_ground(Vector3(0, 0, 30)) + Vector3(0, 2.5, 0), _box_shape(Vector3(12, 5, 1)))
+	var trunk := CylinderShape3D.new()
+	trunk.radius = 0.6
+	trunk.height = 6.0
+	_solid_piece(_nc_m, _nc_m._on_ground(Vector3(0, 0, 20)) + Vector3(0, 3.0, 0), trunk)
+	_nc_cow = _nc_m._add_player(_nc_m.COWBOY, 2)
+	_nc_cow.global_position = _nc_m.boss_on_ground(Vector3(0, 0, 33))
+	_nc_place(40.0)
+	_nc_b._sync_mask()
+	_nc_stage = 0
+	_nc_n = 0.0
+
+func _box_shape(size: Vector3) -> BoxShape3D:
+	var s := BoxShape3D.new()
+	s.size = size
+	return s
+
+## 測試用的一塊擺設：只在第 1 層，跟房子、樹一樣（不加地形那一層）
+func _solid_piece(m: Node, at: Vector3, shape: Shape3D) -> StaticBody3D:
+	var body := StaticBody3D.new()
+	var cs := CollisionShape3D.new()
+	cs.shape = shape
+	body.add_child(cs)
+	m.get_node(^"Arena").add_child(body)
+	body.global_position = at
+	return body
+
+## 尼諾拉放回 z 那裡（貼地，面向 -Z）
+func _nc_place(z: float) -> void:
+	_nc_b.global_position = _nc_m.boss_on_ground(Vector3(0, 0, z))
+	_nc_b.rotation.y = 0.0
+
+## 腳底是不是貼在地面上（腳底和正下方地形的高度差在 0.3 公尺以內）
+func _on_ground_now(m: Node, b: Node3D) -> bool:
+	var feet: float = b.global_position.y - b.HALF_H
+	var ground: float = m._on_ground(Vector3(b.global_position.x, 0, b.global_position.z)).y
+	return b.is_on_floor() and absf(feet - ground) < 0.3
+
+## 每個物理幀推一步（回傳 true 就結束整個測試，同 _process 的慣例）
+func _physics_process(delta: float) -> bool:
+	if _phase != 5:
+		return false
+	_nc_n += delta
+	var b := _nc_b
+	match _nc_stage:
+		0:   # 落到地上、站住
+			b._move(Vector3.ZERO, false, delta)
+			if _nc_n >= 0.25:
+				_ck(not _nc_m.dino_collide and not _nc_btn.button_pressed, "碰撞物件開關預設不勾")
+				_ck(b.collision_mask == Fighter.SOLID_LAYER, "預設關：尼諾拉的遮罩只留地形、圍牆、角色那一層")
+				_ck(b.test_move(b.global_transform, Vector3(0, -0.3, 0)), "關碰撞物件：還是站在地形上（腳底貼地）")
+				_ck(_on_ground_now(_nc_m, b), "關碰撞物件：站著不掉下去")
+				_nc_next(1)
+		1:   # 往前走撞牛仔：牛仔還是擋得住尼諾拉（z=33 站著，尼諾拉停在他前面，不會走過去）
+			b._move(-b.global_basis.z, false, delta)
+			if _nc_n >= 1.5:
+				_ck(b.global_position.z > 35.5, "關碰撞物件：牛仔擋在前面，尼諾拉還是撞得到他（z=%.1f）" % b.global_position.z)
+				_nc_cow.global_position = Vector3(0, 500, 0)
+				_nc_place(40.0)
+				_nc_next(2)
+		2:   # 關碰撞物件：穿過房子和樹，走到 z<18，腳還在地上
+			b._move(-b.global_basis.z, false, delta)
+			if _nc_n >= 6.0:
+				_ck(b.global_position.z < 18.0, "關碰撞物件：穿過房子和樹，走到 z=%.1f" % b.global_position.z)
+				_ck(_on_ground_now(_nc_m, b), "穿過房子之後腳還是在地上（不掉到地下、不卡在屋頂上）")
+				_nc_m._on_dino_collide_toggled(true)
+				b._sync_mask()
+				_ck(_nc_m.dino_collide and b.collision_mask == 1, "打開碰撞物件：遮罩回到全部（第 1 層）")
+				_nc_place(40.0)
+				_nc_next(3)
+		3:   # 打開：撞到房子停在牆前
+			b._move(-b.global_basis.z, false, delta)
+			if _nc_n >= 2.0:
+				_ck(b.global_position.z > 31.0, "打開碰撞物件：撞到房子要停在牆前（z=%.1f）" % b.global_position.z)
+				# 房子的屋頂（約 5 公尺高）剛好穿過身體（身高 12 公尺）。腳的射線從頭頂往下打：打開時腳踩上屋頂，關掉時穿過去、腳貼地。
+				# 之後不再移動（移動會把它推出屋頂），只量腳
+				_solid_piece(_nc_m, _nc_m._on_ground(Vector3(0, 0, 50)) + Vector3(0, 5.0, 0), _box_shape(Vector3(12, 0.5, 12)))
+				_nc_place(50.0)
+				_nc_next(4)
+		4:   # 等屋頂進物理世界，再量腳
+			if _nc_n >= 0.05:
+				var ground_y: float = _nc_m._on_ground(Vector3(0, 0, 50)).y
+				var foot: float = b.get_node(^"Trex")._foot_world(0, 0.0).y
+				_ck(foot > ground_y + 3.0, "打開碰撞物件：腳踩上屋頂（腳 y=%.2f）" % foot)
+				_nc_m._on_dino_collide_toggled(false)
+				b._sync_mask()
+				_nc_next(5)
+		5:   # 關掉：腳貼地，不踩屋頂
+			if _nc_n >= 0.05:
+				var ground_y: float = _nc_m._on_ground(Vector3(0, 0, 50)).y
+				var foot: float = b.get_node(^"Trex")._foot_world(0, 0.0).y
+				_ck(foot < ground_y + 1.0, "關碰撞物件：腳不踩上屋頂，貼地（腳 y=%.2f）" % foot)
+				_ck(b.collision_mask == Fighter.SOLID_LAYER, "關掉之後遮罩回到只留地形和角色")
+				return _done()
+	return false
+
+func _nc_next(stage: int) -> void:
+	_nc_stage = stage
+	_nc_n = 0.0
+
 func _case_sprint_skill() -> void:
 	var m := _new_game()   # 主機 = 恐龍，編號 1
 	var d: Node = m.players.get_node(^"1")

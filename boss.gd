@@ -271,11 +271,18 @@ func _say(s: AudioStream) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	_sync_mask()
 	if _is_my_pilot():
 		_pilot_local()
 	if not is_multiplayer_authority():
 		return
 	think(delta)
+
+## 碰撞物件開關（main.gd 的 dino_collide，預設關）：關掉時遮罩只留地形、圍牆、角色那一層，房子和擺設穿過去。
+## 每台每幀照開關設（移動在主機算，trex.gd 的腳掌射線也用這個遮罩）。沒有遊戲局（沒有 match）就照常撞
+func _sync_mask() -> void:
+	var g := _game()
+	collision_mask = 1 if g == null or g.dino_collide else Fighter.SOLID_LAYER
 
 
 ## 一幀的決策＋移動。測試直接呼叫這個
@@ -848,6 +855,7 @@ func _clamp_arena(at: Vector3) -> Vector3:
 # --- 移動 ---
 
 ## 照導航網格的路徑走到 to（每隔一下、或目標動了就重算路徑）。網格還沒烘好就直線走。到了回傳 true
+# ponytail: 碰撞物件關掉時，電腦恐龍還是照導航網格繞路（穿過建築也繞），要直線走再改這裡
 func _nav_go(to: Vector3, want_run: bool, delta: float) -> bool:
 	if _flat_dist(to) < ARRIVE:
 		_move(Vector3.ZERO, false, delta)
