@@ -992,6 +992,10 @@ func _explode(at: Vector3, kind: int) -> void:
 	_alert_boss(at)
 	if multiplayer.is_server() and at.distance_to(_player.global_position) <= MAX_BLAST_DIST:
 		Explosive.damage(_arena(), at, radius, BLASTS[kind][1], _player)
+		# 派對：炸藥炸得破等級 1 的方塊（草案 4.2）。主機再檢查一次：丟的人還活著、是獵人（不是恐龍）
+		var g := get_tree().get_first_node_in_group(&"match")
+		if kind == KIND_DYNAMITE and g and g.party_mode() and _player.hp > 0 and not _player.is_in_group(&"dino"):
+			Destructible.blast(_arena(), at, radius)
 
 
 func _arena() -> Node3D:

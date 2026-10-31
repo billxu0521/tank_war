@@ -496,7 +496,7 @@ func _game() -> Node:
 
 func _party() -> bool:
 	var g := _game()
-	return g != null and g.rules == &"party" and not g._sandbox   # 大廳選了派對再按沙盒：照沙盒
+	return g != null and g.party_mode()   # 大廳選了派對再按沙盒：照沙盒
 
 func _flat_dist(at: Vector3) -> float:
 	return Vector2(at.x - global_position.x, at.z - global_position.z).length()
@@ -659,6 +659,7 @@ func _spit_fire(dir: Vector3, muzzle: Vector3) -> void:
 	f.max_range = FB_RANGE
 	f.damage = FB_DAMAGE
 	f.burn = true
+	f.wreck = _party()   # 派對：打中方塊扣一下（destructible.gd）
 	f.shooter = self
 	f.vel = dir * FB_SPEED
 	get_tree().get_first_node_in_group(&"arena").add_child(f)

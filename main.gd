@@ -670,10 +670,15 @@ func _set_rules(r: StringName) -> void:
 		rules = r
 		_apply_rules()
 
+## 派對模式（不是沙盒）：甩尾、火球、炸藥拆得掉地形，方塊房子也只在這時候有。boss.gd、viewmodel.gd、fireball.gd 的判斷都看這個
+func party_mode() -> bool:
+	return rules == &"party" and not _sandbox
+
 ## 照模式藏起用不到的東西（每台都跑）
 func _apply_rules() -> void:
 	var has_egg: bool = RULES[rules].egg
 	egg.visible = has_egg
+	map.set_party_house(party_mode())
 	for pad in _exit_pads:
 		pad.visible = has_egg
 	if party:   # 換模式、回大廳都重來一份
@@ -980,11 +985,28 @@ func _far_from_cowboys() -> Vector3:
 ## 讀場景要在主執行緒，烘本身丟背景（幾百毫秒），烘好之前 boss 退回直線追。一個場地只烘一次。
 ## 恐龍很大（半徑 2.4），進不了房子、擠不過柵欄的缺口——網格自己就會繞開這些地方
 var _nav_region: NavigationRegion3D
-## rebake：地形被甩尾拆掉（destructible.gd）時重烘，烘好之前照舊的網格走。
+## rebake：地形被拆掉（destructible.gd）時重烘，烘好之前照舊的網格走。
+## 同一幀拆好幾塊（甩尾一次掃到一圈方塊）只排一次，到 idle 才烘：每次烘要在主線程解析場景，一幀烘十幾次會卡住（量過 93 毫秒）；
+## 要等這一幀的碰撞都拿掉了才讀得到，所以不能當場烘。
 ## ponytail: 整張圖重烘（背景幾百毫秒，甩尾冷卻 20 秒才一次）；連續拆好幾樣時，晚開始的烘可能先烘完被舊的蓋掉，真的發生再排隊
+var _rebake_queued := false
 func bake_nav(rebake := false) -> void:
 	if not multiplayer.is_server() or is_instance_valid(_nav_region) != rebake:
 		return
+	if rebake:
+		if not _rebake_queued:
+			_rebake_queued = true
+			_rebake_now.call_deferred()
+		return
+	_bake_nav()
+
+func _rebake_now() -> void:
+	_rebake_queued = false
+	if is_instance_valid(_nav_region):   # 排隊的時候場地還在；已經回大廳（場地被刪）就不烘
+		_bake_nav()
+
+func _bake_nav() -> void:
+	var rebake := is_instance_valid(_nav_region)
 	var nm := NavigationMesh.new()
 	nm.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS
 	nm.agent_radius = 2.4
@@ -1119,6 +1141,7 @@ func _on_viewer_pressed() -> void:
 	$UI.visible = false
 
 func _enter_game(msg: String) -> void:
+	map.set_party_house(party_mode())   # 沙盒的 rules 還是大廳選的，這裡看的是 _sandbox
 	if multiplayer.is_server():
 		_time_left = MATCH_SECONDS
 		_clock = int(MATCH_SECONDS)
