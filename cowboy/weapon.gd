@@ -20,6 +20,8 @@ enum Action { SINGLE_ACTION, DOUBLE_ACTION, BOLT, LEVER, BREAK, HARPOON }
 
 @export_group("基礎")
 @export var display_name := "武器"
+## 選裝選單的價格（派對模式）；現在先不收錢，全部 0
+@export var price := 0
 ## 射擊類型：單動左輪每發前扳擊錘、雙動扣扳機就扳好、栓動拉栓、槓桿壓槓桿
 @export var action_type := Action.SINGLE_ACTION
 ## 每顆彈丸的傷害。總傷害 = damage × pellets 全中。

@@ -51,6 +51,7 @@ var _held := {}     # 主機：斷線的人 玩家代號 -> {id: 舊編號, at: 
 var _auth_failed := false   # 這次加入是版本檢查逾時（不是主機斷線），斷線時不要蓋掉逾時的字
 var party: Party   # 派對模式的回合、計分（party.gd）；不是派對模式是 null
 var _party_hud: PartyHud   # 派對模式的畫面（方位條要問它是不是在選重生點）
+var _buy_menu: BuyMenu   # 派對準備階段的選裝選單（buy_menu.gd）：開著時游標不鎖
 var _match_hud: MatchHud   # 局內的畫面資訊（match_hud.gd）：方位條、倒數、準心、boss 條、左上角那行字
 @onready var map: ArenaMap = $Arena   # 場地：地形、擺設、門、撤離區都在 arena_map.gd
 const ARENA := ArenaMap.ARENA
@@ -128,6 +129,9 @@ func _ready() -> void:
 	_party_hud = PartyHud.new()   # 派對模式的畫面（party_hud.gd），party 是 null 時自己藏起來
 	_party_hud.main = self
 	$UI/Root.add_child(_party_hud)
+	_buy_menu = BuyMenu.new()   # 派對準備階段的選裝（buy_menu.gd）；要加在 party_hud 後面：數字鍵先給它
+	_buy_menu.main = self
+	$UI/Root.add_child(_buy_menu)
 	ModelMaterials._flatten_models()
 	_use_cjk_font()
 	_add_settings()
@@ -258,7 +262,7 @@ func _unhandled_input(e: InputEvent) -> void:
 		return
 	if esc:
 		_set_menu(not menu.visible)
-	elif e is InputEventMouseButton and e.pressed and not menu.visible and not result.visible:
+	elif e is InputEventMouseButton and e.pressed and not menu.visible and not result.visible and not _buy_menu.visible:
 		Fighter.lock_mouse()  # 點畫面重新鎖回滑鼠
 
 # --- 問題回報（bug_report.gd）---
@@ -1555,7 +1559,7 @@ func _process(delta: float) -> void:
 	var me := _me()
 	# 保險：遊戲中、沒開選單和勝負畫面，游標卻沒鎖住（系統自己放掉的，0.8.1 回饋「舉槍後跑出游標」），就鎖回去。
 	# 視窗沒焦點時鎖不住，等切回來再鎖
-	if not menu.visible and not result.visible and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED \
+	if not menu.visible and not result.visible and not _buy_menu.visible and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED \
 			and get_window().has_focus():
 		Fighter.lock_mouse()
 	_match_hud.update_match(me)

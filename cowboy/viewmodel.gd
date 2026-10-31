@@ -120,6 +120,9 @@ const STICK_THROW_ROT := Vector3(-1.45, 0.0, 0.4)   # 出手：手腕往下壓�
 const STICK_AWAY := Vector3(0.22, -0.34, -0.30)
 var _index := 0
 var _last_long := 1   # 上次拿的長槍（索引 1 以後）：1 鍵從左輪拿回來用
+## 派對模式的選裝（buy_menu.gd 設）：主武器的編號（weapon_scenes 的索引），-1 = 沒選，只帶左輪。
+## static：牛仔死了重生（新節點）還在。電腦牛仔不用這個，主機在 party.gd 另外挑
+static var pick := -1
 ## 每把武器的腰射位置（場景檔的 position），ADS 過渡和切換時用。
 var _hip_positions: Array[Vector3] = []
 
@@ -285,9 +288,9 @@ func _process(delta: float) -> void:
 			weapon.ammo = (weapon.ammo + 1) % Weapon.AMMO_NAMES.size()
 			_refresh_ammo()
 		elif Input.is_action_just_pressed("weapon_next"):
-			switch_weapon((_index + 1) % _weapons.size())
+			switch_weapon(_wheel_target(1))
 		elif Input.is_action_just_pressed("weapon_prev"):
-			switch_weapon((_index - 1 + _weapons.size()) % _weapons.size())
+			switch_weapon(_wheel_target(-1))
 		elif Input.is_action_just_pressed("weapon_1"):
 			switch_weapon(_main_pick())
 		elif Input.is_action_just_pressed("weapon_2"):
@@ -317,10 +320,26 @@ func _process(delta: float) -> void:
 
 
 ## 1 鍵（主武器）：拿著左輪就拿上次的長槍；已經拿著長槍再按，換下一把（散彈 → 步槍 → 長矛 → 散彈）
+## 派對模式只拿選的那把（pick = -1 就不動）
 func _main_pick() -> int:
+	if _party_loadout():
+		return pick
 	if _index == 0:
 		return _last_long
 	return _index % (_weapons.size() - 1) + 1
+
+
+## 滾輪：派對模式只在左輪和選的那把之間切（pick = -1 就不動）；其他模式照舊繞一圈
+func _wheel_target(step: int) -> int:
+	if _party_loadout():
+		return pick if _index == 0 else 0
+	return posmod(_index + step, _weapons.size())
+
+
+## 派對模式（party.gd 在跑）才限制拿槍。在用的時候才問，不在 _ready 判斷：那時還不知道是不是自己的牛仔
+func _party_loadout() -> bool:
+	var g := get_tree().get_first_node_in_group(&"match")
+	return g != null and g.get(&"party") != null
 
 
 func switch_weapon(index: int) -> void:

@@ -276,6 +276,8 @@ func _respawn_step(delta: float) -> void:
 func _spawn_cowboy(id: int, bot: bool, index: int) -> void:
 	var c: Node3D = main._add_player(main.COWBOY, id)
 	c.set(&"bot", bot)
+	if bot:   # 電腦：散彈或步槍隨機拿一把（主機決定，別人的畫面靠 gun 看見）
+		(c as Cowboy).viewmodel.switch_weapon([1, 2].pick_random())
 	c.global_position = main._on_ground(_flat(_spawn_spot(index), 0.5))
 	if not lives.has(id):
 		lives[id] = LIVES
