@@ -1,7 +1,5 @@
 # CD-GBB 中央決鬥場｜測試修改版 v1.2-TST
 
-<!-- Page 1 -->
-
 <a id="map"></a>
 
 ## 1. Map 地圖
@@ -14,23 +12,19 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 ![Figure 1. 俯視配置](../../../image/worldbuilding/CD-GBB-v1.2-TST/CD_GBB_Plan_v1.2-TST.png)
 
-<!-- Page 2 -->
-
 <a id="views"></a>
 
-## 1.1 Overall Views 整體視圖
+### 1.1 Overall Views 整體視圖
 
 ![Figure 2. 45° 俯視](../../../image/worldbuilding/CD-GBB-v1.2-TST/CD_GBB_Oblique_v1.2-TST.png)
 
 ![Figure 3. 東側視](../../../image/worldbuilding/CD-GBB-v1.2-TST/CD_GBB_Side_v1.2-TST.png)
 
-<!-- Page 3 -->
-
 <a id="map-guide"></a>
 
 ## 2. Map Guide 範圍與讀圖
 
-<p class="table-caption">Table 1. 範圍與定位</p>
+**Table 1. 範圍與定位**
 
 | 項目 | 規格 |
 |---|---|
@@ -42,7 +36,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 | 建物朝向 | 旋轉中心、U 軸方位角及門窗側別見附件 B；圖中開口記號已隨屋體旋轉。 |
 | 格位引用 | 清單採中心格；跨格範圍與中心座標見附件 B。格位只表示位置，物件移位不改 ID。 |
 
-<p class="table-caption">Table 2. 圖例與視圖</p>
+**Table 2. 圖例與視圖**
 
 | 記號／視圖 | 判讀 |
 |---|---|
@@ -53,7 +47,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 | 方向 | 俯視圖以北箭頭表示方向；斜視以 SW 視點及 N/E 軸標示；東側視兩端 S/N。 |
 | 投影與圖面層次 | 三視圖共用同一組地形與量體，正投影、水平／垂直等比例，保留實際遮擋。屋面拼板、土坯屋緣、開放棚架、分枝樹冠與地表草叢以簡化外觀表現；物件位置與規格以清單為準，洞內另見局部圖。 |
 
-<p class="table-caption">Table 3. 物件編號與引用</p>
+**Table 3. 物件編號與引用**
 
 | 項目 | 規則 |
 |---|---|
@@ -64,8 +58,6 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 | 編號原則 | BLD、LOC、ZON、RTE 各自起編；既有號碼固定，移位或範圍調整不換號，作廢不回收。項目拆分或合併成新項目時另編新號；已發布項目的變更記入獨立修訂紀錄。 |
 | 完整碼與短碼 | 主題－地圖－類型－流水號，如 CD-GBB-BLD-06、CD-GBB-ZON-01、CD-GBB-RTE-05。本文及圖內共用 CD-GBB 前綴，可寫 BLD-06；跨圖引用保留完整碼。 |
 | 共用資產<br>PRP／MOD／NAT／VEG／MAT／DEC／ASM | 可重用物件、構件、自然物、植被、材質、表面細節及組合使用獨立資產 ID，如 PRP-0001、MAT-0001；場所 BLD／LOC 記錄本圖落點與配置。共用分類與組成規則見附件 A。 |
-
-<!-- Page 4 -->
 
 <a id="environment"></a>
 
@@ -85,7 +77,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 井旁濕地與東側濕洞保留小水盆，坡腳可見濕土；坡面水痕向局部低處連續。場內保持乾硬平整的移動面，濕痕集中牆腳；中央不放淺窪或積水。
 
-<p class="table-caption">Table 4. 地景配置概覽</p>
+**Table 4. 地景配置概覽**
 
 | 分區 | 位置 | 構成與視覺重點 |
 |---|---|---|
@@ -102,15 +94,13 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 <aside class="footnote" id="fn-1">1. National Weather Service, “North American Monsoon Highlights,” accessed October 19, 2026, <a href="https://www.weather.gov/abq/northamericanmonsoon-intro">NWS</a>; National Park Service, “Plants,” El Morro National Monument, accessed October 19, 2026, <a href="https://www.nps.gov/elmo/learn/nature/plants.htm">NPS</a>. 季風降雨與當地植被作自然參照；架空盆地的密度與混植為場景設計。</aside>
 
-<!-- Page 5 -->
-
 <a id="building-register"></a>
 
-## 4. Building Register 建築與細節物件｜01 至 07
+## 4. Building Register 建築與細節物件
 
 編號連至附件 B 的逐棟規格；各列「詳述」連至附件 F 的場所描述。
 
-<p class="table-caption">Table 5. 建築概述：BLD-01 至 BLD-07</p>
+**Table 5. 建築概述：BLD-01 至 BLD-07**
 
 | 編號／主要格位 | 名稱 | 占地與空間描述 | 製作範圍 | 細節物件 | 故事與異常呈現 |
 |---|---|---|---|---|---|
@@ -124,13 +114,9 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [詳細設計規格：附件 B](#building-specs) · [全部場所詳述：附件 F](#place-descriptions)
 
-<!-- Page 6 -->
-
 <a id="buildings-8"></a>
 
-## 4. Building Register 建築與細節物件｜08 至 14
-
-<p class="table-caption">Table 6. 建築概述：BLD-08 至 BLD-14</p>
+**Table 6. 建築概述：BLD-08 至 BLD-14**
 
 | 編號／主要格位 | 名稱 | 占地與空間描述 | 製作範圍 | 細節物件 | 故事與異常呈現 |
 |---|---|---|---|---|---|
@@ -144,13 +130,9 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [詳細設計規格：附件 B](#building-specs) · [全部場所詳述：附件 F](#place-descriptions)
 
-<!-- Page 7 -->
-
 <a id="buildings-15"></a>
 
-## 4. Building Register 建築與細節物件｜15、17 至 21
-
-<p class="table-caption">Table 7. 建築概述：BLD-15、BLD-17 至 BLD-21</p>
+**Table 7. 建築概述：BLD-15、BLD-17 至 BLD-21**
 
 | 編號／主要格位 | 名稱 | 占地與空間描述 | 製作範圍 | 細節物件 | 故事與異常呈現 |
 |---|---|---|---|---|---|
@@ -163,13 +145,9 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [詳細設計規格：附件 B](#building-specs) · [全部場所詳述：附件 F](#place-descriptions)
 
-<!-- Page 8 -->
-
 <a id="buildings-22"></a>
 
-## 4. Building Register 建築與細節物件｜22 至 28
-
-<p class="table-caption">Table 8. 建築概述：BLD-22 至 BLD-28</p>
+**Table 8. 建築概述：BLD-22 至 BLD-28**
 
 | 編號／主要格位 | 名稱 | 占地與空間描述 | 製作範圍 | 細節物件 | 故事與異常呈現 |
 |---|---|---|---|---|---|
@@ -183,15 +161,13 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [詳細設計規格：附件 B](#building-specs) · [全部場所詳述：附件 F](#place-descriptions)
 
-<!-- Page 9 -->
-
 <a id="outdoor-register"></a>
 
-## 5. Outdoor Register 戶外場所與細節｜03 至 05
+## 5. Outdoor Register 戶外場所與細節
 
 編號連至附件 C 的逐處規格；各列「詳述」連至附件 F 的場所描述。
 
-<p class="table-caption">Table 9. 戶外概述：LOC-03 至 LOC-05</p>
+**Table 9. 戶外概述：LOC-03 至 LOC-05**
 
 | 編號／主要格位 | 名稱 | 空間描述 | 細節物件 | 故事與異常呈現 |
 |---|---|---|---|---|
@@ -201,13 +177,9 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [詳細設計規格：附件 C](#outdoor-specs)
 
-<!-- Page 10 -->
-
 <a id="outdoors-6"></a>
 
-## 5. Outdoor Register 戶外場所與細節｜06、08 至 11
-
-<p class="table-caption">Table 10. 戶外概述：LOC-06、LOC-08 至 LOC-11</p>
+**Table 10. 戶外概述：LOC-06、LOC-08 至 LOC-11**
 
 | 編號／主要格位 | 名稱 | 空間描述 | 細節物件 | 故事與異常呈現 |
 |---|---|---|---|---|
@@ -218,8 +190,6 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 | [LOC-11](#spec-loc-11)<br>G4<br>[詳述](#place-loc-11) | 中央決鬥場<br><small>Central Duel Yard</small> | 64 × 72 m 方正場地，H+1；南北端臺與箱陣構成對峙。 | 測試木箱、泥抹圍牆、低臺、坡道 | 木土材質接近周邊，方硬形體與粗簡表面保留經典決鬥場風味。 |
 
 [詳細設計規格：附件 C](#outdoor-specs)
-
-<!-- Page 11 -->
 
 <a id="assembly"></a>
 
@@ -235,7 +205,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 ### 6.2 Map Interfaces 地圖接面檢核
 
-<p class="table-caption">Table 11. 跨項目接面</p>
+**Table 11. 跨項目接面**
 
 | 接面 | 要一起核對的資料 |
 |---|---|
@@ -246,13 +216,11 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 | 石木／活植被 | 保留石質斷面、低枝葉遮蔽和林間空隙。 |
 | 箱陣／標的物件 | 測試掩體不使用十四號或組織委託標記；周邊唯一標的只放指定位置。 |
 
-<!-- Page 12 -->
-
 <a id="common-guidelines"></a>
 
 ## Appendix A. Common Construction Guidelines 共通建構綱領
 
-本圖的場所、配置與製作條件，以本文及其規格附件為準；可重用模型、構件、材質與組合的身分、製作和交付方式，依下列共通文件辦理。
+本圖的場所、配置與製作條件，以本文及其規格附件為準；可重用模型、構件、材質與組合的識別依編碼規則，項目定義依製作目錄。
 
 ### A.1 Scope and Definitions 適用範圍與定義
 
@@ -260,19 +228,16 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 ### A.2 Document Guide 文件導引
 
-1. **[編碼與組成規則 v0.4](../../shared/Environment_Asset_Coding_Guide_v0.4.html)**：先確認類別、基底資產、形體與外觀變體，以及組織、地域客製的表示方式。新建或重用項目時，以此查核身分及依賴關係。
-2. **[環境資產製作目錄 v0.3](../../shared/Environment_Asset_Catalog_v0.3.html)**：查找已有的製作單位、外形關鍵字、材料搭配和配置定義。目錄列製作需求及選用配置；模型完成狀態另依製作紀錄確認。
-3. **[環境資產製作與交接準則 v0.3](../../shared/Environment_Asset_Production_Guide_v0.3.html)**：開始製作前確認尺寸、接口、來源與驗收要求；交付時依其整理可編輯來源、輸出、材質依賴及實際檢查結果。
+1. **[編碼與組成規則 v0.4](../../shared/Environment_Asset_Coding_Guide_v0.4.md)**：先確認類別、基底資產、形體與外觀變體，以及組織、地域客製的表示方式。新建或重用項目時，以此查核身分及依賴關係。
+2. **[環境資產製作目錄 v0.3](../../shared/Environment_Asset_Catalog_v0.3.md)**：查找已有的製作單位、外形關鍵字、材料搭配和配置定義。目錄列製作需求及選用配置；模型完成狀態另依製作紀錄確認。
 
 ### A.3 Application 使用方式
 
-先由地圖概述理解場所，再到相應製作規格確認空間、物件與接面。遇到資產代碼時查製作目錄；需要拆件、新編碼或建立變體時查編碼與組成規則，製作及交付則查製作與交接準則。
+先由地圖概述理解場所，再到相應製作規格確認空間、物件與接面。遇到資產代碼時查製作目錄；需要新編碼或建立變體時查編碼與組成規則。
 
 共用文件說明可以重用的規則，本圖規格說明在這裡如何配置與呈現。物件用量、入口、高程、材料狀態和唯一標的以本圖記錄為準；尚未決定或須實作驗證的事項集中在附件 H。配套文件的修訂分別管理，不因單張地圖進版而自動換版。
 
 [返回地圖](#map) · [建築概述](#building-register) · [戶外概述](#outdoor-register)
-
-<!-- Page 13 -->
 
 <a id="building-specs"></a>
 
@@ -286,7 +251,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 屋基外約 1 m 留整平排水帶，再以約 1.5 m 接坡；門前約 2 m 留踏面，接至圖示支路。靠崖時縮小整平帶，不切穿洞殼。地基向下、牆厚向內，普通屋簷約地板上 2.6 m。接道及門口高差必須同時檢查，不能只轉屋頂。
 
-<p class="table-caption">Table 12. 連接段與高度控制</p>
+**Table 12. 連接段與高度控制**
 
 | 連接段 | 控制點 X, Y, H | 淨寬／水平長 | 建構條件 |
 |---|---|---|---|
@@ -296,19 +261,13 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 | RTE-07 西側入坑坡 | (71, 98, 7.6) → (75, 111, 6) → (83, 106, 4.2) → (86, 93, 2.2) → (94, 93, 1) | 4／44.38 | 最大段高差／水平距離 19.08%；4 m 入坑坡接 H+1 門口；坡腳留連續踏面。 |
 | RTE-08 東側入坑坡 | (201, 87, 9.5) → (196, 80, 8) → (180, 83, 5.8) → (165, 86, 3) → (158, 93, 1) | 4／50.08 | 最大段高差／水平距離 20.2%；4 m 入坑坡接 H+1 門口；坡腳留連續踏面。 |
 
-
 坡度為高差除以水平距離。路面、平台、地面與洞底分開建構；等高線不直接變成一道道牆。
-
 
 **可達層級**：各屋首層與開放工作帶依清單接通；觀察臺、決鬥場平台及低拆料臺可行走。設有檢修用途的高處須有連續梯／階和落腳面。一般屋面未設作業面或接入者不另加通路；有使用需求才補相應結構。圍牆不作通路；兩端平台由坡道接入。箱頂攀登與跳躍另按測試角色驗證。
 
 <aside class="footnote" id="fn-2">2. Esri, “Direction Units for Editing,” ArcGIS Pro 3.4, “North Azimuth,” accessed October 19, 2026, <a href="https://pro.arcgis.com/en/pro-app/3.4/help/editing/direction-formats-for-editing.htm">官方方向定義</a>。本文採其由北順時針的方位角慣例，局部 U/V、轉軸及配置值為本圖設計。</aside>
 
-<!-- Page 14 -->
-
 <a id="building-specs-1"></a>
-
-## Appendix B. Building Specifications 建築製作規格｜01 至 02
 
 <a id="spec-bld-01"></a>
 
@@ -316,7 +275,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-01)
 
-<p class="table-caption">Table 13. BLD-01 製作規格</p>
+**Table 13. BLD-01 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -338,7 +297,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-02)
 
-<p class="table-caption">Table 14. BLD-02 製作規格</p>
+**Table 14. BLD-02 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -357,11 +316,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [返回建築概述](#building-register)
 
-<!-- Page 15 -->
-
 <a id="building-specs-3"></a>
-
-## Appendix B. Building Specifications 建築製作規格｜03 至 04
 
 <a id="spec-bld-03"></a>
 
@@ -369,7 +324,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-03)
 
-<p class="table-caption">Table 15. BLD-03 製作規格</p>
+**Table 15. BLD-03 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -392,7 +347,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-04)
 
-<p class="table-caption">Table 16. BLD-04 製作規格</p>
+**Table 16. BLD-04 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -410,11 +365,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [返回建築概述](#building-register)
 
-<!-- Page 16 -->
-
 <a id="building-specs-5"></a>
-
-## Appendix B. Building Specifications 建築製作規格｜05 至 06
 
 <a id="spec-bld-05"></a>
 
@@ -422,7 +373,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-05)
 
-<p class="table-caption">Table 17. BLD-05 製作規格</p>
+**Table 17. BLD-05 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -445,7 +396,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-06)
 
-<p class="table-caption">Table 18. BLD-06 製作規格</p>
+**Table 18. BLD-06 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -465,11 +416,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [返回建築概述](#building-register)
 
-<!-- Page 17 -->
-
 <a id="building-specs-7"></a>
-
-## Appendix B. Building Specifications 建築製作規格｜07 至 08
 
 <a id="spec-bld-07"></a>
 
@@ -477,7 +424,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-07)
 
-<p class="table-caption">Table 19. BLD-07 製作規格</p>
+**Table 19. BLD-07 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -499,7 +446,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-08)
 
-<p class="table-caption">Table 20. BLD-08 製作規格</p>
+**Table 20. BLD-08 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -518,11 +465,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [返回建築概述](#building-register)
 
-<!-- Page 18 -->
-
 <a id="building-specs-9"></a>
-
-## Appendix B. Building Specifications 建築製作規格｜09 至 10
 
 <a id="spec-bld-09"></a>
 
@@ -530,7 +473,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-09)
 
-<p class="table-caption">Table 21. BLD-09 製作規格</p>
+**Table 21. BLD-09 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -553,7 +496,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-10)
 
-<p class="table-caption">Table 22. BLD-10 製作規格</p>
+**Table 22. BLD-10 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -572,11 +515,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [返回建築概述](#building-register)
 
-<!-- Page 19 -->
-
 <a id="building-specs-11"></a>
-
-## Appendix B. Building Specifications 建築製作規格｜11 至 12
 
 <a id="spec-bld-11"></a>
 
@@ -584,7 +523,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-11)
 
-<p class="table-caption">Table 23. BLD-11 製作規格</p>
+**Table 23. BLD-11 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -607,7 +546,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-12)
 
-<p class="table-caption">Table 24. BLD-12 製作規格</p>
+**Table 24. BLD-12 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -625,11 +564,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [返回建築概述](#building-register)
 
-<!-- Page 20 -->
-
 <a id="building-specs-13"></a>
-
-## Appendix B. Building Specifications 建築製作規格｜13 至 14
 
 <a id="spec-bld-13"></a>
 
@@ -637,7 +572,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-13)
 
-<p class="table-caption">Table 25. BLD-13 製作規格</p>
+**Table 25. BLD-13 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -659,7 +594,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-14)
 
-<p class="table-caption">Table 26. BLD-14 製作規格</p>
+**Table 26. BLD-14 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -678,11 +613,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [返回建築概述](#building-register)
 
-<!-- Page 21 -->
-
 <a id="building-specs-15"></a>
-
-## Appendix B. Building Specifications 建築製作規格｜15
 
 <a id="spec-bld-15"></a>
 
@@ -690,7 +621,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-15)
 
-<p class="table-caption">Table 27. BLD-15 製作規格</p>
+**Table 27. BLD-15 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -706,14 +637,9 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 | 細節與處理 | 維護中舊件；窗下床卷、餐桌腳磨損。屋面承重有中間柱／屋架，不做兩層旅館。 |
 | 可見異常與痕跡 | 不同記號的箱袋混放，餐桌、床卷及工資單留下採集營地的日常尺度。 |
 
-
 [返回建築概述](#buildings-15)
 
-<!-- Page 22 -->
-
 <a id="building-specs-17"></a>
-
-## Appendix B. Building Specifications 建築製作規格｜17 至 18
 
 <a id="spec-bld-17"></a>
 
@@ -721,7 +647,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-17)
 
-<p class="table-caption">Table 28. BLD-17 製作規格</p>
+**Table 28. BLD-17 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -743,7 +669,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-18)
 
-<p class="table-caption">Table 29. BLD-18 製作規格</p>
+**Table 29. BLD-18 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -761,11 +687,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [返回建築概述](#building-register)
 
-<!-- Page 23 -->
-
 <a id="building-specs-19"></a>
-
-## Appendix B. Building Specifications 建築製作規格｜19 至 20
 
 <a id="spec-bld-19"></a>
 
@@ -773,7 +695,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-19)
 
-<p class="table-caption">Table 30. BLD-19 製作規格</p>
+**Table 30. BLD-19 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -795,7 +717,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-20)
 
-<p class="table-caption">Table 31. BLD-20 製作規格</p>
+**Table 31. BLD-20 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -814,11 +736,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [返回建築概述](#building-register)
 
-<!-- Page 24 -->
-
 <a id="building-specs-21"></a>
-
-## Appendix B. Building Specifications 建築製作規格｜21 至 22
 
 <a id="spec-bld-21"></a>
 
@@ -826,7 +744,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-21)
 
-<p class="table-caption">Table 32. BLD-21 製作規格</p>
+**Table 32. BLD-21 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -848,7 +766,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-22)
 
-<p class="table-caption">Table 33. BLD-22 製作規格</p>
+**Table 33. BLD-22 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -866,11 +784,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [返回建築概述](#building-register)
 
-<!-- Page 25 -->
-
 <a id="building-specs-23"></a>
-
-## Appendix B. Building Specifications 建築製作規格｜23 至 24
 
 <a id="spec-bld-23"></a>
 
@@ -878,7 +792,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-23)
 
-<p class="table-caption">Table 34. BLD-23 製作規格</p>
+**Table 34. BLD-23 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -901,7 +815,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-24)
 
-<p class="table-caption">Table 35. BLD-24 製作規格</p>
+**Table 35. BLD-24 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -919,11 +833,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [返回建築概述](#building-register)
 
-<!-- Page 26 -->
-
 <a id="building-specs-25"></a>
-
-## Appendix B. Building Specifications 建築製作規格｜25 至 26
 
 <a id="spec-bld-25"></a>
 
@@ -931,7 +841,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-25)
 
-<p class="table-caption">Table 36. BLD-25 製作規格</p>
+**Table 36. BLD-25 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -953,7 +863,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-26)
 
-<p class="table-caption">Table 37. BLD-26 製作規格</p>
+**Table 37. BLD-26 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -971,11 +881,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [返回建築概述](#building-register)
 
-<!-- Page 27 -->
-
 <a id="building-specs-27"></a>
-
-## Appendix B. Building Specifications 建築製作規格｜27 至 28
 
 <a id="spec-bld-27"></a>
 
@@ -983,7 +889,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-27)
 
-<p class="table-caption">Table 38. BLD-27 製作規格</p>
+**Table 38. BLD-27 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -1005,7 +911,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-bld-28)
 
-<p class="table-caption">Table 39. BLD-28 製作規格</p>
+**Table 39. BLD-28 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -1023,11 +929,9 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [返回建築概述](#building-register)
 
-<!-- Page 28 -->
-
 <a id="outdoor-specs"></a>
 
-## Appendix C. Outdoor Specifications 戶外製作規格｜03
+## Appendix C. Outdoor Specifications 戶外製作規格
 
 <a id="spec-loc-03"></a>
 
@@ -1035,7 +939,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-loc-03)
 
-<p class="table-caption">Table 40. LOC-03 製作規格</p>
+**Table 40. LOC-03 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -1048,11 +952,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [返回戶外概述](#outdoor-register)
 
-<!-- Page 29 -->
-
 <a id="outdoor-specs-4"></a>
-
-## Appendix C. Outdoor Specifications 戶外製作規格｜04 至 06
 
 <a id="spec-loc-04"></a>
 
@@ -1060,7 +960,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-loc-04)
 
-<p class="table-caption">Table 41. LOC-04 製作規格</p>
+**Table 41. LOC-04 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -1077,7 +977,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-loc-05)
 
-<p class="table-caption">Table 42. LOC-05 製作規格</p>
+**Table 42. LOC-05 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -1094,7 +994,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-loc-06)
 
-<p class="table-caption">Table 43. LOC-06 製作規格</p>
+**Table 43. LOC-06 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -1107,11 +1007,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [返回戶外概述](#outdoor-register)
 
-<!-- Page 30 -->
-
 <a id="outdoor-specs-7"></a>
-
-## Appendix C. Outdoor Specifications 戶外製作規格｜08 至 09
 
 <a id="spec-loc-08"></a>
 
@@ -1119,7 +1015,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-loc-08)
 
-<p class="table-caption">Table 44. LOC-08 製作規格</p>
+**Table 44. LOC-08 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -1136,7 +1032,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-loc-09)
 
-<p class="table-caption">Table 45. LOC-09 製作規格</p>
+**Table 45. LOC-09 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -1149,11 +1045,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [返回戶外概述](#outdoor-register)
 
-<!-- Page 31 -->
-
 <a id="outdoor-specs-10"></a>
-
-## Appendix C. Outdoor Specifications 戶外製作規格｜10
 
 <a id="spec-loc-10"></a>
 
@@ -1161,7 +1053,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-loc-10)
 
-<p class="table-caption">Table 46. LOC-10 製作規格</p>
+**Table 46. LOC-10 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -1174,11 +1066,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [返回戶外概述](#outdoor-register)
 
-<!-- Page 32 -->
-
 <a id="outdoor-specs-11"></a>
-
-## Appendix C. Outdoor Specifications 戶外製作規格｜11
 
 <a id="spec-loc-11"></a>
 
@@ -1186,7 +1074,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 [場所詳述](#place-loc-11) · [測試資產及配置](#test-kit)
 
-<p class="table-caption">Table 47. LOC-11 製作規格</p>
+**Table 47. LOC-11 製作規格**
 
 | 項目 | 規格 |
 |---|---|
@@ -1200,8 +1088,6 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 | 外觀 | 木箱有粗板與斜撐，牆面採簡化泥抹／石基，地面暖灰土色；保留方硬稜角、少量大色塊，避免細節把經典輪廓淹沒。 |
 | 通行界線 | 端臺可走；牆頂不走；箱頂跳躍與碰撞先測實際角色。此版本未指定武器、穿透、重生或競技平衡參數。 |
 
-<!-- Page 33 -->
-
 <a id="environment-specs"></a>
 
 ## Appendix D. Environment Specifications 環境製作規格
@@ -1210,7 +1096,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 分區格位是稱呼用包絡，重疊處依「入口與通路 → 指定濕邊 → 清挖面 → 工作院 → 一般坡地」判定。覆蓋率以扣掉建物、道路、平台及裸岩後的可配置地面計；草、灌木投影可能重疊，不相加作總面積。活樹以株數控制。
 
-<p class="table-caption">Table 48. 植被密度與過渡</p>
+**Table 48. 植被密度與過渡**
 
 | 分區 | 候選數量／密度 | 配置規則 |
 |---|---|---|
@@ -1223,20 +1109,17 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 | ZON-07 東側外緣與裂溝 | 草 30 至 50%；灌木 10 至 18%；松 3／檜 10 | 高邊較疏、坡腳較綠；裂溝與車廂開口不塞樹，濕洞入口光照區另依 ZON-08。 |
 | ZON-08 井旁與洞口濕邊 | 濕地草叢 45 至 65%；苔斑 5 至 15%；不新增大樹 | 井旁包絡 8 × 6 m、水盆 3 × 2 m／深 0.2 m；洞口僅有光濕面少量薄苔，洞深不鋪綠草。 |
 
-
 全圖代表樹冠 60 株：矮松 14、低枝檜 46。樹冠位置已畫入三視圖；圖面補入代表草叢、碎石與工作物件，完整數量及分布仍依本表製作。樹冠不是實心遮蔽體，葉量與枝葉下緣仍須以尼諾拉試位。
 
 草與裸土以約 1 至 3 m 不規則過渡；工作路中心少草，兩側逐漸回到分區密度。物件堆外緣留 0.3 至 0.8 m 使用痕跡，牆腳與排水口只在局部潮濕；木屑集中在刨檯／鋸架，泥印由濕處向外減弱，不以均勻散落小物製造生活感。
 
 2 至 3 m 低枝葉遮蔽為必要配置，較高樹木可穿插，並非以 3 m 封頂。檜叢優先在坡腳、屋側與石木群邊形成 2 至 4 株小組；冠緣可交疊，群間留 2 至 4 m 斷口。高度、冠幅和下部枝葉共同決定遮蔽，不把樹高當成已達成遮蔽效果。
 
-<!-- Page 34 -->
-
 <a id="natural-specs"></a>
 
-## Appendix D. Environment Specifications 環境製作規格｜自然物與地表
+### 自然物與地表
 
-<p class="table-caption">Table 49. 本圖自然物用量與形態</p>
+**Table 49. 本圖自然物用量與形態**
 
 | 資產引用 | 本圖配置 | 製作控制 |
 |---|---|---|
@@ -1251,7 +1134,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 石化木採滅絕針葉樹型的形態參照，未定學名；現生矮松、檜叢的名稱不能套到化石上。直立殘幹及異常樹脂是本圖創作配置。<sup><a href="#fn-3">3</a></sup>
 
-<p class="table-caption">Table 50. 岩土、水與接地</p>
+**Table 50. 岩土、水與接地**
 
 | 資產引用 | 配置 | 表面與界線 |
 |---|---|---|
@@ -1261,20 +1144,17 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 | MAT-0019 | LOC-06 及 LOC-08 小水盆。 | 水面、盆底與岸界分件；沿實際局部低點放置，不在斜坡上貼水平水片。 |
 | PRP-0010＋DEC-0008 | BLD-10 的指定岩芯。 | 夾層厚 0.01 至 0.05 m，霧白、不發光，未指定礦物或能源性質。 |
 
-
 <aside class="footnote" id="fn-3">3. National Park Service, “Petrified Wood,” Petrified Forest National Park, accessed October 19, 2026, <a href="https://www.nps.gov/pefo/learn/nature/petrified-wood.htm">NPS</a>. 石化木採礦化外觀參照；直立配置與樹脂狀異常為創作設定。</aside>
-
-<!-- Page 35 -->
 
 <a id="construction-specs"></a>
 
-## Appendix D. Environment Specifications 環境製作規格｜構件與風化
+### 構件與風化
 
 ### D.2 Construction and Surfaces 構件與表面
 
 建物以構件拼裝；材質另行引用。同一木柱模型可換新舊木面，同一木面可供柱、梁及板共用。形體變體、材質搭配、組織識別與地域處理遵照獨立編碼規則，並保留單件來源。<sup><a href="#fn-4">4</a></sup>
 
-<p class="table-caption">Table 51. 構件與材質對應</p>
+**Table 51. 構件與材質對應**
 
 | 構件 | 表面 | 本圖控制 |
 |---|---|---|
@@ -1286,7 +1166,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 | 泵／閥／燈／機件 | MAT-0002／MAT-0008／MAT-0021 | 鐵、黃銅、銅分開；三銼痕、銘牌與白夾層不被統一髒污遮掉。 |
 | 布／馬具／玻璃／床卷 | MAT-0009／MAT-0010／MAT-0011／MAT-0022 | 布摺、皮革磨損與玻璃透光分別處理；不要用同一表面替代。 |
 
-<p class="table-caption">Table 52. 使用與風化處理</p>
+**Table 52. 使用與風化處理**
 
 | 處理 | 可見狀態 | 配置限制 |
 |---|---|---|
@@ -1296,20 +1176,17 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 | 本次破壞 | 新斷口、移位構件、翻土和倒欄。 | 只在逐棟指定處；方向需對得上受力或掩埋。 |
 | 長期暴露 | 裸木灰化、邊緣缺損、積塵與少量散屑。 | 與修補區並存，不能因此推定可攀爬或結構安全。 |
 
-
 <aside class="footnote" id="fn-4">4. 模型形體、材質搭配與地圖配置的分工，見 <a href="../../shared/Environment_Asset_Coding_Guide_v0.4.html#s2">環境資產編碼與組成規則</a>，第 2 節。</aside>
-
-<!-- Page 36 -->
 
 <a id="organization-props"></a>
 
-## Appendix D. Environment Specifications 環境製作規格｜組織物件
+### 組織物件
 
 ### D.3 Organization-Related Props 組織關聯物件
 
 可重複出現的箱袋、文件與機具標記依下表配置；唯一委託標的已收在對應 BLD／LOC 規格。組織鍵是資產搭配用識別，徽章造形與正式英文全名另行設計。
 
-<p class="table-caption">Table 53. 可配置的組織物件</p>
+**Table 53. 可配置的組織物件**
 
 | 組織／識別鍵 | 物件品項 | 資產引用 | 表現方式 |
 |---|---|---|---|
@@ -1322,9 +1199,7 @@ CD-GBB · Central Duel Yard · Duel Test Edition<br>v1.2-TST · October 19, 2026
 
 一般運輸物可沿集貨、儲存、維修關係散置，不必固定每件落點。具有證據或委託意義的文件、標本、銅燈與款箱只按逐棟指定配置。兩方記號可以疊在同件貨物上；兩層都要保留可讀區域。
 
-[環境資產製作目錄](../../shared/Environment_Asset_Catalog_v0.3.html) 列製作單位、材質及變體範例；此處決定哪些物件適合出現在本圖。
-
-<!-- Page 37 -->
+[環境資產製作目錄](../../shared/Environment_Asset_Catalog_v0.3.md) 列製作單位、材質及變體範例；此處決定哪些物件適合出現在本圖。
 
 <a id="special-spaces"></a>
 
@@ -1336,11 +1211,9 @@ BLD-26 工棚、2 m 露天接面與 LOC-08 短洞為三個相接單元。洞底�
 
 ![Figure 4. BLD-26／LOC-08 平面與縱剖](../../../image/worldbuilding/CD-GBB-v1.2-TST/CD_GBB_Cave_Detail_v1.2-TST.png)
 
-<!-- Page 38 -->
-
 <a id="vertical-spaces"></a>
 
-## Appendix E. Special Spaces 特殊空間｜層次與景深
+### 層次與景深
 
 BLD-04 剖面沿局部 V 軸、固定 U=10 m；BLD-22 沿局部 U 軸、固定 V=3 m。兩者整體依附件 B 的方位角置入地圖。
 
@@ -1357,8 +1230,6 @@ BLD-13 觀察臺及 BLD-28 低臺依既有接入通行；BLD-20 由 V+ 側（14�
 BLD-22 U+ 端（102°）保留深約 4 m 的可進入前室；後方以不通行的暗景片或錯位內殼形成深度差。U- 端覆土最高約 H+10，低於 H+12.7 屋頂；V+ 側舊窗背後另設景片，避免看穿後殼。
 
 ![Figure 6. BLD-22 前室、後殼與覆土關係](../../../image/worldbuilding/CD-GBB-v1.2-TST/CD_GBB_Chapel_Detail_v1.2-TST.png)
-
-<!-- Page 39 -->
 
 <a id="place-descriptions"></a>
 
@@ -1411,11 +1282,9 @@ BLD-22 U+ 端（102°）保留深約 4 m 的可進入前室；後方以不通行
 <a href="#place-loc-11"><b>LOC-11</b> 中央決鬥場</a>
 </div>
 
-<!-- Page 40 -->
-
 <a id="place-bld-01"></a>
 
-## F.1.1 BLD-01 南緣農宅
+### F.1.1 BLD-01 南緣農宅
 
 *South Farmhouse* · E8
 
@@ -1430,11 +1299,9 @@ BLD-22 U+ 端（102°）保留深約 4 m 的可進入前室；後方以不通行
 
 [製作規格](#spec-bld-01) · [返回概述](#building-register) · [詳述索引](#place-descriptions)
 
-<!-- Page 41 -->
-
 <a id="place-bld-02"></a>
 
-## F.1.2 BLD-02 南倉糧庫
+### F.1.2 BLD-02 南倉糧庫
 
 *South Granary* · H8
 
@@ -1449,11 +1316,9 @@ BLD-22 U+ 端（102°）保留深約 4 m 的可進入前室；後方以不通行
 
 [製作規格](#spec-bld-02) · [返回概述](#building-register) · [詳述索引](#place-descriptions)
 
-<!-- Page 42 -->
-
 <a id="place-bld-03"></a>
 
-## F.1.3 BLD-03 生皮與馬具棚
+### F.1.3 BLD-03 生皮與馬具棚
 
 *Hide and Tack Shed* · I8
 
@@ -1468,11 +1333,9 @@ BLD-22 U+ 端（102°）保留深約 4 m 的可進入前室；後方以不通行
 
 [製作規格](#spec-bld-03) · [返回概述](#building-register) · [詳述索引](#place-descriptions)
 
-<!-- Page 43 -->
-
 <a id="place-bld-04"></a>
 
-## F.1.4 BLD-04 農莊馬廄
+### F.1.4 BLD-04 農莊馬廄
 
 *Farm Stable* · D7
 
@@ -1487,11 +1350,9 @@ BLD-22 U+ 端（102°）保留深約 4 m 的可進入前室；後方以不通行
 
 [製作規格](#spec-bld-04) · [返回概述](#building-register) · [詳述索引](#place-descriptions)
 
-<!-- Page 44 -->
-
 <a id="place-bld-05"></a>
 
-## F.1.5 BLD-05 育幼圈遮棚
+### F.1.5 BLD-05 育幼圈遮棚
 
 *Nursery Pen Shelter* · E7
 
@@ -1506,11 +1367,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-bld-05) · [返回概述](#building-register) · [詳述索引](#place-descriptions)
 
-<!-- Page 45 -->
-
 <a id="place-bld-06"></a>
 
-## F.1.6 BLD-06 石林邊泵房
+### F.1.6 BLD-06 石林邊泵房
 
 *Petrified Grove Pump House* · C4
 
@@ -1525,11 +1384,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-bld-06) · [返回概述](#building-register) · [詳述索引](#place-descriptions)
 
-<!-- Page 46 -->
-
 <a id="place-bld-07"></a>
 
-## F.1.7 BLD-07 木工與修理棚
+### F.1.7 BLD-07 木工與修理棚
 
 *Carpentry and Repair Shed* · C3
 
@@ -1544,11 +1401,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-bld-07) · [返回概述](#building-register) · [詳述索引](#place-descriptions)
 
-<!-- Page 47 -->
-
 <a id="place-bld-08"></a>
 
-## F.1.8 BLD-08 大標本包裝棚
+### F.1.8 BLD-08 大標本包裝棚
 
 *Specimen Packing Shed* · I4
 
@@ -1563,11 +1418,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-bld-08) · [返回概述](#buildings-8) · [詳述索引](#place-descriptions)
 
-<!-- Page 48 -->
-
 <a id="place-bld-09"></a>
 
-## F.1.9 BLD-09 層位記錄屋
+### F.1.9 BLD-09 層位記錄屋
 
 *Strata Records Office* · I3
 
@@ -1582,11 +1435,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-bld-09) · [返回概述](#buildings-8) · [詳述索引](#place-descriptions)
 
-<!-- Page 49 -->
-
 <a id="place-bld-10"></a>
 
-## F.1.10 BLD-10 岩芯與鑽具庫
+### F.1.10 BLD-10 岩芯與鑽具庫
 
 *Core and Drill Store* · I5
 
@@ -1601,11 +1452,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-bld-10) · [返回概述](#buildings-8) · [詳述索引](#place-descriptions)
 
-<!-- Page 50 -->
-
 <a id="place-bld-11"></a>
 
-## F.1.11 BLD-11 高臺隱燈棚
+### F.1.11 BLD-11 高臺隱燈棚
 
 *Veiled Lamp Hut* · H2
 
@@ -1620,11 +1469,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-bld-11) · [返回概述](#buildings-8) · [詳述索引](#place-descriptions)
 
-<!-- Page 51 -->
-
 <a id="place-bld-12"></a>
 
-## F.1.12 BLD-12 北緣絞盤屋
+### F.1.12 BLD-12 北緣絞盤屋
 
 *North Rim Winch House* · F2
 
@@ -1639,11 +1486,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-bld-12) · [返回概述](#buildings-8) · [詳述索引](#place-descriptions)
 
-<!-- Page 52 -->
-
 <a id="place-bld-13"></a>
 
-## F.1.13 BLD-13 測繪觀察臺
+### F.1.13 BLD-13 測繪觀察臺
 
 *Survey Platform* · G1
 
@@ -1658,11 +1503,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-bld-13) · [返回概述](#buildings-8) · [詳述索引](#place-descriptions)
 
-<!-- Page 53 -->
-
 <a id="place-bld-14"></a>
 
-## F.1.14 BLD-14 貝爾借住屋
+### F.1.14 BLD-14 貝爾借住屋
 
 *Bell’s Lodging* · D2
 
@@ -1677,11 +1520,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-bld-14) · [返回概述](#buildings-8) · [詳述索引](#place-descriptions)
 
-<!-- Page 54 -->
-
 <a id="place-bld-15"></a>
 
-## F.1.15 BLD-15 採集工宿舍
+### F.1.15 BLD-15 採集工宿舍
 
 *Collectors’ Bunkhouse* · J2
 
@@ -1696,11 +1537,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-bld-15) · [返回概述](#buildings-15) · [詳述索引](#place-descriptions)
 
-<!-- Page 55 -->
-
 <a id="place-bld-17"></a>
 
-## F.1.17 BLD-17 坑邊工具棚
+### F.1.17 BLD-17 坑邊工具棚
 
 *Pit Tool Shed* · D5
 
@@ -1715,11 +1554,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-bld-17) · [返回概述](#buildings-15) · [詳述索引](#place-descriptions)
 
-<!-- Page 56 -->
-
 <a id="place-bld-18"></a>
 
-## F.1.18 BLD-18 滑橇吊運棚
+### F.1.18 BLD-18 滑橇吊運棚
 
 *Sled Hoist Shed* · H6
 
@@ -1734,11 +1571,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-bld-18) · [返回概述](#buildings-15) · [詳述索引](#place-descriptions)
 
-<!-- Page 57 -->
-
 <a id="place-bld-19"></a>
 
-## F.1.19 BLD-19 石化木材料棚
+### F.1.19 BLD-19 石化木材料棚
 
 *Petrified Timber Store* · A3
 
@@ -1753,11 +1588,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-bld-19) · [返回概述](#buildings-15) · [詳述索引](#place-descriptions)
 
-<!-- Page 58 -->
-
 <a id="place-bld-20"></a>
 
-## F.1.20 BLD-20 舊風車井架
+### F.1.20 BLD-20 舊風車井架
 
 *Old Windmill Well* · B6
 
@@ -1772,11 +1605,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-bld-20) · [返回概述](#buildings-15) · [詳述索引](#place-descriptions)
 
-<!-- Page 59 -->
-
 <a id="place-bld-21"></a>
 
-## F.1.21 BLD-21 荒地修車棚
+### F.1.21 BLD-21 荒地修車棚
 
 *Badlands Repair Shed* · A7
 
@@ -1791,11 +1622,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-bld-21) · [返回概述](#buildings-15) · [詳述索引](#place-descriptions)
 
-<!-- Page 60 -->
-
 <a id="place-bld-22"></a>
 
-## F.1.22 BLD-22 半埋祈禱堂
+### F.1.22 BLD-22 半埋祈禱堂
 
 *Half-Buried Chapel* · A1
 
@@ -1810,11 +1639,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-bld-22) · [返回概述](#buildings-22) · [詳述索引](#place-descriptions)
 
-<!-- Page 61 -->
-
 <a id="place-bld-23"></a>
 
-## F.1.23 BLD-23 滑落貨車廂
+### F.1.23 BLD-23 滑落貨車廂
 
 *Fallen Boxcar* · K7
 
@@ -1829,11 +1656,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-bld-23) · [返回概述](#buildings-22) · [詳述索引](#place-descriptions)
 
-<!-- Page 62 -->
-
 <a id="place-bld-24"></a>
 
-## F.1.24 BLD-24 外緣化石作坊
+### F.1.24 BLD-24 外緣化石作坊
 
 *Outer Fossil Workshop* · L5
 
@@ -1848,11 +1673,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-bld-24) · [返回概述](#buildings-22) · [詳述索引](#place-descriptions)
 
-<!-- Page 63 -->
-
 <a id="place-bld-25"></a>
 
-## F.1.25 BLD-25 石林瞭望屋
+### F.1.25 BLD-25 石林瞭望屋
 
 *Petrified Grove Lookout* · L2
 
@@ -1867,11 +1690,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-bld-25) · [返回概述](#buildings-22) · [詳述索引](#place-descriptions)
 
-<!-- Page 64 -->
-
 <a id="place-bld-26"></a>
 
-## F.1.26 BLD-26 濕洞口工棚
+### F.1.26 BLD-26 濕洞口工棚
 
 *Cave Entrance Shelter* · K4
 
@@ -1886,11 +1707,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-bld-26) · [返回概述](#buildings-22) · [詳述索引](#place-descriptions)
 
-<!-- Page 65 -->
-
 <a id="place-bld-27"></a>
 
-## F.1.27 BLD-27 高地補給棚
+### F.1.27 BLD-27 高地補給棚
 
 *Upland Supply Shed* · K1
 
@@ -1905,11 +1724,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-bld-27) · [返回概述](#buildings-22) · [詳述索引](#place-descriptions)
 
-<!-- Page 66 -->
-
 <a id="place-bld-28"></a>
 
-## F.1.28 BLD-28 拆料平台
+### F.1.28 BLD-28 拆料平台
 
 *Salvage Platform* · K8
 
@@ -1924,11 +1741,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-bld-28) · [返回概述](#buildings-22) · [詳述索引](#place-descriptions)
 
-<!-- Page 67 -->
-
 <a id="place-loc-03"></a>
 
-## F.2.3 LOC-03 石化林
+### F.2.3 LOC-03 石化林
 
 *Petrified Grove* · B3
 
@@ -1943,11 +1758,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-loc-03) · [返回概述](#outdoor-register) · [詳述索引](#place-descriptions)
 
-<!-- Page 68 -->
-
 <a id="place-loc-04"></a>
 
-## F.2.4 LOC-04 南緣育幼圈
+### F.2.4 LOC-04 南緣育幼圈
 
 *Outer Nursery Pen* · C6
 
@@ -1962,11 +1775,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-loc-04) · [返回概述](#outdoor-register) · [詳述索引](#place-descriptions)
 
-<!-- Page 69 -->
-
 <a id="place-loc-05"></a>
 
-## F.2.5 LOC-05 農莊集貨院
+### F.2.5 LOC-05 農莊集貨院
 
 *Farm Loading Yard* · F7
 
@@ -1981,11 +1792,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-loc-05) · [返回概述](#outdoor-register) · [詳述索引](#place-descriptions)
 
-<!-- Page 70 -->
-
 <a id="place-loc-06"></a>
 
-## F.2.6 LOC-06 井旁濕地
+### F.2.6 LOC-06 井旁濕地
 
 *Wellside Wet Patch* · C5
 
@@ -2000,11 +1809,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-loc-06) · [返回概述](#outdoors-6) · [詳述索引](#place-descriptions)
 
-<!-- Page 71 -->
-
 <a id="place-loc-08"></a>
 
-## F.2.8 LOC-08 異色濕洞
+### F.2.8 LOC-08 異色濕洞
 
 *Discolored Wet Cave* · L4
 
@@ -2019,11 +1826,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-loc-08) · [返回概述](#outdoors-6) · [詳述索引](#place-descriptions)
 
-<!-- Page 72 -->
-
 <a id="place-loc-09"></a>
 
-## F.2.9 LOC-09 滑落裂溝
+### F.2.9 LOC-09 滑落裂溝
 
 *Derailment Gully* · L7
 
@@ -2038,11 +1843,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-loc-09) · [返回概述](#outdoors-6) · [詳述索引](#place-descriptions)
 
-<!-- Page 73 -->
-
 <a id="place-loc-10"></a>
 
-## F.2.10 LOC-10 半埋堂前
+### F.2.10 LOC-10 半埋堂前
 
 *Buried Chapel Forecourt* · A1
 
@@ -2057,11 +1860,9 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 [製作規格](#spec-loc-10) · [返回概述](#outdoors-6) · [詳述索引](#place-descriptions)
 
-<!-- Page 74 -->
-
 <a id="place-loc-11"></a>
 
-## F.2.11 LOC-11 中央決鬥場
+### F.2.11 LOC-11 中央決鬥場
 
 *Central Duel Yard* · G4
 
@@ -2075,8 +1876,6 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 - **辨識重點**：方正圍場、兩端臺與錯列箱陣共同保留 aim_map 的回憶感；此處不用故事說明它為何出現。
 
 [製作規格](#spec-loc-11) · [測試資產](#test-kit) · [返回概述](#outdoors-6) · [詳述索引](#place-descriptions)
-
-<!-- Page 75 -->
 
 <a id="references"></a>
 
@@ -2099,17 +1898,15 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 
 圖面與空間資料提供設計尺度；物件細設、碰撞、角色遮蔽及效能按附件 H 的條件驗證。原始地面網格不應直接封住洞口或取代建築地板。圖上簡化輪廓不能取代各場所的製作要求。
 
-共用資產與製作規範見[附件 A](#common-guidelines)。本文採固定編號閱讀頁，圖、表各自連續編號；PDF 沿用相同頁序。
+共用資產的編碼規則與製作目錄見[附件 A](#common-guidelines)。本文以章節、圖表編號及 BLD／LOC 識別碼定位內容。
 
 測試套件以獨立 TST 命名空間登錄；[本版測試資產資料](CD_GBB_Test_Kit_v1.2-TST.json)記錄套件、構件及實例。地圖 LOC-11 只引用套件，資產 ID 不隸屬 CD-GBB。
-
-<!-- Page 76 -->
 
 <a id="open-issues"></a>
 
 ## Appendix H. Open Issues 待解事項
 
-<p class="table-caption">Table 54. 現階段待解事項</p>
+**Table 54. 現階段待解事項**
 
 | 編號 | 關聯範圍 | 議題 | 暫行狀態 | 下一個確認點 |
 |---|---|---|---|---|
@@ -2123,17 +1920,15 @@ U-／V+ 角的一座主巢占據較受遮蔽的位置，三顆完整卵安放其
 | ISS-08 | 資產目錄／組織物件 | 資產細設與識別 | 依製作目錄的識別鍵、文字封記與材質定義製作；機械型式與內部構造須依用途補足。 | 開工時完成拆件、尺寸與依賴記錄；代表樣本確認後批次製作。 |
 | ISS-09 | 地圖整體 | 出入口、界邊及效能 | 生成點、撤離點、阻擋邊及效能預算須在遊戲整合前配置與驗證。 | 後續遊戲整合階段，回寫此頁。 |
 
-<!-- Page 77 -->
-
 <a id="test-kit"></a>
 
 ## Appendix I. Test Asset Kit 測試資產套件
 
 ### I.1 Test Namespace 測試命名空間
 
-TST 為內部測試資產前綴；後接既有 ASM／PRP／MOD 類別與四位流水號。測試資產登錄於[製作目錄第 11 節](../../shared/Environment_Asset_Catalog_v0.3.html#test-assets)，不帶地圖母碼，可供其他測試場景引用。本附件列本圖採用摘要，完整形體、搭配與組合定義以該版目錄為準。地圖場所 LOC-11 是本次落點，套件本身為 TST-ASM-0001。
+TST 為內部測試資產前綴；後接既有 ASM／PRP／MOD 類別與四位流水號。測試資產登錄於[製作目錄第 11 節](../../shared/Environment_Asset_Catalog_v0.3.md#test-assets)，不帶地圖母碼，可供其他測試場景引用。本附件列本圖採用摘要，完整形體、搭配與組合定義以該版目錄為準。地圖場所 LOC-11 是本次落點，套件本身為 TST-ASM-0001。
 
-<p class="table-caption">Table 55. 測試套件與構件</p>
+**Table 55. 測試套件與構件**
 
 | 代號 | 名稱 | 定義與材料 |
 |---|---|---|
@@ -2145,7 +1940,7 @@ TST 為內部測試資產前綴；後接既有 ASM／PRP／MOD 類別與四位�
 
 表面採少量大色塊、粗木紋與簡單邊線，保留方正輪廓；不複製參考圖的棕櫚樹、現代槍械或其他作品標誌。組織客製不套用此測試套件。<sup><a href="#fn-5">5</a></sup>
 
-<p class="table-caption">Table 56. 木箱尺寸變體</p>
+**Table 56. 木箱尺寸變體**
 
 | 變體 | 寬 × 深 × 高（m） |
 |---|---|
@@ -2159,17 +1954,15 @@ TST 為內部測試資產前綴；後接既有 ASM／PRP／MOD 類別與四位�
 
 <aside class="footnote" id="fn-5">5. FREIHH and leplubodeslapin, “aim_map,” Steam Workshop, published January 24, 2013, updated October 1, 2013, accessed October 19, 2026, <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=122443683">作者頁面</a>。本版依該 CS:GO 移植版公開圖像重繪場景特徵；配置尺寸為 GBB 的內部測試設計，非原圖精確測繪，未匯入原地圖資產。</aside>
 
-<!-- Page 78 -->
-
 <a id="test-placement"></a>
 
-## Appendix I. Test Asset Kit 測試資產套件｜配置
+### 配置
 
 ### I.2 Placement Register 箱體配置
 
 INST-01 至 INST-24 為 TST-ASM-0001 組合內的實例名稱。下表記本圖西南角 X, Y, H，各箱與地圖軸平行；同一變體可多次放置。套件另存相對原點 (94,57,1) 的局部座標，移至別圖時整體平移，實例名稱保持不變。
 
-<p class="table-caption">Table 57. 箱體落點</p>
+**Table 57. 箱體落點**
 
 | 實例 | 尺寸變體 | 西南角 X, Y, H（m） |
 |---|---|---|
