@@ -76,8 +76,137 @@ func _case_boss_scale() -> void:
 	var hy: float = b.head_position().y - b.global_position.y
 	_ck(hy > 0.0 and hy < b.HALF_H and absf(b.head_radius() - 1.6 * b.GROW) < 0.001,
 		"頭的骨頭在身體上半截（%.2f），打頭判定半徑照倍率（%.2f）" % [hy, b.head_radius()])
-	_ck(absf(b.global_position.y - m._terrain.height(b.global_position.x, b.global_position.z) - b.LIFT) < 0.01,
-		"生出來身體中心在 LIFT（腳底貼地、不陷進去）")
+	_ck(absf(_feet_gap(m, b) - 0.15) < 0.05, "生出來腳底貼著身體底下最高的地面（差 %.3f）" % _feet_gap(m, b))
+	_end(m)
+
+## 腳離實際地面多高：身體底下（膠囊半徑內）幾個點往下打線，取最高的那個碰撞地面，腳底減它。尼諾拉自己的膠囊不算
+func _feet_gap(m: Node, b: Node3D) -> float:
+	var feet: float = b.global_position.y - b.HALF_H
+	var top := -INF
+	var sp: PhysicsDirectSpaceState3D = m.get_world_3d().direct_space_state
+	for i in 9:
+		var a := TAU * float(i) / 8.0
+		var r: float = b.BODY_RADIUS if i < 8 else 0.0
+		var at: Vector3 = b.global_position + Vector3(sin(a) * r, 0, cos(a) * r)
+		var q := PhysicsRayQueryParameters3D.create(Vector3(at.x, feet + 1.0, at.z), Vector3(at.x, feet - 20.0, at.z))
+		q.exclude = [b.get_rid()]
+		var hit: Dictionary = sp.intersect_ray(q)
+		if not hit.is_empty():
+			top = maxf(top, hit.position.y)
+	return feet - top if top > -INF else 99.0
+
+## 尼諾拉放大後的細節（驗收修正）：生怪高度、炸藥、撿蛋、電腦起招距離、火球俯角、甩尾拆地形的查詢球心
+func _case_boss_fixes() -> void:
+	# 1. 派對開局、回合開始、新的一局：恐龍放在身體底下最高的地面上（放置時腳離地約 0.15，剛好膠囊半高＋LIFT 的餘量）；第 1 幀不陷進地面
+	var pm := _offline_match()
+	pm._on_mode_picked(pm.RULES.keys().find(&"party"))
+	pm._apply_rules()
+	var pb: Node3D = pm.spawn_boss()
+	pm.party._start_round()
+	pb = pm._boss()
+	var gap: float = _feet_gap(pm, pb)
+	_ck(gap > -0.02 and gap < 0.3, "派對開局：放回出生點，腳離最高地面 %.3f（應為 0.15 左右）" % gap)
+	pb.think(DT)
+	gap = _feet_gap(pm, pb)
+	_ck(gap > -0.05 and gap < 0.4, "派對開局第 1 幀腳沒有陷進地面（腳離地 %.3f）" % gap)
+	pm._new_round()
+	pb = pm._boss()
+	gap = _feet_gap(pm, pb)
+	_ck(pb != null and gap > -0.02 and gap < 0.3, "新的一局：恐龍放回，腳離最高地面 %.3f" % gap)
+	pb.think(DT)
+	gap = _feet_gap(pm, pb)
+	_ck(gap > -0.05 and gap < 0.4, "新的一局第 1 幀腳沒有陷進地面（腳離地 %.3f）" % gap)
+	_end(pm)
+
+	# 2. 炸藥在腳邊爆：尼諾拉的算距離跟著放大，舊恐龍不動
+	var m := _offline_match()
+	var b: Node3D = m.spawn_boss()
+	b.global_position = m._on_ground(Vector3(0, b.LIFT, 60))
+	var old: Node3D = m._add_player(m.DINO, 3)
+	_ck(absf(b.blast_reach - 2.5 * b.GROW) < 0.001 and absf(old.blast_reach - 2.5) < 0.001,
+		"炸藥算距離：尼諾拉 2.5 × 倍率，舊恐龍還是 2.5（%.2f／%.2f）" % [b.blast_reach, old.blast_reach])
+	var shooter: Node3D = m._add_player(m.COWBOY, 2)
+	var hp0: int = b.hp
+	var feet: Vector3 = b.global_position + Vector3.DOWN * b.HALF_H
+	Explosive.damage(m.get_node(^"Arena"), feet, 6.0, 150, shooter)
+	var dealt: int = hp0 - b.hp
+	# 放大前正下方（身體中心下 4.05）約 89；這裡是腳底正下方，數字照放大後的身體算，會比放大前低一點
+	_ck(dealt > 55 and dealt < 95, "炸藥在尼諾拉腳邊爆：扣 %d（放大前正下方約 89）" % dealt)
+	_end(m)
+
+	# 3. 撿蛋：恐龍站在蛋上，貼著膠囊的牛仔撿得到；離遠的撿不到
+	m = _offline_match()
+	b = m.spawn_boss()
+	b.global_position = m._on_ground(Vector3(0, b.LIFT, 60))
+	var picker: Node3D = m._add_player(m.COWBOY, 2)
+	picker.global_position = m._on_ground(Vector3(b.BODY_RADIUS + 0.4, 0, 60))
+	var far_c: Node3D = m._add_player(m.COWBOY, 3)
+	far_c.global_position = m._on_ground(Vector3(-7.0, 0, 60))
+	m.egg.global_position = m._on_ground(Vector3(0, 0.5, 60))
+	m.egg.carrier = 0
+	m.egg.pickup = 0.0
+	var secs: float = m.pickup_seconds()
+	for i in int((secs + 0.2) * 60):
+		m._claim_step(1.0 / 60.0)
+	_ck(m.egg.carrier == 2, "恐龍站在蛋上，貼著身體（水平 %.2f）的牛仔撿得到（撿到的是 %d；蛋 %s，牛仔 %s，撿了 %.2f 秒）" % [b.BODY_RADIUS + 0.4, m.egg.carrier, m.egg.global_position, picker.global_position, m.egg.pickup])
+	_end(m)
+
+	# 4. 電腦咬的觸發：在咬的扇形外 0.5 公尺內才起咬，打不到的距離不空咬
+	m = _offline_match()
+	b = m.spawn_boss()
+	b.global_position = m._on_ground(Vector3(0, b.LIFT, 60))
+	b.rotation.y = 0.0   # 面向 -Z
+	var near_c: Node3D = m._add_player(m.COWBOY, 2)
+	near_c.global_position = m._on_ground(Vector3(0, 0, 60 - b.BITE_TRIGGER + 0.3))
+	b._attack_gap = 0.0
+	_ck(b._start_attack() and b.act == b.ACT_BITE_WIND, "電腦：正前方在咬的範圍內就起咬（觸發距離 %.2f）" % b.BITE_TRIGGER)
+	b.act = b.ACT_NONE
+	b._attack_gap = 0.0
+	near_c.global_position = m._on_ground(Vector3(0, 0, 60 - b.BITE_TRIGGER - 1.5))
+	_ck(not b._start_attack() and b.act == b.ACT_NONE, "電腦：超出觸發距離不空咬")
+	_end(m)
+
+	# 5. 火球俯角：往下看到 BOSS_PITCH_MIN，正前方貼身（BODY_RADIUS + LIGHT_REACH）的地面牛仔在火球半徑內能打到
+	m = _offline_match()
+	b = m.spawn_boss()
+	b.global_position = m._on_ground(Vector3(0, b.LIFT, 60))
+	b.rotation.y = 0.0
+	var terr5: float = m._terrain.height(0, 60)
+	var chest := Vector3(0, terr5 + 1.0, 60 - b.BODY_RADIUS - b.LIGHT_REACH)
+	var best := INF
+	var best_p := 0.0
+	for k in 200:
+		b.look_pitch = lerpf(0.0, b.BOSS_PITCH_MIN, float(k) / 199.0)
+		var mz: Vector3 = b._spit_muzzle()
+		var dir: Vector3 = b._spit_dir()
+		var t: float = maxf((chest - mz).dot(dir), 0.0)
+		var d: float = (chest - (mz + dir * t)).length()
+		if d < best:
+			best = d
+			best_p = b.look_pitch
+	_ck(best <= b.FB_SIZE * 0.5 + 0.4, "火球能打到正前方貼身的地面牛仔（最近 %.2f 公尺，俯角 %.2f 弧度）" % [best, best_p])
+	b.look_pitch = 0.0
+	_end(m)
+
+	# 6. 甩尾拆地形：查詢球心放腳底，貼地 11 公尺（水平）的樹也拆得到
+	m = _offline_match()
+	m.rules = &"party"
+	var tree: Destructible = null
+	for w: Destructible in m._wrecks:
+		if w.hits_needed == 1:
+			tree = w
+			break
+	if tree != null:
+		b = m.spawn_boss()
+		b.rotation.y = 0.0   # 後方是 +Z
+		var root_pos: Vector3 = tree.global_position + Vector3(0, 0, -11.0)
+		b.global_position = m._on_ground(Vector3(root_pos.x, b.LIFT, root_pos.z - b.SWEEP_ROOT_BACK))
+		var hits0: int = tree.hits
+		b._strike_sweep()
+		_ck(tree.hits == hits0 + 1, "甩尾拆地形：貼地 11 公尺（水平）的樹要拆得到（hits %d → %d）" % [hits0, tree.hits])
+	else:
+		_ck(false, "灰盒地圖要有可以甩倒的樹")
+	m.rules = &"match"
 	_end(m)
 
 ## 恐龍 boss：視力差、聽力好、跟蛋無關、導演只給大概方向、追太久會退開、兩招都有預備動作、自己的體力、打不死

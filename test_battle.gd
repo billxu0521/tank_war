@@ -59,6 +59,7 @@ func _process(_delta: float) -> bool:
 		_case_arena_walls()
 		_case_boss()
 		_case_boss_scale()
+		_case_boss_fixes()
 		_case_compass()
 		_case_settings()
 		_case_dedicated_round()

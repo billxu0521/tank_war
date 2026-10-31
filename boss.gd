@@ -76,8 +76,7 @@ const SPOT_TIME := 0.7       # 發現人：停下來吼一聲這麼久，玩家�
 # 以下從 balance.csv 讀（見 balance.gd），改數字去改表
 static var ATTACK_GAP: float = Balance.num("attack_gap")   # 收招之後至少隔這麼久才出下一招
 static var PILOT_ATTACK_GAP: float = Balance.num("pilot_attack_gap")   # 玩家操作：收招後很快能出下一招（電腦版留空檔給牛仔喘氣）
-# 咬：近距離正前方。站定、頭往後仰、低吼，再咬下去
-static var BITE_TRIGGER: float = 7.5 * GROW   # 嘴巴到人這麼近開始預備
+# 咬：近距離正前方。站定、頭往後仰、低吼，再咬下去。BITE_TRIGGER 在輕攻擊的數字之後
 # 以下從 balance.csv 讀（見 balance.gd），改數字去改表
 static var BITE_WIND: float = Balance.num("bite_wind")
 static var PILOT_BITE_WIND: float = Balance.num("pilot_bite_wind")   # 玩家操作：出招要跟手，預備比電腦短一半
@@ -89,6 +88,7 @@ static var BODY_RADIUS: float = 2.4 * GROW   # 身體碰撞膠囊的半徑（bos
 static var LIGHT_DAMAGE: int = Balance.whole("light_damage")
 static var LIGHT_REACH: float = Balance.num("light_reach")
 static var LIGHT_COS: float = cos(deg_to_rad(Balance.num("light_angle") * 0.5))   # 扇形半角的餘弦，判定用
+static var BITE_TRIGGER: float = BODY_RADIUS + LIGHT_REACH + 0.5   # 電腦：牛仔在咬的扇形（_hit_cone 同一個）再外面 0.5 公尺內就起咬，不乘倍率
 # 踩踏：移動中貼著牛仔走過去就踩，站著不動不踩。以下從 balance.csv 讀
 static var STOMP_DAMAGE: int = Balance.whole("stomp_damage")
 static var STOMP_REACH: float = Balance.num("stomp_reach")
@@ -96,7 +96,6 @@ static var STOMP_INTERVAL: float = Balance.num("stomp_interval")
 static var STOMP_MIN_SPEED: float = Balance.num("stomp_min_speed")
 const STOMP_HEIGHT := 1.5    # 牛仔腳底在恐龍腳底上下這麼多以內才踩得到
 # 蓄力甩尾：身邊有人在側面或背後、或身邊不只一個人。站著仰頭長吼，這段時間打中頭就打斷
-static var SWEEP_TRIGGER: float = 9.0 * GROW
 # 以下從 balance.csv 讀（見 balance.gd），改數字去改表
 static var CHARGE_WIND: float = Balance.num("charge_wind")
 static var PILOT_CHARGE_WIND: float = Balance.num("pilot_charge_wind")   # 玩家操作：搖動太久不好玩。打中頭打斷的機會也跟著變短
@@ -106,7 +105,8 @@ static var SWEEP_RECOVER: float = Balance.num("sweep_recover")
 static var SWEEP_CD: float = Balance.num("sweep_cd")
 static var SWEEP_CD_PARTY: float = Balance.num("sweep_cd_party")   # 派對模式：甩尾拆得掉地形（destructible.gd），冷卻拉長，不然掩體一下就拆光
 static var SWEEP_COS: float = cos(deg_to_rad(Balance.num("sweep_angle") * 0.5))   # 甩尾扇形（後方）半角的餘弦
-static var SWEEP_ROOT_BACK: float = Balance.num("sweep_root_back")   # 尾根在身體中心後方幾公尺，甩尾的圓心
+static var SWEEP_ROOT_BACK: float = Balance.num("sweep_root_back") * GROW   # 尾根在身體中心後方幾公尺（表裡是放大前的 0.45），甩尾的圓心
+static var SWEEP_TRIGGER: float = SWEEP_ROOT_BACK + SWEEP_RADIUS   # 電腦：牛仔離身體中心在這裡面才算在甩尾範圍（尾根加半徑）
 static var SWEEP_ACTIVE: float = Balance.num("sweep_active")   # 甩尾判定持續秒數，trex.gd 的甩尾動作也用這個
 static var STUN_TIME: float = Balance.num("stun_time")   # 蓄力被打斷暈多久
 const STRIKE_SHOW := 0.15    # 出手那一下的動作狀態留這麼久（同步每秒 40 次，太短會漏）
@@ -146,6 +146,7 @@ signal got_up         # 各台：起身那一刻
 ## 出招、預備動作、叫聲、體力、倒地、同步都跟電腦版一樣。駕駛斷線 main.gd 會清回 0，電腦接手
 @export var pilot := 0
 enum { PIN_BITE = 1, PIN_SWEEP = 4, PIN_RUN = 8, PIN_FIREBALL = 16 }
+const BOSS_PITCH_MIN := -1.2   # 尼諾拉往下看的極限（約 69 度）：dino.gd 的 PITCH_MIN（43 度）打不到貼身的牛仔，火球平射會從頭上過
 const PILOT_STALE := 0.5     # 主機這麼久沒收到駕駛的輸入就當放開（網路斷斷續續時不要一直往前衝）
 var _pin_move := Vector2.ZERO   # 主機：駕駛最新的輸入（相對鏡頭，x 右、y 後）
 var _pin_yaw := 0.0
@@ -196,6 +197,7 @@ var _stomp_at := {}           # 牛仔 → 上一次被踩的時刻；ponytail: 
 
 func _ready() -> void:
 	super()
+	blast_reach = 2.5 * GROW   # 炸藥算距離從身體中心往外扣這麼多（dino.gd 是放大前的 2.5）
 	var voice := AudioStreamPlayer3D.new()
 	voice.name = "Voice"
 	voice.unit_size = 12.0       # 大隻，遠遠就聽得到
@@ -326,7 +328,7 @@ func pilot_input(move: Vector2, yaw: float, pitch: float, buttons: int) -> void:
 	_pin_yaw = yaw
 	_pin_buttons = buttons
 	_pin_age = 0.0
-	look_pitch = clampf(pitch, PITCH_MIN, PITCH_MAX)
+	look_pitch = clampf(pitch, BOSS_PITCH_MIN, PITCH_MAX)
 
 ## 駕駛這一幀：倒地、出招中照電腦版跑完；平常照輸入走、慢慢轉向鏡頭的方向、按鍵出招
 func _pilot_step(delta: float) -> void:
@@ -366,7 +368,7 @@ func _unhandled_input(e: InputEvent) -> void:
 		return
 	var rel := Settings.look((e as InputEventMouseMotion).screen_relative)
 	_cam_yaw -= rel.x * MOUSE_SENS * 0.5   # 玩家恐龍原本的靈敏度是給會瞬間轉身的身體用的；這隻轉得慢，鏡頭也放慢一點
-	_cam_pitch = clampf(_cam_pitch - rel.y * MOUSE_SENS * 0.5, PITCH_MIN, PITCH_MAX)
+	_cam_pitch = clampf(_cam_pitch - rel.y * MOUSE_SENS * 0.5, BOSS_PITCH_MIN, PITCH_MAX)
 
 ## 甩尾打到可拆的東西（destructible.gd 呼叫）：鏡頭抖一下。只有操控的那台抖得到（鏡頭只在那台）
 func add_shake(amount: float) -> void:
@@ -542,8 +544,9 @@ func _start_attack() -> bool:
 		return _flat_dist(p.global_position) < SWEEP_TRIGGER and not _blocked_by_wall(p))
 	# 咬：嘴巴前面有人
 	for p: Node3D in near:
-		if _in_front(p.global_position, 0.5) and _flat_dist(p.global_position) < BITE_TRIGGER + 1.5 \
-				and p.global_position.distance_to(mouth()) < BITE_TRIGGER:
+		var fwd := -global_basis.z
+		fwd.y = 0.0
+		if _in_fan(global_position, fwd.normalized(), p.global_position, BITE_TRIGGER, LIGHT_COS):
 			_target = p
 			_begin(ACT_BITE_WIND, BITE_WIND)
 			return true
@@ -651,7 +654,9 @@ func _back_dir() -> Vector3:
 ## 甩尾出手的那一下：只拆地形（每幀拆會一棟房子挨好幾下）。掃起的一圈土是各台自己播（trex.gd 的 _act_fx）
 func _strike_sweep() -> void:
 	if _party():
-		_wreck_around(_sweep_root(), _back_dir(), SWEEP_RADIUS, SWEEP_COS)
+		var foot := _sweep_root()
+		foot.y = global_position.y - HALF_H   # 查詢球心放腳底：貼地 12 公尺內的東西都掃得到（放身體中心會漏掉遠處的）
+		_wreck_around(foot, _back_dir(), SWEEP_RADIUS, SWEEP_COS)
 
 ## 甩尾的人：只打尾根後方半圈，高度、擋牆跟輕攻擊一樣。整段出手時間每幀判
 func _sweep_hit() -> void:
@@ -702,7 +707,7 @@ func _wreck_around(at: Vector3, dir: Vector3, radius: float, cos_half: float) ->
 	q.exclude = skip
 	var done := {}
 	# ponytail: 一棟房子幾十塊碰撞各算一筆，上限給大一點；房子擠成一團漏掉幾個再加
-	for r: Dictionary in get_world_3d().direct_space_state.intersect_shape(q, 256):
+	for r: Dictionary in get_world_3d().direct_space_state.intersect_shape(q, 1024):
 		var c: Object = r.collider
 		if c is Node3D and (c as Node3D).is_in_group(&"destructible") and not done.has(c) \
 				and _in_fan(at, dir, (c as Node3D).global_position, radius, cos_half):

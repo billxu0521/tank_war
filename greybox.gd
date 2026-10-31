@@ -1,4 +1,4 @@
-class_name Greybox
+﻿class_name Greybox
 extends RefCounted
 ## 灰盒（素模）：灰色方塊拼的房子和掩體，先專心調玩法（docs/規劃/2026-10-19-灰盒地圖.md）。
 ## 遊戲（arena_map.gd 的 _build_level）和編輯器預覽（LevelPreview）共用：回傳一個 StaticBody3D，
@@ -6,7 +6,7 @@ extends RefCounted
 
 const T := 0.3                 # 牆厚
 const BURY := 1.0              # 牆和地板往地下多埋這麼深：蓋在斜坡上時，低的那邊才不會露縫
-const DOOR := Vector2(1.4, 2.3)   # 一般門（寬、高）：恐龍（半徑 2.4）擠不進來
+const DOOR := Vector2(1.4, 2.3)   # 一般門（寬、高）：恐龍擠不進來（尼諾拉放大後半徑 BODY_RADIUS 3.56，放大前 2.4）
 static var BIG_DOOR: Vector2 = Vector2(6.0, 8.5) * (Balance.num("dino_height") / 8.1)   # 大門：恐龍走得進來（照尼諾拉身高放大，放大前高 8.5；boss.gd 的 GROW）
 const WINDOW := Vector3(1.2, 1.0, 2.1)   # 寬、窗台高、窗頂高。窗台 1 公尺在翻越範圍（0.4～1.5）內
 const RAMP_W := 1.4            # 上樓的斜坡：貼著左牆，從前面往後爬
