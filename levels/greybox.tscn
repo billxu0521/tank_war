@@ -175,12 +175,6 @@ script = ExtResource("2_wwx2q")
 kind = "gb_block"
 size = Vector3(4, 1.2, 0.4)
 
-[node name="@Node3D@3" type="Node3D" parent="中央_蛋區" unique_id=379284891]
-transform = Transform3D(0.8020958, 0, -0.59719545, 0, 1, 0, 0.59719545, 0, 0.8020958, -11, 0, 10.5)
-script = ExtResource("2_wwx2q")
-kind = "gb_block"
-size = Vector3(4, 1.2, 0.4)
-
 [node name="@Node3D@4" type="Node3D" parent="中央_蛋區" unique_id=2136690901]
 transform = Transform3D(0.8960525, 0, 0.44394812, 0, 1, 0, -0.44394812, 0, 0.8960525, 11, 0, 10)
 script = ExtResource("2_wwx2q")
@@ -229,7 +223,7 @@ amount = 7.0
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -61, 0, -29)
 script = ExtResource("2_wwx2q")
 kind = "gb_house"
-size = Vector3(14, 9, 22)
+size = Vector3(14, 13.1, 22)
 amount = 1.0
 flag = true
 
@@ -269,24 +263,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -54.5, 0, 20)
 script = ExtResource("2_wwx2q")
 kind = "fence"
 amount = 5.666666666666667
-
-[node name="@Node3D@13" type="Node3D" parent="西_牧場" unique_id=689901977]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48.833336, 0, 20)
-script = ExtResource("2_wwx2q")
-kind = "fence"
-amount = 5.666666666666667
-
-[node name="柵欄2" type="Node3D" parent="西_牧場" unique_id=996346399]
-transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -46, 0, 22.6)
-script = ExtResource("2_wwx2q")
-kind = "fence"
-amount = 5.2
-
-[node name="@Node3D@14" type="Node3D" parent="西_牧場" unique_id=382447192]
-transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -46, 0, 27.8)
-script = ExtResource("2_wwx2q")
-kind = "fence"
-amount = 5.2
 
 [node name="@Node3D@15" type="Node3D" parent="西_牧場" unique_id=2117652519]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -46, 0, 33)
@@ -372,7 +348,7 @@ amount = 16.0
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 62, 0, -27)
 script = ExtResource("2_wwx2q")
 kind = "gb_house"
-size = Vector3(18, 9, 24)
+size = Vector3(18, 13.1, 24)
 amount = 1.0
 flag = true
 
@@ -386,7 +362,7 @@ amount = 16.0
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 62, 0, 23)
 script = ExtResource("2_wwx2q")
 kind = "gb_house"
-size = Vector3(18, 9, 24)
+size = Vector3(18, 13.1, 24)
 amount = 1.0
 flag = true
 
@@ -1181,35 +1157,11 @@ script = ExtResource("2_wwx2q")
 kind = "tree"
 variant = &"TreePine"
 
-[node name="樹6" type="Node3D" parent="派對_遮蔽" unique_id=488156427]
-transform = Transform3D(-0.654691, 0, -0.958608, 0, 1.16084, 0, 0.958608, 0, -0.654691, -44.8, 0, 11)
-script = ExtResource("2_wwx2q")
-kind = "tree"
-variant = &"TreePine"
-
 [node name="樹7" type="Node3D" parent="派對_遮蔽" unique_id=903821732]
 transform = Transform3D(0.226949, 0, 0.977217, 0, 1.00322, 0, -0.977217, 0, 0.226949, -38.8, 0, 13.9)
 script = ExtResource("2_wwx2q")
 kind = "tree"
 variant = &"TreePine2"
-
-[node name="樹8" type="Node3D" parent="派對_遮蔽" unique_id=23343433]
-transform = Transform3D(0.78742, 0, 0.855083, 0, 1.16241, 0, -0.855083, 0, 0.78742, -36.6, 0, 10.8)
-script = ExtResource("2_wwx2q")
-kind = "tree"
-variant = &"TreeMaple"
-
-[node name="樹9" type="Node3D" parent="派對_遮蔽" unique_id=835486626]
-transform = Transform3D(0.870573, 0, -0.787517, 0, 1.17392, 0, 0.787517, 0, 0.870573, -39.6, 0, 7.9)
-script = ExtResource("2_wwx2q")
-kind = "tree"
-variant = &"TreeOakS"
-
-[node name="樹10" type="Node3D" parent="派對_遮蔽" unique_id=1624345305]
-transform = Transform3D(0.339589, 0, 1.05108, 0, 1.10458, 0, -1.05108, 0, 0.339589, -39.8, 0, 4.1)
-script = ExtResource("2_wwx2q")
-kind = "tree"
-variant = &"TreeOakM"
 
 [node name="樹11" type="Node3D" parent="派對_遮蔽" unique_id=1238577904]
 transform = Transform3D(-0.514431, 0, -1.04005, 0, 1.16032, 0, 1.04005, 0, -0.514431, -43.6, 0, 14.4)
@@ -1432,18 +1384,6 @@ transform = Transform3D(-0.97178, 0, -0.319682, 0, 1.02301, 0, 0.319682, 0, -0.9
 script = ExtResource("2_wwx2q")
 kind = "tree"
 variant = &"TreeOakM"
-
-[node name="樹48" type="Node3D" parent="派對_遮蔽" unique_id=926711505]
-transform = Transform3D(-0.652081, 0, -0.869809, 0, 1.0871, 0, 0.869809, 0, -0.652081, -16.6, 0, 6.8)
-script = ExtResource("2_wwx2q")
-kind = "tree"
-variant = &"TreeOakS"
-
-[node name="樹49" type="Node3D" parent="派對_遮蔽" unique_id=198726473]
-transform = Transform3D(-0.316195, 0, -1.12372, 0, 1.16735, 0, 1.12372, 0, -0.316195, -17.2, 0, 12.5)
-script = ExtResource("2_wwx2q")
-kind = "tree"
-variant = &"TreePine"
 
 [node name="樹50" type="Node3D" parent="派對_遮蔽" unique_id=997619950]
 transform = Transform3D(0.642877, 0, -0.6308, 0, 0.900666, 0, 0.6308, 0, 0.642877, 17.8, 0, -12.5)

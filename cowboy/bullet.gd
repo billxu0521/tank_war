@@ -12,8 +12,6 @@ const GRAVITY := 9.8
 ## 從鏡頭中心出發，前幾公尺不畫，不然第一幀整條曳光糊在自己臉上
 const SHOW_AFTER := 3.0
 const STREAK_LENGTH := 1.5
-## 打在恐龍頭的位置這麼近算打中頭（boss 放大 1.5 倍，頭約 1.2 × 2 公尺）
-const DINO_HEAD := 1.6
 ## 牆的硬度（群組名 -> 硬度）。子彈穿透力 ≥ 硬度就穿過去，沒在表上的東西都擋
 const ARMOR := {&"plank": 1, &"double_plank": 2, &"metal": 3}
 
@@ -141,7 +139,7 @@ func _impact(hit: Dictionary) -> void:
 	if head:
 		dmg = target.max_hp
 	# 恐龍 boss 沒有爆頭秒殺，但打中頭可以打斷牠的蓄力（boss.gd 的 head_hit）
-	var dino_head: bool = target.has_method(&"head_position") and hit["position"].distance_to(target.head_position()) < DINO_HEAD
+	var dino_head: bool = target.has_method(&"head_position") and hit["position"].distance_to(target.head_position()) < target.head_radius()
 	shooter.deal_damage(target, roundi(dmg), dino_head)
 	var g := get_tree().get_first_node_in_group(&"match")
 	if g:

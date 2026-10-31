@@ -11,7 +11,10 @@ const NEXT_ROUND_DELAY := 10.0   # 專用伺服器一局結束後隔幾秒開下
 const SANDBOX_RANGE := Rect2(-20, -30, 40, 112)   # 靶在路兩側 4 公尺、恐龍靶 12 公尺；再窄旁邊的坡會超過 40 度
 const SANDBOX_START := Vector3(0, 0.1, 76)   # y 是離地高度，用 _on_ground() 換成實際位置
 const SANDBOX_TARGETS := [10, 25, 50, 100]   # 牛仔靶的距離（公尺）：左輪、散彈、步槍各自的有效距離
-const PICKUP_RANGE := 3.0     # 牛仔靠這麼近就撿得到蛋
+## 牛仔靠這麼近（水平）就撿得到蛋：至少要比恐龍身體半徑大，恐龍站在蛋上時貼著身體的牛仔也撿得到。做成函式：static var 會在 boss.gd 還沒算好 BODY_RADIUS 時就先讀到 0
+static func pickup_range() -> float:
+	return maxf(3.0, BOSS_GD.BODY_RADIUS + 1.0)
+const PICKUP_HEIGHT := 3.0     # 高度差在這裡面才算（撿蛋看水平距離，高度只給寬限）
 # 以下從 balance.csv 讀（見 balance.gd），改數字去改表
 static var PICKUP_SECONDS: float = Balance.num("pickup_seconds")   # 撿蛋要連續待滿這麼久，不是碰到就拿
 static var EXTRACT_SECONDS: float = Balance.num("extract_seconds")   # 要在撤離區內連續待滿這麼久
@@ -21,6 +24,7 @@ const RESPAWN_DELAY := 5.0    # 死亡的代價是節奏，不是失去參賽資
 const COWBOY := preload("res://cowboy/cowboy.tscn")
 const DINO := preload("res://dino.tscn")
 const BOSS := preload("res://boss.tscn")
+const BOSS_GD := preload("res://boss.gd")   # 尼諾拉的尺寸（HALF_H、GROW、BODY_RADIUS、LIFT），導航網格和生怪用
 const BOSS_ID := -999   # 負數＝電腦（主機操控）；固定編號，場上最多一隻
 
 @onready var lobby: VBoxContainer = $UI/Root/Lobby
@@ -957,7 +961,7 @@ func spawn_boss() -> Node3D:
 	var me := players.get_node_or_null(^"1") as Node3D
 	if _sandbox and me and not _solo_dino:   # 沙盒：生在前方 40 公尺方便看；單人打恐龍：離你最遠，要自己找過來
 		at = me.global_position - me.global_basis.z * 40.0
-	b.global_position = _on_ground(Vector3(at.x, 4.2, at.z))
+	b.global_position = boss_on_ground(at)
 	var boss_hp: int = RULES[rules].boss_hp
 	if boss_hp > 0 and not _sandbox:
 		b.max_hp = boss_hp   # 決鬥要打得死，血多一點（大家一起打）
@@ -981,9 +985,18 @@ func _far_from_cowboys() -> Vector3:
 			best_d = d
 	return best
 
+## 恐龍放在地上：身體中心＝身體底下（膠囊半徑內）最高的地面＋LIFT。中央這類地方地面有小坑、小丘，只看中心一點的話，第 1 幀會懸空或陷進去
+func boss_on_ground(at: Vector3) -> Vector3:
+	var top: float = map._on_ground(Vector3(at.x, 0, at.z)).y
+	for i in 8:
+		var a := TAU * float(i) / 8.0
+		var r: float = BOSS_GD.BODY_RADIUS
+		top = maxf(top, map._on_ground(Vector3(at.x + sin(a) * r, 0, at.z + cos(a) * r)).y)
+	return Vector3(at.x, top + BOSS_GD.LIFT, at.z)
+
 ## 恐龍的導航網格：從場地上所有靜態碰撞（地形、房子、柵欄、樹幹、石頭）烘出來，只在主機上需要。
 ## 讀場景要在主執行緒，烘本身丟背景（幾百毫秒），烘好之前 boss 退回直線追。一個場地只烘一次。
-## 恐龍很大（半徑 2.4），進不了房子、擠不過柵欄的缺口——網格自己就會繞開這些地方
+## 恐龍很大（半徑 BODY_RADIUS、身高 dino_height），進不了房子、擠不過柵欄的缺口——網格自己就會繞開這些地方
 var _nav_region: NavigationRegion3D
 ## rebake：地形被拆掉（destructible.gd）時重烘，烘好之前照舊的網格走。
 ## 同一幀拆好幾塊（甩尾一次掃到一圈方塊）只排一次，到 idle 才烘：每次烘要在主線程解析場景，一幀烘十幾次會卡住（量過 93 毫秒）；
@@ -1009,8 +1022,8 @@ func _bake_nav() -> void:
 	var rebake := is_instance_valid(_nav_region)
 	var nm := NavigationMesh.new()
 	nm.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS
-	nm.agent_radius = 2.4
-	nm.agent_height = 8.0
+	nm.agent_radius = BOSS_GD.BODY_RADIUS
+	nm.agent_height = BOSS_GD.HALF_H * 2.0   # 身高：天花板比這低的地方恐龍站不進去
 	nm.agent_max_climb = 0.9
 	nm.agent_max_slope = 40.0
 	nm.cell_size = 0.5
@@ -1519,7 +1532,7 @@ func _new_round() -> void:
 		if boss == null:
 			spawn_boss()
 		else:
-			boss.global_position = _on_ground(_far_from_cowboys() + Vector3(0, 4.2, 0))
+			boss.global_position = boss_on_ground(_far_from_cowboys())
 			boss.reset_physics_interpolation()
 			boss.hp = boss.max_hp
 	_broadcast_lives()
@@ -1640,9 +1653,9 @@ func _claim_step(delta: float) -> void:
 	for p in players.get_children():
 		if p.is_in_group(&"dino"):
 			continue
-		var d := egg.global_position.distance_to(p.global_position)
-		if d < PICKUP_RANGE and (near == null
-				or d < egg.global_position.distance_to(near.global_position)):
+		var d := Vector2(egg.global_position.x - p.global_position.x, egg.global_position.z - p.global_position.z).length()
+		if d < pickup_range() and absf(egg.global_position.y - p.global_position.y) < PICKUP_HEIGHT and (near == null
+				or d < Vector2(egg.global_position.x - near.global_position.x, egg.global_position.z - near.global_position.z).length()):
 			near = p
 	if near == null:
 		_claimer = 0

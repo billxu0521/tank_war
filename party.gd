@@ -42,6 +42,7 @@ var _pick := {}               # 主機：牛仔選的重生點（編號 -> spawn
 var _sync_left := 0.0
 
 @onready var main: Node = get_parent()
+const BOSS_GD := preload("res://boss.gd")   # 尼諾拉的身高（LIFT）：開局放回出生點用
 
 
 ## 照總分排的連線編號（高的在前）
@@ -210,7 +211,7 @@ func _start_round() -> void:
 		b = main.spawn_boss()
 	b.pilot = 0
 	var c: Vector3 = main.dino_spawn   # 地圖中央（擺設種類 dino_spawn）；沒放就是正中央
-	b.global_position = main._on_ground(Vector3(c.x, 4.2, c.z))
+	b.global_position = main.boss_on_ground(c)
 	b.reset_physics_interpolation()
 	b.hp = b.max_hp
 	if &"down_left" in b:

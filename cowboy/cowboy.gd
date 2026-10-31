@@ -620,7 +620,7 @@ func _bot_should_hold(g: Node) -> bool:
 	if g.egg.carrier == name.to_int():
 		return g._dist_to_exit(global_position) < g.EXIT_RADIUS * 0.5
 	if g.egg.carrier == 0:
-		return global_position.distance_to(g.egg.global_position) < g.PICKUP_RANGE * 0.5
+		return global_position.distance_to(g.egg.global_position) < g.pickup_range() * 0.9   # 0.9：恐龍站在蛋上時，牛仔貼著身體還走得到這裡
 	return false
 
 
