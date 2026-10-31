@@ -211,7 +211,7 @@ func _mark_for_outline() -> void:
 
 
 ## 手上的槍和手整體亮度：顏色 × brightness + lift。像素風（pixel_style.gd）壓暗了全畫面的影子，槍會變成一團黑看不出零件，
-## 開著時把這裡調高抵消；改了之後對 "viewmodel" 群組呼叫 apply_brightness()。材質是 mark_meshes 複製過的，不影響別人
+## 開著時把這裡調高抵消；改了之後對 "viewmodel" 群組呼叫 apply_brightness()。材質是 mark_meshes 複製過的（只有手上的槍和手用 OUTLINE_MARK 這份），不影響別人
 static var brightness := 1.0
 ## 再加上的底亮（0..1）：槍的鐵件接近全黑，只乘倍數還是黑的，要加一點才看得出零件
 static var lift := 0.0
