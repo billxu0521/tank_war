@@ -870,3 +870,16 @@ func _check_melee_hits() -> void:
 	hp0 = _dino.hp
 	vm.try_melee(true)
 	_ck(hp0 - _dino.hp == vm.heavy_damage, "體力見底照樣重擊（打出 %d）" % (hp0 - _dino.hp))
+
+## 標成目標的覆寫材質（viewmodel.gd 的 mark_meshes）：節點一刪，材質要還活著。
+## 渲染端還拿著它的 RID，材質一釋放就報 Parameter "material" is null（同一幀生出來又刪，正式遊戲也會遇到）
+func _case_null_material() -> void:
+	var holder := Node3D.new()
+	var mi := MeshInstance3D.new()
+	mi.mesh = BoxMesh.new()
+	mi.mesh.material = StandardMaterial3D.new()
+	holder.add_child(mi)
+	Viewmodel.mark_meshes(holder, Viewmodel.TARGET_MARK)
+	var ref: WeakRef = weakref(mi.get_surface_override_material(0))
+	holder.free()
+	_ck(ref.get_ref() != null, "標過的覆寫材質節點一刪就釋放了（渲染端會報 material is null）")

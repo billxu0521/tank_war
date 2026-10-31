@@ -211,7 +211,7 @@ func _mark_for_outline() -> void:
 
 
 ## 手上的槍和手整體亮度：顏色 × brightness + lift。像素風（pixel_style.gd）壓暗了全畫面的影子，槍會變成一團黑看不出零件，
-## 開著時把這裡調高抵消；改了之後對 "viewmodel" 群組呼叫 apply_brightness()。材質是 mark_meshes 複製過的，不影響別人
+## 開著時把這裡調高抵消；改了之後對 "viewmodel" 群組呼叫 apply_brightness()。材質是 mark_meshes 複製過的（只有手上的槍和手用 OUTLINE_MARK 這份），不影響別人
 static var brightness := 1.0
 ## 再加上的底亮（0..1）：槍的鐵件接近全黑，只乘倍數還是黑的，要加一點才看得出零件
 static var lift := 0.0
@@ -250,13 +250,25 @@ static func mark_meshes(root: Node, mark: float) -> void:
 		for i in mi.mesh.get_surface_count():
 			var mat := mi.get_active_material(i)
 			if mat is ShaderMaterial and (mat as ShaderMaterial).shader == preload("res://facet.gdshader"):   # 共用材質（model_materials.gd 的 _to_facet）
-				mat = mat.duplicate()
-				mat.set_shader_parameter(&"roughness", mark)
-				mi.set_surface_override_material(i, mat)
+				mi.set_surface_override_material(i, _marked_copy(mat, mark))
 			elif mat is BaseMaterial3D and mat.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED:   # 火光這類半透明的不寫粗糙度，不用改
-				mat = mat.duplicate()
-				mat.roughness = mark
-				mi.set_surface_override_material(i, mat)
+				mi.set_surface_override_material(i, _marked_copy(mat, mark))
+
+## 標過的複本：同一個來源材質、同一個記號只複製一份，留在這裡（靜態，不會被釋放）。
+## 網格的覆寫材質只有節點在持有：節點一刪（同一幀生出來又刪也算），渲染端還拿著它的 RID，就報「Parameter "material" is null」
+## （tools/null_material_repro.gd 重現；只有 set_surface_override_material 會這樣，material_override 不會）
+static var _marked := {}
+
+static func _marked_copy(src: Material, mark: float) -> Material:
+	var key := [src, mark]
+	if not _marked.has(key):
+		var mat := src.duplicate()
+		if mat is ShaderMaterial:
+			mat.set_shader_parameter(&"roughness", mark)
+		else:
+			(mat as BaseMaterial3D).roughness = mark
+		_marked[key] = mat
+	return _marked[key]
 
 
 func _process(delta: float) -> void:
