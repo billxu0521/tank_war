@@ -24,7 +24,7 @@ func _case_party_boss() -> void:
 	var m := _offline_match()
 	m.rules = &"party"
 	var b: Node3D = m.spawn_boss()
-	b.global_position = m._on_ground(Vector3(0, 4.2, 40))
+	b.global_position = m._on_ground(Vector3(0, BOSS_GD.LIFT, 40))
 	b.pilot = 1
 	var got := []
 	b.knocked_down.connect(func() -> void: got.append(&"down"))
@@ -53,6 +53,33 @@ func _case_party_boss() -> void:
 	_ck(b.hp == b.max_hp - 100, "無敵結束後會扣血（%d）" % b.hp)
 	_end(m)
 
+## 尼諾拉放大（草案 1，dino_height）：膠囊高＝身高、模型照倍率放大、腳底貼著膠囊下緣、嘴巴／火球口／尾根／頭的判定照比例、鏡頭照比例
+func _case_boss_scale() -> void:
+	var m := _offline_match()
+	var b: Node3D = m.spawn_boss()
+	var cap: CapsuleShape3D = b.get_node(^"CollisionShape3D").shape
+	var t: Node3D = b.get_node(^"Trex")
+	var h: float = Balance.num("dino_height")
+	_ck(absf(cap.height - h) < 0.001, "膠囊高度要等於 dino_height（膠囊 %.2f，表 %.2f）" % [cap.height, h])
+	_ck(absf(b.GROW - h / 8.1) < 0.001, "放大倍率 = dino_height ÷ 8.1（現在 %.3f）" % b.GROW)
+	_ck(absf(cap.radius - 2.4 * b.GROW) < 0.01 and absf(b.BODY_RADIUS - cap.radius) < 0.001,
+		"膠囊半徑跟著放大（膠囊 %.2f，BODY_RADIUS %.2f）" % [cap.radius, b.BODY_RADIUS])
+	_ck(absf(t.scale.x - 1.5 * b.GROW) < 0.001 and absf(t.position.y + b.HALF_H) < 0.001,
+		"模型照倍率放大、腳底在膠囊下緣（scale %.3f，y %.3f）" % [t.scale.x, t.position.y])
+	_ck(absf(b.get_node(^"CamPivot").position.y - 2.0 * b.GROW) < 0.01 \
+		and absf(b.get_node(^"CamPivot/Camera3D").position.z - 17.0 * b.GROW) < 0.01,
+		"第三人稱鏡頭照倍率（高 %.2f、距 %.2f）" % [b.get_node(^"CamPivot").position.y, b.get_node(^"CamPivot/Camera3D").position.z])
+	_ck(b.BITE_AT > b.BODY_RADIUS and absf(b.mouth().distance_to(b.global_position) - b.BITE_AT) < 0.01,
+		"嘴巴在身體外面、照倍率（%.2f）" % b.BITE_AT)
+	_ck(b._spit_muzzle().distance_to(b.global_position) > b.BODY_RADIUS, "火球口在身體外面")
+	_ck(absf(b.SWEEP_ROOT_BACK - 0.45 * b.GROW) < 0.02, "甩尾尾根照倍率（現在 %.3f，骨架量 0.667）" % b.SWEEP_ROOT_BACK)
+	var hy: float = b.head_position().y - b.global_position.y
+	_ck(hy > 0.0 and hy < b.HALF_H and absf(b.head_radius() - 1.6 * b.GROW) < 0.001,
+		"頭的骨頭在身體上半截（%.2f），打頭判定半徑照倍率（%.2f）" % [hy, b.head_radius()])
+	_ck(absf(b.global_position.y - m._terrain.height(b.global_position.x, b.global_position.z) - b.LIFT) < 0.01,
+		"生出來身體中心在 LIFT（腳底貼地、不陷進去）")
+	_end(m)
+
 ## 恐龍 boss：視力差、聽力好、跟蛋無關、導演只給大概方向、追太久會退開、兩招都有預備動作、自己的體力、打不死
 func _case_boss() -> void:
 	var m := _offline_match()
@@ -66,7 +93,7 @@ func _case_boss() -> void:
 	_ck(is_instance_valid(m._nav_region), "生 boss 要順便烘導航網格")
 	_ck(m._match_hud.BOSS_ACTS.size() == b.ACT_SPOT + 1, "每個動作狀態都要有除錯名稱（BOSS_ACTS 有 %d 個）" % m._match_hud.BOSS_ACTS.size())
 	# 視力：放在沙盒靶場那條路上（整平、沒蓋東西，視線不會被擋）
-	b.global_position = m._on_ground(Vector3(0, 4.2, 40))
+	b.global_position = m._on_ground(Vector3(0, BOSS_GD.LIFT, 40))
 	b.rotation.y = 0.0   # 面向 -Z
 	c.global_position = m._on_ground(Vector3(0, 0.1, 10))
 	_ck(not b.can_see(c), "視力差：正前方 30 公尺看不到")
@@ -160,7 +187,7 @@ func _case_boss() -> void:
 	_ck(d.phase == Director.Phase.BUILD and d.menace < 5.0, "退開、放鬆完回到醞釀，威脅從頭累積")
 	# 咬：有預備動作，預備時不扣血，時間到才咬下去
 	b.director = Director.new()
-	b.global_position = m._on_ground(Vector3(0, 4.2, 40))
+	b.global_position = m._on_ground(Vector3(0, BOSS_GD.LIFT, 40))
 	b.rotation.y = 0.0
 	c.global_position = m._on_ground(Vector3(0, 0.1, 34))   # 嘴巴正前方
 	var hp0: int = c.hp
@@ -444,34 +471,35 @@ func _start_bot_case() -> void:
 	_bot_cowboy = _bot_game.players.get_node(^"2")
 	_bot_from = Vector2(_bot_cowboy.global_position.x, _bot_cowboy.global_position.z)
 
-## 輕攻擊扇形：正前方 5 公尺中；側面 5 公尺（90 度）不中；前方 8 公尺（超出 2.4＋4.0）不中；
-## 出手時間內走進範圍也中；同一招只中一次
+## 輕攻擊扇形（距離從膠囊前緣算，前伸 light_reach）：正前方前緣外 3 公尺中；側面 5 公尺（90 度）不中；
+## 前緣外 light_reach 多 0.5 公尺不中；出手時間內走進範圍也中；同一招只中一次
 func _case_light_cone() -> void:
 	var m := _offline_match()
 	var b: Node3D = m.spawn_boss()
 	b.pilot = 1
-	b.global_position = m._on_ground(Vector3(0, 4.1, 60))
+	b.global_position = m._on_ground(Vector3(0, BOSS_GD.LIFT, 60))
+	var r: float = b.BODY_RADIUS
 	var front: Node3D = m._add_player(m.COWBOY, 2)
 	var side: Node3D = m._add_player(m.COWBOY, 3)
 	var far: Node3D = m._add_player(m.COWBOY, 4)
 	var late: Node3D = m._add_player(m.COWBOY, 5)
-	front.global_position = m._on_ground(Vector3(0, 0, 55))   # 恐龍面向 -Z
+	front.global_position = m._on_ground(Vector3(0, 0, 60 - r - 3.0))   # 恐龍面向 -Z
 	side.global_position = m._on_ground(Vector3(5, 0, 60))
-	far.global_position = m._on_ground(Vector3(0, 0, 52))
-	late.global_position = m._on_ground(Vector3(0, 0, 52))   # 出手後才走進來
+	far.global_position = m._on_ground(Vector3(0, 0, 60 - r - b.LIGHT_REACH - 0.5))
+	late.global_position = m._on_ground(Vector3(0, 0, 60 - r - b.LIGHT_REACH - 0.5))   # 出手後才走進來
 	var walked := false
 	for i in 200:
 		b.pilot_input(Vector2.ZERO, 0.0, 0.0, b.PIN_BITE if i == 0 else 0)
 		b.think(DT)
 		if b.act == b.ACT_BITE and not walked:
 			walked = true
-			late.global_position = m._on_ground(Vector3(0, 0, 55))
+			late.global_position = m._on_ground(Vector3(0, 0, 60 - r - 3.0))
 		if b.act == b.ACT_RECOVER:
 			break
 	_ck(walked, "咬要真的出手（進 ACT_BITE）")
-	_ck(front.hp == front.max_hp - 40, "正前方 5 公尺的牛仔扣 40（現在 %d）" % front.hp)
+	_ck(front.hp == front.max_hp - 40, "正前方、膠囊前緣外 3 公尺的牛仔扣 40（現在 %d）" % front.hp)
 	_ck(side.hp == side.max_hp, "側面 90 度不該中")
-	_ck(far.hp == far.max_hp, "前方 8 公尺超出扇形不該中")
+	_ck(far.hp == far.max_hp, "前緣外超出 light_reach 不該中")
 	_ck(late.hp == late.max_hp - 40, "出手時間內走進扇形也要中，而且只中一次（現在 %d）" % late.hp)
 	_end(m)
 
@@ -483,7 +511,7 @@ func _case_sweep_half() -> void:
 	var b: Node3D = m.spawn_boss()
 	b.pilot = 1
 	b.rotation.y = 0.0   # 面向 -Z，後方是 +Z；尾根在 (0, 40 + sweep_root_back)
-	b.global_position = m._on_ground(Vector3(0, 4.1, 40))
+	b.global_position = m._on_ground(Vector3(0, BOSS_GD.LIFT, 40))
 	var root_z: float = 40.0 + b.SWEEP_ROOT_BACK
 	var behind: Node3D = m._add_player(m.COWBOY, 2)
 	var front: Node3D = m._add_player(m.COWBOY, 3)
@@ -523,10 +551,10 @@ func _case_stomp() -> void:
 	var m := _offline_match()
 	var b: Node3D = m.spawn_boss()
 	b.pilot = 1
-	var spot: Vector3 = m._on_ground(Vector3(0, 4.1, 60))
+	var spot: Vector3 = m._on_ground(Vector3(0, BOSS_GD.LIFT, 60))
 	var c: Node3D = m._add_player(m.COWBOY, 2)
 	var far: Node3D = m._add_player(m.COWBOY, 3)
-	c.global_position = m._on_ground(Vector3(3, 0, 60))   # 側面 3 公尺，在 2.4＋1.0 之內
+	c.global_position = m._on_ground(Vector3(b.BODY_RADIUS + 0.5, 0, 60))   # 身體外 0.5 公尺，在 stomp_reach 之內
 	far.global_position = m._on_ground(Vector3(40, 0, 60))
 	var hp0: int = c.hp
 	for i in 130:
@@ -577,7 +605,7 @@ func _case_boss_fireball() -> void:
 	var m := _offline_match()
 	var b: Node3D = m.spawn_boss()
 	b.pilot = 1
-	b.global_position = m._on_ground(Vector3(0, 4.1, 60))
+	b.global_position = m._on_ground(Vector3(0, BOSS_GD.LIFT, 60))
 	b.rotation.y = 0.0
 	var arena: Node = m.get_node(^"Arena")
 	var n0 := _fireball_count(arena)

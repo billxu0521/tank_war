@@ -21,6 +21,7 @@ const RESPAWN_DELAY := 5.0    # 死亡的代價是節奏，不是失去參賽資
 const COWBOY := preload("res://cowboy/cowboy.tscn")
 const DINO := preload("res://dino.tscn")
 const BOSS := preload("res://boss.tscn")
+const BOSS_GD := preload("res://boss.gd")   # 尼諾拉的尺寸（HALF_H、GROW、BODY_RADIUS、LIFT），導航網格和生怪用
 const BOSS_ID := -999   # 負數＝電腦（主機操控）；固定編號，場上最多一隻
 
 @onready var lobby: VBoxContainer = $UI/Root/Lobby
@@ -957,7 +958,7 @@ func spawn_boss() -> Node3D:
 	var me := players.get_node_or_null(^"1") as Node3D
 	if _sandbox and me and not _solo_dino:   # 沙盒：生在前方 40 公尺方便看；單人打恐龍：離你最遠，要自己找過來
 		at = me.global_position - me.global_basis.z * 40.0
-	b.global_position = _on_ground(Vector3(at.x, 4.2, at.z))
+	b.global_position = _on_ground(Vector3(at.x, BOSS_GD.LIFT, at.z))
 	var boss_hp: int = RULES[rules].boss_hp
 	if boss_hp > 0 and not _sandbox:
 		b.max_hp = boss_hp   # 決鬥要打得死，血多一點（大家一起打）
@@ -983,7 +984,7 @@ func _far_from_cowboys() -> Vector3:
 
 ## 恐龍的導航網格：從場地上所有靜態碰撞（地形、房子、柵欄、樹幹、石頭）烘出來，只在主機上需要。
 ## 讀場景要在主執行緒，烘本身丟背景（幾百毫秒），烘好之前 boss 退回直線追。一個場地只烘一次。
-## 恐龍很大（半徑 2.4），進不了房子、擠不過柵欄的缺口——網格自己就會繞開這些地方
+## 恐龍很大（半徑 BODY_RADIUS、身高 dino_height），進不了房子、擠不過柵欄的缺口——網格自己就會繞開這些地方
 var _nav_region: NavigationRegion3D
 ## rebake：地形被拆掉（destructible.gd）時重烘，烘好之前照舊的網格走。
 ## 同一幀拆好幾塊（甩尾一次掃到一圈方塊）只排一次，到 idle 才烘：每次烘要在主線程解析場景，一幀烘十幾次會卡住（量過 93 毫秒）；
@@ -1009,8 +1010,8 @@ func _bake_nav() -> void:
 	var rebake := is_instance_valid(_nav_region)
 	var nm := NavigationMesh.new()
 	nm.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS
-	nm.agent_radius = 2.4
-	nm.agent_height = 8.0
+	nm.agent_radius = BOSS_GD.BODY_RADIUS
+	nm.agent_height = BOSS_GD.HALF_H * 2.0   # 身高：天花板比這低的地方恐龍站不進去
 	nm.agent_max_climb = 0.9
 	nm.agent_max_slope = 40.0
 	nm.cell_size = 0.5

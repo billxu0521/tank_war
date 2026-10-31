@@ -1,5 +1,6 @@
 extends SceneTree
 
+const BOSS_GD := preload("res://boss.gd")   # 尼諾拉的尺寸（LIFT 等），生怪要用
 var _fails := 0
 var _shooter: Node
 var _brawler: Node

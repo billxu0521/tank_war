@@ -446,7 +446,7 @@ func _case_versus() -> void:
 	m._add_player(m.COWBOY, 1)
 	m._add_player(m.COWBOY, 2)
 	var b: Node = m.spawn_boss()
-	b.global_position = m._on_ground(Vector3(0, 4.2, 40))   # 整平的路上，前面沒東西擋
+	b.global_position = m._on_ground(Vector3(0, BOSS_GD.LIFT, 40))   # 整平的路上，前面沒東西擋
 	b.rotation.y = 0.0
 	m._pick_pilot()
 	_ck(b.pilot == 0, "沒人勾「我想當恐龍」：尼諾拉還是電腦")
@@ -632,7 +632,7 @@ func _case_party_destruction() -> void:
 	_ck(not "甩尾" in m._match_hud._boss_label.text, "別人操作（或電腦）的恐龍不顯示甩尾冷卻")
 	# 恐龍站在樹旁邊甩尾，旁邊擺一間沒進群組的安全屋
 	var base := Vector3(tree.global_position.x, 0, tree.global_position.z)
-	b.global_position = m._on_ground(base + Vector3(4, 4.2, 0))
+	b.global_position = m._on_ground(base + Vector3(4, BOSS_GD.LIFT, 0))
 	var safe := Greybox.house(Vector3(5, 3, 5), 1)
 	safe.add_to_group(&"safe_house")
 	m.map._place_greybox(safe, b.global_position * Vector3(1, 0, 1) + Vector3(0, 0, 6), 0.0)
@@ -896,7 +896,7 @@ func _case_party_gameplay() -> void:
 	bots[0].take_damage(30, b)
 	_ck(bots[0].hp == hp0, "準備階段不扣血")
 	# 準備階段恐龍按 F 放蛋
-	b.global_position = m._on_ground(Vector3(0, 4.2, 40))
+	b.global_position = m._on_ground(Vector3(0, BOSS_GD.LIFT, 40))
 	p.place_egg()
 	_ck(p.egg_placed and Vector2(m.egg.global_position.x - 0, m.egg.global_position.z - 40).length() < 0.1, "恐龍按 F 蛋放在腳下")
 	for c: Node3D in bots:

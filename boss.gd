@@ -29,6 +29,11 @@ extends "res://dino.gd"
 ## 移動：照導航網格的路徑走（main.gd 的 bake_nav，開場在主機上烘），繞得過建築；烘好之前退回直線追。
 ## 走跟牛仔一樣、跑比牛仔快。跑步吃體力，見底只能走、回到 RECOVER_AT 才能再跑——牛仔拉開距離的機會就在這。
 
+# 尼諾拉放大（草案 1，balance.csv 的 dino_height）：膠囊、模型、嘴巴、尾根、鏡頭、判定高度都乘 GROW。
+# boss.tscn 的膠囊和模型已依 GROW 放好（放大前膠囊高 8.1），tests/dino.gd 釘住兩者一致
+static var HALF_H: float = Balance.num("dino_height") * 0.5   # 身體中心到腳底（膠囊半高）
+static var GROW: float = HALF_H * 2.0 / 8.1                    # 放大倍率
+static var LIFT: float = HALF_H + 0.15                         # 生在地上時身體中心的高度（腳底貼地再多 0.15）
 # 以下從 balance.csv 讀（見 balance.gd），改數字去改表
 static var WALK: float = Balance.num("dino_walk")   # 牛仔走 4.0
 static var RUN: float = Balance.num("dino_run")   # 牛仔衝刺 6.8
@@ -72,14 +77,14 @@ const SPOT_TIME := 0.7       # 發現人：停下來吼一聲這麼久，玩家�
 static var ATTACK_GAP: float = Balance.num("attack_gap")   # 收招之後至少隔這麼久才出下一招
 static var PILOT_ATTACK_GAP: float = Balance.num("pilot_attack_gap")   # 玩家操作：收招後很快能出下一招（電腦版留空檔給牛仔喘氣）
 # 咬：近距離正前方。站定、頭往後仰、低吼，再咬下去
-const BITE_TRIGGER := 7.5    # 嘴巴到人這麼近開始預備
+static var BITE_TRIGGER: float = 7.5 * GROW   # 嘴巴到人這麼近開始預備
 # 以下從 balance.csv 讀（見 balance.gd），改數字去改表
 static var BITE_WIND: float = Balance.num("bite_wind")
 static var PILOT_BITE_WIND: float = Balance.num("pilot_bite_wind")   # 玩家操作：出招要跟手，預備比電腦短一半
 static var BITE_RECOVER: float = Balance.num("bite_recover")
 static var PILOT_BITE_RECOVER: float = Balance.num("pilot_bite_recover")   # 玩家操作：咬完很快收回來
-const BITE_AT := 6.0         # 判定點在身體中心前方這麼遠（嘴巴的位置）
-const BODY_RADIUS := 2.4     # 身體碰撞膠囊的半徑（boss.tscn）
+static var BITE_AT: float = 6.0 * GROW       # 判定點在身體中心前方這麼遠（嘴巴的位置）
+static var BODY_RADIUS: float = 2.4 * GROW   # 身體碰撞膠囊的半徑（boss.tscn）
 # 輕攻擊（左鍵咬）：胸前扇形，從身體中心算。以下從 balance.csv 讀
 static var LIGHT_DAMAGE: int = Balance.whole("light_damage")
 static var LIGHT_REACH: float = Balance.num("light_reach")
@@ -91,7 +96,7 @@ static var STOMP_INTERVAL: float = Balance.num("stomp_interval")
 static var STOMP_MIN_SPEED: float = Balance.num("stomp_min_speed")
 const STOMP_HEIGHT := 1.5    # 牛仔腳底在恐龍腳底上下這麼多以內才踩得到
 # 蓄力甩尾：身邊有人在側面或背後、或身邊不只一個人。站著仰頭長吼，這段時間打中頭就打斷
-const SWEEP_TRIGGER := 9.0
+static var SWEEP_TRIGGER: float = 9.0 * GROW
 # 以下從 balance.csv 讀（見 balance.gd），改數字去改表
 static var CHARGE_WIND: float = Balance.num("charge_wind")
 static var PILOT_CHARGE_WIND: float = Balance.num("pilot_charge_wind")   # 玩家操作：搖動太久不好玩。打中頭打斷的機會也跟著變短
@@ -196,7 +201,7 @@ func _ready() -> void:
 	voice.unit_size = 12.0       # 大隻，遠遠就聽得到
 	voice.max_distance = 120.0
 	voice.volume_db = 4.0
-	voice.position = Vector3(0, 2.0, -4.0)   # 頭的位置
+	voice.position = Vector3(0, 2.0, -4.0) * GROW   # 頭的位置
 	add_child(voice)
 	_tree = BT.Sel.new([
 		BT.Seq.new([BT.Cond.new(func() -> bool: return down_left > 0.0), BT.Act.new(_act_down)]),
@@ -232,7 +237,7 @@ func _process(delta: float) -> void:
 	if down_left > 0.0 and not _was_down:   # 倒地：整隻摔下去揚起一大圈土
 		var w: Node = get_tree().get_first_node_in_group(&"arena")
 		if w:
-			Fx.dust_ring(w, global_position + Vector3.DOWN * 3.5, 4.0, 40, 9.0, 1.2)
+			Fx.dust_ring(w, global_position + Vector3.DOWN * 3.5 * GROW, 4.0 * GROW, 40, 9.0, 1.2)
 	if downed != _was_down:
 		(knocked_down if downed else got_up).emit()
 	_was_down = downed
@@ -300,7 +305,7 @@ func _stomp(delta: float) -> void:
 	for p: Node3D in _cowboys():
 		var to := p.global_position - global_position
 		to.y = 0.0
-		if to.length() >= BODY_RADIUS + STOMP_REACH or absf(p.global_position.y - (global_position.y - 4.0)) >= STOMP_HEIGHT:
+		if to.length() >= BODY_RADIUS + STOMP_REACH or absf(p.global_position.y - (global_position.y - HALF_H)) >= STOMP_HEIGHT:
 			continue
 		if _stomp_clock - _stomp_at.get(p, -INF) < STOMP_INTERVAL:
 			continue
@@ -515,6 +520,17 @@ func mouth() -> Vector3:
 	fwd.y = 0.0
 	return global_position + fwd.normalized() * BITE_AT
 
+## 火球口：頭的高度、往前幾公尺（dino.gd 的 _spit_muzzle 是原本的尺寸，這裡跟著放大）
+func _spit_muzzle() -> Vector3:
+	return global_position + Vector3.UP * HEAD_HEIGHT * GROW + _spit_dir() * MUZZLE_FWD * GROW
+
+## 從頭拉線看有沒有牆擋（dino.gd 的版本是原本的頭高）
+func _blocked_by_wall(target: Node3D) -> bool:
+	var q := PhysicsRayQueryParameters3D.create(
+		global_position + Vector3.UP * HEAD_HEIGHT * GROW, target.global_position + Vector3.UP)
+	q.exclude = [get_rid(), target.get_rid()]
+	return not get_world_3d().direct_space_state.intersect_ray(q).is_empty()
+
 
 # --- 出招 ---
 
@@ -613,7 +629,7 @@ func _hit_cone() -> void:
 	for p: Node3D in _cowboys():
 		if p in _hit_once or not _in_fan(global_position, fwd, p.global_position, BODY_RADIUS + LIGHT_REACH, LIGHT_COS):
 			continue
-		if absf(p.global_position.y - (global_position.y - 4.0)) < 4.0 and not _blocked_by_wall(p):
+		if absf(p.global_position.y - (global_position.y - HALF_H)) < 4.0 * GROW and not _blocked_by_wall(p):
 			_hit_once.append(p)
 			p.take_damage(LIGHT_DAMAGE, self)
 
@@ -644,7 +660,7 @@ func _sweep_hit() -> void:
 	for p: Node3D in _cowboys():
 		if p in _hit_once or not _in_fan(root, back, p.global_position, SWEEP_RADIUS, SWEEP_COS):
 			continue
-		if absf(p.global_position.y - (global_position.y - 4.0)) < 4.0 and not _blocked_by_wall(p):
+		if absf(p.global_position.y - (global_position.y - HALF_H)) < 4.0 * GROW and not _blocked_by_wall(p):
 			_hit_once.append(p)
 			p.take_damage(SWEEP_DAMAGE, self)
 
@@ -713,6 +729,10 @@ func _on_hurt(amount: int, from: Vector3) -> void:
 		push.y = 0.0
 		push = push.normalized()
 	$Trex.flinch(push, clampf(amount / 40.0, 0.3, 1.0), false)
+
+## 打中頭的判定半徑（子彈用，見 Bullet._impact）：頭約 1.2 × 2 公尺，跟著放大
+func head_radius() -> float:
+	return 1.6 * GROW
 
 ## 頭的位置（牛仔的子彈判斷有沒有打中頭用，見 Bullet._impact）
 func head_position() -> Vector3:
@@ -809,7 +829,7 @@ func _act_retreat(delta: float) -> int:
 
 func _clamp_arena(at: Vector3) -> Vector3:
 	var g := _game()
-	var half: float = g.ARENA * 0.5 - 10.0 if g else 70.0
+	var half: float = g.ARENA * 0.5 - 10.0 * GROW if g else 70.0
 	return Vector3(clampf(at.x, -half, half), at.y, clampf(at.z, -half, half))
 
 

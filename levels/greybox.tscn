@@ -229,7 +229,7 @@ amount = 7.0
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -61, 0, -29)
 script = ExtResource("2_wwx2q")
 kind = "gb_house"
-size = Vector3(14, 9, 22)
+size = Vector3(14, 13.1, 22)
 amount = 1.0
 flag = true
 
@@ -372,7 +372,7 @@ amount = 16.0
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 62, 0, -27)
 script = ExtResource("2_wwx2q")
 kind = "gb_house"
-size = Vector3(18, 9, 24)
+size = Vector3(18, 13.1, 24)
 amount = 1.0
 flag = true
 
@@ -386,7 +386,7 @@ amount = 16.0
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, 62, 0, 23)
 script = ExtResource("2_wwx2q")
 kind = "gb_house"
-size = Vector3(18, 9, 24)
+size = Vector3(18, 13.1, 24)
 amount = 1.0
 flag = true
 
