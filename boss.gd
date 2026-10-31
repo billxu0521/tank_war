@@ -496,7 +496,7 @@ func _game() -> Node:
 
 func _party() -> bool:
 	var g := _game()
-	return g != null and g.rules == &"party" and not g._sandbox   # 大廳選了派對再按沙盒：照沙盒
+	return g != null and g.party_mode()   # 大廳選了派對再按沙盒：照沙盒
 
 func _flat_dist(at: Vector3) -> float:
 	return Vector2(at.x - global_position.x, at.z - global_position.z).length()
@@ -659,6 +659,7 @@ func _spit_fire(dir: Vector3, muzzle: Vector3) -> void:
 	f.max_range = FB_RANGE
 	f.damage = FB_DAMAGE
 	f.burn = true
+	f.wreck = _party()   # 派對：打中方塊扣一下（destructible.gd）
 	f.shooter = self
 	f.vel = dir * FB_SPEED
 	get_tree().get_first_node_in_group(&"arena").add_child(f)
@@ -677,7 +678,12 @@ func _wreck_around(at: Vector3, dir: Vector3, radius: float, cos_half: float) ->
 	var q := PhysicsShapeQueryParameters3D.new()
 	q.shape = sphere
 	q.transform = Transform3D(Basis(), at)
-	q.exclude = [get_rid()]
+	# 地面（地形）不要算：一個半徑 12 公尺的球會切到好幾百個地形面，把查詢的上限 256 佔滿，後面的樹和房子就漏掉了
+	var skip: Array[RID] = [get_rid()]
+	for g in get_tree().get_nodes_in_group(&"ground"):
+		if g is CollisionObject3D:
+			skip.append((g as CollisionObject3D).get_rid())
+	q.exclude = skip
 	var done := {}
 	# ponytail: 一棟房子幾十塊碰撞各算一筆，上限給大一點；房子擠成一團漏掉幾個再加
 	for r: Dictionary in get_world_3d().direct_space_state.intersect_shape(q, 256):

@@ -75,7 +75,9 @@ var spawn_points: Array[Vector3] = []   # 牛仔出生／重生候選點（擺�
 var dino_spawn := Vector3.ZERO           # 恐龍出生點（擺設種類 dino_spawn）；沒放就是場地中央貼地
 var _houses_built := 0   # 第幾棟農舍：三種輪流蓋（不用亂數，後面擺的東西位置才不會跟著變）
 var _doors: Array[Door] = []   # 晚加入的人連進來時，把開著的門補送給他
-var _wrecks: Array[Destructible] = []   # 甩尾拆得掉的地形（destructible.gd）：晚加入的人連進來時，把打過的補送給他
+var _wrecks: Array[Destructible] = []   # 拆得掉的地形（destructible.gd）：晚加入的人連進來時，把打過的補送給他
+var _party_at := Vector3.INF   # 派對方塊房子的位置（灰盒才找；INF = 沒有）
+var _party_house: Node3D       # 方塊房子（greybox.gd cube_house）：每台都蓋，不是派對就藏起來（set_party_house）
 var _wheat_fields: Array[Rect2] = []   # 地形上色要知道哪裡是麥田
 var _roads: Array[Rect2] = []          # 城鎮主街這類另外鋪的土路（地形上色）；彎彎曲曲的荒地小路在 Trails（trails.gd）
 var _blocked: Array[Rect2] = []  # 建築物在 XZ 平面佔的範圍
@@ -87,7 +89,9 @@ func _build_arena() -> void:
 	Trails.enabled = main.mode != &"range" and not greybox   # 自動擺設、地面上色、草都會查小路，最先設
 	if _level.is_empty():
 		_generate_level()
-	# 地形要在擺任何東西之前定案：整平區（農莊、倉庫、牧場的房子……）在清單裡
+	# 地形要在擺任何東西之前定案：整平區（農莊、倉庫、牧場的房子……）在清單裡。方塊房子的整平區也要先記進去
+	if greybox:
+		_party_house_spot()
 	_terrain = make_terrain(_level.filter(func(r: Dictionary) -> bool: return r.kind == &"flat") \
 		.map(func(r: Dictionary) -> Array: return [Vector2(r.pos.x, r.pos.z), r.r]))
 	var ground := _terrain.build(_ground_color, _ground_mix, Greybox.ground_material() if greybox else null)
@@ -109,6 +113,8 @@ func _build_arena() -> void:
 		_props[&"FenceRail"], FENCE_SEG))
 
 	_build_level()
+	if _party_at.is_finite():
+		_build_party_house()
 	if not greybox:   # ponytail: 灰盒不撒碎物、草、野花、風滾草；只留擺設清單裡的樹、灌木、石頭當遮蔽
 		_clutter_field()   # 有碰撞：伺服器也要擺，固定種子每台一樣
 
@@ -277,12 +283,66 @@ func _place_greybox(body: StaticBody3D, p: Vector3, yaw: float) -> void:
 	body.rotation.y = yaw
 	add_child(body)
 
-## 甩尾拆得掉（destructible.gd，打 hits 下倒）：照蓋的順序取名 Wreck0、Wreck1…，每台一樣，RPC 才找得到同一個
-func _destructible(body: StaticBody3D, hits: int, visual: Node3D = null) -> StaticBody3D:
+## 派對模式的方塊房子（草案 4.1）：找到的位置照 greybox.gd cube_house 的順序，每塊一個 Destructible，名字接在後面（每台一樣）。
+## 材質照等級對應子彈穿透（bullet.gd ARMOR）：1 木板、2 雙層木板、3 金屬板
+const PARTY_ARMOR := [&"plank", &"double_plank", &"metal"]
+func _build_party_house() -> void:
+	_party_house = Node3D.new()
+	_party_house.name = &"CubeHouse"
+	add_child(_party_house)
+	_party_house.position = _on_ground(_party_at)
+	for cell: Array in Greybox.cube_house():
+		var body := Greybox.cube()
+		body.position = cell[0]
+		_party_house.add_child(body)
+		var w := _destructible(body, cell[1])
+		w.add_to_group(PARTY_ARMOR[cell[1] - 1])
+	set_party_house(false)   # 開場先藏起來，_apply_rules 看模式再開
+
+## 派對模式才看得到、拆得掉：不是派對（或沙盒）就整棟藏起來、碰撞和拆的資格一起拿掉（main.gd 的 _enter_game、_apply_rules 呼叫）
+func set_party_house(on: bool) -> void:
+	if _party_house == null:
+		return
+	_party_house.visible = on
+	for c in _party_house.get_children():   # 底下還有播完音效的 AudioStreamPlayer3D（destructible.gd 的 _sfx），要跳過
+		var w := c as Destructible
+		if w == null:
+			continue
+		var up := on and w.hits < w.hits_needed   # 已經倒的不復活碰撞（新的一場 party.gd 的 restore 會立回來）
+		w.collision_layer = 1 if up else 0
+		if up:
+			w.add_to_group(&"destructible")
+		else:
+			w.remove_from_group(&"destructible")
+
+## 方塊房子的位置：離場地中心最近、又不擋東西的一塊空地（離出生點、安全屋、撤離區都要有距離）。
+## 找到就記成整平區（地形要在它之前定案），並 _block 起來：出生點、蛋的位置（_spawn_point 用 _is_clear）就避開它
+func _party_house_spot() -> void:
+	var best := Vector3.INF
+	for x in range(-60, 61, 4):
+		for z in range(-60, 61, 4):
+			var p := Vector3(x, 0, z)
+			if best.is_finite() and p.length() >= best.length():
+				continue
+			if not _is_clear(Vector2(x, z), 6.0) or not _free(p, 9.0) or not _inside(p, 12.0):
+				continue
+			if _level.any(func(r: Dictionary) -> bool:
+					return (r.kind == &"spawn" or r.kind == &"dino_spawn") and Vector2(r.pos.x, r.pos.z).distance_to(Vector2(x, z)) < 9.0):
+				continue
+			best = p
+	if not best.is_finite():
+		return
+	_party_at = best
+	_put({kind = &"flat", pos = best, r = 7.0})
+	_block(best, Vector2(6, 6), 3.0)
+
+## 拆得掉的地形（destructible.gd，等級 level：1、2 挨 level 下倒，3 打不壞）：照蓋的順序取名 Wreck0、Wreck1…，每台一樣，RPC 才找得到同一個
+func _destructible(body: StaticBody3D, level: int, visual: Node3D = null) -> StaticBody3D:
 	body.set_script(Destructible)
 	var w: Destructible = body
 	w.name = "Wreck%d" % _wrecks.size()
-	w.hits_needed = hits
+	w.level = level
+	w.hits_needed = level
 	w.visual = visual
 	w.add_to_group(&"destructible")
 	_wrecks.append(w)
@@ -1428,7 +1488,7 @@ func _tree(rec: Dictionary) -> void:
 		body = _solid_cyl(p + Vector3(0, trunk[1] * s * 0.5, 0), trunk[0] * s, trunk[1] * s)
 	var mi := _prop(rec.mesh, p, Vector3.ONE * s)
 	mi.rotation.y = rec.yaw
-	_destructible(body, 1, mi)   # 甩一下就倒
+	_destructible(body, 2, mi)   # 甩兩下才倒（草案 4.2 等級 2）
 
 ## 人字屋頂的碰撞：兩片斜板。斜度在 45 度以內，恐龍爬上來站得住。
 ## 外觀在 Blender 的模型裡（blender/props.py 的 gable_roof() 照這個擺法建的）

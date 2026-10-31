@@ -1,6 +1,7 @@
 class_name Destructible
 extends StaticBody3D
-## 甩尾拆得掉的地形（派對模式，docs/企劃/派對玩法.md）：樹甩一次就倒，灰盒房子甩兩次才倒。
+## 派對模式拆得掉的地形（docs/企劃/派對玩法.md、規則草案 4.2）。等級 1 挨一下就倒、2 挨兩下、3 打不壞（甩尾、火球、炸藥都不行）。
+## 樹是 2、灰盒房子是 2、方塊房子的每一塊照它的等級。
 ## arena_map.gd 蓋場地時把樹幹、灰盒房子的 body 換成這個腳本、加進群組 destructible（_destructible）。安全屋不加，拆不掉。
 ##
 ## 主機說了算：boss.gd 的甩尾打中就呼叫 tail_hit，主機記次數、廣播給所有人（包括自己）。
@@ -9,7 +10,8 @@ extends StaticBody3D
 ##
 ## ponytail: 倒了只是藏起來、碰撞拿掉，節點留著：晚加入補送、重複的 RPC 都還找得到它。bot 找掩體用的擺設清單（_level）不會跟著改
 
-var hits_needed := 1
+var level := 1         # 耐久等級（草案 4.2）：1、2 挨 hits_needed 下倒，3 不能被甩尾、火球、炸藥破壞
+var hits_needed := 1   # 倒下要挨的次數（等級 1、2 就是等級本身）
 var hits := 0
 ## 外觀不在這個 body 底下的（樹的模型是另外擺的），倒的時候一起動、一起藏
 var visual: Node3D
@@ -22,9 +24,19 @@ const TREE_FALL_SOUND := "res://assets/audio/destruction/tree_fall.wav"
 const HOUSE_FALL_SOUND := "res://assets/audio/destruction/house_collapse.wav"
 
 
+## 甩尾、火球打中一下（主機才算）
 func tail_hit(from: Vector3) -> void:
-	if multiplayer.is_server() and hits < hits_needed:
+	if multiplayer.is_server() and level < 3 and hits < hits_needed:
 		_set_hits.rpc(hits + 1, from, false)
+
+
+## 炸藥爆炸（主機才算）：範圍內等級 1 的挨一下（一下就倒），等級 2、3 不受影響（草案 4.2 一般炸彈）。
+## ponytail: 只看距離，不算中間有沒有牆擋住；方塊房子的牆互相擋住的話，爆炸會穿過去拆後面的等級 1 方塊
+static func blast(world: Node3D, at: Vector3, radius: float) -> void:
+	for w: Node in world.get_tree().get_nodes_in_group(&"destructible"):
+		var d := w as Destructible
+		if d and d.level == 1 and d.global_position.distance_to(at) < radius:
+			d.tail_hit(at)
 
 
 @rpc("authority", "call_local", "reliable")
