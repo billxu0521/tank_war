@@ -584,7 +584,7 @@ func _case_dino_attack_switch() -> void:
 	_ck(m.get_node(^"UI/Root/Menu/Box/Controller/DinoAttackBtn").button_pressed, "選單開關預設是開的")
 	_end(m)
 
-## 恐龍碰撞物件開關（預設關）：關掉尼諾拉穿過房子和樹、還是站在地上、牛仔照樣撞得到；打開就撞牆停，腳也不踩上屋頂。
+## 恐龍碰撞物件開關（預設關）：關掉尼諾拉只穿過樹、房子照樣擋，還是站在地上、牛仔照樣撞得到；打開樹也擋，腳也不踩上樹冠。
 ## 要跨物理幀（move_and_slide 在一般幀裡不會動），接在火球的物理後面（_phase 5，見 test_battle.gd）。
 ## 由 MainLoop 的 _physics_process 每個物理幀推一步，boss 自己的思考和移動關掉（set_physics_process false）
 var _nc_m: Node
@@ -605,12 +605,27 @@ func _start_noclip_case() -> void:
 	_nc_b = _nc_m.spawn_boss()
 	_nc_b.set_physics_process(false)
 	_nc_btn = _nc_m.get_node(^"UI/Root/Menu/Box/Controller/DinoCollideBtn")
-	# 房子和樹只在第 1 層（跟建築一樣）：房子擋在 z=30，樹幹在 z=20；牛仔站在 z=33（關掉碰撞時也要撞得到）
-	_solid_piece(_nc_m, _nc_m._on_ground(Vector3(0, 0, 30)) + Vector3(0, 2.5, 0), _box_shape(Vector3(12, 5, 1)))
+	# 真的場地蓋出來的：樹群組的 body 不能有第 5 層（關碰撞物件穿得過），其他第 1 層的 body（建築、柵欄、石頭……）都要有
+	var trees := 0
+	var trees_solid := 0   # 樹不該有第 5 層的數量
+	var blocks := 0
+	var blocks_bare := 0   # 其他第 1 層的 body（建築、柵欄、石頭……）沒有第 5 層的數量
+	for body: PhysicsBody3D in _nc_m.map.find_children("*", "PhysicsBody3D", true, false):
+		var solid: bool = (body.collision_layer & Fighter.SOLID_LAYER) != 0
+		if body.is_in_group(&"tree"):
+			trees += 1
+			trees_solid += 1 if solid else 0
+		elif (body.collision_layer & 1) != 0:
+			blocks += 1
+			blocks_bare += 0 if solid else 1
+	_ck(trees > 0 and trees_solid == 0, "場地的樹（%d 棵）都沒有第 5 層：關碰撞物件穿得過" % trees)
+	_ck(blocks > 0 and blocks_bare == 0, "場地的建築擺設（%d 個）第 1 層的都有第 5 層：關碰撞物件照樣擋" % blocks)
+	# 房子擋在 z=20（建築，第 1、5 層）、樹幹在 z=30（只在第 1 層，群組 tree）；牛仔站在 z=33（關掉碰撞時也要撞得到）
+	_solid_piece(_nc_m, _nc_m._on_ground(Vector3(0, 0, 20)) + Vector3(0, 2.5, 0), _box_shape(Vector3(12, 5, 1)), true)
 	var trunk := CylinderShape3D.new()
 	trunk.radius = 0.6
 	trunk.height = 6.0
-	_solid_piece(_nc_m, _nc_m._on_ground(Vector3(0, 0, 20)) + Vector3(0, 3.0, 0), trunk)
+	_solid_piece(_nc_m, _nc_m._on_ground(Vector3(0, 0, 30)) + Vector3(0, 3.0, 0), trunk, false, true)
 	_nc_cow = _nc_m._add_player(_nc_m.COWBOY, 2)
 	_nc_cow.global_position = _nc_m.boss_on_ground(Vector3(0, 0, 33))
 	_nc_place(40.0)
@@ -623,12 +638,16 @@ func _box_shape(size: Vector3) -> BoxShape3D:
 	s.size = size
 	return s
 
-## 測試用的一塊擺設：只在第 1 層，跟房子、樹一樣（不加地形那一層）
-func _solid_piece(m: Node, at: Vector3, shape: Shape3D) -> StaticBody3D:
+## 測試用的一塊擺設。預設只在第 1 層（樹幹那樣）；solid 再加第 5 層（場地上的建築，arena_map.gd 的 _build_arena 掃的那樣）；tree 進 tree 群組
+func _solid_piece(m: Node, at: Vector3, shape: Shape3D, solid := false, tree := false) -> StaticBody3D:
 	var body := StaticBody3D.new()
 	var cs := CollisionShape3D.new()
 	cs.shape = shape
 	body.add_child(cs)
+	if solid:
+		body.collision_layer |= Fighter.SOLID_LAYER
+	if tree:
+		body.add_to_group(&"tree")
 	m.get_node(^"Arena").add_child(body)
 	body.global_position = at
 	return body
@@ -655,7 +674,7 @@ func _physics_process(delta: float) -> bool:
 			b._move(Vector3.ZERO, false, delta)
 			if _nc_n >= 0.25:
 				_ck(not _nc_m.dino_collide and not _nc_btn.button_pressed, "碰撞物件開關預設不勾")
-				_ck(b.collision_mask == Fighter.SOLID_LAYER, "預設關：尼諾拉的遮罩只留地形、圍牆、角色那一層")
+				_ck(b.collision_mask == Fighter.SOLID_LAYER, "預設關：尼諾拉的遮罩只留第 5 層（地形、圍牆、建築、角色）")
 				_ck(b.test_move(b.global_transform, Vector3(0, -0.3, 0)), "關碰撞物件：還是站在地形上（腳底貼地）")
 				_ck(_on_ground_now(_nc_m, b), "關碰撞物件：站著不掉下去")
 				_nc_next(1)
@@ -666,30 +685,32 @@ func _physics_process(delta: float) -> bool:
 				_nc_cow.global_position = Vector3(0, 500, 0)
 				_nc_place(40.0)
 				_nc_next(2)
-		2:   # 關碰撞物件：穿過房子和樹，走到 z<18，腳還在地上
+		2:   # 關碰撞物件：穿過樹（z=30），被房子（z=20）擋住，停在房子前（身體半徑 3.56，中心約 z=24），腳還在地上
 			b._move(-b.global_basis.z, false, delta)
 			if _nc_n >= 6.0:
-				_ck(b.global_position.z < 18.0, "關碰撞物件：穿過房子和樹，走到 z=%.1f" % b.global_position.z)
-				_ck(_on_ground_now(_nc_m, b), "穿過房子之後腳還是在地上（不掉到地下、不卡在屋頂上）")
+				_ck(b.global_position.z > 21.0 and b.global_position.z < 27.0, "關碰撞物件：穿過樹、被房子擋住停在房子前（z=%.1f）" % b.global_position.z)
+				# 房子前的地是斜的（z=20 到 25 每公尺升約 0.3），身體中心那點的地比接觸的地高約 0.35，所以腳底容許 0.6 公尺
+				var feet_gap: float = (b.global_position.y - b.HALF_H) - _nc_m._on_ground(Vector3(b.global_position.x, 0, b.global_position.z)).y
+				_ck(b.is_on_floor() and absf(feet_gap) < 0.6, "穿過樹、停在房子前，腳還是在地上（不掉到地下、不卡在樹冠上，差 %.2f）" % feet_gap)
 				_nc_m._on_dino_collide_toggled(true)
 				b._sync_mask()
 				_ck(_nc_m.dino_collide and b.collision_mask == 1, "打開碰撞物件：遮罩回到全部（第 1 層）")
 				_nc_place(40.0)
 				_nc_next(3)
-		3:   # 打開：撞到房子停在牆前
+		3:   # 打開：樹也擋，停在樹前（樹幹前面 z=30.6，身體中心約 z=34）
 			b._move(-b.global_basis.z, false, delta)
 			if _nc_n >= 2.0:
-				_ck(b.global_position.z > 31.0, "打開碰撞物件：撞到房子要停在牆前（z=%.1f）" % b.global_position.z)
-				# 房子的屋頂（約 5 公尺高）剛好穿過身體（身高 12 公尺）。腳的射線從頭頂往下打：打開時腳踩上屋頂，關掉時穿過去、腳貼地。
-				# 之後不再移動（移動會把它推出屋頂），只量腳
-				_solid_piece(_nc_m, _nc_m._on_ground(Vector3(0, 0, 50)) + Vector3(0, 5.0, 0), _box_shape(Vector3(12, 0.5, 12)))
+				_ck(b.global_position.z > 31.0 and b.global_position.z < 36.0, "打開碰撞物件：樹擋在前面，停在樹前（z=%.1f）" % b.global_position.z)
+				# 樹冠（約 5 公尺高，只在第 1 層、群組 tree，跟樹一樣）剛好穿過身體（身高 12 公尺）。腳的射線從頭頂往下打：打開時腳踩上樹冠，關掉時穿過去、腳貼地。
+				# 測的是樹冠／樹幹頂不會被踩上（關碰撞物件時）。之後不再移動（移動會把它推出樹冠），只量腳
+				_solid_piece(_nc_m, _nc_m._on_ground(Vector3(0, 0, 50)) + Vector3(0, 5.0, 0), _box_shape(Vector3(12, 0.5, 12)), false, true)
 				_nc_place(50.0)
 				_nc_next(4)
 		4:   # 等屋頂進物理世界，再量腳
 			if _nc_n >= 0.05:
 				var ground_y: float = _nc_m._on_ground(Vector3(0, 0, 50)).y
 				var foot: float = b.get_node(^"Trex")._foot_world(0, 0.0).y
-				_ck(foot > ground_y + 3.0, "打開碰撞物件：腳踩上屋頂（腳 y=%.2f）" % foot)
+				_ck(foot > ground_y + 3.0, "打開碰撞物件：腳踩上樹冠（腳 y=%.2f）" % foot)
 				_nc_m._on_dino_collide_toggled(false)
 				b._sync_mask()
 				_nc_next(5)
@@ -697,8 +718,8 @@ func _physics_process(delta: float) -> bool:
 			if _nc_n >= 0.05:
 				var ground_y: float = _nc_m._on_ground(Vector3(0, 0, 50)).y
 				var foot: float = b.get_node(^"Trex")._foot_world(0, 0.0).y
-				_ck(foot < ground_y + 1.0, "關碰撞物件：腳不踩上屋頂，貼地（腳 y=%.2f）" % foot)
-				_ck(b.collision_mask == Fighter.SOLID_LAYER, "關掉之後遮罩回到只留地形和角色")
+				_ck(foot < ground_y + 1.0, "關碰撞物件：腳不踩上樹冠，貼地（腳 y=%.2f）" % foot)
+				_ck(b.collision_mask == Fighter.SOLID_LAYER, "關掉之後遮罩回到只留第 5 層")
 				return _done()
 	return false
 

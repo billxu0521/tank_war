@@ -15,6 +15,7 @@ var _light: OmniLight3D
 ## 擺一盞油燈。hang = true：at 是掛鉤；false：放在地上（at 是地面）
 static func place(parent: Node3D, mesh: Mesh, at: Vector3, hang := true) -> OilLantern:
 	var l := OilLantern.new()
+	l.collision_layer |= Fighter.SOLID_LAYER   # 油燈算建築：關碰撞物件的尼諾拉也撞得到（arena_map.gd 的掃描之後才擺，要自己加）
 	l._mesh = MeshInstance3D.new()
 	l._mesh.mesh = mesh
 	l.add_child(l._mesh)

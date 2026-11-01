@@ -96,7 +96,6 @@ func _build_arena() -> void:
 		.map(func(r: Dictionary) -> Array: return [Vector2(r.pos.x, r.pos.z), r.r]))
 	var ground := _terrain.build(_ground_color, _ground_mix, Greybox.ground_material() if greybox else null)
 	ground.add_to_group(&"ground")   # 子彈打到噴土（Bullet.surface_of）
-	ground.collision_layer |= Fighter.SOLID_LAYER   # 地形：關碰撞物件時尼諾拉還是站在上面
 	add_child(ground)
 
 	# 四周圍牆，東西才不會掉出場外。內側牆面剛好貼齊地板邊緣，不留縫。
@@ -109,7 +108,6 @@ func _build_arena() -> void:
 			[Vector3(-e, WALL_H * 0.5, 0), Vector3(WALL_T, WALL_H, long)]]:
 		var wall := _solid_box(w[0], w[1])
 		wall.add_to_group(&"arena_wall")
-		wall.collision_layer |= Fighter.SOLID_LAYER   # 場地圍牆不算建築：關碰撞物件也擋，尼諾拉不會走出場外
 	var far_color := (func(_x: float, _z: float, _h: float) -> Color: return Color(0.42, 0.44, 0.4)) if greybox else _ground_color   # 灰盒：場外跟地面一樣灰
 	add_child(FarLand.build(_terrain, far_color, [_props[&"TreeOakM"], _props[&"TreeOakS"], _props[&"Bush"],
 		_props[&"TreePine2"], _props[&"Saguaro"]],
@@ -120,6 +118,11 @@ func _build_arena() -> void:
 		_build_party_house()
 	if not greybox:   # ponytail: 灰盒不撒碎物、草、野花、風滾草；只留擺設清單裡的樹、灌木、石頭當遮蔽
 		_clutter_field()   # 有碰撞：伺服器也要擺，固定種子每台一樣
+	# 關碰撞物件時尼諾拉只穿過樹（boss.gd 的 _sync_mask）：場地底下第 1 層的 body（地形、圍牆、房子、柵欄、石頭、貨箱……）全部加上第 5 層，樹除外。
+	# 要在地形、圍牆、建築都蓋完之後掃。方塊房子開場是 0 層（掃不到），由 set_party_house 自己加
+	for body: PhysicsBody3D in find_children("*", "PhysicsBody3D", true, false):
+		if body.collision_layer & 1 and not body.is_in_group(&"tree"):
+			body.collision_layer |= Fighter.SOLID_LAYER
 
 	# 草地：畫面用的，伺服器沒畫面就不長（測試會直接呼叫 _grass_field 檢查）
 	if DisplayServer.get_name() != "headless" and not greybox:   # 灰盒也不分區調光（Ambience 的區域是照牧場劃的）
@@ -312,7 +315,7 @@ func set_party_house(on: bool) -> void:
 		if w == null:
 			continue
 		var up := on and w.hits < w.hits_needed   # 已經倒的不復活碰撞（新的一場 party.gd 的 restore 會立回來）
-		w.collision_layer = 1 if up else 0
+		w.collision_layer = (1 | Fighter.SOLID_LAYER) if up else 0   # 同 _build_arena：建築要擋關碰撞物件的尼諾拉
 		if up:
 			w.add_to_group(&"destructible")
 		else:
@@ -1491,7 +1494,8 @@ func _tree(rec: Dictionary) -> void:
 		body = _solid_cyl(p + Vector3(0, trunk[1] * s * 0.5, 0), trunk[0] * s, trunk[1] * s)
 	var mi := _prop(rec.mesh, p, Vector3.ONE * s)
 	mi.rotation.y = rec.yaw
-	_destructible(body, 2, mi)   # 甩兩下才倒（草案 4.2 等級 2）
+	var tree := _destructible(body, 2, mi)   # 甩兩下才倒（草案 4.2 等級 2）
+	tree.add_to_group(&"tree")   # 關碰撞物件時尼諾拉穿過樹（見 _build_arena 的掃描）
 
 ## 人字屋頂的碰撞：兩片斜板。斜度在 45 度以內，恐龍爬上來站得住。
 ## 外觀在 Blender 的模型裡（blender/props.py 的 gable_roof() 照這個擺法建的）
@@ -1710,7 +1714,7 @@ func _exit_pipe(c: Vector3) -> void:
 		mi.position = c + Vector3(0, part[2], 0)
 		mi.add_to_group(&"exit_pipe")
 		add_child(mi)
-	_solid_cyl(c + Vector3(0, H * 0.5, 0), R + 0.25, H)
+	_solid_cyl(c + Vector3(0, H * 0.5, 0), R + 0.25, H).collision_layer |= Fighter.SOLID_LAYER   # 擺設不是樹：關碰撞物件也擋（這在 _build_arena 的掃描之後才蓋，要自己加）
 
 ## 找一個不在建築物裡面的出生點
 func _spawn_point(span := ARENA * 0.45) -> Vector3:
