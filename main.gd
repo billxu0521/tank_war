@@ -775,9 +775,10 @@ func _on_sandbox_pressed() -> void:
 			map._hay_bale(SANDBOX_START + Vector3(9, -0.1, -6), 0.0),
 			map._hay_bale(SANDBOX_START + Vector3(9, -0.1, -9), 0.0)]:
 		prop.add_to_group(&"sandbox_prop")
+		prop.collision_layer |= Fighter.SOLID_LAYER   # 晚蓋的擺設：要自己加第 5 層（arena_map.gd 的掃描之後才擺）
 	# 油燈練習：乾草捲旁邊地上兩盞、柵欄邊一盞，射它會潑油燒起來（燒到旁邊的燈會連鎖）
 	for off: Vector3 in [Vector3(7, 0, -7.5), Vector3(7.4, 0, -8.2), Vector3(-9, 0, -2.5)]:
-		OilLantern.place($Arena, _props.get(&"Lantern"), _on_ground(SANDBOX_START + off), false).add_to_group(&"sandbox_prop")
+		OilLantern.place($Arena, _props.get(&"Lantern"), _on_ground(SANDBOX_START + off), false).add_to_group(&"sandbox_prop")   # 油燈自己加第 5 層（lantern.gd）
 
 ## 單人打恐龍：測恐龍行為用。場地跟沙盒一樣，只有自己和一隻恐龍 boss（導演、兩招、找路都照連線模式），
 ## 子彈無限、接關無限：死了五秒後在地圖上隨機一個地方回來。恐龍生在離你最遠的地方，要靠導演給的方向找過來。
@@ -851,6 +852,7 @@ func _pierce_walls() -> void:
 		var body := StaticBody3D.new()
 		body.add_to_group(w[1])
 		body.add_to_group(&"sandbox_prop")
+		body.collision_layer |= Fighter.SOLID_LAYER   # 靶場的牆是晚蓋的，要自己加第 5 層
 		var size := Vector3(2.0, 2.4, w[2])
 		var shape := CollisionShape3D.new()
 		shape.shape = BoxShape3D.new()
