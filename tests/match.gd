@@ -1405,6 +1405,8 @@ func _toy_restore_case() -> void:
 func _case_toy_b() -> void:
 	_toy_b_static()
 	_toy_b_merge()
+	_toy_b_armor()
+	_toy_b_freeze()
 
 func _toy_b_static() -> void:
 	var Main: GDScript = load("res://main.gd")
@@ -1523,3 +1525,47 @@ func _merge_run(m: Node, spacing: float, label: String) -> void:
 	for i in n:
 		back = back and t.is_standing(i) and late.is_standing(i)
 	_ck(back and t.loose_ids().is_empty() and late.loose_ids().is_empty(), "新的一場：大碎塊刪掉，每塊回來（%s）" % label)
+
+
+## 子彈穿材質用的形狀編號要對到塊（沒碰撞的塊排前面也不能錯位）：第 0 個形狀是第 1 塊（等級 2）
+func _toy_b_armor() -> void:
+	var t := ToyBuild.make([
+		[Transform3D(Basis(), Vector3(0, 0.5, 0)), Vector3(0.5, 0.5, 0.5), 1, Color.RED, false],   # 樹冠式的沒碰撞塊（等級 1）
+		[Transform3D(Basis(), Vector3(2, 0.5, 0)), Vector3(0.5, 0.5, 0.5), 2, Color.BLUE]])       # 有碰撞（等級 2）
+	_ck(t.armor_of(0) == &"double_plank" and t.armor_of(1) == &"", "子彈的材質照形狀對到塊（形狀 0 是等級 2 的塊）")
+	t.free()
+
+## 碎塊在尼諾拉身體裡（真的 boss，不在對局裡不跑思考）：時間到之前不凍，尼諾拉離開後就凍；最多等 SETTLE_TIME 的 3 倍，之後不管重疊直接凍
+func _toy_b_freeze() -> void:
+	var m := _toy_map()
+	var boss: Node3D = m.spawn_boss()
+	boss.set_physics_process(false)
+	var a := _brick_at_ground(m, Vector3(-60, 0, 30))
+	var b := _brick_at_ground(m, Vector3(-60, 0, 60))
+	_defer(3, func() -> void:
+		_put_boss_over(boss, a)
+		_defer(2, func() -> void:   # 身體移過去要跑一個物理幀，查詢才看得到
+			a._physics_process(4.1)
+			_ck(a._pieces[0] is RigidBody3D, "碎塊在尼諾拉身體裡：時間到之前不凍")
+			boss.global_position += Vector3(40, 0, 0)   # 尼諾拉離開
+			_defer(2, func() -> void:
+				a._physics_process(0.01)
+				_ck(a._pieces[0] is StaticBody3D, "尼諾拉離開後，碎塊凍住（StaticBody3D）")
+				_put_boss_over(boss, b)
+				_defer(2, func() -> void:
+					b._physics_process(ToyBuild.SETTLE_TIME * 3.0 + 0.1)   # 還在身體裡，時間到了：照凍
+					_ck(b._pieces[0] is StaticBody3D, "身體還在裡面，但等滿 SETTLE_TIME 的 3 倍就照凍")
+					_free_map(m)))))
+
+## 一塊積木在 at（地面），炸開成碎塊（碎塊在原地飛）
+func _brick_at_ground(m: Node, at: Vector3) -> ToyBuild:
+	var t := ToyBuild.make([[Transform3D(Basis(), Vector3.ZERO), Vector3(0.6, 0.6, 0.6), 1, Color.RED]])
+	t.name = "ToyFreeze%d" % m.map._toys.size()
+	m.map.add_child(t)
+	t.position = m.map._on_ground(at)
+	t.smash(func(_p: Vector3) -> bool: return true, 1, t.global_position)
+	return t
+
+## 尼諾拉的身體壓在碎塊上
+func _put_boss_over(boss: Node3D, t: ToyBuild) -> void:
+	boss.global_position = t.global_position + Vector3(0, boss.LIFT, 0)

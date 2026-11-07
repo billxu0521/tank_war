@@ -33,6 +33,7 @@ var _hp := PackedInt32Array()     # 還要挨幾下（主機才看）
 var _col: Array[Color] = []
 var _shape: Array[CollisionShape3D] = []
 var _sidx := PackedInt32Array()   # 每塊的碰撞形狀編號（沒有碰撞的塊是 -1，不佔編號）
+var _brick_of := PackedInt32Array()   # 碰撞形狀編號 -> 塊編號（子彈查穿透材質用）
 var _nshape := 0
 var _off := PackedByteArray()     # 形狀是不是停用了（拆掉的塊）
 var _loose := PackedByteArray()   # 鬆脫了沒有（碎塊飛著或等著生都算）
@@ -100,6 +101,7 @@ static func make(bricks: Array, can_break_ := true, layer := -1) -> ToyBuild:
 			t.add_child(cs)
 			t._shape.append(cs)
 			t._sidx[i] = t._nshape
+			t._brick_of.append(i)
 			t._nshape += 1
 		t._off[i] = 0
 		t._loose[i] = 0
@@ -420,9 +422,9 @@ func loose_xforms() -> Array:
 
 ## 這塊的材質（子彈穿透用）：等級對應 ARMOR_GROUP；不能拆的沒有材質（照以前不穿）。shape 是碰撞形狀的編號（= 塊的編號）
 func armor_of(shape: int) -> StringName:
-	if not can_break or shape < 0 or shape >= _lv.size():
+	if not can_break or shape < 0 or shape >= _brick_of.size():
 		return &""
-	return ARMOR_GROUP[_lv[shape] - 1]
+	return ARMOR_GROUP[_lv[_brick_of[shape]] - 1]
 
 
 ## 測試用：塊現在還站著（沒鬆脫）、它的等級、剩幾下、它的世界中心
@@ -471,7 +473,9 @@ func _physics_process(delta: float) -> void:
 		if not n is RigidBody3D:
 			continue
 		_age[key] = _age.get(key, 0.0) + delta
-		if ((n as RigidBody3D).sleeping or _age[key] >= SETTLE_TIME) and not _in_boss(n):   # 凍在尼諾拉身體裡會把牠頂起來：等牠出來再凍
+		# 凍在尼諾拉身體裡會把牠頂起來：等牠出來再凍；但最多等 SETTLE_TIME 的 3 倍，之後不管重疊直接凍
+		var stuck: bool = _age[key] < SETTLE_TIME * 3.0 and _in_boss(n)
+		if ((n as RigidBody3D).sleeping or _age[key] >= SETTLE_TIME) and not stuck:
 			ids.append(key)
 			xfs.append(n.global_transform)
 	if not ids.is_empty():
@@ -495,7 +499,7 @@ func _in_boss(n: Node3D) -> bool:
 	q.shape = cs.shape
 	q.transform = n.global_transform * cs.transform
 	q.exclude = [n.get_rid()]
-	for r: Dictionary in get_world_3d().direct_space_state.intersect_shape(q, 8):
+	for r: Dictionary in get_world_3d().direct_space_state.intersect_shape(q, 32):
 		var c: Object = r.collider
 		if c is Node3D and (c as Node3D).is_in_group(&"boss"):
 			return true

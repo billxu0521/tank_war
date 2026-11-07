@@ -105,9 +105,9 @@ static var SWEEP_RECOVER: float = Balance.num("sweep_recover")
 static var SWEEP_CD: float = Balance.num("sweep_cd")
 static var SWEEP_CD_PARTY: float = Balance.num("sweep_cd_party")   # 派對模式：甩尾拆得掉地形（積木，toy_build.gd），冷卻拉長，不然掩體一下就拆光
 static var TOY_CHARGE_SPEED: float = RUN * Balance.num("toy_charge_ratio")   # 尼諾拉撞積木要跑到這個水平速度才拆（跑步速度的 0.7 倍，走路不拆）
-static var TOY_KICK: float = Balance.num("toy_kick")
+static var TOY_KICK: float = Balance.num("toy_kick")   # 尼諾拉跑進碎塊，碎塊被踢出去的速度（公尺／秒）
 static var TOY_CHARGE_REACH: float = Balance.num("toy_charge_reach")   # 跑步撞的範圍：身體表面外多遠（公尺）
-static var TOY_CHARGE_LEVEL: int = Balance.whole("toy_charge_level")   # 跑步撞能扣到的最高等級（等級 1、2 都扣一下）   # 尼諾拉跑進碎塊，碎塊被踢出去的速度（公尺／秒）
+static var TOY_CHARGE_LEVEL: int = Balance.whole("toy_charge_level")   # 跑步撞能扣到的最高等級（等級 1、2 都扣一下）
 const CHARGE_MS := 300   # 同一棟積木撞過之後，這段時間內不再撞（毫秒）
 static var SWEEP_COS: float = cos(deg_to_rad(Balance.num("sweep_angle") * 0.5))   # 甩尾扇形（後方）半角的餘弦
 static var SWEEP_ROOT_BACK: float = Balance.num("sweep_root_back") * GROW   # 尾根在身體中心後方幾公尺（表裡是放大前的 0.45），甩尾的圓心
@@ -984,6 +984,8 @@ func _charge_hits(before: Vector3, delta: float) -> void:
 ## 跑步撞：身體前方一個長方體（寬 2×BODY_RADIUS、腳底到頭頂、從身體中心到前方 BODY_RADIUS+TOY_CHARGE_REACH 公尺）裡的積木全部算打到，
 ## 等級 TOY_CHARGE_LEVEL 以下都扣一下（等級 2 要撞兩次）。同一棟 CHARGE_MS 毫秒內只算一次，所以一直往前跑會一路撞穿、不會爬上屋頂
 ## ponytail: 一次查詢最多 256 個形狀，一棟大樓吃光上限時，後面的棟這一幀撞不到（下一幀再查）
+static var _charge_box: BoxShape3D
+
 func _smash_ahead(now: int) -> bool:
 	var any := false
 	var depth := BODY_RADIUS + TOY_CHARGE_REACH
@@ -991,11 +993,13 @@ func _smash_ahead(now: int) -> bool:
 	var half_h := HALF_H + 0.75
 	var half_w := BODY_RADIUS + 0.75   # 側面也多半塊：角上的積木中心在身體外、半塊還伸進身體
 	var xf := Transform3D(global_basis, global_position + (-global_basis.z) * (depth * 0.5) + Vector3.DOWN * 0.75)
-	var box := BoxShape3D.new()
-	box.size = Vector3(half_w * 2.0, half_h * 2.0, depth)
+	if _charge_box == null:   # 共用一個形狀（尺寸是常數）
+		_charge_box = BoxShape3D.new()
+		_charge_box.size = Vector3(half_w * 2.0, half_h * 2.0, depth)
 	var q := PhysicsShapeQueryParameters3D.new()
-	q.shape = box
+	q.shape = _charge_box
 	q.transform = xf
+	q.collision_mask = collision_mask   # 關碰撞物件時只看 1 層（穿過樹、不撞爛樹，PR #75）
 	var exclude: Array[RID] = [get_rid()]
 	for g in get_tree().get_nodes_in_group(&"ground"):   # 地面不算（盒子的底在腳底，會切到地形）
 		if g is CollisionObject3D:
@@ -1008,8 +1012,10 @@ func _smash_ahead(now: int) -> bool:
 			homes[c] = true
 	var inv := xf.affine_inverse()
 	for c: ToyBuild in homes:
-		var nin := 0   # 盒子裡有幾塊（一塊都沒有就不算這棟，冷卻也不起算）
+		var nin := 0   # 盒子裡有幾塊（一塊都沒有就不算這棟，冷卻也不起算）；已經鬆脫、等級 3 的不算
 		for k in c.brick_count():
+			if not c.is_standing(k) or c.level_of(k) >= 3:
+				continue
 			var l := inv * c.center_of(k)
 			if absf(l.x) <= half_w and absf(l.y) <= half_h and absf(l.z) <= depth * 0.5:
 				nin += 1
