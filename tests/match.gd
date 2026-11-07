@@ -1229,7 +1229,8 @@ func _toy_bullet_case() -> void:
 	m.map.add_child(wall)
 	wall.position = Vector3(0, 0, 0)
 	var b := Bullet.new()
-	b.weapon = Weapon.new()
+	var wp := Weapon.new()   # 不在場景樹裡：測完自己 free
+	b.weapon = wp
 	b.power = 1
 	b.vel = Vector3(0, 0, 600)   # 一幀就飛過整個牆
 	m.map.add_child(b)
@@ -1240,7 +1241,8 @@ func _toy_bullet_case() -> void:
 		_ck(b.is_queued_for_deletion(), "子彈穿過等級 1 的前牆後，停在等級 2 的後牆")
 		_ck(absf(b._traveled - 3.28) < 0.05, "子彈停的位置在後牆前面（飛了 %.2f，要約 3.28）" % b._traveled)
 		_ck(wall.is_standing(0) and wall.is_standing(1), "子彈只是穿過，積木沒被打掉（力量 1 打不掉等級 2）")
-		_free_map(m))
+		_free_map(m)
+		wp.free())
 
 func _toy_sweep_cap_case() -> void:
 	var m := _toy_map()
@@ -1423,6 +1425,19 @@ func _toy_b_static() -> void:
 		for i in t.brick_count():
 			stone_ok = stone_ok and t.level_of(i) == 3
 	_ck(stone_ok, "石頭（%d 顆）：積木、全部等級 3、拆不掉、有碰撞" % stones.size())
+	# 樹冠沒有碰撞（射線穿過去）；只打樹幹最下面那塊兩下（max_level 2）→ 樹幹斷，樹冠因連通檢查跟著鬆脫
+	var tr: ToyBuild = trees[0]
+	var crown := _first_brick(tr, 1)
+	var trunk0 := _first_brick(tr, 2)
+	_defer(4, func() -> void:
+		var space := tr.get_world_3d().direct_space_state
+		var cc := tr.center_of(crown)
+		var ray := PhysicsRayQueryParameters3D.create(cc + Vector3(-3, 0, 0), cc + Vector3(3, 0, 0))
+		_ck(space.intersect_ray(ray).get(&"collider") != tr, "樹冠沒有碰撞：射線穿過樹冠")
+		_hit_brick(tr, trunk0, 2)
+		_hit_brick(tr, trunk0, 2)
+		_ck(not tr.is_standing(trunk0) and not tr.is_standing(crown), "只打樹幹最下面那塊兩下：樹幹斷，樹冠跟著鬆脫")
+	)
 	# 柵欄：積木、等級 1、頂端還是 FENCE_H（翻越的高度不變）
 	var fences: Array = m.map._toys.filter(func(t: ToyBuild) -> bool: return t.is_in_group(&"fence"))
 	var fence_ok := not fences.is_empty()
@@ -1451,11 +1466,16 @@ func _toy_b_static() -> void:
 
 func _toy_b_merge() -> void:
 	var m := _toy_map()
-	# 400 塊（超過 MAX_PIECES）一次全拆：每塊都在某個碎塊裡、沒有塊被藏起來而沒有碎塊；碎塊總數在上限內
+	_merge_run(m, 0.2, "擠在 4 公尺內")   # 格子 3 公尺就夠，一組一組併
+	_merge_run(m, 3.0, "散在 60 公尺內")   # 每塊各一格：格子要加倍才到 150 以內，一格裡有好幾塊
+	_free_map(m)
+
+## 400 塊（超過 MAX_PIECES）一次全拆：每塊都在某個碎塊裡；碎塊總數在上限內；晚加入一樣；還原照樣
+func _merge_run(m: Node, spacing: float, label: String) -> void:
 	var bricks := []
 	for ix in 20:
 		for iz in 20:
-			bricks.append([Transform3D(Basis(), Vector3(ix * 0.2, 0.25, iz * 0.2)), Vector3(0.2, 0.5, 0.2), 1, Color.RED])
+			bricks.append([Transform3D(Basis(), Vector3(ix * spacing, 0.25, iz * spacing)), Vector3(0.2, 0.5, 0.2), 1, Color.RED])
 	var t := ToyBuild.make(bricks)
 	t.name = "ToyMerge"
 	m.map.add_child(t)
@@ -1465,15 +1485,18 @@ func _toy_b_merge() -> void:
 		t._physics_process(0.0)
 	var n := t.brick_count()
 	var covered := {}
+	var biggest := 0
 	for key in t._info:
+		biggest = maxi(biggest, (t._info[key].m as PackedInt32Array).size())
 		for mb: int in t._info[key].m:
 			covered[mb] = true
-	_ck(covered.size() == n and t._idle(), "超過上限的一次鬆脫：每塊都在某個碎塊裡（%d 塊，併成 %d 個碎塊）" % [covered.size(), t.loose_ids().size()])
-	_ck(t.loose_ids().size() <= ToyBuild.MAX_PIECES and t.loose_ids().size() > 0, "碎塊總數在上限 %d 內" % ToyBuild.MAX_PIECES)
+	_ck(covered.size() == n and t._idle(), "超過上限一次鬆脫（%s）：每塊都在某個碎塊裡（%d 塊，併成 %d 個碎塊）" % [label, covered.size(), t.loose_ids().size()])
+	_ck(t.loose_ids().size() <= ToyBuild.MAX_PIECES and t.loose_ids().size() > 0, "碎塊總數在上限 %d 內（%s）" % [ToyBuild.MAX_PIECES, label])
+	_ck(biggest >= 2 or spacing < 1.0, "格子加倍後一格裡有好幾塊（%s，最大一組 %d 塊）" % [label, biggest])
 	var all_down := true
 	for i in n:
 		all_down = all_down and not t.is_standing(i)
-	_ck(all_down, "拆掉的塊都不站著（沒有塊留在原地）")
+	_ck(all_down, "拆掉的塊都不站著（%s）" % label)
 	# 晚加入：照主機的補送內容擺出一樣的碎塊（位置一樣、塊都藏起來）
 	var st: Dictionary = t.state()
 	var late := ToyBuild.make(bricks)
@@ -1492,12 +1515,11 @@ func _toy_b_merge() -> void:
 	var late_all_down := true
 	for i in n:
 		late_all_down = late_all_down and not late.is_standing(i)
-	_ck(same and late_all_down, "晚加入的人：碎塊的位置一樣、塊都藏起來")
+	_ck(same and late_all_down, "晚加入的人：碎塊的位置一樣、塊都藏起來（%s）" % label)
 	# 還原：每塊回來、碎塊刪掉
 	t.restore()
 	late.restore()
 	var back := true
 	for i in n:
 		back = back and t.is_standing(i) and late.is_standing(i)
-	_ck(back and t.loose_ids().is_empty() and late.loose_ids().is_empty(), "新的一場：大碎塊刪掉，每塊回來")
-	_free_map(m)
+	_ck(back and t.loose_ids().is_empty() and late.loose_ids().is_empty(), "新的一場：大碎塊刪掉，每塊回來（%s）" % label)

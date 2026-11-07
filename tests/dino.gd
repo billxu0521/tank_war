@@ -1028,6 +1028,10 @@ var _tb_pile: ToyBuild
 var _tb_stage := 0
 var _tb_n := 0.0   # 這一段跑了幾秒（物理時間，不數幀）
 var _tb_before := {}   # 踢之前每個碎塊的位置（代表塊 -> 位置）
+var _tb_kick_block: ToyBuild
+var _tb_kx := 0.0
+var _tb_kick_pos0 := Vector3.ZERO
+var _tb_kick_checked := false
 var _tb_z0 := 0.0   # 墙的車道（沿 X 跑）：挑一段空地，不撞到房子
 var _tb_z1 := 0.0   # 碎塊的車道
 
@@ -1082,6 +1086,19 @@ func _tb_next(stage: int) -> void:
 	_tb_stage = stage
 	_tb_n = 0.0
 
+## 碎塊在前面 2 公尺的那一段：一塊碎塊（0.6 公尺見方）擺在車道上，尼諾拉從 5.9 公尺外（身體中心）跑來
+func _tb_setup_kick() -> void:
+	var z2 := _tb_clear_z(_tb_z1 + 12.0)
+	_tb_kick_block = _tb_block(Vector3(2, 0, z2), 1, 1, Vector3(0.6, 0.6, 0.6))
+	_tb_kick_block.smash(func(_p: Vector3) -> bool: return true, 1, Vector3(-3, 0, z2))
+	_tb_kick_block._physics_process(ToyBuild.SETTLE_TIME + 0.1)   # 停下來、凍住
+	_tb_kx = 2.0
+	_tb_kick_pos0 = (_tb_kick_block._pieces[0] as Node3D).global_position
+	_tb_kick_checked = false
+	_tb_b.global_position = _tb_m.boss_on_ground(Vector3(_tb_kx - (_tb_b.BODY_RADIUS + 2.3), 0, z2))
+	_tb_b.velocity = Vector3(_tb_b.RUN, 0, 0)   # 已經在跑（踢只在跑步的速度時做）
+	_tb_b.rotation.y = -PI * 0.5
+
 ## 墙還完整（每塊都站著、沒挨過打）
 func _tb_wall_intact() -> bool:
 	if _tb_wall.has_damage():
@@ -1130,6 +1147,16 @@ func _toyb_physics(delta: float) -> bool:
 				_ck(moved > 0.3, "跑步撞碎塊：碎塊被踢開（最遠移了 %.2f 公尺）" % moved)
 				_ck(b.global_position.x > 5.0 and absf(b.global_position.z - _tb_z1) < 2.0, "跑過一堆碎塊不卡住：尼諾拉走到碎塊另一側（x=%.1f，z=%.1f）" % [b.global_position.x, b.global_position.z])
 				_ck(_tb_pile.has_damage(), "碎塊有記在積木上（新的一場要還原）")
+				_tb_setup_kick()
+				_tb_next(3)
+		3:   # 碎塊在前面 2 公尺（還沒撞上）：跑步時就踢開（_kick_ahead）；踢完等 SETTLE_TIME 又凍住
+			b._move(Vector3.RIGHT, true, delta)
+			if _tb_n >= 0.1 and not _tb_kick_checked:
+				_tb_kick_checked = true
+				var moved: float = (_tb_kick_block._pieces[0] as Node3D).global_position.distance_to(_tb_kick_pos0)
+				_ck(moved > 0.3 and b.global_position.x < _tb_kx - 0.9, "碎塊在前面 2 公尺：還沒撞上就踢開（移了 %.2f，尼諾拉 x=%.2f，碎塊 x=%.2f）" % [moved, b.global_position.x, _tb_kx])
+			if _tb_n >= ToyBuild.SETTLE_TIME + 0.6:
+				_ck(_tb_kick_block._pieces[0] is StaticBody3D, "踢完等 SETTLE_TIME 後又凍住（StaticBody3D）")
 				_free_map(_tb_m)
 				return _done()
 	return false

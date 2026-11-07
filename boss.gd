@@ -104,7 +104,7 @@ static var SWEEP_DAMAGE: int = Balance.whole("sweep_damage")
 static var SWEEP_RECOVER: float = Balance.num("sweep_recover")
 static var SWEEP_CD: float = Balance.num("sweep_cd")
 static var SWEEP_CD_PARTY: float = Balance.num("sweep_cd_party")   # 派對模式：甩尾拆得掉地形（積木，toy_build.gd），冷卻拉長，不然掩體一下就拆光
-static var TOY_CHARGE_SPEED: float = Balance.num("toy_charge_speed")   # 尼諾拉撞積木要跑到這個水平速度才拆（跑步的 0.7 倍，走路不拆）
+static var TOY_CHARGE_SPEED: float = RUN * Balance.num("toy_charge_ratio")   # 尼諾拉撞積木要跑到這個水平速度才拆（跑步速度的 0.7 倍，走路不拆）
 static var TOY_KICK: float = Balance.num("toy_kick")   # 尼諾拉跑進碎塊，碎塊被踢出去的速度（公尺／秒）
 const CHARGE_MS := 300   # 同一棟積木撞過之後，這段時間內不再撞（毫秒）
 static var SWEEP_COS: float = cos(deg_to_rad(Balance.num("sweep_angle") * 0.5))   # 甩尾扇形（後方）半角的餘弦
@@ -941,12 +941,16 @@ var _charge_t := {}   # 撞過的積木（ToyBuild）-> 上次撞的毫秒（主
 
 ## 跑步的時候，前面貼身的碎塊先踢開（還沒撞上）：踢出去的速度比跑步快，碎塊跑在前面，不會被追上、卡進身體裡炸飛（見 balance.csv 的 toy_kick）
 ## ponytail: 只看身體前面一小段（半徑 1.5 公尺的球），每幀查一次；踢的是這段裡的每一塊碎塊
+static var _ahead_shape: SphereShape3D   # 共用的查詢球（每幀查，不每次建）
+
 func _kick_ahead(fwd: Vector3) -> void:
-	var sphere := SphereShape3D.new()
-	sphere.radius = 1.5
+	if _ahead_shape == null:
+		_ahead_shape = SphereShape3D.new()
+		_ahead_shape.radius = 2.0
 	var q := PhysicsShapeQueryParameters3D.new()
-	q.shape = sphere
-	q.transform = Transform3D(Basis(), global_position + fwd * (BODY_RADIUS + 1.0))
+	q.shape = _ahead_shape
+	# 球心放在身體前面（身體表面外 2 公尺）、腳邊往上 1 公尺：地上的碎塊查得到（身體中心高約 6 公尺，查中心會漏掉地上的）
+	q.transform = Transform3D(Basis(), global_position + fwd * (BODY_RADIUS + 2.0) + Vector3.DOWN * (HALF_H - 1.0))
 	q.exclude = [get_rid()]
 	for r: Dictionary in get_world_3d().direct_space_state.intersect_shape(q, 16):
 		var c: Object = r.collider
@@ -954,6 +958,7 @@ func _kick_ahead(fwd: Vector3) -> void:
 			var home: ToyBuild = (c as Node3D).get_meta(&"toy_home")
 			if is_instance_valid(home):
 				home.kick((c as Node3D).get_meta(&"toy_key"), fwd, TOY_KICK)
+
 func _charge_hits(before: Vector3) -> void:
 	var fwd := before.normalized() if before.length() > 0.01 else Vector3.ZERO
 	var now := Time.get_ticks_msec()

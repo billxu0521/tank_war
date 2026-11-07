@@ -32,6 +32,8 @@ var _lv := PackedInt32Array()     # 等級：1、2 挨幾下倒，3 打不壞
 var _hp := PackedInt32Array()     # 還要挨幾下（主機才看）
 var _col: Array[Color] = []
 var _shape: Array[CollisionShape3D] = []
+var _sidx := PackedInt32Array()   # 每塊的碰撞形狀編號（沒有碰撞的塊是 -1，不佔編號）
+var _nshape := 0
 var _off := PackedByteArray()     # 形狀是不是停用了（拆掉的塊）
 var _loose := PackedByteArray()   # 鬆脫了沒有（碎塊飛著或等著生都算）
 var _bb: Array[AABB] = []         # 每塊的邊界框（這棟的本地座標，連通檢查用）
@@ -87,13 +89,18 @@ static func make(bricks: Array, can_break_ := true, layer := -1) -> ToyBuild:
 		t._bb.append(xf * AABB(-size * 0.5, size))
 		t._mm.set_instance_transform(i, Transform3D(xf.basis.scaled(size), xf.origin))
 		t._mm.set_instance_color(i, b[3])
-		var sh := BoxShape3D.new()
-		sh.size = size
-		var cs := CollisionShape3D.new()
-		cs.shape = sh
-		cs.transform = xf
-		t.add_child(cs)
-		t._shape.append(cs)
+		var solid: bool = b[4] if b.size() > 4 else true   # 第 5 個：false＝有畫面、沒有碰撞（樹冠）
+		t._sidx.append(-1)
+		if solid:
+			var sh := BoxShape3D.new()
+			sh.size = size
+			var cs := CollisionShape3D.new()
+			cs.shape = sh
+			cs.transform = xf
+			t.add_child(cs)
+			t._shape.append(cs)
+			t._sidx[i] = t._nshape
+			t._nshape += 1
 		t._off[i] = 0
 		t._loose[i] = 0
 	return t
@@ -374,6 +381,8 @@ func kick(key: int, dir: Vector3, speed: float) -> void:
 ## 踢（各台）：靜態的碎塊換成飛的（同名、同位置、同一個代表塊），給衝量。主機之後照 _physics_process 停下來再 _settle
 @rpc("authority", "call_local", "reliable")
 func _kick(key: int, impulse: Vector3) -> void:
+	if not _info.has(key) and not _pending.is_empty():   # 大碎塊還在排隊：先生完
+		_flush()
 	var n: Node3D = _pieces.get(key)
 	if n == null:
 		return
@@ -462,7 +471,7 @@ func _physics_process(delta: float) -> void:
 		if not n is RigidBody3D:
 			continue
 		_age[key] = _age.get(key, 0.0) + delta
-		if (n as RigidBody3D).sleeping or _age[key] >= SETTLE_TIME:
+		if ((n as RigidBody3D).sleeping or _age[key] >= SETTLE_TIME) and not _in_boss(n):   # 凍在尼諾拉身體裡會把牠頂起來：等牠出來再凍
 			ids.append(key)
 			xfs.append(n.global_transform)
 	if not ids.is_empty():
@@ -472,6 +481,25 @@ func _physics_process(delta: float) -> void:
 		_bake()
 	if _idle() and not _has_flying():
 		set_physics_process(false)
+
+
+## 碎塊的形狀有沒有跟尼諾拉（boss 群組）重疊（主機凍住前看）
+func _in_boss(n: Node3D) -> bool:
+	var cs: CollisionShape3D = null
+	for c in n.get_children():
+		if c is CollisionShape3D:
+			cs = c
+	if cs == null or cs.shape == null:
+		return false
+	var q := PhysicsShapeQueryParameters3D.new()
+	q.shape = cs.shape
+	q.transform = n.global_transform * cs.transform
+	q.exclude = [n.get_rid()]
+	for r: Dictionary in get_world_3d().direct_space_state.intersect_shape(q, 8):
+		var c: Object = r.collider
+		if c is Node3D and (c as Node3D).is_in_group(&"boss"):
+			return true
+	return false
 
 
 ## 沒有排隊要藏的，也沒有等著生的大碎塊
@@ -508,7 +536,8 @@ func _has_flying() -> bool:
 ## 形狀停用／啟用：直接叫物理伺服器（CollisionShape3D.disabled 每次要 78 微秒，一棟大樓一拆就卡一幀）
 func _set_off(i: int, off: bool) -> void:
 	_off[i] = 1 if off else 0
-	PhysicsServer3D.body_set_shape_disabled(get_rid(), i, off)
+	if _sidx[i] >= 0:
+		PhysicsServer3D.body_set_shape_disabled(get_rid(), _sidx[i], off)
 
 
 func _hide_brick(i: int) -> void:
@@ -566,6 +595,8 @@ func _make(key: int, flying: bool, xf: Transform3D) -> Node3D:
 
 ## 碎塊停下來：飛的換成靜態的（同名、同位置），靜態的只移位置
 func _freeze(key: int, xf: Transform3D) -> void:
+	if not _info.has(key) and not _pending.is_empty():   # 大碎塊還在排隊：先生完才認得出它
+		_flush()
 	var old: Node3D = _pieces.get(key)
 	_age.erase(key)
 	if old is StaticBody3D:

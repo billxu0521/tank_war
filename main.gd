@@ -413,6 +413,8 @@ func _to_lobby(msg: String) -> void:
 		party = null
 	egg.visible = true
 	for n in get_tree().get_nodes_in_group(&"sandbox_prop"):
+		if n is ToyBuild:   # 沙盒的柵欄是積木，登記在 _toys 裡：free 前要拿掉，不然補送、還原會碰到已釋放的
+			map._toys.erase(n)
 		n.free()
 	_time_left = 0.0
 	_respawn_queue.clear()

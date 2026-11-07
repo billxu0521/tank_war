@@ -1,23 +1,26 @@
 extends SceneTree
 ## 玩具積木拍照（docs/規劃/2026-11-08-玩具積木場景.md、-二.md）：灰盒地圖。拍：
-##   trees（一排積木樹，近看）、stones_fence（石頭和柵欄，近看）、ground（地面，近看）、town（整個鎮的遠景）、
-##   charge_0_before / charge_1_hit / charge_2_after（尼諾拉跑步撞進一棟房子：撞之前、撞的那一下、之後碎塊散開）。
-## 同時印出：積木總塊數、樹、石頭、柵欄的數量。
+##   trees（一排積木樹，近看）、stones_fence（石頭和柵欄，近看）、ground（地面，近看）、town（鎮的遠景）、
+##   charge_0_before / charge_1_hit / charge_2_after（尼諾拉跑步撞進一棟房子：撞之前、房子第一塊掉下來、0.8 秒後）。
+## 鏡頭換了要等幾幀才拍（畫面要跟上），所以每張都是「換鏡頭、等 4 幀、存圖」。
 ##   OUT=/path/to/folder godot --path . --resolution 1280x720 --script tools/toy_shots.gd
 
 var _f := 0
 var _main: Node
 var _cam: Camera3D
 var _boss: Node3D
+var _house: ToyBuild
+var _hc := Vector3.ZERO
 var _shots: Array = []   # [名字, 鏡頭位置, 看向的點]
 var _i := 0
 var _wait := 0
 var _out := ""
-var _stage := 0          # 0 = 靜態的拍照；1 = 跑步撞房子（物理在 _physics_process 推）
-var _run_t := 0.0        # 跑了幾秒（物理時間）
-var _hit_at := -1.0      # 撞到之後幾秒（拍 charge_2 用）
-var _house: ToyBuild
-var _hc := Vector3.ZERO
+var _stage := 0          # 0 = 靜態的拍照；1 = 跑步撞房子
+var _run_on := false     # 鏡頭對好之後才讓尼諾拉跑（物理在 _physics_process 推）
+var _run_t := 0.0
+var _hit := false
+var _after_t := -1.0
+var _before_done := false
 
 func _initialize() -> void:
 	_out = OS.get_environment("OUT")
@@ -39,48 +42,48 @@ func _process(_d: float) -> bool:
 		return false
 	if _f < 60:
 		return false
-	if _stage == 1:
-		return _charge_shots()
 	_wait += 1
-	if _wait < 8:   # 等畫面和物理穩下來
-		return false
-	_wait = 0
-	if _i < _shots.size():
-		var s: Array = _shots[_i]
-		_aim(s[1], s[2])
-		_save(s[0])
-		_i += 1
-		if _i == _shots.size():
+	if _stage == 0:
+		if _i >= _shots.size():
 			_stage = 1
-			_aim(_boss_cam_from(), _hc + Vector3(0, 3, 0))
-			_save("charge_0_before")
 			_wait = 0
-			_run_t = 0.0
+			return false
+		var s: Array = _shots[_i]
+		if _wait == 1:
+			_aim(s[1], s[2])
+		elif _wait >= 5:
+			_save(s[0])
+			_i += 1
+			_wait = 0
+		return false
+	# 撞房子：鏡頭對好、等 5 幀，拍撞之前，然後讓尼諾拉跑
+	if _wait == 1:
+		_aim(_hc + Vector3(-14, 7, 20), _hc + Vector3(-4, 4, 0))
+	if _wait == 5 and not _before_done:
+		_save("charge_0_before")
+		_before_done = true
+		_run_on = true
+	if _run_on and not _hit and _standing() < _house.brick_count():
+		_hit = true
+		_save("charge_1_hit")
+		print("撞到了：尼諾拉 x=%.1f，房子站著 %d 塊" % [_boss.global_position.x, _standing()])
+		_after_t = 0.0
+	if _after_t >= 0.8:
+		_save("charge_2_after")
+		print("之後：房子站著 %d 塊（共 %d 塊）；場上碎塊 %d 個" % [_standing(), _house.brick_count(), _pieces()])
+		return true
+	if _run_t > 5.0:
+		print("跑了 5 秒還沒撞到房子")
+		return true
 	return false
 
-## 跑步撞房子：撞之前拍過了（charge_0_before）。跑 0.9 秒拍撞的那一下，之後再 1.8 秒拍碎塊散開
-func _charge_shots() -> bool:
-	if _run_t < 0.9:
-		return false
-	if _hit_at < 0.0:
-		_save("charge_1_hit")
-		print("撞的時候 尼諾拉在 x=%.1f；房子還站著 %d 塊" % [_boss.global_position.x, _standing()])
-		_hit_at = 0.0
-	if _hit_at < 1.8:
-		return false
-	_save("charge_2_after")
-	print("之後：房子站著 %d 塊（%d 塊）；場上碎塊 %d 個" % [_standing(), _house.brick_count(), _pieces()])
-	return true
-
 func _physics_process(delta: float) -> bool:
-	if _stage != 1 or _boss == null:
+	if not _run_on or _boss == null:
 		return false
-	if _run_t < 0.9:
-		_run_t += delta
-		_boss._move(Vector3.RIGHT, true, delta)   # 沿 +X 跑，房子在前面
-	else:
-		_hit_at += delta
-		_boss._move(Vector3.ZERO, false, delta)   # 撞之後停住，看碎塊怎麼散
+	_run_t += delta
+	if _after_t >= 0.0:
+		_after_t += delta
+	_boss._move(Vector3.RIGHT, true, delta)   # 沿 +X 跑，房子在前面
 	return false
 
 func _setup() -> void:
@@ -98,28 +101,25 @@ func _setup() -> void:
 	var stones: Array = toys.filter(func(t: ToyBuild) -> bool: return t.is_in_group(&"stone"))
 	var fences: Array = toys.filter(func(t: ToyBuild) -> bool: return t.is_in_group(&"fence"))
 	print("樹 %d 棵、石頭 %d 顆、柵欄 %d 段" % [trees.size(), stones.size(), fences.size()])
-	var base: ToyBuild = trees[trees.size() / 2]
-	var row := _nearest(trees, base.global_position, 3)
-	var rc: Vector3 = (row[0].global_position + row[1].global_position + row[2].global_position) / 3.0
-	_shots.append(["trees", rc + Vector3(0, 3.5, 13.0), rc + Vector3(0, 3.0, 0)])
-	var st: ToyBuild = stones[0] if not stones.is_empty() else base
-	var fe: ToyBuild = fences[0] if not fences.is_empty() else base
-	var sc := (st.global_position + fe.global_position) * 0.5
-	_shots.append(["stones_fence", sc + Vector3(0, 3.0, 9.0), sc + Vector3(0, 0.8, 0)])
-	_shots.append(["ground", base.global_position + Vector3(0, 1.8, 5.0), base.global_position + Vector3(0, 0, 0)])
-	_shots.append(["town", Vector3(-45, 38, 55), Vector3(0, 2, 0)])
 	var houses: Array = toys.filter(func(t: ToyBuild) -> bool: return t.can_break and t.brick_count() > 300 and not t.is_in_group(&"tree") and not t.is_in_group(&"fence") and t != _main.map._party_house)
-	_house = houses[0] if not houses.is_empty() else base
+	_house = houses[0]
 	_hc = _house.global_position
+	# 一排樹：挑一棵，取離它最近的三棵，從它們的前面（+Z 側）拍
+	var row := _nearest(trees, _hc, 3)
+	var rc: Vector3 = (row[0].global_position + row[1].global_position + row[2].global_position) / 3.0
+	_shots.append(["trees", rc + Vector3(0, 2.2, 8.0), rc + Vector3(0, 2.6, 0)])
+	var st: ToyBuild = stones[0]
+	var fe: ToyBuild = fences[0]
+	var sc := (st.global_position + fe.global_position) * 0.5
+	_shots.append(["stones_fence", sc + Vector3(0, 2.5, 7.0), sc + Vector3(0, 0.8, 0)])
+	_shots.append(["ground", row[0].global_position + Vector3(0, 1.4, 4.0), row[0].global_position + Vector3(0, 0, 0)])
+	_shots.append(["town", _hc + Vector3(-26, 13, 34), _hc + Vector3(0, 3, 0)])
 	_boss = _main.spawn_boss()
 	_boss.set_physics_process(false)
 	_boss.global_position = _main.boss_on_ground(_hc + Vector3(-16, 0, 0))
 	_boss.rotation.y = -PI * 0.5
 	_boss.velocity = Vector3.ZERO
 	print("房子 %d 塊，尼諾拉在它前面 16 公尺" % _house.brick_count())
-
-func _boss_cam_from() -> Vector3:
-	return _hc + Vector3(-14, 7, 20)
 
 func _standing() -> int:
 	var n := 0
