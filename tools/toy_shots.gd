@@ -21,6 +21,8 @@ var _run_t := 0.0
 var _hit := false
 var _after_t := -1.0
 var _before_done := false
+var _cam_at := Vector3.ZERO
+var _cam_to := Vector3.ZERO
 
 func _initialize() -> void:
 	_out = OS.get_environment("OUT")
@@ -58,7 +60,7 @@ func _process(_d: float) -> bool:
 		return false
 	# 撞房子：鏡頭對好、等 5 幀，拍撞之前，然後讓尼諾拉跑
 	if _wait == 1:
-		_aim(_hc + Vector3(-14, 7, 20), _hc + Vector3(-4, 4, 0))
+		_aim(_cam_at, _cam_to)
 	if _wait == 5 and not _before_done:
 		_save("charge_0_before")
 		_before_done = true
@@ -70,7 +72,7 @@ func _process(_d: float) -> bool:
 		_after_t = 0.0
 	if _run_on and _run_t > 0.0 and int(_run_t * 4) != int((_run_t - 0.02) * 4):
 		print("跑 %.2f 秒 x=%.1f y=%.2f floor=%s 房子站著 %d" % [_run_t, _boss.global_position.x, _boss.global_position.y, str(_boss.is_on_floor()), _standing()])
-	if _after_t >= 0.8:
+	if _after_t >= 1.5:
 		_save("charge_2_after")
 		print("之後：尼諾拉 x=%.1f y=%.2f floor=%s；房子站著 %d 塊（共 %d 塊）；場上碎塊 %d 個" % [_boss.global_position.x, _boss.global_position.y, str(_boss.is_on_floor()), _standing(), _house.brick_count(), _pieces()])
 		return true
@@ -129,6 +131,9 @@ func _setup() -> void:
 	_boss.global_position = _main.boss_on_ground(Vector3(wall_x - _boss.BODY_RADIUS - 10.0, 0, zc))
 	_boss.rotation.y = -PI * 0.5
 	_boss.velocity = Vector3.ZERO
+	# 鏡頭低、近：在房子前面（-X 那側）偏一邊，看得到尼諾拉、牆和地上的碎塊
+	_cam_at = Vector3(wall_x - 15.0, 4.0, zc + 15.0)
+	_cam_to = Vector3(wall_x - 3.0, 3.0, zc - 1.0)
 	print("生出來時房子站著 %d／%d 塊；尼諾拉 x=%.1f" % [_standing(), _house.brick_count(), _boss.global_position.x])
 
 func _standing() -> int:

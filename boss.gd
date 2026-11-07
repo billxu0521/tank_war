@@ -105,7 +105,9 @@ static var SWEEP_RECOVER: float = Balance.num("sweep_recover")
 static var SWEEP_CD: float = Balance.num("sweep_cd")
 static var SWEEP_CD_PARTY: float = Balance.num("sweep_cd_party")   # 派對模式：甩尾拆得掉地形（積木，toy_build.gd），冷卻拉長，不然掩體一下就拆光
 static var TOY_CHARGE_SPEED: float = RUN * Balance.num("toy_charge_ratio")   # 尼諾拉撞積木要跑到這個水平速度才拆（跑步速度的 0.7 倍，走路不拆）
-static var TOY_KICK: float = Balance.num("toy_kick")   # 尼諾拉跑進碎塊，碎塊被踢出去的速度（公尺／秒）
+static var TOY_KICK: float = Balance.num("toy_kick")
+static var TOY_CHARGE_REACH: float = Balance.num("toy_charge_reach")   # 跑步撞的範圍：身體表面外多遠（公尺）
+static var TOY_CHARGE_LEVEL: int = Balance.whole("toy_charge_level")   # 跑步撞能扣到的最高等級（等級 1、2 都扣一下）   # 尼諾拉跑進碎塊，碎塊被踢出去的速度（公尺／秒）
 const CHARGE_MS := 300   # 同一棟積木撞過之後，這段時間內不再撞（毫秒）
 static var SWEEP_COS: float = cos(deg_to_rad(Balance.num("sweep_angle") * 0.5))   # 甩尾扇形（後方）半角的餘弦
 static var SWEEP_ROOT_BACK: float = Balance.num("sweep_root_back") * GROW   # 尾根在身體中心後方幾公尺（表裡是放大前的 0.45），甩尾的圓心
@@ -929,7 +931,7 @@ func _move(dir: Vector3, want_run: bool, delta: float) -> void:
 	var before := Vector3(velocity.x, 0.0, velocity.z)   # 撞之前的水平速度（撞了 move_and_slide 會被削掉）
 	move_and_slide()
 	if multiplayer.is_server():
-		_charge_hits(before)
+		_charge_hits(before, delta)
 		if before.length() >= TOY_CHARGE_SPEED:
 			_kick_ahead(before.normalized())
 
@@ -938,6 +940,8 @@ func _move(dir: Vector3, want_run: bool, delta: float) -> void:
 ## 撞到積木、撞之前的水平速度 ≥ toy_charge_speed（跑步，走路不算）就拆碰撞點 BODY_RADIUS 內、等級 1 的塊；同一棟 CHARGE_MS 毫秒內只算一次。
 ## 撞到碎塊（群組 toy_piece）就踢開（速度 toy_kick，同一塊的冷卻見 ToyBuild.kick）
 var _charge_t := {}   # 撞過的積木（ToyBuild）-> 上次撞的毫秒（主機用）
+var _charge_fresh := 0.0   # 還算在跑的剩餘秒數（見 _charge_hits）
+const CHARGE_FRESH := 0.5
 
 ## 跑步的時候，前面貼身的碎塊先踢開（還沒撞上）：踢出去的速度比跑步快，碎塊跑在前面，不會被追上、卡進身體裡炸飛（見 balance.csv 的 toy_kick）
 ## ponytail: 只看身體前面一小段（半徑 1.5 公尺的球），每幀查一次；踢的是這段裡的每一塊碎塊
@@ -959,20 +963,68 @@ func _kick_ahead(fwd: Vector3) -> void:
 			if is_instance_valid(home):
 				home.kick((c as Node3D).get_meta(&"toy_key"), fwd, TOY_KICK)
 
-func _charge_hits(before: Vector3) -> void:
+func _charge_hits(before: Vector3, delta: float) -> void:
 	var fwd := before.normalized() if before.length() > 0.01 else Vector3.ZERO
 	var now := Time.get_ticks_msec()
+	# 跑到門檻的速度之後 0.5 秒內，撞到東西停下來還是算在跑（等級 2 要第二次撞，撞的時候已經被擋住、速度是 0）
+	if before.length() >= TOY_CHARGE_SPEED:
+		_charge_fresh = CHARGE_FRESH
+	_charge_fresh = maxf(_charge_fresh - delta, 0.0)
+	if _charge_fresh > 0.0 and running:
+		if _smash_ahead(now):   # 前面還有積木（撞著、擋著）就繼續算在撞，不會因為停下來而斷
+			_charge_fresh = CHARGE_FRESH
 	for k in get_slide_collision_count():
 		var col := get_slide_collision(k)
 		var c := col.get_collider()
-		if c is ToyBuild and before.length() >= TOY_CHARGE_SPEED and now - int(_charge_t.get(c, -CHARGE_MS)) >= CHARGE_MS:
-			_charge_t[c] = now
-			var at := col.get_position()
-			(c as ToyBuild).smash(func(p: Vector3) -> bool: return p.distance_to(at) < BODY_RADIUS, 1, global_position)
-		elif c is Node3D and (c as Node3D).is_in_group(&"toy_piece") and fwd != Vector3.ZERO:
+		if c is Node3D and (c as Node3D).is_in_group(&"toy_piece") and fwd != Vector3.ZERO:
 			var home: ToyBuild = (c as Node3D).get_meta(&"toy_home")
 			if is_instance_valid(home):
 				home.kick((c as Node3D).get_meta(&"toy_key"), fwd, TOY_KICK)
+
+## 跑步撞：身體前方一個長方體（寬 2×BODY_RADIUS、腳底到頭頂、從身體中心到前方 BODY_RADIUS+TOY_CHARGE_REACH 公尺）裡的積木全部算打到，
+## 等級 TOY_CHARGE_LEVEL 以下都扣一下（等級 2 要撞兩次）。同一棟 CHARGE_MS 毫秒內只算一次，所以一直往前跑會一路撞穿、不會爬上屋頂
+## ponytail: 一次查詢最多 256 個形狀，一棟大樓吃光上限時，後面的棟這一幀撞不到（下一幀再查）
+func _smash_ahead(now: int) -> bool:
+	var any := false
+	var depth := BODY_RADIUS + TOY_CHARGE_REACH
+	# 盒子從腳底往下多 1.5 公尺（半高 HALF_H+0.75）：圓的身體底部會騎在最下排的積木上（腳底懸空約 1 公尺），那排也要撞掉
+	var half_h := HALF_H + 0.75
+	var half_w := BODY_RADIUS + 0.75   # 側面也多半塊：角上的積木中心在身體外、半塊還伸進身體
+	var xf := Transform3D(global_basis, global_position + (-global_basis.z) * (depth * 0.5) + Vector3.DOWN * 0.75)
+	var box := BoxShape3D.new()
+	box.size = Vector3(half_w * 2.0, half_h * 2.0, depth)
+	var q := PhysicsShapeQueryParameters3D.new()
+	q.shape = box
+	q.transform = xf
+	var exclude: Array[RID] = [get_rid()]
+	for g in get_tree().get_nodes_in_group(&"ground"):   # 地面不算（盒子的底在腳底，會切到地形）
+		if g is CollisionObject3D:
+			exclude.append((g as CollisionObject3D).get_rid())
+	q.exclude = exclude
+	var homes := {}
+	for r: Dictionary in get_world_3d().direct_space_state.intersect_shape(q, 256):
+		var c: Object = r.collider
+		if c is ToyBuild and (c as ToyBuild).can_break:
+			homes[c] = true
+	var inv := xf.affine_inverse()
+	for c: ToyBuild in homes:
+		var nin := 0   # 盒子裡有幾塊（一塊都沒有就不算這棟，冷卻也不起算）
+		for k in c.brick_count():
+			var l := inv * c.center_of(k)
+			if absf(l.x) <= half_w and absf(l.y) <= half_h and absf(l.z) <= depth * 0.5:
+				nin += 1
+				break
+		if nin == 0:
+			continue
+		any = true
+		var last: int = _charge_t.get(c, -CHARGE_MS)
+		if now - last < CHARGE_MS:
+			continue
+		_charge_t[c] = now
+		c.smash(func(p: Vector3) -> bool:
+			var l := inv * p
+			return absf(l.x) <= half_w and absf(l.y) <= half_h and absf(l.z) <= depth * 0.5, TOY_CHARGE_LEVEL, global_position)
+	return any
 
 
 # --- 受傷 ---

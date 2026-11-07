@@ -1127,7 +1127,7 @@ func _toyb_physics(delta: float) -> bool:
 				_ck(_tb_wall_intact(), "走路撞積木：墙不拆（走路 %.1f 公尺／秒，門檻 %.1f）" % [b.velocity.length(), b.TOY_CHARGE_SPEED])
 				_tb_place(-9.0, _tb_z0)
 				_tb_next(1)
-		1:   # 跑步撞墙：撞的那一下墙的塊鬆脫（墙是等級 1，一下就拆）
+		1:   # 跑步撞墙：墙的塊鬆脫，尼諾拉撞穿過去（x 過了墙），不會爬上墙頂（y 沒有被頂高）
 			b._move(Vector3.RIGHT, true, delta)
 			if _tb_n >= 3.0:
 				var down := 0
@@ -1135,6 +1135,10 @@ func _toyb_physics(delta: float) -> bool:
 					if not _tb_wall.is_standing(i):
 						down += 1
 				_ck(_tb_wall.has_damage() and down >= 6, "跑步撞積木：墙的塊鬆脫（%d 塊，共 %d 塊）" % [down, _tb_wall.brick_count()])
+				_ck(b.global_position.x > 1.0, "跑步撞穿：尼諾拉過了墙（x=%.2f）" % b.global_position.x)
+				# 腳底離身下的地面不到 1 公尺（沒有爬上墙頂）
+				var lift: float = b.global_position.y - b.HALF_H - _tb_m.map._on_ground(Vector3(b.global_position.x, 0, b.global_position.z)).y
+				_ck(lift < 1.0, "跑步撞穿：沒有爬上墙頂（腳底離地 %.2f 公尺）" % lift)
 				_tb_setup_pile()
 				_tb_place(-9.0, _tb_z1)
 				_tb_next(2)
