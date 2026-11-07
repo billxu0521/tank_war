@@ -77,6 +77,8 @@ var _doors: Array[Door]:
 	get: return map._doors
 var _wrecks: Array[Destructible]:
 	get: return map._wrecks
+var _toys: Array[ToyBuild]:
+	get: return map._toys
 var _drift: Node3D:
 	get: return map._drift
 ## 場地的一行轉接（給牛仔、派對、bot 用，名字不變）
@@ -425,7 +427,7 @@ func _to_lobby(msg: String) -> void:
 	_show_cursor()
 	# 靶場是另一張地圖：回大廳就重載回牧場（測試自己組的場景不是 current_scene，不重載）。
 	# 甩尾拆過東西也重載：下一局（或加入別人的房間）場地要是完整的
-	var wrecked := _wrecks.any(func(w: Destructible) -> bool: return w.hits > 0)
+	var wrecked := _wrecks.any(func(w: Destructible) -> bool: return w.hits > 0) or _toys.any(func(t: ToyBuild) -> bool: return t.has_damage())
 	if mode == &"range" or wrecked:
 		mode = &""
 		if get_tree().current_scene == self:
@@ -1204,6 +1206,9 @@ func _spawn(id: int) -> void:
 		for w in _wrecks:
 			if w.hits > 0:
 				w._set_hits.rpc_id(id, w.hits, Vector3.ZERO, true)
+		for t in _toys:
+			if t.loose_ids().size() + t.gone_ids().size() > 0:
+				t._resume.rpc_id(id, t.loose_ids(), t.loose_xforms(), t.gone_ids())
 
 func _add_player(scene: PackedScene, id: int) -> Node3D:
 	var p: Node3D = scene.instantiate()
@@ -1496,10 +1501,26 @@ func _physics_process(delta: float) -> void:
 		_next_round = NEXT_ROUND_DELAY
 		_finish.rpc(RULES[rules].timeout_msg)
 
+## 拆過的地形立回來（新的一局、派對的新的一場；主機呼叫）：樹（Destructible）和積木（ToyBuild）。回傳有沒有立回來的，有就烘導航
+func restore_terrain() -> bool:
+	var fixed := false
+	for w: Destructible in _wrecks:
+		if w.hits > 0:
+			w.restore.rpc()
+			fixed = true
+	for t: ToyBuild in _toys:
+		if t.has_damage():
+			t.restore.rpc()
+			fixed = true
+	if fixed:
+		bake_nav(true)
+	return fixed
+
 ## 開下一局（開房的人按「重開一局」、或專用伺服器自動）：時間和蛋歸位、重生次數補滿，
 ## 每個牛仔重生（刪掉重生，客戶端的位置才會跟著換），出局的人也回來；boss 回到離大家最遠的地方
 func _new_round() -> void:
 	_over = false
+	restore_terrain()   # 拆過的樹和積木立回來（所有模式：拆東西不分模式）
 	var pending := _respawn_queue.duplicate()   # 一局結束時剛死、還在等重生的人（_enter_game 會清掉這張單）
 	_enter_game("專用伺服器" if _dedicated else "新的一局")
 	egg.extract = 0.0

@@ -64,11 +64,6 @@ static func cube_house() -> Array:
 	return cells
 
 
-## 一塊方塊（碰撞一塊、網格一塊）。位置由呼叫的人設
-static func cube() -> StaticBody3D:
-	return _body([[Transform3D(Basis(), Vector3.ZERO), Vector3.ONE * CUBE]])
-
-
 ## 斜坡要多深才放得下（樓高 h）：前後各留 1 公尺走道
 static func ramp_depth(h: float) -> float:
 	return h / tan(deg_to_rad(RAMP_DEG)) + 2.0 * T + 2.0
@@ -76,21 +71,31 @@ static func ramp_depth(h: float) -> float:
 
 ## 實心方塊：半身牆、木箱、平台。size.y 是露出地面的高度
 static func block(size: Vector3) -> StaticBody3D:
+	return _body(block_pieces(size))
+
+
+static func block_pieces(size: Vector3) -> Array:
 	var p := []
-	_box(p, Vector3(0, (size.y - BURY) * 0.5, 0), size + Vector3(0, BURY, 0))
-	return _body(p)
+	_box(p, Vector3(0, (size.y - BURY) * 0.5, 0), size + Vector3(0, BURY, 0), 2, 0)
+	return p
 
 
 ## 房子：size = 寬 × 每層高 × 深，floors 層。一樓前後各一扇門（big：前門換成恐龍進得去的大門），
 ## 窗戶在兩側和樓上；兩層以上貼著左牆有斜坡上樓。平屋頂，上不去
 static func house(size: Vector3, floors: int, big := false) -> StaticBody3D:
+	return _body(house_pieces(size, floors, big))
+
+
+## house() 的每一塊 [Transform3D, 尺寸, 等級, 材質（0 牆、1 屋頂、2 柱子樓板斜坡）]，玩具積木用（bricks()）。
+## 四個角各一根柱子（等級 2）：牆在兩端各縮一根柱子的寬度，角落由柱子補上
+static func house_pieces(size: Vector3, floors: int, big := false) -> Array:
 	var p := []
 	var hx := size.x * 0.5
 	var hz := size.z * 0.5
 	var h := size.y
 	floors = maxi(floors, 1)
-	_box(p, Vector3(0, (FLOOR - BURY) * 0.5, 0), Vector3(size.x, BURY + FLOOR, size.z))   # 地板（實心埋進地下）
-	_box(p, Vector3(0, h * floors + T * 0.5, 0), Vector3(size.x, T, size.z))   # 屋頂
+	_box(p, Vector3(0, (FLOOR - BURY) * 0.5, 0), Vector3(size.x, BURY + FLOOR, size.z), 2, 2)   # 地板（實心埋進地下）
+	_box(p, Vector3(0, h * floors + T * 0.5, 0), Vector3(size.x, T, size.z), 1, 1)   # 屋頂
 	var run := h / tan(deg_to_rad(RAMP_DEG))
 	var z0 := hz - T - 1.0                 # 斜坡起點（低的那端）
 	var hole := -hx + T + RAMP_W + 0.2     # 樓板開洞的右緣
@@ -111,19 +116,23 @@ static func house(size: Vector3, floors: int, big := false) -> StaticBody3D:
 		else:
 			front = [[-hx * 0.5] + win, [hx * 0.5] + win]
 			back = front
-			_box(p, Vector3((hole + hx - T) * 0.5, f * h - SLAB * 0.5, 0), Vector3(hx - T - hole, SLAB, size.z - 2 * T))
+			_box(p, Vector3((hole + hx - T) * 0.5, f * h - SLAB * 0.5, 0), Vector3(hx - T - hole, SLAB, size.z - 2 * T), 2, 2)
 			var zb := z0 - run
-			_box(p, Vector3((-hx + T + hole) * 0.5, f * h - SLAB * 0.5, (zb - hz + T) * 0.5), Vector3(hole + hx - T, SLAB, zb + hz - T))
-			_box(p, Vector3((-hx + T + hole) * 0.5, f * h - SLAB * 0.5, (z0 + hz - T) * 0.5), Vector3(hole + hx - T, SLAB, hz - T - z0))
+			_box(p, Vector3((-hx + T + hole) * 0.5, f * h - SLAB * 0.5, (zb - hz + T) * 0.5), Vector3(hole + hx - T, SLAB, zb + hz - T), 2, 2)
+			_box(p, Vector3((-hx + T + hole) * 0.5, f * h - SLAB * 0.5, (z0 + hz - T) * 0.5), Vector3(hole + hx - T, SLAB, hz - T - z0), 2, 2)
 		if f < floors - 1:   # 往上一層的斜坡
 			var ramp := Transform3D(Basis(Vector3.RIGHT, deg_to_rad(RAMP_DEG)),
 				Vector3(-hx + T + RAMP_W * 0.5, f * h + h * 0.5 - SLAB * 0.5, z0 - run * 0.5))
-			p.append([ramp, Vector3(RAMP_W, SLAB, Vector2(run, h).length())])
-		_wall(p, true, hz - T * 0.5, size.x, y0, y1, front)
-		_wall(p, true, -hz + T * 0.5, size.x, y0, y1, back)
+			p.append([ramp, Vector3(RAMP_W, SLAB, Vector2(run, h).length()), 2, 2])
+		# 前後的牆兩端各縮 T（角落給柱子），左右的牆本來就縮了
+		_wall(p, true, hz - T * 0.5, size.x - 2 * T, y0, y1, front)
+		_wall(p, true, -hz + T * 0.5, size.x - 2 * T, y0, y1, back)
 		_wall(p, false, -hx + T * 0.5, size.z - 2 * T, y0, y1, left)
 		_wall(p, false, hx - T * 0.5, size.z - 2 * T, y0, y1, right)
-	return _body(p)
+		for sx in [-1.0, 1.0]:
+			for sz in [-1.0, 1.0]:
+				_box(p, Vector3(sx * (hx - T * 0.5), (y0 + y1) * 0.5, sz * (hz - T * 0.5)), Vector3(T, y1 - y0, T), 2, 2)
+	return p
 
 
 ## 一面牆：沿 X（along_x）或 Z 方向，長 length，挖掉 holes 的洞。holes 每個是 [中心, 寬, 底, 頂]，由小到大排
@@ -146,8 +155,8 @@ static func _seg(p: Array, along_x: bool, at: float, u0: float, u1: float, y0: f
 	_box(p, c, Vector3(u1 - u0, y1 - y0, T) if along_x else Vector3(T, y1 - y0, u1 - u0))
 
 
-static func _box(p: Array, center: Vector3, size: Vector3) -> void:
-	p.append([Transform3D(Basis(), center), size])
+static func _box(p: Array, center: Vector3, size: Vector3, lv := 1, tone := 0) -> void:
+	p.append([Transform3D(Basis(), center), size, lv, tone])
 
 
 ## 每一塊 [Transform3D, 尺寸]：網格合併成一個（一棟一次繪製），碰撞一塊一個
@@ -170,3 +179,77 @@ static func _body(pieces: Array) -> StaticBody3D:
 	mi.material_override = material()
 	body.add_child(mi)
 	return body
+
+
+## ---- 玩具積木（docs/規劃/2026-11-08-玩具積木場景.md）----
+## 積木最大：水平 1.5、高 0.75 公尺；厚度（0.2、0.3）本來就小於這個，不會被切
+const BRICK_W := 1.5
+const BRICK_H := 0.75
+## 鮮豔的玩具色，每棟挑一個當牆（屋頂用隔兩個的顏色）。地基（頂面在地面以下）一律灰
+const TOY_COLORS := [Color(0.85, 0.18, 0.16), Color(0.18, 0.38, 0.85), Color(0.95, 0.78, 0.18),
+	Color(0.2, 0.66, 0.3), Color(0.93, 0.93, 0.9)]
+
+
+## 把 pieces（house_pieces／block_pieces 的結果）切成積木：每塊 [Transform3D（相對原點，沒有旋轉）, 尺寸, 等級, 顏色]。
+## at 是這棟的位置（挑色用）；force > 0 時所有塊都改成這個等級（安全屋全部 3）。斜坡（有轉角度）整片一塊。
+## 等級：頂面在地面以下（<= 0.05）的是 3；其他照 pieces 的等級（牆、屋頂 1，樓板、柱子、斜坡 2）。純計算、沒有亂數：每台切出來一樣
+static func bricks(pieces: Array, at := Vector3.ZERO, force := 0) -> Array:
+	var out := []
+	for pc: Array in pieces:
+		var xf: Transform3D = pc[0]
+		var size: Vector3 = pc[1]
+		var base: bool = xf.origin.y + size.y * 0.5 <= FLOOR + 0.001
+		var lv: int = 3 if base else int(pc[2])
+		if force > 0:
+			lv = force
+		var tone: int = pc[3]
+		if not xf.basis.is_equal_approx(Basis()):   # 斜坡：不切
+			out.append([xf, size, lv, paint(tone, base, at, xf.origin)])
+			continue
+		var n := Vector3i(_cuts(size.x, BRICK_W), _cuts(size.y, BRICK_H), _cuts(size.z, BRICK_W))
+		var each := size / Vector3(n)
+		for ix in n.x:
+			for iy in n.y:
+				for iz in n.z:
+					var c := xf.origin + (Vector3(ix + 0.5, iy + 0.5, iz + 0.5) * each - size * 0.5)
+					out.append([Transform3D(Basis(), c), each, lv, paint(tone, base, at, c)])
+	return out
+
+
+## 切成幾塊：平均切，每塊不超過 limit（厚度比 limit 小的自然是 1 塊）
+static func _cuts(d: float, limit: float) -> int:
+	return maxi(ceili(d / limit - 0.001), 1)
+
+
+## 積木的顏色。tone：0 牆、1 屋頂（隔兩個顏色）、2 柱子樓板斜坡（同色深一點）；base 是地基（灰）。
+## 每塊亮度 ±5%，用位置算，看得出一塊一塊
+static func paint(tone: int, base: bool, key: Vector3, at: Vector3) -> Color:
+	var c := Color(0.5, 0.5, 0.5)
+	if not base:
+		var k := int(absf(key.x) * 3.0 + absf(key.z) * 7.0) % TOY_COLORS.size()
+		match tone:
+			1:
+				c = TOY_COLORS[(k + 2) % TOY_COLORS.size()]
+			2:
+				c = (TOY_COLORS[k] as Color).darkened(0.3)
+			_:
+				c = TOY_COLORS[k]
+	var j := _jitter(at) * 0.05
+	return Color(c.r * (1.0 + j), c.g * (1.0 + j), c.b * (1.0 + j))
+
+
+## -1 到 1 之間、由位置決定的數（不用亂數）
+static func _jitter(p: Vector3) -> float:
+	var s := sin(p.x * 12.9898 + p.y * 78.233 + p.z * 37.719) * 43758.5453
+	return (s - floorf(s)) * 2.0 - 1.0
+
+
+## 方塊房子（派對，cube_house() 的格子）的積木：等級照格子，顏色照等級（地基灰、柱子樓板深色、屋頂另一色）
+static func cube_bricks(at: Vector3) -> Array:
+	var out := []
+	for c: Array in cube_house():
+		var lv: int = c[1]
+		var center: Vector3 = c[0]
+		var tone := 2 if lv == 2 else (1 if center.y > 3.0 else 0)
+		out.append([Transform3D(Basis(), center), Vector3.ONE * CUBE, lv, paint(tone, lv == 3, at, center)])
+	return out

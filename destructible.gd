@@ -1,8 +1,8 @@
 class_name Destructible
 extends StaticBody3D
 ## 派對模式拆得掉的地形（docs/企劃/派對玩法.md、規則草案 4.2）。等級 1 挨一下就倒、2 挨兩下、3 打不壞（甩尾、火球、炸藥都不行）。
-## 樹是 2、灰盒房子是 2、方塊房子的每一塊照它的等級。
-## arena_map.gd 蓋場地時把樹幹、灰盒房子的 body 換成這個腳本、加進群組 destructible（_destructible）。安全屋不加，拆不掉。
+## 樹是 2。灰盒房子、方塊房子已經改成積木（toy_build.gd，玩具積木場景），不再用這個腳本；拆積木的入口是 Destructible.blast（炸藥）同 boss.gd、fireball.gd 的 smash。
+## arena_map.gd 蓋場地時把樹幹的 body 換成這個腳本、加進群組 destructible（_destructible）。
 ##
 ## 主機說了算：boss.gd 的甩尾打中就呼叫 tail_hit，主機記次數、廣播給所有人（包括自己）。
 ## 節點名字由 arena_map.gd 依序取（Wreck0、Wreck1…），每台蓋出來一樣，RPC 才找得到同一個（同 Door）。
@@ -34,6 +34,9 @@ func tail_hit(from: Vector3) -> void:
 ## ponytail: 只看距離，不算中間有沒有牆擋住；方塊房子的牆互相擋住的話，爆炸會穿過去拆後面的等級 1 方塊
 static func blast(world: Node3D, at: Vector3, radius: float) -> void:
 	for w: Node in world.get_tree().get_nodes_in_group(&"destructible"):
+		if w.has_method(&"smash"):   # 積木（toy_build.gd）：半徑內等級 1 的塊扣一下
+			w.smash(func(p: Vector3) -> bool: return p.distance_to(at) < radius, 1, at)
+			continue
 		var d := w as Destructible
 		if d and d.level == 1 and d.global_position.distance_to(at) < radius:
 			d.tail_hit(at)
@@ -69,8 +72,13 @@ func _set_hits(n: int, from: Vector3, instant: bool) -> void:
 
 ## 挨打（down = 這一下把它打倒）：碎裂聲、鏡頭震、操作恐龍的那台停一下。回傳這台鏡頭震了多少（測試用）
 func _smash_fx(down: bool) -> float:
-	_sfx(HIT_SOUND, 40.0)
-	var cam := get_viewport().get_camera_3d()
+	return hit_fx(self, global_position + Vector3.UP * _height() * 0.5, down)
+
+
+## 挨打的回饋（樹、積木共用）：碎裂聲在 at，鏡頭震離 at 越遠越小，操作恐龍的那台停一下。回傳鏡頭震了多少
+static func hit_fx(on: Node3D, at: Vector3, down: bool) -> float:
+	sfx(on, HIT_SOUND, 40.0, at)
+	var cam := on.get_viewport().get_camera_3d()
 	if cam == null:
 		return 0.0
 	# 從鏡頭往上找第一個有 add_shake 的（牛仔的鏡頭在 Head 底下，恐龍的在 CamPivot 底下）
@@ -79,7 +87,7 @@ func _smash_fx(down: bool) -> float:
 		who = who.get_parent()
 	if who == null:
 		return 0.0
-	var k: float = clampf(1.0 - cam.global_position.distance_to(global_position) / SHAKE_RANGE, 0.0, 1.0) * Settings.v.get(&"shake", 1.0)
+	var k: float = clampf(1.0 - cam.global_position.distance_to(at) / SHAKE_RANGE, 0.0, 1.0) * Settings.v.get(&"shake", 1.0)
 	var amount: float = (0.08 if down else 0.03) * k
 	who.add_shake(amount)
 	if who.has_method(&"add_hitstop"):
@@ -88,16 +96,20 @@ func _smash_fx(down: bool) -> float:
 
 
 ## 3D 音效播一次、播完自己收掉（照 shot_fx.gd 的 impact_sound）。檔案還沒放進來就安靜跳過
-func _sfx(path: String, max_dist: float) -> void:
+static func sfx(on: Node3D, path: String, max_dist: float, at: Vector3) -> void:
 	if not ResourceLoader.exists(path):
 		return
 	var snd := AudioStreamPlayer3D.new()
-	get_parent().add_child(snd)
+	on.get_parent().add_child(snd)
 	snd.stream = load(path)
 	snd.max_distance = max_dist
-	snd.global_position = global_position + Vector3.UP * _height() * 0.5
+	snd.global_position = at
 	snd.play()
 	snd.finished.connect(snd.queue_free)
+
+
+func _sfx(path: String, max_dist: float) -> void:
+	sfx(self, path, max_dist, global_position + Vector3.UP * _height() * 0.5)
 
 
 ## 還沒倒：抖一下、掉一點灰（看得出來挨了一下）

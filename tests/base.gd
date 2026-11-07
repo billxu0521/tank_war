@@ -15,17 +15,88 @@ var _bot_frames := 0
 var _frames := 0
 const DT := 1.0 / 120.0
 
+var _deferred: Array = []   # [到期的幀數, Callable]：要等物理幀才驗得到的（剛加進場景的物體，射線和形狀查詢要跑過一幀才看得到）
+
+## 過 after 幀再執行 fn（test_battle.gd 的 _process 每幀呼叫 _run_deferred）
+func _defer(after: int, fn: Callable) -> void:
+	_deferred.append([_frames + after, fn])
+
+func _run_deferred() -> void:
+	for d: Array in _deferred.duplicate():
+		if _frames >= d[0]:
+			_deferred.erase(d)
+			d[1].call()
+
+## 測試的對局收起來：match、arena、ground 群組拿掉。這些群組的「第一個」是正式的對局（HUD、子彈、火球、爆炸都找它），
+## 測試的對局不能搶；要跑物理的那段才用 _with_first 放回去
+func _park(m: Node) -> void:
+	m.remove_from_group(&"match")
+	m.map.remove_from_group(&"arena")
+	for c: Node in m.map.get_children():
+		if c.is_in_group(&"ground"):
+			c.remove_from_group(&"ground")
+			c.set_meta(&"parked", true)
+
+## 這一段要用「第一個」對局、場地、地面、boss、dino（子彈、火球、爆炸、HUD 都找它們）：別處的先移出群組，做完再放回去（順序不變）
+const FIRST_GROUPS := [&"match", &"arena", &"ground", &"boss", &"dino"]
+func _with_first(m: Node, fn: Callable) -> void:
+	var others := {}
+	for g: StringName in FIRST_GROUPS:
+		var list: Array = get_nodes_in_group(g).filter(func(n: Node) -> bool: return not (n == m or m.map.is_ancestor_of(n)))
+		others[g] = list
+		for o: Node in list:
+			o.remove_from_group(g)
+	m.add_to_group(&"match")
+	m.map.add_to_group(&"arena")
+	_unpark_ground(m, true)
+	fn.call()
+	m.remove_from_group(&"match")
+	m.map.remove_from_group(&"arena")
+	_unpark_ground(m, false)
+	for g: StringName in FIRST_GROUPS:
+		for o: Node in others[g]:
+			o.add_to_group(g)
+
+func _unpark_ground(m: Node, on: bool) -> void:
+	for c: Node in m.map.get_children():
+		if on and c.has_meta(&"parked"):
+			c.add_to_group(&"ground")
+			c.remove_meta(&"parked")
+		elif not on and c.is_in_group(&"ground"):
+			c.remove_from_group(&"ground")
+			c.set_meta(&"parked", true)
+
+## 要跑物理的測試對局放在自己的物理世界（SubViewport 的 own_world_3d）：和別的測試的場地不互撞、射線打不到別人的地形
+func _isolated_match() -> Node:
+	var vp := SubViewport.new()
+	vp.own_world_3d = true
+	root.add_child(vp)
+	var m: Node = load("res://main.tscn").instantiate()
+	vp.add_child(m)
+	m.multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	m._offline = true
+	m._enter_game("test")
+	return m
+
+## 收掉 _isolated_match 的對局（不動連線：多個對局共用同一個 root 的 multiplayer，_end 會把它設成 null，別的測試還在用）
+func _free_map(m: Node) -> void:
+	var vp := m.get_parent()
+	root.remove_child(vp)
+	vp.free()
+
 func _ck(ok: bool, msg: String) -> void:
 	if not ok:
 		_fails += 1
 		printerr("FAIL: ", msg)
 
 func _done() -> bool:
+	if not _deferred.is_empty():
+		_ck(false, "延後的檢查沒有跑完（還剩 %d 個）" % _deferred.size())
 	if _fails > 0:
 		printerr("有 %d 項失敗" % _fails)
 		quit(1)
 	else:
-		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與左輪扳擊錘換彈動作音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰一條體力、沙盒、鄉村柵欄灌木貼圖、著彈碎屑與煙囪煙、地形起伏、F 開門爬梯子、翻柵欄和窗台、手腳、只剩連線和沙盒、遊戲局控制、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、恐龍攻擊開關、介面（大廳存 IP、勝負畫面、倒數）、中彈踉蹌、恐龍 boss 行為樹（導演、兩招預備動作、導航網格）、方位條、測試站自動開下一局、問題回報、滑鼠鎖定不凍視角、灰盒地圖都正常、主機檢查移動和傷害額度、斷線重連拿回命數和分數、恐龍沙盒叫獵人清獵人、數值表、主副武器鍵、補血包、輕攻擊扇形、甩尾半圈、踩踏、燃燒、火球、選裝、彈藥數量、方塊房子（等級 1、2、3、火球、炸藥、子彈穿材質）、尼諾拉放大細節（生怪高度、炸藥、撿蛋、電腦起招、火球俯角、甩尾拆地形、空材質、恐龍碰撞開關）")
+		print("OK：生怪、傷害、時間到判勝、重生、咬擊方向、離線兩種模式、牛仔身分與開槍、按鍵綁定、三把槍與左輪扳擊錘換彈動作音效不延遲子彈下墜有效射程爆頭閉氣蹲穩摔落輕重近戰一條體力、沙盒、鄉村柵欄灌木貼圖、著彈碎屑與煙囪煙、地形起伏、F 開門爬梯子、翻柵欄和窗台、手腳、只剩連線和沙盒、遊戲局控制、回大廳重開、建築擋視線、圍牆擋出界、暴龍骨架與尾巴慣性、側傾與位移延遲、開槍命中恐龍、恐龍跳躍、牛仔 bot、體力規則、衝刺技能、蛋與撤離、恐龍撿不到蛋、火球、恐龍攻擊開關、介面（大廳存 IP、勝負畫面、倒數）、中彈踉蹌、恐龍 boss 行為樹（導演、兩招預備動作、導航網格）、方位條、測試站自動開下一局、問題回報、滑鼠鎖定不凍視角、灰盒地圖都正常、主機檢查移動和傷害額度、斷線重連拿回命數和分數、恐龍沙盒叫獵人清獵人、數值表、主副武器鍵、補血包、輕攻擊扇形、甩尾半圈、踩踏、燃燒、火球、選裝、彈藥數量、方塊房子（等級 1、2、3、火球、炸藥、子彈穿材質）、玩具積木（切塊、安全屋、連通、碎塊停下、晚加入、新的一場、非派對甩尾、子彈穿塊、甩尾上限、真房子拆下排）、尼諾拉放大細節（生怪高度、炸藥、撿蛋、電腦起招、火球俯角、甩尾拆地形、空材質、恐龍碰撞開關）")
 	return true
 
 # --- 共用 ---

@@ -77,7 +77,8 @@ var _houses_built := 0   # 第幾棟農舍：三種輪流蓋（不用亂數，�
 var _doors: Array[Door] = []   # 晚加入的人連進來時，把開著的門補送給他
 var _wrecks: Array[Destructible] = []   # 拆得掉的地形（destructible.gd）：晚加入的人連進來時，把打過的補送給他
 var _party_at := Vector3.INF   # 派對方塊房子的位置（灰盒才找；INF = 沒有）
-var _party_house: Node3D       # 方塊房子（greybox.gd cube_house）：每台都蓋，不是派對就藏起來（set_party_house）
+var _toys: Array[ToyBuild] = []   # 積木（toy_build.gd）：灰盒的房子、掩體、安全屋，和派對的方塊房子。每台蓋的順序一樣，名字 Toy0、Toy1…
+var _party_house: ToyBuild     # 方塊房子（greybox.gd cube_house）：每台都蓋，不是派對就藏起來（set_party_house）
 var _wheat_fields: Array[Rect2] = []   # 地形上色要知道哪裡是麥田
 var _roads: Array[Rect2] = []          # 城鎮主街這類另外鋪的土路（地形上色）；彎彎曲曲的荒地小路在 Trails（trails.gd）
 var _blocked: Array[Rect2] = []  # 建築物在 XZ 平面佔的範圍
@@ -267,10 +268,10 @@ func _build_level() -> void:
 			&"hitch": _hitch(p)
 			&"shop": _shop(p, rec.variant, rec.yaw)
 			&"water_tower": _water_tower(p, rec.yaw)
-			&"gb_house": _place_greybox(_destructible(Greybox.house(rec.size, rec.floors, rec.big), 2), p, rec.yaw)
-			&"gb_block": _place_greybox(Greybox.block(rec.size), p, rec.yaw)
-			&"gb_safe":   # 安全屋：一層的小灰盒房，門窗恐龍擠不進。拆不掉（不進 destructible）
-				var safe := Greybox.house(rec.size, 1)
+			&"gb_house": _place_greybox(_toy(ToyBuild.make(Greybox.bricks(Greybox.house_pieces(rec.size, rec.floors, rec.big), p))), p, rec.yaw)
+			&"gb_block": _place_greybox(_toy(ToyBuild.make(Greybox.bricks(Greybox.block_pieces(rec.size), p))), p, rec.yaw)   # 掩體方塊：等級 2、拆得掉
+			&"gb_safe":   # 安全屋：一層的小灰盒房，門窗恐龍擠不進。全部等級 3、拆不掉（不進 destructible）
+				var safe := _toy(ToyBuild.make(Greybox.bricks(Greybox.house_pieces(rec.size, 1), p, 3), false))
 				safe.add_to_group(&"safe_house")
 				_place_greybox(safe, p, rec.yaw)
 			&"spawn": spawn_points.append(_on_ground(p))
@@ -289,37 +290,23 @@ func _place_greybox(body: StaticBody3D, p: Vector3, yaw: float) -> void:
 	body.rotation.y = yaw
 	add_child(body)
 
-## 派對模式的方塊房子（草案 4.1）：找到的位置照 greybox.gd cube_house 的順序，每塊一個 Destructible，名字接在後面（每台一樣）。
-## 材質照等級對應子彈穿透（bullet.gd ARMOR）：1 木板、2 雙層木板、3 金屬板
-const PARTY_ARMOR := [&"plank", &"double_plank", &"metal"]
+## 派對模式的方塊房子（草案 4.1）：一棟積木（toy_build.gd），格子和等級照 greybox.gd cube_house()。
 func _build_party_house() -> void:
-	_party_house = Node3D.new()
-	_party_house.name = &"CubeHouse"
+	_party_house = _toy(ToyBuild.make(Greybox.cube_bricks(_party_at)))
 	add_child(_party_house)
 	_party_house.position = _on_ground(_party_at)
-	for cell: Array in Greybox.cube_house():
-		var body := Greybox.cube()
-		body.position = cell[0]
-		_party_house.add_child(body)
-		var w := _destructible(body, cell[1])
-		w.add_to_group(PARTY_ARMOR[cell[1] - 1])
 	set_party_house(false)   # 開場先藏起來，_apply_rules 看模式再開
 
 ## 派對模式才看得到、拆得掉：不是派對（或沙盒）就整棟藏起來、碰撞和拆的資格一起拿掉（main.gd 的 _enter_game、_apply_rules 呼叫）
 func set_party_house(on: bool) -> void:
-	if _party_house == null:
-		return
-	_party_house.visible = on
-	for c in _party_house.get_children():   # 底下還有播完音效的 AudioStreamPlayer3D（destructible.gd 的 _sfx），要跳過
-		var w := c as Destructible
-		if w == null:
-			continue
-		var up := on and w.hits < w.hits_needed   # 已經倒的不復活碰撞（新的一場 party.gd 的 restore 會立回來）
-		w.collision_layer = (1 | Fighter.SOLID_LAYER) if up else 0   # 同 _build_arena：建築要擋關碰撞物件的尼諾拉
-		if up:
-			w.add_to_group(&"destructible")
-		else:
-			w.remove_from_group(&"destructible")
+	if _party_house:
+		_party_house.set_on(on)
+
+## 積木照蓋的順序取名 Toy0、Toy1…（每台一樣，RPC 才找得到）。要在加進場景樹之前呼叫
+func _toy(t: ToyBuild) -> ToyBuild:
+	t.name = "Toy%d" % _toys.size()
+	_toys.append(t)
+	return t
 
 ## 方塊房子的位置：離場地中心最近、又不擋東西的一塊空地（離出生點、安全屋、撤離區都要有距離）。
 ## 找到就記成整平區（地形要在它之前定案），並 _block 起來：出生點、蛋的位置（_spawn_point 用 _is_clear）就避開它
