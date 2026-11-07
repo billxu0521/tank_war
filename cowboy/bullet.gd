@@ -71,7 +71,7 @@ func advance(delta: float) -> void:
 	while true:
 		var q := PhysicsRayQueryParameters3D.create(from, to, mask, exclude)
 		hit = get_world_3d().direct_space_state.intersect_ray(q)
-		if hit.is_empty() or not pierces(hit["collider"], power):
+		if hit.is_empty() or not pierces(hit["collider"], power, hit["shape"]):
 			break
 		# 穿牆：留彈孔、這面牆不再算，從打到的點繼續掃這一幀剩下的路
 		_traveled += from.distance_to(hit["position"])
@@ -100,9 +100,14 @@ func advance(delta: float) -> void:
 	queue_free()
 
 
-## 穿透力 power 的子彈能不能穿過 target
-static func pierces(target: Object, power: int) -> bool:
+## 穿透力 power 的子彈能不能穿過 target。shape 是打到的碰撞形狀編號（玩具積木一棟一個物體、每塊一個形狀，要照塊的材質算）
+static func pierces(target: Object, power: int, shape := -1) -> bool:
 	if not target is Node:
+		return false
+	if target.has_method(&"armor_of"):
+		var armor: StringName = target.armor_of(shape)
+		if armor != &"":
+			return power >= ARMOR[armor]
 		return false
 	for g: StringName in ARMOR:
 		if (target as Node).is_in_group(g):

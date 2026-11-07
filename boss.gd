@@ -667,10 +667,9 @@ func _back_dir() -> Vector3:
 
 ## 甩尾出手的那一下：只拆地形（每幀拆會一棟房子挨好幾下）。掃起的一圈土是各台自己播（trex.gd 的 _act_fx）
 func _strike_sweep() -> void:
-	if _party():
-		var foot := _sweep_root()
-		foot.y = global_position.y - HALF_H   # 查詢球心放腳底：貼地 12 公尺內的東西都掃得到（放身體中心會漏掉遠處的）
-		_wreck_around(foot, _back_dir(), SWEEP_RADIUS, SWEEP_COS)
+	var foot := _sweep_root()
+	foot.y = global_position.y - HALF_H   # 查詢球心放腳底：貼地 12 公尺內的東西都掃得到（放身體中心會漏掉遠處的）
+	_wreck_around(foot, _back_dir(), SWEEP_RADIUS, SWEEP_COS)
 
 ## 甩尾的人：只打尾根後方半圈，高度、擋牆跟輕攻擊一樣。整段出手時間每幀判
 func _sweep_hit() -> void:
@@ -694,7 +693,7 @@ func _spit_fire(dir: Vector3, muzzle: Vector3) -> void:
 	f.max_range = FB_RANGE
 	f.damage = FB_DAMAGE
 	f.burn = true
-	f.wreck = _party()   # 派對：打中方塊扣一下（destructible.gd）
+	f.wreck = true   # 打中可拆的地形扣一下（destructible.gd、toy_build.gd）
 	f.shooter = self
 	f.vel = dir * FB_SPEED
 	get_tree().get_first_node_in_group(&"arena").add_child(f)
@@ -706,7 +705,7 @@ func _spit_fire(dir: Vector3, muzzle: Vector3) -> void:
 func _sweep_cd_time() -> float:
 	return SWEEP_CD_PARTY if _party() else SWEEP_CD
 
-## 派對模式：甩尾掃到的地形（群組 destructible：樹、灰盒房子；安全屋不在裡面）各挨一下，倒不倒它自己算。只算後方半圈（同 _sweep_hit）
+## 甩尾掃到的地形（群組 destructible：樹、積木房子；安全屋不在裡面）各挨一下，倒不倒它自己算。只算後方半圈（同 _sweep_hit）。積木是一棟一個物體，照每塊的位置拆
 func _wreck_around(at: Vector3, dir: Vector3, radius: float, cos_half: float) -> void:
 	var sphere := SphereShape3D.new()
 	sphere.radius = radius
@@ -723,7 +722,10 @@ func _wreck_around(at: Vector3, dir: Vector3, radius: float, cos_half: float) ->
 	# ponytail: 一棟房子幾十塊碰撞各算一筆，上限給大一點；房子擠成一團漏掉幾個再加
 	for r: Dictionary in get_world_3d().direct_space_state.intersect_shape(q, 256):
 		var c: Object = r.collider
-		if c is Node3D and (c as Node3D).is_in_group(&"destructible") and not done.has(c) \
+		if c is ToyBuild and (c as ToyBuild).is_in_group(&"destructible") and not done.has(c):
+			done[c] = true
+			(c as ToyBuild).smash(func(p: Vector3) -> bool: return _in_fan(at, dir, p, radius, cos_half), 2, at)
+		elif c is Node3D and (c as Node3D).is_in_group(&"destructible") and not done.has(c) \
 				and _in_fan(at, dir, (c as Node3D).global_position, radius, cos_half):
 			done[c] = true
 			c.tail_hit(at)

@@ -593,23 +593,19 @@ func _case_respawn() -> void:
 		_ck(back.bot, "重生後靶還是靶，不會變成真人操控的")
 	_end(m)
 
-## 派對模式甩尾拆地形（destructible.gd）：樹兩下倒、灰盒房子兩下倒、不在群組裡的（安全屋）不倒、倒了碰撞沒了
+## 派對模式甩尾拆地形（destructible.gd）：樹兩下倒、不在群組裡的（安全屋）不倒、倒了碰撞沒了。積木房子見 _case_party_cubes、_case_toy
 func _case_party_destruction() -> void:
 	var Main: GDScript = load("res://main.gd")
 	var keep: String = Main.level_file
 	Main.level_file = ""
 	var m := _offline_match()
 	var tree: Destructible = null
-	var house: Destructible = null
 	for w: Destructible in m._wrecks:
-		if w.get_parent() != m.map:   # 方塊房子的每一塊在它自己底下，另外測（_case_party_cubes）
-			continue
-		if w.visual != null and tree == null:
+		if w.visual != null:   # 樹（外觀另外擺）
 			tree = w
-		elif w.visual == null and house == null:
-			house = w
-	_ck(tree != null and house != null, "灰盒地圖的樹、房子要拆得掉（%d 樣）" % m._wrecks.size())
-	if tree == null or house == null:
+			break
+	_ck(tree != null, "灰盒地圖要有拆得掉的樹（%d 樣）" % m._wrecks.size())
+	if tree == null:
 		_end(m)
 		Main.level_file = keep
 		return
@@ -650,78 +646,86 @@ func _case_party_destruction() -> void:
 	_ck(tree.hits == 2 and tree.collision_layer == 0 and not tree.is_in_group(&"destructible"), "樹甩兩下就倒")
 	_ck(space.intersect_ray(ray).get(&"collider") != tree, "倒了的樹沒有碰撞")
 	_ck(safe.collision_layer != 0, "不在群組裡的東西（安全屋）甩不倒")
-	house.tail_hit(Vector3.ZERO)
-	_ck(house.hits == 1 and house.collision_layer != 0, "房子甩一下還站著")
-	house.tail_hit(Vector3.ZERO)
-	_ck(house.hits == 2 and house.collision_layer == 0, "房子甩兩下倒了、碰撞沒了")
-	var layer0: int = house.get(&"_home")[2]
-	house.restore()
-	_ck(house.hits == 0 and house.collision_layer == layer0 and house.visible and house.is_in_group(&"destructible"), "新的一場：倒掉的房子立回來")
-	_ck(layer0 & Fighter.SOLID_LAYER != 0 and house.collision_layer & Fighter.SOLID_LAYER != 0, "房子（建築）有第 5 層，倒了立回來也還有")
 	# 挨打、倒下的回饋（音效檔還沒放進來，前面甩倒的時候已經跑過，不能報錯）：鏡頭晃動設 0 就不震
 	var old_shake: Variant = Settings.v.get(&"shake", 1.0)
 	Settings.v[&"shake"] = 0.0
-	_ck(house._smash_fx(false) == 0.0 and tree._smash_fx(true) == 0.0, "鏡頭晃動設 0 時不震")
+	_ck(tree._smash_fx(false) == 0.0 and Destructible.hit_fx(tree, tree.global_position, true) == 0.0, "鏡頭晃動設 0 時不震")
 	Settings.v[&"shake"] = old_shake
 	m.rules = &"egg"
 	_end(m)
 	Main.level_file = keep
 
-## 派對方塊房子（草案 4.1、4.2）：只在派對模式看得到；53 塊、等級數對、門口和窗戶留空；名字照蓋的順序；
-## 甩尾（tail_hit）、火球（boss._spit_fire 設旗標）、炸藥（viewmodel._explode）各照等級拆；子彈穿材質照等級
+## 派對方塊房子（草案 4.1、4.2）：只在派對模式看得到、拆得掉；53 塊、等級 1、2、3 各 29、12、12；門口和窗戶留空；
+## 甩尾（smash）、火球（boss._spit_fire 設 wreck，半徑 2 公尺內的塊）、炸藥（viewmodel._explode）各照等級拆；子彈穿材質照等級
 func _case_party_cubes() -> void:
+	_party_cubes_body()
+
+func _party_cubes_body() -> void:
 	var Main: GDScript = load("res://main.gd")
 	var keep: String = Main.level_file
 	Main.level_file = ""
-	var m := _offline_match()
-	var house: Node3D = m.map.get_node_or_null(^"CubeHouse")
+	var m := _isolated_match()
+	_park(m)   # 物理那段才放回去（見 _with_first）
+	var house: ToyBuild = m.map._party_house
 	_ck(house != null, "灰盒地圖要有方塊房子")
 	if house == null:
 		_end(m)
 		Main.level_file = keep
 		return
-	var blocks: Array = house.get_children().filter(func(c: Node) -> bool: return c is Destructible)   # 底下可能有播完的音效
+	var n := house.brick_count()
 	var by := {1: 0, 2: 0, 3: 0}
-	for w: Destructible in blocks:
-		by[w.level] += 1
-		_ck(w.name == "Wreck%d" % m.map._wrecks.find(w), "方塊名字要照蓋的順序（%s）" % w.name)
-	_ck(blocks.size() == 53 and by == {1: 29, 2: 12, 3: 12}, "方塊房子 53 塊、等級 1、2、3 各 29、12、12（現在 %d 塊 %s）" % [blocks.size(), by])
+	for i in n:
+		by[house.level_of(i)] += 1
+	_ck(n == 53 and by == {1: 29, 2: 12, 3: 12}, "方塊房子 53 塊、等級 1、2、3 各 29、12、12（現在 %d 塊 %s）" % [n, by])
+	_ck(house.name == "Toy%d" % m.map._toys.find(house), "方塊房子名字要照蓋的順序（%s）" % house.name)
 	# 門口（正面靠左那一格）兩層都空；窗戶（左側牆中間那格）只留窗台
-	_ck(_block_at(blocks, Vector3(-0.75, 0.75, 2.25)) == null and _block_at(blocks, Vector3(-0.75, 2.25, 2.25)) == null, "門口兩層都空")
-	_ck(_block_at(blocks, Vector3(-2.25, 0.75, -0.75)) != null and _block_at(blocks, Vector3(-2.25, 2.25, -0.75)) == null, "窗戶只留窗台、窗頂以上空")
+	_ck(_brick_at(house, Vector3(-0.75, 0.75, 2.25)) == -1 and _brick_at(house, Vector3(-0.75, 2.25, 2.25)) == -1, "門口兩層都空")
+	_ck(_brick_at(house, Vector3(-2.25, 0.75, -0.75)) != -1 and _brick_at(house, Vector3(-2.25, 2.25, -0.75)) == -1, "窗戶只留窗台、窗頂以上空")
 	_ck(m.map._party_at.is_finite() and m.map.spawn_points.all(func(s: Vector3) -> bool: return Vector2(s.x - m.map._party_at.x, s.z - m.map._party_at.z).length() > 6.0), "方塊房子離出生點要有距離")
 	# 不是派對：整棟藏起來，碰撞和群組都拿掉
-	_ck(not house.visible and blocks.all(func(w: Destructible) -> bool: return w.collision_layer == 0 and not w.is_in_group(&"destructible")), "非派對模式房子藏起來、沒有碰撞")
+	_ck(not house.visible and house.collision_layer == 0 and not house.is_in_group(&"destructible"), "非派對模式房子藏起來、沒有碰撞")
 	m.rules = &"party"
 	m.map.set_party_house(m.party_mode())
-	_ck(house.visible and blocks.all(func(w: Destructible) -> bool: return w.collision_layer != 0 and w.is_in_group(&"destructible")), "派對模式房子看得到、拆得掉")
-	# 甩尾：等級 1 一下倒、等級 2 兩下、等級 3 甩多少下都不倒
-	var one: Destructible = blocks.filter(func(w: Destructible) -> bool: return w.level == 1)[0]
-	var two: Destructible = blocks.filter(func(w: Destructible) -> bool: return w.level == 2)[0]
-	var three: Destructible = blocks.filter(func(w: Destructible) -> bool: return w.level == 3)[0]
-	one.tail_hit(Vector3.ZERO)
-	_ck(one.hits == 1 and one.collision_layer == 0, "等級 1 的方塊甩一下就倒")
-	two.tail_hit(Vector3.ZERO)
-	_ck(two.hits == 1 and two.collision_layer != 0, "等級 2 的方塊甩一下還站著")
-	two.tail_hit(Vector3.ZERO)
-	_ck(two.hits == 2 and two.collision_layer == 0, "等級 2 的方塊甩兩下倒")
-	for i in 5:
-		three.tail_hit(Vector3.ZERO)
-	_ck(three.hits == 0 and three.collision_layer != 0, "等級 3 的方塊甩五下還是不倒")
-	# 火球：走 boss._spit_fire（它照 _party() 設 wreck）
+	_ck(house.visible and house.collision_layer != 0 and house.is_in_group(&"destructible"), "派對模式房子看得到、拆得掉")
+	# 甩尾：等級 1 一下倒、等級 2 兩下、等級 3 甩多少下都不倒（挑的塊都在地基或屋頂，不會連帶掉別的塊）
+	var one := _first_brick(house, 1, 3.5)   # 屋頂
+	var two := _first_brick(house, 2)        # 地板（在地基上）
+	var three := _first_brick(house, 3)      # 地基
+	_hit_brick(house, one, 2)
+	_ck(not house.is_standing(one), "等級 1 的方塊甩一下就倒")
+	_hit_brick(house, two, 2)
+	_ck(house.is_standing(two) and house.hp_of(two) == 1, "等級 2 的方塊甩一下還站著")
+	_hit_brick(house, two, 2)
+	_ck(not house.is_standing(two), "等級 2 的方塊甩兩下倒")
+	for k in 5:
+		_hit_brick(house, three, 2)
+	_ck(house.is_standing(three) and house.hp_of(three) == 3, "等級 3 的方塊甩五下還是不倒")
+	# 火球、炸藥、子彈要跑物理（射線、形狀查詢），過幾幀再驗
+	_defer(4, func() -> void:
+		_with_first(m, func() -> void: _cubes_physics(m, house, one, three))
+		_free_map(m))
+	Main.level_file = keep
+
+## 方塊房子的物理部分（_case_party_cubes 過幾幀才跑）：火球、炸藥、子彈穿材質
+func _cubes_physics(m: Node, house: ToyBuild, one: int, three: int) -> void:
+	# 火球：走 boss._spit_fire（它設 wreck）；打中的塊半徑 2 公尺內都算。等級 3 的不扣
 	var boss: Node3D = m.spawn_boss()
-	var lone := _block_at(blocks, Vector3(-0.75, 3.75, -2.25))   # 屋頂，等級 1
-	var lone2 := _block_at(blocks, Vector3(0.75, 3.75, -2.25))   # 屋頂，等級 1，給非派對那發打
-	var b3 := _block_at(blocks, Vector3(-0.75, -0.75, -2.25))    # 地基，等級 3
+	var lone := _first_standing(house, 1, 3.5)   # 屋頂，等級 1（前面甩倒的那塊不算）
+	var lone2 := -1
+	for i in _standing(house, 1):   # 離 lone 2.5 公尺以上：火球半徑 2 公尺，lone 那一發已經會把近的一起扣掉
+		if house.center_of(i).y - house.global_position.y > 3.5 and house.center_of(i).distance_to(house.center_of(lone)) > 2.5:
+			lone2 = i
+			break
+	var b3 := three   # 地基，等級 3
 	_spit_at(m, boss, house, lone)
-	_ck(lone.hits == 1 and lone.collision_layer == 0, "派對模式尼諾拉的火球打中等級 1 的方塊：扣一下、倒")
+	_ck(not house.is_standing(lone), "派對模式尼諾拉的火球打中等級 1 的方塊：扣一下、倒")
 	_spit_at(m, boss, house, b3)
-	_ck(b3.hits == 0 and b3.collision_layer != 0, "火球打中等級 3 的方塊不扣")
-	# 非派對：碰撞留著（火球真的會打到），火球照打過去也不拆，是 _spit_fire 的旗標擋下的
+	_ck(house.is_standing(b3) and house.hp_of(b3) == 3, "火球打中等級 3 的方塊不扣")
+	# 非派對：火球照拆（沒有模式的擋）
 	m.rules = &"egg"
 	m.map.set_party_house(true)
 	_spit_at(m, boss, house, lone2)
-	_ck(lone2.hits == 0 and lone2.collision_layer != 0, "非派對模式尼諾拉的火球不拆方塊")
+	_ck(not house.is_standing(lone2), "非派對模式尼諾拉的火球也拆方塊")
 	m.rules = &"party"
 	m.map.set_party_house(true)
 	# 炸藥：爆炸點在房子前面（-Z）4 公尺，範圍 6 公尺內的等級 1 要拆
@@ -729,57 +733,202 @@ func _case_party_cubes() -> void:
 	var player: Node3D = m._add_player(m.COWBOY, 1)
 	player.global_position = m._on_ground(Vector3(house.global_position.x, 0, house.global_position.z - 8.0))
 	var vm = player.viewmodel
-	# (a) 非派對：房子還在群組裡、還有碰撞，炸藥不拆，是 viewmodel 的模式檢查擋下的
-	m.rules = &"egg"
-	m.map.set_party_house(true)
-	var before := _standing(blocks, 1).size()
-	vm._explode(at, Viewmodel.KIND_DYNAMITE)
-	_ck(_standing(blocks, 1).size() == before, "非派對模式炸藥不拆方塊")
 	# (b) 派對、丟的人被自己炸死（扣血前活著）：範圍內等級 1 照拆
-	m.rules = &"party"
-	m.map.set_party_house(true)
 	player.hp = 1
-	var inside := _standing(blocks, 1).filter(func(w: Destructible) -> bool: return w.global_position.distance_to(at) < 6.0)
-	before = _standing(blocks, 1).size()
+	var inside := _standing(house, 1).filter(func(i: int) -> bool: return house.center_of(i).distance_to(at) < 6.0)
 	vm._explode(at, Viewmodel.KIND_DYNAMITE)
 	_ck(player.hp <= 0, "丟的人被自己的炸藥炸死（前提）")
-	_ck(not inside.is_empty() and inside.all(func(w: Destructible) -> bool: return w.hits > 0), "丟的人自己被炸死，範圍內等級 1 的方塊照拆")
-	_ck(_standing(blocks, 1).size() == before - inside.size(), "範圍外的等級 1 不拆")
+	_ck(not inside.is_empty() and inside.all(func(i: int) -> bool: return not house.is_standing(i)), "丟的人自己被炸死，範圍內等級 1 照拆")
 	# (c) 丟的人是恐龍（沒有獵人身分）：不拆
 	var dino_thrower: Node3D = m._add_player(m.COWBOY, 5)
 	dino_thrower.global_position = m._on_ground(Vector3(house.global_position.x, 0, house.global_position.z + 8.0))
 	dino_thrower.add_to_group(&"dino")
 	var at2 := house.global_position + Vector3(0, 1.5, 4.0)
-	before = _standing(blocks, 1).size()
+	var before := _standing(house, 1).size()
 	dino_thrower.viewmodel._explode(at2, Viewmodel.KIND_DYNAMITE)
-	_ck(_standing(blocks, 1).size() == before, "丟的人是恐龍，炸藥不拆方塊")
-	# 等級 2、3 不受炸藥影響（前面 (b) 炸的範圍裡有等級 2 的柱子、地板）
-	_ck(blocks.filter(func(w: Destructible) -> bool: return w.level == 3 and w.hits == 0).size() == 12, "炸藥不影響等級 3")
+	_ck(_standing(house, 1).size() == before, "丟的人是恐龍，炸藥不拆方塊")
+	# 等級 3 不受炸藥影響
+	_ck(house.is_standing(three) and house.hp_of(three) == 3, "炸藥不影響等級 3")
 	# 子彈穿材質：木板（等級 1）力量 1 穿得過，雙層（2）要 2，金屬（3）要 3
-	_ck(Bullet.pierces(one, 1) and not Bullet.pierces(two, 1) and Bullet.pierces(two, 2) and not Bullet.pierces(three, 2) and Bullet.pierces(three, 3), "方塊的子彈穿透照等級")
-	_end(m)
-	Main.level_file = keep
+	var s1 := _first_brick(house, 1)
+	var s2 := _first_brick(house, 2)
+	var s3 := _first_brick(house, 3)
+	_ck(Bullet.pierces(house, 1, s1) and not Bullet.pierces(house, 1, s2) and Bullet.pierces(house, 2, s2) and not Bullet.pierces(house, 2, s3) and Bullet.pierces(house, 3, s3), "方塊的子彈穿透照等級")
 
-## 還站著、等級 level 的方塊（hits 為 0）
-func _standing(blocks: Array, level: int) -> Array:
-	return blocks.filter(func(w: Destructible) -> bool: return w.level == level and w.hits == 0)
 
-## 尼諾拉從房子後面（-Z）吐一顆火球打 target（boss._spit_fire 照它的規則設 wreck）。先確認射線真的先打到目標
-func _spit_at(m: Node, boss: Node3D, house: Node3D, target: Destructible) -> void:
-	var start: Vector3 = house.global_position + target.position + Vector3(0, 0, -4.0)
-	var space: PhysicsDirectSpaceState3D = m.get_viewport().world_3d.direct_space_state
+## 還站著、等級 level 的方塊編號
+func _standing(t: ToyBuild, level: int) -> Array:
+	var out := []
+	for i in t.brick_count():
+		if t.level_of(i) == level and t.is_standing(i):
+			out.append(i)
+	return out
+
+## 第一塊等級 level 的方塊編號（min_y：高於這棟原點幾公尺，預設不限；用來挑屋頂或地基）
+func _first_brick(t: ToyBuild, level: int, min_y := -INF) -> int:
+	for i in t.brick_count():
+		if t.level_of(i) == level and t.center_of(i).y - t.global_position.y > min_y:
+			return i
+	return -1
+
+## 第一塊還站著、等級 level、高於 min_y 的方塊編號
+func _first_standing(t: ToyBuild, level: int, min_y := -INF) -> int:
+	for i in _standing(t, level):
+		if t.center_of(i).y - t.global_position.y > min_y:
+			return i
+	return -1
+
+## 這棟本地座標 local 上的那一塊的編號（沒有就 -1）
+func _brick_at(t: ToyBuild, local: Vector3) -> int:
+	var g := t.global_transform * local
+	for i in t.brick_count():
+		if t.center_of(i).distance_to(g) < 0.01:
+			return i
+	return -1
+
+## 打第 i 塊一下（只打它：hit 只認它的中心）
+func _hit_brick(t: ToyBuild, i: int, max_level: int) -> void:
+	var c := t.center_of(i)
+	t.smash(func(p: Vector3) -> bool: return p.distance_to(c) < 0.01, max_level, Vector3.ZERO)
+
+## 尼諾拉從房子前面（-Z）吐一顆火球打第 i 塊（boss._spit_fire 設 wreck）。先確認射線真的先打到那一塊
+func _spit_at(m: Node, boss: Node3D, house: ToyBuild, i: int) -> void:
+	var start: Vector3 = house.center_of(i) + Vector3(0, 0, -4.0)
+	var space: PhysicsDirectSpaceState3D = house.get_world_3d().direct_space_state
 	var pre := space.intersect_ray(PhysicsRayQueryParameters3D.create(start, start + Vector3(0, 0, 7.5)))
-	_ck(pre.get(&"collider") == target, "火球的射線要先打到目標（%s）" % target.name)
+	_ck(pre.get(&"collider") == house and pre.get(&"shape") == i, "火球的射線要先打到目標（積木 %d）" % i)
 	boss._spit_fire(Vector3(0, 0, 1), start)
 	var fb: Fireball = m.get_node(^"Arena").get_children().filter(func(c: Node) -> bool: return c is Fireball).back()
 	fb._physics_process(0.3)   # 25 公尺／秒 × 0.3 秒 = 7.5 公尺，剛好打到目標
 
-## 房子裡某一塊（用房子的本地座標找）
-func _block_at(blocks: Array, local: Vector3) -> Destructible:
-	for w: Destructible in blocks:
-		if w.position.distance_to(local) < 0.01:
-			return w
-	return null
+## 玩具積木（toy_build.gd、greybox.gd bricks）：房子切成積木、安全屋和掩體拆不掉、連通檢查（懸空的鬆脫）、碎塊留在場上、
+## 碎塊停下來（主機送、各台一樣）、晚加入補送、新的一場還原、非派對模式甩尾也拆得到
+func _case_toy() -> void:
+	_toy_body()
+
+func _toy_body() -> void:
+	var Main: GDScript = load("res://main.gd")
+	var keep: String = Main.level_file
+	Main.level_file = ""
+	var m := _isolated_match()
+	_park(m)   # 物理那段才放回去（見 _with_first）
+	var party_house: ToyBuild = m.map._party_house
+	# 灰盒的房子是積木；切出來的塊不超過 1.5 × 0.75（斜坡整片一塊，不算）；每棟幾十到幾百塊
+	var recs: Array = m.map._level.filter(func(r: Dictionary) -> bool: return r.kind == &"gb_house")
+	var houses: Array = m.map._toys.filter(func(t: ToyBuild) -> bool: return t.can_break and t != party_house)
+	_ck(recs.size() > 0 and houses.size() == recs.size(), "灰盒房子每棟都是積木（%d 棟，積木 %d 棟）" % [recs.size(), houses.size()])
+	var lim_ok := true
+	var sized := true
+	for rec: Dictionary in recs:
+		var bl := Greybox.bricks(Greybox.house_pieces(rec.size, rec.floors, rec.big), rec.pos)
+		sized = sized and bl.size() >= 30 and bl.size() <= 2000   # 一般的 180 到 700 塊；最大的兩棟（高 13 公尺）過千
+		for b: Array in bl:
+			var xf: Transform3D = b[0]
+			var s: Vector3 = b[1]
+			if xf.basis.is_equal_approx(Basis()) and (s.x > Greybox.BRICK_W + 0.01 or s.z > Greybox.BRICK_W + 0.01 or s.y > Greybox.BRICK_H + 0.01):
+				lim_ok = false
+	_ck(lim_ok, "切出來的積木不超過 1.5 × 0.75（斜坡除外）")
+	_ck(sized, "每棟房子幾十到幾百塊")
+	var total := 0
+	for t: ToyBuild in m.map._toys:
+		total += t.brick_count()   # 每塊一個碰撞形狀
+	print("玩具積木：整張灰盒地圖 %d 個積木（%d 棟，每塊一個碰撞形狀）" % [total, m.map._toys.size()])
+	# 安全屋：積木、全部等級 3、不進 destructible；掩體方塊也不進 destructible
+	var safes := m.get_tree().get_nodes_in_group(&"safe_house")
+	var safe_ok := not safes.is_empty()
+	for s: Node in safes:
+		var st := s as ToyBuild
+		safe_ok = safe_ok and st != null and not st.can_break and not st.is_in_group(&"destructible")
+		if st:
+			for i in st.brick_count():
+				safe_ok = safe_ok and st.level_of(i) == 3
+	_ck(safe_ok, "安全屋是積木、全部等級 3、拆不掉（不進 destructible）")
+	var nblocks: int = m.map._level.filter(func(r: Dictionary) -> bool: return r.kind == &"gb_block" or r.kind == &"gb_safe").size()
+	var nonbreak: int = m.map._toys.filter(func(t: ToyBuild) -> bool: return not t.can_break).size()
+	_ck(nonbreak == nblocks, "掩體方塊和安全屋都是積木、拆不掉（%d 個）" % nblocks)
+	# 連通檢查：中間那塊拆掉，上面懸空的也鬆脫；底下的站著
+	var col := ToyBuild.make(_column_bricks())
+	col.name = "ToyCol"
+	m.map.add_child(col)
+	col.position = m.map._on_ground(Vector3(-50, 0, -50))
+	_hit_brick(col, 1, 1)
+	_ck(not col.is_standing(1) and not col.is_standing(2) and col.is_standing(0), "拆掉中間那塊，懸空的上面那塊也鬆脫，底下的站著")
+	var rb := _piece_node(col, 1)
+	_ck(rb is RigidBody3D and rb.collision_layer == 1 | Fighter.SOLID_LAYER and rb.is_in_group(&"toy_piece"), "鬆脫的塊變成碎塊（RigidBody3D、碰撞層 1 加 16、群組 toy_piece）")
+	_ck(_piece_node(col, 2) is RigidBody3D, "懸空的那塊也變成碎塊")
+	# 碎塊還在飛：沒停下來前是 RigidBody3D；4 秒後（主機送 _settle）換成靜態的，還在場上
+	col._physics_process(4.1)
+	var st := _piece_node(col, 2)
+	_ck(st is StaticBody3D and st.is_in_group(&"toy_piece") and not st.is_queued_for_deletion(), "4 秒後碎塊停下來（靜態），還在場上、沒被刪")
+	# 停下來的位置照主機算的擺（兩台一致）：直接呼叫 _settle 到指定位置
+	var ids := col.loose_ids()
+	var moved: Array = col.loose_xforms().map(func(x: Transform3D) -> Transform3D: return x.translated(Vector3(0, 1, 0)))
+	col._settle(ids, moved)
+	_ck(_piece_node(col, 1).global_transform.is_equal_approx(moved[0]) and _piece_node(col, 1) is StaticBody3D, "_settle 後碎塊到指定位置並凍住")
+	# 導航烘焙要讀得到凍住的碎塊（靜態碰撞體）：從碎塊本身解析，有頂點才算
+	var nm := NavigationMesh.new()
+	nm.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS
+	var sv := NavigationMeshSourceGeometryData3D.new()
+	NavigationServer3D.parse_source_geometry_data(nm, sv, _piece_node(col, 1))
+	_ck(sv.get_vertices().size() > 0, "導航烘焙讀得到凍住的碎塊（靜態碰撞體）")
+	# 晚加入：另一份積木照補送的資料擺，鬆脫的塊一樣、碎塊在同樣位置
+	var late := ToyBuild.make(_column_bricks())
+	late.name = "ToyLate"
+	m.map.add_child(late)
+	late.position = col.position
+	late._resume(ids, moved)
+	_ck(not late.is_standing(1) and not late.is_standing(2) and late.is_standing(0), "晚加入的人：鬆脫的塊一樣")
+	_ck(_piece_node(late, 1) != null and _piece_node(late, 1).global_transform.is_equal_approx(moved[0]) and _piece_node(late, 2).global_transform.is_equal_approx(moved[1]), "晚加入的人：碎塊在同樣位置")
+	_end_piece(late)   # 測試用的積木用完就收
+	# 挨一下沒倒（等級 2）：站著、扣了血、有挨打記號
+	var hurt := ToyBuild.make([[Transform3D(Basis(), Vector3(0, 0.75, 0)), Vector3(1.5, 1.5, 1.5), 2, Color.RED]])
+	hurt.name = "ToyHurt"
+	m.map.add_child(hurt)
+	hurt.position = m.map._on_ground(Vector3(-50, 0, -40))
+	_hit_brick(hurt, 0, 2)
+	_ck(hurt.is_standing(0) and hurt.hp_of(0) == 1 and hurt.has_damage() and hurt.get_parent().get_node_or_null(NodePath("%s_P0" % hurt.name)) == null, "等級 2 挨一下還站著、有挨打記號、沒有碎塊")
+	# 新的一場：碎塊刪掉、塊回來、血量回滿
+	col.restore()
+	_ck(_piece_node(col, 1) == null and col.loose_ids().is_empty() and col.is_standing(1) and col.hp_of(1) == 1 and not col.has_damage(), "新的一場：碎塊刪掉、塊回來、血量回滿")
+	hurt.restore()
+	_ck(not hurt.has_damage() and hurt.hp_of(0) == 2, "新的一場：挨一下的也回滿")
+	# 子彈穿材質：單塊的（等級 1 木板）力量 1 穿得過；安全屋沒有材質，照以前穿不過
+	_ck(Bullet.pierces(col, 1, 1) and not Bullet.pierces(col, 1, 0) and Bullet.pierces(col, 3, 0), "積木的子彈穿透照塊的等級")
+	# 非派對模式甩尾（_wreck_around）也拆得到積木；派對方塊房子這時藏著
+	m.rules = &"egg"
+	var base := Vector3(20, 0, -20)
+	var one := ToyBuild.make([[Transform3D(Basis(), Vector3(0, 0.75, 0)), Vector3(1.5, 1.5, 1.5), 1, Color.BLUE]])
+	one.name = "ToyOne"
+	m.map.add_child(one)
+	one.position = m.map._on_ground(base)
+	_ck(not m.party_mode() and not party_house.visible and party_house.collision_layer == 0 and not party_house.is_in_group(&"destructible"), "非派對模式：派對方塊房子藏起來、沒有碰撞")
+	_defer(4, func() -> void:
+		_with_first(m, func() -> void:
+			var b: Node3D = m.spawn_boss()
+			b.rotation.y = -PI * 0.5   # 背後朝 -X
+			b.global_position = m.map._on_ground(base + Vector3(4, BOSS_GD.LIFT, 0))
+			b._strike_sweep())
+		_ck(not one.is_standing(0), "非派對模式（死鬥）甩尾也拆得到積木（後方半圈）")
+		_free_map(m))
+	Main.level_file = keep
+
+## 連通檢查用的三塊直條：底下是地基（等級 3），中間一塊等級 1，最上面一塊等級 1 懸在中間那塊上面
+func _column_bricks() -> Array:
+	return [
+		[Transform3D(Basis(), Vector3(0, 0.25, 0)), Vector3(1.5, 0.5, 1.5), 3, Color(0.5, 0.5, 0.5)],
+		[Transform3D(Basis(), Vector3(0, 0.875, 0)), Vector3(1.5, 0.75, 1.5), 1, Color.RED],
+		[Transform3D(Basis(), Vector3(0, 1.625, 0)), Vector3(1.5, 0.75, 1.5), 1, Color.RED],
+	]
+
+## 碎塊的節點（已經排進刪除佇列的不算）
+func _piece_node(t: ToyBuild, i: int) -> Node3D:
+	var n: Node3D = t.get_parent().get_node_or_null(NodePath("%s_P%d" % [t.name, i]))
+	return null if n == null or n.is_queued_for_deletion() else n
+
+## 測試用的積木用完就收掉
+func _end_piece(t: ToyBuild) -> void:
+	t.get_parent().remove_child(t)
+	t.free()
 
 ## 派對畫面（party_hud.gd）：用沒放進場景樹的 Party（只裝值，request_respawn_at 改成記下來）驗各階段文字、分數板排序、選重生點
 func _case_party_hud() -> void:

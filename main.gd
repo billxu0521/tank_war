@@ -77,6 +77,8 @@ var _doors: Array[Door]:
 	get: return map._doors
 var _wrecks: Array[Destructible]:
 	get: return map._wrecks
+var _toys: Array[ToyBuild]:
+	get: return map._toys
 var _drift: Node3D:
 	get: return map._drift
 ## 場地的一行轉接（給牛仔、派對、bot 用，名字不變）
@@ -425,7 +427,7 @@ func _to_lobby(msg: String) -> void:
 	_show_cursor()
 	# 靶場是另一張地圖：回大廳就重載回牧場（測試自己組的場景不是 current_scene，不重載）。
 	# 甩尾拆過東西也重載：下一局（或加入別人的房間）場地要是完整的
-	var wrecked := _wrecks.any(func(w: Destructible) -> bool: return w.hits > 0)
+	var wrecked := _wrecks.any(func(w: Destructible) -> bool: return w.hits > 0) or _toys.any(func(t: ToyBuild) -> bool: return t.has_damage())
 	if mode == &"range" or wrecked:
 		mode = &""
 		if get_tree().current_scene == self:
@@ -1204,6 +1206,9 @@ func _spawn(id: int) -> void:
 		for w in _wrecks:
 			if w.hits > 0:
 				w._set_hits.rpc_id(id, w.hits, Vector3.ZERO, true)
+		for t in _toys:
+			if t.loose_ids().size() > 0:
+				t._resume.rpc_id(id, t.loose_ids(), t.loose_xforms())
 
 func _add_player(scene: PackedScene, id: int) -> Node3D:
 	var p: Node3D = scene.instantiate()

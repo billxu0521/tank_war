@@ -5,6 +5,7 @@ extends "res://tests/ui.gd"
 
 func _process(_delta: float) -> bool:
 	_frames += 1
+	_run_deferred()
 	if _frames == 1:
 		var Main: GDScript = load("res://main.gd")
 		Main.level_file = Main.RANCH_LEVEL   # 舊案例都是照牧場寫的（穀倉門、柵欄、農舍）；灰盒另外測（_case_greybox）
@@ -69,6 +70,7 @@ func _process(_delta: float) -> bool:
 		_case_party_map()
 		_case_party_destruction()
 		_case_party_cubes()
+		_case_toy()
 		_case_party_hud()
 		_case_buy_menu()
 		_case_party_gameplay()

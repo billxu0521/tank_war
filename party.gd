@@ -142,6 +142,10 @@ func start() -> void:
 		if w.hits > 0:
 			w.restore.rpc()
 			fixed = true
+	for t: ToyBuild in main._toys:   # 積木（房子、掩體）也立回來
+		if t.has_damage():
+			t.restore.rpc()
+			fixed = true
 	if fixed:
 		main.bake_nav(true)
 	scores.clear()
