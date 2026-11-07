@@ -269,7 +269,7 @@ func _build_level() -> void:
 			&"shop": _shop(p, rec.variant, rec.yaw)
 			&"water_tower": _water_tower(p, rec.yaw)
 			&"gb_house": _place_greybox(_toy(ToyBuild.make(Greybox.bricks(Greybox.house_pieces(rec.size, rec.floors, rec.big), p))), p, rec.yaw)
-			&"gb_block": _place_greybox(_toy(ToyBuild.make(Greybox.bricks(Greybox.block_pieces(rec.size), p), false)), p, rec.yaw)   # 掩體方塊：拆不掉（第二批再決定）
+			&"gb_block": _place_greybox(_toy(ToyBuild.make(Greybox.bricks(Greybox.block_pieces(rec.size), p))), p, rec.yaw)   # 掩體方塊：等級 2、拆得掉
 			&"gb_safe":   # 安全屋：一層的小灰盒房，門窗恐龍擠不進。全部等級 3、拆不掉（不進 destructible）
 				var safe := _toy(ToyBuild.make(Greybox.bricks(Greybox.house_pieces(rec.size, 1), p, 3), false))
 				safe.add_to_group(&"safe_house")

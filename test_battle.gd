@@ -71,6 +71,7 @@ func _process(_delta: float) -> bool:
 		_case_party_destruction()
 		_case_party_cubes()
 		_case_toy()
+		_case_toy_more()
 		_case_party_hud()
 		_case_buy_menu()
 		_case_party_gameplay()

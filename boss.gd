@@ -713,22 +713,28 @@ func _wreck_around(at: Vector3, dir: Vector3, radius: float, cos_half: float) ->
 	q.shape = sphere
 	q.transform = Transform3D(Basis(), at)
 	# 地面（地形）不要算：一個半徑 12 公尺的球會切到好幾百個地形面，把查詢的上限 256 佔滿，後面的樹和房子就漏掉了
-	var skip: Array[RID] = [get_rid()]
+	var exclude: Array[RID] = [get_rid()]
 	for g in get_tree().get_nodes_in_group(&"ground"):
 		if g is CollisionObject3D:
-			skip.append((g as CollisionObject3D).get_rid())
-	q.exclude = skip
+			exclude.append((g as CollisionObject3D).get_rid())
 	var done := {}
-	# ponytail: 一棟房子幾十塊碰撞各算一筆，上限給大一點；房子擠成一團漏掉幾個再加
-	for r: Dictionary in get_world_3d().direct_space_state.intersect_shape(q, 256):
-		var c: Object = r.collider
-		if c is ToyBuild and (c as ToyBuild).is_in_group(&"destructible") and not done.has(c):
-			done[c] = true
-			(c as ToyBuild).smash(func(p: Vector3) -> bool: return _in_fan(at, dir, p, radius, cos_half), 2, at)
-		elif c is Node3D and (c as Node3D).is_in_group(&"destructible") and not done.has(c) \
-				and _in_fan(at, dir, (c as Node3D).global_position, radius, cos_half):
-			done[c] = true
-			c.tail_hit(at)
+	var space := get_world_3d().direct_space_state
+	# 一棟大樓的每塊都是一個形狀，一次查詢會被它吃光上限（量到 667 筆）。滿了就把看過的物體排除再查，直到不滿
+	# ponytail: 最多查 32 輪（一輪 256 筆）；超過還滿就停，剩下的物體這次甩不到
+	for _round in 32:
+		q.exclude = exclude
+		var res := space.intersect_shape(q, 256)
+		for r: Dictionary in res:
+			var c: Object = r.collider
+			exclude.append(r.rid)
+			if c is Node3D and (c as Node3D).is_in_group(&"destructible") and not done.has(c):
+				done[c] = true
+				if c.has_method(&"smash"):   # 積木：每塊照位置算（_in_fan 看塊的中心），整棟一次
+					c.smash(func(p: Vector3) -> bool: return _in_fan(at, dir, p, radius, cos_half), 2, at)
+				elif _in_fan(at, dir, (c as Node3D).global_position, radius, cos_half):
+					c.tail_hit(at)
+		if res.size() < 256:
+			break
 
 ## 打中頭（Main.request_damage 帶 head 旗標進來）：蓄力中被打中頭就打斷、暈 STUN_TIME 秒
 func head_hit() -> void:

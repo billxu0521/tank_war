@@ -26,11 +26,23 @@ var _lv := PackedInt32Array()     # 等級：1、2 挨幾下倒，3 打不壞
 var _hp := PackedInt32Array()     # 還要挨幾下（主機才看）
 var _col: Array[Color] = []
 var _shape: Array[CollisionShape3D] = []
+var _off := PackedByteArray()     # 形狀是不是停用了（拆掉的塊）
 var _bb: Array[AABB] = []         # 每塊的邊界框（這棟的本地座標，連通檢查用）
 var _mm: MultiMesh
 var _pieces := {}                 # 鬆脫的塊編號 -> 碎塊節點（飛的時候是 RigidBody3D，停下來換成 StaticBody3D）
 var _age := {}                    # 碎塊飛了多久（主機用）
 var _touched := false             # 挨過打（鬆脫、或只挨一下），新的一場要還原
+var _need_bake := false           # 有碎塊還在飛：停下來之後主機要烘一次導航
+var _gone := {}                   # 鬆脫但沒生碎塊（一次超過 MAX_PIECES 的部分，直接藏起來）：編號 -> true
+var _hide_queue: Array = []       # 等著實體停用形狀的塊編號（見 HIDE_PER_FRAME）
+var _grid := {}                   # 連通檢查用的鄰居表：格子（Vector3i）-> 蓋到這格的塊編號。第一次要用時建，塊不會動
+const GRID := 1.6                 # 鄰居表的格子大小（公尺）
+# ponytail: 一次鬆脫最多生 300 個碎塊（每個都是 RigidBody 加一個網格、一個形狀，一次生 1275 個要 70 毫秒的一幀）。
+# 超過的塊直接藏起來、不生碎塊（晚加入的人也照樣藏）。要真的一棟一棟飛，調大這個數、或改共用網格
+const MAX_PIECES := 150
+# ponytail: 每停用一個形狀要 O(這棟的塊數) 的時間（1659 塊的大樓一個約 78 微秒），一次藏 1100 塊就卡一幀 110 毫秒。
+# 超過上限的塊邏輯上馬上算藏起來，實體的藏起來分到每幀 HIDE_PER_FRAME 個做（約 0.3 秒藏完）
+const HIDE_PER_FRAME := 64
 
 
 ## bricks：每塊 [Transform3D（相對這棟）, 尺寸 Vector3, 等級 int, 顏色 Color]（Greybox.bricks 切出來的）。
@@ -50,7 +62,6 @@ static func make(bricks: Array, can_break_ := true) -> ToyBuild:
 	mmi.multimesh = t._mm
 	mmi.material_override = material()
 	t.add_child(mmi)
-	t.set_physics_process(false)   # 只有主機在鬆脫後才開（碎塊停下來要主機送）
 	for i in bricks.size():
 		var b: Array = bricks[i]
 		var xf: Transform3D = b[0]
@@ -70,6 +81,7 @@ static func make(bricks: Array, can_break_ := true) -> ToyBuild:
 		cs.transform = xf
 		t.add_child(cs)
 		t._shape.append(cs)
+		t._off.append(0)
 	return t
 
 
@@ -89,7 +101,7 @@ func smash(hit: Callable, max_level: int, from: Vector3) -> void:
 	var loose := PackedByteArray()
 	loose.resize(n)
 	for i in n:
-		loose[i] = 1 if _pieces.has(i) else 0
+		loose[i] = 1 if (_pieces.has(i) or _gone.has(i)) else 0
 	var fresh := PackedInt32Array()
 	var hurt := false
 	for i in n:
@@ -102,18 +114,25 @@ func smash(hit: Callable, max_level: int, from: Vector3) -> void:
 		if _hp[i] <= 0:
 			loose[i] = 1
 			fresh.append(i)
-	for i in _unsupported(loose):
-		fresh.append(i)
+	if not fresh.is_empty():   # 沒有新鬆脫的塊，連通不會變（炸藥炸在空地就不用算）
+		for i in _unsupported(loose):
+			fresh.append(i)
 	if not fresh.is_empty():
-		_break.rpc(fresh, from)
+		_break.rpc(fresh.slice(0, MAX_PIECES), fresh.slice(MAX_PIECES), from)
 	elif hurt:
 		_hurt.rpc()
 
 
-## 連不到地面的塊（loose 為 1 的不算）：從著地的塊（頂面在 BASE_TOP 以下，或等級 3）順著邊界框相接（放大 0.05）一路找，找不到的回傳
-## ponytail: 每次拆都是 O(n²)（n 是這棟的塊數）：329 塊約 3 毫秒，1659 塊約 100 毫秒。慢了改成拆之前建鄰接表
+## 連不到地面的塊（loose 為 1 的不算）：從著地的塊（頂面在 BASE_TOP 以下，或等級 3）順著邊界框相接（放大 0.05）一路找，找不到的回傳。
+## 只看鄰居表（格子 GRID 公尺，每塊只跟蓋到同一格的比）：第一次用時建一次（1659 塊約 5 毫秒）
 func _unsupported(loose: PackedByteArray) -> PackedInt32Array:
 	var n := _xf.size()
+	if _grid.is_empty():
+		for i in n:
+			for c: Vector3i in _cells(_bb[i].grow(0.05)):
+				if not _grid.has(c):
+					_grid[c] = []
+				_grid[c].append(i)
 	var ok := PackedByteArray()
 	ok.resize(n)
 	var todo: Array[int] = []
@@ -124,10 +143,11 @@ func _unsupported(loose: PackedByteArray) -> PackedInt32Array:
 	while not todo.is_empty():
 		var a: int = todo.pop_back()
 		var ga := _bb[a].grow(0.05)
-		for j in n:
-			if loose[j] == 0 and ok[j] == 0 and ga.intersects(_bb[j]):
-				ok[j] = 1
-				todo.append(j)
+		for c: Vector3i in _cells(ga):
+			for j: int in _grid.get(c, []):
+				if loose[j] == 0 and ok[j] == 0 and ga.intersects(_bb[j]):
+					ok[j] = 1
+					todo.append(j)
 	var out := PackedInt32Array()
 	for i in n:
 		if loose[i] == 0 and ok[i] == 0:
@@ -137,8 +157,13 @@ func _unsupported(loose: PackedByteArray) -> PackedInt32Array:
 
 ## 鬆脫：每台拿掉碰撞、實例縮成 0，在同一個位置生碎塊、給衝量往外飛。主機重烘導航（碎塊還沒停下，先不算進去）
 @rpc("authority", "call_local", "reliable")
-func _break(ids: PackedInt32Array, from: Vector3) -> void:
+func _break(ids: PackedInt32Array, gone: PackedInt32Array, from: Vector3) -> void:
 	_touched = true
+	for i in gone:
+		_gone[i] = true
+		_hide_queue.append(i)
+	if not _hide_queue.is_empty():
+		set_physics_process(true)
 	var at := Vector3.ZERO
 	for i in ids:
 		var c := global_transform * _xf[i].origin
@@ -156,7 +181,7 @@ func _break(ids: PackedInt32Array, from: Vector3) -> void:
 	Fx.dust_ring(get_parent(), Vector3(at.x, global_position.y, at.z), 4.0, 30, 5.0, 1.4)
 	if multiplayer.is_server():
 		set_physics_process(true)
-		_bake()
+		_need_bake = true   # 碎塊停下來才烘（烘的時候碎塊要已經是靜態的）
 
 
 ## 挨了一下沒倒：各台抖一下、播打擊聲（照 Destructible._smash_fx）
@@ -171,13 +196,15 @@ func _hurt() -> void:
 func _settle(ids: PackedInt32Array, xfs: Array) -> void:
 	for k in ids.size():
 		_freeze(ids[k], xfs[k])
-	if multiplayer.is_server() and not ids.is_empty():
-		_bake()
 
 
 ## 晚加入：主機把鬆脫的塊和它們現在的位置補給他（直接到位、凍住、不播音效）
 @rpc("authority", "reliable")
-func _resume(ids: PackedInt32Array, xfs: Array) -> void:
+func _resume(ids: PackedInt32Array, xfs: Array, gone: PackedInt32Array) -> void:
+	for i in gone:
+		_touched = true
+		_hide_brick(i)
+		_gone[i] = true
 	for k in ids.size():
 		if _pieces.has(ids[k]):
 			continue
@@ -195,8 +222,10 @@ func restore() -> void:
 	_age.clear()
 	for i in _xf.size():
 		_hp[i] = _lv[i]
-		_shape[i].disabled = false
+		_set_off(i, false)
 		_mm.set_instance_transform(i, Transform3D(_xf[i].basis.scaled(_size[i]), _xf[i].origin))
+	_gone.clear()
+	_hide_queue.clear()
 	_touched = false
 	set_physics_process(false)
 
@@ -227,6 +256,14 @@ func loose_ids() -> PackedInt32Array:
 	return out
 
 
+## 藏起來沒生碎塊的塊（超過 MAX_PIECES 的那些）
+func gone_ids() -> PackedInt32Array:
+	var out := PackedInt32Array()
+	for i in _gone:
+		out.append(i)
+	return out
+
+
 func loose_xforms() -> Array:
 	var out := []
 	for i in _pieces:
@@ -243,7 +280,7 @@ func armor_of(shape: int) -> StringName:
 
 ## 測試用：塊現在還站著（沒鬆脫、沒被縮掉）、它的等級、剩幾下、它的世界中心
 func is_standing(i: int) -> bool:
-	return not _pieces.has(i) and not _shape[i].disabled
+	return not _pieces.has(i) and _off[i] == 0
 
 
 func level_of(i: int) -> int:
@@ -262,9 +299,20 @@ func brick_count() -> int:
 	return _xf.size()
 
 
+## 進場景樹時關掉每幀處理：只有主機在鬆脫後才開（_break），碎塊停下來就關
+func _ready() -> void:
+	set_physics_process(false)
+
+
 ## 碎塊的物理：主機每幀看一次，睡著或飛滿 SETTLE_TIME 秒的，送 _settle（連同它的位置）
 func _physics_process(delta: float) -> void:
+	var k := 0
+	while k < HIDE_PER_FRAME and not _hide_queue.is_empty():
+		_hide_brick(_hide_queue.pop_front())
+		k += 1
 	if not multiplayer.is_server():
+		if _hide_queue.is_empty():
+			set_physics_process(false)
 		return
 	var ids := PackedInt32Array()
 	var xfs := []
@@ -278,8 +326,23 @@ func _physics_process(delta: float) -> void:
 			xfs.append(n.global_transform)
 	if not ids.is_empty():
 		_settle.rpc(ids, xfs)
-	if _pieces.is_empty() or not _has_flying():
+	if _need_bake and not _has_flying():   # 這棟的碎塊全部停下來了：烘一次
+		_need_bake = false
+		_bake()
+	if not _has_flying() and _hide_queue.is_empty():
 		set_physics_process(false)
+
+
+## 邊界框蓋到的格子
+func _cells(bb: AABB) -> Array:
+	var a := Vector3i(floori(bb.position.x / GRID), floori(bb.position.y / GRID), floori(bb.position.z / GRID))
+	var b := Vector3i(floori(bb.end.x / GRID), floori(bb.end.y / GRID), floori(bb.end.z / GRID))
+	var out := []
+	for x in range(a.x, b.x + 1):
+		for y in range(a.y, b.y + 1):
+			for z in range(a.z, b.z + 1):
+				out.append(Vector3i(x, y, z))
+	return out
 
 
 func _has_flying() -> bool:
@@ -289,8 +352,14 @@ func _has_flying() -> bool:
 	return false
 
 
+## 形狀停用／啟用：直接叫物理伺服器（CollisionShape3D.disabled 每次要 78 微秒，一棟大樓一拆就卡一幀）
+func _set_off(i: int, off: bool) -> void:
+	_off[i] = 1 if off else 0
+	PhysicsServer3D.body_set_shape_disabled(get_rid(), i, off)
+
+
 func _hide_brick(i: int) -> void:
-	_shape[i].disabled = true
+	_set_off(i, true)
 	_mm.set_instance_transform(i, Transform3D(Basis.from_scale(Vector3.ZERO), Vector3.ZERO))
 
 
@@ -298,7 +367,8 @@ func _hide_brick(i: int) -> void:
 func _piece(i: int, flying: bool, xf: Transform3D) -> Node3D:
 	var n: Node3D = RigidBody3D.new() if flying else StaticBody3D.new()
 	n.name = "%s_P%d" % [name, i]
-	n.collision_layer = 1 | Fighter.SOLID_LAYER
+	n.collision_layer = collision_layer   # 跟這棟一樣（派對房子藏起來時碎塊也藏、沒有碰撞）
+	n.visible = visible
 	n.collision_mask = 1
 	n.add_to_group(&"toy_piece")
 	if can_break:
@@ -343,7 +413,7 @@ func _freeze(i: int, xf: Transform3D) -> void:
 	_piece(i, false, xf)
 
 
-## 碎塊停下來後要重烘導航（碎塊會擋恐龍的路）。照 Destructible：排隊、延後
+## 碎塊停下來後要重烘導航（碎塊會擋恐龍的路）：主機在這棟的碎塊全部停下來之後呼叫一次
 func _bake() -> void:
 	var g := get_tree().get_first_node_in_group(&"match")
 	if g and g.has_method(&"bake_nav"):

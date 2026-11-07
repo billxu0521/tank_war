@@ -68,7 +68,9 @@ func advance(delta: float) -> void:
 	if is_instance_valid(shooter):
 		exclude.append(shooter.get_rid())
 	var hit := {}
-	while true:
+	var steps := 0
+	while steps < 64:   # ponytail: 一發子彈最多穿 64 次（一棟房子的牆穿不了這麼多），超過就當打到
+		steps += 1
 		var q := PhysicsRayQueryParameters3D.create(from, to, mask, exclude)
 		hit = get_world_3d().direct_space_state.intersect_ray(q)
 		if hit.is_empty() or not pierces(hit["collider"], power, hit["shape"]):
@@ -77,8 +79,13 @@ func advance(delta: float) -> void:
 		_traveled += from.distance_to(hit["position"])
 		if is_instance_valid(fx):
 			fx.impact(hit["position"], hit["normal"], surface_of(hit["collider"]), sound)
-		exclude.append(hit["rid"])   # ponytail: 排除整個物體不是單一碰撞形狀。整棟房子標材質時，同一幀會連後牆一起穿，到時改排除形狀
-		from = hit["position"]
+		if hit["collider"].has_method(&"armor_of"):
+			# 積木：一棟一個物體，不排除整棟（後面幾塊還要照材質算）。從打到的點往前 0.02 公尺再找
+			# （起點在形狀裡面，物理不會再報同一塊）
+			from = hit["position"] + (to - from).normalized() * 0.02
+		else:
+			exclude.append(hit["rid"])
+			from = hit["position"]
 	if hit.is_empty():
 		_traveled += from.distance_to(to)
 		global_position = to

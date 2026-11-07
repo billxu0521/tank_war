@@ -137,17 +137,7 @@ func step(delta: float) -> void:
 
 ## 開新的一場：分數歸零、排參賽者、開第一回合
 func start() -> void:
-	var fixed := false
-	for w: Destructible in main._wrecks:   # 上一場拆掉的地形立回來
-		if w.hits > 0:
-			w.restore.rpc()
-			fixed = true
-	for t: ToyBuild in main._toys:   # 積木（房子、掩體）也立回來
-		if t.has_damage():
-			t.restore.rpc()
-			fixed = true
-	if fixed:
-		main.bake_nav(true)
+	main.restore_terrain()   # 上一場拆掉的樹、積木立回來
 	scores.clear()
 	names.clear()
 	round_index = 0
