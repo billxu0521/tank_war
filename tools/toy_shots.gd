@@ -66,11 +66,13 @@ func _process(_d: float) -> bool:
 	if _run_on and not _hit and _standing() < _house.brick_count():
 		_hit = true
 		_save("charge_1_hit")
-		print("撞到了：尼諾拉 x=%.1f，房子站著 %d 塊" % [_boss.global_position.x, _standing()])
+		print("撞到了：尼諾拉 x=%.2f，房子站著 %d 塊" % [_boss.global_position.x, _standing()])
 		_after_t = 0.0
+	if _run_on and _run_t > 0.0 and int(_run_t * 4) != int((_run_t - 0.02) * 4):
+		print("跑 %.2f 秒 x=%.1f y=%.2f floor=%s 房子站著 %d" % [_run_t, _boss.global_position.x, _boss.global_position.y, str(_boss.is_on_floor()), _standing()])
 	if _after_t >= 0.8:
 		_save("charge_2_after")
-		print("之後：房子站著 %d 塊（共 %d 塊）；場上碎塊 %d 個" % [_standing(), _house.brick_count(), _pieces()])
+		print("之後：尼諾拉 x=%.1f y=%.2f floor=%s；房子站著 %d 塊（共 %d 塊）；場上碎塊 %d 個" % [_boss.global_position.x, _boss.global_position.y, str(_boss.is_on_floor()), _standing(), _house.brick_count(), _pieces()])
 		return true
 	if _run_t > 5.0:
 		print("跑了 5 秒還沒撞到房子")
@@ -113,13 +115,21 @@ func _setup() -> void:
 	var sc := (st.global_position + fe.global_position) * 0.5
 	_shots.append(["stones_fence", sc + Vector3(0, 2.5, 7.0), sc + Vector3(0, 0.8, 0)])
 	_shots.append(["ground", row[0].global_position + Vector3(0, 1.4, 4.0), row[0].global_position + Vector3(0, 0, 0)])
-	_shots.append(["town", _hc + Vector3(-26, 13, 34), _hc + Vector3(0, 3, 0)])
+	_shots.append(["town", _hc + Vector3(-55, 40, 75), _hc + Vector3(0, 0, 0)])
+	# 房子的邊界框（本地座標，各塊 AABB 合起來）
+	var bb: AABB = _house._bb[0]
+	for i in _house.brick_count():
+		bb = bb.merge(_house._bb[i])
+	print("房子邊界框（本地）位置 %s 大小 %s；世界中心 %s" % [str(bb.position), str(bb.size), str(_hc)])
 	_boss = _main.spawn_boss()
 	_boss.set_physics_process(false)
-	_boss.global_position = _main.boss_on_ground(_hc + Vector3(-16, 0, 0))
+	# 尼諾拉放在房子 -X 那面牆外 BODY_RADIUS + 10 公尺，面向 +X（後面朝 -X）
+	var wall_x: float = _hc.x + bb.position.x
+	var zc: float = _hc.z + bb.get_center().z
+	_boss.global_position = _main.boss_on_ground(Vector3(wall_x - _boss.BODY_RADIUS - 10.0, 0, zc))
 	_boss.rotation.y = -PI * 0.5
 	_boss.velocity = Vector3.ZERO
-	print("房子 %d 塊，尼諾拉在它前面 16 公尺" % _house.brick_count())
+	print("生出來時房子站著 %d／%d 塊；尼諾拉 x=%.1f" % [_standing(), _house.brick_count(), _boss.global_position.x])
 
 func _standing() -> int:
 	var n := 0
