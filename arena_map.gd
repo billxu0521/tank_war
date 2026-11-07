@@ -1,7 +1,7 @@
 class_name ArenaMap
 extends Node3D
 ## 場地：地形、農舍、穀倉、柵欄、灌木、草、撤離區、靶場……（原本全在 main.gd）。掛在 main.tscn 的 Arena 節點上，main 的 _ready 叫它蓋。
-## 蓋的順序不能動：Door、Destructible 的 RPC 靠 Arena/Door0…、Arena/Wreck0… 的節點名字找到它們。
+## 蓋的順序不能動：Door、ToyBuild 的 RPC 靠 Arena/Door0…、Arena/Toy0… 的節點名字找到它們。
 
 @onready var main: Node = get_parent()   # 掛它的 main：讀 mode、greybox、level_path（main.gd 沒有 class_name，用實例讀）
 var greybox: bool:
@@ -75,7 +75,6 @@ var spawn_points: Array[Vector3] = []   # 牛仔出生／重生候選點（擺�
 var dino_spawn := Vector3.ZERO           # 恐龍出生點（擺設種類 dino_spawn）；沒放就是場地中央貼地
 var _houses_built := 0   # 第幾棟農舍：三種輪流蓋（不用亂數，後面擺的東西位置才不會跟著變）
 var _doors: Array[Door] = []   # 晚加入的人連進來時，把開著的門補送給他
-var _wrecks: Array[Destructible] = []   # 拆得掉的地形（destructible.gd）：晚加入的人連進來時，把打過的補送給他
 var _party_at := Vector3.INF   # 派對方塊房子的位置（灰盒才找；INF = 沒有）
 var _toys: Array[ToyBuild] = []   # 積木（toy_build.gd）：灰盒的房子、掩體、安全屋，和派對的方塊房子。每台蓋的順序一樣，名字 Toy0、Toy1…
 var _party_house: ToyBuild     # 方塊房子（greybox.gd cube_house）：每台都蓋，不是派對就藏起來（set_party_house）
@@ -109,7 +108,7 @@ func _build_arena() -> void:
 			[Vector3(-e, WALL_H * 0.5, 0), Vector3(WALL_T, WALL_H, long)]]:
 		var wall := _solid_box(w[0], w[1])
 		wall.add_to_group(&"arena_wall")
-	var far_color := (func(_x: float, _z: float, _h: float) -> Color: return Color(0.42, 0.44, 0.4)) if greybox else _ground_color   # 灰盒：場外跟地面一樣灰
+	var far_color := (func(_x: float, _z: float, _h: float) -> Color: return Greybox.GROUND_COLOR) if greybox else _ground_color   # 灰盒：場外跟地面一樣（玩具地墊的淡綠）
 	add_child(FarLand.build(_terrain, far_color, [_props[&"TreeOakM"], _props[&"TreeOakS"], _props[&"Bush"],
 		_props[&"TreePine2"], _props[&"Saguaro"]],
 		_props[&"FenceRail"], FENCE_SEG))
@@ -282,7 +281,9 @@ func _build_level() -> void:
 			&"bush":
 				# 埋一點，斜坡下坡那側才不會懸空。灌木幾百叢，用 MultiMesh 一次畫完
 				bushes.append(Transform3D(Basis(Vector3.UP, rec.yaw).scaled(rec.size), _on_ground(p) + Vector3.DOWN * 0.15))
-	_scatter(&"Bush", bushes, true)
+	var bush_mi := _scatter(&"Bush", bushes, true)
+	if greybox:
+		bush_mi.material_override = Greybox.bush_material()   # 玩具風：圓圓的綠色塑膠感，形狀不動
 
 ## 灰盒的房子、方塊：貼地擺好。網格合併過，一棟一次繪製
 func _place_greybox(body: StaticBody3D, p: Vector3, yaw: float) -> void:
@@ -329,17 +330,6 @@ func _party_house_spot() -> void:
 	_put({kind = &"flat", pos = best, r = 7.0})
 	_block(best, Vector2(6, 6), 3.0)
 
-## 拆得掉的地形（destructible.gd，等級 level：1、2 挨 level 下倒，3 打不壞）：照蓋的順序取名 Wreck0、Wreck1…，每台一樣，RPC 才找得到同一個
-func _destructible(body: StaticBody3D, level: int, visual: Node3D = null) -> StaticBody3D:
-	body.set_script(Destructible)
-	var w: Destructible = body
-	w.name = "Wreck%d" % _wrecks.size()
-	w.level = level
-	w.hits_needed = level
-	w.visual = visual
-	w.add_to_group(&"destructible")
-	_wrecks.append(w)
-	return w
 
 ## 自動擺一份初稿：固定種子的亂數，每台機器擺出來一樣。手調過的場景檔存在時不會跑這個
 func _generate_level() -> void:
@@ -533,24 +523,30 @@ func _near_bush(p: Vector3, r: float) -> bool:
 			return true
 	return false
 
-## 一顆石頭：往下埋一點（斜坡上才不會懸空）。solid 的用模型的凸包當碰撞，擋人也擋子彈
+## 一顆石頭（積木，玩具風）：照模型的邊界框疊兩塊灰色、米色的，等級 3（打不壞）。有碰撞的才擺：擋人也擋子彈，子彈打到噴石屑（群組 stone）。
+## 往下埋一點（斜坡上才不會懸空）。沒碰撞的小石頭直接不擺（ponytail: 純裝飾，省事；要的話加一塊不碰撞的方塊）
 func _rock(kind: StringName, p: Vector3, s: float, yaw: float, solid: bool) -> void:
-	var at := _on_ground(p) + Vector3.DOWN * 0.15 * s
-	var mesh: Mesh = _props.get(kind)
-	if solid:
-		var hull := mesh.create_convex_shape() as ConvexPolygonShape3D
-		var pts := PackedVector3Array()
-		for v in hull.points:
-			pts.append(v * s)
-		var shape := ConvexPolygonShape3D.new()
-		shape.points = pts
-		var body := _body(at, shape)
-		body.add_to_group(&"stone")   # 子彈打到噴石屑
-		body.rotation.y = yaw
-		_prop(kind, Vector3.ZERO, Vector3.ONE * s, body)
-	else:
-		var mi := _prop(kind, at, Vector3.ONE * s)
-		mi.rotation.y = yaw
+	if not solid:
+		return
+	var box: AABB = (_props.get(kind) as Mesh).get_aabb()
+	var w := box.size.x * s
+	var h := box.size.y * s
+	var d := box.size.z * s
+	var key := Vector3(p.x, 0.0, p.z)
+	var bricks := [
+		[Transform3D(Basis(), Vector3(0, h * 0.3, 0)), Vector3(w, h * 0.6, d), 3, _toy_paint(Color(0.56, 0.55, 0.5), key)],
+		[Transform3D(Basis(), Vector3(w * 0.12, h * 0.8, d * 0.05)), Vector3(w * 0.7, h * 0.4, d * 0.7), 3, _toy_paint(Color(0.74, 0.68, 0.56), key + Vector3(1, 0, 0))],
+	]
+	var body := _toy(ToyBuild.make(bricks, false))   # 不能拆（等級 3、不進 destructible）
+	body.add_to_group(&"stone")   # 子彈打到噴石屑
+	body.position = _on_ground(p) + Vector3.DOWN * 0.15 * s
+	body.rotation.y = yaw
+	add_child(body)
+
+## 玩具色：同一個顏色每塊亮度 ±5%，用位置算（不用亂數，每台一樣）
+static func _toy_paint(c: Color, key: Vector3) -> Color:
+	var j := Greybox._jitter(key) * 0.05
+	return Color(c.r * (1.0 + j), c.g * (1.0 + j), c.b * (1.0 + j))
 
 ## 蹲在灌木叢裡（離某叢中心 1.2 公尺內）：灌木 1.5 公尺高，站著頭會露出來，蹲下才藏得住
 func hidden_in_bush(who: Node3D) -> bool:
@@ -1433,28 +1429,28 @@ func _silo(p: Vector3, h: float) -> void:
 	_prop(&"SiloBody", p, Vector3(1, h / SILO_BASE_H, 1))
 	_prop(&"SiloDome", p + Vector3(0, h, 0))
 
-## 柵欄：碰撞是一整片 1 公尺高的板子——剛好在翻越範圍內。外觀是一段段 2.5 公尺的
-## 木樁＋橫木排過去（長度不整除就每段稍微拉長），最後補一根收尾的木樁
-func _fence(p: Vector3, length: float, yaw: float) -> StaticBody3D:
-	var body := StaticBody3D.new()
-	# 兩端各自貼地，整段沿著坡度斜過去。p.y 是離地高度（沙盒的練習柵欄用）。yaw 0 沿 X，-90 度沿 +Z
+## 柵欄（積木，玩具風）：每 FENCE_SEG 公尺一根柱子、柱子中間一整片薄板（一片高 FENCE_H），都是等級 1（一下就拆）。
+## 薄板的碰撞就是整段 0 到 FENCE_H 的板子，跟以前一樣（翻越的高度和擋人都不變）；兩條橫木的縫會讓翻越的射線從縫裡穿過去，所以不分兩條。
+## 柱子和薄板從地下 0.1 公尺起算（埋一點，斜坡上不懸空）。兩端各自貼地，整段沿著坡度斜過去。p.y 是離地高度（沙盒的練習柵欄用）。yaw 0 沿 X，-90 度沿 +Z
+func _fence(p: Vector3, length: float, yaw: float) -> ToyBuild:
 	var dir := Basis(Vector3.UP, yaw) * Vector3.RIGHT
 	var a := _on_ground(p - dir * length * 0.5)
 	var b := _on_ground(p + dir * length * 0.5)
 	var x := (b - a).normalized()
 	var z := x.cross(Vector3.UP).normalized()
-	body.transform = Transform3D(Basis(x, z.cross(x), z), (a + b) * 0.5)
-	var shape := BoxShape3D.new()
-	shape.size = Vector3(length, FENCE_H, 0.2)
-	var cs := CollisionShape3D.new()
-	cs.shape = shape
-	cs.position.y = FENCE_H * 0.5
-	body.add_child(cs)
 	var n := maxi(ceili(length / FENCE_SEG), 1)
 	var seg := length / n
+	var pal := Greybox.TOY_COLORS
+	var bricks := []
+	for i in n + 1:
+		bricks.append([Transform3D(Basis(), Vector3(-length * 0.5 + i * seg, (FENCE_H - 0.1) * 0.5, 0.0)),
+			Vector3(0.3, FENCE_H + 0.1, 0.3), 1, pal[i % pal.size()]])
 	for i in n:
-		_prop(&"FenceRail", Vector3(-length * 0.5 + (i + 0.5) * seg, 0, 0), Vector3(seg / FENCE_SEG, 1, 1), body)
-	_prop(&"FencePost", Vector3(length * 0.5, 0, 0), Vector3.ONE, body)
+		var cx := -length * 0.5 + (i + 0.5) * seg
+		bricks.append([Transform3D(Basis(), Vector3(cx, (FENCE_H - 0.1) * 0.5, 0.0)), Vector3(seg, FENCE_H + 0.1, 0.12), 1, pal[(i + 2) % pal.size()]])
+	var body := _toy(ToyBuild.make(bricks))
+	body.transform = Transform3D(Basis(x, z.cross(x), z), (a + b) * 0.5)
+	body.add_to_group(&"fence")   # 測試用：數柵欄（積木，拆得掉）
 	add_child(body)
 	return body
 
@@ -1467,22 +1463,50 @@ func _hay_bale(p: Vector3, yaw: float) -> StaticBody3D:
 	_prop(&"HayBale", Vector3.ZERO, Vector3.ONE, body)
 	return body
 
-## 樹：只有樹幹有碰撞，擋子彈；樹冠擋視線不擋子彈，躲在樹下只是比較難被看到。
-## pine_chance：林子邊緣混一點松樹，果園只種闊葉樹
+## 樹（積木，玩具風）：樹幹棕色 2～3 塊（等級 2，挨兩下才拆掉一塊；樹幹斷了，上面的樹冠跟著鬆脫），
+## 樹冠綠色 3 塊（等級 1，一下就拆）。松樹（TreePine、TreePine2）樹冠疊成四層的金字塔；仙人掌（Saguaro、SaguaroS）是綠色的細長塊疊的。
+## 樹有碰撞、擋子彈和視線，但不加 SOLID_LAYER：關碰撞物件時尼諾拉穿過樹（群組 tree，見 _build_arena 的掃描）。
+## 樹幹底下埋一點（-0.3 公尺）：斜坡上樹根的下坡那側才不會懸空
 func _tree(rec: Dictionary) -> void:
-	var p := _on_ground(rec.pos) + Vector3.DOWN * 0.3   # 往下埋一點：斜坡上樹根的下坡那側才不會懸空
 	var s: float = rec.s
-	var body: StaticBody3D
-	if rec.mesh == &"TreePine":
-		var h := s * TREE_BASE_TRUNK
-		body = _solid_cyl(p + Vector3(0, h * 0.5, 0), 0.35, h)
+	var kind: StringName = rec.mesh
+	var cactus := kind == &"Saguaro" or kind == &"SaguaroS"
+	var pine := kind.begins_with("TreePine")
+	var r: float
+	var h: float
+	if kind == &"TreePine":   # 松樹的樹幹高度照 TREE_BASE_TRUNK（和原本的碰撞圓柱一樣）
+		r = 0.35 * s
+		h = s * TREE_BASE_TRUNK
 	else:
-		var trunk: Array = TREE_KINDS[rec.mesh]
-		body = _solid_cyl(p + Vector3(0, trunk[1] * s * 0.5, 0), trunk[0] * s, trunk[1] * s)
-	var mi := _prop(rec.mesh, p, Vector3.ONE * s)
-	mi.rotation.y = rec.yaw
-	var tree := _destructible(body, 2, mi)   # 甩兩下才倒（草案 4.2 等級 2）
-	tree.add_to_group(&"tree")   # 關碰撞物件時尼諾拉穿過樹（見 _build_arena 的掃描）
+		r = TREE_KINDS[kind][0] * s
+		h = TREE_KINDS[kind][1] * s
+	var key := Vector3(rec.pos.x, 0.0, rec.pos.z)   # 顏色的亮度用位置算，每台一樣
+	var bricks := []
+	var w := maxf(0.6, 2.0 * r)
+	var nt := (4 if h > 3.0 else 3) if cactus else (3 if h > 3.0 else 2)
+	var bh := h / nt
+	var base := -0.3
+	var trunk_c := Color(0.25, 0.6, 0.3) if cactus else Color(0.45, 0.3, 0.16)
+	for k in nt:
+		bricks.append([Transform3D(Basis(), Vector3(0, base + (k + 0.5) * bh, 0)), Vector3(w, bh, w), 2, _toy_paint(trunk_c, key + Vector3(0, k, 0))])
+	var top := base + h
+	if pine:   # 金字塔：四層，由下往上越來越窄，由深到淺
+		var ph := 1.0 * s
+		var ws := [3.4, 2.6, 1.8, 1.0]
+		var greens := [Color(0.13, 0.4, 0.17), Color(0.17, 0.46, 0.2), Color(0.22, 0.54, 0.24), Color(0.3, 0.62, 0.3)]
+		for k in 4:
+			var bw: float = ws[k] * s
+			bricks.append([Transform3D(Basis(), Vector3(0, top + (k + 0.5) * ph, 0)), Vector3(bw, ph, bw), 1, _toy_paint(greens[k], key + Vector3(k, 1, 0))])
+	elif not cactus:   # 闊葉樹：底下一大塊、中間一塊偏一邊、頂上一塊偏另一邊，三塊都是綠色的深淺
+		var d := 1.1 * h
+		bricks.append([Transform3D(Basis(), Vector3(0, top + 0.4 * d, 0)), Vector3(d, 0.8 * d, d), 1, _toy_paint(Color(0.2, 0.5, 0.2), key)])
+		bricks.append([Transform3D(Basis(), Vector3(0.15 * d, top + 1.1 * d, 0.1 * d)), Vector3(0.7 * d, 0.6 * d, 0.7 * d), 1, _toy_paint(Color(0.3, 0.66, 0.26), key + Vector3(1, 0, 0))])
+		bricks.append([Transform3D(Basis(), Vector3(-0.1 * d, top + 1.65 * d, -0.1 * d)), Vector3(0.45 * d, 0.5 * d, 0.45 * d), 1, _toy_paint(Color(0.45, 0.78, 0.32), key + Vector3(0, 1, 1))])
+	for k in range(nt, bricks.size()):   # 樹冠沒有碰撞：看得到、擋視線，不擋子彈、不擋路、導航也不算（老設計）
+		bricks[k].append(false)
+	var t := _toy(ToyBuild.make(bricks, true, 1))   # 層 1：不加 SOLID_LAYER（見上面）
+	t.add_to_group(&"tree")
+	_place_greybox(t, rec.pos, rec.yaw)
 
 ## 人字屋頂的碰撞：兩片斜板。斜度在 45 度以內，恐龍爬上來站得住。
 ## 外觀在 Blender 的模型裡（blender/props.py 的 gable_roof() 照這個擺法建的）
@@ -1611,11 +1635,13 @@ func _solid_mesh(pos: Vector3, mesh: Mesh, scale: Vector3) -> StaticBody3D:
 
 ## 一次撒幾千個一樣的東西（麥子、草叢）：MultiMesh 一次畫完，一叢一個節點會卡。
 ## 不投影子：幾千叢的影子很貴，而且貼著地面本來就看不太出來
-func _scatter(name: StringName, pts: Array[Transform3D], shadows := false) -> void:
-	_scatter_mesh(_props.get(name), pts, shadows)
+func _scatter(name: StringName, pts: Array[Transform3D], shadows := false) -> MultiMeshInstance3D:
+	return _scatter_mesh(_props.get(name), pts, shadows)
 
-func _scatter_mesh(mesh: Mesh, pts: Array[Transform3D], shadows := false) -> void:
-	add_child(FarLand._scatter(mesh, pts, shadows))   # 整片一個 MultiMesh（試過分塊：影子少兩成三角形，繪製指令卻多一倍，不划算）
+func _scatter_mesh(mesh: Mesh, pts: Array[Transform3D], shadows := false) -> MultiMeshInstance3D:
+	var mi := FarLand._scatter(mesh, pts, shadows)   # 整片一個 MultiMesh（試過分塊：影子少兩成三角形，繪製指令卻多一倍，不划算）
+	add_child(mi)
+	return mi
 
 ## 擺一個 Blender 建的場景物件（models/props.glb）。parent 預設是場地
 func _prop(name: StringName, pos: Vector3, scale := Vector3.ONE, parent: Node = null) -> MeshInstance3D:

@@ -72,6 +72,7 @@ func _process(_delta: float) -> bool:
 		_case_party_cubes()
 		_case_toy()
 		_case_toy_more()
+		_case_toy_b()
 		_case_party_hud()
 		_case_buy_menu()
 		_case_party_gameplay()
@@ -82,8 +83,8 @@ func _process(_delta: float) -> bool:
 		return false
 	# 剩下的要跨好幾個 frame 才驗得到。總幀數設上限：腳本編譯壞掉時各階段等不到條件，
 	# 沒有上限測試會永遠卡住，而不是回報失敗
-	if _frames > 3000:
-		_ck(false, "測試跑超過 3000 幀還沒結束（卡在第 %d 階段）" % _phase)
+	if _frames > 6000:   # 全部的階段加起來（玩具積木的物理階段最長，見 dino.gd 的 _toyb_physics）
+		_ck(false, "測試跑超過 6000 幀還沒結束（卡在第 %d 階段）" % _phase)
 		return _done()
 	match _phase:
 		0:  # 牛仔開槍打恐龍。等一個物理幀讓位置進到物理世界，射線才打得到；

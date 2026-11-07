@@ -75,8 +75,6 @@ var dino_spawn: Vector3:
 	get: return map.dino_spawn
 var _doors: Array[Door]:
 	get: return map._doors
-var _wrecks: Array[Destructible]:
-	get: return map._wrecks
 var _toys: Array[ToyBuild]:
 	get: return map._toys
 var _drift: Node3D:
@@ -415,6 +413,8 @@ func _to_lobby(msg: String) -> void:
 		party = null
 	egg.visible = true
 	for n in get_tree().get_nodes_in_group(&"sandbox_prop"):
+		if n is ToyBuild:   # 沙盒的柵欄是積木，登記在 _toys 裡：free 前要拿掉，不然補送、還原會碰到已釋放的
+			map._toys.erase(n)
 		n.free()
 	_time_left = 0.0
 	_respawn_queue.clear()
@@ -427,7 +427,7 @@ func _to_lobby(msg: String) -> void:
 	_show_cursor()
 	# 靶場是另一張地圖：回大廳就重載回牧場（測試自己組的場景不是 current_scene，不重載）。
 	# 甩尾拆過東西也重載：下一局（或加入別人的房間）場地要是完整的
-	var wrecked := _wrecks.any(func(w: Destructible) -> bool: return w.hits > 0) or _toys.any(func(t: ToyBuild) -> bool: return t.has_damage())
+	var wrecked := _toys.any(func(t: ToyBuild) -> bool: return t.has_damage())
 	if mode == &"range" or wrecked:
 		mode = &""
 		if get_tree().current_scene == self:
@@ -1203,12 +1203,9 @@ func _spawn(id: int) -> void:
 		for d in _doors:   # 門的開關不走同步器，晚來的人要補送一次
 			if d.is_open:
 				d._set_open.rpc_id(id, true)
-		for w in _wrecks:
-			if w.hits > 0:
-				w._set_hits.rpc_id(id, w.hits, Vector3.ZERO, true)
 		for t in _toys:
-			if t.loose_ids().size() + t.gone_ids().size() > 0:
-				t._resume.rpc_id(id, t.loose_ids(), t.loose_xforms(), t.gone_ids())
+			if t.has_damage():
+				t.send_state_to(id)
 
 func _add_player(scene: PackedScene, id: int) -> Node3D:
 	var p: Node3D = scene.instantiate()
@@ -1501,13 +1498,9 @@ func _physics_process(delta: float) -> void:
 		_next_round = NEXT_ROUND_DELAY
 		_finish.rpc(RULES[rules].timeout_msg)
 
-## 拆過的地形立回來（新的一局、派對的新的一場；主機呼叫）：樹（Destructible）和積木（ToyBuild）。回傳有沒有立回來的，有就烘導航
+## 拆過的積木（房子、掩體、樹）立回來（新的一局、派對的新的一場；主機呼叫）。回傳有沒有立回來的，有就烘導航
 func restore_terrain() -> bool:
 	var fixed := false
-	for w: Destructible in _wrecks:
-		if w.hits > 0:
-			w.restore.rpc()
-			fixed = true
 	for t: ToyBuild in _toys:
 		if t.has_damage():
 			t.restore.rpc()

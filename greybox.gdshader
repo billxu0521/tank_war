@@ -5,6 +5,7 @@ shader_type spatial;
 uniform vec3 base : source_color = vec3(0.72);
 uniform vec3 floor_color : source_color = vec3(0.5);
 uniform float line = 0.22;   // 格線壓暗多少
+uniform float cell = 1.0;    // 格子大小（公尺）；地面用 2（玩具地墊）
 
 varying vec3 wp;
 varying vec3 wn;
@@ -25,7 +26,7 @@ void fragment() {
 	vec3 n = abs(wn);
 	vec2 uv = n.y > max(n.x, n.z) ? wp.xz : (n.x > n.z ? wp.zy : wp.xy);
 	vec3 c = wn.y > 0.7 ? floor_color : base;
-	ALBEDO = c * (1.0 - line * grid(uv));
+	ALBEDO = c * (1.0 - line * grid(uv / cell));
 	ROUGHNESS = 0.95;
 	SPECULAR = 0.0;
 }

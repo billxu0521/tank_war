@@ -216,14 +216,18 @@ func _case_boss_fixes() -> void:
 	# 6. 甩尾拆地形：查詢球心在腳底。矮的可拆方塊（1.2 公尺）在尾根水平 11.5 公尺：球心在身體中心時打不到，腳底才打得到
 	m = _offline_match()
 	m.rules = &"party"
-	var blk: StaticBody3D = m.map._destructible(Greybox.block(Vector3(4.0, 1.2, 0.4)), 1)
+	var blk := ToyBuild.make(Greybox.bricks(Greybox.block_pieces(Vector3(4.0, 1.2, 0.4)), Vector3.ZERO))   # 積木（等級 2，挨一下扣一下）
+	m.map._toy(blk)
 	m.map._place_greybox(blk, Vector3(0, 0, 60 + 11.7), 0.0)   # 長邊朝 X，最近的一點離尾根 11.5 公尺
 	b = m.spawn_boss()
 	b.rotation.y = 0.0   # 後方是 +Z
 	b.global_position = m.boss_on_ground(Vector3(0, 0, 60 - b.SWEEP_ROOT_BACK))
-	var hits0: int = blk.hits
 	b._strike_sweep()
-	_ck(blk.hits == hits0 + 1, "甩尾拆地形：矮的可拆方塊（尾根水平 11.5 公尺、高 1.2）要拆得到（hits %d → %d）" % [hits0, blk.hits])
+	var hurt := 0
+	for i in blk.brick_count():
+		if blk.hp_of(i) < blk.level_of(i):
+			hurt += 1
+	_ck(hurt > 0, "甩尾拆地形：矮的積木（尾根水平 11.5 公尺、高 1.2）要挨得到（%d 塊扣了血）" % hurt)
 	m.rules = &"match"
 	_end(m)
 
@@ -665,6 +669,8 @@ func _on_ground_now(m: Node, b: Node3D) -> bool:
 
 ## 每個物理幀推一步（回傳 true 就結束整個測試，同 _process 的慣例）
 func _physics_process(delta: float) -> bool:
+	if _phase == 6:
+		return _toyb_physics(delta)
 	if _phase != 5:
 		return false
 	_nc_n += delta
@@ -720,7 +726,7 @@ func _physics_process(delta: float) -> bool:
 				var foot: float = b.get_node(^"Trex")._foot_world(0, 0.0).y
 				_ck(foot < ground_y + 1.0, "關碰撞物件：腳不踩上樹冠，貼地（腳 y=%.2f）" % foot)
 				_ck(b.collision_mask == Fighter.SOLID_LAYER, "關掉之後遮罩回到只留第 5 層")
-				return _done()
+				_start_toyb_case()
 	return false
 
 func _nc_next(stage: int) -> void:
@@ -1012,3 +1018,149 @@ func _fb_end() -> void:
 	root.remove_child(_fb_world)
 	_fb_world.free()
 	root.multiplayer.multiplayer_peer = null
+
+## ---- 玩具積木第二批的物理（docs/規劃/2026-11-08-玩具積木場景-二.md）：尼諾拉跑步撞積木就拆、走路撞不拆、跑過碎塊會踢開、不會卡住。
+## 接在碰撞物件後面（_phase 6，由 _physics_process 每個物理幀推）。boss 自己的思考關掉，這裡直接推 _move
+var _tb_m: Node
+var _tb_b: Node3D
+var _tb_wall: ToyBuild
+var _tb_pile: ToyBuild
+var _tb_stage := 0
+var _tb_n := 0.0   # 這一段跑了幾秒（物理時間，不數幀）
+var _tb_before := {}   # 踢之前每個碎塊的位置（代表塊 -> 位置）
+var _tb_kick_block: ToyBuild
+var _tb_kx := 0.0
+var _tb_kick_pos0 := Vector3.ZERO
+var _tb_kick_checked := false
+var _tb_z0 := 0.0   # 墙的車道（沿 X 跑）：挑一段空地，不撞到房子
+var _tb_z1 := 0.0   # 碎塊的車道
+
+func _start_toyb_case() -> void:
+	_phase = 6
+	var Main: GDScript = load("res://main.gd")
+	var keep: String = Main.level_file
+	Main.level_file = ""
+	_tb_m = _isolated_match()
+	Main.level_file = keep
+	_park(_tb_m)   # 不是正式對局：boss 不讀開關，碰撞遮罩全開（只撞 1 層的也撞得到）
+	_tb_z0 = _tb_clear_z(-40.0)
+	_tb_z1 = _tb_clear_z(_tb_z0 + 12.0)
+	_tb_wall = _tb_block(Vector3(0, 0, _tb_z0), 4, 12, Vector3(0.3, 0.5, 1.0))   # 墙面朝 X（尼諾拉沿 +X 跑來撞）。6 公尺高：圓的身體底部爬不過去
+	_tb_b = _tb_m.spawn_boss()
+	_tb_b.set_physics_process(false)
+	_tb_b._sync_mask()   # 測試裡沒有對局（_park）：遮罩照 _sync_mask 設成只看 1 層（積木的 1 和 16 都撞得到）
+	_tb_stage = 0
+	_tb_n = 0.0
+	_tb_place(-9.0, _tb_z0)
+
+## 一面積木墻（cols 個 × rows 層，沿 Z 排、每塊 size）：等級 1，一下就拆。at 在地面上
+func _tb_block(at: Vector3, cols: int, rows: int, size: Vector3) -> ToyBuild:
+	var bricks := []
+	for ix in cols:
+		for iy in rows:
+			bricks.append([Transform3D(Basis(), Vector3(0.0, (iy + 0.5) * size.y, (ix - (cols - 1) * 0.5) * size.z)), size, 1, Color(0.9, 0.2, 0.2)])
+	var t: ToyBuild = _tb_m.map._toy(ToyBuild.make(bricks))
+	_tb_m.map._place_greybox(t, at, 0.0)
+	return t
+
+## 從 from_z 往後找一條空車道（沿 X 方向、寬 3 公尺、x 從 -12 到 16 都不撞到建築）
+func _tb_clear_z(from_z: float) -> float:
+	var z := from_z
+	while z < from_z + 200.0:
+		var ok := true
+		for x in range(-12, 17, 2):
+			for dz in [-1.5, 0.0, 1.5]:
+				ok = ok and _tb_m.map._is_clear(Vector2(x, z + dz), 1.0)
+		if ok:
+			return z
+		z += 2.0
+	return from_z
+
+## 尼諾拉放在地上的 (x, z)，面朝 +X（後面朝 -X）、速度歸零
+func _tb_place(x: float, z: float) -> void:
+	_tb_b.global_position = _tb_m.boss_on_ground(Vector3(x, 0, z))
+	_tb_b.rotation.y = -PI * 0.5
+	_tb_b.velocity = Vector3.ZERO
+
+func _tb_next(stage: int) -> void:
+	_tb_stage = stage
+	_tb_n = 0.0
+
+## 碎塊在前面 2 公尺的那一段：一塊碎塊（0.6 公尺見方）擺在車道上，尼諾拉從 5.9 公尺外（身體中心）跑來
+func _tb_setup_kick() -> void:
+	var z2 := _tb_clear_z(_tb_z1 + 12.0)
+	_tb_kick_block = _tb_block(Vector3(2, 0, z2), 1, 1, Vector3(0.6, 0.6, 0.6))
+	_tb_kick_block.smash(func(_p: Vector3) -> bool: return true, 1, Vector3(-3, 0, z2))
+	_tb_kick_block._physics_process(ToyBuild.SETTLE_TIME + 0.1)   # 停下來、凍住
+	_tb_kx = 2.0
+	_tb_kick_pos0 = (_tb_kick_block._pieces[0] as Node3D).global_position
+	_tb_kick_checked = false
+	_tb_b.global_position = _tb_m.boss_on_ground(Vector3(_tb_kx - (_tb_b.BODY_RADIUS + 2.3), 0, z2))
+	_tb_b.velocity = Vector3(_tb_b.RUN, 0, 0)   # 已經在跑（踢只在跑步的速度時做）
+	_tb_b.rotation.y = -PI * 0.5
+
+## 墙還完整（每塊都站著、沒挨過打）
+func _tb_wall_intact() -> bool:
+	if _tb_wall.has_damage():
+		return false
+	for i in _tb_wall.brick_count():
+		if not _tb_wall.is_standing(i):
+			return false
+	return true
+
+## 踢的那一段要的碎塊：先拆一堆、等它們停下來（主機送 _settle 的效果），記下位置
+func _tb_setup_pile() -> void:
+	_tb_pile = _tb_block(Vector3(2, 0, _tb_z1), 3, 2, Vector3(0.6, 0.6, 0.6))
+	_tb_pile.smash(func(_p: Vector3) -> bool: return true, 1, Vector3(-3, 0, _tb_z1))   # 全部拆掉：每塊一個碎塊（飛出去）
+	_tb_pile._physics_process(ToyBuild.SETTLE_TIME + 0.1)   # 停下來、凍住（各台一樣）
+	_tb_before = {}
+	for key in _tb_pile.loose_ids():
+		_tb_before[key] = (_tb_pile._pieces[key] as Node3D).global_position
+
+func _toyb_physics(delta: float) -> bool:
+	_tb_n += delta
+	var b := _tb_b
+	match _tb_stage:
+		0:   # 走路撞墙：速度 4 不到 toy_charge_speed，墙一塊都不拆
+			b._move(Vector3.RIGHT, false, delta)
+			if _tb_n >= 3.0:
+				_ck(_tb_wall_intact(), "走路撞積木：墙不拆（走路 %.1f 公尺／秒，門檻 %.1f）" % [b.velocity.length(), b.TOY_CHARGE_SPEED])
+				_tb_place(-9.0, _tb_z0)
+				_tb_next(1)
+		1:   # 跑步撞墙：墙的塊鬆脫，尼諾拉撞穿過去（x 過了墙），不會爬上墙頂（y 沒有被頂高）
+			b._move(Vector3.RIGHT, true, delta)
+			if _tb_n >= 3.0:
+				var down := 0
+				for i in _tb_wall.brick_count():
+					if not _tb_wall.is_standing(i):
+						down += 1
+				_ck(_tb_wall.has_damage() and down >= 6, "跑步撞積木：墙的塊鬆脫（%d 塊，共 %d 塊）" % [down, _tb_wall.brick_count()])
+				_ck(b.global_position.x > 1.0, "跑步撞穿：尼諾拉過了墙（x=%.2f）" % b.global_position.x)
+				# 腳底離身下的地面不到 1 公尺（沒有爬上墙頂）
+				var lift: float = b.global_position.y - b.HALF_H - _tb_m.map._on_ground(Vector3(b.global_position.x, 0, b.global_position.z)).y
+				_ck(lift < 1.0, "跑步撞穿：沒有爬上墙頂（腳底離地 %.2f 公尺）" % lift)
+				_tb_setup_pile()
+				_tb_place(-9.0, _tb_z1)
+				_tb_next(2)
+		2:   # 跑步穿過一堆碎塊：碎塊被踢開（位置變了），尼諾拉走得過去、不卡住
+			b._move(Vector3.RIGHT, true, delta)
+			if _tb_n >= 4.0:
+				var moved := 0.0
+				for key in _tb_before:
+					moved = maxf(moved, (_tb_pile._pieces[key] as Node3D).global_position.distance_to(_tb_before[key]))
+				_ck(moved > 0.3, "跑步撞碎塊：碎塊被踢開（最遠移了 %.2f 公尺）" % moved)
+				_ck(b.global_position.x > 5.0 and absf(b.global_position.z - _tb_z1) < 2.0, "跑過一堆碎塊不卡住：尼諾拉走到碎塊另一側（x=%.1f，z=%.1f）" % [b.global_position.x, b.global_position.z])
+				_ck(_tb_pile.has_damage(), "碎塊有記在積木上（新的一場要還原）")
+				_tb_setup_kick()
+				_tb_next(3)
+		3:   # 碎塊在前面 2 公尺（還沒撞上）：跑步時就踢開（_kick_ahead）；踢完等 SETTLE_TIME 又凍住
+			b._move(Vector3.RIGHT, true, delta)
+			if _tb_n >= 0.1 and not _tb_kick_checked:
+				_tb_kick_checked = true
+				var moved: float = (_tb_kick_block._pieces[0] as Node3D).global_position.distance_to(_tb_kick_pos0)
+				_ck(moved > 0.3 and b.global_position.x < _tb_kx - 0.9, "碎塊在前面 2 公尺：還沒撞上就踢開（移了 %.2f，尼諾拉 x=%.2f，碎塊 x=%.2f）" % [moved, b.global_position.x, _tb_kx])
+			if _tb_n >= ToyBuild.SETTLE_TIME + 0.6:
+				_ck(_tb_kick_block._pieces[0] is StaticBody3D, "踢完等 SETTLE_TIME 後又凍住（StaticBody3D）")
+				_free_map(_tb_m)
+				return _done()
+	return false

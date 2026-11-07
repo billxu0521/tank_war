@@ -17,7 +17,7 @@ var radius := 0.0          # 0 = 只用射線；大於 0 = 每幀另外用球形
 var max_range := 0.0       # 0 = 不限（照原本 5 秒消失）；大於 0 = 飛超過這麼遠就消失
 var damage := DAMAGE
 var burn := false          # 打中人就點著（燃燒見 fighter.gd）
-var wreck := false         # 打中可拆的地形扣一下（尼諾拉的火球；destructible.gd、toy_build.gd 自己擋等級 3）
+var wreck := false         # 打中可拆的積木扣一下（尼諾拉的火球；toy_build.gd 自己擋等級 3）
 var _flown := 0.0          # 飛了多遠
 
 func _ready() -> void:
@@ -50,8 +50,6 @@ func _physics_process(delta: float) -> void:
 	elif wreck and multiplayer.is_server() and hit.collider.has_method(&"smash"):   # 積木（toy_build.gd）：半徑 2 公尺內的塊
 		var at: Vector3 = hit.position
 		hit.collider.smash(func(p: Vector3) -> bool: return p.distance_to(at) < 2.0, 2, from)
-	elif wreck and multiplayer.is_server() and hit.collider.has_method(&"tail_hit"):
-		hit.collider.tail_hit(from)
 	queue_free()
 
 ## 射線沒打到的時候，看半徑之內有沒有會受傷的人（擦過去也算）。發射者不算
