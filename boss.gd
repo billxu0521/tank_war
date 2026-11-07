@@ -103,7 +103,10 @@ static var SWEEP_RADIUS: float = Balance.num("sweep_radius")
 static var SWEEP_DAMAGE: int = Balance.whole("sweep_damage")
 static var SWEEP_RECOVER: float = Balance.num("sweep_recover")
 static var SWEEP_CD: float = Balance.num("sweep_cd")
-static var SWEEP_CD_PARTY: float = Balance.num("sweep_cd_party")   # 派對模式：甩尾拆得掉地形（destructible.gd），冷卻拉長，不然掩體一下就拆光
+static var SWEEP_CD_PARTY: float = Balance.num("sweep_cd_party")   # 派對模式：甩尾拆得掉地形（積木，toy_build.gd），冷卻拉長，不然掩體一下就拆光
+static var TOY_CHARGE_SPEED: float = Balance.num("toy_charge_speed")   # 尼諾拉撞積木要跑到這個水平速度才拆（跑步的 0.7 倍，走路不拆）
+static var TOY_KICK: float = Balance.num("toy_kick")   # 尼諾拉跑進碎塊，碎塊被踢出去的速度（公尺／秒）
+const CHARGE_MS := 300   # 同一棟積木撞過之後，這段時間內不再撞（毫秒）
 static var SWEEP_COS: float = cos(deg_to_rad(Balance.num("sweep_angle") * 0.5))   # 甩尾扇形（後方）半角的餘弦
 static var SWEEP_ROOT_BACK: float = Balance.num("sweep_root_back") * GROW   # 尾根在身體中心後方幾公尺（表裡是放大前的 0.45），甩尾的圓心
 static var SWEEP_TRIGGER: float = SWEEP_ROOT_BACK + SWEEP_RADIUS   # 電腦：牛仔離身體中心在這裡面才算在甩尾範圍（尾根加半徑）
@@ -382,7 +385,7 @@ func _unhandled_input(e: InputEvent) -> void:
 func _clamp_cam_pitch(v: float) -> float:
 	return clampf(v, CAM_PITCH_MIN, PITCH_MAX)
 
-## 甩尾打到可拆的東西（destructible.gd 呼叫）：鏡頭抖一下。只有操控的那台抖得到（鏡頭只在那台）
+## 積木挨打的鏡頭抖（ToyBuild.hit_fx 找這個方法）：鏡頭抖一下。只有操控的那台抖得到（鏡頭只在那台）
 func add_shake(amount: float) -> void:
 	_quake = minf(_quake + amount, 0.2)
 
@@ -693,7 +696,7 @@ func _spit_fire(dir: Vector3, muzzle: Vector3) -> void:
 	f.max_range = FB_RANGE
 	f.damage = FB_DAMAGE
 	f.burn = true
-	f.wreck = true   # 打中可拆的地形扣一下（destructible.gd、toy_build.gd）
+	f.wreck = true   # 打中可拆的積木扣一下（toy_build.gd）
 	f.shooter = self
 	f.vel = dir * FB_SPEED
 	get_tree().get_first_node_in_group(&"arena").add_child(f)
@@ -705,7 +708,7 @@ func _spit_fire(dir: Vector3, muzzle: Vector3) -> void:
 func _sweep_cd_time() -> float:
 	return SWEEP_CD_PARTY if _party() else SWEEP_CD
 
-## 甩尾掃到的地形（群組 destructible：樹、積木房子；安全屋不在裡面）各挨一下，倒不倒它自己算。只算後方半圈（同 _sweep_hit）。積木是一棟一個物體，照每塊的位置拆
+## 甩尾掃到的積木（群組 destructible：樹、房子、掩體；安全屋和石頭不在裡面）各挨一下。只算後方半圈（同 _sweep_hit）。積木是一棟一個物體，照每塊的位置拆
 func _wreck_around(at: Vector3, dir: Vector3, radius: float, cos_half: float) -> void:
 	var sphere := SphereShape3D.new()
 	sphere.radius = radius
@@ -727,12 +730,9 @@ func _wreck_around(at: Vector3, dir: Vector3, radius: float, cos_half: float) ->
 		for r: Dictionary in res:
 			var c: Object = r.collider
 			exclude.append(r.rid)
-			if c is Node3D and (c as Node3D).is_in_group(&"destructible") and not done.has(c):
+			if c is ToyBuild and (c as ToyBuild).is_in_group(&"destructible") and not done.has(c):
 				done[c] = true
-				if c.has_method(&"smash"):   # 積木：每塊照位置算（_in_fan 看塊的中心），整棟一次
-					c.smash(func(p: Vector3) -> bool: return _in_fan(at, dir, p, radius, cos_half), 2, at)
-				elif _in_fan(at, dir, (c as Node3D).global_position, radius, cos_half):
-					c.tail_hit(at)
+				(c as ToyBuild).smash(func(p: Vector3) -> bool: return _in_fan(at, dir, p, radius, cos_half), 2, at)   # 積木：每塊照位置算（_in_fan 看塊的中心），整棟一次
 		if res.size() < 256:
 			break
 
@@ -926,7 +926,48 @@ func _move(dir: Vector3, want_run: bool, delta: float) -> void:
 	var speed := (RUN if running else WALK) * (STAGGER_MULT if _stagger > 0.0 else 1.0)
 	_accelerate(dir * speed, ACCEL, BRAKE, delta)
 	_apply_gravity(delta)
+	var before := Vector3(velocity.x, 0.0, velocity.z)   # 撞之前的水平速度（撞了 move_and_slide 會被削掉）
 	move_and_slide()
+	if multiplayer.is_server():
+		_charge_hits(before)
+		if before.length() >= TOY_CHARGE_SPEED:
+			_kick_ahead(before.normalized())
+
+
+## 尼諾拉撞東西（只在主機算，_move 的 move_and_slide 之後看這一幀的碰撞）：
+## 撞到積木、撞之前的水平速度 ≥ toy_charge_speed（跑步，走路不算）就拆碰撞點 BODY_RADIUS 內、等級 1 的塊；同一棟 CHARGE_MS 毫秒內只算一次。
+## 撞到碎塊（群組 toy_piece）就踢開（速度 toy_kick，同一塊的冷卻見 ToyBuild.kick）
+var _charge_t := {}   # 撞過的積木（ToyBuild）-> 上次撞的毫秒（主機用）
+
+## 跑步的時候，前面貼身的碎塊先踢開（還沒撞上）：踢出去的速度比跑步快，碎塊跑在前面，不會被追上、卡進身體裡炸飛（見 balance.csv 的 toy_kick）
+## ponytail: 只看身體前面一小段（半徑 1.5 公尺的球），每幀查一次；踢的是這段裡的每一塊碎塊
+func _kick_ahead(fwd: Vector3) -> void:
+	var sphere := SphereShape3D.new()
+	sphere.radius = 1.5
+	var q := PhysicsShapeQueryParameters3D.new()
+	q.shape = sphere
+	q.transform = Transform3D(Basis(), global_position + fwd * (BODY_RADIUS + 1.0))
+	q.exclude = [get_rid()]
+	for r: Dictionary in get_world_3d().direct_space_state.intersect_shape(q, 16):
+		var c: Object = r.collider
+		if c is Node3D and (c as Node3D).is_in_group(&"toy_piece"):
+			var home: ToyBuild = (c as Node3D).get_meta(&"toy_home")
+			if is_instance_valid(home):
+				home.kick((c as Node3D).get_meta(&"toy_key"), fwd, TOY_KICK)
+func _charge_hits(before: Vector3) -> void:
+	var fwd := before.normalized() if before.length() > 0.01 else Vector3.ZERO
+	var now := Time.get_ticks_msec()
+	for k in get_slide_collision_count():
+		var col := get_slide_collision(k)
+		var c := col.get_collider()
+		if c is ToyBuild and before.length() >= TOY_CHARGE_SPEED and now - int(_charge_t.get(c, -CHARGE_MS)) >= CHARGE_MS:
+			_charge_t[c] = now
+			var at := col.get_position()
+			(c as ToyBuild).smash(func(p: Vector3) -> bool: return p.distance_to(at) < BODY_RADIUS, 1, global_position)
+		elif c is Node3D and (c as Node3D).is_in_group(&"toy_piece") and fwd != Vector3.ZERO:
+			var home: ToyBuild = (c as Node3D).get_meta(&"toy_home")
+			if is_instance_valid(home):
+				home.kick((c as Node3D).get_meta(&"toy_key"), fwd, TOY_KICK)
 
 
 # --- 受傷 ---

@@ -593,22 +593,27 @@ func _case_respawn() -> void:
 		_ck(back.bot, "重生後靶還是靶，不會變成真人操控的")
 	_end(m)
 
-## 派對模式甩尾拆地形（destructible.gd）：樹兩下倒、不在群組裡的（安全屋）不倒、倒了碰撞沒了。積木房子見 _case_party_cubes、_case_toy
+## 派對模式甩尾拆積木（樹）：樹幹等級 2（甩一下扣一下、第二下整條樹幹拆斷），樹冠等級 1（甩一下就掉）；
+## 樹幹拆斷，上面懸空的跟著鬆脫；不在群組裡的（安全屋）不倒；倒了碰撞沒了。積木房子見 _case_party_cubes、_case_toy
 func _case_party_destruction() -> void:
 	var Main: GDScript = load("res://main.gd")
 	var keep: String = Main.level_file
 	Main.level_file = ""
 	var m := _offline_match()
-	var tree: Destructible = null
-	for w: Destructible in m._wrecks:
-		if w.visual != null:   # 樹（外觀另外擺）
-			tree = w
+	var tree: ToyBuild = null
+	for t: ToyBuild in m.map._toys:
+		if t.is_in_group(&"tree"):
+			tree = t
 			break
-	_ck(tree != null, "灰盒地圖要有拆得掉的樹（%d 樣）" % m._wrecks.size())
+	_ck(tree != null, "灰盒地圖要有拆得掉的樹（積木）")
 	if tree == null:
 		_end(m)
 		Main.level_file = keep
 		return
+	var trunk := _first_brick(tree, 2)   # 最底下那塊樹幹（樹幹先蓋、等級 2）
+	var crown := _first_brick(tree, 1)   # 樹冠（等級 1）
+	_ck(trunk >= 0 and crown >= 0 and tree.is_standing(trunk) and tree.is_standing(crown), "樹有樹幹（等級 2）和樹冠（等級 1）")
+	_ck(not tree.is_in_group(&"stone") and tree.collision_layer & Fighter.SOLID_LAYER == 0, "樹不加 SOLID_LAYER（關碰撞物件時尼諾拉穿過）")
 	var b: Node3D = m.spawn_boss()
 	_ck(b._sweep_cd_time() == b.SWEEP_CD, "其他模式甩尾冷卻不變")
 	m.rules = &"party"   # ponytail: RULES 的 party 是 gameplay 加的，這裡只借 rules 這個值
@@ -633,23 +638,24 @@ func _case_party_destruction() -> void:
 	safe.add_to_group(&"safe_house")
 	m.map._place_greybox(safe, b.global_position * Vector3(1, 0, 1) + Vector3(0, 0, 6), 0.0)
 	var space: PhysicsDirectSpaceState3D = m.get_viewport().world_3d.direct_space_state
-	var ray := PhysicsRayQueryParameters3D.create(tree.global_position + Vector3(-3, 0, 0), tree.global_position + Vector3(3, 0, 0))
+	var ray := PhysicsRayQueryParameters3D.create(tree.global_position + Vector3(-3, 0.6, 0), tree.global_position + Vector3(3, 0.6, 0))   # 高 0.6 公尺：樹幹最底下那塊
 	_ck(space.intersect_ray(ray).get(&"collider") == tree, "倒之前樹幹擋得住")
-	# 只拆後方半圈：樹在正前方（背後朝 +X）甩不到，背後朝 -X 樹在後面才倒
+	# 只拆後方半圈：樹在正前方（背後朝 +X）甩不到，背後朝 -X 樹在後面才拆
 	b.rotation.y = PI * 0.5
 	b._strike_sweep()
-	_ck(tree.hits == 0 and tree.is_in_group(&"destructible"), "樹在正前方甩不到（只拆後方）")
+	_ck(tree.hp_of(trunk) == 2 and tree.is_standing(crown), "樹在正前方甩不到（只拆後方）")
 	b.rotation.y = -PI * 0.5
 	b._strike_sweep()
-	_ck(tree.hits == 1 and tree.collision_layer != 0 and tree.is_in_group(&"destructible"), "樹（等級 2）甩一下還站著")
+	_ck(not tree.is_standing(crown) and tree.is_standing(trunk) and tree.hp_of(trunk) == 1, "甩一下：樹冠掉了，樹幹（等級 2）還站著")
 	b._strike_sweep()
-	_ck(tree.hits == 2 and tree.collision_layer == 0 and not tree.is_in_group(&"destructible"), "樹甩兩下就倒")
-	_ck(space.intersect_ray(ray).get(&"collider") != tree, "倒了的樹沒有碰撞")
+	_ck(not tree.is_standing(trunk), "樹幹甩兩下拆斷")
+	_ck(space.intersect_ray(ray).get(&"collider") != tree, "樹拆斷了沒有碰撞（樹幹的塊都鬆脫）")
+	_ck(_piece_node(tree, trunk) != null and _piece_node(tree, trunk).collision_layer & Fighter.SOLID_LAYER == 0, "鬆脫的樹幹碎塊也不加 SOLID_LAYER")
 	_ck(safe.collision_layer != 0, "不在群組裡的東西（安全屋）甩不倒")
 	# 挨打、倒下的回饋（音效檔還沒放進來，前面甩倒的時候已經跑過，不能報錯）：鏡頭晃動設 0 就不震
 	var old_shake: Variant = Settings.v.get(&"shake", 1.0)
 	Settings.v[&"shake"] = 0.0
-	_ck(tree._smash_fx(false) == 0.0 and Destructible.hit_fx(tree, tree.global_position, true) == 0.0, "鏡頭晃動設 0 時不震")
+	_ck(ToyBuild.hit_fx(tree, tree.global_position, false) == 0.0 and ToyBuild.hit_fx(tree, tree.global_position, true) == 0.0, "鏡頭晃動設 0 時不震")
 	Settings.v[&"shake"] = old_shake
 	m.rules = &"egg"
 	_end(m)
@@ -815,7 +821,7 @@ func _toy_body() -> void:
 	var party_house: ToyBuild = m.map._party_house
 	# 灰盒的房子是積木；切出來的塊不超過 1.5 × 0.75（斜坡整片一塊，不算）；每棟幾十到幾百塊
 	var recs: Array = m.map._level.filter(func(r: Dictionary) -> bool: return r.kind == &"gb_house")
-	var houses: Array = m.map._toys.filter(func(t: ToyBuild) -> bool: return t.can_break and t != party_house)
+	var houses: Array = m.map._toys.filter(func(t: ToyBuild) -> bool: return t.can_break and t != party_house and not t.is_in_group(&"tree") and not t.is_in_group(&"fence"))
 	var nblock: int = m.map._level.filter(func(r: Dictionary) -> bool: return r.kind == &"gb_block").size()
 	_ck(recs.size() > 0 and houses.size() == recs.size() + nblock, "灰盒房子和掩體方塊每棟都是積木、拆得掉（房子 %d 棟、掩體 %d 個，積木 %d 棟）" % [recs.size(), nblock, houses.size()])
 	var lim_ok := true
@@ -845,8 +851,9 @@ func _toy_body() -> void:
 				safe_ok = safe_ok and st.level_of(i) == 3
 	_ck(safe_ok, "安全屋是積木、全部等級 3、拆不掉（不進 destructible）")
 	var nsafe: int = m.map._level.filter(func(r: Dictionary) -> bool: return r.kind == &"gb_safe").size()
+	var nstone: int = m.map._toys.filter(func(t: ToyBuild) -> bool: return t.is_in_group(&"stone")).size()
 	var nonbreak: int = m.map._toys.filter(func(t: ToyBuild) -> bool: return not t.can_break).size()
-	_ck(nonbreak == nsafe, "只有安全屋拆不掉，掩體方塊是積木、拆得掉（安全屋 %d 個，拆不掉的 %d 個）" % [nsafe, nonbreak])
+	_ck(nonbreak == nsafe + nstone, "只有安全屋和石頭拆不掉，掩體方塊是積木、拆得掉（安全屋 %d 個、石頭 %d 個，拆不掉的 %d 個）" % [nsafe, nstone, nonbreak])
 	# 連通檢查：中間那塊拆掉，上面懸空的也鬆脫；底下的站著
 	var col := ToyBuild.make(_column_bricks())
 	col.name = "ToyCol"
@@ -1389,4 +1396,108 @@ func _toy_restore_case() -> void:
 	late.position = t.position
 	late._resume(ids, xfs, PackedInt32Array())
 	_ck(not late.is_standing(2) and late.is_standing(0), "晚加入的人：鬆脫的塊一樣")
+	_free_map(m)
+
+## 玩具積木第二批（docs/規劃/2026-11-08-玩具積木場景-二.md）：積木樹、石頭、柵欄的樣子和碰撞；超過上限的一次鬆脫併成大塊（每塊都還在場上），
+## 晚加入的人一樣、還原照樣。尼諾拉撞積木、踢碎塊是物理的，見 dino.gd 的 _start_toyb_case
+func _case_toy_b() -> void:
+	_toy_b_static()
+	_toy_b_merge()
+
+func _toy_b_static() -> void:
+	var Main: GDScript = load("res://main.gd")
+	var keep: String = Main.level_file
+	Main.level_file = ""
+	var m := _toy_map()
+	# 樹：積木、在 tree 群組、碰撞層只有 1（不加 SOLID_LAYER，關碰撞物件時尼諾拉穿過）、拆得掉；樹幹（最底下）等級 2、樹冠（最上面）等級 1
+	var trees: Array = m.map._toys.filter(func(t: ToyBuild) -> bool: return t.is_in_group(&"tree"))
+	var tree_ok := not trees.is_empty()
+	for t: ToyBuild in trees:
+		tree_ok = tree_ok and t.collision_layer == 1 and t.can_break and t.level_of(0) == 2 and t.level_of(t.brick_count() - 1) == 1
+	_ck(tree_ok, "積木樹（%d 棵）：碰撞層只有 1、拆得掉、樹幹等級 2、樹冠等級 1" % trees.size())
+	# 石頭：積木、全部等級 3、拆不掉、有碰撞、群組 stone
+	var stones: Array = m.map._toys.filter(func(t: ToyBuild) -> bool: return t.is_in_group(&"stone"))
+	var stone_ok := not stones.is_empty()
+	for t: ToyBuild in stones:
+		stone_ok = stone_ok and not t.can_break and not t.is_in_group(&"destructible") and (t.collision_layer & Fighter.SOLID_LAYER) != 0
+		for i in t.brick_count():
+			stone_ok = stone_ok and t.level_of(i) == 3
+	_ck(stone_ok, "石頭（%d 顆）：積木、全部等級 3、拆不掉、有碰撞" % stones.size())
+	# 柵欄：積木、等級 1、頂端還是 FENCE_H（翻越的高度不變）
+	var fences: Array = m.map._toys.filter(func(t: ToyBuild) -> bool: return t.is_in_group(&"fence"))
+	var fence_ok := not fences.is_empty()
+	for t: ToyBuild in fences:
+		var top := -INF
+		for i in t.brick_count():
+			fence_ok = fence_ok and t.level_of(i) == 1
+			top = maxf(top, t._xf[i].origin.y + t._size[i].y * 0.5)
+		fence_ok = fence_ok and absf(top - ArenaMap.FENCE_H) < 0.01
+	_ck(fence_ok, "柵欄（%d 段）：積木、等級 1、頂端還是 FENCE_H（%.2f）" % [fences.size(), ArenaMap.FENCE_H])
+	# 甩尾一下就拆柵欄：柵欄在恐龍後方（背朝 -X），離得夠近、在甩尾範圍內
+	var fence: ToyBuild = m.map._fence(Vector3(-40, 0, -40), 6.0, 0.0)
+	_defer(4, func() -> void:
+		_with_first(m, func() -> void:
+			var b: Node3D = m.spawn_boss()
+			b.rotation.y = -PI * 0.5   # 背後朝 -X，柵欄在後面
+			b.global_position = m.map._on_ground(Vector3(-30, 0, -40)) + Vector3(0, BOSS_GD.LIFT, 0)
+			b._strike_sweep())
+		var down := 0
+		for i in fence.brick_count():
+			if not fence.is_standing(i):
+				down += 1
+		_ck(down > 0 and fence.has_damage(), "甩尾一下柵欄就拆（%d 塊鬆脫）" % down)
+		_free_map(m))
+	Main.level_file = keep
+
+func _toy_b_merge() -> void:
+	var m := _toy_map()
+	# 400 塊（超過 MAX_PIECES）一次全拆：每塊都在某個碎塊裡、沒有塊被藏起來而沒有碎塊；碎塊總數在上限內
+	var bricks := []
+	for ix in 20:
+		for iz in 20:
+			bricks.append([Transform3D(Basis(), Vector3(ix * 0.2, 0.25, iz * 0.2)), Vector3(0.2, 0.5, 0.2), 1, Color.RED])
+	var t := ToyBuild.make(bricks)
+	t.name = "ToyMerge"
+	m.map.add_child(t)
+	t.position = m.map._on_ground(Vector3(-60, 0, -60))
+	t.smash(func(_p: Vector3) -> bool: return true, 1, t.global_position)
+	for _k in 12:   # 分幀藏、併成的大塊等它的塊都藏好才生
+		t._physics_process(0.0)
+	var n := t.brick_count()
+	var covered := {}
+	for key in t._info:
+		for mb: int in t._info[key].m:
+			covered[mb] = true
+	_ck(covered.size() == n and t._idle(), "超過上限的一次鬆脫：每塊都在某個碎塊裡（%d 塊，併成 %d 個碎塊）" % [covered.size(), t.loose_ids().size()])
+	_ck(t.loose_ids().size() <= ToyBuild.MAX_PIECES and t.loose_ids().size() > 0, "碎塊總數在上限 %d 內" % ToyBuild.MAX_PIECES)
+	var all_down := true
+	for i in n:
+		all_down = all_down and not t.is_standing(i)
+	_ck(all_down, "拆掉的塊都不站著（沒有塊留在原地）")
+	# 晚加入：照主機的補送內容擺出一樣的碎塊（位置一樣、塊都藏起來）
+	var st: Dictionary = t.state()
+	var late := ToyBuild.make(bricks)
+	late.name = "ToyMergeLate"
+	m.map.add_child(late)
+	late.position = t.position
+	for g: Array in st.groups:
+		late._resume_group(g[0], g[1])
+	late._resume(st.ids, st.xfs, PackedInt32Array())
+	for _k in 12:
+		late._physics_process(0.0)
+	var same := late.loose_ids().size() == t.loose_ids().size()
+	for key in t._pieces:
+		var lp: Node3D = late._pieces.get(key)
+		same = same and lp != null and lp.global_transform.is_equal_approx((t._pieces[key] as Node3D).global_transform)
+	var late_all_down := true
+	for i in n:
+		late_all_down = late_all_down and not late.is_standing(i)
+	_ck(same and late_all_down, "晚加入的人：碎塊的位置一樣、塊都藏起來")
+	# 還原：每塊回來、碎塊刪掉
+	t.restore()
+	late.restore()
+	var back := true
+	for i in n:
+		back = back and t.is_standing(i) and late.is_standing(i)
+	_ck(back and t.loose_ids().is_empty() and late.loose_ids().is_empty(), "新的一場：大碎塊刪掉，每塊回來")
 	_free_map(m)

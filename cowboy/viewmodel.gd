@@ -1007,7 +1007,7 @@ func _explode(at: Vector3, kind: int) -> void:
 		Explosive.damage(_arena(), at, radius, BLASTS[kind][1], _player)
 		# 炸藥炸得破等級 1 的地形（草案 4.2）。主機再檢查一次：丟的人活著（扣血前）、是獵人（不是恐龍）
 		if kind == KIND_DYNAMITE and alive and not _player.is_in_group(&"dino"):
-			Destructible.blast(_arena(), at, radius)
+			ToyBuild.blast(_arena(), at, radius)
 
 
 func _arena() -> Node3D:

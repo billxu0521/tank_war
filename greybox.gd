@@ -25,15 +25,28 @@ static func material() -> ShaderMaterial:
 	return _mat
 
 
-## 地面：比牆暗一點、格線淡一點，牆和地分得開
+## 地面（玩具地墊）：柔和的淡綠、大格子（2 公尺一格）、線淡一點。場外（arena_map.gd）也用這個顏色
+const GROUND_COLOR := Color(0.6, 0.82, 0.55)
+static var _bush_mat: StandardMaterial3D
+
 static func ground_material() -> ShaderMaterial:
 	if _ground_mat == null:
 		_ground_mat = ShaderMaterial.new()
 		_ground_mat.shader = preload("res://greybox.gdshader")
-		_ground_mat.set_shader_parameter(&"base", Color(0.42, 0.44, 0.4))
-		_ground_mat.set_shader_parameter(&"floor_color", Color(0.42, 0.44, 0.4))
-		_ground_mat.set_shader_parameter(&"line", 0.12)
+		_ground_mat.set_shader_parameter(&"base", GROUND_COLOR)
+		_ground_mat.set_shader_parameter(&"floor_color", GROUND_COLOR)
+		_ground_mat.set_shader_parameter(&"line", 0.06)
+		_ground_mat.set_shader_parameter(&"cell", 2.0)
 	return _ground_mat
+
+
+## 灌木（玩具風）：圓圓的綠色塑膠感，形狀不動（arena_map.gd 的 _build_level 換上）
+static func bush_material() -> StandardMaterial3D:
+	if _bush_mat == null:
+		_bush_mat = StandardMaterial3D.new()
+		_bush_mat.albedo_color = Color(0.3, 0.72, 0.32)
+		_bush_mat.roughness = 0.3
+	return _bush_mat
 
 
 ## 方塊房子（派對模式，規則草案 4.1 試驗屋）：一格 1.5 公尺的方塊，4×4 格＝6 公尺見方、一層樓。
