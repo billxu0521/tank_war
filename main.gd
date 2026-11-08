@@ -529,6 +529,7 @@ func _start_dedicated() -> void:
 		return
 	multiplayer.multiplayer_peer = peer
 	_dedicated = true
+	ToyBuild.no_flight = true   # 伺服器沒畫面：積木碎塊不飛（直接落地，見 toy_build.gd _land）
 	# 物理 120Hz 只是為了畫面順（README「為什麼物理跑 120Hz」），伺服器沒畫面：60 次就夠，處理器省一半。
 	# 測試站（1 顆處理器）跑 120 次算不完，遊戲時間會變慢（2026-10-18 測試站回報）
 	Engine.physics_ticks_per_second = 60
@@ -1023,6 +1024,25 @@ const REBAKE_GAP_MS := 5000   # 兩次烘之間至少隔幾毫秒：專用伺服
 var _last_bake_ms := -REBAKE_GAP_MS   # 上一次開始解析場景的時刻（毫秒）
 var _slow_work := ""   # 這一幀有沒有慢的工作（停頓記錄用，見 _process）
 var _hitch_last_us := 0
+var _hitch_phys := 0
+static var HITCH_MS := int(OS.get_environment("HITCH_MS")) if OS.get_environment("HITCH_MS") != "" else 50   # 停頓記錄的門檻（毫秒）；本機查效能時設 0 每幀都印
+
+## 停頓記錄的細節：這幀跑了幾步物理、每步腳本花多少、會動的物體、碰撞對數、碎塊數（找卡頓是誰造成的）
+func _hitch_detail() -> String:
+	var flying := 0
+	var pieces := get_tree().get_nodes_in_group(&"toy_piece")
+	for p in pieces:
+		if p is RigidBody3D:
+			flying += 1
+	return "[物理 %d 步 每步腳本 %.1f 毫秒 會動 %d 碰撞對 %d 群 %d 碎塊 %d（飛 %d）節點 %d 玩家 %d]" % [
+		Engine.get_physics_frames() - _hitch_phys,
+		Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0,
+		Performance.get_monitor(Performance.PHYSICS_3D_ACTIVE_OBJECTS),
+		Performance.get_monitor(Performance.PHYSICS_3D_COLLISION_PAIRS),
+		Performance.get_monitor(Performance.PHYSICS_3D_ISLAND_COUNT),
+		pieces.size(), flying,
+		Performance.get_monitor(Performance.OBJECT_NODE_COUNT),
+		multiplayer.get_peers().size()]
 func bake_nav(rebake := false) -> void:
 	if not multiplayer.is_server() or is_instance_valid(_nav_region) != rebake:
 		return
@@ -1628,9 +1648,10 @@ func _process(delta: float) -> void:
 	if multiplayer.is_server():
 		var now := Time.get_ticks_usec()
 		var gap := (now - _hitch_last_us) / 1000
-		if _hitch_last_us > 0 and gap > 50 and not lobby.visible:
-			print("主機停頓 %d 毫秒%s" % [gap, "（%s）" % _slow_work if _slow_work != "" else ""])
+		if _hitch_last_us > 0 and gap > HITCH_MS and not lobby.visible:
+			print("主機停頓 %d 毫秒%s %s" % [gap, "（%s）" % _slow_work if _slow_work != "" else "", _hitch_detail()])
 		_hitch_last_us = now
+		_hitch_phys = Engine.get_physics_frames()
 	_slow_work = ""
 	_match_hud.track_frame_time(delta)
 	_diag_print(delta)

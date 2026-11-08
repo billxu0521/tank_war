@@ -73,6 +73,8 @@ func _process(_delta: float) -> bool:
 		_case_toy()
 		_case_toy_more()
 		_case_toy_b()
+		_case_toy_nofly()
+		_case_toy_area()
 		_case_party_hud()
 		_case_buy_menu()
 		_case_party_gameplay()

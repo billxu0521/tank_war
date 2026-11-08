@@ -734,7 +734,7 @@ func _wreck_around(at: Vector3, dir: Vector3, radius: float, cos_half: float) ->
 			exclude.append(r.rid)
 			if c is ToyBuild and (c as ToyBuild).is_in_group(&"destructible") and not done.has(c):
 				done[c] = true
-				(c as ToyBuild).smash(func(p: Vector3) -> bool: return _in_fan(at, dir, p, radius, cos_half), 2, at)   # 積木：每塊照位置算（_in_fan 看塊的中心），整棟一次
+				(c as ToyBuild).smash(func(p: Vector3) -> bool: return _in_fan(at, dir, p, radius, cos_half), 2, at, AABB(at - Vector3.ONE * radius, Vector3.ONE * radius * 2.0))   # 積木：每塊照位置算（_in_fan 看塊的中心），整棟一次
 		if res.size() < 256:
 			break
 
@@ -1011,9 +1011,11 @@ func _smash_ahead(now: int) -> bool:
 		if c is ToyBuild and (c as ToyBuild).can_break:
 			homes[c] = true
 	var inv := xf.affine_inverse()
+	# 盒子的世界邊界框：積木只看這範圍裡的塊（bricks_near），一棟大樓幾千塊不用每步全看
+	var box_w := xf * AABB(Vector3(-half_w, -half_h, -depth * 0.5), Vector3(half_w * 2.0, half_h * 2.0, depth))
 	for c: ToyBuild in homes:
 		var nin := 0   # 盒子裡有幾塊（一塊都沒有就不算這棟，冷卻也不起算）；已經鬆脫、等級 3 的不算
-		for k in c.brick_count():
+		for k: int in c.bricks_near(box_w):
 			if not c.is_standing(k) or c.level_of(k) >= 3:
 				continue
 			var l := inv * c.center_of(k)
@@ -1029,7 +1031,7 @@ func _smash_ahead(now: int) -> bool:
 		_charge_t[c] = now
 		c.smash(func(p: Vector3) -> bool:
 			var l := inv * p
-			return absf(l.x) <= half_w and absf(l.y) <= half_h and absf(l.z) <= depth * 0.5, TOY_CHARGE_LEVEL, global_position)
+			return absf(l.x) <= half_w and absf(l.y) <= half_h and absf(l.z) <= depth * 0.5, TOY_CHARGE_LEVEL, global_position, box_w)
 	return any
 
 

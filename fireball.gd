@@ -49,7 +49,7 @@ func _physics_process(delta: float) -> void:
 				hit.collider.ignite(shooter)
 	elif wreck and multiplayer.is_server() and hit.collider.has_method(&"smash"):   # 積木（toy_build.gd）：半徑 2 公尺內的塊
 		var at: Vector3 = hit.position
-		hit.collider.smash(func(p: Vector3) -> bool: return p.distance_to(at) < 2.0, 2, from)
+		hit.collider.smash(func(p: Vector3) -> bool: return p.distance_to(at) < 2.0, 2, from, AABB(at - Vector3.ONE * 2.0, Vector3.ONE * 4.0))
 	queue_free()
 
 ## 射線沒打到的時候，看半徑之內有沒有會受傷的人（擦過去也算）。發射者不算
