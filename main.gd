@@ -529,6 +529,7 @@ func _start_dedicated() -> void:
 		return
 	multiplayer.multiplayer_peer = peer
 	_dedicated = true
+	ToyBuild.no_flight = true   # 伺服器沒畫面：積木碎塊不飛（直接落地，見 toy_build.gd _land）
 	# 物理 120Hz 只是為了畫面順（README「為什麼物理跑 120Hz」），伺服器沒畫面：60 次就夠，處理器省一半。
 	# 測試站（1 顆處理器）跑 120 次算不完，遊戲時間會變慢（2026-10-18 測試站回報）
 	Engine.physics_ticks_per_second = 60

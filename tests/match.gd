@@ -1569,3 +1569,113 @@ func _brick_at_ground(m: Node, at: Vector3) -> ToyBuild:
 ## 尼諾拉的身體壓在碎塊上
 func _put_boss_over(boss: Node3D, t: ToyBuild) -> void:
 	boss.global_position = t.global_position + Vector3(0, boss.LIFT, 0)
+
+## 專用伺服器的碎塊（ToyBuild.no_flight，只在這裡開、測完關）：拆開直接靜態落地、沒有 RigidBody；
+## 底下有東西就疊在上面（塊或碎塊），底下沒有的落到地上；底下是站著的塊就落在它頂面；踢開的先水平移開再落；_settle 等 SETTLE_TIME 秒才送
+func _case_toy_nofly() -> void:
+	var m := _toy_map()
+	var size := Vector3(1.0, 0.5, 1.0)
+	var t := ToyBuild.make([
+		[Transform3D(Basis(), Vector3(0, 0.25, 0)), size, 1, Color.RED],     # 0 底排（拆）
+		[Transform3D(Basis(), Vector3(1, 0.25, 0)), size, 1, Color.RED],     # 1 底排（拆）
+		[Transform3D(Basis(), Vector3(0, 0.75, 0)), size, 1, Color.RED],     # 2 壓在 0 上，連不到地面就掉
+		[Transform3D(Basis(), Vector3(2.5, 0.75, 0)), size, 1, Color.RED],   # 3 懸空（底下沒有），要落到地上
+		[Transform3D(Basis(), Vector3(0, 1.25, 0)), size, 1, Color.RED],     # 4 壓在 2 上
+		[Transform3D(Basis(), Vector3(7, 0.25, 0)), size, 3, Color.GRAY],    # 5 站著的地基（等級 3，拆不掉）
+		[Transform3D(Basis(), Vector3(7, 1.25, 0)), size, 1, Color.RED],     # 6 懸在地基上面，拆下來落在地基頂
+	])
+	t.name = "ToyNoFly"
+	m.map.add_child(t)
+	t.position = m.map._on_ground(Vector3(-70, 0, -60))
+	var inv := t.global_transform.affine_inverse()
+	ToyBuild.no_flight = true
+	t.smash(func(p: Vector3) -> bool:
+		var l := inv * p
+		return l.y < 0.4 and l.x < 1.5, 1, t.global_position)
+	ToyBuild.no_flight = false
+	_ck(not t._has_flying() and t._pieces.size() == 6, "專用伺服器拆開：主機上沒有 RigidBody 碎塊（%d 個碎塊，都是靜態的）" % t._pieces.size())
+	var all_static := true
+	for key in t._pieces:
+		all_static = all_static and t._pieces[key] is StaticBody3D
+	# 疊在上面的：底面正好是底下那塊的頂面（2 壓 0、4 壓 2）；落在站著的地基頂的（6）：底面在地基頂（相對這棟的原點 0.5）
+	var stacked := absf(_piece_bottom(t, 2) - _piece_bottom(t, 0) - 0.5) < 0.01 and absf(_piece_bottom(t, 4) - _piece_bottom(t, 2) - 0.5) < 0.01
+	var on_base := absf(_piece_bottom(t, 6) - t.global_position.y - 0.5) < 0.01
+	_ck(all_static and t._pieces.size() == 6, "碎塊都是靜態的")
+	_ck(stacked and on_base, "疊得住：2 壓在 0 上、4 壓在 2 上（底面貼頂面）；6 落在站著的地基頂")
+	var saved := {}
+	for key in t._pieces:
+		saved[key] = (t._pieces[key] as Node3D).global_transform
+	_defer(2, func() -> void:   # 物理下一幀才看得到新的靜態碰撞體，射線也要等
+		var rest := true
+		for key in t._pieces:
+			var gap := _rest_gap(t, key)
+			rest = rest and absf(gap) <= 0.3
+		_ck(rest, "每個碎塊底下都有東西擋：從中心往下射線打到的地方在底面 0.3 公尺內")
+		# 踢開（尼諾拉踢碎塊）：先水平移開 KICK_SHIFT 公尺再落下，還是靜態、落地
+		var before := (t._pieces[3] as Node3D).global_position
+		ToyBuild.no_flight = true
+		t.kick(3, Vector3.RIGHT, 3.0)
+		ToyBuild.no_flight = false
+		var after := (t._pieces[3] as Node3D).global_position
+		_ck(t._pieces[3] is StaticBody3D and t._landed.has(3) and absf(after.x - before.x - ToyBuild.KICK_SHIFT) < 0.01 and absf(_rest_gap(t, 3)) <= 0.3, "踢開的碎塊：水平移開 %.1f 公尺、落地（底下有東西擋）、還是靜態" % ToyBuild.KICK_SHIFT)
+		# _settle：落地後 SETTLE_TIME 秒才送；送的位置就是落地的位置（前面還沒到時間，位置不動）
+		t._physics_process(ToyBuild.SETTLE_TIME * 0.5)
+		_ck(t._landed.size() == t._pieces.size(), "落地的碎塊還在等 SETTLE_TIME 秒（%d 個）" % t._landed.size())
+		t._physics_process(ToyBuild.SETTLE_TIME)
+		var moved := 0
+		for key in saved:
+			if key != 3 and not (t._pieces[key] as Node3D).global_transform.is_equal_approx(saved[key]):
+				moved += 1
+		_ck(t._landed.is_empty() and moved == 0, "時間到，_settle 送出，其他碎塊的位置和落地時一樣（沒有被改動）")
+		_ck(t.loose_ids().size() == 6 and t.is_standing(5), "拆掉的 6 塊都還在場上（碎塊），地基還站著")
+		_free_map(m)
+	)
+
+## 碎塊的底面高度（世界座標）：碎塊扶正（方塊本地的邊界框中心）算的
+func _piece_bottom(t: ToyBuild, key: int) -> float:
+	var n: Node3D = t._pieces[key]
+	var box: AABB = t._info[key].box
+	return (n.global_transform * box.get_center()).y - box.size.y * 0.5
+
+## 碎塊中心往下射線打到的高度，減掉底面（0 代表剛好貼著；打不到回 999）
+func _rest_gap(t: ToyBuild, key: int) -> float:
+	var n: Node3D = t._pieces[key]
+	var box: AABB = t._info[key].box
+	var c := n.global_transform * box.get_center()
+	var q := PhysicsRayQueryParameters3D.create(c, c + Vector3.DOWN * 50.0)
+	q.exclude = [(n as StaticBody3D).get_rid()]
+	var hit := t.get_world_3d().direct_space_state.intersect_ray(q)
+	if hit.is_empty():
+		return 999.0
+	return hit.position.y - _piece_bottom(t, key)
+
+## 範圍拆（smash 的 area）：同一堵牆，有範圍和沒範圍拆到的塊一樣；範圍也真的縮小了要看的塊
+func _case_toy_area() -> void:
+	var m := _toy_map()
+	var grid := []
+	for ix in 12:
+		for iy in 3:
+			grid.append([Transform3D(Basis(), Vector3(ix, 0.25 + iy * 0.5, 0)), Vector3(1.0, 0.5, 1.0), 1, Color.RED])
+	var a := ToyBuild.make(grid)
+	var b := ToyBuild.make(grid)
+	for pair: Array in [[a, "ToyAreaA", Vector3(-80, 0, -80)], [b, "ToyAreaB", Vector3(-80, 0, -70)]]:
+		var t: ToyBuild = pair[0]
+		t.name = pair[1]
+		m.map.add_child(t)
+		t.position = m.map._on_ground(pair[2])
+	var c_local := Vector3(2.0, 0.75, 0.0)
+	var c := b.global_transform * c_local
+	var hit := func(p: Vector3) -> bool: return p.distance_to(c) < 1.2
+	var area := AABB(c - Vector3.ONE * 1.2, Vector3.ONE * 2.4)
+	var near := b.bricks_near(area).size()
+	a.smash(func(p: Vector3) -> bool: return p.distance_to(a.global_transform * c_local) < 1.2, 1, a.global_position)
+	b.smash(hit, 1, b.global_position, area)
+	var same := true
+	var loose := 0
+	for i in a.brick_count():
+		same = same and a.is_standing(i) == b.is_standing(i)
+		if not a.is_standing(i):
+			loose += 1
+	_ck(same and loose > 0 and loose < a.brick_count(), "範圍拆和全部拆拆到的塊一樣（%d 塊鬆脫）" % loose)
+	_ck(near > 0 and near < b.brick_count(), "範圍只看附近的塊（%d 塊，全部 %d 塊）" % [near, b.brick_count()])
+	_free_map(m)

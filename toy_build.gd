@@ -21,8 +21,12 @@ const HIT_SOUND := "res://assets/audio/destruction/wood_crack.wav"
 const HOUSE_FALL_SOUND := "res://assets/audio/destruction/house_collapse.wav"
 const SHAKE_RANGE := 25.0         # 離鏡頭超過這個距離（公尺）就不震
 const KICK_COOLDOWN := 500        # 毫秒：同一塊碎塊被踢過之後，這段時間內不再踢
+const LAND_DROP := 50.0           # 專用伺服器：碎塊往下找落點最遠幾公尺（見 _land）
+const KICK_SHIFT := 2.0           # 專用伺服器：踢出去的碎塊先水平移開這麼遠再落下（公尺）
+const LAND_LIFT := 0.5            # 專用伺服器：往下掃之前先抬高這麼多（剛好貼著地面或陷進去一點，掃不到東西）
 
 static var _mat: ShaderMaterial
+static var no_flight := false     # 專用伺服器設 true：主機上的碎塊不飛，直接落到正下方（見 _land）；客戶端照飛
 
 var can_break := true             # 拆得掉（安全屋、掩體方塊、石頭不行，進 destructible 群組也是看這個）
 var _layer := 1 | 16             # 碰撞層（make 設；樹是 1、不加 SOLID_LAYER，關碰撞物件時尼諾拉穿過）
@@ -48,6 +52,7 @@ var _need_bake := false           # 有碎塊還在飛：停下來之後主機�
 var _hide_queue: Array = []       # 等著實體停用形狀的塊編號（見 HIDE_PER_FRAME）
 var _pending: Array = []          # 等它的塊都藏好才生的大碎塊：{m: 塊編號, from: 衝量的來源}（見 _merge）
 var _grid := {}                   # 連通檢查用的鄰居表：格子（Vector3i）-> 蓋到這格的塊編號。第一次要用時建，塊不會動
+var _landed := {}                 # 專用伺服器：已經落地（直接靜態）、還沒送 _settle 的碎塊：代表塊編號 -> 落地過了幾秒
 const GRID := 1.6                 # 鄰居表的格子大小（公尺）
 # ponytail: 一次鬆脫最多生 150 個碎塊（每個都是 RigidBody 加一個網格、一個形狀，一次生 1275 個要 70 毫秒的一幀）。
 # 超過的那次鬆脫，塊照位置併成大塊（_merge：3 公尺的格子，併完還超過就格子加倍），碎塊總數還在上限內，每一塊都還在場上
@@ -117,21 +122,22 @@ static func material() -> ShaderMaterial:
 
 ## 拆（主機才算）：hit 收每塊的世界中心，回傳 true＝打到。打到的、等級 <= max_level、不是 3 的扣一下，扣到 0 鬆脫。
 ## 然後連通檢查：連不到地面的（懸空）也鬆脫。鬆脫的送 _break；有扣血但沒鬆脫的送 _hurt（各台抖一下）
-func smash(hit: Callable, max_level: int, from: Vector3) -> void:
+## area 是世界座標的範圍（有體積才用）：只看範圍內的塊（hit 收的點要在範圍裡，範圍外的塊不會被打到）。沒給就是全部的塊
+func smash(hit: Callable, max_level: int, from: Vector3, area := AABB()) -> void:
 	var t0 := Time.get_ticks_usec()
-	_smash(hit, max_level, from)
+	_smash(hit, max_level, from, area)
 	var ms := (Time.get_ticks_usec() - t0) / 1000
 	if ms > 20:   # 停頓記錄：拆一棟太慢時印出來（主機日誌）
 		print("拆積木 %d 毫秒（%d 塊）" % [ms, _xf.size()])
 
-func _smash(hit: Callable, max_level: int, from: Vector3) -> void:
+func _smash(hit: Callable, max_level: int, from: Vector3, area: AABB) -> void:
 	if not multiplayer.is_server() or not can_break:
 		return
 	var n := _xf.size()
 	var loose := _loose.duplicate()
 	var fresh := PackedInt32Array()
 	var hurt := false
-	for i in n:
+	for i in bricks_near(area):
 		if loose[i] == 1 or _lv[i] >= 3 or _lv[i] > max_level:
 			continue
 		if not hit.call(global_transform * _xf[i].origin):
@@ -159,12 +165,7 @@ func _smash(hit: Callable, max_level: int, from: Vector3) -> void:
 ## 只看鄰居表（格子 GRID 公尺，每塊只跟蓋到同一格的比）：第一次用時建一次（1659 塊約 5 毫秒）
 func _unsupported(loose: PackedByteArray) -> PackedInt32Array:
 	var n := _xf.size()
-	if _grid.is_empty():
-		for i in n:
-			for c: Vector3i in _cells(_bb[i].grow(0.05)):
-				if not _grid.has(c):
-					_grid[c] = []
-				_grid[c].append(i)
+	_ensure_grid()
 	var ok := PackedByteArray()
 	ok.resize(n)
 	var todo: Array[int] = []
@@ -193,11 +194,17 @@ func _unsupported(loose: PackedByteArray) -> PackedInt32Array:
 func _break(ids: PackedInt32Array, gone: PackedInt32Array, from: Vector3) -> void:
 	_touched = true
 	var at := Vector3.ZERO
+	var order: Array = Array(ids)
+	if ToyBuild.no_flight and multiplayer.is_server():   # 專用伺服器：由低到高落地，後面的疊在前面的上面
+		order.sort_custom(func(a: int, b: int) -> bool: return _xf[a].origin.y < _xf[b].origin.y)
 	for i in ids:
 		_loose[i] = 1
 		at += global_transform * _xf[i].origin
 		_hide_brick(i)
-		_fling(_spawn(PackedInt32Array([i]), _xf[i], global_transform * _xf[i], true) as RigidBody3D, from)
+	for i in order:
+		var n := _spawn(PackedInt32Array([i]), _xf[i], global_transform * _xf[i], true)
+		if n is RigidBody3D:   # 專用伺服器落地的是靜態的，不用飛
+			_fling(n as RigidBody3D, from)
 	for i in gone:
 		_loose[i] = 1
 		at += global_transform * _xf[i].origin
@@ -249,6 +256,11 @@ func _spawn(mem: PackedInt32Array, local: Transform3D, xf: Transform3D, flying: 
 		vol += _size[m].x * _size[m].y * _size[m].z
 		lv = mini(lv, _lv[m])
 	_info[mem[0]] = {"m": mem, "rel": rel, "box": box, "vol": vol, "lv": lv}
+	if flying and ToyBuild.no_flight and multiplayer.is_server():
+		# ponytail: 專用伺服器的碎塊不飛：直接靜態、落到正下方，不是真的散落；要真的散落就用少一點的剛體模擬
+		var none: Array[RID] = []
+		_landed[mem[0]] = 0.0
+		return _make(mem[0], false, _land(xf, box, none))   # 先算好落點再生（進了場景樹才改位置，物理要到下一步才看得到）
 	return _make(mem[0], flying, xf)
 
 
@@ -260,8 +272,44 @@ func _spawn_group(mem: PackedInt32Array, from: Vector3) -> void:
 		for m in mem:
 			c += _xf[m].origin
 		local = Transform3D(Basis(), c / float(mem.size()))
-	var rb := _spawn(mem, local, global_transform * local, true) as RigidBody3D
-	_fling(rb, from)
+	var n := _spawn(mem, local, global_transform * local, true)
+	if n is RigidBody3D:
+		_fling(n as RigidBody3D, from)
+
+
+## 專用伺服器的落地（no_flight）：xf 是碎塊現在的位置、box 是它的邊界框（碎塊本地）。扶正（保留偏航角），往正下方落到第一個擋住的。
+## 擋的有兩種：這棟自己站著的塊（不在物理查詢裡，照本地的鄰居表算頂面）、其他東西（物理查詢，排除自己、skip、尼諾拉）。取近的那個。
+## 回傳落地後的位置（只改高度）。沒有擋的（物理查不到、這棟也沒有）就落 LAND_DROP 公尺
+func _land(xf: Transform3D, box: AABB, skip: Array[RID]) -> Transform3D:
+	var up := Transform3D(Basis(Vector3.UP, xf.basis.get_euler().y), xf.origin)
+	var wb := up * box
+	# 這棟自己的塊：沒鬆脫、沒藏、有碰撞，邊界框跟碎塊的水平範圍相接、頂面在碎塊底下的，取最高的
+	_ensure_grid()
+	var lb := global_transform.affine_inverse() * wb
+	var bottom := lb.position.y
+	var top := -INF
+	for c: Vector3i in _cells(lb):
+		for j: int in _grid.get(c, []):
+			var b := _bb[j]
+			if _loose[j] == 0 and _off[j] == 0 and _sidx[j] >= 0 and b.end.y <= bottom + 0.01 and b.end.y > top \
+					and b.end.x >= lb.position.x and b.position.x <= lb.end.x and b.end.z >= lb.position.z and b.position.z <= lb.end.z:
+				top = b.end.y
+	var d := INF if top == -INF else bottom - top
+	# 其他東西（地形、別棟、別的碎塊、掩體）：方塊往下掃，碰到的第一個
+	var sh := BoxShape3D.new()
+	sh.size = box.size
+	var q := PhysicsShapeQueryParameters3D.new()
+	q.shape = sh
+	q.transform = up * Transform3D(Basis(), box.get_center() + Vector3.UP * LAND_LIFT)
+	q.motion = Vector3.DOWN * (LAND_DROP + LAND_LIFT)
+	var ex: Array[RID] = skip.duplicate()
+	ex.append(get_rid())
+	for b in get_tree().get_nodes_in_group(&"boss"):
+		if b is CollisionObject3D:
+			ex.append((b as CollisionObject3D).get_rid())
+	q.exclude = ex
+	var drop := minf(maxf(get_world_3d().direct_space_state.cast_motion(q)[0] * (LAND_DROP + LAND_LIFT) - LAND_LIFT, 0.0), d)
+	return Transform3D(up.basis, up.origin + Vector3.DOWN * drop)
 
 
 ## 往外飛：從 from 往碎塊的方向（水平），加一點往上，往前滾
@@ -363,6 +411,7 @@ func restore() -> void:
 	_info.clear()
 	_age.clear()
 	_kick_t.clear()
+	_landed.clear()
 	_pending.clear()
 	_hide_queue.clear()
 	for i in _xf.size():
@@ -394,6 +443,17 @@ func _kick(key: int, impulse: Vector3) -> void:
 		_flush()
 	var n: Node3D = _pieces.get(key)
 	if n == null:
+		return
+	if n is StaticBody3D and ToyBuild.no_flight and multiplayer.is_server():   # 專用伺服器：不飛，先水平移開再直接落地
+		var xf := n.global_transform
+		var ex: Array[RID] = [(n as StaticBody3D).get_rid()]   # 舊的還在場上（queue_free 到幀尾才刪），落點不算它
+		n.name = n.name + "~"
+		n.queue_free()
+		var shift := Vector3(impulse.x, 0.0, impulse.z).normalized() * KICK_SHIFT
+		_landed[key] = 0.0
+		_make(key, false, _land(Transform3D(xf.basis, xf.origin + shift), _info[key].box, ex))
+		_need_bake = true
+		_age.erase(key)
 		return
 	if n is StaticBody3D:
 		var xf := n.global_transform
@@ -480,17 +540,22 @@ func _physics_process(delta: float) -> void:
 		if not n is RigidBody3D:
 			continue
 		_age[key] = _age.get(key, 0.0) + delta
-		# 凍在尼諾拉身體裡會把牠頂起來：等牠出來再凍；但最多等 SETTLE_TIME 的 3 倍，之後不管重疊直接凍
-		var stuck: bool = _age[key] < SETTLE_TIME * 3.0 and _in_boss(n)
-		if ((n as RigidBody3D).sleeping or _age[key] >= SETTLE_TIME) and not stuck:
+		# 已經停了（睡著或飛滿 SETTLE_TIME）才看卡不卡：凍在尼諾拉身體裡會把牠頂起來：等牠出來再凍；但最多等 SETTLE_TIME 的 3 倍，之後不管重疊直接凍
+		if ((n as RigidBody3D).sleeping or _age[key] >= SETTLE_TIME) and not (_age[key] < SETTLE_TIME * 3.0 and _in_boss(n)):
 			ids.append(key)
 			xfs.append(n.global_transform)
+	for key in _landed.keys():   # 專用伺服器落地的碎塊：落地滿 SETTLE_TIME 秒才送最後位置（各台的碎塊飛完才對齊）
+		_landed[key] += delta
+		if _landed[key] >= SETTLE_TIME and _pieces.has(key):
+			_landed.erase(key)
+			ids.append(key)
+			xfs.append((_pieces[key] as Node3D).global_transform)
 	if not ids.is_empty():
 		_settle.rpc(ids, xfs)
-	if _need_bake and _idle() and not _has_flying():   # 這棟的碎塊全部停下來、形狀也藏完了：烘一次
+	if _need_bake and _idle() and not _has_flying():   # 這棟的碎塊全部停下來、形狀也藏完了：烘一次（專用伺服器的碎塊落地就是停了）
 		_need_bake = false
 		_bake()
-	if _idle() and not _has_flying():
+	if _idle() and not _has_flying() and _landed.is_empty():
 		set_physics_process(false)
 
 
@@ -523,6 +588,38 @@ func _all_hidden(mem: PackedInt32Array) -> bool:
 		if _off[m] == 0:
 			return false
 	return true
+
+
+## 鄰居表：第一次要用時建（連通檢查、範圍內的塊都用它）
+func _ensure_grid() -> void:
+	if not _grid.is_empty():
+		return
+	for i in _xf.size():
+		for c: Vector3i in _cells(_bb[i].grow(0.05)):
+			if not _grid.has(c):
+				_grid[c] = []
+			_grid[c].append(i)
+
+
+## 範圍（世界座標）蓋到的塊編號，由小到大；範圍沒有體積就是全部的塊。範圍內的塊一定在鄰居表的格子裡（格子蓋的是邊界框）
+func bricks_near(area: AABB) -> PackedInt32Array:
+	var out := PackedInt32Array()
+	if not area.has_volume():
+		out.resize(_xf.size())
+		for i in _xf.size():
+			out[i] = i
+		return out
+	_ensure_grid()
+	var la := global_transform.affine_inverse() * area
+	var seen := PackedByteArray()
+	seen.resize(_xf.size())
+	for c: Vector3i in _cells(la):
+		for j: int in _grid.get(c, []):
+			if seen[j] == 0:
+				seen[j] = 1
+				out.append(j)
+	out.sort()
+	return out
 
 
 ## 邊界框蓋到的格子
@@ -598,6 +695,8 @@ func _make(key: int, flying: bool, xf: Transform3D) -> Node3D:
 		for b in get_tree().get_nodes_in_group(&"boss"):
 			if b is PhysicsBody3D:
 				(n as RigidBody3D).add_collision_exception_with(b)
+	if ToyBuild.no_flight and not flying:   # 專用伺服器的靜態碎塊：先擺好位置再進場景樹（進了才改的位置，物理要到下一步才看得到）
+		n.transform = get_parent().global_transform.affine_inverse() * xf
 	get_parent().add_child(n)
 	n.global_transform = xf
 	_pieces[key] = n
@@ -680,4 +779,4 @@ static func sfx(on: Node3D, path: String, max_dist: float, at: Vector3) -> void:
 static func blast(world: Node3D, at: Vector3, radius: float) -> void:
 	for w: Node in world.get_tree().get_nodes_in_group(&"destructible"):
 		if w is ToyBuild:
-			(w as ToyBuild).smash(func(p: Vector3) -> bool: return p.distance_to(at) < radius, 1, at)
+			(w as ToyBuild).smash(func(p: Vector3) -> bool: return p.distance_to(at) < radius, 1, at, AABB(at - Vector3.ONE * radius, Vector3.ONE * radius * 2.0))
