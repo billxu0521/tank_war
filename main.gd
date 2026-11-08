@@ -1018,13 +1018,23 @@ var _nav_region: NavigationRegion3D
 ## 要等這一幀的碰撞都拿掉了才讀得到，所以不能當場烘。
 ## ponytail: 整張圖重烘（背景幾百毫秒，甩尾冷卻 20 秒才一次）；連續拆好幾樣時，晚開始的烘可能先烘完被舊的蓋掉，真的發生再排隊
 var _rebake_queued := false
+## ponytail: 解析還在主線程（整張 1 萬多個碰撞體，慢的主機要幾十毫秒）；只隔 5 秒烘一次先擋住連續卡頓。升級：只解析變動的區域、或快取靜態幾何
+const REBAKE_GAP_MS := 5000   # 兩次烘之間至少隔幾毫秒：專用伺服器（慢的 VPS）每次解析場景要幾十毫秒，拆積木一直烘會讓讀秒變慢、玩家卡住
+var _last_bake_ms := -REBAKE_GAP_MS   # 上一次開始解析場景的時刻（毫秒）
+var _slow_work := ""   # 這一幀有沒有慢的工作（停頓記錄用，見 _process）
+var _hitch_last_us := 0
 func bake_nav(rebake := false) -> void:
 	if not multiplayer.is_server() or is_instance_valid(_nav_region) != rebake:
 		return
 	if rebake:
 		if not _rebake_queued:
 			_rebake_queued = true
-			_rebake_now.call_deferred()
+			# 距上一次烘滿 REBAKE_GAP_MS 才烘（第一次立刻烘）；不夠就排到滿了再烘，之後的請求都併進這一次
+			var wait := REBAKE_GAP_MS - (Time.get_ticks_msec() - _last_bake_ms)
+			if wait <= 0:
+				_rebake_now.call_deferred()
+			else:
+				get_tree().create_timer(wait / 1000.0).timeout.connect(_rebake_now)
 		return
 	_bake_nav()
 
@@ -1034,6 +1044,8 @@ func _rebake_now() -> void:
 		_bake_nav()
 
 func _bake_nav() -> void:
+	_last_bake_ms = Time.get_ticks_msec()
+	var t0 := Time.get_ticks_usec()
 	var rebake := is_instance_valid(_nav_region)
 	var nm := NavigationMesh.new()
 	nm.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS
@@ -1045,6 +1057,10 @@ func _bake_nav() -> void:
 	nm.cell_height = 0.25
 	var src := NavigationMeshSourceGeometryData3D.new()
 	NavigationServer3D.parse_source_geometry_data(nm, src, $Arena)
+	var ms := (Time.get_ticks_usec() - t0) / 1000   # 主線程的解析部分（背景烘焙不算）
+	if ms > 20:
+		_slow_work = "重烘導航 %d 毫秒" % ms
+		print("重烘導航 %d 毫秒" % ms)
 	if not rebake:
 		_nav_region = NavigationRegion3D.new()
 		_nav_region.name = "DinoNav"
@@ -1608,6 +1624,14 @@ func _egg_step(delta: float) -> void:
 
 func _process(delta: float) -> void:
 	Fighter._frame_ms = Time.get_ticks_msec()   # 給 Fighter.after_hitch 判斷卡頓
+	# 主機停頓記錄：兩幀之間隔超過 50 毫秒就印出來（只在遊戲中印，大廳不算）；順便附上這段時間裡慢的工作
+	if multiplayer.is_server():
+		var now := Time.get_ticks_usec()
+		var gap := (now - _hitch_last_us) / 1000
+		if _hitch_last_us > 0 and gap > 50 and not lobby.visible:
+			print("主機停頓 %d 毫秒%s" % [gap, "（%s）" % _slow_work if _slow_work != "" else ""])
+		_hitch_last_us = now
+	_slow_work = ""
 	_match_hud.track_frame_time(delta)
 	_diag_print(delta)
 	if BugReport.instance.take_new_error():
