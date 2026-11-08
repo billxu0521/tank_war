@@ -118,6 +118,13 @@ static func material() -> ShaderMaterial:
 ## 拆（主機才算）：hit 收每塊的世界中心，回傳 true＝打到。打到的、等級 <= max_level、不是 3 的扣一下，扣到 0 鬆脫。
 ## 然後連通檢查：連不到地面的（懸空）也鬆脫。鬆脫的送 _break；有扣血但沒鬆脫的送 _hurt（各台抖一下）
 func smash(hit: Callable, max_level: int, from: Vector3) -> void:
+	var t0 := Time.get_ticks_usec()
+	_smash(hit, max_level, from)
+	var ms := (Time.get_ticks_usec() - t0) / 1000
+	if ms > 20:   # 停頓記錄：拆一棟太慢時印出來（主機日誌）
+		print("拆積木 %d 毫秒（%d 塊）" % [ms, _xf.size()])
+
+func _smash(hit: Callable, max_level: int, from: Vector3) -> void:
 	if not multiplayer.is_server() or not can_break:
 		return
 	var n := _xf.size()
