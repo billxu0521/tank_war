@@ -1024,6 +1024,7 @@ var _last_bake_ms := -REBAKE_GAP_MS   # 上一次開始解析場景的時刻（�
 var _slow_work := ""   # 這一幀有沒有慢的工作（停頓記錄用，見 _process）
 var _hitch_last_us := 0
 var _hitch_phys := 0
+static var HITCH_MS := int(OS.get_environment("HITCH_MS")) if OS.get_environment("HITCH_MS") != "" else 50   # 停頓記錄的門檻（毫秒）；本機查效能時設 0 每幀都印
 
 ## 停頓記錄的細節：這幀跑了幾步物理、每步腳本花多少、會動的物體、碰撞對數、碎塊數（找卡頓是誰造成的）
 func _hitch_detail() -> String:
@@ -1646,7 +1647,7 @@ func _process(delta: float) -> void:
 	if multiplayer.is_server():
 		var now := Time.get_ticks_usec()
 		var gap := (now - _hitch_last_us) / 1000
-		if _hitch_last_us > 0 and gap > 50 and not lobby.visible:
+		if _hitch_last_us > 0 and gap > HITCH_MS and not lobby.visible:
 			print("主機停頓 %d 毫秒%s %s" % [gap, "（%s）" % _slow_work if _slow_work != "" else "", _hitch_detail()])
 		_hitch_last_us = now
 		_hitch_phys = Engine.get_physics_frames()
