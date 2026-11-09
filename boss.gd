@@ -114,6 +114,9 @@ static var TOY_PLOW_MS: int = Balance.whole("toy_plow_ms")   # 全速撞的冷�
 static var TOY_PLOW_SPEED: float = RUN * Balance.num("toy_plow_speed")   # 剛撞穿積木之後的水平速度上限（阻力）
 static var TOY_PLOW_BREAK: float = RUN * Balance.num("toy_plow_break")   # 全速撞的門檻：到這個速度，等級 2 一下打穿
 static var TOY_PLOW_FLING: float = Balance.num("toy_plow_fling")   # 全速撞飛碎塊：碎塊速度＝水平速度乘這個數
+static var TOY_PLOW_STALL: float = RUN * Balance.num("toy_plow_stall")   # 撞進去那一下的水平速度上限（卡一下）
+static var TOY_PLOW_STALL_MS: int = Balance.whole("toy_plow_stall_ms")   # 卡一下多久（毫秒）
+static var TOY_PLOW_DMG: int = Balance.whole("toy_plow_dmg")   # 全速撞每下扣幾點
 const PLOW_DRAG := 300        # 撞穿之後這段時間內（毫秒）水平速度有上限（見 TOY_PLOW_SPEED）
 const PLOW_GAP := 500         # 撞過之後這段時間內還算同一次撞；超過才算第一下（停頓只給第一下，見 _plow_fed）
 const PLOW_HITSTOP := 0.1     # 第一下的停頓（秒）
@@ -961,10 +964,12 @@ func _move(dir: Vector3, want_run: bool, delta: float) -> void:
 	_apply_gravity(delta)
 	if multiplayer.is_server():
 		# 剛撞穿積木：水平速度有上限（阻力，撞穿要有重量感，但不停）
+		# 撞進去的第一下：先卡一下（TOY_PLOW_STALL），之後才回到 TOY_PLOW_SPEED
+		var cap := TOY_PLOW_STALL if Time.get_ticks_msec() - _plow_first < TOY_PLOW_STALL_MS else TOY_PLOW_SPEED
 		if Time.get_ticks_msec() - _plow_t < PLOW_DRAG:
 			var h := Vector2(velocity.x, velocity.z)
-			if h.length() > TOY_PLOW_SPEED:
-				h = h.normalized() * TOY_PLOW_SPEED
+			if h.length() > cap:
+				h = h.normalized() * cap
 				velocity.x = h.x
 				velocity.z = h.y
 		# 先拆再走：跑到門檻速度，身體前方的積木先鬆脫，身體才不會被擋停
@@ -983,6 +988,7 @@ func _move(dir: Vector3, want_run: bool, delta: float) -> void:
 ## 撞到積木、撞之前的水平速度 ≥ toy_charge_speed（跑步，走路不算）就拆碰撞點 BODY_RADIUS 內、等級 1 的塊；同一棟 CHARGE_MS 毫秒內只算一次。
 ## 撞到碎塊（群組 toy_piece）就踢開（速度 toy_kick，同一塊的冷卻見 ToyBuild.kick）
 var _charge_t := {}   # 撞過的積木（ToyBuild）-> 上次撞的毫秒（主機用）
+var _plow_first := -1000000   # 這次撞的第一下的毫秒（主機）：卡一下從這裡算
 var _plow_t := -1000000   # 上一次撞穿積木的毫秒（主機算；駕駛那台由 _plow_fed 同步）：算阻力、第一下、is_plowing
 var _charge_fresh := 0.0   # 還算在跑的剩餘秒數（見 _charge_hits）
 const CHARGE_FRESH := 0.5
@@ -1062,7 +1068,7 @@ func _smash_ahead(now: int, spd: float) -> bool:
 	var any := false
 	var full := spd >= TOY_PLOW_BREAK or now - _plow_t < PLOW_GAP   # 已經在撞（剛撞穿過）也算全速：阻力把速度壓在門檻下，不算的話等級 2 又要撞兩下、一撞一停
 	var cd := TOY_PLOW_MS if full else CHARGE_MS
-	var dmg := 2 if full else 1
+	var dmg := TOY_PLOW_DMG if full else 1
 	# 正在撞（全速）就照全速撞飛：被擋了一下、速度掉下來時也一樣（不然碎塊軟軟掉在原地，專用伺服器上又落在路上擋住）
 	var power := clampf((maxf(spd, TOY_PLOW_SPEED) if full else spd) * TOY_PLOW_FLING, ToyBuild.FALL_SPEED, PLOW_POWER_MAX)
 	var hit_any := false
@@ -1121,6 +1127,8 @@ func _smash_ahead(now: int, spd: float) -> bool:
 ## 撞穿了（主機）：第一下（距上一下超過 PLOW_GAP）停頓＋大抖，之後只抖。同步給駕駛那台（_plow_fed）；hit_fx 看 is_plowing 不再停
 func _plow_hit(now: int) -> void:
 	var first := now - _plow_t >= PLOW_GAP
+	if first:
+		_plow_first = now
 	_plow_t = now
 	if pilot != 0:
 		_plow_fed.rpc_id(pilot, first)
