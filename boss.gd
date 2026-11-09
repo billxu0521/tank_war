@@ -118,7 +118,7 @@ const PLOW_DRAG := 300        # 撞穿之後這段時間內（毫秒）水平速
 const PLOW_GAP := 500         # 撞過之後這段時間內還算同一次撞；超過才算第一下（停頓只給第一下，見 _plow_fed）
 const PLOW_HITSTOP := 0.1     # 第一下的停頓（秒）
 const PLOW_SHAKE_FIRST := 0.08   # 第一下的鏡頭抖（和挨重打一樣）
-const PLOW_SHAKE := 0.03      # 之後每一下的鏡頭抖（只抖不停）
+const PLOW_SHAKE := 0.02      # 之後每一下的鏡頭抖（只抖不停，像持續的低震）
 const PLOW_POWER_MAX := 15.0  # 碎塊飛出的速度上限（公尺／秒）
 static var SWEEP_COS: float = cos(deg_to_rad(Balance.num("sweep_angle") * 0.5))   # 甩尾扇形（後方）半角的餘弦
 static var SWEEP_ROOT_BACK: float = Balance.num("sweep_root_back") * GROW   # 尾根在身體中心後方幾公尺（表裡是放大前的 0.45），甩尾的圓心
@@ -172,7 +172,8 @@ var _pin_age := 0.0
 var _cam_yaw := 0.0             # 駕駛那台：鏡頭的水平角（身體慢慢轉過來）
 var _cam_pitch := 0.0
 var _piloting := false          # 駕駛那台：現在是不是由我操作（變成駕駛、不再是駕駛的那一刻才換鏡頭）
-var _quake := 0.0               # 駕駛那台：甩尾打到可拆的東西，鏡頭抖的幅度（弧度），每幀衰減（add_shake）
+var _quake := 0.0               # 駕駛那台：打到可拆的東西，鏡頭抖的幅度（0～0.2，乘 QUAKE_METERS 是平移公尺），每幀衰減（add_shake）
+const QUAKE_METERS := 2.0       # 抖動幅度換成鏡頭平移：0.08（第一下）約 0.16 公尺、上限 0.2 是 0.4 公尺
 
 var director := Director.new()
 var _tree: BT.Task
@@ -251,8 +252,13 @@ func _process(delta: float) -> void:
 		_cam_yaw = rotation.y
 	if mine:
 		$CamPivot.rotation = Vector3(CAM_BASE + _cam_pitch + randf_range(-1.0, 1.0) * _stagger * 0.08 * Settings.v.get(&"shake", 1.0), _cam_yaw - rotation.y, 0.0)
-		_quake = lerpf(_quake, 0.0, 1.0 - exp(-10.0 * delta))
-		$CamPivot.rotation += Vector3(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0), 0.0) * _quake
+		_quake = lerpf(_quake, 0.0, 1.0 - exp(-8.0 * delta))
+		# 抖動：鏡頭平移（h_offset、v_offset），不轉鏡頭（轉的話整個畫面甩，暈）；用幾個正弦疊出平滑的晃動，不是每幀亂跳
+		var tq := Time.get_ticks_msec() * 0.001
+		var nz := Vector2(sin(tq * 23.0) + sin(tq * 37.0 + 1.3), sin(tq * 29.0 + 0.7) + sin(tq * 41.0 + 2.1)) * 0.5
+		var amp: float = _quake * QUAKE_METERS * Settings.v.get(&"shake", 1.0)
+		cam.h_offset = nz.x * amp
+		cam.v_offset = nz.y * amp * 0.6   # 上下比左右少一點
 	$Trex.rotation.z = lerpf($Trex.rotation.z, 1.35 if down_left > 0.0 else 0.0, minf(delta * 4.0, 1.0))
 	if down_left > 0.0 and not _was_down:   # 倒地：整隻摔下去揚起一大圈土
 		var w: Node = get_tree().get_first_node_in_group(&"arena")
@@ -401,7 +407,7 @@ func _clamp_cam_pitch(v: float) -> float:
 
 ## 積木挨打的鏡頭抖（ToyBuild.hit_fx 找這個方法）：鏡頭抖一下。只有操控的那台抖得到（鏡頭只在那台）
 func add_shake(amount: float) -> void:
-	_quake = minf(_quake + amount, 0.2)
+	_quake = minf(maxf(_quake, amount), 0.2)   # 取大的，不疊加：連續撞（每 0.1 秒一下）不會越抖越大
 
 ## 打擊停頓：只有操控牠的那台停，骨架凍住（trex.gd 的 hitstop）；別人看到的照常動
 func add_hitstop(sec: float) -> void:
