@@ -759,11 +759,14 @@ func _cubes_physics(m: Node, house: ToyBuild, one: int, three: int) -> void:
 	_ck(_standing(house, 1).size() == before, "丟的人是恐龍，炸藥不拆方塊")
 	# 等級 3 不受炸藥影響
 	_ck(house.is_standing(three) and house.hp_of(three) == 3, "炸藥不影響等級 3")
-	# 子彈穿材質：木板（等級 1）力量 1 穿得過，雙層（2）要 2，金屬（3）要 3
+	# 子彈分級先關：木板、雙層、金屬，力量 1～3 都擋住
 	var s1 := _first_brick(house, 1)
 	var s2 := _first_brick(house, 2)
 	var s3 := _first_brick(house, 3)
-	_ck(Bullet.pierces(house, 1, s1) and not Bullet.pierces(house, 1, s2) and Bullet.pierces(house, 2, s2) and not Bullet.pierces(house, 2, s3) and Bullet.pierces(house, 3, s3), "方塊的子彈穿透照等級")
+	var none := true
+	for p in [1, 2, 3]:
+		none = none and not Bullet.pierces(house, p, s1) and not Bullet.pierces(house, p, s2) and not Bullet.pierces(house, p, s3)
+	_ck(none, "方塊擋子彈（分級先關，每級每種力量都不穿）")
 
 
 ## 還站著、等級 level 的方塊編號
@@ -904,8 +907,8 @@ func _toy_body() -> void:
 	_ck(_piece_node(col, 1) == null and col.loose_ids().is_empty() and col.is_standing(1) and col.hp_of(1) == 1 and not col.has_damage(), "新的一場：碎塊刪掉、塊回來、血量回滿")
 	hurt.restore()
 	_ck(not hurt.has_damage() and hurt.hp_of(0) == 2, "新的一場：挨一下的也回滿")
-	# 子彈穿材質：單塊的（等級 1 木板）力量 1 穿得過；安全屋沒有材質，照以前穿不過
-	_ck(Bullet.pierces(col, 1, 1) and not Bullet.pierces(col, 1, 0) and Bullet.pierces(col, 3, 0), "積木的子彈穿透照塊的等級")
+	# 子彈分級先關：單塊（等級 1 木板）力量 3 也擋住
+	_ck(not Bullet.pierces(col, 3, 1) and not Bullet.pierces(col, 3, 0), "積木的子彈一律擋住（分級先關）")
 	# 非派對模式甩尾（_wreck_around）也拆得到積木；派對方塊房子這時藏著
 	m.rules = &"egg"
 	var base := Vector3(20, 0, -20)
@@ -1225,7 +1228,7 @@ func _toy_bullet_case() -> void:
 	var m := _isolated_match()
 	Main.level_file = keep
 	_park(m)
-	# 前牆是等級 1（木板，力量 1 穿得過），後面一塊等級 2（雙層，要力量 2）：力量 1 的子彈穿過前牆、停在後牆前面
+	# 前牆是等級 1（木板），後面一塊等級 2（雙層）：分級先關，力量 3 的子彈也停在前牆前面（前牆在 2.01 公尺）
 	var wall := ToyBuild.make([
 		[Transform3D(Basis(), Vector3(0, 0.75, 0)), Vector3(1.5, 1.5, 0.3), 1, Color.RED],
 		[Transform3D(Basis(), Vector3(0, 0.75, 0.45)), Vector3(1.5, 1.5, 0.3), 2, Color.BLUE]])
@@ -1235,16 +1238,16 @@ func _toy_bullet_case() -> void:
 	var b := Bullet.new()
 	var wp := Weapon.new()   # 不在場景樹裡：測完自己 free
 	b.weapon = wp
-	b.power = 1
+	b.power = 3
 	b.vel = Vector3(0, 0, 600)   # 一幀就飛過整個牆
 	m.map.add_child(b)
 	b.global_position = Vector3(0, 0.75, -3)
 	b.set_physics_process(false)   # 自己不飛，等物理幀過了再由這裡推一次（advance）
 	_defer(4, func() -> void:
 		b.advance(1.0 / 120.0)
-		_ck(b.is_queued_for_deletion(), "子彈穿過等級 1 的前牆後，停在等級 2 的後牆")
-		_ck(absf(b._traveled - 3.28) < 0.05, "子彈停的位置在後牆前面（飛了 %.2f，要約 3.28）" % b._traveled)
-		_ck(wall.is_standing(0) and wall.is_standing(1), "子彈只是穿過，積木沒被打掉（力量 1 打不掉等級 2）")
+		_ck(b.is_queued_for_deletion(), "力量 3 的子彈打到等級 1 的前牆就停（分級先關）")
+		_ck(absf(b._traveled - 2.01) < 0.05, "子彈停在前牆前面（飛了 %.2f，前牆在 2.01）" % b._traveled)
+		_ck(wall.is_standing(0) and wall.is_standing(1), "子彈沒穿過，積木沒被打掉")
 		_free_map(m)
 		wp.free())
 
