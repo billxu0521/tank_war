@@ -106,6 +106,7 @@ static var SWEEP_CD: float = Balance.num("sweep_cd")
 static var SWEEP_CD_PARTY: float = Balance.num("sweep_cd_party")   # 派對模式：甩尾拆得掉地形（積木，toy_build.gd），冷卻拉長，不然掩體一下就拆光
 static var TOY_CHARGE_SPEED: float = RUN * Balance.num("toy_charge_ratio")   # 尼諾拉撞積木要跑到這個水平速度才拆（跑步速度的 0.7 倍，走路不拆）
 static var TOY_KICK: float = Balance.num("toy_kick")   # 尼諾拉跑進碎塊，碎塊被踢出去的速度（公尺／秒）
+static var TOY_NUDGE: float = Balance.num("toy_nudge")   # 尼諾拉走路撞到碎塊，碎塊被推開的速度（公尺／秒）
 static var TOY_CHARGE_REACH: float = Balance.num("toy_charge_reach")   # 跑步撞的範圍：身體表面外多遠（公尺）
 static var TOY_CHARGE_LEVEL: int = Balance.whole("toy_charge_level")   # 跑步撞能扣到的最高等級（等級 1、2 都扣一下）
 const CHARGE_MS := 300   # 同一棟積木撞過之後，這段時間內不再撞（毫秒）
@@ -973,9 +974,23 @@ func _kick_ahead(fwd: Vector3) -> void:
 	for r: Dictionary in get_world_3d().direct_space_state.intersect_shape(q, 16):
 		var c: Object = r.collider
 		if c is Node3D and (c as Node3D).is_in_group(&"toy_piece"):
-			var home: ToyBuild = (c as Node3D).get_meta(&"toy_home")
-			if is_instance_valid(home):
-				home.kick((c as Node3D).get_meta(&"toy_key"), fwd, TOY_KICK)
+			_kick_piece(c, fwd, TOY_KICK)
+
+## 踢碎塊。專用伺服器（碎塊不飛）往路的兩旁踢（像鏟雪）：往前踢的話碎塊只移開 KICK_SHIFT 就落地，又擋在前面，一路被推著走
+## 方向＝碎塊在路的哪一側就往那側（正前方的隨便挑一側），再帶一點往前
+func _kick_piece(c: Node3D, fwd: Vector3, speed: float) -> void:
+	var home: ToyBuild = c.get_meta(&"toy_home")
+	if not is_instance_valid(home):
+		return
+	if not ToyBuild.no_flight:   # 碎塊會飛（單機、自己開房）：往前踢飛就飛遠了，往旁邊踢反而撞到剩下的牆彈回來
+		home.kick(c.get_meta(&"toy_key"), fwd, speed)
+		return
+	var lat := c.global_position - global_position
+	lat.y = 0.0
+	lat -= fwd * lat.dot(fwd)
+	if lat.length() < 0.3:
+		lat = fwd.cross(Vector3.UP) * (1.0 if _rng.randf() < 0.5 else -1.0)
+	home.kick(c.get_meta(&"toy_key"), (lat.normalized() + fwd * 0.4).normalized(), speed)
 
 func _charge_hits(before: Vector3, delta: float) -> void:
 	var fwd := before.normalized() if before.length() > 0.01 else Vector3.ZERO
@@ -989,23 +1004,21 @@ func _charge_hits(before: Vector3, delta: float) -> void:
 	if running and (_charge_fresh > 0.0 or (pilot != 0 and _wall_is_toy())):
 		if _smash_ahead(now):   # 前面還有積木（撞著、擋著）就繼續算在撞，不會因為停下來而斷
 			_charge_fresh = CHARGE_FRESH
-	# 踢碎塊的規則：只在跑的時候踢（走路不踢）；踩在碎塊上面（法線朝上，碎塊是地板）不踢，讓恐龍站在碎塊上走
+	# 踢碎塊的規則：踩在碎塊上面（法線朝上，碎塊是地板）不踢，讓恐龍站在碎塊上走；撞到側面：跑步踢飛（toy_kick），走路輕輕推開（toy_nudge），不然走路會被碎塊卡死
 	for k in get_slide_collision_count():
 		var col := get_slide_collision(k)
 		var c := col.get_collider()
-		if c is Node3D and (c as Node3D).is_in_group(&"toy_piece") and fwd != Vector3.ZERO and running and _should_kick(col.get_normal()):
-			var home: ToyBuild = (c as Node3D).get_meta(&"toy_home")
-			if is_instance_valid(home):
-				home.kick((c as Node3D).get_meta(&"toy_key"), fwd, TOY_KICK)
+		if c is Node3D and (c as Node3D).is_in_group(&"toy_piece") and _should_kick(col.get_normal()):
+			_kick_piece(c, fwd if fwd != Vector3.ZERO else -global_basis.z, TOY_KICK if running else TOY_NUDGE)   # 被擋住、速度歸零時照面對的方向推
 
 ## 跑步撞：身體前方一個長方體（寬 2×BODY_RADIUS、腳底到頭頂、從身體中心到前方 BODY_RADIUS+TOY_CHARGE_REACH 公尺）裡的積木全部算打到，
 ## 等級 TOY_CHARGE_LEVEL 以下都扣一下（等級 2 要撞兩次）。同一棟 CHARGE_MS 毫秒內只算一次，所以一直往前跑會一路撞穿、不會爬上屋頂
 ## ponytail: 一次查詢最多 256 個形狀，一棟大樓吃光上限時，後面的棟這一幀撞不到（下一幀再查）
 static var _charge_box: BoxShape3D
 
-## 碎塊的碰撞法線：朝上（y > 0.5）是碎塊在腳下當地板，不踢；水平或朝下的才是撞到碎塊的側面
-static func _should_kick(normal: Vector3) -> bool:
-	return normal.y <= 0.5
+## 碎塊的碰撞法線：站得上去的斜度（floor_max_angle 以內）是碎塊在腳下當地板，不踢；更陡的是撞到碎塊的側面或邊角（圓的身體卡在邊角上，法線 y 約 0.6，也要踢開）
+func _should_kick(normal: Vector3) -> bool:
+	return normal.angle_to(Vector3.UP) > floor_max_angle
 
 ## 這一幀撞到的是不是房子（ToyBuild 的牆面，不是碎塊）：法線大致水平才算牆；碎塊和地板不算
 func _wall_is_toy() -> bool:

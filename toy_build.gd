@@ -22,7 +22,7 @@ const HOUSE_FALL_SOUND := "res://assets/audio/destruction/house_collapse.wav"
 const SHAKE_RANGE := 25.0         # 離鏡頭超過這個距離（公尺）就不震
 const KICK_COOLDOWN := 500        # 毫秒：同一塊碎塊被踢過之後，這段時間內不再踢
 const LAND_DROP := 50.0           # 專用伺服器：碎塊往下找落點最遠幾公尺（見 _land）
-const KICK_SHIFT := 2.0           # 專用伺服器：踢出去的碎塊先水平移開這麼遠再落下（公尺）
+const KICK_SHIFT := 4.0           # 專用伺服器：踢出去的碎塊先水平移開這麼遠再落下（公尺）；要比尼諾拉身體半徑（約 3.6）遠，才讓得出路
 const LAND_LIFT := 0.5            # 專用伺服器：往下掃之前先抬高這麼多（剛好貼著地面或陷進去一點，掃不到東西）
 
 static var _mat: ShaderMaterial
