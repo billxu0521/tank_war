@@ -696,6 +696,7 @@ func _spit_fire(dir: Vector3, muzzle: Vector3) -> void:
 	f.speed = FB_SPEED
 	f.gravity = 0.0          # 直線飛
 	f.radius = FB_SIZE * 0.5
+	(f.get_node(^"MeshInstance3D") as Node3D).scale = Vector3.ONE * (FB_SIZE / 2.0)   # 畫面跟著變大：fireball.tscn 的球是照大小 2 做的
 	f.max_range = FB_RANGE
 	f.damage = FB_DAMAGE
 	f.burn = true
