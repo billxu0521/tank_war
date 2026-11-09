@@ -183,12 +183,14 @@ func _start_round() -> void:
 	egg_placed = false
 	dino_id = _roster[round_index % _roster.size()]
 	# 清場：boss 以外全部收掉再照這回合的角色生（刪掉重生，客戶端的位置才會跟著換；做法同 main._new_round）
+	# 恐龍的牛仔留著：make_pilot 要跟他交接（先叫他停送同步再收），不能現在就收
 	var players: Node = main.players
+	var keep := str(dino_id) if dino_id > 0 and _present(dino_id) else ""
 	for p in players.get_children():
-		if not p.is_in_group(&"boss"):
+		if not p.is_in_group(&"boss") and String(p.name) != keep:
 			players.remove_child(p)
 			p.queue_free()
-	main._cowboys = 0
+	main._cowboys = 1 if keep != "" and players.has_node(keep) else 0
 	main._respawn_queue.clear()
 	main._claimer = 0
 	var egg: Egg = main.egg
