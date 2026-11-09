@@ -1019,7 +1019,9 @@ var _nav_region: NavigationRegion3D
 ## 要等這一幀的碰撞都拿掉了才讀得到，所以不能當場烘。
 ## ponytail: 整張圖重烘（背景幾百毫秒，甩尾冷卻 20 秒才一次）；連續拆好幾樣時，晚開始的烘可能先烘完被舊的蓋掉，真的發生再排隊
 var _rebake_queued := false
-## ponytail: 解析還在主線程（整張 1 萬多個碰撞體，慢的主機要幾十毫秒）；只隔 5 秒烘一次先擋住連續卡頓。升級：只解析變動的區域、或快取靜態幾何
+## ponytail: 沒拆過的積木解析過就存在 _toy_nav，之後只重解析拆過的積木和其他碰撞體（每次都解析，主線程）；最慘是一次拆好幾棟大房子，解析還是要幾十毫秒。只隔 5 秒烘一次先擋住連續卡頓。升級：分區，只解析變動的區域
+const NAV_GROUP := &"nav_parse"   # 解析時臨時加進群組的節點（見 _parse_arena）
+var _toy_nav := {}   # ToyBuild -> [碰撞層, 解析好的幾何]
 const REBAKE_GAP_MS := 5000   # 兩次烘之間至少隔幾毫秒：專用伺服器（慢的 VPS）每次解析場景要幾十毫秒，拆積木一直烘會讓讀秒變慢、玩家卡住
 var _last_bake_ms := -REBAKE_GAP_MS   # 上一次開始解析場景的時刻（毫秒）
 var _slow_work := ""   # 這一幀有沒有慢的工作（停頓記錄用，見 _process）
@@ -1075,8 +1077,11 @@ func _bake_nav() -> void:
 	nm.agent_max_slope = 40.0
 	nm.cell_size = 0.5
 	nm.cell_height = 0.25
-	var src := NavigationMeshSourceGeometryData3D.new()
-	NavigationServer3D.parse_source_geometry_data(nm, src, $Arena)
+	nm.geometry_source_geometry_mode = NavigationMesh.SOURCE_GEOMETRY_GROUPS_EXPLICIT
+	nm.geometry_source_group_name = NAV_GROUP
+	if not rebake:
+		_toy_nav.clear()   # 新的場地：舊場地的積木已經不在了
+	var src := _parse_arena(nm)
 	var ms := (Time.get_ticks_usec() - t0) / 1000   # 主線程的解析部分（背景烘焙不算）
 	if ms > 20:
 		_slow_work = "重烘導航 %d 毫秒" % ms
@@ -1090,6 +1095,28 @@ func _bake_nav() -> void:
 		var r: Object = region.get_ref()
 		if r:
 			r.set_deferred(&"navigation_mesh", nm))   # 烘完的通知可能不在主執行緒
+
+## 只把這些節點加進 NAV_GROUP 解析，解析完就拿掉
+func _parse_group(nm: NavigationMesh, nodes: Array) -> NavigationMeshSourceGeometryData3D:
+	for n in nodes: n.add_to_group(NAV_GROUP)
+	var s := NavigationMeshSourceGeometryData3D.new()
+	NavigationServer3D.parse_source_geometry_data(nm, s, $Arena)
+	for n in nodes: n.remove_from_group(NAV_GROUP)
+	return s
+
+## 沒拆過的積木（ToyBuild）解析一次就存著重用；拆過的（碎塊、位置會變）和其他碰撞體每次重解析
+func _parse_arena(nm: NavigationMesh) -> NavigationMeshSourceGeometryData3D:
+	var src := NavigationMeshSourceGeometryData3D.new()
+	var rest := []
+	for b in $Arena.find_children("*", "StaticBody3D", true, false):
+		if not (b is ToyBuild) or b.has_damage():
+			rest.append(b); continue
+		var c = _toy_nav.get(b)
+		if c == null or c[0] != b.collision_layer:
+			c = [b.collision_layer, _parse_group(nm, [b])]; _toy_nav[b] = c
+		src.merge(c[1])
+	src.merge(_parse_group(nm, rest))
+	return src
 
 ## 移動標靶：在主機玩家前方 25 公尺，左右各 6 公尺來回走，不開槍
 func add_walker() -> Node3D:
