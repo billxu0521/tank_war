@@ -1228,25 +1228,25 @@ func _toy_bullet_case() -> void:
 	var m := _isolated_match()
 	Main.level_file = keep
 	_park(m)
-	# 前牆是等級 1（木板），後面一塊等級 2（雙層）：分級先關，力量 3 的子彈也停在前牆前面（前牆在 2.01 公尺）
+	# 前牆是等級 1（木板），後面一塊等級 2（雙層）：分級先關，力量 3 的子彈也停在前牆前面（前牆前面在 2.85 公尺）；放在 50 公尺高的空中，地圖上的積木和碎塊擋不到
 	var wall := ToyBuild.make([
 		[Transform3D(Basis(), Vector3(0, 0.75, 0)), Vector3(1.5, 1.5, 0.3), 1, Color.RED],
 		[Transform3D(Basis(), Vector3(0, 0.75, 0.45)), Vector3(1.5, 1.5, 0.3), 2, Color.BLUE]])
 	wall.name = "ToyWall"
 	m.map.add_child(wall)
-	wall.position = Vector3(0, 0, 0)
+	wall.position = Vector3(0, 50, 0)
 	var b := Bullet.new()
 	var wp := Weapon.new()   # 不在場景樹裡：測完自己 free
 	b.weapon = wp
 	b.power = 3
 	b.vel = Vector3(0, 0, 600)   # 一幀就飛過整個牆
 	m.map.add_child(b)
-	b.global_position = Vector3(0, 0.75, -3)
+	b.global_position = Vector3(0, 50.75, -3)
 	b.set_physics_process(false)   # 自己不飛，等物理幀過了再由這裡推一次（advance）
 	_defer(4, func() -> void:
 		b.advance(1.0 / 120.0)
 		_ck(b.is_queued_for_deletion(), "力量 3 的子彈打到等級 1 的前牆就停（分級先關）")
-		_ck(absf(b._traveled - 2.01) < 0.05, "子彈停在前牆前面（飛了 %.2f，前牆在 2.01）" % b._traveled)
+		_ck(absf(b._traveled - 2.85) < 0.05, "子彈停在前牆前面（飛了 %.2f，前牆在 2.85）" % b._traveled)
 		_ck(wall.is_standing(0) and wall.is_standing(1), "子彈沒穿過，積木沒被打掉")
 		_free_map(m)
 		wp.free())
