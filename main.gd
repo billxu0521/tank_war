@@ -997,8 +997,8 @@ func _save_setting(section: String, key: String, value: Variant) -> void:
 func _on_dino_attack_toggled(on: bool) -> void:
 	dino_attacks = on
 
-## 選單的「恐龍碰撞物件」開關（預設關）：關掉尼諾拉只穿過樹，房子、柵欄等建築照樣擋；打開樹也擋（boss.gd 的 _sync_mask）。只有主機能按，同步給大家
-var dino_collide := false
+## 選單的「恐龍碰撞物件」開關（預設開：樹也擋、跑步撞得倒，跟房子一樣）：關掉尼諾拉只穿過樹，房子、柵欄等建築照樣擋；打開樹也擋（boss.gd 的 _sync_mask）。只有主機能按，同步給大家
+var dino_collide := true
 
 func _on_dino_collide_toggled(on: bool) -> void:
 	dino_collide = on
