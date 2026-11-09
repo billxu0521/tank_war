@@ -1720,3 +1720,27 @@ func _case_nav_parse() -> void:
 		check.call("拆過之後")
 		_free_map(m)
 	)
+
+## 蛋被碎塊包住（房子拆倒、碎塊堆在蛋上）就往上抬到露出來；積木一塊都不動、不消失。旁邊沒包住的蛋不動
+func _case_egg_unbury() -> void:
+	var m := _toy_map()
+	var base: Vector3 = m.map._on_ground(Vector3(-70, 0, -50))
+	var b := ToyBuild.make([
+		[Transform3D(Basis(), Vector3(0, 1.0, 0)), Vector3(2, 2, 2), 1, Color.RED],
+	])
+	b.name = "ToyEggBrick"
+	m.map.add_child(b)
+	b.position = base
+	var egg: Egg = m.egg
+	egg.carrier = 0
+	egg.global_position = base + Vector3(0, 1.0, 0)   # 蛋的位置在積木正中間
+	_defer(4, func() -> void:   # 積木的靜態碰撞要過一幀才查得到
+		egg._physics_process(DT)
+		_ck(egg.global_position.y >= base.y + 1.99, "蛋被積木包住要往上抬到頂（現在 y=%.2f，頂在 %.2f）" % [egg.global_position.y, base.y + 2.0])
+		_ck(b.is_standing(0), "蛋抬起來時積木不能被拿掉")
+		egg.global_position = base + Vector3(3, 1, 0)   # 旁邊 3 公尺，沒包住
+		var before := egg.global_position
+		egg._physics_process(DT)
+		_ck(egg.global_position.is_equal_approx(before), "沒被包住的蛋不該動")
+		_free_map(m)
+	)
