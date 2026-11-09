@@ -204,6 +204,7 @@ var _stomp_at := {}           # 牛仔 → 上一次被踩的時刻；ponytail: 
 func _ready() -> void:
 	super()
 	blast_reach = 2.5 * GROW   # 炸藥算距離從身體中心往外扣這麼多（dino.gd 是放大前的 2.5）
+	$CamPivot/Camera3D.fov = Balance.num("dino_cam_fov")   # 鏡頭垂直視角（度）
 	var voice := AudioStreamPlayer3D.new()
 	voice.name = "Voice"
 	voice.unit_size = 12.0       # 大隻，遠遠就聽得到
@@ -695,6 +696,7 @@ func _spit_fire(dir: Vector3, muzzle: Vector3) -> void:
 	f.speed = FB_SPEED
 	f.gravity = 0.0          # 直線飛
 	f.radius = FB_SIZE * 0.5
+	(f.get_node(^"MeshInstance3D") as Node3D).scale = Vector3.ONE * (FB_SIZE / 2.0)   # 畫面跟著變大：fireball.tscn 的球是照大小 2 做的
 	f.max_range = FB_RANGE
 	f.damage = FB_DAMAGE
 	f.burn = true
@@ -971,7 +973,8 @@ func _charge_hits(before: Vector3, delta: float) -> void:
 	if before.length() >= TOY_CHARGE_SPEED:
 		_charge_fresh = CHARGE_FRESH
 	_charge_fresh = maxf(_charge_fresh - delta, 0.0)
-	if _charge_fresh > 0.0 and running:
+	# 貼著積木按住跑（速度起不來）也算撞：駕駛才算，電腦照舊要有助跑（脫困時別把房子啃掉）
+	if running and (_charge_fresh > 0.0 or (pilot != 0 and is_on_wall())):
 		if _smash_ahead(now):   # 前面還有積木（撞著、擋著）就繼續算在撞，不會因為停下來而斷
 			_charge_fresh = CHARGE_FRESH
 	for k in get_slide_collision_count():

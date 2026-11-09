@@ -69,6 +69,7 @@ func _case_boss_scale() -> void:
 	_ck(absf(b.get_node(^"CamPivot").position.y - 2.0 * b.GROW) < 0.01 \
 		and absf(b.get_node(^"CamPivot/Camera3D").position.z - 17.0 * b.GROW) < 0.01,
 		"第三人稱鏡頭照倍率（高 %.2f、距 %.2f）" % [b.get_node(^"CamPivot").position.y, b.get_node(^"CamPivot/Camera3D").position.z])
+	_ck(absf(b.get_node(^"CamPivot/Camera3D").fov - Balance.num("dino_cam_fov")) < 0.01, "駕駛鏡頭視角照表（%.1f 度）" % b.get_node(^"CamPivot/Camera3D").fov)
 	_ck(b.BITE_AT > b.BODY_RADIUS and absf(b.mouth().distance_to(b.global_position) - b.BITE_AT) < 0.01,
 		"嘴巴在身體外面、照倍率（%.2f）" % b.BITE_AT)
 	_ck(b._spit_muzzle().distance_to(b.global_position) > b.BODY_RADIUS, "火球口在身體外面")
@@ -918,9 +919,10 @@ func _case_boss_fireball() -> void:
 	for c in arena.get_children():
 		if c is Fireball:
 			ball = c
-	_ck(ball != null and ball.gravity == 0.0 and ball.radius == 1.0 and ball.max_range == 60.0 \
-		and ball.damage == 50 and ball.burn and ball.speed == 25.0, "火球設定：直線、半徑 1、60 公尺、50 點、會燒")
-	_ck(ball != null and absf(ball.vel.y) < 0.001 and ball.vel.z < -24.9, "恐龍水平看的時候火球朝前飛（vel %s）" % str(ball.vel if ball else Vector3.ZERO))
+	_ck(ball != null and ball.gravity == 0.0 and absf(ball.radius - Balance.num("fireball_size") * 0.5) < 0.001 and ball.max_range == 60.0 \
+		and ball.damage == 50 and ball.burn and ball.speed == Balance.num("fireball_speed"), "火球設定：直線、半徑照 fireball_size、60 公尺、50 點、會燒")
+	_ck(ball != null and absf(ball.vel.y) < 0.001 and ball.vel.z < -(b.FB_SPEED - 0.1), "恐龍水平看的時候火球朝前飛（vel %s）" % str(ball.vel if ball else Vector3.ZERO))
+	_ck(Balance.num("fireball_speed") >= 35.0 and Balance.num("fireball_size") >= 3.0, "火球加快加大（回饋 0.8.13）")
 	# 冷卻中再按 Q 不出
 	b.pilot_input(Vector2.ZERO, 0.0, 0.0, b.PIN_FIREBALL)
 	for j in 120:
@@ -1024,6 +1026,7 @@ func _fb_end() -> void:
 var _tb_m: Node
 var _tb_b: Node3D
 var _tb_wall: ToyBuild
+var _tb_wall2: ToyBuild   # 第四段：貼著的那面墙
 var _tb_pile: ToyBuild
 var _tb_stage := 0
 var _tb_n := 0.0   # 這一段跑了幾秒（物理時間，不數幀）
@@ -1161,6 +1164,31 @@ func _toyb_physics(delta: float) -> bool:
 				_ck(moved > 0.3 and b.global_position.x < _tb_kx - 0.9, "碎塊在前面 2 公尺：還沒撞上就踢開（移了 %.2f，尼諾拉 x=%.2f，碎塊 x=%.2f）" % [moved, b.global_position.x, _tb_kx])
 			if _tb_n >= ToyBuild.SETTLE_TIME + 0.6:
 				_ck(_tb_kick_block._pieces[0] is StaticBody3D, "踢完等 SETTLE_TIME 後又凍住（StaticBody3D）")
+				# 第四段：貼著墙按住跑。另一條車道，身體貼著墙面，速度起不來也要拆
+				var z3 := _tb_clear_z(-52.0)   # 挑地形中間的空車道（z 太大會掉出地形外）
+				_tb_wall2 = _tb_block(Vector3(0, 0, z3), 4, 12, Vector3(0.3, 0.5, 1.0))
+				_tb_b.pilot = 1
+				_tb_b.stamina = _tb_b.STAMINA_MAX
+				_tb_b._charge_fresh = 0.0
+				_tb_place(-(_tb_b.BODY_RADIUS + 0.2), z3)
+				_tb_next(4)
+		4:   # 貼著墙走路按住：速度 4 起不來，墙不拆
+			b._move(Vector3.RIGHT, false, delta)
+			if _tb_n >= 1.0:
+				_ck(_tb_down(_tb_wall2) == 0, "貼著墙走路不拆（墙鬆脫 %d 塊）" % _tb_down(_tb_wall2))
+				_tb_next(5)
+		5:   # 貼著墙按住跑（駕駛）：速度起不來也算撞，墙的塊鬆脫
+			b._move(Vector3.RIGHT, true, delta)
+			if _tb_n >= 1.0:
+				_ck(_tb_down(_tb_wall2) >= 1, "駕駛貼著墙按住跑：墙的塊鬆脫（%d 塊）" % _tb_down(_tb_wall2))
 				_free_map(_tb_m)
 				return _done()
 	return false
+
+## 墙上鬆脫（或拆掉）的塊數
+func _tb_down(w: ToyBuild) -> int:
+	var n := 0
+	for i in w.brick_count():
+		if not w.is_standing(i):
+			n += 1
+	return n
