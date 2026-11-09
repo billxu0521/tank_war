@@ -1131,6 +1131,15 @@ func _tb_setup_kick() -> void:
 	_tb_b.velocity = Vector3(_tb_b.RUN, 0, 0)   # 已經在跑（踢只在跑步的速度時做）
 	_tb_b.rotation.y = -PI * 0.5
 
+## 走路撞的碎塊：一塊碎塊擺在空車道上（停下、凍住），尼諾拉從 -9 公尺處走來（不跑）
+func _tb_setup_walk_piece() -> void:
+	var z4 := _tb_clear_z(-80.0)   # 地形中間的空車道（z 太大掉出地形外）
+	_tb_kick_block = _tb_block(Vector3(2, 0, z4), 1, 1, Vector3(1.5, 3.0, 1.5))   # 高 3 公尺：腳底（騎在地上）碰得到，不會從上面過去
+	_tb_kick_block.smash(func(_p: Vector3) -> bool: return true, 1, Vector3(-3, 0, z4))
+	_tb_kick_block._physics_process(ToyBuild.SETTLE_TIME + 0.1)
+	_tb_kick_pos0 = (_tb_kick_block._pieces[0] as Node3D).global_position
+	_tb_place(-9.0, z4)
+
 ## 墙還完整（每塊都站著、沒挨過打）
 func _tb_wall_intact() -> bool:
 	if _tb_wall.has_damage():
@@ -1205,11 +1214,21 @@ func _toyb_physics(delta: float) -> bool:
 			b._move(Vector3.RIGHT, false, delta)
 			if _tb_n >= 1.0:
 				_ck(_tb_down(_tb_wall2) == 0, "貼著墙走路不拆（墙鬆脫 %d 塊）" % _tb_down(_tb_wall2))
+				_ck(b._wall_is_toy(), "貼著的是房子（ToyBuild）：算牆")
 				_tb_next(5)
 		5:   # 貼著墙按住跑（駕駛）：速度起不來也算撞，墙的塊鬆脫
 			b._move(Vector3.RIGHT, true, delta)
 			if _tb_n >= 1.0:
 				_ck(_tb_down(_tb_wall2) >= 1, "駕駛貼著墙按住跑：墙的塊鬆脫（%d 塊）" % _tb_down(_tb_wall2))
+				_tb_setup_walk_piece()
+				_tb_next(6)
+		6:   # 碎塊（不是房子）擋在前面：走路撞上去不踢（碎塊不動）；踩在碎塊上（法線朝上）不踢
+			b._move(Vector3.RIGHT, false, delta)
+			if _tb_n >= 3.0:
+				var moved: float = (_tb_kick_block._pieces[0] as Node3D).global_position.distance_to(_tb_kick_pos0)
+				_ck(b.get_slide_collision_count() > 0 and not b._wall_is_toy(), "走路撞碎塊：確實撞到了，但碎塊不算牆")
+				_ck(moved < 0.01, "走路撞碎塊不踢（碎塊移了 %.3f 公尺）" % moved)
+				_ck(not b._should_kick(Vector3.UP) and b._should_kick(Vector3.RIGHT), "踩碎塊的法線朝上不踢、撞側面的才踢")
 				_free_map(_tb_m)
 				return _done()
 	return false
