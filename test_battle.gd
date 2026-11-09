@@ -54,6 +54,7 @@ func _process(_delta: float) -> bool:
 		_case_stomp()
 		_case_burn()
 		_case_boss_fireball()
+		_case_pilot_feedback()
 		_case_ui()
 		_case_bug_report()
 		_case_stagger()

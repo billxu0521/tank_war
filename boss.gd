@@ -326,7 +326,7 @@ func _stomp(delta: float) -> void:
 		if _stomp_clock - _stomp_at.get(p, -INF) < STOMP_INTERVAL:
 			continue
 		_stomp_at[p] = _stomp_clock
-		p.take_damage(STOMP_DAMAGE, self)
+		_hurt(p, STOMP_DAMAGE)
 
 # --- 對抗模式：玩家駕駛 ---
 
@@ -399,6 +399,17 @@ func add_hitstop(sec: float) -> void:
 
 func _is_my_pilot() -> bool:
 	return pilot != 0 and multiplayer.multiplayer_peer != null and pilot == multiplayer.get_unique_id()
+
+## 打到牛仔（主機）：扣血，並讓駕駛那台閃命中提示（火球另外在 fireball.gd 自己叫 on_hit）
+func _hurt(p: Node3D, dmg: int) -> void:
+	p.take_damage(dmg, self)
+	if pilot != 0:
+		_hit_fed.rpc_id(pilot)
+
+@rpc("authority", "call_local", "reliable")
+func _hit_fed() -> void:
+	on_hit()
+	add_hitstop(0.06)
 
 ## 駕駛那台每個物理幀：把按鍵送給主機（鏡頭在 _process）
 func _pilot_local() -> void:
@@ -654,7 +665,7 @@ func _hit_cone() -> void:
 			continue
 		if absf(p.global_position.y - (global_position.y - HALF_H)) < 4.0 * GROW and not _blocked_by_wall(p):
 			_hit_once.append(p)
-			p.take_damage(LIGHT_DAMAGE, self)
+			_hurt(p, LIGHT_DAMAGE)
 
 ## 扇形判定（輕攻擊、甩尾共用）：at 在 from 往 dir 那邊（水平）、距離在 reach 以內、夾角 cos 在 cos_half 以上
 func _in_fan(from: Vector3, dir: Vector3, at: Vector3, reach: float, cos_half: float) -> bool:
@@ -686,7 +697,7 @@ func _sweep_hit() -> void:
 			continue
 		if absf(p.global_position.y - (global_position.y - HALF_H)) < 4.0 * GROW and not _blocked_by_wall(p):
 			_hit_once.append(p)
-			p.take_damage(SWEEP_DAMAGE, self)
+			_hurt(p, SWEEP_DAMAGE)
 
 ## 尼諾拉吐火球：方向跟鏡頭俯仰走（_spit_dir），各台都生一顆（dino.gd 的 _spit 沒有參數、設定不夠用，另寫一個）。
 ## 扣血和燃燒只在主機（Fireball 裡 is_server 才算）

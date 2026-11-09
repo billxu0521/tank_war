@@ -26,6 +26,7 @@ func update_match(me: Node) -> void:
 	_update_spectator(me)
 	_update_crosshair(me)
 	_update_boss_bar(me)
+	_update_pilot_hint(me)
 	_update_compass()
 
 ## 體力條和左上角那行字
@@ -72,6 +73,8 @@ func reset() -> void:
 		_boss_bar.hide()
 		_boss_label.hide()
 	_had_me = false
+	if _pilot_hint:
+		_pilot_hint.hide()
 	main.crosshair.hide()
 	main.stamina_bar.hide()
 	main.hud.text = ""
@@ -192,11 +195,33 @@ func _update_net_info() -> void:
 		parts.append("%d FPS（最慢一幀 %.0f ms）" % [Engine.get_frames_per_second(), _slow_shown])
 	main.net_info.text = "　".join(parts)
 
+## 操作尼諾拉時左下角的操作提示（同 docs/發布/說明.txt）
+const PILOT_HINT := "左鍵 咬　右鍵 蓄力甩尾　Q 火球　Shift 跑"
+var _pilot_hint: Label
+func _update_pilot_hint(me: Node) -> void:
+	if _pilot_hint == null:
+		_pilot_hint = Label.new()
+		_pilot_hint.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+		_pilot_hint.offset_left = 24
+		_pilot_hint.offset_top = -140   # 在體力、Hud、Status 那幾行上面
+		_pilot_hint.offset_bottom = -110
+		_pilot_hint.add_theme_font_size_override(&"font_size", 20)
+		_pilot_hint.add_theme_color_override(&"font_outline_color", Color(0.12, 0.07, 0.05, 0.85))
+		_pilot_hint.add_theme_constant_override(&"outline_size", 6)
+		_pilot_hint.text = PILOT_HINT
+		_root.add_child(_pilot_hint)
+	_pilot_hint.visible = me != null and me.is_in_group(&"boss") and me.pilot == main.multiplayer.get_unique_id()
+
 ## 準心畫在「火球會落到哪」，不是螢幕正中央——抬頭時看得出彈道往上跑。
 ## 牛仔的準心在自己的 HUD 裡（子彈是直線，畫正中央就對），沒有 aim_point，這裡就不顯示。
 func _update_crosshair(me: Node) -> void:
 	var cam := main.get_viewport().get_camera_3d()
-	if me == null or cam == null or not me.has_method("aim_point") or me.is_in_group(&"boss"):   # 操作尼諾拉時沒有火球，不畫準心
+	if me != null and me.is_in_group(&"boss"):   # 操作尼諾拉：沒有火球準心，打中人時畫面中間閃紅
+		main.crosshair.visible = me.hit_until > Time.get_ticks_msec()
+		main.crosshair.modulate = Color(1, 0.3, 0.25)
+		main.crosshair.position = main.get_viewport().get_visible_rect().size * 0.5 - main.crosshair.size * 0.5
+		return
+	if me == null or cam == null or not me.has_method("aim_point"):
 		main.crosshair.hide()
 		return
 	# 打中人準心閃紅。遠距離看不出血條掉，這是唯一的命中確認
