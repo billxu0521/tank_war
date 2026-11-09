@@ -281,6 +281,7 @@ text = "恐龍攻擊（關掉＝傷害歸零，測行為用）"
 
 [node name="DinoCollideBtn" type="CheckButton" parent="UI/Root/Menu/Box/Controller" unique_id=1964021253]
 layout_mode = 2
+button_pressed = true
 text = "恐龍碰撞物件（不勾＝尼諾拉穿過樹）"
 
 [node name="CenterInfo" type="Label" parent="UI/Root" unique_id=1778000001]

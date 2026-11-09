@@ -680,8 +680,10 @@ func _physics_process(delta: float) -> bool:
 		0:   # 落到地上、站住
 			b._move(Vector3.ZERO, false, delta)
 			if _nc_n >= 0.25:
-				_ck(not _nc_m.dino_collide and not _nc_btn.button_pressed, "碰撞物件開關預設不勾")
-				_ck(b.collision_mask == Fighter.SOLID_LAYER, "預設關：尼諾拉的遮罩只留第 5 層（地形、圍牆、建築、角色）")
+				_ck(_nc_m.dino_collide and _nc_btn.button_pressed and b.collision_mask == 1, "碰撞物件開關預設勾（樹也擋、撞得倒）")
+				_nc_m._on_dino_collide_toggled(false)   # 下面測關掉的情形
+				b._sync_mask()
+				_ck(b.collision_mask == Fighter.SOLID_LAYER, "關掉：尼諾拉的遮罩只留第 5 層（地形、圍牆、建築、角色）")
 				_ck(b.test_move(b.global_transform, Vector3(0, -0.3, 0)), "關碰撞物件：還是站在地形上（腳底貼地）")
 				_ck(_on_ground_now(_nc_m, b), "關碰撞物件：站著不掉下去")
 				_nc_next(1)
