@@ -378,6 +378,7 @@ func _case_hunt_weapons() -> void:
 	# 設計原則：原地平地跳不能超過柵欄高度（過柵欄要翻越）
 	var jump_h: float = me.jump_velocity * me.jump_velocity / (2.0 * ProjectSettings.get_setting("physics/3d/default_gravity"))
 	_ck(jump_h < ArenaMap.FENCE_H, "原地跳 %.2f 公尺不能超過柵欄 %.2f 公尺" % [jump_h, ArenaMap.FENCE_H])
+	_ck(jump_h > 0.75, "原地跳 %.2f 公尺要跳得過 0.75 公尺的碎塊" % jump_h)
 
 	# 換彈會放下槍回腰射：舉滿時按 R，按著右鍵也舉不起來；換完才舉回去
 	revolver.mag = 3
@@ -882,3 +883,70 @@ func _case_null_material() -> void:
 	var ref: WeakRef = weakref(mi.get_surface_override_material(0))
 	holder.free()
 	_ck(ref.get_ref() != null, "標過的覆寫材質節點一刪就釋放了（渲染端會報 material is null）")
+
+## ---- 自動跨上矮碎塊（cowboy.gd 的 _try_step）：接在玩具積木後面（_phase 7，由 dino.gd 的 _physics_process 每個物理幀推）。
+## 牛仔自己的輸入和物理關掉，這裡照 _physics_process 的順序（重力、_move_flat）直接推；move_and_slide 只在物理幀有效
+var _su_m: Node
+var _su_c: Node3D
+var _su_stage := 0
+var _su_t := 0.0   # 這一段走了幾秒（物理時間）
+var _su_ground := 0.0
+
+func _start_step_case() -> void:
+	_phase = 7
+	var Main: GDScript = load("res://main.gd")
+	var keep: String = Main.level_file
+	Main.level_file = ""
+	_su_m = _isolated_match()
+	Main.level_file = keep
+	_park(_su_m)
+	_su_c = _su_m._add_player(_su_m.COWBOY, 1)
+	_su_c.set_physics_process(false)
+	_su_box(2.0, 0.3)   # 0.3 公尺的碎塊：走過去會自動跨上
+	_su_next(0, Vector3(-4, 0, 0))
+
+## 一塊碎塊（0.75 公尺厚、1.5 公尺寬、高 h），底面貼地，中心在 x
+func _su_box(x: float, h: float) -> void:
+	var b := StaticBody3D.new()
+	b.collision_layer = 1 | Fighter.SOLID_LAYER
+	var cs := CollisionShape3D.new()
+	var sh := BoxShape3D.new()
+	sh.size = Vector3(0.75, h, 1.5)
+	cs.shape = sh
+	cs.position = Vector3(0, h * 0.5, 0)
+	b.add_child(cs)
+	_su_m.map.add_child(b)
+	b.global_position = _su_m.map._on_ground(Vector3(x, 0, 0))
+
+func _su_next(stage: int, at: Vector3) -> void:
+	_su_stage = stage
+	_su_t = 0.0
+	_su_ground = _su_m.map._on_ground(Vector3(at.x, 0, at.z)).y
+	_su_c.global_position = _su_m.map._on_ground(Vector3(at.x, 0, at.z))
+	_su_c.velocity = Vector3.ZERO
+
+## 每個物理幀：照 _physics_process 的順序，空中加重力，再沿 +X 走（速度就是走路速度）
+func _su_physics(delta: float) -> bool:
+	_su_t += delta
+	var c := _su_c
+	if not c.is_on_floor():
+		c.velocity += c.get_gravity() * delta
+	c._move_flat(Vector3.RIGHT * c.walk_speed, delta)
+	match _su_stage:
+		0:   # 0.3 公尺的碎塊（x=2，前面在 1.625）：走過去（x 過了 2.6），不用按跳
+			if c.global_position.x > 2.6:
+				_su_box(10.0, 0.75)   # 再擺一塊 0.75 公尺的，走不過去
+				_su_next(1, Vector3(6, 0, 0))
+			elif _su_t > 6.0:
+				_ck(false, "走路撞 0.3 公尺的碎塊要自動跨上去（x=%.2f）" % c.global_position.x)
+				return _su_end()
+		1:   # 0.75 公尺的碎塊（x=10，前面在 9.625）：走到箱前停下，不能自動跨（只有跳才過得去）
+			if _su_t > 4.0:
+				_ck(c.global_position.x < 9.6 and c.global_position.y < _su_ground + 0.05,
+					"0.75 公尺的碎塊不自動跨上（停在 x=%.2f，高 %.2f）" % [c.global_position.x, c.global_position.y - _su_ground])
+				return _su_end()
+	return false
+
+func _su_end() -> bool:
+	_free_map(_su_m)
+	return _done()

@@ -11,8 +11,13 @@ var walk_speed: float = Balance.num("cowboy_walk")
 var sprint_speed: float = Balance.num("cowboy_sprint")
 var crouch_speed: float = Balance.num("cowboy_crouch")
 ## 起跳速度。設計原則（2026-10-09 使用者）：原地平地跳的高度不能超過柵欄高度（arena_map.gd 的 FENCE_H），
-## 過柵欄一定要翻越。3.1 → 腳離地約 0.49 公尺（v²/2g，重力 9.8）；以前 4.5 是 1.03 公尺，直接跳過 1 公尺的柵欄
-@export var jump_velocity := 3.1
+## 過柵欄一定要翻越。4.0 → 腳離地約 0.82 公尺（v²/2g，重力 9.8），跳得過碎塊、仍低於柵欄；
+## 以前 3.1 是 0.49 公尺（碎塊擋死），4.5 是 1.03 公尺，直接跳過 1 公尺的柵欄
+@export var jump_velocity := 4.0
+## 走路自動跨上的障礙高度上限（見 _try_step）。矮的碎塊不用跳，走過去就上去
+const STEP_H := 0.35
+## 自動跨上的小跳起跳速度，要 ≤ jump_velocity（net_max_up 才算得過主機的往上上限）
+const STEP_SPEED := 3.0
 ## 加速度，單位是 m/s²（不是每 frame 的插值比例），所以幀率高低不影響手感。
 @export var ground_accel := 25.0
 @export var air_accel := 6.0
@@ -40,7 +45,11 @@ var crouch_speed: float = Balance.num("cowboy_crouch")
 @export_group("Vault")
 ## 翻得上去的高度範圍。低於下限的東西直接走上去就好，高於上限爬不動。
 @export var vault_min_height := 0.4
-@export var vault_max_height := 1.5
+@export var vault_max_height := 2.2
+## 翻高：比這個高（到 vault_max_height）的是「撐上去」——比較慢、比較累（碎塊堆常常 1.5～2 公尺高，翻不上去就整個擋死）
+@export var mantle_height := 1.5
+@export var mantle_time := 0.9
+@export var mantle_stamina := 30.0
 ## 障礙要在多近才翻得到。
 @export var vault_reach := 1.0
 @export var vault_time := 0.55
@@ -478,7 +487,7 @@ func _physics_process(delta: float) -> void:
 
 	if not is_on_floor():
 		velocity += get_gravity() * delta
-	elif Input.is_action_just_pressed("jump"):
+	if (is_on_floor() or _wedged()) and Input.is_action_just_pressed("jump"):
 		# 前進頂著東西按跳＝翻越，其餘情況才是普通跳。get_vector 的 y 是 -1 代表往前
 		if try_vault(input.y < 0.0):
 			return
@@ -509,7 +518,23 @@ func _move_flat(want: Vector3, delta: float) -> void:
 	velocity.x = flat.x
 	velocity.z = flat.z
 	move_and_slide()
+	_wedge_t = _wedge_t + delta if not is_on_floor() and get_slide_collision_count() > 0 and absf(global_position.y - _wedge_y) < 0.005 else 0.0
+	_wedge_y = global_position.y
+	_try_step(want)
 	_track_fall()
+
+
+## 走路撞到矮的（STEP_H 以下）就給一個小跳跨上去：不瞬移（主機要看移動速度上限），只把往上的速度給到 STEP_SPEED，水平速度不動。
+## 頭上要有空、往前 0.3 公尺也走得過才算，不然就是牆。蹲在矮處、翻越、爬梯子不做
+func _try_step(want: Vector3) -> void:
+	var flat := Vector3(want.x, 0.0, want.z)
+	if not is_on_floor() or flat.length() < 0.5 or not is_on_wall() or vaulting or _ladder or _blocked_above():
+		return
+	var raised := global_transform
+	raised.origin += Vector3.UP * STEP_H
+	if test_move(global_transform, Vector3.UP * STEP_H) or test_move(raised, flat.normalized() * 0.3):
+		return
+	velocity.y = maxf(velocity.y, STEP_SPEED)
 
 
 ## 記騰空最高點，落地時算摔了多高。本人和 bot 共用這條，所以放在移動之後。
@@ -799,7 +824,8 @@ func net_max_speed() -> float:
 
 ## 往上最快：跳、爬梯子、翻越（頂面再多 0.5 公尺當餘裕，曲線會略高）
 func net_max_up() -> float:
-	return maxf(maxf(jump_velocity, climb_speed), (vault_max_height + 0.5) / vault_time)
+	# 翻越（到 mantle_height、vault_time 秒）和翻高（到 vault_max_height、mantle_time 秒）取快的那個
+	return maxf(maxf(jump_velocity, climb_speed), maxf((mantle_height + 0.5) / vault_time, (vault_max_height + 0.5) / mantle_time))
 
 
 # --- 以下是 FNE 原本的移動系統 ---
@@ -885,38 +911,63 @@ func try_vault(pressing_forward: bool) -> bool:
 
 	var forward := -global_transform.basis.z
 	# 從膝蓋高度往前找牆面。太低的東西直接走上去就好，不用翻
-	var knee := global_position + Vector3.UP * vault_min_height
-	var wall := _ray(knee, knee + forward * vault_reach)
+	# 碎塊堆常常底下是空的（斜靠著、疊歪）：膝蓋打不到就再往上打兩次
+	var wall := {}
+	for up: float in [vault_min_height, 0.8, 1.2]:
+		var knee := global_position + Vector3.UP * up
+		wall = _ray(knee, knee + forward * vault_reach)
+		if not wall.is_empty():
+			break
 	if wall.is_empty():
 		return false
 
 	# 從障礙上方往下打，找出頂面在哪。往裡探三個深度取最高的：
 	# 柵欄和牆只有 20 公分厚，只探一個 25 公分會越過它、打到另一邊的地上，當成「太矮不用翻」
+	# 先從翻越的高度（mantle_height 上方）往下打，找不到合的再從翻高的高度打：
+	# 窗戶上面還有牆，一開始就從高處打會打到窗戶上方的牆，翻不進窗
 	var top := {}
-	for depth: float in [0.05, 0.15, 0.3]:
-		var probe := Vector3(wall["position"].x, 0.0, wall["position"].z) + forward * depth
-		probe.y = global_position.y + vault_max_height + 0.3
-		var hit := _ray(probe, probe + Vector3.DOWN * (vault_max_height + 0.6))
-		if not hit.is_empty() and (top.is_empty() or hit["position"].y > top["position"].y):
-			top = hit
+	var height := 0.0
+	for reach: float in [mantle_height, vault_max_height]:
+		top = {}
+		for depth: float in [0.05, 0.15, 0.3]:
+			var probe := Vector3(wall["position"].x, 0.0, wall["position"].z) + forward * depth
+			probe.y = global_position.y + reach + 0.3
+			var hit := _ray(probe, probe + Vector3.DOWN * (reach + 0.6))
+			if not hit.is_empty() and (top.is_empty() or hit["position"].y > top["position"].y):
+				top = hit
+		if not top.is_empty():
+			height = top["position"].y - global_position.y
+			if height >= vault_min_height and height <= reach:
+				break
+		top = {}
 	if top.is_empty():
-		return false
-
-	var height: float = top["position"].y - global_position.y
-	if height < vault_min_height or height > vault_max_height:
 		return false
 
 	# 往前跨出去之後腳踩在哪：寬平台會踩在自己的頂面，薄牆／窗戶則是踩到另一側地面。
 	# 不重新找一次會落在頂面高度的半空中，翻完立刻往下掉
-	var ahead: Vector3 = top["position"] + forward * vault_landing_offset
-	var ground := _ray(
-		ahead + Vector3.UP * 0.2, ahead + Vector3.DOWN * (vault_max_height + 1.2)
-	)
-	var landing: Vector3 = ground["position"] if ground else ahead
-	if not _fits_at(landing):
+	# 碎塊堆凹凸不平：照預設距離站不下，就試站在頂上（近一點）、或跨遠一點
+	# ponytail: 最多 30 次查詢，只在按跳的那一下。先照原本從頂面上方 0.2 往下打（窗戶：0.6 會打到窗框上緣）；
+	# 都站不下再從 0.6 打（碎塊堆往前是往上疊的，0.2 的起點在碎塊裡）
+	var landing := Vector3.INF
+	var side := forward.cross(Vector3.UP)
+	for lift: float in [0.2, 0.6]:
+		for off: float in [vault_landing_offset, 0.35, 0.6, 1.4, 1.9]:
+			for lat: float in [0.0, 0.4, -0.4]:
+				var ahead: Vector3 = top["position"] + forward * off + side * lat
+				var ground := _ray(ahead + Vector3.UP * lift, ahead + Vector3.DOWN * (vault_max_height + 1.2))
+				var spot: Vector3 = (ground["position"] if ground else ahead) + Vector3.UP * 0.1   # 抬一點：凹凸的碎塊頂面差幾公分就判定卡住
+				if spot.y - global_position.y <= vault_max_height + 0.3 and _fits_at(spot):
+					landing = spot
+					break
+			if landing != Vector3.INF:
+				break
+		if landing != Vector3.INF:
+			break
+	if landing == Vector3.INF:
 		return false
 
-	spend_stamina(vault_stamina)
+	var high := height > mantle_height
+	spend_stamina(mantle_stamina if high else vault_stamina)
 	vaulting = true
 	velocity = Vector3.ZERO
 	if _jump_sound:
@@ -930,7 +981,7 @@ func try_vault(pressing_forward: bool) -> bool:
 	tween.set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
 	tween.tween_method(func(t: float) -> void:
 		vault_t = t
-		global_position = start.bezier_interpolate(c1, c2, landing, t), 0.0, 1.0, vault_time)
+		global_position = start.bezier_interpolate(c1, c2, landing, t), 0.0, 1.0, mantle_time if high else vault_time)
 	tween.finished.connect(func():
 		vaulting = false
 		vault_t = 0.0
@@ -992,6 +1043,15 @@ func rotate_view(amount: Vector2) -> void:
 
 
 ## 用現在這個（矮的）膠囊往上掃過要長高的距離，被擋住就代表站不起來。
+## 卡在碎塊中間：沒踩到平地（腳下是斜的邊角）但被夾住不動，也要能跳、能翻，不然整個卡死
+## 要「高度不變超過 0.2 秒」才算：跳到最高點那一下不算，不然貼著牆在空中一直跳就能爬上去
+func _wedged() -> bool:
+	return _wedge_t > 0.2
+
+var _wedge_t := 0.0
+var _wedge_y := 0.0
+
+
 func _blocked_above() -> bool:
 	var grow := stand_height - _capsule.height
 	return grow > 0.01 and test_move(global_transform, Vector3.UP * grow)
