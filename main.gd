@@ -641,7 +641,7 @@ func _pick_pilot() -> void:
 var _handover := 0
 
 ## 讓 id 操作尼諾拉：他的牛仔收掉、不排重生。
-## 遠端玩家的牛仔要先叫他停送同步再收（不然他送的同步包會找不到節點），回覆或一秒後才完成
+## 遠端玩家的牛仔要先叫他停送同步再收（不然他送的同步包會找不到節點），回覆後再等一下、或兩秒後才完成
 func make_pilot(id: int) -> void:
 	if _boss() == null:
 		return
@@ -650,7 +650,7 @@ func make_pilot(id: int) -> void:
 	if p and id != multiplayer.get_unique_id() and multiplayer.get_peers().has(id):
 		_handover = id
 		_stop_sync.rpc_id(id)
-		get_tree().create_timer(1.0).timeout.connect(_finish_handover.bind(id))
+		get_tree().create_timer(2.0).timeout.connect(_finish_handover.bind(id))   # 沒回覆（卡住、掉線）也不要一直等
 	else:
 		_take_over(id)
 
@@ -697,8 +697,8 @@ func _sync_stopped() -> void:
 	if not multiplayer.is_server():
 		return
 	var id := multiplayer.get_remote_sender_id()
-	if id == _handover:
-		_finish_handover(id)
+	if id == _handover:   # 同步包走不保證送達的通道，停之前送出的可能比回覆晚到：再等一下才收
+		get_tree().create_timer(0.25).timeout.connect(_finish_handover.bind(id))
 
 ## 自己的角色：牛仔，或是自己正在操作的尼諾拉
 func _me() -> Node:
