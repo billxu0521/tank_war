@@ -930,6 +930,35 @@ func _case_boss_fireball() -> void:
 	_ck(b.act == b.ACT_NONE and _fireball_count(arena) == n0 + 1, "冷卻中再按 Q 不出")
 	_end(m)
 
+## 駕駛打到人：咬空沒有命中提示；咬中駕駛那台 hit_until 有值，畫面中間準心閃紅
+func _case_pilot_feedback() -> void:
+	var m := _offline_match()
+	var b: Node3D = m.spawn_boss()
+	b.pilot = 1
+	b.global_position = m._on_ground(Vector3(0, BOSS_GD.LIFT, 60))
+	b.rotation.y = 0.0
+	var far: Node3D = m._add_player(m.COWBOY, 2)
+	far.global_position = m._on_ground(Vector3(0, 0, 60 - b.BODY_RADIUS - b.LIGHT_REACH - 3.0))   # 扇形外
+	for i in 200:
+		b.pilot_input(Vector2.ZERO, 0.0, 0.0, b.PIN_BITE if i == 0 else 0)
+		b.think(DT)
+	_ck(far.hp == far.max_hp and b.hit_until == 0, "咬空：駕駛沒有命中提示")
+	m._match_hud.update_match(b)
+	_ck(not m.crosshair.visible, "咬空：準心不閃")
+	var front: Node3D = m._add_player(m.COWBOY, 3)
+	front.global_position = m._on_ground(Vector3(0, 0, 60 - b.BODY_RADIUS - 3.0))
+	b._attack_gap = 0.0
+	for i in 200:
+		b.pilot_input(Vector2.ZERO, 0.0, 0.0, b.PIN_BITE if i == 0 else 0)
+		b.think(DT)
+		if front.hp < front.max_hp:
+			break
+	_ck(front.hp == front.max_hp - 40, "咬中扣 40（現在 %d）" % front.hp)
+	_ck(b.hit_until > 0, "咬中：駕駛那台有命中提示")
+	m._match_hud.update_match(b)
+	_ck(m.crosshair.visible, "咬中：畫面中間準心閃紅")
+	_end(m)
+
 func _fireball_count(arena: Node) -> int:
 	var n := 0
 	for c in arena.get_children():

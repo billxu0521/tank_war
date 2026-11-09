@@ -460,6 +460,8 @@ func _case_versus() -> void:
 	m._pick_pilot()
 	_ck(b.pilot == 1 and not m.players.has_node(^"1"), "勾了就抽來當尼諾拉，自己的牛仔收掉")
 	_ck(m._me() == b, "操作尼諾拉時「自己」就是尼諾拉（畫面資訊、體力條用）")
+	m._match_hud.update_match(b)
+	_ck(m._match_hud._pilot_hint.visible and m._match_hud._pilot_hint.text.contains("Q 火球"), "操作尼諾拉時左下角有操作提示")
 	# 往前跑：照輸入動、跑吃體力、轉身有限速
 	for i in 60:   # 測試在第一格跑，物理還沒開始算、位置不會動：看速度
 		b.pilot_input(Vector2(0, -1), 0.0, 0.0, b.PIN_RUN)
@@ -497,6 +499,8 @@ func _case_versus() -> void:
 	m.want_dino = false
 	m._new_round()
 	_ck(b.pilot == 0 and m.players.has_node(^"1"), "下一局：操作尼諾拉的人先變回牛仔")
+	m._match_hud.update_match(m._me())
+	_ck(not m._match_hud._pilot_hint.visible, "變回牛仔：左下角操作提示收起來")
 	# 操作的人斷線：電腦接手
 	m.want_dino = true
 	m._pick_pilot()
