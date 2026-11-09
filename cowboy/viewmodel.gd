@@ -296,7 +296,7 @@ func _process(delta: float) -> void:
 			try_fire(true)   # 左輪腰射按住＝搧擊錘，快但散
 		elif Input.is_action_just_pressed("reload"):
 			try_reload()
-		elif Input.is_action_just_pressed("ammo_next") and not weapon.harpoon:
+		elif Input.is_action_just_pressed("ammo_next") and Weapon.AMMO_TIERS and not weapon.harpoon:
 			weapon.ammo = (weapon.ammo + 1) % Weapon.AMMO_NAMES.size()
 			_refresh_ammo()
 		elif Input.is_action_just_pressed("weapon_next"):
@@ -789,7 +789,7 @@ func _update_heal(delta: float) -> void:
 func _refresh_ammo() -> void:
 	if ammo_label:
 		ammo_label.text = "%s%s  %d | %s    炸藥 %s    補血包 ×%d" % [
-			weapon.display_name, "" if weapon.harpoon else "（%s型彈）" % Weapon.AMMO_NAMES[weapon.ammo], weapon.mag,
+			weapon.display_name, "" if weapon.harpoon or not Weapon.AMMO_TIERS else "（%s型彈）" % Weapon.AMMO_NAMES[weapon.ammo], weapon.mag,
 			"∞" if weapon.reserve < 0 else str(weapon.reserve),
 			"∞" if dynamite < 0 else str(dynamite),
 			_player.medkits,

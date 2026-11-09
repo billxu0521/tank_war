@@ -249,6 +249,8 @@ static func recoil_curve(s: float, keep: float) -> float:
 
 
 var harpoon: MeshInstance3D   # 炸彈長矛管裡那支魚叉（沒有就是一般的槍）
+## 子彈分級（B 換型、穿牆都看這個）。ponytail: 先關掉，之後要再開；關的時候子彈一律不穿（Bullet.pierces）
+const AMMO_TIERS := false
 ## 裝哪種子彈：0 輕、1 中、2 重，越重穿越硬的牆（Bullet.ARMOR）。換了馬上生效，不用重裝
 ## ponytail: 三種只差穿透，傷害、彈數都一樣。要讓輕型有人用再加代價
 var ammo := 0

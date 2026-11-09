@@ -585,17 +585,17 @@ func _case_hunt_weapons() -> void:
 	b.free()
 	_ck(rifle.muzzle_velocity > revolver.muzzle_velocity, "步槍子彈要比左輪快")
 
-	# 穿牆：穿透力 ≥ 牆的硬度才穿（輕 1 中 2 重 3 對 單層木板 1 雙層 2 金屬 3），沒標材質的照擋
+	# 子彈分級先關：每種牆、每個力量都擋住（之後要再開，Weapon.AMMO_TIERS 改成 true 才會照硬度穿）
 	for g: StringName in Bullet.ARMOR:
 		var wall := StaticBody3D.new()
 		wall.add_to_group(g)
 		for p in [1, 2, 3]:
-			_ck(Bullet.pierces(wall, p) == (p >= Bullet.ARMOR[g]), "穿透力 %d 打 %s 穿不穿不對" % [p, g])
+			_ck(not Bullet.pierces(wall, p), "穿透力 %d 打 %s 也要擋（分級先關）" % [p, g])
 		wall.free()
 	var plain := StaticBody3D.new()
 	_ck(not Bullet.pierces(plain, 3), "沒標材質的東西重型也不能穿")
 	plain.free()
-	_ck(Weapon.AMMO_NAMES.size() == 3, "子彈要有輕、中、重三種")
+	_ck(Weapon.AMMO_NAMES.size() == 3 and not Weapon.AMMO_TIERS, "子彈要有輕、中、重三種的資料，但分級先關（B 不換）")
 
 	# 有效射程：射程內全額，超過遞減，射程盡頭剩一半；射程要照步槍 > 左輪 > 散彈排
 	for w in vm._weapons:
@@ -830,7 +830,7 @@ func _start_gun_case() -> void:
 	back.global_position = Vector3(0, 400, -8)
 	_case_foot_ik(m)
 
-## 實際飛一發打金屬板（5 公尺外，後面 8 公尺外一面沒標材質的牆）：輕型停在金屬板，重型穿過去停在後牆
+## 實際飛一發打金屬板（5 公尺外，後面 8 公尺外一面沒標材質的牆）：每種子彈都停在金屬板（分級先關，穿不過）
 ## 子彈走 _launch 生，順便驗子彈種類有變成穿透力
 func _check_pierce_flight() -> void:
 	var vm: Node = _shooter.viewmodel
@@ -845,9 +845,8 @@ func _check_pierce_flight() -> void:
 			if b.is_queued_for_deletion():
 				break
 			b.advance(1.0 / 120.0)
-		var want := 5.0 if ammo < 2 else 8.0
-		_ck(b.is_queued_for_deletion() and absf(b._traveled - want) < 0.1,
-			"%s型彈打金屬板要停在 %.0f 公尺（飛了 %.2f）" % [Weapon.AMMO_NAMES[ammo], want, b._traveled])
+		_ck(b.is_queued_for_deletion() and absf(b._traveled - 5.0) < 0.1,
+			"%s型彈打金屬板要停在 5 公尺（飛了 %.2f）" % [Weapon.AMMO_NAMES[ammo], b._traveled])
 		b.free()
 	for i in vm._weapons.size():
 		if vm._weapons[i].harpoon:

@@ -109,6 +109,8 @@ func advance(delta: float) -> void:
 
 ## 穿透力 power 的子彈能不能穿過 target。shape 是打到的碰撞形狀編號（玩具積木一棟一個物體、每塊一個形狀，要照塊的材質算）
 static func pierces(target: Object, power: int, shape := -1) -> bool:
+	if not Weapon.AMMO_TIERS:   # 分級先關：什麼都不穿
+		return false
 	if not target is Node:
 		return false
 	if target.has_method(&"armor_of"):
