@@ -637,13 +637,29 @@ func _pick_pilot() -> void:
 	if not pool.is_empty():
 		make_pilot(pool.pick_random())
 
-## 讓 id 操作尼諾拉：他的牛仔收掉、不排重生
+## 交接中的遠端玩家（_stop_sync 送出、還沒收到回覆）：0 = 沒有
+var _handover := 0
+
+## 讓 id 操作尼諾拉：他的牛仔收掉、不排重生。
+## 遠端玩家的牛仔要先叫他停送同步再收（不然他送的同步包會找不到節點），回覆或一秒後才完成
 func make_pilot(id: int) -> void:
+	if _boss() == null:
+		return
+	_pilot_picked = true
+	var p := players.get_node_or_null(NodePath(str(id)))
+	if p and id != multiplayer.get_unique_id() and multiplayer.get_peers().has(id):
+		_handover = id
+		_stop_sync.rpc_id(id)
+		get_tree().create_timer(1.0).timeout.connect(_finish_handover.bind(id))
+	else:
+		_take_over(id)
+
+## 交接完成：牛仔收掉、尼諾拉換人
+func _take_over(id: int) -> void:
 	var b := _boss()
 	if b == null:
 		return
 	b.pilot = id
-	_pilot_picked = true
 	var p := players.get_node_or_null(NodePath(str(id)))
 	if p:
 		players.remove_child(p)
@@ -655,6 +671,34 @@ func make_pilot(id: int) -> void:
 		_announce(msg)
 	else:
 		_announce.rpc_id(id, msg)
+
+## 遠端交接的收尾：回覆和計時器都會呼叫，先到的完成，後到的看 _handover 已清就不動
+func _finish_handover(id: int) -> void:
+	if _handover != id:
+		return
+	_handover = 0
+	var b := _boss()
+	if b == null or (party and party.dino_id != id) or not multiplayer.get_peers().has(id):
+		return   # 回合已換、或人已離線：這次不交接，牛仔留著
+	_take_over(id)
+
+## 主機要收你的牛仔：先停止送同步，再回覆
+@rpc("authority", "call_remote", "reliable")
+func _stop_sync() -> void:
+	var p := players.get_node_or_null(NodePath(str(multiplayer.get_unique_id())))
+	var sync: MultiplayerSynchronizer = p.get_node_or_null(^"Sync") if p else null
+	if sync:
+		sync.public_visibility = false
+	_sync_stopped.rpc_id(1)
+
+## 客戶端回覆：他的同步已停，可以收牛仔了
+@rpc("any_peer", "call_remote", "reliable")
+func _sync_stopped() -> void:
+	if not multiplayer.is_server():
+		return
+	var id := multiplayer.get_remote_sender_id()
+	if id == _handover:
+		_finish_handover(id)
 
 ## 自己的角色：牛仔，或是自己正在操作的尼諾拉
 func _me() -> Node:
@@ -1288,6 +1332,8 @@ func _despawn(id: int) -> void:
 		return
 	_hold(id)   # 斷線先記下命數和出局狀態，RECONNECT_MS 內連回來還給他
 	_volunteers.erase(id)
+	if _handover == id:   # 交接中離線：不用再收了
+		_handover = 0
 	var b := _boss()
 	if b and b.pilot == id:   # 操作尼諾拉的人走了：電腦接手
 		b.pilot = 0

@@ -789,7 +789,7 @@ func _act_glimpse(delta: float) -> int:
 	return BT.RUNNING
 
 func _act_chase(delta: float) -> int:
-	if not is_instance_valid(_target):
+	if not is_instance_valid(_target) or not _target.is_inside_tree():   # 同 _turn_to：收走的目標不能讀位置
 		return BT.FAILURE
 	_nav_go(_target.global_position, true, delta)
 	return BT.RUNNING
@@ -908,7 +908,8 @@ func _go(to: Vector3, want_run: bool, delta: float) -> void:
 
 ## p 可能已經被刪掉（預備出招時目標剛好死掉）：參數不寫型別，先檢查再用
 func _turn_to(p: Variant, speed: float, delta: float) -> void:
-	if not is_instance_valid(p):
+	# 被 remove_child 收走的牛仔還是有效實例、但不在樹上，讀 global_position 會報錯
+	if not is_instance_valid(p) or not (p as Node).is_inside_tree():
 		return
 	var d: Vector3 = (p as Node3D).global_position - global_position
 	rotation.y = rotate_toward(rotation.y, atan2(-d.x, -d.z), speed * delta)
