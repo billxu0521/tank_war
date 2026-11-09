@@ -1059,6 +1059,8 @@ var _tb_b: Node3D
 var _tb_wall: ToyBuild
 var _tb_wall2: ToyBuild   # 第四段：貼著的那面墙
 var _tb_pile: ToyBuild
+var _tb_wall3: ToyBuild   # 第七段：全速穿過的二級墻
+var _tb_pile2: ToyBuild   # 第八段：專用伺服器全速撞的碎塊
 var _tb_stage := 0
 var _tb_n := 0.0   # 這一段跑了幾秒（物理時間，不數幀）
 var _tb_before := {}   # 踢之前每個碎塊的位置（代表塊 -> 位置）
@@ -1087,12 +1089,12 @@ func _start_toyb_case() -> void:
 	_tb_n = 0.0
 	_tb_place(-9.0, _tb_z0)
 
-## 一面積木墻（cols 個 × rows 層，沿 Z 排、每塊 size）：等級 1，一下就拆。at 在地面上
-func _tb_block(at: Vector3, cols: int, rows: int, size: Vector3) -> ToyBuild:
+## 一面積木墻（cols 個 × rows 層，沿 Z 排、每塊 size）：等級 lv（預設 1，一下就拆）。at 在地面上
+func _tb_block(at: Vector3, cols: int, rows: int, size: Vector3, lv := 1) -> ToyBuild:
 	var bricks := []
 	for ix in cols:
 		for iy in rows:
-			bricks.append([Transform3D(Basis(), Vector3(0.0, (iy + 0.5) * size.y, (ix - (cols - 1) * 0.5) * size.z)), size, 1, Color(0.9, 0.2, 0.2)])
+			bricks.append([Transform3D(Basis(), Vector3(0.0, (iy + 0.5) * size.y, (ix - (cols - 1) * 0.5) * size.z)), size, lv, Color(0.9, 0.2, 0.2)])
 	var t: ToyBuild = _tb_m.map._toy(ToyBuild.make(bricks))
 	_tb_m.map._place_greybox(t, at, 0.0)
 	return t
@@ -1142,6 +1144,21 @@ func _tb_setup_walk_piece() -> void:
 	_tb_kick_pos0 = (_tb_kick_block._pieces[0] as Node3D).global_position
 	_tb_kick_checked = true
 	_tb_place(-9.0, z4)
+
+## 全速穿過的二級墻（等級 2）：尼諾拉從 -9 公尺處全速（跑步速度）跑來，車道在 z1 後面
+func _tb_setup_plow() -> void:
+	var z5 := _tb_clear_z(_tb_z1 + 30.0)
+	_tb_wall3 = _tb_block(Vector3(0, 0, z5), 4, 12, Vector3(0.3, 0.5, 1.0), 2)
+	_tb_place(-9.0, z5)
+	_tb_b.velocity = Vector3(_tb_b.RUN, 0, 0)   # 已經全速
+
+## 專用伺服器（碎塊不飛）：一塊碎塊擺在路上（車道 z6），尼諾拉在 -3 公尺處全速朝 +X 撞它，碎塊該落在旁邊
+func _tb_setup_nofly() -> void:
+	var z6 := _tb_clear_z(_tb_z1 + 30.0)
+	_tb_pile2 = _tb_block(Vector3(2, 0, z6), 1, 1, Vector3(0.6, 0.6, 0.6))
+	ToyBuild.no_flight = true
+	_tb_pile2.smash(func(_p: Vector3) -> bool: return true, 1, Vector3(-3, 0, z6), AABB(), 13.0, 1, Vector3.RIGHT)
+	ToyBuild.no_flight = false
 
 ## 墙還完整（每塊都站著、沒挨過打）
 func _tb_wall_intact() -> bool:
@@ -1234,8 +1251,22 @@ func _toyb_physics(delta: float) -> bool:
 				_ck(_tb_kick_checked, "走路撞碎塊：碎塊不算牆")
 				_ck(moved > 0.3, "走路撞碎塊會推開，不會卡死（碎塊移了 %.2f 公尺）" % moved)
 				_ck(not b._should_kick(Vector3.UP) and not b._should_kick(Vector3(0.3, 0.95, 0).normalized()) and b._should_kick(Vector3(0.8, 0.5, 0).normalized()) and b._should_kick(Vector3.RIGHT), "踩得上去的斜度不踢，更陡的邊角和側面才踢")
-				_free_map(_tb_m)
-				return _done()
+				_tb_setup_plow()
+				_tb_next(7)
+		7:   # 全速穿過二級墻（等級 2）：全速一下就倒（dmg 2），穿過的時候平均速度不低於跑步的 0.6 倍（先拆再走、撞穿不停）
+			b._move(Vector3.RIGHT, true, delta)
+			if b.global_position.x > 1.0 or _tb_n >= 4.0:
+				var avg: float = (b.global_position.x - -9.0) / maxf(_tb_n, 0.001)
+				_ck(_tb_down(_tb_wall3) == _tb_wall3.brick_count(), "全速穿二級墻：一下就倒（%d／%d 塊）" % [_tb_down(_tb_wall3), _tb_wall3.brick_count()])
+				_ck(avg >= 0.6 * b.RUN, "全速穿二級墻不停：平均速度 %.2f 公尺／秒（跑步 %.1f，要 0.6 倍以上）" % [avg, b.RUN])
+				_tb_setup_nofly()
+				_tb_next(8)
+		8:   # 專用伺服器（碎塊不飛）全速撞：碎塊直接落地，但落在尼諾拉兩旁（不在路上）
+			var p: Vector3 = (_tb_pile2._pieces[0] as Node3D).global_position
+			var c0 := _tb_pile2.center_of(0)
+			_ck(_tb_pile2._pieces[0] is StaticBody3D and absf(p.z - c0.z) > 3.0 and absf(p.x - c0.x) < 1.0, "專用伺服器全速撞：碎塊移到尼諾拉的旁邊（z 移了 %.2f 公尺，x 移了 %.2f）" % [p.z - c0.z, p.x - c0.x])
+			_free_map(_tb_m)
+			return _done()
 	return false
 
 ## 墙上鬆脫（或拆掉）的塊數

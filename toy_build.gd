@@ -22,6 +22,7 @@ const HOUSE_FALL_SOUND := "res://assets/audio/destruction/house_collapse.wav"
 const SHAKE_RANGE := 25.0         # 離鏡頭超過這個距離（公尺）就不震
 const KICK_COOLDOWN := 500        # 毫秒：同一塊碎塊被踢過之後，這段時間內不再踢
 const LAND_DROP := 50.0           # 專用伺服器：碎塊往下找落點最遠幾公尺（見 _land）
+const PLOW_CLEAR := 6.5          # 專用伺服器：衝撞拆下的塊落在離路中線這麼遠以外（尼諾拉身體半徑約 3.6，加塊的大小）
 const KICK_SHIFT := 4.0           # 專用伺服器：踢出去的碎塊先水平移開這麼遠再落下（公尺）；要比尼諾拉身體半徑（約 3.6）遠，才讓得出路
 const LAND_LIFT := 0.5            # 專用伺服器：往下掃之前先抬高這麼多（剛好貼著地面或陷進去一點，掃不到東西）
 
@@ -123,16 +124,19 @@ static func material() -> ShaderMaterial:
 ## 拆（主機才算）：hit 收每塊的世界中心，回傳 true＝打到。打到的、等級 <= max_level、不是 3 的扣一下，扣到 0 鬆脫。
 ## 然後連通檢查：連不到地面的（懸空）也鬆脫。鬆脫的送 _break；有扣血但沒鬆脫的送 _hurt（各台抖一下）
 ## area 是世界座標的範圍（有體積才用）：只看範圍內的塊（hit 收的點要在範圍裡，範圍外的塊不會被打到）。沒給就是全部的塊
-func smash(hit: Callable, max_level: int, from: Vector3, area := AABB()) -> void:
+## power：碎塊飛出的速度（公尺／秒）；預設 FALL_SPEED 就是原本的飛法。dmg：每下扣幾點（全速撞的等級 2 扣 2 一下倒）。
+## dir：水平的前進方向（專用伺服器全速撞：碎塊往這個方向的兩旁移開，見 _plow_xf）。回傳打到沒有（有扣血或鬆脫）
+func smash(hit: Callable, max_level: int, from: Vector3, area := AABB(), power := FALL_SPEED, dmg := 1, dir := Vector3.ZERO) -> bool:
 	var t0 := Time.get_ticks_usec()
-	_smash(hit, max_level, from, area)
+	var any := _smash(hit, max_level, from, area, power, dmg, dir)
 	var ms := (Time.get_ticks_usec() - t0) / 1000
 	if ms > 20:   # 停頓記錄：拆一棟太慢時印出來（主機日誌）
 		print("拆積木 %d 毫秒（%d 塊）" % [ms, _xf.size()])
+	return any
 
-func _smash(hit: Callable, max_level: int, from: Vector3, area: AABB) -> void:
+func _smash(hit: Callable, max_level: int, from: Vector3, area: AABB, power: float, dmg: int, dir: Vector3) -> bool:
 	if not multiplayer.is_server() or not can_break:
-		return
+		return false
 	var n := _xf.size()
 	var loose := _loose.duplicate()
 	var fresh := PackedInt32Array()
@@ -142,7 +146,7 @@ func _smash(hit: Callable, max_level: int, from: Vector3, area: AABB) -> void:
 			continue
 		if not hit.call(global_transform * _xf[i].origin):
 			continue
-		_hp[i] -= 1
+		_hp[i] -= dmg
 		hurt = true
 		if _hp[i] <= 0:
 			loose[i] = 1
@@ -154,11 +158,12 @@ func _smash(hit: Callable, max_level: int, from: Vector3, area: AABB) -> void:
 		fresh.sort()
 		# 不超過上限：每塊一個碎塊（ids）；超過：全部照位置併成大塊（gone，見 _merge）
 		if fresh.size() <= MAX_PIECES:
-			_break.rpc(fresh, PackedInt32Array(), from)
+			_break.rpc(fresh, PackedInt32Array(), from, power, dir)
 		else:
-			_break.rpc(PackedInt32Array(), fresh, from)
+			_break.rpc(PackedInt32Array(), fresh, from, power, dir)
 	elif hurt:
 		_hurt.rpc()
+	return hurt
 
 
 ## 連不到地面的塊（loose 為 1 的不算）：從著地的塊（頂面在 BASE_TOP 以下，或等級 3）順著邊界框相接（放大 0.05）一路找，找不到的回傳。
@@ -191,7 +196,7 @@ func _unsupported(loose: PackedByteArray) -> PackedInt32Array:
 ## 鬆脫（每台一樣）：ids 每塊馬上生一個碎塊（塊藏起來、碎塊往外飛）；gone 是超過上限的，照位置併成大塊，
 ## 等它們的塊分幀藏好才生（_pending）。主機重烘導航（碎塊還沒停下，先不算進去）
 @rpc("authority", "call_local", "reliable")
-func _break(ids: PackedInt32Array, gone: PackedInt32Array, from: Vector3) -> void:
+func _break(ids: PackedInt32Array, gone: PackedInt32Array, from: Vector3, power: float, dir: Vector3) -> void:
 	_touched = true
 	var at := Vector3.ZERO
 	var order: Array = Array(ids)
@@ -202,15 +207,15 @@ func _break(ids: PackedInt32Array, gone: PackedInt32Array, from: Vector3) -> voi
 		at += global_transform * _xf[i].origin
 		_hide_brick(i)
 	for i in order:
-		var n := _spawn(PackedInt32Array([i]), _xf[i], global_transform * _xf[i], true)
+		var n := _spawn(PackedInt32Array([i]), _xf[i], _plow_xf(global_transform * _xf[i], from, dir, power), true)
 		if n is RigidBody3D:   # 專用伺服器落地的是靜態的，不用飛
-			_fling(n as RigidBody3D, from)
+			_fling(n as RigidBody3D, from, power)
 	for i in gone:
 		_loose[i] = 1
 		at += global_transform * _xf[i].origin
 		_hide_queue.append(i)
 	for g: PackedInt32Array in _merge(gone):
-		_pending.append({"m": g, "from": from})
+		_pending.append({"m": g, "from": from, "power": power, "dir": dir})
 	at /= float(maxi(ids.size() + gone.size(), 1))
 	sfx(self, HOUSE_FALL_SOUND, 80.0, at)
 	Fx.dust_ring(get_parent(), Vector3(at.x, global_position.y, at.z), 4.0, 30, 5.0, 1.4)
@@ -265,16 +270,33 @@ func _spawn(mem: PackedInt32Array, local: Transform3D, xf: Transform3D, flying: 
 
 
 ## 大碎塊：等它的塊都藏好了（_physics_process）才生。原點取塊中心的平均；只有一塊的照那塊的位置
-func _spawn_group(mem: PackedInt32Array, from: Vector3) -> void:
+func _spawn_group(mem: PackedInt32Array, from: Vector3, power: float, dir: Vector3) -> void:
 	var local := _xf[mem[0]]
 	if mem.size() > 1:
 		var c := Vector3.ZERO
 		for m in mem:
 			c += _xf[m].origin
 		local = Transform3D(Basis(), c / float(mem.size()))
-	var n := _spawn(mem, local, global_transform * local, true)
+	var n := _spawn(mem, local, _plow_xf(global_transform * local, from, dir, power), true)
 	if n is RigidBody3D:
-		_fling(n as RigidBody3D, from)
+		_fling(n as RigidBody3D, from, power)
+
+
+## 專用伺服器的全速撞（碎塊不飛、直接落地）：落地前先往尼諾拉兩旁移開 KICK_SHIFT（同 boss.gd _kick_piece），不然碎塊落在路上、又擋住下一下。
+## power 不超過 FALL_SPEED（一般的撞）或不是專用伺服器就原樣回傳
+func _plow_xf(xf: Transform3D, from: Vector3, dir: Vector3, power: float) -> Transform3D:
+	if power <= FALL_SPEED or not (ToyBuild.no_flight and multiplayer.is_server()):
+		return xf
+	var fwd := Vector3(dir.x, 0.0, dir.z).normalized()
+	var lat := xf.origin - from
+	lat.y = 0.0
+	lat -= fwd * lat.dot(fwd)
+	var side := lat.length()
+	if side < 0.3:   # 正在路中間：隨便挑一邊（只在主機算，落點之後照主機同步）
+		lat = fwd.cross(Vector3.UP) * (1.0 if randf() < 0.5 else -1.0)
+	# 移到尼諾拉身體掃過的路外面（離路中線至少 PLOW_CLEAR），不然落在路上又把牠擋停；本來就在外面的再往外 1 公尺
+	xf.origin += lat.normalized() * (maxf(PLOW_CLEAR, side + 1.0) - side)
+	return xf
 
 
 ## 專用伺服器的落地（no_flight）：xf 是碎塊現在的位置、box 是它的邊界框（碎塊本地）。扶正（保留偏航角），往正下方落到第一個擋住的。
@@ -313,10 +335,16 @@ func _land(xf: Transform3D, box: AABB, skip: Array[RID]) -> Transform3D:
 
 
 ## 往外飛：從 from 往碎塊的方向（水平），加一點往上，往前滾
-func _fling(rb: RigidBody3D, from: Vector3) -> void:
+## power 比一般的 FALL_SPEED 快（全速撞）：往上飛高一點、亂轉，速度照 power（碎塊照撞的速度飛）
+func _fling(rb: RigidBody3D, from: Vector3, power := FALL_SPEED) -> void:
 	var d := rb.global_position - from
 	d.y = 0.0
 	d = d.normalized() if d.length() > 0.01 else Vector3.FORWARD
+	if power > FALL_SPEED:
+		var up := (d + Vector3.UP * 0.6).normalized()
+		rb.apply_central_impulse(up * power * rb.mass)
+		rb.angular_velocity = Vector3(randf_range(-6.0, 6.0), randf_range(-6.0, 6.0), randf_range(-6.0, 6.0))
+		return
 	var dir := (d + Vector3.UP * 0.4).normalized()
 	rb.apply_central_impulse(dir * FALL_SPEED * rb.mass)
 	rb.angular_velocity = Vector3(d.z, 0.0, -d.x) * 4.0   # 往前滾
@@ -398,7 +426,7 @@ func _flush() -> void:
 		_hide_brick(_hide_queue.pop_front())
 	while not _pending.is_empty():
 		var p: Dictionary = _pending.pop_front()
-		_spawn_group(p.m, p.from)
+		_spawn_group(p.m, p.from, p.power, p.dir)
 	set_physics_process(true)
 
 
@@ -528,7 +556,7 @@ func _physics_process(delta: float) -> void:
 		k += 1
 	while not _pending.is_empty() and _all_hidden(_pending[0].m):
 		var p: Dictionary = _pending.pop_front()
-		_spawn_group(p.m, p.from)
+		_spawn_group(p.m, p.from, p.power, p.dir)
 	if not multiplayer.is_server():
 		if _idle():
 			set_physics_process(false)
@@ -756,7 +784,8 @@ static func hit_fx(on: Node3D, at: Vector3, down: bool) -> float:
 	var k: float = clampf(1.0 - cam.global_position.distance_to(at) / SHAKE_RANGE, 0.0, 1.0) * Settings.v.get(&"shake", 1.0)
 	var amount: float = (0.08 if down else 0.03) * k
 	who.add_shake(amount)
-	if who.has_method(&"add_hitstop"):
+	# 尼諾拉正在全速撞：停頓只在第一下給（boss.gd _plow_fed），這裡不再停
+	if who.has_method(&"add_hitstop") and not (who.has_method(&"is_plowing") and who.is_plowing()):
 		who.add_hitstop(0.1 if down else 0.06)
 	return amount
 

@@ -110,6 +110,16 @@ static var TOY_NUDGE: float = Balance.num("toy_nudge")   # 尼諾拉走路撞到
 static var TOY_CHARGE_REACH: float = Balance.num("toy_charge_reach")   # 跑步撞的範圍：身體表面外多遠（公尺）
 static var TOY_CHARGE_LEVEL: int = Balance.whole("toy_charge_level")   # 跑步撞能扣到的最高等級（等級 1、2 都扣一下）
 const CHARGE_MS := 300   # 同一棟積木撞過之後，這段時間內不再撞（毫秒）
+static var TOY_PLOW_MS: int = Balance.whole("toy_plow_ms")   # 全速撞的冷卻（毫秒）：比 CHARGE_MS 短，連續撞才不會一撞一停
+static var TOY_PLOW_SPEED: float = RUN * Balance.num("toy_plow_speed")   # 剛撞穿積木之後的水平速度上限（阻力）
+static var TOY_PLOW_BREAK: float = RUN * Balance.num("toy_plow_break")   # 全速撞的門檻：到這個速度，等級 2 一下打穿
+static var TOY_PLOW_FLING: float = Balance.num("toy_plow_fling")   # 全速撞飛碎塊：碎塊速度＝水平速度乘這個數
+const PLOW_DRAG := 300        # 撞穿之後這段時間內（毫秒）水平速度有上限（見 TOY_PLOW_SPEED）
+const PLOW_GAP := 500         # 撞過之後這段時間內還算同一次撞；超過才算第一下（停頓只給第一下，見 _plow_fed）
+const PLOW_HITSTOP := 0.1     # 第一下的停頓（秒）
+const PLOW_SHAKE_FIRST := 0.08   # 第一下的鏡頭抖（和挨重打一樣）
+const PLOW_SHAKE := 0.03      # 之後每一下的鏡頭抖（只抖不停）
+const PLOW_POWER_MAX := 15.0  # 碎塊飛出的速度上限（公尺／秒）
 static var SWEEP_COS: float = cos(deg_to_rad(Balance.num("sweep_angle") * 0.5))   # 甩尾扇形（後方）半角的餘弦
 static var SWEEP_ROOT_BACK: float = Balance.num("sweep_root_back") * GROW   # 尾根在身體中心後方幾公尺（表裡是放大前的 0.45），甩尾的圓心
 static var SWEEP_TRIGGER: float = SWEEP_ROOT_BACK + SWEEP_RADIUS   # 電腦：牛仔離身體中心在這裡面才算在甩尾範圍（尾根加半徑）
@@ -943,6 +953,18 @@ func _move(dir: Vector3, want_run: bool, delta: float) -> void:
 	var speed := (RUN if running else WALK) * (STAGGER_MULT if _stagger > 0.0 else 1.0)
 	_accelerate(dir * speed, ACCEL, BRAKE, delta)
 	_apply_gravity(delta)
+	if multiplayer.is_server():
+		# 剛撞穿積木：水平速度有上限（阻力，撞穿要有重量感，但不停）
+		if Time.get_ticks_msec() - _plow_t < PLOW_DRAG:
+			var h := Vector2(velocity.x, velocity.z)
+			if h.length() > TOY_PLOW_SPEED:
+				h = h.normalized() * TOY_PLOW_SPEED
+				velocity.x = h.x
+				velocity.z = h.y
+		# 先拆再走：跑到門檻速度，身體前方的積木先鬆脫，身體才不會被擋停
+		var spd := Vector2(velocity.x, velocity.z).length()
+		if running and (spd >= TOY_CHARGE_SPEED or is_plowing()):   # 正在撞（被擋了一下、速度掉下來）也繼續先拆
+			_smash_ahead(Time.get_ticks_msec(), spd)
 	var before := Vector3(velocity.x, 0.0, velocity.z)   # 撞之前的水平速度（撞了 move_and_slide 會被削掉）
 	move_and_slide()
 	if multiplayer.is_server():
@@ -955,6 +977,7 @@ func _move(dir: Vector3, want_run: bool, delta: float) -> void:
 ## 撞到積木、撞之前的水平速度 ≥ toy_charge_speed（跑步，走路不算）就拆碰撞點 BODY_RADIUS 內、等級 1 的塊；同一棟 CHARGE_MS 毫秒內只算一次。
 ## 撞到碎塊（群組 toy_piece）就踢開（速度 toy_kick，同一塊的冷卻見 ToyBuild.kick）
 var _charge_t := {}   # 撞過的積木（ToyBuild）-> 上次撞的毫秒（主機用）
+var _plow_t := -1000000   # 上一次撞穿積木的毫秒（主機算；駕駛那台由 _plow_fed 同步）：算阻力、第一下、is_plowing
 var _charge_fresh := 0.0   # 還算在跑的剩餘秒數（見 _charge_hits）
 const CHARGE_FRESH := 0.5
 
@@ -1002,7 +1025,7 @@ func _charge_hits(before: Vector3, delta: float) -> void:
 	# 貼著積木按住跑（速度起不來）也算撞：駕駛才算，電腦照舊要有助跑（脫困時別把房子啃掉）
 	# 只有貼著「房子」才算：碎塊（toy_piece）不是牆，靠在碎塊上按住跑不會被當成撞牆（見 _wall_is_toy）
 	if running and (_charge_fresh > 0.0 or (pilot != 0 and _wall_is_toy())):
-		if _smash_ahead(now):   # 前面還有積木（撞著、擋著）就繼續算在撞，不會因為停下來而斷
+		if _smash_ahead(now, before.length()):   # 前面還有積木（撞著、擋著）就繼續算在撞，不會因為停下來而斷
 			_charge_fresh = CHARGE_FRESH
 	# 踢碎塊的規則：踩在碎塊上面（法線朝上，碎塊是地板）不踢，讓恐龍站在碎塊上走；撞到側面：跑步踢飛（toy_kick），走路輕輕推開（toy_nudge），不然走路會被碎塊卡死
 	for k in get_slide_collision_count():
@@ -1028,8 +1051,15 @@ func _wall_is_toy() -> bool:
 			return true
 	return false
 
-func _smash_ahead(now: int) -> bool:
+## 跑步撞的積木：spd 是撞之前的水平速度。全速（TOY_PLOW_BREAK 以上）冷卻短、等級 2 一下打穿，碎塊飛的速度照 spd 算（toy_build.gd smash）
+func _smash_ahead(now: int, spd: float) -> bool:
 	var any := false
+	var full := spd >= TOY_PLOW_BREAK or now - _plow_t < PLOW_GAP   # 已經在撞（剛撞穿過）也算全速：阻力把速度壓在門檻下，不算的話等級 2 又要撞兩下、一撞一停
+	var cd := TOY_PLOW_MS if full else CHARGE_MS
+	var dmg := 2 if full else 1
+	# 正在撞（全速）就照全速撞飛：被擋了一下、速度掉下來時也一樣（不然碎塊軟軟掉在原地，專用伺服器上又落在路上擋住）
+	var power := clampf((maxf(spd, TOY_PLOW_SPEED) if full else spd) * TOY_PLOW_FLING, ToyBuild.FALL_SPEED, PLOW_POWER_MAX)
+	var hit_any := false
 	var depth := BODY_RADIUS + TOY_CHARGE_REACH
 	# 盒子從腳底往下多 1.5 公尺（半高 HALF_H+0.75）：圓的身體底部會騎在最下排的積木上（腳底懸空約 1 公尺），那排也要撞掉
 	var half_h := HALF_H + 0.75
@@ -1052,6 +1082,8 @@ func _smash_ahead(now: int) -> bool:
 		var c: Object = r.collider
 		if c is ToyBuild and (c as ToyBuild).can_break:
 			homes[c] = true
+		elif full and c is Node3D and (c as Node3D).is_in_group(&"toy_piece"):   # 全速撞：路上的碎塊也先踢開（撞上才踢的話已經被擋停了）
+			_kick_piece(c, -global_basis.z, TOY_KICK)
 	var inv := xf.affine_inverse()
 	# 盒子的世界邊界框：積木只看這範圍裡的塊（bricks_near），一棟大樓幾千塊不用每步全看
 	var box_w := xf * AABB(Vector3(-half_w, -half_h, -depth * 0.5), Vector3(half_w * 2.0, half_h * 2.0, depth))
@@ -1067,14 +1099,37 @@ func _smash_ahead(now: int) -> bool:
 		if nin == 0:
 			continue
 		any = true
-		var last: int = _charge_t.get(c, -CHARGE_MS)
-		if now - last < CHARGE_MS:
+		var last: int = _charge_t.get(c, -1000000)
+		if now - last < cd:
 			continue
 		_charge_t[c] = now
-		c.smash(func(p: Vector3) -> bool:
+		var inside := func(p: Vector3) -> bool:
 			var l := inv * p
-			return absf(l.x) <= half_w and absf(l.y) <= half_h and absf(l.z) <= depth * 0.5, TOY_CHARGE_LEVEL, global_position, box_w)
+			return absf(l.x) <= half_w and absf(l.y) <= half_h and absf(l.z) <= depth * 0.5
+		if c.smash(inside, TOY_CHARGE_LEVEL, global_position, box_w, power, dmg, -global_basis.z):
+			hit_any = true
+	if hit_any:
+		_plow_hit(now)
 	return any
+
+## 撞穿了（主機）：第一下（距上一下超過 PLOW_GAP）停頓＋大抖，之後只抖。同步給駕駛那台（_plow_fed）；hit_fx 看 is_plowing 不再停
+func _plow_hit(now: int) -> void:
+	var first := now - _plow_t >= PLOW_GAP
+	_plow_t = now
+	if pilot != 0:
+		_plow_fed.rpc_id(pilot, first)
+
+## 正在撞（駕駛那台的鏡頭是這隻恐龍的，ToyBuild.hit_fx 看到就不再給停頓；第一下的停頓由 _plow_fed 給）
+func is_plowing() -> bool:
+	return Time.get_ticks_msec() - _plow_t < PLOW_GAP
+
+## 全速撞的回饋（主機送駕駛那台，各台也記 _plow_t）：每下抖一下，第一下多停一下
+@rpc("authority", "call_local", "reliable")
+func _plow_fed(first: bool) -> void:
+	_plow_t = Time.get_ticks_msec()
+	add_shake(PLOW_SHAKE_FIRST if first else PLOW_SHAKE)
+	if first:
+		add_hitstop(PLOW_HITSTOP)
 
 
 # --- 受傷 ---
