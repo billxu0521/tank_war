@@ -672,6 +672,8 @@ func _on_ground_now(m: Node, b: Node3D) -> bool:
 func _physics_process(delta: float) -> bool:
 	if _phase == 6:
 		return _toyb_physics(delta)
+	if _phase == 7:
+		return _su_physics(delta)
 	if _phase != 5:
 		return false
 	_nc_n += delta
@@ -1266,7 +1268,8 @@ func _toyb_physics(delta: float) -> bool:
 			var c0 := _tb_pile2.center_of(0)
 			_ck(_tb_pile2._pieces[0] is StaticBody3D and absf(p.z - c0.z) > 3.0 and absf(p.x - c0.x) < 1.0, "專用伺服器全速撞：碎塊移到尼諾拉的旁邊（z 移了 %.2f 公尺，x 移了 %.2f）" % [p.z - c0.z, p.x - c0.x])
 			_free_map(_tb_m)
-			return _done()
+			_start_step_case()   # 自動跨上矮碎塊（_phase 7，見 combat.gd）
+			return false
 	return false
 
 ## 墙上鬆脫（或拆掉）的塊數
