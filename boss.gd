@@ -985,13 +985,15 @@ func _charge_hits(before: Vector3, delta: float) -> void:
 		_charge_fresh = CHARGE_FRESH
 	_charge_fresh = maxf(_charge_fresh - delta, 0.0)
 	# 貼著積木按住跑（速度起不來）也算撞：駕駛才算，電腦照舊要有助跑（脫困時別把房子啃掉）
-	if running and (_charge_fresh > 0.0 or (pilot != 0 and is_on_wall())):
+	# 只有貼著「房子」才算：碎塊（toy_piece）不是牆，靠在碎塊上按住跑不會被當成撞牆（見 _wall_is_toy）
+	if running and (_charge_fresh > 0.0 or (pilot != 0 and _wall_is_toy())):
 		if _smash_ahead(now):   # 前面還有積木（撞著、擋著）就繼續算在撞，不會因為停下來而斷
 			_charge_fresh = CHARGE_FRESH
+	# 踢碎塊的規則：只在跑的時候踢（走路不踢）；踩在碎塊上面（法線朝上，碎塊是地板）不踢，讓恐龍站在碎塊上走
 	for k in get_slide_collision_count():
 		var col := get_slide_collision(k)
 		var c := col.get_collider()
-		if c is Node3D and (c as Node3D).is_in_group(&"toy_piece") and fwd != Vector3.ZERO:
+		if c is Node3D and (c as Node3D).is_in_group(&"toy_piece") and fwd != Vector3.ZERO and running and _should_kick(col.get_normal()):
 			var home: ToyBuild = (c as Node3D).get_meta(&"toy_home")
 			if is_instance_valid(home):
 				home.kick((c as Node3D).get_meta(&"toy_key"), fwd, TOY_KICK)
@@ -1000,6 +1002,18 @@ func _charge_hits(before: Vector3, delta: float) -> void:
 ## 等級 TOY_CHARGE_LEVEL 以下都扣一下（等級 2 要撞兩次）。同一棟 CHARGE_MS 毫秒內只算一次，所以一直往前跑會一路撞穿、不會爬上屋頂
 ## ponytail: 一次查詢最多 256 個形狀，一棟大樓吃光上限時，後面的棟這一幀撞不到（下一幀再查）
 static var _charge_box: BoxShape3D
+
+## 碎塊的碰撞法線：朝上（y > 0.5）是碎塊在腳下當地板，不踢；水平或朝下的才是撞到碎塊的側面
+static func _should_kick(normal: Vector3) -> bool:
+	return normal.y <= 0.5
+
+## 這一幀撞到的是不是房子（ToyBuild 的牆面，不是碎塊）：法線大致水平才算牆；碎塊和地板不算
+func _wall_is_toy() -> bool:
+	for k in get_slide_collision_count():
+		var col := get_slide_collision(k)
+		if col.get_collider() is ToyBuild and absf(col.get_normal().y) < 0.5:
+			return true
+	return false
 
 func _smash_ahead(now: int) -> bool:
 	var any := false
