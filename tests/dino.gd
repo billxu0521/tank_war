@@ -1255,12 +1255,12 @@ func _toyb_physics(delta: float) -> bool:
 				_ck(not b._should_kick(Vector3.UP) and not b._should_kick(Vector3(0.3, 0.95, 0).normalized()) and b._should_kick(Vector3(0.8, 0.5, 0).normalized()) and b._should_kick(Vector3.RIGHT), "踩得上去的斜度不踢，更陡的邊角和側面才踢")
 				_tb_setup_plow()
 				_tb_next(7)
-		7:   # 全速穿過二級墻（等級 2）：全速一下就倒（dmg 2），穿過的時候平均速度不低於跑步的 0.6 倍（先拆再走、撞穿不停）
+		7:   # 全速穿過二級墻（等級 2）：撞進去卡一下、每下扣 toy_plow_dmg，還是撞得穿（先拆再走，不會整個停住）
 			b._move(Vector3.RIGHT, true, delta)
 			if b.global_position.x > 1.0 or _tb_n >= 4.0:
 				var avg: float = (b.global_position.x - -9.0) / maxf(_tb_n, 0.001)
-				_ck(_tb_down(_tb_wall3) == _tb_wall3.brick_count(), "全速穿二級墻：一下就倒（%d／%d 塊）" % [_tb_down(_tb_wall3), _tb_wall3.brick_count()])
-				_ck(avg >= 0.6 * b.RUN, "全速穿二級墻不停：平均速度 %.2f 公尺／秒（跑步 %.1f，要 0.6 倍以上）" % [avg, b.RUN])
+				_ck(_tb_down(_tb_wall3) == _tb_wall3.brick_count(), "全速穿二級墻：撞得穿（%d／%d 塊）" % [_tb_down(_tb_wall3), _tb_wall3.brick_count()])
+				_ck(avg >= 0.25 * b.RUN and avg < 0.9 * b.RUN, "全速穿二級墻：卡一下但不停，平均速度 %.2f 公尺／秒（跑步 %.1f，要 0.25～0.9 倍）" % [avg, b.RUN])
 				_tb_setup_nofly()
 				_tb_next(8)
 		8:   # 專用伺服器（碎塊不飛）全速撞：碎塊直接落地，但落在尼諾拉兩旁（不在路上）
