@@ -1679,3 +1679,44 @@ func _case_toy_area() -> void:
 	_ck(same and loose > 0 and loose < a.brick_count(), "範圍拆和全部拆拆到的塊一樣（%d 塊鬆脫）" % loose)
 	_ck(near > 0 and near < b.brick_count(), "範圍只看附近的塊（%d 塊，全部 %d 塊）" % [near, b.brick_count()])
 	_free_map(m)
+
+## 導航網格解析（main.gd _parse_arena）：沒拆過的積木存起來重用，拆過的重解析；和整個場地一次解析的頂點、索引數一樣
+func _case_nav_parse() -> void:
+	var Main: GDScript = load("res://main.gd")
+	var m := _toy_map()
+	var t := ToyBuild.make([
+		[Transform3D(Basis(), Vector3(0, 0.25, 0)), Vector3(1.0, 0.5, 1.0), 1, Color.RED],
+		[Transform3D(Basis(), Vector3(1, 0.25, 0)), Vector3(1.0, 0.5, 1.0), 1, Color.RED],
+		[Transform3D(Basis(), Vector3(0, 0.75, 0)), Vector3(1.0, 0.5, 1.0), 1, Color.RED],
+	])
+	t.name = "ToyNavParse"
+	m.map.add_child(t)
+	t.position = m.map._on_ground(Vector3(-70, 0, -50))
+	var nm := NavigationMesh.new()
+	nm.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS
+	nm.geometry_source_geometry_mode = NavigationMesh.SOURCE_GEOMETRY_GROUPS_EXPLICIT
+	nm.geometry_source_group_name = Main.NAV_GROUP
+	var full_nm := NavigationMesh.new()
+	full_nm.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS
+	var check := func(tag: String) -> void:
+		var full := NavigationMeshSourceGeometryData3D.new()
+		NavigationServer3D.parse_source_geometry_data(full_nm, full, m.map)
+		var mine: NavigationMeshSourceGeometryData3D = m._parse_arena(nm)
+		var same := mine.get_vertices().size() == full.get_vertices().size() and mine.get_indices().size() == full.get_indices().size()
+		_ck(same, "%s：分段解析和整個場地一次解析的頂點、索引數一樣（%d/%d 對 %d/%d）" % [tag, mine.get_vertices().size(), mine.get_indices().size(), full.get_vertices().size(), full.get_indices().size()])
+	check.call("沒拆過")
+	_ck(m._toy_nav.has(t), "沒拆過的積木解析後存進快取")
+	var cached: Variant = m._toy_nav[t][1]
+	check.call("快取重用")
+	_ck(m._toy_nav[t][1] == cached, "第二次解析沿用快取（同一份幾何，沒有重解析）")
+	var inv := t.global_transform.affine_inverse()
+	ToyBuild.no_flight = true
+	t.smash(func(p: Vector3) -> bool:
+		var l := inv * p
+		return l.y < 0.4 and l.x < 1.5, 1, t.global_position)
+	ToyBuild.no_flight = false
+	_defer(2, func() -> void:   # 碎塊的靜態碰撞要過一幀才在場景裡
+		_ck(t.has_damage(), "拆過的積木：有挨打")
+		check.call("拆過之後")
+		_free_map(m)
+	)
