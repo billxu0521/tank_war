@@ -586,16 +586,18 @@ func _case_hunt_weapons() -> void:
 	b.free()
 	_ck(rifle.muzzle_velocity > revolver.muzzle_velocity, "步槍子彈要比左輪快")
 
-	# 子彈分級先關：每種牆、每個力量都擋住（之後要再開，Weapon.AMMO_TIERS 改成 true 才會照硬度穿）
-	for g: StringName in Bullet.ARMOR:
+	# 物理規則：群組名是材質就照厚度穿（木頭 1、樹和磚 2、鐵 3、石頭擋），穿過剩的力道 = 力道 - 厚度
+	var pierce_want := {&"wood": [0, 1, 2], &"tree": [-1, 0, 1], &"brick": [-1, 0, 1], &"iron": [-1, -1, 0], &"stone": [-1, -1, -1]}
+	for g: StringName in pierce_want:
 		var wall := StaticBody3D.new()
 		wall.add_to_group(g)
 		for p in [1, 2, 3]:
-			_ck(not Bullet.pierces(wall, p), "穿透力 %d 打 %s 也要擋（分級先關）" % [p, g])
+			_ck(Bullet.pierce_left(wall, p) == pierce_want[g][p - 1], "穿透力 %d 打 %s 要剩 %d（是 %d）" % [p, g, pierce_want[g][p - 1], Bullet.pierce_left(wall, p)])
 		wall.free()
 	var plain := StaticBody3D.new()
 	_ck(not Bullet.pierces(plain, 3), "沒標材質的東西重型也不能穿")
 	plain.free()
+	_ck(revolver.pierce == 1 and shotgun.pierce == 1 and rifle.pierce == 2, "穿透力照槍：左輪、散彈 1，步槍 2")
 	_ck(Weapon.AMMO_NAMES.size() == 3 and not Weapon.AMMO_TIERS, "子彈要有輕、中、重三種的資料，但分級先關（B 不換）")
 
 	# 有效射程：射程內全額，超過遞減，射程盡頭剩一半；射程要照步槍 > 左輪 > 散彈排
@@ -816,9 +818,9 @@ func _start_gun_case() -> void:
 	_brawler = m.players.get_node(^"2")
 	_brawler.global_position = spot + Vector3(0, 0, -15.0 - 3.4)
 	_brawler.rotation.y = PI   # 面向 +Z，對著恐龍
-	# 穿牆實飛用：高空一面金屬板（要等一個物理幀才進得了物理世界，所以先放、第 3 幀才打）
+	# 穿牆實飛用：高空一面木板（要等一個物理幀才進得了物理世界，所以先放、第 3 幀才打）
 	_pierce_wall = StaticBody3D.new()
-	_pierce_wall.add_to_group(&"metal")
+	_pierce_wall.add_to_group(&"wood")
 	var cs := CollisionShape3D.new()
 	cs.shape = BoxShape3D.new()
 	(cs.shape as BoxShape3D).size = Vector3(4, 4, 0.03)
@@ -826,13 +828,13 @@ func _start_gun_case() -> void:
 	m.get_node(^"Arena").add_child(_pierce_wall)
 	_pierce_wall.global_position = Vector3(0, 400, -5)
 	var back := _pierce_wall.duplicate() as StaticBody3D
-	back.remove_from_group(&"metal")
+	back.remove_from_group(&"wood")
 	m.get_node(^"Arena").add_child(back)
 	back.global_position = Vector3(0, 400, -8)
 	_case_foot_ik(m)
 
-## 實際飛一發打金屬板（5 公尺外，後面 8 公尺外一面沒標材質的牆）：每種子彈都停在金屬板（分級先關，穿不過）
-## 子彈走 _launch 生，順便驗子彈種類有變成穿透力
+## 實際飛一發打木板（5 公尺外，後面 8 公尺外一面沒標材質的牆）：左輪穿過木板、停在後面那面牆，穿一片記一次（傷害打折）
+## 子彈走 _launch 生，順便驗穿透力照槍、子彈種類不加（分級關著）
 func _check_pierce_flight() -> void:
 	var vm: Node = _shooter.viewmodel
 	var arena: Node = _pierce_wall.get_parent()
@@ -841,13 +843,13 @@ func _check_pierce_flight() -> void:
 		vm._launch(0, Vector3(0, 400, 0), PackedVector3Array([Vector3.FORWARD]), true, ammo)
 		var b: Bullet = arena.get_child(before)
 		b.fx = null   # 不出著彈聲：測試結束時還在播會算成沒清掉的物件
-		_ck(b.power == ammo + 1, "%s型彈穿透力要是 %d（是 %d）" % [Weapon.AMMO_NAMES[ammo], ammo + 1, b.power])
-		for i in 20:
+		_ck(b.power == vm._weapons[0].pierce, "%s型彈穿透力要照槍是 %d（是 %d）" % [Weapon.AMMO_NAMES[ammo], vm._weapons[0].pierce, b.power])
+		for i in 30:
 			if b.is_queued_for_deletion():
 				break
 			b.advance(1.0 / 120.0)
-		_ck(b.is_queued_for_deletion() and absf(b._traveled - 5.0) < 0.1,
-			"%s型彈打金屬板要停在 5 公尺（飛了 %.2f）" % [Weapon.AMMO_NAMES[ammo], b._traveled])
+		_ck(b.is_queued_for_deletion() and absf(b._traveled - 8.0) < 0.1 and b._pierced == 1 and b.power == 0,
+			"左輪要穿過 5 公尺的木板、停在 8 公尺的牆（飛了 %.2f、穿了 %d 片）" % [b._traveled, b._pierced])
 		b.free()
 	for i in vm._weapons.size():
 		if vm._weapons[i].harpoon:

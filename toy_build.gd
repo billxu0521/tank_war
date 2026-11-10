@@ -15,7 +15,6 @@ extends StaticBody3D
 const SETTLE_TIME := 4.0          # 碎塊飛出去之後幾秒就停下來（主機送 _settle）
 const FALL_SPEED := 3.5           # 碎塊飛出去的初速（公尺／秒）
 const MASS_PER_M3 := 40.0         # 碎塊質量：0.5 kg 加體積乘這個數
-const ARMOR_GROUP := [&"plank", &"double_plank", &"metal"]   # 等級 1、2、3 的子彈穿透材質（bullet.gd ARMOR）
 const BASE_TOP := 0.05            # 頂面在這棟原點以下（含）的塊算著地（連通檢查的起點）
 const HIT_SOUND := "res://assets/audio/destruction/wood_crack.wav"
 const HOUSE_FALL_SOUND := "res://assets/audio/destruction/house_collapse.wav"
@@ -34,6 +33,7 @@ var _layer := 1 | 16             # 碰撞層（make 設；樹是 1、不加 SOLI
 var _xf: Array[Transform3D] = []  # 每塊在這棟裡的位置（相對原點）
 var _size: Array[Vector3] = []
 var _lv := PackedInt32Array()     # 等級：1、2 挨幾下倒，3 打不壞
+var _mt: Array[StringName] = []   # 材質（HitRules.MATS；子彈穿透照它，碎塊的群組名也是它）
 var _hp := PackedInt32Array()     # 還要挨幾下（主機才看）
 var _col: Array[Color] = []
 var _shape: Array[CollisionShape3D] = []
@@ -64,7 +64,7 @@ const MERGE_CELL := 3.0
 const HIDE_PER_FRAME := 64
 
 
-## bricks：每塊 [Transform3D（相對這棟）, 尺寸 Vector3, 等級 int, 顏色 Color]（Greybox.bricks 切出來的）。
+## bricks：每塊 [Transform3D（相對這棟）, 尺寸 Vector3, 等級 int, 顏色 Color, 有沒有碰撞 bool（可省）, 材質 StringName（可省）]（Greybox.bricks 切出來的）。
 ## can_break_ = false：不進 destructible 群組（安全屋、掩體方塊、石頭）。layer：碰撞層（預設 1 加 SOLID_LAYER；樹傳 1；不碰撞傳 0）。
 static func make(bricks: Array, can_break_ := true, layer := -1) -> ToyBuild:
 	var t := ToyBuild.new()
@@ -91,6 +91,7 @@ static func make(bricks: Array, can_break_ := true, layer := -1) -> ToyBuild:
 		t._xf.append(xf)
 		t._size.append(size)
 		t._lv.append(b[2])
+		t._mt.append(b[5] if b.size() > 5 else HitRules.default_mat(b[2]))   # 第 6 個：材質（沒給照等級）
 		t._hp.append(b[2])
 		t._col.append(b[3])
 		t._bb.append(xf * AABB(-size * 0.5, size))
@@ -251,6 +252,7 @@ func _spawn(mem: PackedInt32Array, local: Transform3D, xf: Transform3D, flying: 
 	var box := AABB()
 	var vol := 0.0
 	var lv := 3
+	var mt := &"stone"
 	var inv := local.affine_inverse()
 	for k in mem.size():
 		var m := mem[k]
@@ -259,8 +261,10 @@ func _spawn(mem: PackedInt32Array, local: Transform3D, xf: Transform3D, flying: 
 		var b := r * AABB(-_size[m] * 0.5, _size[m])
 		box = b if k == 0 else box.merge(b)
 		vol += _size[m].x * _size[m].y * _size[m].z
+		if HitRules.thick(_mt[m]) < HitRules.thick(mt):   # 併起來的碎塊照最薄的材質（子彈穿得過最薄那塊）
+			mt = _mt[m]
 		lv = mini(lv, _lv[m])
-	_info[mem[0]] = {"m": mem, "rel": rel, "box": box, "vol": vol, "lv": lv}
+	_info[mem[0]] = {"m": mem, "rel": rel, "box": box, "vol": vol, "lv": lv, "mt": mt}
 	if flying and ToyBuild.no_flight and multiplayer.is_server():
 		# ponytail: 專用伺服器的碎塊不飛：直接靜態、落到正下方，不是真的散落；要真的散落就用少一點的剛體模擬
 		var none: Array[RID] = []
@@ -515,11 +519,11 @@ func loose_xforms() -> Array:
 	return out
 
 
-## 這塊的材質（子彈穿透用）：等級對應 ARMOR_GROUP；不能拆的沒有材質（照以前不穿）。shape 是碰撞形狀的編號（= 塊的編號）
-func armor_of(shape: int) -> StringName:
+## 這塊的材質（HitRules.MATS）：子彈穿透查表用。不能拆的沒有材質（照以前一律擋）。shape 是碰撞形狀的編號
+func material_of(shape: int) -> StringName:
 	if not can_break or shape < 0 or shape >= _brick_of.size():
 		return &""
-	return ARMOR_GROUP[_lv[_brick_of[shape]] - 1]
+	return _mt[_brick_of[shape]]
 
 
 ## 測試用：塊現在還站著（沒鬆脫）、它的等級、剩幾下、它的世界中心
@@ -695,7 +699,7 @@ func _make(key: int, flying: bool, xf: Transform3D) -> Node3D:
 	n.set_meta(&"toy_home", self)
 	n.add_to_group(&"toy_piece")
 	if can_break:
-		n.add_to_group(ARMOR_GROUP[int(info.lv) - 1])
+		n.add_to_group(info.mt)   # 子彈照材質穿碎塊（Bullet.pierce_left）
 	var box: AABB = info.box
 	var sh := BoxShape3D.new()
 	sh.size = box.size
@@ -803,9 +807,9 @@ static func sfx(on: Node3D, path: String, max_dist: float, at: Vector3) -> void:
 	snd.finished.connect(snd.queue_free)
 
 
-## 炸藥爆炸（主機才算）：範圍內等級 1 的塊扣一下（一下就倒），等級 2、3 不受影響（草案 4.2 一般炸彈）。
+## 炸藥爆炸（主機才算）：範圍內力道（hit_blast_force，1）打得壞的塊扣一下：木頭一下就倒，樹、磚、石頭不受影響（草案 4.2 一般炸彈）。
 ## ponytail: 只看距離，不算中間有沒有牆擋住；方塊房子的牆互相擋住的話，爆炸會穿過去拆後面的等級 1 方塊
 static func blast(world: Node3D, at: Vector3, radius: float) -> void:
 	for w: Node in world.get_tree().get_nodes_in_group(&"destructible"):
 		if w is ToyBuild:
-			(w as ToyBuild).smash(func(p: Vector3) -> bool: return p.distance_to(at) < radius, 1, at, AABB(at - Vector3.ONE * radius, Vector3.ONE * radius * 2.0))
+			(w as ToyBuild).smash(func(p: Vector3) -> bool: return p.distance_to(at) < radius, Balance.whole("hit_blast_force"), at, AABB(at - Vector3.ONE * radius, Vector3.ONE * radius * 2.0))

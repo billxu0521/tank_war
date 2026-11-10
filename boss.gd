@@ -767,7 +767,7 @@ func _wreck_around(at: Vector3, dir: Vector3, radius: float, cos_half: float) ->
 			exclude.append(r.rid)
 			if c is ToyBuild and (c as ToyBuild).is_in_group(&"destructible") and not done.has(c):
 				done[c] = true
-				(c as ToyBuild).smash(func(p: Vector3) -> bool: return _in_fan(at, dir, p, radius, cos_half), 2, at, AABB(at - Vector3.ONE * radius, Vector3.ONE * radius * 2.0))   # 積木：每塊照位置算（_in_fan 看塊的中心），整棟一次
+				(c as ToyBuild).smash(func(p: Vector3) -> bool: return _in_fan(at, dir, p, radius, cos_half), Balance.whole("hit_sweep_force"), at, AABB(at - Vector3.ONE * radius, Vector3.ONE * radius * 2.0))   # 積木：每塊照位置算（_in_fan 看塊的中心），整棟一次
 		if res.size() < 256:
 			break
 

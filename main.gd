@@ -884,9 +884,10 @@ func _start_range() -> void:
 		_sign(_on_ground(RANGE_START + Vector3(-18, 1.2, -d)), "%d m" % d)
 	_pierce_walls()
 
-## 穿牆測試：跑道右邊三個牛仔靶，每個前面 3 公尺一面牆（單層木板、雙層木板、金屬板），站在射擊線上牆剛好擋在靶前面。子彈分級先關，三面牆都擋子彈
-const PIERCE_WALLS := [["單層木板", &"plank", 0.05, Color(0.66, 0.5, 0.32)],
-	["雙層木板", &"double_plank", 0.12, Color(0.45, 0.32, 0.2)], ["金屬板", &"metal", 0.03, Color(0.55, 0.57, 0.6)]]
+## 穿牆測試：跑道右邊三個牛仔靶，每個前面 3 公尺一面牆（木板、磚牆、鐵板），站在射擊線上牆剛好擋在靶前面。
+## 群組名就是材質（HitRules）：左輪、散彈穿木板，步槍穿木板和磚牆，鐵板都擋
+const PIERCE_WALLS := [["木板", &"wood", 0.05, Color(0.66, 0.5, 0.32)],
+	["磚牆", &"brick", 0.12, Color(0.6, 0.35, 0.28)], ["鐵板", &"iron", 0.03, Color(0.55, 0.57, 0.6)]]
 
 func _pierce_walls() -> void:
 	for i in PIERCE_WALLS.size():
