@@ -54,6 +54,8 @@ var _kick_t := {}                 # 踢過的碎塊：代表塊編號 -> 上次�
 var _touched := false             # 挨過打（鬆脫、或只挨一下），新的一場要還原
 var _need_bake := false           # 有碎塊還在飛：停下來之後主機要烘一次導航
 var _land_q: Array = []           # 專用伺服器：排隊等落地的碎塊：[代表塊編號, 落地前的位置]（見 LAND_PER_TICK）
+var _adj: Array[PackedInt32Array] = []   # 連通檢查用：每塊相接的塊（_ensure_adj 建一次）
+var _base := PackedInt32Array()          # 著地的塊（頂面在 BASE_TOP 以下，或等級 3）：連通檢查的起點
 var _grid := {}                   # 連通檢查用的鄰居表：格子（Vector3i）-> 蓋到這格的塊編號。第一次要用時建，塊不會動
 var geo_ver := 0                  # 形狀停用／啟用的次數（導航網格的快取要看這個）
 var _landed := {}                 # 專用伺服器：已經落地（直接靜態）、還沒送 _settle 的碎塊：代表塊編號 -> 落地過了幾秒
@@ -171,30 +173,49 @@ func _smash(hit: Callable, max_level: int, from: Vector3, area: AABB, power: flo
 
 
 ## 連不到地面的塊（loose 為 1 的不算）：從著地的塊（頂面在 BASE_TOP 以下，或等級 3）順著邊界框相接（放大 0.05）一路找，找不到的回傳。
-## 只看鄰居表（格子 GRID 公尺，每塊只跟蓋到同一格的比）：第一次用時建一次（1659 塊約 5 毫秒）
+## 只看鄰居表（格子 GRID 公尺，每塊只跟蓋到同一格的比）：相接的塊先算好存著（_ensure_adj）
 func _unsupported(loose: PackedByteArray) -> PackedInt32Array:
 	var n := _xf.size()
-	_ensure_grid()
+	_ensure_adj()
 	var ok := PackedByteArray()
 	ok.resize(n)
-	var todo: Array[int] = []
-	for i in n:
-		if loose[i] == 0 and (_lv[i] == 3 or _bb[i].position.y <= BASE_TOP):
+	var todo := PackedInt32Array()
+	for i in _base:
+		if loose[i] == 0:
 			ok[i] = 1
 			todo.append(i)
-	while not todo.is_empty():
-		var a: int = todo.pop_back()
-		var ga := _bb[a].grow(0.05)
-		for c: Vector3i in _cells(ga):
-			for j: int in _grid.get(c, []):
-				if loose[j] == 0 and ok[j] == 0 and ga.intersects(_bb[j]):
-					ok[j] = 1
-					todo.append(j)
+	var h := 0
+	while h < todo.size():
+		for j in _adj[todo[h]]:
+			if loose[j] == 0 and ok[j] == 0:
+				ok[j] = 1
+				todo.append(j)
+		h += 1
 	var out := PackedInt32Array()
 	for i in n:
 		if loose[i] == 0 and ok[i] == 0:
 			out.append(i)
 	return out
+
+
+## 每塊相接的塊（_adj）和著地的塊（_base）：塊不會動，算一次就好。
+## 以前每次連通檢查都重查格子、重比邊界框，1659 塊的房子一次 6～8 毫秒，尼諾拉撞穿時每 0.1 秒一次；現在只走表，約 1 毫秒
+func _ensure_adj() -> void:
+	if not _adj.is_empty() or _xf.is_empty():
+		return
+	_ensure_grid()
+	for a in _xf.size():
+		if _lv[a] == 3 or _bb[a].position.y <= BASE_TOP:
+			_base.append(a)
+		var ga := _bb[a].grow(0.05)
+		var seen := {}
+		var near := PackedInt32Array()
+		for c: Vector3i in _cells(ga):
+			for j: int in _grid[c]:
+				if j != a and not seen.has(j) and ga.intersects(_bb[j]):
+					seen[j] = true
+					near.append(j)
+		_adj.append(near)
 
 
 ## 鬆脫（每台一樣）：ids 每塊馬上生一個碎塊（塊藏起來、碎塊往外飛）；gone 是超過上限的，照位置併成大塊，每組生一個。
@@ -559,6 +580,8 @@ func brick_count() -> int:
 ## 進場景樹時關掉每幀處理：只有鬆脫後才開（_break、_kick），碎塊停下來就關
 func _ready() -> void:
 	set_physics_process(false)
+	if can_break:
+		_ensure_adj()   # 載入時先建好（全場約 12000 塊共幾十毫秒），不要留到第一次被撞的那一幀
 
 
 ## 每幀：先落排隊的碎塊（專用伺服器，分幀）；主機再看碎塊睡著或飛滿 SETTLE_TIME 秒的，送 _settle（連同它的位置）
