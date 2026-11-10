@@ -50,6 +50,7 @@ func _physics_process(delta: float) -> void:
 	elif wreck and multiplayer.is_server() and hit.collider.has_method(&"smash"):   # 積木（toy_build.gd）：半徑（球半徑的 2 倍）內的塊
 		var at: Vector3 = hit.position
 		var reach := radius * 2.0
+		hit.collider.fireball_fire(at, reach)   # 打到可燃的塊留一灘火（物理規則第二版）。認方法不認型別：寫 ToyBuild 會循環載入（toy_build → … → fireball.tscn）
 		hit.collider.smash(func(p: Vector3) -> bool: return p.distance_to(at) < reach, Balance.whole("hit_fireball_force"), from, AABB(at - Vector3.ONE * reach, Vector3.ONE * reach * 2.0))
 	queue_free()
 

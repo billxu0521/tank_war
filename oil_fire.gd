@@ -17,6 +17,9 @@ const FLAMES := 40         # 火苗幾簇
 const SCORCH_KEEP := 30.0  # 秒：燒焦的痕跡留多久
 
 var shooter: Node = null   # 誰打破的（燒死人算他的）
+var radius := RADIUS       # 這灘多大（積木燒起來的小火比油燈的小，見 ToyBuild.fire_at）
+var burn_time := BURN      # 這灘燒多久
+var on_ground := true      # false：積木燒起來的火（在半空中），不留燒焦的痕跡
 
 var _t := 0.0
 var _tick := 0.0
@@ -30,13 +33,19 @@ var _sound: AudioStreamPlayer3D
 var _rng := RandomNumberGenerator.new()
 
 static var _flame_mesh: Mesh
+## 燒掉的塊要生火、但全場滿了：先排隊（[這棟, 位置]），有火熄了就補（主機）。ponytail: 最多排 QUEUE_MAX 個，多的丟掉最舊的
+static var queue: Array = []
+const QUEUE_MAX := 64
 const FIRE := [Color(1.0, 0.45, 0.08), Color(1.0, 0.68, 0.18), Color(1.0, 0.85, 0.4)]
 
 
 ## 在 world 底下 at（地面上）點一灘火
-static func spill(world: Node3D, at: Vector3, by: Node) -> OilFire:
+static func spill(world: Node3D, at: Vector3, by: Node, r := RADIUS, secs := BURN, ground := true) -> OilFire:
 	var f := OilFire.new()
 	f.shooter = by
+	f.radius = r
+	f.burn_time = secs
+	f.on_ground = ground
 	world.add_child(f)
 	f.global_position = at
 	return f
@@ -49,6 +58,7 @@ func _ready() -> void:
 	for i in 5:
 		_lobes.append(Vector2(TAU * i / 5.0 + _rng.randf_range(-0.4, 0.4), _rng.randf_range(0.55, 1.0)))
 	_make_scorch()
+	_scorch.visible = on_ground
 	_glow = _scorch.duplicate() as MeshInstance3D   # 燒著的油面：同一個形狀，fire_ground.gdshader 畫會流動的三階火
 	var gm := ShaderMaterial.new()
 	gm.shader = preload("res://fire_ground.gdshader")
@@ -59,7 +69,7 @@ func _ready() -> void:
 		_add_flame(i)
 	_light = OmniLight3D.new()
 	_light.light_color = Color(1.0, 0.6, 0.25)
-	_light.omni_range = RADIUS * 3.0
+	_light.omni_range = radius * 3.0
 	_light.shadow_enabled = false
 	_light.position = Vector3.UP * 0.8
 	add_child(_light)
@@ -73,7 +83,7 @@ func _ready() -> void:
 
 
 func _loop_sound() -> void:
-	if _t < SPREAD + BURN:
+	if _t < SPREAD + burn_time:
 		_sound.play()
 
 
@@ -97,8 +107,8 @@ func _make_scorch() -> void:
 		st.set_color(Color(0, 0, 0))   # 頂點顏色 r：中心 0、邊緣 1（燃燒油面的著色器拿來算離中心多遠）
 		st.add_vertex(Vector3.ZERO)
 		st.set_color(Color(1, 0, 0))
-		st.add_vertex(Vector3(cos(a1), 0, sin(a1)) * _reach(a1) * RADIUS)
-		st.add_vertex(Vector3(cos(a0), 0, sin(a0)) * _reach(a0) * RADIUS)
+		st.add_vertex(Vector3(cos(a1), 0, sin(a1)) * _reach(a1) * radius)
+		st.add_vertex(Vector3(cos(a0), 0, sin(a0)) * _reach(a0) * radius)
 	st.generate_normals()
 	var m := StandardMaterial3D.new()
 	m.albedo_color = Color(0.09, 0.06, 0.04, 0.0)
@@ -167,7 +177,7 @@ func _respawn(f: Node3D, i: int) -> void:
 	var a := _rng.randf() * TAU
 	var r := sqrt(_rng.randf())
 	var reach := _reach(a) * r
-	f.position = Vector3(cos(a), 0, sin(a)) * reach * RADIUS
+	f.position = Vector3(cos(a), 0, sin(a)) * reach * radius
 	f.rotation.y = _rng.randf() * TAU
 	f.set_meta(&"r", reach)
 	f.set_meta(&"life", _rng.randf_range(0.45, 0.9))
@@ -181,7 +191,7 @@ func _process(delta: float) -> void:
 	_t += delta
 	var spread := clampf(_t / SPREAD, 0.0, 1.0)
 	spread = 1.0 - pow(1.0 - spread, 2.0)            # 一開始潑得快、後面慢下來
-	var dying := clampf((_t - SPREAD - BURN) / FADE, 0.0, 1.0)
+	var dying := clampf((_t - SPREAD - burn_time) / FADE, 0.0, 1.0)
 	var life := 1.0 - dying
 	for i in _flames.size():
 		var f := _flames[i]
@@ -202,7 +212,7 @@ func _process(delta: float) -> void:
 	var sm := _scorch.material_override as StandardMaterial3D
 	var sk := maxf(spread, 0.05)
 	_scorch.scale = Vector3(sk, 1, sk)
-	sm.albedo_color.a = 0.75 * minf(_t / 0.5, 1.0) * (1.0 - clampf((_t - SPREAD - BURN - FADE) / SCORCH_KEEP, 0.0, 1.0))
+	sm.albedo_color.a = 0.75 * minf(_t / 0.5, 1.0) * (1.0 - clampf((_t - SPREAD - burn_time - FADE) / SCORCH_KEEP, 0.0, 1.0))
 	_glow.scale = _scorch.scale
 	(_glow.material_override as ShaderMaterial).set_shader_parameter(&"burn", life * minf(_t / 0.3, 1.0))
 	_glow.visible = life > 0.0
@@ -212,22 +222,22 @@ func _process(delta: float) -> void:
 	if life > 0.0 and fmod(_t, 0.2) < delta:
 		_smoke(spread)
 	if life > 0.0:
-		_ignite_nearby(spread * RADIUS)
+		_ignite_nearby(spread * radius)
 		_tick += delta
 		if _tick >= TICK:
 			_tick = 0.0
-			_burn(spread * RADIUS)
-	if _t > SPREAD + BURN + FADE:
+			_burn(spread * radius)
+	if _t > SPREAD + burn_time + FADE:
 		_sound.stop()
 		_light.visible = false
-	if _t > SPREAD + BURN + FADE + SCORCH_KEEP:
+	if _t > SPREAD + burn_time + FADE + (SCORCH_KEEP if on_ground else 0.0):   # 半空中的火沒有焦痕，熄了就刪
 		queue_free()
 
 
 func _smoke(spread: float) -> void:
 	# 黑煙：火上面一團團往上飄（跟炸藥的煙同一個樣子）
 	var a := _rng.randf() * TAU
-	var r := _rng.randf() * spread * RADIUS * 0.7
+	var r := _rng.randf() * spread * radius * 0.7
 	var at := global_position + Vector3(cos(a) * r, 1.0, sin(a) * r)
 	# 煙：半透明的灰褐低面數煙團，往上飄、變大、變淡（實心的會像一顆顆砲彈）
 	var m := StandardMaterial3D.new()
@@ -266,7 +276,7 @@ static func _smoke_mesh() -> Mesh:
 func _ember(spread: float) -> void:
 	# 火星：小小的亮黃碎塊，從火裡往上飄、左右飄、變小消失
 	var a := _rng.randf() * TAU
-	var r := _rng.randf() * spread * RADIUS * 0.8
+	var r := _rng.randf() * spread * radius * 0.8
 	var at := global_position + Vector3(cos(a) * r, _rng.randf_range(0.2, 0.6), sin(a) * r)
 	var m := StandardMaterial3D.new()
 	m.albedo_color = FIRE[2] if _rng.randf() < 0.6 else FIRE[1]
@@ -299,7 +309,8 @@ func covers(p: Vector3, r: float, margin := 0.0) -> bool:
 
 func _burn(r: float) -> void:
 	if not multiplayer.is_server():
-		return   # 扣血只有主機算（跟子彈、炸藥一樣）
+		return   # 扣血、燒積木只有主機算（跟子彈、炸藥一樣）
+	_burn_toys(r)
 	var game := get_tree().get_first_node_in_group(&"match")
 	if game == null:
 		return
@@ -313,3 +324,29 @@ func _ignite_nearby(r: float) -> void:
 	for l: Node in get_tree().get_nodes_in_group(&"oil_lantern"):
 		if l.has_method(&"on_shot") and not l.broken and covers((l as Node3D).global_position, r, 0.15):   # 燈本身有 0.15 公尺寬
 			l.on_shot((l as Node3D).global_position, shooter)
+
+
+## 還在燒嗎（還沒開始熄）：全場火的上限 fire_max 只算這種
+func burning() -> bool:
+	return _t < SPREAD + burn_time
+
+
+## 燒積木（物理規則第二版）：火的範圍裡可燃的塊累積著火秒數，燒掉的塊在原地生一灘小火（ToyBuild.fire_at 管上限）
+func _burn_toys(r: float) -> void:
+	var sr := Balance.num("fire_spread_radius")
+	var ss := Balance.num("fire_spread_seconds")
+	while not queue.is_empty() and is_instance_valid(queue[0][0]) and queue[0][0].fire_at(queue[0][1], sr, ss):   # 先補排隊的（有火熄了才有空位）
+		queue.pop_front()
+	while not queue.is_empty() and not is_instance_valid(queue[0][0]):
+		queue.pop_front()
+	if not burning():
+		return   # 正在熄的火只幫忙補，不再燒
+	var box := AABB(global_position - Vector3(r, 0.5, r), Vector3(r * 2.0, 2.5, r * 2.0))
+	var per := Balance.whole("fire_per_tick")
+	for w: Node in get_tree().get_nodes_in_group(&"destructible"):
+		if w is ToyBuild:
+			for c: Vector3 in (w as ToyBuild).burn(func(p: Vector3) -> bool: return covers(p, r), global_position, box, TICK, per):
+				if not (w as ToyBuild).fire_at(c, sr, ss):
+					queue.append([w, c])
+					if queue.size() > QUEUE_MAX:
+						queue.pop_front()
