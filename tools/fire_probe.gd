@@ -18,6 +18,8 @@ var last_us := 0
 func _process(_d: float) -> bool:
 	if not started:
 		started = true
+		Balance._load()
+		Balance._vals["fire_burns_toys"] = "1"   # 開關預設關，實地測要打開
 		var Main: GDScript = load("res://main.gd")
 		Main.level_file = ""
 		m = _isolated_match()

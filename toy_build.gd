@@ -878,6 +878,8 @@ func fire_at(at: Vector3, r: float, secs: float) -> bool:
 
 ## 火球打到這棟：命中點 reach 內有可燃、還站著的塊就在命中點留一灘火（先查再拆，拆掉的塊也算）
 func fireball_fire(at: Vector3, reach: float) -> void:
+	if Balance.whole("fire_burns_toys") == 0:
+		return
 	for i in bricks_near(AABB(at - Vector3.ONE * reach, Vector3.ONE * reach * 2.0)):
 		if _loose[i] == 0 and HitRules.burns(_mt[i]) and (global_transform * _xf[i].origin).distance_to(at) < reach:
 			fire_at(at, Balance.num("fire_ball_radius"), Balance.num("fire_ball_seconds"))
