@@ -1064,9 +1064,10 @@ var _nav_region: NavigationRegion3D
 ## 要等這一幀的碰撞都拿掉了才讀得到，所以不能當場烘。
 ## ponytail: 整張圖重烘（背景幾百毫秒，甩尾冷卻 20 秒才一次）；連續拆好幾樣時，晚開始的烘可能先烘完被舊的蓋掉，真的發生再排隊
 var _rebake_queued := false
-## ponytail: 沒拆過的積木解析過就存在 _toy_nav，之後只重解析拆過的積木和其他碰撞體（每次都解析，主線程）；最慘是一次拆好幾棟大房子，解析還是要幾十毫秒。只隔 5 秒烘一次先擋住連續卡頓。升級：分區，只解析變動的區域
+## ponytail: 沒拆過的積木存在 _toy_nav，拆過的和停下來的碎塊存在 _piece_nav（只在形狀或位置變了才重解析）；但一次拆好幾棟時，每棟第一次拆過的狀態還是要在主線程解析（全場 172 棟約 17 毫秒）。只隔 5 秒烘一次先擋住連續卡頓。升級：拆的當下分幀解析，或分區，只解析變動的區域
 const NAV_GROUP := &"nav_parse"   # 解析時臨時加進群組的節點（見 _parse_arena）
 var _toy_nav := {}   # ToyBuild -> [碰撞層, 解析好的幾何]
+var _piece_nav := {}   # 拆過的積木和靜態碎塊 -> [碰撞層, 位置, 形狀版本, 解析好的幾何]（只留這次還在場上的，見 _parse_arena）
 const REBAKE_GAP_MS := 5000   # 兩次烘之間至少隔幾毫秒：專用伺服器（慢的 VPS）每次解析場景要幾十毫秒，拆積木一直烘會讓讀秒變慢、玩家卡住
 var _last_bake_ms := -REBAKE_GAP_MS   # 上一次開始解析場景的時刻（毫秒）
 var _slow_work := ""   # 這一幀有沒有慢的工作（停頓記錄用，見 _process）
@@ -1149,17 +1150,29 @@ func _parse_group(nm: NavigationMesh, nodes: Array) -> NavigationMeshSourceGeome
 	for n in nodes: n.remove_from_group(NAV_GROUP)
 	return s
 
-## 沒拆過的積木（ToyBuild）解析一次就存著重用；拆過的（碎塊、位置會變）和其他碰撞體每次重解析
+## 沒拆過的積木（ToyBuild）解析一次就存著重用（_toy_nav）。拆過的積木（形狀會被藏）和停下來的靜態碎塊也存（_piece_nav），
+## 只有位置、碰撞層、形狀版本（ToyBuild.geo_ver，_set_off 時加一）變了才重解析；飛的碎塊每次重解析。
+## 每次烘都重建 _piece_nav，所以已經不在場上的碎塊自然掉出快取
 func _parse_arena(nm: NavigationMesh) -> NavigationMeshSourceGeometryData3D:
 	var src := NavigationMeshSourceGeometryData3D.new()
 	var rest := []
+	var keep := {}
 	for b in $Arena.find_children("*", "StaticBody3D", true, false):
-		if not (b is ToyBuild) or b.has_damage():
-			rest.append(b); continue
-		var c = _toy_nav.get(b)
-		if c == null or c[0] != b.collision_layer:
-			c = [b.collision_layer, _parse_group(nm, [b])]; _toy_nav[b] = c
-		src.merge(c[1])
+		if b is ToyBuild and not b.has_damage():
+			var c = _toy_nav.get(b)
+			if c == null or c[0] != b.collision_layer:
+				c = [b.collision_layer, _parse_group(nm, [b])]; _toy_nav[b] = c
+			src.merge(c[1])
+		elif b is ToyBuild or b.is_in_group(&"toy_piece"):
+			var v: int = b.geo_ver if b is ToyBuild else 0
+			var p = _piece_nav.get(b)
+			if p == null or p[0] != b.collision_layer or p[1] != b.global_transform or p[2] != v:
+				p = [b.collision_layer, b.global_transform, v, _parse_group(nm, [b])]
+			keep[b] = p
+			src.merge(p[3])
+		else:
+			rest.append(b)
+	_piece_nav = keep
 	src.merge(_parse_group(nm, rest))
 	return src
 

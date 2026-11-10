@@ -55,6 +55,7 @@ var _touched := false             # 挨過打（鬆脫、或只挨一下），�
 var _need_bake := false           # 有碎塊還在飛：停下來之後主機要烘一次導航
 var _land_q: Array = []           # 專用伺服器：排隊等落地的碎塊：[代表塊編號, 落地前的位置]（見 LAND_PER_TICK）
 var _grid := {}                   # 連通檢查用的鄰居表：格子（Vector3i）-> 蓋到這格的塊編號。第一次要用時建，塊不會動
+var geo_ver := 0                  # 形狀停用／啟用的次數（導航網格的快取要看這個）
 var _landed := {}                 # 專用伺服器：已經落地（直接靜態）、還沒送 _settle 的碎塊：代表塊編號 -> 落地過了幾秒
 const GRID := 1.6                 # 鄰居表的格子大小（公尺）
 # ponytail: 一次鬆脫最多生 150 個碎塊（每個都是 RigidBody 加一個網格、一個形狀，一次生 1275 個要 70 毫秒的一幀）。
@@ -679,6 +680,7 @@ func _set_off(ids: PackedInt32Array, off: bool) -> void:
 		_off[i] = 1 if off else 0
 		if _sidx[i] >= 0:
 			sh.append(_sidx[i])
+	geo_ver += 1   # 形狀變了：導航網格重烘時要重新解析（main.gd _parse_arena）
 	if sh.is_empty():
 		return
 	var rid := get_rid()
