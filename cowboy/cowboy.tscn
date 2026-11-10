@@ -116,7 +116,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.1, 0.88, 0)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.35, 0)
 
 [node name="Sync" type="MultiplayerSynchronizer" parent="."]
-replication_interval = 0.025
+replication_interval = 0.0
 replication_config = SubResource("Sync_player")
 
 [node name="StepSound" type="AudioStreamPlayer" parent="."]

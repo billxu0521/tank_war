@@ -225,8 +225,8 @@ func _client(d: float) -> bool:
 		_report()
 		_sent_gaps.sort()
 		if not _sent_gaps.is_empty():
-			print("順暢 [client] 尼諾拉的位置包：收到 %d 包，間隔中位 %.0f、p99 %.0f、最久 %.0f 毫秒；畫面上尼諾拉停住（等不到新的包）%d 幀、最久連續 %.0f 毫秒" % [
-				_sent_gaps.size(), _sent_gaps[_sent_gaps.size() / 2], _sent_gaps[int(_sent_gaps.size() * 0.99)], _sent_gaps[-1], _starved, _starve_max])
+			print("順暢 [client] 尼諾拉的位置包：收到 %d 包，間隔中位 %.0f、p99 %.0f、最久 %.0f 毫秒；畫面上尼諾拉停住（等不到新的包）%d 幀、最久連續 %.0f 毫秒；畫面真的不動（畫面該走的那一段在走、畫面位置沒變）%d 幀、最久連續 %.0f 毫秒" % [
+				_sent_gaps.size(), _sent_gaps[_sent_gaps.size() / 2], _sent_gaps[int(_sent_gaps.size() * 0.99)], _sent_gaps[-1], _starved, _starve_max, _vis_frozen, _vis_max])
 		print("SMOOTH OK")
 		return true
 	_sample(d)
@@ -247,6 +247,10 @@ var _last_sent := -1.0
 var _starved := 0
 var _starve_run := 0.0
 var _starve_max := 0.0
+var _vis_frozen := 0          # 畫面真的不動：畫面這一刻該用的那一段速度 > 0.5 公尺／秒，可是這一幀畫面上的位置跟上一幀一樣
+var _vis_run := 0.0
+var _vis_max := 0.0
+var _prev_pos := Vector3.INF
 func _watch_boss() -> void:
 	var b := _m.get_tree().get_first_node_in_group(&"boss")
 	if b == null or (b._snaps as Array).is_empty():
@@ -265,6 +269,25 @@ func _watch_boss() -> void:
 		_starve_max = maxf(_starve_max, _starve_run)
 	else:
 		_starve_run = 0.0
+	# 這一幀畫面要的時刻（同 fighter.gd net_step）落在哪一段，那一段的速度才算數（不然剛開始走的時候，畫面還慢 60 毫秒，會誤算成停住）
+	var t: float = float(Time.get_ticks_msec()) - off - float(b.NET_DELAY)
+	var vel := 0.0
+	if snaps.size() >= 2:
+		var seg := snaps.size() - 1
+		for i in range(snaps.size() - 1, 0, -1):
+			if (snaps[i - 1] as Array)[0] <= t:
+				seg = i
+				break
+		var a: Array = snaps[seg - 1]
+		var bn: Array = snaps[seg]
+		vel = ((bn[2] as Vector3) - (a[2] as Vector3)).length() / maxf((bn[0] - a[0]) / 1000.0, 0.001)
+	if vel > 0.5 and b.global_position.distance_to(_prev_pos) < 0.001:
+		_vis_frozen += 1
+		_vis_run += _gaps[-1]
+		_vis_max = maxf(_vis_max, _vis_run)
+	else:
+		_vis_run = 0.0
+	_prev_pos = b.global_position
 
 
 ## 逐項計時：直接叫 toy_build.gd、main.gd 裡的步驟，各自量幾毫秒（找卡頓是誰造成的）
