@@ -53,18 +53,17 @@ var _age := {}                    # 碎塊飛了多久（主機用）
 var _kick_t := {}                 # 踢過的碎塊：代表塊編號 -> 上次踢的毫秒（主機用）
 var _touched := false             # 挨過打（鬆脫、或只挨一下），新的一場要還原
 var _need_bake := false           # 有碎塊還在飛：停下來之後主機要烘一次導航
-var _hide_queue: Array = []       # 等著實體停用形狀的塊編號（見 HIDE_PER_FRAME）
-var _pending: Array = []          # 等它的塊都藏好才生的大碎塊：{m: 塊編號, from: 衝量的來源}（見 _merge）
+var _land_q: Array = []           # 專用伺服器：排隊等落地的碎塊：[代表塊編號, 落地前的位置]（見 LAND_PER_TICK）
 var _grid := {}                   # 連通檢查用的鄰居表：格子（Vector3i）-> 蓋到這格的塊編號。第一次要用時建，塊不會動
+var geo_ver := 0                  # 形狀停用／啟用的次數（導航網格的快取要看這個）
 var _landed := {}                 # 專用伺服器：已經落地（直接靜態）、還沒送 _settle 的碎塊：代表塊編號 -> 落地過了幾秒
 const GRID := 1.6                 # 鄰居表的格子大小（公尺）
 # ponytail: 一次鬆脫最多生 150 個碎塊（每個都是 RigidBody 加一個網格、一個形狀，一次生 1275 個要 70 毫秒的一幀）。
 # 超過的那次鬆脫，塊照位置併成大塊（_merge：3 公尺的格子，併完還超過就格子加倍），碎塊總數還在上限內，每一塊都還在場上
 const MAX_PIECES := 150
 const MERGE_CELL := 3.0
-# ponytail: 每停用一個形狀要 O(這棟的塊數) 的時間（1659 塊的大樓一個約 78 微秒），一次藏 1100 塊就卡一幀 110 毫秒。
-# 鬆脫的塊分到每幀 HIDE_PER_FRAME 個藏（約 0.3 秒藏完）；大碎塊等它的塊都藏好才生，兩邊接著來，不會疊在一起
-const HIDE_PER_FRAME := 64
+# ponytail: 專用伺服器的落地每塊要往下掃一次（約 45 微秒），排隊分幀做，每幀最多這麼多塊；超過的留到下一幀
+const LAND_PER_TICK := 30
 
 
 ## bricks：每塊 [Transform3D（相對這棟）, 尺寸 Vector3, 等級 int, 顏色 Color, 有沒有碰撞 bool（可省）, 材質 StringName（可省）]（Greybox.bricks 切出來的）。
@@ -198,8 +197,8 @@ func _unsupported(loose: PackedByteArray) -> PackedInt32Array:
 	return out
 
 
-## 鬆脫（每台一樣）：ids 每塊馬上生一個碎塊（塊藏起來、碎塊往外飛）；gone 是超過上限的，照位置併成大塊，
-## 等它們的塊分幀藏好才生（_pending）。主機重烘導航（碎塊還沒停下，先不算進去）
+## 鬆脫（每台一樣）：ids 每塊馬上生一個碎塊（塊藏起來、碎塊往外飛）；gone 是超過上限的，照位置併成大塊，每組生一個。
+## 塊一次全部藏好（_set_off 一批）才生碎塊。主機重烘導航（碎塊還沒停下，先不算進去）
 @rpc("authority", "call_local", "reliable")
 func _break(ids: PackedInt32Array, gone: PackedInt32Array, from: Vector3, power: float, dir: Vector3) -> void:
 	_touched = true
@@ -210,17 +209,16 @@ func _break(ids: PackedInt32Array, gone: PackedInt32Array, from: Vector3, power:
 	for i in ids:
 		_loose[i] = 1
 		at += global_transform * _xf[i].origin
-		_hide_brick(i)
+	for i in gone:
+		_loose[i] = 1
+		at += global_transform * _xf[i].origin
+	_hide_bricks(ids + gone)
 	for i in order:
 		var n := _spawn(PackedInt32Array([i]), _xf[i], _plow_xf(global_transform * _xf[i], from, dir, power), true)
 		if n is RigidBody3D:   # 專用伺服器落地的是靜態的，不用飛
 			_fling(n as RigidBody3D, from, power)
-	for i in gone:
-		_loose[i] = 1
-		at += global_transform * _xf[i].origin
-		_hide_queue.append(i)
 	for g: PackedInt32Array in _merge(gone):
-		_pending.append({"m": g, "from": from, "power": power, "dir": dir})
+		_spawn_group(g, from, power, dir)
 	at /= float(maxi(ids.size() + gone.size(), 1))
 	sfx(self, HOUSE_FALL_SOUND, 80.0, at)
 	Fx.dust_ring(get_parent(), Vector3(at.x, global_position.y, at.z), 4.0, 30, 5.0, 1.4)
@@ -271,9 +269,9 @@ func _spawn(mem: PackedInt32Array, local: Transform3D, xf: Transform3D, flying: 
 	_info[mem[0]] = {"m": mem, "rel": rel, "box": box, "vol": vol, "lv": lv, "mt": mt}
 	if flying and ToyBuild.no_flight and multiplayer.is_server():
 		# ponytail: 專用伺服器的碎塊不飛：直接靜態、落到正下方，不是真的散落；要真的散落就用少一點的剛體模擬
-		var none: Array[RID] = []
 		_landed[mem[0]] = 0.0
-		return _make(mem[0], false, _land(xf, box, none))   # 先算好落點再生（進了場景樹才改位置，物理要到下一步才看得到）
+		_land_q.append([mem[0], xf])   # 排隊落地（_physics_process 分幀算落點、生）；晚加入補送前由 _flush 全部做完
+		return null
 	return _make(mem[0], flying, xf)
 
 
@@ -376,16 +374,21 @@ func _settle(ids: PackedInt32Array, xfs: Array) -> void:
 ## gone：藏起來沒有碎塊的。send_state_to 先把排隊的生完，所以主機現在送的是空的，留著給同一套的補送
 @rpc("authority", "reliable")
 func _resume(ids: PackedInt32Array, xfs: Array, gone: PackedInt32Array) -> void:
+	var hide := PackedInt32Array()
 	for i in gone:
 		_touched = true
 		_loose[i] = 1
-		_hide_brick(i)
+		hide.append(i)
+	var todo: Array[int] = []
 	for k in ids.size():
 		if _pieces.has(ids[k]):
 			continue
 		_touched = true
 		_loose[ids[k]] = 1
-		_hide_brick(ids[k])
+		hide.append(ids[k])
+		todo.append(k)
+	_hide_bricks(hide)
+	for k in todo:
 		_spawn(PackedInt32Array([ids[k]]), _xf[ids[k]], xfs[k], false)
 
 
@@ -396,13 +399,12 @@ func _resume_group(mem: PackedInt32Array, xf: Transform3D) -> void:
 	var c := Vector3.ZERO
 	for m in mem:
 		_loose[m] = 1
-		_hide_queue.append(m)
 		c += _xf[m].origin
+	_hide_bricks(mem)
 	_spawn(mem, Transform3D(Basis(), c / float(mem.size())), xf, false)
-	set_physics_process(true)
 
 
-## 主機：晚加入的人連進來時呼叫（send_state_to）。先把排隊的藏完、等著生的生完，然後每個碎塊的現在位置：
+## 主機：晚加入的人連進來時呼叫（send_state_to）。先把排隊要落地的落完，然後每個碎塊的現在位置：
 ## ids／xfs 是單塊的碎塊（_resume），groups 是大碎塊 [塊編號, 位置]（_resume_group）
 func state() -> Dictionary:
 	_flush()
@@ -428,14 +430,17 @@ func send_state_to(peer: int) -> void:
 		_resume.rpc_id(peer, st.ids, st.xfs, _ash)   # 燒成灰的走 gone：藏起來、不生碎塊
 
 
-## 排隊中的藏完、等著生的照排隊的順序生完（主機補送前用，一次做完、不分幀）
+## 排隊要落地的照排隊的順序全部落完（主機補送前用，一次做完、不分幀）
 func _flush() -> void:
-	while not _hide_queue.is_empty():
-		_hide_brick(_hide_queue.pop_front())
-	while not _pending.is_empty():
-		var p: Dictionary = _pending.pop_front()
-		_spawn_group(p.m, p.from, p.power, p.dir)
-	set_physics_process(true)
+	while not _land_q.is_empty():
+		_land_next()
+
+
+## 排隊的第一塊：算落點、生成靜態的碎塊
+func _land_next() -> void:
+	var p: Array = _land_q.pop_front()
+	var none: Array[RID] = []
+	_make(p[0], false, _land(p[1], _info[p[0]].box, none))
 
 
 ## 新的一場（party.gd start、main.restore_terrain）：碎塊刪掉、每塊放回原位、血量回滿。碰撞層和群組由 set_on 管
@@ -448,16 +453,15 @@ func restore() -> void:
 	_age.clear()
 	_kick_t.clear()
 	_landed.clear()
-	_pending.clear()
-	_hide_queue.clear()
+	_land_q.clear()
 	_burning.clear()
 	_ash.clear()
 	OilFire.queue = OilFire.queue.filter(func(q: Array) -> bool: return q[0] != self)   # 排隊要生的火也不要了
 	for i in _xf.size():
 		_hp[i] = _lv[i]
 		_loose[i] = 0
-		_set_off(i, false)
 		_mm.set_instance_transform(i, Transform3D(_xf[i].basis.scaled(_size[i]), _xf[i].origin))
+	_set_off(PackedInt32Array(range(_xf.size())), false)
 	_touched = false
 	set_physics_process(false)
 
@@ -478,8 +482,6 @@ func kick(key: int, dir: Vector3, speed: float) -> void:
 ## 踢（各台）：靜態的碎塊換成飛的（同名、同位置、同一個代表塊），給衝量。主機之後照 _physics_process 停下來再 _settle
 @rpc("authority", "call_local", "reliable")
 func _kick(key: int, impulse: Vector3) -> void:
-	if not _info.has(key) and not _pending.is_empty():   # 大碎塊還在排隊：先生完
-		_flush()
 	var n: Node3D = _pieces.get(key)
 	if n == null:
 		return
@@ -559,15 +561,12 @@ func _ready() -> void:
 	set_physics_process(false)
 
 
-## 每幀：先藏鬆脫的塊（分幀）、藏完的大碎塊生出來；主機再看碎塊睡著或飛滿 SETTLE_TIME 秒的，送 _settle（連同它的位置）
+## 每幀：先落排隊的碎塊（專用伺服器，分幀）；主機再看碎塊睡著或飛滿 SETTLE_TIME 秒的，送 _settle（連同它的位置）
 func _physics_process(delta: float) -> void:
 	var k := 0
-	while k < HIDE_PER_FRAME and not _hide_queue.is_empty():
-		_hide_brick(_hide_queue.pop_front())
+	while k < LAND_PER_TICK and not _land_q.is_empty():
+		_land_next()
 		k += 1
-	while not _pending.is_empty() and _all_hidden(_pending[0].m):
-		var p: Dictionary = _pending.pop_front()
-		_spawn_group(p.m, p.from, p.power, p.dir)
 	if not multiplayer.is_server():
 		if _idle():
 			set_physics_process(false)
@@ -617,16 +616,9 @@ func _in_boss(n: Node3D) -> bool:
 	return false
 
 
-## 沒有排隊要藏的，也沒有等著生的大碎塊
+## 沒有排隊要落地的碎塊
 func _idle() -> bool:
-	return _hide_queue.is_empty() and _pending.is_empty()
-
-
-func _all_hidden(mem: PackedInt32Array) -> bool:
-	for m in mem:
-		if _off[m] == 0:
-			return false
-	return true
+	return _land_q.is_empty()
 
 
 ## 鄰居表：第一次要用時建（連通檢查、範圍內的塊都用它）
@@ -680,16 +672,30 @@ func _has_flying() -> bool:
 	return false
 
 
-## 形狀停用／啟用：直接叫物理伺服器（CollisionShape3D.disabled 每次要 78 微秒，一棟大樓一拆就卡一幀）
-func _set_off(i: int, off: bool) -> void:
-	_off[i] = 1 if off else 0
-	if _sidx[i] >= 0:
-		PhysicsServer3D.body_set_shape_disabled(get_rid(), _sidx[i], off)
+## 一批形狀停用／啟用（拆掉的塊、還原）。每改一個形狀，物理伺服器要重算整棟（1659 塊的房子一個 87 微秒），所以先把這棟移出物理空間，
+## 一批關完再放回去（同一幀做完，量過 150 塊 0.16 毫秒；物理要到下一步才看得到）
+func _set_off(ids: PackedInt32Array, off: bool) -> void:
+	var sh := PackedInt32Array()
+	for i in ids:
+		_off[i] = 1 if off else 0
+		if _sidx[i] >= 0:
+			sh.append(_sidx[i])
+	geo_ver += 1   # 形狀變了：導航網格重烘時要重新解析（main.gd _parse_arena）
+	if sh.is_empty():
+		return
+	var rid := get_rid()
+	var space := PhysicsServer3D.body_get_space(rid)
+	PhysicsServer3D.body_set_space(rid, RID())
+	for s in sh:
+		PhysicsServer3D.body_set_shape_disabled(rid, s, off)
+	PhysicsServer3D.body_set_space(rid, space)
 
 
-func _hide_brick(i: int) -> void:
-	_set_off(i, true)
-	_mm.set_instance_transform(i, Transform3D(Basis.from_scale(Vector3.ZERO), Vector3.ZERO))
+## 藏起來：碰撞形狀停用、畫面縮成零
+func _hide_bricks(ids: PackedInt32Array) -> void:
+	_set_off(ids, true)
+	for i in ids:
+		_mm.set_instance_transform(i, Transform3D(Basis.from_scale(Vector3.ZERO), Vector3.ZERO))
 
 
 ## 碎塊節點：flying 是剛鬆脫、還在飛（RigidBody3D）；否則是靜態的（StaticBody3D）。名字每台一樣。
@@ -744,8 +750,6 @@ func _make(key: int, flying: bool, xf: Transform3D) -> Node3D:
 
 ## 碎塊停下來：飛的換成靜態的（同名、同位置），靜態的只移位置
 func _freeze(key: int, xf: Transform3D) -> void:
-	if not _info.has(key) and not _pending.is_empty():   # 大碎塊還在排隊：先生完才認得出它
-		_flush()
 	var old: Node3D = _pieces.get(key)
 	_age.erase(key)
 	if old is StaticBody3D:
@@ -856,7 +860,7 @@ func _ash_off(ids: PackedInt32Array) -> void:
 	for i in ids:
 		_loose[i] = 1
 		_ash.append(i)
-		_hide_brick(i)
+	_hide_bricks(ids)
 	set_physics_process(true)
 	if multiplayer.is_server():
 		_need_bake = true
