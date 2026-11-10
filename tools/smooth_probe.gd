@@ -35,6 +35,9 @@ var PLOW := OS.get_environment("SCEN") == "plow"   # SCEN=plow：不直接叫 sm
 var _boss: Node3D
 var _from := Vector3.ZERO
 var _to := Vector3.ZERO
+var _f_steps := 0        # 這一幀跑了幾步物理
+var _f_pp_us := 0        # 這一幀第一步物理開始的時刻
+var _f_boss := 0.0       # 這一幀尼諾拉移動花的毫秒
 var _move_ms := 0.0      # 尼諾拉移動一步（含撞、踢）最久幾毫秒
 var _windowed := DisplayServer.get_name() != "headless"
 
@@ -46,6 +49,10 @@ func _env(k: String, d: float) -> float:
 func _initialize() -> void:
 	if OS.get_environment("HITCH_MS") == "":
 		load("res://main.gd").HITCH_MS = 30   # 遊戲自己的「主機停頓」記錄門檻（平常 50）調低，一起印出來對照
+	if _role != "server":
+		# 沒畫面的 Godot 每幀固定睡 6.9 毫秒（low_processor_usage_mode_sleep_usec），兩幀的間隔＝睡覺＋真正做事的時間，會多算 6.9。
+		# 關掉才量得到「這一幀做了多久」；伺服器照真的開法（60 幀＋睡覺），不動
+		OS.low_processor_usage_mode_sleep_usec = 1
 	_m = load("res://main.tscn").instantiate()
 	root.add_child(_m)
 
@@ -65,16 +72,17 @@ func _process(d: float) -> bool:
 				cam.current = true
 				cam.set_meta(&"probe", true)
 		elif _role == "client":
+			Engine.max_fps = 120   # 不睡覺會一秒跑幾千幀，同一毫秒裡好幾幀，「畫面不動」會數錯；鎖在一般螢幕的幀率
 			var join := OS.get_environment("JOIN")   # LAG=1 時指到 tools/lag_proxy.py
 			_m.ip_edit.text = join if join != "" else "127.0.0.1"
-			_m.player_key = "smooth-probe"
+			_m.player_key = "smooth-probe" + OS.get_environment("IDX")   # 多個客戶端在同一台，代號要不一樣
 			_m._on_join_pressed()
 	if _f < 3:
 		return false
 	if _role == "client":
 		return _client(d)
 	if not _started:
-		if _role == "server" and _peer_player() == null:
+		if _role == "server" and _peer_players() < maxi(int(_env("CLIENTS", 1.0)), 1):
 			return _f > 60 * 60   # 一分鐘沒人連就放棄
 		_started = true
 		for tb: ToyBuild in _m.map._toys:
@@ -131,6 +139,9 @@ func _process(d: float) -> bool:
 
 
 func _physics_process(delta: float) -> bool:
+	if _f_steps == 0:
+		_f_pp_us = Time.get_ticks_usec()
+	_f_steps += 1
 	if _boss == null or _hi < 0 or _hi >= _houses.size():
 		return false
 	var d := (_to if _t < GAP * 0.5 else _from) - _boss.global_position
@@ -142,7 +153,9 @@ func _physics_process(delta: float) -> bool:
 	_boss.exhausted = false
 	var t0 := Time.get_ticks_usec()
 	_boss._move(d.normalized(), true, delta)
-	_move_ms = maxf(_move_ms, (Time.get_ticks_usec() - t0) / 1000.0)
+	var ms := (Time.get_ticks_usec() - t0) / 1000.0
+	_move_ms = maxf(_move_ms, ms)
+	_f_boss += ms
 	return false
 
 
@@ -162,7 +175,11 @@ func _sample(d: float) -> void:
 	_t += d
 	_gaps.append(ms)
 	if ms > FRAME_MS:
-		_worst.append([ms, _t])
+		# 這一幀拆開看：跑了幾步物理、物理開始前等了多久（上一幀的 _process、畫面、鎖幀率的睡覺）、尼諾拉那一步、其他物理（節點的 _physics_process＋引擎）
+		var before := ((_f_pp_us if _f_steps > 0 else now) - (now - int(ms * 1000.0))) / 1000.0
+		_worst.append([ms, _t, _f_steps, before, _f_boss, ms - before - _f_boss])
+	_f_steps = 0
+	_f_boss = 0.0
 	if _windowed:
 		_draws.append(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME))
 		_tris.append(Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME))
@@ -181,7 +198,7 @@ func _report() -> void:
 		_role if _role != "" else "單機", "／落地" if ToyBuild.no_flight else "", _phase, g.size(), g[g.size() / 2], g[int(g.size() * 0.95)], g[int(g.size() * 0.99)], g[-1],
 		_worst.size(), over, g.size() - g.bsearch(33.0), g.size() - g.bsearch(50.0), _m.get_tree().get_nodes_in_group(&"toy_piece").size()]
 	if not _worst.is_empty():
-		s += "；最慢的幾幀（毫秒@第幾秒）" + str(_worst.slice(0, 4).map(func(w: Array) -> String: return "%.0f@%.1f" % w))
+		s += "；最慢的幾幀（毫秒@第幾秒）" + str(_worst.slice(0, 4).map(func(w: Array) -> String: return "%.0f@%.1f（物理 %d 步、物理前 %.1f、尼諾拉 %.1f、其他物理 %.1f）" % w))
 	if PLOW and _boss:
 		s += "；尼諾拉一步最久 %.1f 毫秒" % _move_ms
 	if _windowed:
@@ -189,7 +206,7 @@ func _report() -> void:
 		var tr := _tris.duplicate(); tr.sort()
 		s += "；繪製指令中位 %d、三角形 %d 萬" % [dr[dr.size() / 2], tr[tr.size() / 2] / 10000.0]
 	if _role == "server":
-		s += "；網路送出 %.1f KB／秒、拉回玩家 %d 次" % [(_net_bytes() - _bytes0) / 1024.0 / maxf(_t, 0.01), _fixes]
+		s += "；網路送出共 %.1f KB／秒（%d 個客戶端）、拉回玩家 %d 次" % [(_net_bytes() - _bytes0) / 1024.0 / maxf(_t, 0.01), _m.multiplayer.get_peers().size(), _fixes]
 	print(s)
 
 
@@ -203,11 +220,13 @@ func _net_bytes() -> int:
 var _bytes_total := 0
 
 
-func _peer_player() -> Node:
+## 已經連上、生出來的客戶端玩家有幾個
+func _peer_players() -> int:
+	var n := 0
 	for p: Node in _m.players.get_children():
 		if p.name.to_int() in _m.multiplayer.get_peers():
-			return p
-	return null
+			n += 1
+	return n
 
 
 ## 客戶端：連上、生出來之後一直來回跑（同 net_check.gd 的 A），量到伺服器關掉為止，整段印一行
@@ -296,6 +315,7 @@ func _profile() -> void:
 	var n := h.brick_count()
 	var bb: AABB = h.global_transform * h._all
 	var at := Vector3(bb.position.x, h.global_position.y, bb.position.z)
+	_m.nav_budget_ms = 0.0   # 重烘導航一次做完才量得到整段
 	print("計時：最大的一棟 %d 塊，場上積木 %d 棟共 %d 塊" % [n, _m.map._toys.size(), _m.map._toys.reduce(func(a: int, t: ToyBuild) -> int: return a + t.brick_count(), 0)])
 	_time("建鄰居表 _ensure_grid（每棟第一次拆才建）", func() -> void: h._ensure_grid())
 	_time("連通檢查 _unsupported", func() -> void: h._unsupported(h._loose))

@@ -1064,9 +1064,11 @@ var _nav_region: NavigationRegion3D
 ## 要等這一幀的碰撞都拿掉了才讀得到，所以不能當場烘。
 ## ponytail: 整張圖重烘（背景幾百毫秒，甩尾冷卻 20 秒才一次）；連續拆好幾樣時，晚開始的烘可能先烘完被舊的蓋掉，真的發生再排隊
 var _rebake_queued := false
-## ponytail: 沒拆過的積木存在 _toy_nav，拆過的和停下來的碎塊存在 _piece_nav（只在形狀或位置變了才重解析）；但一次拆好幾棟時，每棟第一次拆過的狀態還是要在主線程解析（全場 172 棟約 17 毫秒）。只隔 5 秒烘一次先擋住連續卡頓。升級：拆的當下分幀解析，或分區，只解析變動的區域
+## ponytail: 沒拆過的積木存在 _toy_nav，拆過的和停下來的碎塊存在 _piece_nav（只在形狀或位置變了才重解析）；重烘的解析分幀做（每幀最多 nav_budget_ms 毫秒，全場約 15 毫秒分成五、六幀），分幀期間場地有變動的要等下一次烘才看得到。只隔 5 秒烘一次。升級：分區，只解析變動的區域
 const NAV_GROUP := &"nav_parse"   # 解析時臨時加進群組的節點（見 _parse_arena）
 var _toy_nav := {}   # ToyBuild -> [碰撞層, 解析好的幾何]
+var _bake_serial := 0   # 第幾次烘（分幀解析到一半又開始新的一次時，舊的那次作廢）
+var nav_budget_ms := 3.0   # 重烘導航時，主線程一幀最多解析幾毫秒（0＝一次做完，量測和測試用）
 var _piece_nav := {}   # 拆過的積木和靜態碎塊 -> [碰撞層, 位置, 形狀版本, 解析好的幾何]（只留這次還在場上的，見 _parse_arena）
 const REBAKE_GAP_MS := 5000   # 兩次烘之間至少隔幾毫秒：專用伺服器（慢的 VPS）每次解析場景要幾十毫秒，拆積木一直烘會讓讀秒變慢、玩家卡住
 var _last_bake_ms := -REBAKE_GAP_MS   # 上一次開始解析場景的時刻（毫秒）
@@ -1113,6 +1115,8 @@ func _rebake_now() -> void:
 
 func _bake_nav() -> void:
 	_last_bake_ms = Time.get_ticks_msec()
+	_bake_serial += 1
+	var serial := _bake_serial
 	var t0 := Time.get_ticks_usec()
 	var rebake := is_instance_valid(_nav_region)
 	var nm := NavigationMesh.new()
@@ -1127,9 +1131,12 @@ func _bake_nav() -> void:
 	nm.geometry_source_group_name = NAV_GROUP
 	if not rebake:
 		_toy_nav.clear()   # 新的場地：舊場地的積木已經不在了
-	var src := _parse_arena(nm)
+	# 重烘分幀解析（每幀最多 nav_budget_ms 毫秒）；第一次烘（開場）一次做完
+	var src: NavigationMeshSourceGeometryData3D = await _parse_arena(nm, nav_budget_ms if rebake else 0.0)
+	if serial != _bake_serial or (rebake and not is_instance_valid(_nav_region)):   # 分幀的時候又開始了一次烘、或回大廳了：這次作廢
+		return
 	var ms := (Time.get_ticks_usec() - t0) / 1000   # 主線程的解析部分（背景烘焙不算）
-	if ms > 20:
+	if ms > 20 and not rebake:
 		_slow_work = "重烘導航 %d 毫秒" % ms
 		print("重烘導航 %d 毫秒" % ms)
 	if not rebake:
@@ -1153,11 +1160,18 @@ func _parse_group(nm: NavigationMesh, nodes: Array) -> NavigationMeshSourceGeome
 ## 沒拆過的積木（ToyBuild）解析一次就存著重用（_toy_nav）。拆過的積木（形狀會被藏）和停下來的靜態碎塊也存（_piece_nav），
 ## 只有位置、碰撞層、形狀版本（ToyBuild.geo_ver，_set_off 時加一）變了才重解析；飛的碎塊每次重解析。
 ## 每次烘都重建 _piece_nav，所以已經不在場上的碎塊自然掉出快取
-func _parse_arena(nm: NavigationMesh) -> NavigationMeshSourceGeometryData3D:
+func _parse_arena(nm: NavigationMesh, budget_ms := 0.0) -> NavigationMeshSourceGeometryData3D:
 	var src := NavigationMeshSourceGeometryData3D.new()
 	var rest := []
 	var keep := {}
-	for b in $Arena.find_children("*", "StaticBody3D", true, false):
+	var t0 := Time.get_ticks_usec()
+	for b: Node in _static_bodies($Arena, []):
+		# 重烘（budget_ms > 0）：這一幀做超過 budget_ms 毫秒就留到下一幀接著做。全場存好的幾何併起來就要 5～12 毫秒，一幀做完會頓一下
+		if budget_ms > 0.0 and Time.get_ticks_usec() - t0 > budget_ms * 1000.0:
+			await get_tree().process_frame
+			t0 = Time.get_ticks_usec()
+		if not is_instance_valid(b) or not b.is_inside_tree():   # 等下一幀的時候被刪掉了（碎塊被踢、回大廳）
+			continue
 		if b is ToyBuild and not b.has_damage():
 			var c = _toy_nav.get(b)
 			if c == null or c[0] != b.collision_layer:
@@ -1173,8 +1187,18 @@ func _parse_arena(nm: NavigationMesh) -> NavigationMeshSourceGeometryData3D:
 		else:
 			rest.append(b)
 	_piece_nav = keep
-	src.merge(_parse_group(nm, rest))
+	src.merge(_parse_group(nm, rest.filter(func(b: Node) -> bool: return is_instance_valid(b) and b.is_inside_tree())))
 	return src
+
+## 場地底下所有的 StaticBody3D（同 find_children("*", "StaticBody3D")，但不往積木和碎塊裡面找：
+## 它們底下是一萬多個碰撞形狀，find_children 每個都看，一次 3～9 毫秒）
+func _static_bodies(at: Node, out: Array) -> Array:
+	for c in at.get_children():
+		if c is StaticBody3D:
+			out.append(c)
+		if not (c is ToyBuild or c.is_in_group(&"toy_piece")):
+			_static_bodies(c, out)
+	return out
 
 ## 移動標靶：在主機玩家前方 25 公尺，左右各 6 公尺來回走，不開槍
 func add_walker() -> Node3D:
