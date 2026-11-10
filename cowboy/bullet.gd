@@ -12,8 +12,6 @@ const GRAVITY := 9.8
 ## 從鏡頭中心出發，前幾公尺不畫，不然第一幀整條曳光糊在自己臉上
 const SHOW_AFTER := 3.0
 const STREAK_LENGTH := 1.5
-## 牆的硬度（群組名 -> 硬度）。子彈穿透力 ≥ 硬度就穿過去，沒在表上的東西都擋
-const ARMOR := {&"plank": 1, &"double_plank": 2, &"metal": 3}
 
 var origin := Vector3.ZERO
 var vel := Vector3.ZERO
@@ -21,8 +19,10 @@ var shooter: Node          # Cowboy。可能在子彈飛行中死掉被砍，用
 var weapon: Weapon         # 傷害、有效射程、射程都照這把槍
 var fx: ShotFX             # 火花、彈孔、著彈聲
 var mask := 1
-## 穿透力：輕型 1、中型 2、重型 3（Weapon.ammo + 1）。0 = 什麼都不穿（魚叉）
+## 穿透力：照槍（Weapon.pierce）。每穿一片減掉那片的厚度（HitRules.pierce），0 = 什麼都不穿（魚叉）
 var power := 0
+## 穿過幾片了：傷害每片乘 hit_pierce_dmg
+var _pierced := 0
 var visual_only := false
 ## 霰彈十顆同時打到，著彈聲只要第一顆出聲
 var sound := true
@@ -73,13 +73,18 @@ func advance(delta: float) -> void:
 		steps += 1
 		var q := PhysicsRayQueryParameters3D.create(from, to, mask, exclude)
 		hit = get_world_3d().direct_space_state.intersect_ray(q)
-		if hit.is_empty() or not pierces(hit["collider"], power, hit["shape"]):
+		if hit.is_empty():
 			break
+		var left := pierce_left(hit["collider"], power, hit["shape"])
+		if left < 0:
+			break
+		power = left
+		_pierced += 1
 		# 穿牆：留彈孔、這面牆不再算，從打到的點繼續掃這一幀剩下的路
 		_traveled += from.distance_to(hit["position"])
 		if is_instance_valid(fx):
 			fx.impact(hit["position"], hit["normal"], surface_of(hit["collider"]), sound)
-		if hit["collider"].has_method(&"armor_of"):
+		if hit["collider"].has_method(&"material_of"):
 			# 積木：一棟一個物體，不排除整棟（後面幾塊還要照材質算）。從打到的點往前 0.02 公尺再找
 			# （起點在形狀裡面，物理不會再報同一塊）
 			from = hit["position"] + (to - from).normalized() * 0.02
@@ -107,21 +112,21 @@ func advance(delta: float) -> void:
 	queue_free()
 
 
-## 穿透力 power 的子彈能不能穿過 target。shape 是打到的碰撞形狀編號（玩具積木一棟一個物體、每塊一個形狀，要照塊的材質算）
-static func pierces(target: Object, power: int, shape := -1) -> bool:
-	if not Weapon.AMMO_TIERS:   # 分級先關：什麼都不穿
-		return false
+## 穿透力 power 的子彈穿過 target 後剩多少；-1 = 擋住。shape 是打到的碰撞形狀編號（玩具積木一棟一個物體、每塊一個形狀，照塊的材質算）。
+## 材質：積木問 material_of，其他東西（碎塊、靶場的牆）看群組名是不是材質鍵；沒有材質的一律擋
+static func pierce_left(target: Object, power: int, shape := -1) -> int:
 	if not target is Node:
-		return false
-	if target.has_method(&"armor_of"):
-		var armor: StringName = target.armor_of(shape)
-		if armor != &"":
-			return power >= ARMOR[armor]
-		return false
-	for g: StringName in ARMOR:
+		return HitRules.BLOCK
+	if target.has_method(&"material_of"):
+		return HitRules.pierce(power, target.material_of(shape))
+	for g: StringName in HitRules.MATS:
 		if (target as Node).is_in_group(g):
-			return power >= ARMOR[g]
-	return false
+			return HitRules.pierce(power, g)
+	return HitRules.BLOCK
+
+
+static func pierces(target: Object, power: int, shape := -1) -> bool:
+	return pierce_left(target, power, shape) >= 0
 
 
 ## 打到的是什麼材質：會扣血的噴血，地形噴土，石頭噴石屑，其他（房子、柵欄、樹）都當木頭
@@ -130,7 +135,7 @@ static func surface_of(target: Object) -> StringName:
 		return &"blood"
 	if target is Node and target.is_in_group(&"ground"):
 		return &"dirt"
-	if target is Node and (target.is_in_group(&"stone") or target.is_in_group(&"metal")):   # 金屬板先借石屑
+	if target is Node and (target.is_in_group(&"stone") or target.is_in_group(&"iron")):   # 鐵板先借石屑
 		return &"stone"
 	return &"wood"
 
@@ -147,7 +152,7 @@ func _impact(hit: Dictionary) -> void:
 		on_impact.call(hit["position"] + hit["normal"] * 0.15)
 	if visual_only or not flesh or not is_instance_valid(shooter):
 		return
-	var dmg := weapon.damage_at(_traveled)
+	var dmg := weapon.damage_at(_traveled) * pow(Balance.num("hit_pierce_dmg"), _pierced)   # 隔牆打人比正面弱
 	# 爆頭秒殺只在有效射程內成立，跟 Hunt 一樣。距離用子彈實際飛了多遠
 	var head: bool = _traveled <= weapon.falloff_start and Viewmodel.is_headshot(target, hit["position"])
 	if head:

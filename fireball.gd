@@ -50,7 +50,7 @@ func _physics_process(delta: float) -> void:
 	elif wreck and multiplayer.is_server() and hit.collider.has_method(&"smash"):   # 積木（toy_build.gd）：半徑（球半徑的 2 倍）內的塊
 		var at: Vector3 = hit.position
 		var reach := radius * 2.0
-		hit.collider.smash(func(p: Vector3) -> bool: return p.distance_to(at) < reach, 2, from, AABB(at - Vector3.ONE * reach, Vector3.ONE * reach * 2.0))
+		hit.collider.smash(func(p: Vector3) -> bool: return p.distance_to(at) < reach, Balance.whole("hit_fireball_force"), from, AABB(at - Vector3.ONE * reach, Vector3.ONE * reach * 2.0))
 	queue_free()
 
 ## 射線沒打到的時候，看半徑之內有沒有會受傷的人（擦過去也算）。發射者不算

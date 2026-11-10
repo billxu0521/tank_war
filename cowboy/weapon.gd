@@ -26,6 +26,8 @@ enum Action { SINGLE_ACTION, DOUBLE_ACTION, BOLT, LEVER, BREAK, HARPOON }
 @export var action_type := Action.SINGLE_ACTION
 ## 每顆彈丸的傷害。總傷害 = damage × pellets 全中。
 @export var damage := 25.0
+## 子彈穿透力（HitRules：跟材質厚度比，穿一片減掉厚度）。0 = 什麼都不穿
+@export var pierce := 1
 ## 彈藥容量：最多裝幾發（現在剩幾發是 mag）
 @export var capacity := 12
 ## 起始備彈：一開始另外帶幾發。-1 = 無限（沙盒）。遊戲中剩多少是 reserve
@@ -251,7 +253,7 @@ static func recoil_curve(s: float, keep: float) -> float:
 var harpoon: MeshInstance3D   # 炸彈長矛管裡那支魚叉（沒有就是一般的槍）
 ## 子彈分級（B 換型、穿牆都看這個）。ponytail: 先關掉，之後要再開；關的時候子彈一律不穿（Bullet.pierces）
 const AMMO_TIERS := false
-## 裝哪種子彈：0 輕、1 中、2 重，越重穿越硬的牆（Bullet.ARMOR）。換了馬上生效，不用重裝
+## 裝哪種子彈：0 輕、1 中、2 重，打開分級後穿透力 = 槍的 pierce + 這個。換了馬上生效，不用重裝
 ## ponytail: 三種只差穿透，傷害、彈數都一樣。要讓輕型有人用再加代價
 var ammo := 0
 const AMMO_NAMES := ["輕", "中", "重"]

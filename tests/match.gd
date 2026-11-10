@@ -759,14 +759,13 @@ func _cubes_physics(m: Node, house: ToyBuild, one: int, three: int) -> void:
 	_ck(_standing(house, 1).size() == before, "丟的人是恐龍，炸藥不拆方塊")
 	# 等級 3 不受炸藥影響
 	_ck(house.is_standing(three) and house.hp_of(three) == 3, "炸藥不影響等級 3")
-	# 子彈分級先關：木板、雙層、金屬，力量 1～3 都擋住
+	# 物理規則：沒給材質照等級（1 木頭、2 磚、3 石頭）；左輪（1）穿木頭，步槍（2）穿木頭和磚，石頭都擋
 	var s1 := _first_brick(house, 1)
 	var s2 := _first_brick(house, 2)
 	var s3 := _first_brick(house, 3)
-	var none := true
-	for p in [1, 2, 3]:
-		none = none and not Bullet.pierces(house, p, s1) and not Bullet.pierces(house, p, s2) and not Bullet.pierces(house, p, s3)
-	_ck(none, "方塊擋子彈（分級先關，每級每種力量都不穿）")
+	_ck(Bullet.pierce_left(house, 1, s1) == 0 and not Bullet.pierces(house, 1, s2), "力量 1 穿木頭（剩 0）、擋在磚")
+	_ck(Bullet.pierce_left(house, 2, s1) == 1 and Bullet.pierce_left(house, 2, s2) == 0, "力量 2 穿木頭剩 1、穿磚剩 0")
+	_ck(not Bullet.pierces(house, 3, s3), "等級 3（石頭）什麼都穿不過")
 
 
 ## 還站著、等級 level 的方塊編號
@@ -907,8 +906,8 @@ func _toy_body() -> void:
 	_ck(_piece_node(col, 1) == null and col.loose_ids().is_empty() and col.is_standing(1) and col.hp_of(1) == 1 and not col.has_damage(), "新的一場：碎塊刪掉、塊回來、血量回滿")
 	hurt.restore()
 	_ck(not hurt.has_damage() and hurt.hp_of(0) == 2, "新的一場：挨一下的也回滿")
-	# 子彈分級先關：單塊（等級 1 木板）力量 3 也擋住
-	_ck(not Bullet.pierces(col, 3, 1) and not Bullet.pierces(col, 3, 0), "積木的子彈一律擋住（分級先關）")
+	# 物理規則：等級 1（木頭）的塊力量 1 就穿
+	_ck(Bullet.pierces(col, 1, 1) and Bullet.pierces(col, 1, 2) and not Bullet.pierces(col, 3, 0), "等級 1 的積木（木頭）力量 1 就穿，底下等級 3（石頭）都擋")
 	# 非派對模式甩尾（_wreck_around）也拆得到積木；派對方塊房子這時藏著
 	m.rules = &"egg"
 	var base := Vector3(20, 0, -20)
@@ -1238,16 +1237,16 @@ func _toy_bullet_case() -> void:
 	var b := Bullet.new()
 	var wp := Weapon.new()   # 不在場景樹裡：測完自己 free
 	b.weapon = wp
-	b.power = 3
+	b.power = 2   # 步槍：穿前面的木頭（剩 1），停在後面的磚
 	b.vel = Vector3(0, 0, 600)   # 一幀就飛過整個牆
 	m.map.add_child(b)
 	b.global_position = Vector3(0, 50.75, -3)
 	b.set_physics_process(false)   # 自己不飛，等物理幀過了再由這裡推一次（advance）
 	_defer(4, func() -> void:
 		b.advance(1.0 / 120.0)
-		_ck(b.is_queued_for_deletion(), "力量 3 的子彈打到等級 1 的前牆就停（分級先關）")
-		_ck(absf(b._traveled - 2.85) < 0.05, "子彈停在前牆前面（飛了 %.2f，前牆在 2.85）" % b._traveled)
-		_ck(wall.is_standing(0) and wall.is_standing(1), "子彈沒穿過，積木沒被打掉")
+		_ck(b.is_queued_for_deletion() and b._pierced == 1 and b.power == 1, "力量 2 的子彈穿過木頭前牆、停在磚（穿了 %d 片、剩 %d）" % [b._pierced, b.power])
+		_ck(absf(b._traveled - 3.30) < 0.05, "子彈停在磚牆前面（飛了 %.2f，磚牆在 3.30）" % b._traveled)
+		_ck(wall.is_standing(0) and wall.is_standing(1) and wall.hp_of(0) == 1, "子彈不拆積木：穿過的木頭也沒扣血")
 		_free_map(m)
 		wp.free())
 
@@ -1534,13 +1533,20 @@ func _merge_run(m: Node, spacing: float, label: String) -> void:
 	_ck(back and t.loose_ids().is_empty() and late.loose_ids().is_empty(), "新的一場：大碎塊刪掉，每塊回來（%s）" % label)
 
 
-## 子彈穿材質用的形狀編號要對到塊（沒碰撞的塊排前面也不能錯位）：第 0 個形狀是第 1 塊（等級 2）
+## 子彈穿材質用的形狀編號要對到塊（沒碰撞的塊排前面也不能錯位）：第 0 個形狀是第 1 塊（等級 2）；有給材質的照給的
 func _toy_b_armor() -> void:
 	var t := ToyBuild.make([
 		[Transform3D(Basis(), Vector3(0, 0.5, 0)), Vector3(0.5, 0.5, 0.5), 1, Color.RED, false],   # 樹冠式的沒碰撞塊（等級 1）
-		[Transform3D(Basis(), Vector3(2, 0.5, 0)), Vector3(0.5, 0.5, 0.5), 2, Color.BLUE]])       # 有碰撞（等級 2）
-	_ck(t.armor_of(0) == &"double_plank" and t.armor_of(1) == &"", "子彈的材質照形狀對到塊（形狀 0 是等級 2 的塊）")
+		[Transform3D(Basis(), Vector3(2, 0.5, 0)), Vector3(0.5, 0.5, 0.5), 2, Color.BLUE],        # 有碰撞（等級 2，沒給材質 = 磚）
+		[Transform3D(Basis(), Vector3(4, 0.5, 0)), Vector3(0.5, 0.5, 0.5), 2, Color.BROWN, true, &"tree"]])   # 樹幹
+	_ck(t.material_of(0) == &"brick" and t.material_of(1) == &"tree" and t.material_of(2) == &"", "子彈的材質照形狀對到塊（形狀 0 是等級 2 的磚、形狀 1 是樹）")
 	t.free()
+	# 規則表：每種材質四列都在 balance.csv；壞和穿照規格
+	for mt: StringName in HitRules.MATS:
+		HitRules.level(mt); HitRules.burns(mt); HitRules.thick(mt); HitRules.pushable(mt)
+	_ck(Balance.missing.is_empty(), "材質表每列都在 balance.csv（少了 %s）" % [Balance.missing])
+	_ck(not HitRules.breaks(2, &"stone") and not HitRules.breaks(3, &"iron") and HitRules.breaks(2, &"brick") and not HitRules.breaks(1, &"tree"), "壞：力道 ≥ 耐久，耐久 3 永遠不壞")
+	_ck(HitRules.pierce(2, &"wood") == 1 and HitRules.pierce(1, &"brick") == HitRules.BLOCK and HitRules.pierce(3, &"iron") == 0, "穿：力道 ≥ 厚度才穿，剩力道 - 厚度")
 
 ## 碎塊在尼諾拉身體裡（真的 boss，不在對局裡不跑思考）：時間到之前不凍，尼諾拉離開後就凍；最多等 SETTLE_TIME 的 3 倍，之後不管重疊直接凍
 func _toy_b_freeze() -> void:

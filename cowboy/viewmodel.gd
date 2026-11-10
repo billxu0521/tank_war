@@ -605,7 +605,7 @@ func _launch(index: int, from: Vector3, dirs: PackedVector3Array, visual_only: b
 		b.fx = _fx
 		b.mask = hit_mask
 		b.visual_only = visual_only
-		b.power = 0 if w.harpoon else ammo + 1
+		b.power = 0 if w.harpoon else w.pierce + (ammo if Weapon.AMMO_TIERS else 0)
 		b.sound = i == 0
 		if w.harpoon:   # 炸彈長矛：飛出去的是魚叉，打中就爆
 			var mi := MeshInstance3D.new()

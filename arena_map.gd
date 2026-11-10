@@ -1502,6 +1502,8 @@ func _tree(rec: Dictionary) -> void:
 		bricks.append([Transform3D(Basis(), Vector3(0, top + 0.4 * d, 0)), Vector3(d, 0.8 * d, d), 1, _toy_paint(Color(0.2, 0.5, 0.2), key)])
 		bricks.append([Transform3D(Basis(), Vector3(0.15 * d, top + 1.1 * d, 0.1 * d)), Vector3(0.7 * d, 0.6 * d, 0.7 * d), 1, _toy_paint(Color(0.3, 0.66, 0.26), key + Vector3(1, 0, 0))])
 		bricks.append([Transform3D(Basis(), Vector3(-0.1 * d, top + 1.65 * d, -0.1 * d)), Vector3(0.45 * d, 0.5 * d, 0.45 * d), 1, _toy_paint(Color(0.45, 0.78, 0.32), key + Vector3(0, 1, 1))])
+	for k in nt:   # 樹幹、仙人掌是「樹」材質（子彈要步槍才穿）；樹冠照等級是木頭
+		bricks[k].append_array([true, &"tree"])
 	for k in range(nt, bricks.size()):   # 樹冠沒有碰撞：看得到、擋視線，不擋子彈、不擋路、導航也不算（老設計）
 		bricks[k].append(false)
 	var t := _toy(ToyBuild.make(bricks, true, 1))   # 層 1：不加 SOLID_LAYER（見上面）
