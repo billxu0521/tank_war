@@ -41,10 +41,12 @@ static var _frame_ms := 0   # 上一幀跑完的時刻（毫秒），main.gd 每
 # 在前後兩筆之間補（跟 FPS 遊戲的「插值」同一招）：網路一時慢了、一次來兩包，看起來還是順的。
 # 只有客戶端這樣做。主機（含測試站）收到就直接套：恐龍咬人、boss 找人都在主機算，不能看慢了的位置。
 # 客戶端自己判定打中（Bullet），打的就是畫面上看到的位置，所以「看到哪、打哪」還是對得上。
-# 晚越多越順但越不準（躲到牆後還中彈）：同步器每秒送 40 次（cowboy.tscn、boss.tscn 的 replication_interval），
-# 晚 60ms 等於手上隨時有兩三筆可以補，晚一包也不會停住
+# 晚越多越順但越不準（躲到牆後還中彈）：同步器每幀送一次（cowboy.tscn、boss.tscn、dino.tscn 的 replication_interval = 0；
+# 設成 0.025 會被湊成兩幀＝33ms，才會停住），晚 60ms 等於手上隨時有兩三筆可以補
 const NET_DELAY := 60.0
 const NET_KEEP := 1000.0   # 存最近這麼多毫秒
+const NET_EXTRA := 100.0   # 新的包沒到時，最多照速度往前推這麼多毫秒，再久就停住
+const NET_EXTRA_SPEED := 0.03   # 推的速度上限（每毫秒，= 30 公尺／秒）
 var net_smooth := false     # _ready 決定；測試會直接打開
 var _snaps: Array = []      # [送出時間, 收到時間, 位置, 朝向]，照時間排
 var net_state: Array:
@@ -194,8 +196,14 @@ func net_step(now: float) -> void:
 		off = minf(off, s[1] - s[0])
 	var t := now - off - NET_DELAY
 	var last: Array = _snaps[-1]
-	if t >= last[0]:   # 新的還沒到：停在最後一筆，不亂猜
-		position = last[2]
+	if t >= last[0]:   # 新的還沒到：照最後兩筆的速度往前推，最多 NET_EXTRA 毫秒，再久就停住
+		var v := Vector3.ZERO
+		if _snaps.size() >= 2:
+			var a: Array = _snaps[-2]
+			v = ((last[2] as Vector3) - (a[2] as Vector3)) / maxf(last[0] - a[0], 0.001)   # 每毫秒
+		if v.length() > NET_EXTRA_SPEED:   # ponytail: 傳送、重生那種大跳不推，直接停住
+			v = Vector3.ZERO
+		position = last[2] + v * minf(t - last[0], NET_EXTRA)
 		rotation = last[3]
 		return
 	for i in range(_snaps.size() - 1, 0, -1):
