@@ -35,6 +35,9 @@ var _size: Array[Vector3] = []
 var _lv := PackedInt32Array()     # 等級：1、2 挨幾下倒，3 打不壞
 var _mt: Array[StringName] = []   # 材質（HitRules.MATS；子彈穿透照它，碎塊的群組名也是它）
 var _hp := PackedInt32Array()     # 還要挨幾下（主機才看）
+var _burning := {}                # 塊編號 -> 著火幾秒了（主機才看，見 burn）
+var _ash := PackedInt32Array()    # 燒成灰的塊（藏起來、沒有碎塊；晚加入補送用）
+var _all := AABB()                # 整棟的邊界框（本地座標）：火離很遠就不用建鄰居表
 var _col: Array[Color] = []
 var _shape: Array[CollisionShape3D] = []
 var _sidx := PackedInt32Array()   # 每塊的碰撞形狀編號（沒有碰撞的塊是 -1，不佔編號）
@@ -95,6 +98,7 @@ static func make(bricks: Array, can_break_ := true, layer := -1) -> ToyBuild:
 		t._hp.append(b[2])
 		t._col.append(b[3])
 		t._bb.append(xf * AABB(-size * 0.5, size))
+		t._all = t._bb[i] if i == 0 else t._all.merge(t._bb[i])
 		t._mm.set_instance_transform(i, Transform3D(xf.basis.scaled(size), xf.origin))
 		t._mm.set_instance_color(i, b[3])
 		var solid: bool = b[4] if b.size() > 4 else true   # 第 5 個：false＝有畫面、沒有碰撞（樹冠）
@@ -420,8 +424,8 @@ func send_state_to(peer: int) -> void:
 	var st := state()
 	for g: Array in st.groups:
 		_resume_group.rpc_id(peer, g[0], g[1])
-	if not (st.ids as PackedInt32Array).is_empty():
-		_resume.rpc_id(peer, st.ids, st.xfs, PackedInt32Array())
+	if not (st.ids as PackedInt32Array).is_empty() or not _ash.is_empty():
+		_resume.rpc_id(peer, st.ids, st.xfs, _ash)   # 燒成灰的走 gone：藏起來、不生碎塊
 
 
 ## 排隊中的藏完、等著生的照排隊的順序生完（主機補送前用，一次做完、不分幀）
@@ -446,6 +450,9 @@ func restore() -> void:
 	_landed.clear()
 	_pending.clear()
 	_hide_queue.clear()
+	_burning.clear()
+	_ash.clear()
+	OilFire.queue = OilFire.queue.filter(func(q: Array) -> bool: return q[0] != self)   # 排隊要生的火也不要了
 	for i in _xf.size():
 		_hp[i] = _lv[i]
 		_loose[i] = 0
@@ -807,9 +814,93 @@ static func sfx(on: Node3D, path: String, max_dist: float, at: Vector3) -> void:
 	snd.finished.connect(snd.queue_free)
 
 
+## 火燒（主機才算，OilFire 每 TICK 叫）：covers 收塊上離火（at）最近的一點（世界座標），回傳 true＝在火裡（大片牆板中心離很遠也燒得到）。可燃（HitRules.burns）、還站著的塊累積著火秒數，
+## 滿 fire_catch_seconds 就燒成灰（藏起來、不留碎塊）；燒掉以後懸空的照常鬆脫成碎塊。一次最多燒 limit 塊。回傳燒掉的塊中心（生新火用）
+func burn(covers: Callable, at: Vector3, area: AABB, dt: float, limit: int) -> Array[Vector3]:
+	var out: Array[Vector3] = []
+	if not multiplayer.is_server() or not can_break or not _all.intersects(global_transform.affine_inverse() * area):
+		return out
+	var catch := Balance.num("fire_catch_seconds")
+	var la := global_transform.affine_inverse() * at
+	var loose := _loose.duplicate()
+	var ash := PackedInt32Array()
+	for i in bricks_near(area):
+		if loose[i] == 1 or not HitRules.burns(_mt[i]):
+			continue
+		var near := (_xf[i].affine_inverse() * la).clamp(-_size[i] * 0.5, _size[i] * 0.5)   # 塊自己的座標：離火最近的一點
+		if not covers.call(global_transform * (_xf[i] * near)):
+			continue
+		var c := global_transform * _xf[i].origin
+		_burning[i] = float(_burning.get(i, 0.0)) + dt
+		if _burning[i] >= catch and ash.size() < limit:
+			loose[i] = 1
+			ash.append(i)
+			out.append(c)
+	if ash.is_empty():
+		return out
+	for i in ash:
+		_burning.erase(i)
+	_ash_off.rpc(ash)
+	var fall := _unsupported(loose)
+	if fall.size() > MAX_PIECES:
+		_break.rpc(PackedInt32Array(), fall, out[0], FALL_SPEED, Vector3.ZERO)
+	elif not fall.is_empty():
+		_break.rpc(fall, PackedInt32Array(), out[0], FALL_SPEED, Vector3.ZERO)
+	return out
+
+
+## 燒成灰（各台）：塊藏起來、不生碎塊
+@rpc("authority", "call_local", "reliable")
+func _ash_off(ids: PackedInt32Array) -> void:
+	_touched = true
+	for i in ids:
+		_loose[i] = 1
+		_ash.append(i)
+		_hide_brick(i)
+	set_physics_process(true)
+	if multiplayer.is_server():
+		_need_bake = true
+
+
+## 在 at 生一灘火（主機叫；各台都生，見 _fire）。全場還在燒的火滿 fire_max 灘就不生。回傳生了沒有
+func fire_at(at: Vector3, r: float, secs: float) -> bool:
+	if not multiplayer.is_server():
+		return false
+	var live := 0
+	for f: Node in get_tree().get_nodes_in_group(&"oil_fire"):
+		if f.burning():
+			live += 1
+	if live >= Balance.whole("fire_max"):
+		return false
+	_fire.rpc(at, r, secs)
+	return true
+
+
+## 火球打到這棟：命中點 reach 內有可燃、還站著的塊就在命中點留一灘火（先查再拆，拆掉的塊也算）
+func fireball_fire(at: Vector3, reach: float) -> void:
+	for i in bricks_near(AABB(at - Vector3.ONE * reach, Vector3.ONE * reach * 2.0)):
+		if _loose[i] == 0 and HitRules.burns(_mt[i]) and (global_transform * _xf[i].origin).distance_to(at) < reach:
+			fire_at(at, Balance.num("fire_ball_radius"), Balance.num("fire_ball_seconds"))
+			return
+
+
+@rpc("authority", "call_local", "reliable")
+func _fire(at: Vector3, r: float, secs: float) -> void:
+	OilFire.spill(get_parent(), at, null, r, secs, false)
+
+
 ## 炸藥爆炸（主機才算）：範圍內力道（hit_blast_force，1）打得壞的塊扣一下：木頭一下就倒，樹、磚、石頭不受影響（草案 4.2 一般炸彈）。
 ## ponytail: 只看距離，不算中間有沒有牆擋住；方塊房子的牆互相擋住的話，爆炸會穿過去拆後面的等級 1 方塊
 static func blast(world: Node3D, at: Vector3, radius: float) -> void:
+	# 先推碎塊（物理規則第二版）：範圍內可推的碎塊從爆心往外、往上噴（新拆下來的本來就會飛，不用再推）
+	var push := Balance.num("blast_push")
+	for n: Node in world.get_tree().get_nodes_in_group(&"toy_piece"):
+		var home: Variant = n.get_meta(&"toy_home", null)
+		var d := (n as Node3D).global_position - at
+		if d.length() >= radius or not is_instance_valid(home) or not (home as ToyBuild)._info.has(n.get_meta(&"toy_key")):
+			continue
+		if HitRules.pushable((home as ToyBuild)._info[n.get_meta(&"toy_key")].mt):
+			(home as ToyBuild).kick(n.get_meta(&"toy_key"), (d.normalized() + Vector3.UP * 0.6).normalized(), push * (1.0 - d.length() / radius))
 	for w: Node in world.get_tree().get_nodes_in_group(&"destructible"):
 		if w is ToyBuild:
 			(w as ToyBuild).smash(func(p: Vector3) -> bool: return p.distance_to(at) < radius, Balance.whole("hit_blast_force"), at, AABB(at - Vector3.ONE * radius, Vector3.ONE * radius * 2.0))

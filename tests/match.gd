@@ -1219,6 +1219,62 @@ func _case_toy_more() -> void:
 	_toy_house_band_case()
 	_toy_safe_case()
 	_toy_restore_case()
+	_toy_fire_case()
+
+## 物理規則第二版（docs/規劃/2026-11-10-物理規則.md）：火燒可燃的塊（燒成灰、不留碎塊、原地生新火、一路燒過去），磚不燒；
+## 全場火的上限；火球打可燃的塊留火、打磚不留；炸藥推碎塊；新的一場燒掉的塊回來
+func _toy_fire_case() -> void:
+	var m := _toy_map()
+	var tree := m.get_tree()
+	var row := []
+	for k in 4:   # 一排 4 塊木頭（間隔 0.9 公尺），最後一塊磚
+		row.append([Transform3D(Basis(), Vector3(k * 0.9, 0.5, 0)), Vector3(0.9, 1.0, 0.3), 1, Color.RED])
+	row.append([Transform3D(Basis(), Vector3(4 * 0.9, 0.5, 0)), Vector3(0.9, 1.0, 0.3), 2, Color.BLUE])
+	var t := ToyBuild.make(row)
+	t.name = "ToyFire"
+	m.map.add_child(t)
+	t.position = Vector3(30, 50, 30)   # 空中：地圖上的東西碰不到
+	var fires := func() -> int: return tree.get_nodes_in_group(&"oil_fire").size()
+	var n0: int = fires.call()
+	var f := OilFire.spill(m.map, t.global_position, null, 0.6, 6.0, false)
+	for k in 5:
+		f._burn_toys(0.6)
+	_ck(t.is_standing(0), "木頭在火裡 2.5 秒還沒燒掉")
+	f._burn_toys(0.6)
+	_ck(not t.is_standing(0) and _piece_node(t, 0) == null and t.loose_ids().is_empty(), "木頭在火裡 3 秒燒成灰、不留碎塊")
+	_ck(fires.call() == n0 + 2, "燒掉的塊原地生一灘新火（有 %d 灘）" % (fires.call() - n0))
+	for k in 40:   # 每灘火都燒 20 秒：一塊接一塊燒過去
+		for g: Node in tree.get_nodes_in_group(&"oil_fire"):
+			if g.burning():
+				g._burn_toys(g.radius)
+	_ck(not t.is_standing(1) and not t.is_standing(2) and not t.is_standing(3), "火一路燒過去，整排木頭都燒掉")
+	_ck(t.is_standing(4) and t.hp_of(4) == 2, "磚不燒")
+	for g: Node in tree.get_nodes_in_group(&"oil_fire"):
+		g.free()
+	# 上限：還在燒的火滿 fire_max 灘就不生
+	var made := 0
+	while t.fire_at(t.global_position + Vector3(made, 0, 0), 1.0, 6.0) and made < 100:
+		made += 1
+	_ck(made == Balance.whole("fire_max") and not t.fire_at(t.global_position, 1.0, 6.0), "全場最多 %d 灘火（生了 %d）" % [Balance.whole("fire_max"), made])
+	for g: Node in tree.get_nodes_in_group(&"oil_fire"):
+		g.free()
+	# 新的一場：燒掉的回來
+	t.restore()
+	_ck(t.is_standing(0) and t.is_standing(3) and t._ash.is_empty(), "新的一場：燒掉的塊回來")
+	# 火球：打可燃的塊留火，打磚不留
+	t.fireball_fire(t.center_of(4), 0.5)
+	_ck(fires.call() == 0, "火球打磚不留火")
+	t.fireball_fire(t.center_of(0), 0.5)
+	_ck(fires.call() == 1, "火球打木頭留一灘火")
+	for g: Node in tree.get_nodes_in_group(&"oil_fire"):
+		g.free()
+	# 炸藥推碎塊：先拆一塊變碎塊，爆炸在它旁邊，它要被踢一下
+	_hit_brick(t, 3, 1)
+	var key := 3
+	_ck(t._info.has(key), "拆下來的木頭變成碎塊")
+	ToyBuild.blast(m.map, t.center_of(3) + Vector3(0, 0, -1.0), 3.0)
+	_ck(t._kick_t.has(key), "炸藥推得動旁邊的木頭碎塊")
+	_free_map(m)
 
 func _toy_bullet_case() -> void:
 	var Main: GDScript = load("res://main.gd")
