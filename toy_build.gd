@@ -56,6 +56,7 @@ var _need_bake := false           # 有碎塊還在飛：停下來之後主機�
 var _hide_queue: Array = []       # 等著實體停用形狀的塊編號（見 HIDE_PER_FRAME）
 var _pending: Array = []          # 等它的塊都藏好才生的大碎塊：{m: 塊編號, from: 衝量的來源}（見 _merge）
 var _grid := {}                   # 連通檢查用的鄰居表：格子（Vector3i）-> 蓋到這格的塊編號。第一次要用時建，塊不會動
+var geo_ver := 0                  # 形狀停用／啟用的次數（導航網格的快取要看這個）
 var _landed := {}                 # 專用伺服器：已經落地（直接靜態）、還沒送 _settle 的碎塊：代表塊編號 -> 落地過了幾秒
 const GRID := 1.6                 # 鄰居表的格子大小（公尺）
 # ponytail: 一次鬆脫最多生 150 個碎塊（每個都是 RigidBody 加一個網格、一個形狀，一次生 1275 個要 70 毫秒的一幀）。
@@ -683,6 +684,7 @@ func _has_flying() -> bool:
 ## 形狀停用／啟用：直接叫物理伺服器（CollisionShape3D.disabled 每次要 78 微秒，一棟大樓一拆就卡一幀）
 func _set_off(i: int, off: bool) -> void:
 	_off[i] = 1 if off else 0
+	geo_ver += 1   # 形狀變了：導航網格重烘時要重新解析（main.gd _parse_arena）
 	if _sidx[i] >= 0:
 		PhysicsServer3D.body_set_shape_disabled(get_rid(), _sidx[i], off)
 
