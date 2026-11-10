@@ -1237,6 +1237,14 @@ func _toy_fire_case() -> void:
 	var fires := func() -> int: return tree.get_nodes_in_group(&"oil_fire").size()
 	var n0: int = fires.call()
 	var f := OilFire.spill(m.map, t.global_position, null, 0.6, 6.0, false)
+	Balance._vals["fire_burns_toys"] = "0"
+	for k in 8:
+		f._burn_toys(0.6)
+	t.fireball_fire(t.center_of(0), 0.5)
+	_ck(t.is_standing(0) and fires.call() == n0 + 1, "開關關著：火不燒積木、火球不留火")
+	f._t = 0.0
+	t._burning.clear()
+	Balance._vals["fire_burns_toys"] = "1"   # 下面測打開的樣子，測完關回去
 	for k in 5:
 		f._burn_toys(0.6)
 	_ck(t.is_standing(0), "木頭在火裡 2.5 秒還沒燒掉")
@@ -1274,6 +1282,7 @@ func _toy_fire_case() -> void:
 	_ck(t._info.has(key), "拆下來的木頭變成碎塊")
 	ToyBuild.blast(m.map, t.center_of(3) + Vector3(0, 0, -1.0), 3.0)
 	_ck(t._kick_t.has(key), "炸藥推得動旁邊的木頭碎塊")
+	Balance._vals["fire_burns_toys"] = "0"
 	_free_map(m)
 
 func _toy_bullet_case() -> void:

@@ -333,6 +333,8 @@ func burning() -> bool:
 
 ## 燒積木（物理規則第二版）：火的範圍裡可燃的塊累積著火秒數，燒掉的塊在原地生一灘小火（ToyBuild.fire_at 管上限）
 func _burn_toys(r: float) -> void:
+	if Balance.whole("fire_burns_toys") == 0:
+		return   # 先關掉（balance.csv fire_burns_toys）
 	var sr := Balance.num("fire_spread_radius")
 	var ss := Balance.num("fire_spread_seconds")
 	while not queue.is_empty() and is_instance_valid(queue[0][0]) and queue[0][0].fire_at(queue[0][1], sr, ss):   # 先補排隊的（有火熄了才有空位）
