@@ -1670,6 +1670,7 @@ func _case_toy_nofly() -> void:
 	t.smash(func(p: Vector3) -> bool:
 		var l := inv * p
 		return l.y < 0.4 and l.x < 1.5, 1, t.global_position)
+	t._flush()   # 專用伺服器的落地分幀做（每幀 LAND_PER_TICK 塊）；這個案例要一次全部落完才查
 	ToyBuild.no_flight = false
 	_ck(not t._has_flying() and t._pieces.size() == 6, "專用伺服器拆開：主機上沒有 RigidBody 碎塊（%d 個碎塊，都是靜態的）" % t._pieces.size())
 	var all_static := true

@@ -126,7 +126,7 @@ func _process(d: float) -> bool:
 	_begin("拆第 %d 棟（%d 塊）" % [_hi + 1, h.brick_count()])
 	var t0 := Time.get_ticks_usec()
 	h.smash(func(p: Vector3) -> bool: return p.distance_to(at) < R, 2, at)
-	print("  smash 呼叫本身 %.1f 毫秒，鬆脫後碎塊 %d 個、排隊要藏 %d 塊" % [(Time.get_ticks_usec() - t0) / 1000.0, h._pieces.size() + h._pending.size(), h._hide_queue.size()])
+	print("  smash 呼叫本身 %.1f 毫秒，鬆脫後碎塊 %d 個、排隊落地 %d 塊" % [(Time.get_ticks_usec() - t0) / 1000.0, h._pieces.size(), h._land_q.size()])
 	return false
 
 
@@ -277,8 +277,8 @@ func _profile() -> void:
 	_time("建鄰居表 _ensure_grid（每棟第一次拆才建）", func() -> void: h._ensure_grid())
 	_time("連通檢查 _unsupported", func() -> void: h._unsupported(h._loose))
 	_time("拆（甩尾半徑）smash：算＋生碎塊", func() -> void: h.smash(func(p: Vector3) -> bool: return p.distance_to(at) < R, 2, at))
-	print("    → 碎塊 %d 個、等著生的大塊 %d、排隊要藏 %d 塊" % [h._pieces.size(), h._pending.size(), h._hide_queue.size()])
-	_time("藏完排隊的塊＋生大塊 _flush（遊戲裡分幀做）", func() -> void: h._flush())
+	print("    → 碎塊 %d 個、排隊落地 %d 塊" % [h._pieces.size(), h._land_q.size()])
+	_time("落完排隊的碎塊 _flush（遊戲裡分幀做）", func() -> void: h._flush())
 	var ids := PackedInt32Array()
 	var xfs := []
 	for k: int in h._pieces:
@@ -290,7 +290,7 @@ func _profile() -> void:
 	_time("重烘導航 _bake_nav 主線程解析（拆過 1 棟）", func() -> void: _m._bake_nav())
 	_time("還原 restore（新的一場，1 棟）", func() -> void: h.restore())
 	_time("整棟一次拆光 smash（最壞：全部塊都中）", func() -> void: h.smash(func(_p: Vector3) -> bool: return true, 2, at))
-	print("    → 碎塊 %d 個、等著生的大塊 %d、排隊要藏 %d 塊" % [h._pieces.size(), h._pending.size(), h._hide_queue.size()])
+	print("    → 碎塊 %d 個、排隊落地 %d 塊" % [h._pieces.size(), h._land_q.size()])
 	_time("    其中 _flush", func() -> void: h._flush())
 	h.restore()
 	# 一次鬆脫 150 塊、每塊一個碎塊（尼諾拉撞穿牆最常走的路）：拆開來量每一步
@@ -302,8 +302,7 @@ func _profile() -> void:
 	_time("鬆脫 150 塊 _break（客戶端的路：150 個會飛的碎塊）", func() -> void: h._break(top, PackedInt32Array(), at, ToyBuild.FALL_SPEED, Vector3.ZERO))
 	_time("    150 個碎塊停下 _settle（刪掉飛的、各生一個靜態的）", func() -> void: h._settle(top, top_xf(h, top)))
 	h.restore()
-	_time("    其中：藏 150 塊 _hide_brick", func() -> void:
-		for i in top: h._hide_brick(i))
+	_time("    其中：藏 150 塊 _hide_bricks", func() -> void: h._hide_bricks(top))
 	_time("    其中：生 150 個碎塊節點 _spawn＋_make", func() -> void:
 		for i in top: h._spawn(PackedInt32Array([i]), h._xf[i], h.global_transform * h._xf[i], true))
 	h.restore()
