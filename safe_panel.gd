@@ -67,8 +67,8 @@ func _label(size: int, txt: String) -> Label:
 
 
 func open_panel() -> void:
-	tens = -1
-	ones = -1
+	tens = int(main.party.my_digits[0]) if main.party else -1   # 看過的那一位先幫他選好
+	ones = int(main.party.my_digits[1]) if main.party else -1
 	_sent = -1
 	_last = []
 	show()

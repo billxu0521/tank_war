@@ -1230,6 +1230,73 @@ func _case_safe() -> void:
 	_ck(not m.safe.on and not m.safe.visible and m.safe.collision_layer == 0 and not m.safe.locked(), "搶蛋模式沒有保險箱")
 	_end(m)
 
+## 信封和號碼牌（envelope.gd、party.gd，規劃 docs/企劃/2026-11-12-保險箱與號碼牌.md 製作順序第 2 步）
+func _case_envelope() -> void:
+	var m := _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"party"))
+	m._apply_rules()
+	var p: Party = m.party
+	var s: Safe = m.safe
+	m._physics_process(DT)   # 開場：主機（1）當恐龍，電腦 -1～-3 當牛仔
+	_ck(p.envelopes.size() == 2 and p.env_open == [false, false], "每回合兩個信封，還沒人看過")
+	var e0: Vector3 = p.env_pos[0]
+	var e1: Vector3 = p.env_pos[1]
+	_ck(Vector2(e0.x - e1.x, e0.z - e1.z).length() > 20.0 and m._exits.all(func(x: Vector3) -> bool:
+		return Vector2(e0.x - x.x, e0.z - x.z).length() > m.EXIT_RADIUS and Vector2(e1.x - x.x, e1.z - x.z).length() > m.EXIT_RADIUS),
+		"兩個信封分開、不在撤離圈（%s %s）" % [e0, e1])
+	p.place_egg()
+	var bots: Array = [-1, -2, -3].map(func(id: int) -> Node3D: return m.players.get_node(NodePath(str(id))))
+	_ck(not p.read(-1, 0), "準備階段不能看牌")
+	p.time_left = 0.0
+	m._physics_process(DT)
+	var code: int = s._code
+	bots[0].global_position = e0 + Vector3(1, 0.5, 0)
+	_ck(not p.read(1, 0), "恐龍不能看牌")
+	_ck(not p.read(-2, 0), "離太遠不能看")
+	_ck(p.read(-1, 0) and p.env_open == [true, false], "牛仔站旁邊看十位數的牌，信封變成開過（公開）")
+	_ck(p._known[-1] == [code / 10, -1], "主機記下他看過十位數 %d" % (code / 10))
+	_ck(p.my_digits == [-1, -1] and not p._known.has(1), "數字只給看的人：主機這台（恐龍）沒收到")
+	var st: Dictionary = p.state()
+	_ck(st.env_open == [true, false] and not st.has("my_digits") and not st.has("_known"), "party 那包有開過沒，沒有誰知道什麼")
+	p._process(0.0)   # 外觀每幀照公開狀態套
+	_ck(p.envelopes[0].opened and not p.envelopes[1].opened and p.envelopes[0].global_position == e0, "開過的信封換樣子、擺在抽到的位置")
+	_ck(p.read(-1, 0) and p._known[-1] == [code / 10, -1], "牌沒被拿走，可以再看")
+	# 下一回合：主機變回牛仔，看過的、開過的都清掉
+	p._end_round(true, "test")
+	p.time_left = 0.0
+	m._physics_process(DT)
+	_ck(p.dino_id == -1 and p._known.is_empty() and p.env_open == [false, false] and p.my_digits == [-1, -1], "新回合：看過的牌、開過的信封清掉")
+	p.time_left = 0.0
+	m._physics_process(DT)
+	code = s._code
+	var me: Cowboy = m.players.get_node(^"1")
+	me.global_position = p.env_pos[1] + Vector3(0, 0.5, 1)
+	p.envelopes[1].interact(me)   # 按 F 那條路
+	_ck(p.my_digits == [-1, code % 10] and p.env_open == [false, true], "主機自己看個位數：收到 %d" % (code % 10))
+	_ck(p.envelopes[1].prompt.contains(str(code % 10)), "看過的信封提示寫數字（%s）" % p.envelopes[1].prompt)
+	m._match_hud.update_text(me)
+	_ck(m.hud.text.contains("密碼 ? %d" % (code % 10)), "左下角小抄（%s）" % m.hud.text)
+	var panel: SafePanel = m._safe_panel
+	panel.open_panel()
+	_ck(panel.tens == -1 and panel.ones == code % 10, "面板打開：看過的那一位先選好")
+	panel.hide()
+	# 死了重生還記得
+	p.lives[1] = 3
+	me.take_damage(9999)
+	m.players.remove_child(me)
+	me.free()
+	m._physics_process(DT)
+	p._waiting[1][0] = 0.0
+	m._physics_process(DT)
+	_ck(m.players.has_node(^"1") and p.my_digits == [-1, code % 10] and p._known[1] == [-1, code % 10], "死了重生還記得看過的牌")
+	# 斷線重連：換編號後補送
+	p.rekey(1, 7)
+	_ck(p._known.has(7) and not p._known.has(1), "重連：看過的牌搬到新編號")
+	p.my_digits = [-1, -1]
+	p.rekey(7, 1)
+	_ck(p.my_digits == [-1, code % 10], "重連後補送給本人")
+	_end(m)
+
 ## 斷線重連：60 秒內同一個代號連回來，拿回命數、出局狀態、派對分數；過期、新局就當新人
 func _case_reconnect() -> void:
 	var m := _offline_match()
