@@ -60,6 +60,9 @@ properties/3/replication_mode = 1
 properties/0/path = NodePath(".:position")
 properties/0/spawn = true
 properties/0/replication_mode = 1
+properties/1/path = NodePath(".:rotation")
+properties/1/spawn = true
+properties/1/replication_mode = 1
 
 [sub_resource type="StyleBoxFlat" id="bar_bg"]
 bg_color = Color(0, 0, 0, 0.45)
@@ -101,7 +104,7 @@ script = ExtResource("2")
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="Egg" unique_id=1290539770]
 replication_config = SubResource("egg_repl")
 
-[node name="Safe" type="StaticBody3D" parent="."]
+[node name="Safe" type="RigidBody3D" parent="."]
 script = ExtResource("safe_gd")
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="Safe"]

@@ -143,7 +143,7 @@ func step(delta: float) -> void:
 		&"play":
 			_respawn_step(delta)
 			main.safe.server_step(delta)   # 試密碼的 1 秒、作廢、開箱
-			if main.safe.locked():   # 鎖著：蛋跟著箱子（第 4 步箱子會被炸飛）
+			if main.safe.locked():   # 鎖著：蛋跟著箱子（箱子會被炸飛、甩飛）
 				main.egg.global_position = main.safe.global_position
 			_drop_orphan_egg()
 			main._egg_step(delta)   # 撿蛋、帶著走、撤離（撤離成功會叫 extracted）
@@ -345,8 +345,7 @@ func _hide_egg_at(p: Vector3) -> void:
 	if b:
 		var fwd := -b.global_basis.z
 		p += Vector3(fwd.x, 0.0, fwd.z).normalized() * (BOSS_GD.BODY_RADIUS + Safe.HALF + 1.0)
-	main.safe.global_position = main._on_ground(_flat(p, Safe.HALF))
-	main.safe.reset_physics_interpolation()
+	main.safe.place(main._on_ground(_flat(p, Safe.HALF)))
 	main.egg.global_position = main.safe.global_position
 	main.egg.reset_physics_interpolation()
 

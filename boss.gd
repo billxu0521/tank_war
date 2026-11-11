@@ -796,6 +796,12 @@ func _strike_sweep() -> void:
 	var foot := _sweep_root()
 	foot.y = global_position.y - HALF_H   # 查詢球心放腳底：貼地 12 公尺內的東西都掃得到（放身體中心會漏掉遠處的）
 	_wreck_around(foot, _back_dir(), SWEEP_RADIUS, SWEEP_COS)
+	var g := _game()   # 保險箱在後方半圈裡（高度同 _sweep_hit）就掃飛：從尾根往外偏上
+	var s: Safe = g.safe if g else null
+	if s and _in_fan(_sweep_root(), _back_dir(), s.global_position, SWEEP_RADIUS, SWEEP_COS) and absf(s.global_position.y - foot.y) < 4.0 * GROW:
+		var out := s.global_position - _sweep_root()
+		out.y = 0.0
+		s.push((out.normalized() + Vector3.UP * 0.4).normalized() * Safe.SWEEP_SPEED)
 
 ## 甩尾的人：只打尾根後方半圈，高度、擋牆跟輕攻擊一樣。整段出手時間每幀判
 func _sweep_hit() -> void:
