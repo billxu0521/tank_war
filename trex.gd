@@ -123,6 +123,30 @@ var _lean_v := Vector2.ZERO
 var _drift := Vector2.ZERO    # 身體相對腳的位移延遲（本地座標的左右、前後）
 var _drift_v := Vector2.ZERO
 var _local_v := Vector3.ZERO  # 上一幀的本地速度，用來算加速度
+var _moved_s := Vector3.ZERO  # 平滑過的速度（世界座標）
+var _yaw_rate_s := 0.0        # 平滑過的轉身速度
+var _last_xf := Transform3D()
+
+# --- 巨型爬蟲的走法：重、有力、看得出每一步在承重 ---
+# 全部跟著步伐相位（_gait，走多遠跨幾步）和彈簧走，各台自己算，主機、客戶端、電腦操控的都一樣。
+# 幅度是模型單位／弧度；尼諾拉在遊戲裡放大 2.22 倍
+const SWAY_X := 0.14        # 重心左右移到踩著的那隻腳上（尼諾拉約 31 公分）
+const SWAY_ROLL := 0.045    # 身體跟著往踩著的那邊倒一點
+const BOB_WALK := 0.06      # 走路時身體上下起伏（兩腳都著地時最低）
+const BOB_RUN := 0.11       # 跑步起伏更大
+const STEP_THUD := 0.45     # 腳落地那一下把身體往下踢多快（模型單位／秒，進身體高度的彈簧，自己彈回來）：每一步都看得到重量壓下去
+const STEP_NOD := 0.35      # 落地那一下身體往前點多快（弧度／秒，進俯仰的彈簧）
+const HIP_SWING := 0.07     # 骨盆跟著步伐左右扭（弧度）：跨出去那隻腳的髖往前送，蜥蜴、鱷魚那種扭著走
+const CHEST_SWING := 0.04  # 胸再往反方向多扭一點、脖子轉回來：從上面看是 S 形，頭維持朝前
+const TAIL_SWING := 0.045   # 尾巴每一節跟著骨盆擺多少（弧度），越後面越大
+const TAIL_SWING_LAG := 0.45  # 每一節比前一節晚多少（弧度相位）：整條尾巴是一道往後傳的波，尾尖比尾根慢半拍多
+var _hip_yaw := 0.0
+var _sway_x := 0.0
+var _tail_go := 0.0
+const HEAD_LAG := 0.10      # 身體上下動時頭晚一點跟上（脖子反向補，弧度 ÷ 每秒模型單位）
+const STEP_SHAKE := 0.012   # 落地時附近的人鏡頭震一下（走路；跑步兩倍）。駕駛自己不震。0＝關掉
+const STEP_SHAKE_REACH := 30.0
+var _sway_roll := 0.0
 var _breath := 0.0
 # 跑步姿勢：跑起來頭往前伸、身體前傾壓低、尾巴抬平（_run 0 走 → 1 跑，跟著速度平滑變）
 var _run := 0.0
@@ -134,7 +158,42 @@ const RUN_SPINE := -0.18    # 身體前傾
 const RUN_LOW := 0.30       # 身體壓低（模型單位，乘腿長比例）
 const RUN_TAIL := -0.12     # 尾巴抬平（尾巴俯仰正的是往下）
 
+## 跟著「畫面上的」身體走，不跟物理步的身體。
+## 身體（CharacterBody3D）一秒走 120 個物理步，畫面在兩步之間補（物理插值）；這裡在 _process 用 global_position 拿到的卻是物理步的位置。
+## 螢幕不是 60／120 張時（50 張：一幀 2 步、3 步交替）每幀算出來的速度差兩成，步伐、點頭、位移延遲跟著一快一慢；
+## 釘在世界座標的腳是對著物理步的身體解的，畫出來的身體卻在別的地方，踩著的腳每幀前後跳（tools/gait_probe.gd 量過：50 張時踩著的腳每秒來回 42 次）。
+## 所以模型自己不當身體的子節點擺（top_level、不經過物理插值），每幀擺到補過的身體上；這樣下面所有 global_transform 都是畫面上的。
+## 別人同步來的（fighter.gd net_smooth，本來就每幀自己補、關掉物理插值）直接用牠現在的位置。
+## 身體不是碰撞物件（工具裡每幀直接搬的架子）就照舊當子節點
+var _body: Node3D
+var _seat := Transform3D()   # 模型相對身體擺在哪（場景裡設的）
+var _big := false            # 身體是尼諾拉（boss 群組）：腳不踩積木和碎塊，見 _ground
+var down_roll := 0.0         # 倒地往側邊躺多少（弧度，boss.gd 設；以前直接改 rotation.z）
+
+func _follow() -> void:
+	if _body == null:
+		return
+	var b := _body.get_global_transform_interpolated() if _body.is_physics_interpolated_and_enabled() else _body.global_transform
+	global_transform = b * _seat_xf()
+
+func _seat_xf() -> Transform3D:
+	return Transform3D(Basis(Vector3.BACK, down_roll) * _seat.basis, _seat.origin)
+
+## 模型上的一點（世界座標）換到「物理步的」身體上的同一點。判定用（打頭）：判定是對物理步的身體算的，
+## 模型卻擺在畫面上的身體（慢不到一步）；身體剛被搬走（出生、重生）那一幀模型還在原地，直接用會差很遠
+func on_body(p: Vector3) -> Vector3:
+	if _body == null:
+		return p
+	return _body.global_transform * _seat_xf() * (global_transform.affine_inverse() * p)
+
 func _ready() -> void:
+	if get_parent() is CollisionObject3D:
+		_body = get_parent()
+		_seat = transform
+		top_level = true
+		physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+		_follow()
+		_big = _body.is_in_group(&"boss")
 	var parts := MODEL.instantiate() as Node3D
 	add_child(parts)
 	parts.position.y = MODEL_LIFT
@@ -178,6 +237,7 @@ const REACH_BACK := 0.9     # 離地時在中立位置後方多遠。前後不�
 const DUTY_WALK := 0.62     # 走路：一隻腳六成時間踩地，有兩腳同時著地的時候
 const DUTY_RUN := 0.40      # 跑步：四成，有騰空
 const SWING_LIFT := 0.42    # 擺動期腳掌抬多高（模型單位）
+const RUN_LIFT := 0.4       # 跑步時腳再抬高幾成：跑起來身體壓低、起伏大，抬一樣高會掃到地；步子也看起來更大
 const MIN_CYCLE := 0.9      # 一個循環最快幾秒：撲擊這種爆衝時腳跟不上就讓它滑，不要抖成一團
 const HURRY_CYCLE := 0.45  # 腳被拖太遠時的步伐，最快一個循環幾秒
 const SETTLE_CYCLE := 1.6   # 停下來時，跨到一半的腳用這個速度放下來
@@ -250,9 +310,12 @@ func _ground(p: Vector3) -> Vector3:
 		q.exclude = [body.get_rid()]
 		q.collision_mask = body.collision_mask   # 腳只踩身體撞得到的東西：尼諾拉關碰撞物件時穿過樹，腳不踩上樹冠
 	var hit := w.direct_space_state.intersect_ray(q)
-	# 打到會動的角色（牛仔、別隻恐龍）不算地：不然人走到腳下、尾巴下，腳和尾巴會一下子踩上去
-	for _i in 3:
-		if hit.is_empty() or not hit.collider is CharacterBody3D:
+	# 打到會動的角色（牛仔、別隻恐龍）不算地：不然人走到腳下、尾巴下，腳和尾巴會一下子踩上去。還在飛的碎塊也不算。
+	# 尼諾拉（_big）連積木房子、樹、石頭、落地的碎塊都不算：牠站不上去（撞開或被擋住），腳邊還站著的半面牆、滿地碎塊卻會被射線打到，
+	# 腳一下踩上牆頂、一下踩回地上（廢墟裡量到踩著的腳一幀跳 2.6 公尺，身體跟著沉、腿整條摺起來）。小恐龍照舊踩得上去
+	for _i in 6 if _big else 3:
+		var c: Object = hit.get("collider")
+		if c == null or not (c is CharacterBody3D or c is RigidBody3D or (_big and (c is ToyBuild or (c as Node).is_in_group(&"toy_piece")))):
 			break
 		var ex := q.exclude
 		ex.append(hit.rid)
@@ -274,7 +337,13 @@ func _walk(delta: float, moved: Vector3, speed: float, yaw_rate: float, teleport
 			_plant[i] = _foot_world(i, 0.0)
 		_walk_ready = true
 	var sw := skel.global_basis.get_scale().x   # 模型單位 → 公尺
-	var to_skel := skel.global_transform.affine_inverse()
+	# 步伐的判斷（腳離中立位置多遠、落點、左右滑的上限）用「沒扭、沒左右移」的骨架座標：骨盆跟著步伐扭、重心左右移（_hip_yaw、_sway_x）是表演，
+	# 算進去的話踩著的腳會被當成偏太多、提早抬或往旁邊滑（檢視模式檢查量到踩著的腳滑動從 0.014 變 0.075 公尺）。最後解 IK 才用真的骨架
+	var loc := skel.transform
+	loc.basis = Basis(Vector3.UP, -_hip_yaw) * loc.basis
+	loc.origin.x -= _sway_x
+	var sk_xf := (skel.get_parent() as Node3D).global_transform * loc
+	var to_skel := sk_xf.affine_inverse()
 	_air_land = maxf(_air_land - delta, 0.0) if act != 6 else _air_land
 	var run_k := clampf((speed - 4.0) / 7.0, 0.0, 1.0)
 	var duty := lerpf(DUTY_WALK, DUTY_RUN, run_k)
@@ -347,7 +416,7 @@ func _walk(delta: float, moved: Vector3, speed: float, yaw_rate: float, teleport
 		var heel := 0.8 * minf(travel_s / 2.0, 1.0)   # 支撐末段腳跟抬多少（用平滑過的速度：急停時腳背才不會一幀轉 35 度）
 		if air:
 			_swing[i] = false
-			var tuck: Vector3 = skel.global_transform * ((_leg[i].neutral as Vector3) + Vector3(0.0, 0.8, 0.5) * _lk)
+			var tuck: Vector3 = sk_xf * ((_leg[i].neutral as Vector3) + Vector3(0.0, 0.8, 0.5) * _lk)
 			_plant[i] = (_plant[i] as Vector3).lerp(tuck, 1.0 - exp(-14.0 * delta))
 			a3 -= 0.7
 			_curl[i] = move_toward(_curl[i], 0.9, CURL_SPEED * delta)
@@ -360,11 +429,11 @@ func _walk(delta: float, moved: Vector3, speed: float, yaw_rate: float, teleport
 			var t_rem := (1.0 - s) * (1.0 - duty) * cycle_t
 			# 側移（斜著走、橫著走）：左右照「站到一半」的時候算，腳落在身體會經過的地方，
 			# 踩著的那段身體從腳的一邊移到另一邊，不會一直被拉著（檢視模式量到累積滑一公尺）
-			var side_v := skel.global_basis.x.normalized()
+			var side_v := sk_xf.basis.x.normalized()
 			var lat := side_v * flat.dot(side_v)
 			# 先往前推、再找地面高度：反過來的話坡上會差 推的距離 × 坡度（20 度坡推 1 公尺差 36 公分，斜坡檢查量過）
-			var land := _ground(skel.global_transform * _leg[i].neutral + Vector3(0, 0, 0)
-				- skel.global_basis.z.normalized() * reach * sw + flat * t_rem + lat * (0.5 * duty * cycle_t))
+			var land := _ground(sk_xf * _leg[i].neutral + Vector3(0, 0, 0)
+				- sk_xf.basis.z.normalized() * reach * sw + flat * t_rem + lat * (0.5 * duty * cycle_t))
 			# 落點不能比現在的腳低超過一條腿：前面是懸崖、坑邊，射線會打到底下很遠的地面（操控檢查量到落點低了 6 公尺）。
 			# 那就踩在原本的高度（像停在邊上），不要一腳踏空
 			land.y = maxf(land.y, (_plant[i] as Vector3).y - MAX_DROP * _lk * sw)
@@ -391,7 +460,7 @@ func _walk(delta: float, moved: Vector3, speed: float, yaw_rate: float, teleport
 				var pt := (_lift_from[i] as Vector3).lerp(_land[i], f)
 				clear = maxf(clear, _ground(pt).y - pt.y)
 			foot.y += clear * sin(PI * s)
-			var lift_y := SWING_LIFT * _lk * sw * sin(PI * smoothstep(0.0, 1.0, s)) * clampf(travel_s / 2.0, 0.6, 1.0)
+			var lift_y := SWING_LIFT * _lk * sw * sin(PI * smoothstep(0.0, 1.0, s)) * clampf(travel_s / 2.0, 0.6, 1.0) * (1.0 + RUN_LIFT * run_k)
 			foot.y += lift_y   # 離地那一刻速度從 0 開始（以前一抬就往上衝，坡上腿伸很直時跟不上、腳會掃進坡裡）；慢的時候也要抬夠高，限速的腿慢半拍時才不會掃到地
 			_toe_h[i] = lift_y / skel.global_basis.get_scale().y
 			_plant[i] = foot
@@ -414,12 +483,15 @@ func _walk(delta: float, moved: Vector3, speed: float, yaw_rate: float, teleport
 			var nx: float = L.neutral.x
 			if absf(lp.x - nx) > LATERAL_MAX * _lk:
 				lp.x = clampf(lp.x, nx - LATERAL_MAX * _lk, nx + LATERAL_MAX * _lk)
-				_plant[i] = _ground(skel.global_transform * lp)   # 滑到旁邊要重新貼地：坡上左右高低不一樣
+				var side_at := _ground(sk_xf * lp)   # 滑到旁邊要重新貼地：坡上左右高低不一樣
+				# 高度慢慢跟（每秒最多 3 模型單位）：滑過碎塊、台階邊時每幀重新打射線，腳會一幀跳上跳下
+				side_at.y = move_toward((_plant[i] as Vector3).y, side_at.y, 3.0 * _lk * sw * delta)
+				_plant[i] = side_at
 		# 腳背角度只是姿態（腳跟抬、腳背收），平滑地追：走跑切換、急停、起步時它的公式會換，直接用會一幀轉二三十度
 		_a3_s[i] = move_toward(_a3_s[i], a3, 7.0 * delta) if _walk_ready_a3 else a3
 		a3 = _a3_s[i]
 		# 兩段 IK：腳掌目標 → 踝 → 膝（膝蓋朝前）
-		var ball: Vector3 = to_skel * (_plant[i] as Vector3)
+		var ball: Vector3 = skel.global_transform.affine_inverse() * (_plant[i] as Vector3)
 		if offs.size() == 2:   # 出招的腳部動作（跺地抬腳、踏步、張開）：只動這一幀的目標
 			ball += offs[i]
 		# 左右：腳不在靜止時的那條線上（側移、轉彎時腳釘在地上、身體走開），整條腿繞髖往外或往內擺（_roll），
@@ -473,10 +545,20 @@ func flinch(push: Vector3, strength: float, head: bool) -> void:
 var hitstop := 0.0   # 打擊停頓剩下幾秒：骨架整個不動（只有操控的那台設，boss.add_hitstop）
 
 func _process(delta: float) -> void:
+	_follow()
 	if hitstop > 0.0:
 		hitstop -= delta
+		# 停的這段整隻凍著跟身體滑（身體沒停）：腳踩的地方也跟著搬，不然醒來那一幀踩著的腳跳回原地（量過一幀 0.4～0.66 公尺）
+		var slid := global_transform * _last_xf.affine_inverse()   # 身體這一幀怎麼動的（連轉身）
+		for i in 2:
+			_plant[i] = slid * (_plant[i] as Vector3)
+			_lift_from[i] = slid * (_lift_from[i] as Vector3)
+			_land[i] = slid * (_land[i] as Vector3)
+		_last_xf = global_transform
 		_last_pos = global_position   # 停的這段不算移動，醒來時不會被當成瞬移
+		_yaw_prev = global_rotation.y
 		return
+	_last_xf = global_transform
 	_process_base(delta)
 	if skel == null:
 		return
@@ -506,8 +588,17 @@ func _process_base(delta: float) -> void:
 	var teleported := moved.length() * delta > 1.0   # 重生、檢視模式換位置：最快的撲擊 24 m/s 一幀才 0.4 公尺
 	if teleported:
 		moved = Vector3.ZERO   # 不然那一幀算成時速上百，步伐、側傾、位移延遲全被踢飛
+		_moved_s = Vector3.ZERO
 	# 往上爬時腳也要動一下。只算往上的部分，不然下墜會變成空中亂踢
 	var speed := Vector2(moved.x, moved.z).length() + maxf(moved.y, 0.0) * 0.5
+	# 身體的動作（點頭、側傾、位移延遲、幅度）用平滑過的速度（約 0.07 秒）：別人同步來的位置是一包一包補的，每幀的速度忽快忽慢
+	# （客戶端量到 95% 的幀差 3 公尺／秒），直接用的話「速度變了多少」的衝量每幀被亂踢。
+	# 腳（_walk）照舊用沒平滑的：步伐相位要跟實際走過的距離一致，平滑過的慢半拍，起跑時腳會被拖在後面（走路檢查量過）
+	_moved_s = _moved_s.lerp(moved, 1.0 - exp(-14.0 * delta))
+	var raw_moved := moved
+	var raw_speed := speed
+	moved = _moved_s
+	speed = Vector2(moved.x, moved.z).length() + maxf(moved.y, 0.0) * 0.5
 	var stride := clampf(speed / 11.0, 0.0, 1.5)  # 除數大約等於恐龍的基礎速度
 	_bite = maxf(_bite - delta * 3.5, 0.0)
 	var chomp := sin(_bite * PI)  # 0 -> 1 -> 0
@@ -565,6 +656,10 @@ func _process_base(delta: float) -> void:
 	var yaw := global_rotation.y
 	var yaw_rate := wrapf(yaw - _yaw_prev, -PI, PI) / maxf(delta, 0.0001)
 	_yaw_prev = yaw
+	# 轉身速度也先平滑（同上面的速度）：客戶端每幀的角度差忽大忽小，尾巴、脊椎、側傾跟著抖（量到邊跑邊轉時尾尖每秒來回 12 次）
+	_yaw_rate_s = 0.0 if teleported else lerpf(_yaw_rate_s, yaw_rate, 1.0 - exp(-14.0 * delta))
+	var raw_yaw_rate := yaw_rate   # 腳用沒平滑的（同上）
+	yaw_rate = _yaw_rate_s
 
 	# 本地座標的速度：x 是左右、z 是前後（Godot 的前方是 -Z）。
 	# 側移和轉彎都會讓身體往內倒，加減速則是前後俯仰。
@@ -577,7 +672,7 @@ func _process_base(delta: float) -> void:
 	_lean_v.x += (roll_target - _lean.x) * LEAN_STIFF * delta
 	# 俯仰不是狀態是事件：只有「速度變了」才會點頭。所以拿速度差當衝量踢一下，
 	# 再讓彈簧把它收回中間。用 dv 不用加速度，才跟幀率無關。
-	_lean_v.y += dv.z * 0.030 - _lean.y * LEAN_STIFF * delta
+	_lean_v.y += dv.z * 0.040 - _lean.y * LEAN_STIFF * delta
 	_lean_v *= exp(-LEAN_DAMP * delta)
 	_lean += _lean_v * delta
 	_lean.x = clampf(_lean.x, -LEAN_MAX, LEAN_MAX)
@@ -593,6 +688,21 @@ func _process_base(delta: float) -> void:
 	_breath += delta * 1.6
 	var idle := 1.0 - clampf(stride, 0.0, 1.0)
 	_run += (clampf((speed - RUN_FROM) / (RUN_FULL - RUN_FROM), 0.0, 1.0) - _run) * (1.0 - exp(-2.5 * delta))   # 慢一點：身體一下壓太快，抬在半空的腳跟不上會掃進地裡
+
+	# 步伐帶動全身（巨型爬蟲的走法，常數在上面）。go：走起來才有（0 站著 → 1 走路以上）
+	var go := clampf(speed / 3.0, 0.0, 1.0)
+	var mid := 0.5 * lerpf(DUTY_WALK, DUTY_RUN, clampf((speed - 4.0) / 7.0, 0.0, 1.0))   # 左腳踩到一半時的相位
+	var over := cos(TAU * (_gait - mid)) * go          # +1 重心在左腳（_leg[0]）上、-1 在右腳上
+	_sway_roll = over * SWAY_ROLL * (1.0 - 0.4 * _run)
+	_tail_go = go
+	_hip_yaw = cos(_phase) * go * HIP_SWING * signf(_leg[0].neutral.x)   # 左腳落地時左髖在前
+	var bob := cos(_phase * 2.0) * lerpf(BOB_WALK, BOB_RUN, _run) * go   # 腳落地時最低，單腳撐到一半最高（落地後再往下沉一點是下面的衝量給的）
+	var roll := _lean.x + _sway_roll
+	for i in 2:   # 落地那一下：身體往下一沉、往前一點，彈簧自己收回來（上一幀 _walk 記的）
+		if _landed[i] and _walk_ready:
+			_body_h_v -= STEP_THUD * go * (1.0 + 0.6 * _run)
+			_lean_v.y -= STEP_NOD * go
+	var head_lag := clampf(-_body_h_v * HEAD_LAG, -0.12, 0.12)   # 身體往下掉時頭還留在上面
 
 	# 出招的腿部動作（疊在走路上）。thigh 正的是大腿往前抬、shin 負的是膝蓋彎、foot 正的是腳尖往下（看截圖確認過）
 	#   咬預備：重心往後坐（兩膝微彎）；咬下去：左腳往前踏一步
@@ -629,9 +739,11 @@ func _process_base(delta: float) -> void:
 		_body_h += _body_h_v * delta
 		_foot_tilt = lerpf(_foot_tilt, clampf(atan2(hs[0] - hs[1], 1.64), -0.35, 0.35), 1.0 - exp(-6.0 * delta))
 	# 身體隨步伐上下起伏，再疊上位移延遲和呼吸。要在腳的 IK 之前設：IK 照這一幀的骨架位置算，之後再動髖就對不上了
-	skel.position = Vector3(_drift.x,
-		_body_h + STAND_RISE * _lk - 0.05 * cos(_phase * 2.0) * minf(stride * 2.0, 1.0) + sin(_breath * 0.5) * 0.025 * idle - (_crouch * 0.38 + _rear * 0.15 + _run * RUN_LOW) * _lk,
+	_sway_x = over * SWAY_X * signf(_leg[0].neutral.x) * (1.0 - 0.5 * _run)
+	skel.position = Vector3(_drift.x + _sway_x,
+		_body_h + STAND_RISE * _lk - bob + sin(_breath * 0.5) * 0.025 * idle - (_crouch * 0.38 + _rear * 0.15 + _run * RUN_LOW) * _lk,
 		_drift.y - _lunge * 0.3 - sin(PI * _snap) * 0.4 * float(_snap_bite))   # 咬下去往前一衝：前後都平順（以前一幀衝 0.4，腿抽 32 度）
+	skel.rotation.y = _hip_yaw   # 整副骨架（骨盆）扭；腳的 IK 在後面照扭過的骨架解，踩著的腳不動
 
 	# 腳：踩在地上走（_walk 算 IK）。出招的腿部動作不再疊在關節角度上（那樣腳會離開踩著的地方，往後滑或穿地，
 	# 知識庫 IK 筆記指出的）：蹲、後坐、前衝靠上面移動身體，膝蓋由 IK 自己彎；跺地、咬下去踏一步、兩腳張開、站不穩，
@@ -645,7 +757,7 @@ func _process_base(delta: float) -> void:
 		# 以前是往前踏再往回滑、兩腳張開、站不穩左右晃，都是踩著的腳在地上被拖（自我檢查量過）
 		var step := sin(PI * _snap) * float(_snap_bite and sg > 0.0)
 		offs.append(Vector3(0.0, lift * 0.55 + step * 0.45, -step * 0.5))
-	var legs := _walk(delta, moved, speed, yaw_rate, teleported, offs)
+	var legs := _walk(delta, raw_moved, raw_speed, raw_yaw_rate, teleported, offs)
 	for i in 2:
 		var s: String = ["_l", "_r"][i]
 		var p: Vector3 = legs[i]   # 大腿、小腿、腳背的俯仰（IK 算的）
@@ -669,15 +781,15 @@ func _process_base(delta: float) -> void:
 	# 尾巴：轉身往外甩 + 走路跟著擺，然後一節傳一節
 	# 出招時：長吼甩尾巴、預備時尾巴先拉向 + 那一側（拉弓）、甩尾時從一側掃到另一側、撲擊時打直、被打斷垂下來
 	var sweep_p := clampf(_act_t / SWEEP_ACTIVE, 0.0, 1.0)
-	var tail_yaw_drive := clampf(-yaw_rate * 0.20, -0.65, 0.65) + sin(_phase) * 0.09 * stride \
+	var tail_yaw_drive := clampf(-yaw_rate * 0.20, -0.65, 0.65) \
 		+ sin(_act_t * 9.0) * 0.55 * _roar
-	var tail_pitch_drive := clampf(-moved.y * 0.035, -0.30, 0.30) + 0.09 \
+	var tail_pitch_drive := clampf(-moved.y * 0.035, -0.30, 0.30) + 0.09 + clampf(_body_h_v * 0.25, -0.15, 0.15) \
 		- _rear * 0.20 - _roar * 0.35 - _snap * 0.30 + _crouch * 0.10 + _stun * 0.40 \
 		- _hunt * 0.06 - _spot * 0.25 + _run * RUN_TAIL + roam * 0.10 + _retreat * 0.30   # 尾巴俯仰正的是往下（看截圖確認過）；0.09：參考動畫尾巴是平的、尾尖微垂
 	_propagate(_tail_yaw, _tail_yaw_v, tail_yaw_drive, TAIL_STIFF, TAIL_DAMP, delta)
 	_propagate(_tail_pitch, _tail_pitch_v, tail_pitch_drive, TAIL_STIFF, TAIL_DAMP, delta)
 	for i in TAIL_N:
-		_pose_pyr("tail%d" % (i + 1), _tail_pitch[i] * TAIL_PER, (_tail_yaw[i] + _sweep_yaw(i)) * TAIL_PER, _lean.x * 0.12 * TAIL_PER)
+		_pose_pyr("tail%d" % (i + 1), _tail_pitch[i] * TAIL_PER, _tail_yaw_at(i), _lean.x * 0.12 * TAIL_PER)
 	_tail_off_ground(delta)
 
 	# 脊椎到頭：同一套邏輯，但幅度小、追得緊，轉身時上半身會晚一點跟上
@@ -688,27 +800,31 @@ func _process_base(delta: float) -> void:
 	# 頭再反向轉回去——掠食者跑起來頭是穩的，這一下最像活的。
 	# -0.12：身體壓平（設定圖「保持水平重心」、參考動畫背是平的）；模型靜止姿勢胸口偏高
 	_propagate(_bite_pitch, _bite_pitch_v, _snap * float(_snap_bite), BITE_CHAIN_STIFF, BITE_CHAIN_DAMP, delta)
+	var s_yaw := -_hip_yaw   # 骨盆扭多少，脊椎就轉回來多少：胸和頭在世界裡維持朝前
+	var c_yaw := -_hip_yaw * (CHEST_SWING / HIP_SWING)
 	_pose_pyr("spine1", -0.12 + sin(_phase * 0.4) * 0.02 + _lean.y * 0.50 - _crouch * 0.30 - _lunge * 0.20 + _roar * 0.15
 		- _bite_pitch[0] * 0.35 + _spot * 0.15 + _run * RUN_SPINE + _search * 0.15 - _hunt * 0.08,
-		_spine_yaw[0] + sweep_twist, _lean.x * 0.45)
-	_pose_pyr("spine2", _lean.y * 0.30, _spine_yaw[1] + sweep_twist, _lean.x * 0.35)
-	_pose_pyr("neck", -0.20 + sin(_phase) * 0.05 * stride + chomp * 0.35 + look_pitch * 0.45
+		_spine_yaw[0] + sweep_twist + s_yaw * 0.55 + c_yaw, roll * 0.45)
+	_pose_pyr("spine2", _lean.y * 0.30, _spine_yaw[1] + sweep_twist + s_yaw * 0.45, roll * 0.35)
+	# 轉彎時胸往外甩（慣性，_spine_yaw 的延遲），脖子和頭反過來往彎裡轉：整條是 S 形，頭帶著身體轉，不是被拖著走
+	_pose_pyr("neck", -0.20 + cos(_phase * 2.0 - 0.5) * 0.03 * go + head_lag + chomp * 0.35 + look_pitch * 0.45
 		+ sin(_breath) * 0.030 * idle + _roar * 0.55 - _crouch * 0.15 - _stun * 0.45
 		- _bite_pitch[1] * 0.45 + _spot * 0.55 + _search * MOOD_SEARCH_NECK - _hunt * 0.12 + roam * MOOD_ROAM_NECK - sniff * 0.45
 		+ _retreat * MOOD_RETREAT_NECK + toss * 0.25 + _run * RUN_NECK * (1.0 - _retreat),   # 退開時跑步不壓脖子
-		_spine_yaw[2] + shake + sin(_act_t * 11.0) * 0.25 * _recover * _recover_shake + scan * 0.5 + toss * 0.3 * _toss_side + _retreat * MOOD_RETREAT_YAW * 0.5, _lean.x * 0.25)
+		-_spine_yaw[2] - c_yaw + shake + sin(_act_t * 11.0) * 0.25 * _recover * _recover_shake + scan * 0.5 + toss * 0.3 * _toss_side + _retreat * MOOD_RETREAT_YAW * 0.5, roll * 0.25)
 	_pose_pyr("head", 0.18 - chomp * 0.25 + look_pitch * 0.35 - _lean.y * 0.55 + _roar * 0.40 - _stun * 0.25 - _bite_pitch[2] * 0.30
 		+ _spot * 0.30 + _hunt * 0.10 - sniff * 0.35 + toss * 0.2 + _run * RUN_HEAD * (1.0 - _retreat),
-		_spine_yaw[3] + sin(_breath * 0.31) * 0.10 * idle + shake + scan + toss * 0.4 * _toss_side + _retreat * MOOD_RETREAT_YAW * 0.5 - sweep_twist * 0.5,
-		-_lean.x * 0.75 + shake * 0.5)
+		-_spine_yaw[3] * 1.3 + sin(_breath * 0.31) * 0.10 * idle + shake + scan + toss * 0.4 * _toss_side + _retreat * MOOD_RETREAT_YAW * 0.5 - sweep_twist * 0.5,
+		-roll * 0.75 + shake * 0.5)
 	_pose("jaw", Vector3.RIGHT, -0.12 - chomp * 0.65 - _rear * 0.30 - _roar * 0.75 - _lunge * 0.60 - _stun * 0.25
 		- _spot * 0.80 - _hunt * MOOD_HUNT_JAW)
 
 	# 小手貼著身體晃一下；長吼時亂揮、撲出去時往前抓、撲擊預備時收起來、被打斷時垂下
 	var flail := sin(_act_t * 14.0) * 0.5 * _roar
 	var arm_k := -0.7 + _lunge * 1.0 + _snap * 0.6 * float(_snap_bite) - _crouch * 0.4 + _stun * 0.5 + _rear * 0.3
-	_pose("arm_l", Vector3.RIGHT, arm_k + sin(_phase) * 0.15 * stride + sin(_breath) * 0.04 * idle + flail)
-	_pose("arm_r", Vector3.RIGHT, arm_k - sin(_phase) * 0.15 * stride + sin(_breath) * 0.04 * idle - flail)
+	var arm_lag := clampf(_body_h_v * 0.5, -0.3, 0.3)   # 小手慢半拍：身體往下掉時手還留在上面
+	_pose("arm_l", Vector3.RIGHT, arm_k + sin(_phase) * 0.15 * go + arm_lag + sin(_breath) * 0.04 * idle + flail)
+	_pose("arm_r", Vector3.RIGHT, arm_k - sin(_phase) * 0.15 * go + arm_lag + sin(_breath) * 0.04 * idle - flail)
 
 # --- 塵土特效（純表演，每台自己播，見 fx.gd）---
 
@@ -793,11 +909,17 @@ func _sweep_yaw(i: int) -> float:
 	var q := clampf((_sweep_t - i * SWEEP_LAG) / SWEEP_ACTIVE, 0.0, 1.0)
 	return (SWEEP_PULL * _roar + SWEEP_SWING * (1.0 - 2.0 * smoothstep(0.0, 1.0, q)) * _sweep) / (TAIL_N * TAIL_PER)
 
+## 第 i 節尾巴的偏航：彈簧鏈（轉身甩出去）＋甩尾＋走路的波。
+## 走路的波直接照步伐相位算、每節晚 TAIL_SWING_LAG：彈簧鏈在走路的頻率每節晚 70 度，八節繞一圈半、左右互相抵銷，看不出在擺（從上面拍過）
+func _tail_yaw_at(i: int) -> float:
+	var wave := cos(_phase - TAIL_SWING_LAG * (i + 1)) * TAIL_SWING * (0.6 + 0.12 * i) * _tail_go * signf(_leg[0].neutral.x)
+	return (_tail_yaw[i] + _sweep_yaw(i)) * TAIL_PER + wave
+
 ## 尾巴整條往上抬 total 弧度，按 8、7、6…1 的比例分給每一節
 func _tail_lift(total: float) -> void:
 	for i in TAIL_N:
 		var w := float(TAIL_N - i) / float(TAIL_N * (TAIL_N + 1) / 2)
-		_pose_pyr("tail%d" % (i + 1), _tail_pitch[i] * TAIL_PER - total * w, (_tail_yaw[i] + _sweep_yaw(i)) * TAIL_PER, _lean.x * 0.12 * TAIL_PER)
+		_pose_pyr("tail%d" % (i + 1), _tail_pitch[i] * TAIL_PER - total * w, _tail_yaw_at(i), _lean.x * 0.12 * TAIL_PER)
 
 func _world() -> Node:
 	return get_tree().get_first_node_in_group(&"arena") if is_inside_tree() else null
@@ -822,6 +944,9 @@ func _fx_step(delta: float, speed: float) -> void:
 		if _landed[i] and stride > 0.25:
 			var run := stride > 0.7
 			Fx.dust(w, bone_pos(foot), back + Vector3.UP * 0.6, 1.4 if run else 0.6, 12 if run else 4, 4.0 if run else 1.5, 2.2 if run else 1.4)
+			var cam := get_viewport().get_camera_3d()   # 附近的人鏡頭震一下；鏡頭在牠自己身上（駕駛）不震
+			if STEP_SHAKE > 0.0 and cam and _body and not _body.is_ancestor_of(cam):
+				Fx.shake(w, bone_pos(foot), STEP_SHAKE * (2.0 if run else 1.0), STEP_SHAKE_REACH)
 		# 長吼的跺地：抬起來的腳踩回去那一下
 		var stomp := sin(_act_t * 7.0 + o) * float(act == 3)
 		if _stomp_prev[i] > 0.0 and stomp <= 0.0:

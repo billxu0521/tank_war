@@ -301,7 +301,7 @@ func _process(delta: float) -> void:
 		var amp: float = _quake * QUAKE_METERS * Settings.v.get(&"shake", 1.0)
 		cam.h_offset = nz.x * amp
 		cam.v_offset = nz.y * amp * 0.6   # 上下比左右少一點
-	$Trex.rotation.z = lerpf($Trex.rotation.z, 1.35 if down_left > 0.0 else 0.0, minf(delta * 4.0, 1.0))
+	$Trex.down_roll = lerpf($Trex.down_roll, 1.35 if down_left > 0.0 else 0.0, minf(delta * 4.0, 1.0))
 	if down_left > 0.0 and not _was_down:   # 倒地：整隻摔下去揚起一大圈土
 		var w: Node = get_tree().get_first_node_in_group(&"arena")
 		if w:
@@ -895,7 +895,7 @@ func head_position() -> Vector3:
 	var t: Trex = $Trex
 	if t.skel == null:
 		return mouth()
-	return t.skel.to_global(t.skel.get_bone_global_pose(t.skel.find_bone("head")).origin)
+	return t.on_body(t.skel.to_global(t.skel.get_bone_global_pose(t.skel.find_bone("head")).origin))
 
 
 # --- 行為樹的其他動作 ---
