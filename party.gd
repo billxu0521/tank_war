@@ -36,11 +36,17 @@ var names := {}               # 連線編號 -> 顯示名稱
 var last_result := ""
 var egg_placed := false       # 準備階段恐龍放蛋了沒
 var use_safe := false         # 蛋鎖在保險箱（match_rules 的 safe，_ready 讀；測試可以先關掉走舊的藏蛋）
+var env_pos: Array = [Vector3.ZERO, Vector3.ZERO]   # 兩個信封的位置（公開）：0 十位數、1 個位數
+var env_open: Array = [false, false]                # 信封有沒有人看過（公開，只分有沒有、不分誰）
+var my_digits: Array = [-1, -1]   # 這台的人看過的數字（十位、個位，-1 = 沒看過）。主機只用 rpc_id 送本人，不在 state() 裡
+var envelopes: Array[Envelope] = []
 
 var _roster: Array = []       # 參賽者（照當恐龍的順序）
 var _waiting := {}            # 主機：等重生的牛仔編號 -> [剩幾秒, 是不是電腦]
 var _pick := {}               # 主機：牛仔選的重生點（編號 -> spawn_points 的索引）
 var _sync_left := 0.0
+var _known := {}              # 主機：牛仔編號 -> [十位, 個位]（-1 = 沒看過）。跟著人不跟著命，回合開始清掉
+var _noted: Array = [false, false]   # 這台已經提示過恐龍「信封被開了」
 
 @onready var main: Node = get_parent()
 const BOSS_GD := preload("res://boss.gd")   # 尼諾拉的身高（LIFT）：開局放回出生點用
@@ -48,6 +54,15 @@ const BOSS_GD := preload("res://boss.gd")   # 尼諾拉的身高（LIFT）：開
 
 func _ready() -> void:
 	use_safe = bool(main.RULES[main.rules].get("safe", false))
+	for i in 2:   # 每台都建、名字固定，看牌走 party 的 RPC，信封自己沒有 RPC
+		var e := Envelope.new()
+		e.name = "Envelope%d" % i
+		e.index = i
+		e.party = self
+		e.visible = false
+		e.collision_layer = 0
+		add_child(e)
+		envelopes.append(e)
 
 
 ## 照總分排的連線編號（高的在前）
@@ -89,6 +104,17 @@ func _process(delta: float) -> void:
 	# 準備階段只有恐龍看得到蛋：牛仔要看恐龍往哪走，猜蛋藏在哪
 	main.egg.visible = (phase != &"prep" or me == dino_id) and not main.safe.locked()
 	main.safe.visible = main.safe.on and egg_placed and (phase != &"prep" or me == dino_id)
+	for i in envelopes.size():
+		var e := envelopes[i]
+		e.visible = main.safe.on
+		e.collision_layer = 1 if main.safe.on else 0
+		if e.global_position != env_pos[i]:
+			e.global_position = env_pos[i]
+		if e.opened != bool(env_open[i]):
+			e.set_opened(env_open[i])
+		if env_open[i] and not _noted[i] and me == dino_id and phase == &"play":   # 恐龍：第一次被開跳一行字
+			main.status.text = "%s的信封被打開了" % Envelope.NAMES[i]
+		_noted[i] = bool(env_open[i])
 	if phase == &"prep" and me == dino_id and not egg_placed and Input.is_action_just_pressed(&"interact") \
 			and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		place_egg()
@@ -189,6 +215,11 @@ func _start_round() -> void:
 	last_result = ""
 	egg_placed = false
 	main.safe.reset(use_safe)   # 每回合重抽密碼、清試過的表
+	_known.clear()   # 看過的牌、信封開過沒：每回合重來
+	my_digits = [-1, -1]
+	env_open = [false, false]
+	if main.safe.on:
+		_place_envelopes()
 	dino_id = _roster[round_index % _roster.size()]
 	# 清場：boss 以外全部收掉再照這回合的角色生（刪掉重生，客戶端的位置才會跟著換；做法同 main._new_round）
 	# 恐龍的牛仔留著：make_pilot 要跟他交接（先叫他停送同步再收），不能現在就收
@@ -353,9 +384,9 @@ func _humans() -> Array:
 func _present(id: int) -> bool:
 	return id < 0 or (id == 1 and not main._dedicated) or multiplayer.get_peers().has(id)
 
-## 斷線重連（main._reclaim）：舊編號的分數、名字、命數、名單位置都換成新編號
+## 斷線重連（main._reclaim）：舊編號的分數、名字、命數、名單位置、看過的牌都換成新編號（看過的牌在 _sync 補送）
 func rekey(old: int, new: int) -> void:
-	for d: Dictionary in [scores, round_scores, lives, names, _waiting, _pick]:
+	for d: Dictionary in [scores, round_scores, lives, names, _waiting, _pick, _known]:
 		if d.has(old):
 			d[new] = d[old]
 			d.erase(old)
@@ -375,6 +406,8 @@ func _add(id: int, pts: int) -> void:
 func _sync() -> void:
 	_sync_left = 1.0
 	_recv.rpc(state())
+	for id: int in _known:   # 看過的牌每次跟著補送本人：重連、晚建好 Party 的也拿得到
+		_tell(id)
 	changed.emit()
 
 
@@ -382,7 +415,7 @@ func _sync() -> void:
 func state() -> Dictionary:
 	return {rounds = rounds, round_index = round_index, phase = phase, time_left = time_left, scores = scores,
 		round_scores = round_scores, lives = lives, dino_id = dino_id, names = names, last_result = last_result,
-		egg_placed = egg_placed, safe = main.safe.state()}
+		egg_placed = egg_placed, safe = main.safe.state(), env_pos = env_pos, env_open = env_open}
 
 
 @rpc("authority", "call_remote", "reliable")
@@ -392,4 +425,77 @@ func _recv(s: Dictionary) -> void:
 			main.safe.set_state(s[k])
 		else:
 			set(k, s[k])
+	if phase != &"play":   # 回合外看過的牌作廢（主機在 _start_round 清 _known）
+		my_digits = [-1, -1]
+	changed.emit()
+
+
+## 信封：兩個隨機的空地（main._spawn_point，搶蛋模式放蛋也用它），不在撤離圈、離中央（恐龍放箱子的地方）和彼此夠遠。
+## 抽不到合格的就放寬距離再抽
+const ENV_APART := 60.0       # 兩個信封至少相距
+const ENV_FROM_CENTER := 30.0 # 離恐龍出生點（箱子大概放在那附近）
+func _place_envelopes() -> void:
+	var apart := ENV_APART
+	var center := ENV_FROM_CENTER
+	for tries in 200:
+		if tries % 40 == 39:
+			apart *= 0.7
+			center *= 0.7
+		var pts: Array = [_env_spot(), _env_spot()]
+		var ok := pts.all(func(q: Vector3) -> bool:
+			return _flat(q, 0).distance_to(_flat(main.dino_spawn, 0)) >= center \
+				and main._exits.all(func(x: Vector3) -> bool: return _flat(q, 0).distance_to(_flat(x, 0)) > main.EXIT_RADIUS + 3.0))
+		if ok and _flat(pts[0], 0).distance_to(_flat(pts[1], 0)) >= apart or tries == 199:
+			env_pos = pts
+			return
+
+
+func _env_spot() -> Vector3:
+	return main._on_ground(_flat(main._spawn_point(), 0.0))
+
+
+## 牛仔看著信封按 F（envelope.gd）：客戶端送到主機
+@rpc("any_peer", "call_remote", "reliable")
+func read_envelope(i: int) -> void:
+	if not multiplayer.is_server():
+		read_envelope.rpc_id(1, i)
+		return
+	var from := multiplayer.get_remote_sender_id()
+	read(from if from != 0 else multiplayer.get_unique_id(), i)
+
+
+## 主機：id 這個牛仔看第 i 張牌。全部重新檢查（遊戲中、有保險箱、活著的牛仔、不是恐龍、夠近）。
+## 數字只記進 _known、只送給他本人（_tell）；公開的只有「這個信封開過」。電腦牛仔（第 3 步）直接叫這個
+func read(id: int, i: int) -> bool:
+	if phase != &"play" or not main.safe.on or i < 0 or i > 1 or id == dino_id:
+		return false
+	var c := main.players.get_node_or_null(NodePath(str(id))) as Cowboy
+	if c == null or c.hp <= 0 or c.is_queued_for_deletion() or _flat(c.global_position, 0).distance_to(_flat(env_pos[i], 0)) >= Envelope.RANGE:
+		return false
+	var k: Array = _known.get(id, [-1, -1])
+	k[i] = digit(i)
+	_known[id] = k
+	env_open[i] = true
+	_sync()   # 公開的「開過了」＋補送本人
+	return true
+
+
+## 主機：第 i 位的數字（0 十位、1 個位）。只在主機有意義（客戶端的 _code 是 -1）
+func digit(i: int) -> int:
+	var code: int = main.safe._code
+	return code / 10 if i == 0 else code % 10
+
+
+## 主機：把 id 看過的數字送給他一個人。主機自己是玩家就直接寫；電腦（負的編號）不用送
+func _tell(id: int) -> void:
+	if id == multiplayer.get_unique_id():
+		_got_digits(_known[id])
+	elif id > 0 and multiplayer.get_peers().has(id):
+		_got_digits.rpc_id(id, _known[id])
+
+
+@rpc("authority", "call_remote", "reliable")
+func _got_digits(k: Array) -> void:
+	if phase == &"play":
+		my_digits = k.duplicate()
 	changed.emit()
