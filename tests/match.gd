@@ -1048,6 +1048,8 @@ func _case_party_gameplay() -> void:
 	m._apply_rules()
 	var p: Party = m.party
 	_ck(p != null and m.get_node_or_null(^"Party") == p, "派對模式 main 底下要有 $Party")
+	_ck(p.use_safe, "派對模式預設用保險箱")
+	p.use_safe = false   # 這段驗舊的藏蛋流程（開關關掉還能玩）；保險箱見 _case_safe
 	m._physics_process(DT)   # 第一幀開場
 	_ck(p.phase == &"prep" and p.round_index == 0 and p.time_left == p.PREP_SECONDS, "開場是第一回合的準備階段")
 	_ck(p.scores.size() == 4 and p.scores.has(-3), "不到四人用電腦補到四個")
@@ -1139,6 +1141,93 @@ func _case_party_gameplay() -> void:
 	m._on_mode_picked(m.RULES.keys().find(&"egg"))
 	m._apply_rules()
 	_ck(m.party == null and not m.party_frozen(), "其他模式沒有 $Party")
+	_end(m)
+
+## 保險箱（safe.gd、safe_panel.gd，規劃 docs/企劃/2026-11-12-保險箱與號碼牌.md 製作順序第 1 步）
+func _case_safe() -> void:
+	var m := _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"party"))
+	m._apply_rules()
+	var p: Party = m.party
+	var s: Safe = m.safe
+	m._physics_process(DT)   # 開場：主機（1）當恐龍
+	var b: Node3D = m._boss()
+	b.global_position = m._on_ground(Vector3(0, BOSS_GD.LIFT, 40))
+	p.place_egg()
+	_ck(p.egg_placed and s.locked() and m.egg.global_position.distance_to(s.global_position) < 0.1
+		and Vector2(s.global_position.x, s.global_position.z - 40).length() < BOSS_GD.BODY_RADIUS + 3.0, "恐龍按 F 放保險箱（在牠前面），蛋鎖在裡面")
+	var code: int = s._code
+	_ck(code >= 0 and code <= 99, "主機抽了兩位數密碼（%d）" % code)
+	# 密碼不在送出去的東西裡：party 那包只有公開的欄位；同步器只送位置
+	var st: Dictionary = p.state()
+	_ck(st.safe.size() == 4 and not str(st).contains("code"), "party 那包沒有密碼（%s）" % [st.safe.keys()])
+	var props: Array = (s.get_node(^"MultiplayerSynchronizer") as MultiplayerSynchronizer).replication_config.get_properties()
+	_ck(props.size() == 1 and String(props[0]).ends_with(":position"), "保險箱的同步器只送位置（%s）" % [props])
+	var bots: Array = [-1, -2, -3].map(func(id: int) -> Node3D: return m.players.get_node(NodePath(str(id))))
+	for c: Node3D in bots:
+		c.global_position = Vector3(0, 800, 0)
+	p.time_left = 0.0
+	m._physics_process(DT)
+	_ck(p.phase == &"play" and m.egg.global_position.distance_to(s.global_position) < 0.1, "遊戲開始：蛋還在箱子裡")
+	var near := s.global_position + Vector3(1.6, 0, 0)
+	bots[0].global_position = near
+	bots[1].global_position = near + Vector3(0, 0, 0.8)
+	var wrong := (code + 37) % 100
+	_ck(not s.try_code(1, wrong), "恐龍不能試密碼")
+	_ck(not s.try_code(-3, wrong), "離太遠不能試")
+	_ck(s.try_code(-1, wrong) and s.busy == -1, "牛仔站旁邊可以試")
+	_ck(not s.try_code(-2, code), "一次一個人：別人在試，請求被拒")
+	for i in int(Safe.TRY_SECONDS / DT * 0.5):
+		m._physics_process(DT)
+	_ck(s.busy == -1 and s.tried[wrong] == 0, "試到一半還沒公布")
+	for i in int(Safe.TRY_SECONDS / DT * 0.5) + 2:
+		m._physics_process(DT)
+	_ck(s.busy == 0 and s.tried[wrong] == 1 and s.locked(), "1 秒後公布：猜錯記進表、箱子沒開")
+	for i in int(m.pickup_seconds() / DT) + 10:
+		m._physics_process(DT)
+	_ck(m.egg.carrier == 0, "箱子沒開，站在旁邊也撿不到蛋")
+	# 面板：選了十位數，跟它試過的個位數變灰；反過來也一樣
+	var panel: SafePanel = m._safe_panel
+	panel.tens = wrong / 10
+	panel.ones = -1
+	_ck(panel.is_gray(1, wrong % 10) and not panel.is_gray(1, (wrong + 1) % 10) and not panel.is_gray(0, wrong / 10), "選了十位數，試過的個位數變灰")
+	panel.tens = -1
+	panel.ones = wrong % 10
+	_ck(panel.is_gray(0, wrong / 10) and not panel.is_gray(0, (wrong / 10 + 1) % 10), "選了個位數，試過的十位數變灰")
+	# 試到一半走開：作廢，不記
+	_ck(s.try_code(-1, code), "再試一次")
+	bots[0].global_position = near + Vector3(20, 0, 0)
+	m._physics_process(DT)
+	_ck(s.busy == 0 and s.tried[code] == 0 and s.locked(), "試到一半走開：這次作廢，沒記進表")
+	# 試到一半死掉：一樣作廢
+	_ck(s.try_code(-2, code), "另一個人試")
+	var c2: Node3D = bots[1]
+	c2.take_damage(9999, b)
+	m.players.remove_child(c2)
+	c2.free()
+	m._physics_process(DT)
+	_ck(s.busy == 0 and s.tried[code] == 0 and s.locked(), "試到一半死掉：作廢")
+	# 猜對：開箱、蛋放到箱頂，照舊撿
+	bots[0].global_position = near
+	_ck(s.try_code(-1, code), "猜對的那一次")
+	for i in int(Safe.TRY_SECONDS / DT) + 2:
+		m._physics_process(DT)
+	_ck(s.open and not s.locked() and s.tried[code] == 1 and p.state().safe.open, "猜對：箱子開了（公開狀態）")
+	_ck(not s.try_code(-1, wrong), "開了就不收試開")
+	for i in int(m.pickup_seconds() / DT) + 10:
+		m._physics_process(DT)
+	_ck(m.egg.carrier == -1, "開箱後蛋撿得起來")
+	# 下一回合重抽、清表
+	p._end_round(true, "test")
+	p.time_left = 0.0
+	m._physics_process(DT)
+	_ck(p.phase == &"prep" and s.on and not s.open and s.busy == 0 and Array(s.tried).count(1) == 0, "新回合：箱子關上、試過的表清掉")
+	_end(m)
+	# 其他模式沒有保險箱
+	m = _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"egg"))
+	m._apply_rules()
+	_ck(not m.safe.on and not m.safe.visible and m.safe.collision_layer == 0 and not m.safe.locked(), "搶蛋模式沒有保險箱")
 	_end(m)
 
 ## 斷線重連：60 秒內同一個代號連回來，拿回命數、出局狀態、派對分數；過期、新局就當新人
