@@ -37,6 +37,21 @@ static func burst(parent: Node3D, mesh: PrimitiveMesh, color: Color,
 	t.chain().tween_callback(mi.queue_free)
 
 
+## 鏡頭震一下：離 at 越遠越小，reach 公尺外不震，乘過「鏡頭晃動」設定。回傳 [誰的鏡頭（有 add_shake 的），震了多少]，沒震到是 [null, 0.0]
+static func shake(on: Node, at: Vector3, amount: float, reach: float) -> Array:
+	var cam := on.get_viewport().get_camera_3d()
+	# 從鏡頭往上找第一個有 add_shake 的（牛仔的鏡頭在 Head 底下，恐龍的在 CamPivot 底下）
+	var who: Node = cam.get_parent() if cam else null
+	while who and not who.has_method(&"add_shake"):
+		who = who.get_parent()
+	if who == null:
+		return [null, 0.0]
+	# 設定用 load 拿、不寫 Settings：寫了會循環載入（dino.gd → fireball.tscn → fireball.gd → Fx → Settings → …），測試裡 fireball.tscn 會變成空的
+	amount *= clampf(1.0 - cam.global_position.distance_to(at) / reach, 0.0, 1.0) * load("res://settings.gd").v.get(&"shake", 1.0)
+	who.add_shake(amount)
+	return [who, amount]
+
+
 ## 著彈：沿著命中面噴碎屑（土、木屑、石屑、血），土和石頭多一小團煙塵
 static func hit(world: Node, at: Vector3, normal: Vector3, surface: StringName) -> void:
 	var s: Array = SURFACES.get(surface, SURFACES[&"wood"])

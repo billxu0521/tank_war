@@ -143,6 +143,7 @@ const SOUNDS := {
 	ACT_CHARGE_WIND: preload("res://assets/audio/dino/roar.wav"),
 	ACT_STUN: preload("res://assets/audio/dino/yelp.wav"),
 	ACT_SPOT: preload("res://assets/audio/dino/bellow.wav"),
+	ACT_SPIT_WIND: preload("res://assets/audio/dino/snarl.wav"),   # 火球預備：短咆哮（原本撲擊用的，撲擊拿掉後沒人用）
 }
 const YELP := preload("res://assets/audio/dino/yelp.wav")
 const SNIFF := preload("res://assets/audio/dino/sniff.wav")
@@ -212,6 +213,10 @@ var _suspect := 0.0           # 確定的進度 0~1
 var _spot_pending := false    # 剛確定看到人，這一幀要吼
 var _look_left := 0.0         # 繞著找時停下來張望還剩多久
 var fireball_left := 0.0      # 火球冷卻還剩幾秒（只有主機算）
+var _charge: Node3D           # 嘴裡蓄的火（FireballFx.charge）
+const LAG_CATCH_MAX := 0.25   # 秒：客戶端的火球最多往前補這麼久（_spit_fire）
+static var FB_LOOK: float = FB_SIZE * 0.85    # 火球看起來的直徑：比判定的直徑小一點（外圈是火舌，不是打得到的範圍）
+const MOUTH_IN_HEAD := Vector3(0.0, 1.05, -0.5)   # 蓄火的位置：頭骨往鼻尖 1.05、往下顎 0.5（骨架自己的單位），在張開的嘴裡
 var _stomp_clock := 0.0        # 踩踏的計時（只在主機用）
 var _stomp_at := {}           # 牛仔 → 上一次被踩的時刻；ponytail: 牛仔離線留下的項目不清，一局幾個人不會長大
 
@@ -227,6 +232,8 @@ func _ready() -> void:
 	voice.volume_db = 4.0
 	voice.position = Vector3(0, 2.0, -4.0) * GROW   # 頭的位置
 	add_child(voice)
+	if FireballFx.on:   # 火球的材質先畫一遍，第一顆才不會卡（等擺好位置再做）
+		(func() -> void: FireballFx.warm(get_tree().get_first_node_in_group(&"arena"), global_position)).call_deferred()
 	_tree = BT.Sel.new([
 		BT.Seq.new([BT.Cond.new(func() -> bool: return down_left > 0.0), BT.Act.new(_act_down)]),
 		BT.Seq.new([BT.Cond.new(func() -> bool: return act != ACT_NONE), BT.Act.new(_act_attack)]),
@@ -280,6 +287,11 @@ func _process(delta: float) -> void:
 			voice.play()
 		if act == ACT_BITE:
 			$Trex.bite()
+		# 火球預備：嘴裡蓄一團火（各台自己播，看同步來的 act）；吐出去（_spit_fire）或被打斷就收掉
+		if is_instance_valid(_charge):
+			_charge.queue_free()
+		if act == ACT_SPIT_WIND and FireballFx.on:
+			_charge = FireballFx.charge($Trex.skel, "head", MOUTH_IN_HEAD, FB_LOOK, FIREBALL_WIND)
 	$Trex.mood = mood
 	# 找人的時候不時嗅一下（嘴巴沒在叫的時候才嗅，不蓋掉出招的預告）
 	_sniff_in -= delta
@@ -727,7 +739,7 @@ func _spit_fire(dir: Vector3, muzzle: Vector3) -> void:
 	f.speed = FB_SPEED
 	f.gravity = 0.0          # 直線飛
 	f.radius = FB_SIZE * 0.5
-	(f.get_node(^"MeshInstance3D") as Node3D).scale = Vector3.ONE * (FB_SIZE / 2.0)   # 畫面跟著變大：fireball.tscn 的球是照大小 2 做的
+	f.look_size = FB_LOOK
 	f.max_range = FB_RANGE
 	f.damage = FB_DAMAGE
 	f.burn = true
@@ -736,9 +748,19 @@ func _spit_fire(dir: Vector3, muzzle: Vector3) -> void:
 	f.vel = dir * FB_SPEED
 	get_tree().get_first_node_in_group(&"arena").add_child(f)
 	f.global_position = muzzle
+	# 客戶端晚收到這一下（網路延遲），照樣從嘴前開始飛的話，畫面上的火球會一路落後主機算的那顆（量到延遲 150 毫秒落後 5 公尺多）。
+	# 先往前走「來回時間的一半」那麼久：只動這台自己的那顆（判定在主機，不受影響），外觀照樣從嘴裡滑出去追上
+	var enet := multiplayer.multiplayer_peer as ENetMultiplayerPeer
+	if enet and not multiplayer.is_server() and enet.get_peer(1):
+		f._physics_process(minf(enet.get_peer(1).get_statistic(ENetPacketPeer.PEER_ROUND_TRIP_TIME) / 2000.0, LAG_CATCH_MAX))
 	$Trex.bite()   # 順便張嘴
-	Fx.burst(get_tree().get_first_node_in_group(&"arena"), SphereMesh.new(),
-		Color(1, 0.55, 0.15, 0.9), muzzle, Vector3.ONE * 0.5, Vector3.ONE * 3.0, 0.18)
+	if FireballFx.on:
+		var skel: Skeleton3D = $Trex.skel   # 外觀從嘴裡那團火的位置出發（判定還是從 muzzle）
+		f.look_from = skel.global_transform * (skel.get_bone_global_pose(skel.find_bone("head")) * MOUTH_IN_HEAD)
+		if is_instance_valid(_charge):
+			_charge.queue_free()
+		FireballFx.launch(get_tree().get_first_node_in_group(&"arena"), muzzle, dir, FB_LOOK)
+		add_shake(0.12)   # 駕駛那台：吐出去鏡頭頓一下（只有鏡頭在牠身上才看得到）
 
 func _sweep_cd_time() -> float:
 	return SWEEP_CD_PARTY if _party() else SWEEP_CD

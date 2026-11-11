@@ -75,8 +75,8 @@ static func _ground_ring(world: Node3D, at: Vector3, radius: float) -> void:
 
 ## 一團低面數的火球或煙：平面著色（每一面一個顏色、硬邊）。從 r0 脹到 r1 同時移動 move，維持 hold 秒，最後 shrink 秒縮掉
 static var _blob_mesh: Mesh
-static func _blob(world: Node3D, at: Vector3, color: Color, glow: bool, r0: float, r1: float,
-		move: Vector3, hold: float, shrink: float) -> void:
+## 低面數的球（直徑 1）：每一面一個顏色、硬邊。炸藥的火團煙團、火球（fireball_fx.gd）共用
+static func blob_mesh() -> Mesh:
 	if _blob_mesh == null:
 		var sphere := SphereMesh.new()
 		sphere.radial_segments = 7
@@ -86,12 +86,16 @@ static func _blob(world: Node3D, at: Vector3, color: Color, glow: bool, r0: floa
 		st.deindex()            # 每個三角形自己的頂點，法線才不會被抹圓
 		st.generate_normals()
 		_blob_mesh = st.commit()
+	return _blob_mesh
+
+static func _blob(world: Node3D, at: Vector3, color: Color, glow: bool, r0: float, r1: float,
+		move: Vector3, hold: float, shrink: float) -> void:
 	var m := StandardMaterial3D.new()
 	m.albedo_color = color
 	if glow:
 		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	var mi := MeshInstance3D.new()
-	mi.mesh = _blob_mesh
+	mi.mesh = blob_mesh()
 	mi.material_override = m
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	world.add_child(mi)
