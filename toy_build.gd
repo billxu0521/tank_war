@@ -67,14 +67,36 @@ const MERGE_CELL := 3.0
 # ponytail: 專用伺服器的落地每塊要往下掃一次（約 45 微秒），排隊分幀做，每幀最多這麼多塊；超過的留到下一幀
 const LAND_PER_TICK := 30
 # ponytail: 同一次鬆脫的碎塊飛滿 SETTLE_TIME 會在同一步一起停（150 個剛體刪掉、150 個靜態的加進物理，開視窗量到那一步 5～9 毫秒）。
-# 這棟一步最多停這麼多個，剩下的下一步（150 個分 5 步，共 42 毫秒）
+# 全場一步物理最多停這麼多個，剩下的下一步（150 個分 5 步，共 42 毫秒）
 const SETTLE_PER_TICK := 30
-# ponytail: 會飛的碎塊（單機、自己開房、客戶端）一次鬆脫當步最多生這麼多個，超過的排隊（_land_q）之後每步再生這麼多：塊的碰撞當步全關（尼諾拉不會被擋），
-# 畫面等輪到它的碎塊生出來才換（牆是幾步之內陸續碎開，不會先破一個洞）。150 個分 4 步、共 33 毫秒。
+# ponytail: 會飛的碎塊（單機、自己開房、客戶端）全場一步物理最多生這麼多個，超過的排隊（_land_q）下一步接著生：塊的碰撞當步全關（尼諾拉不會被擋），
+# 畫面等輪到它的碎塊生出來才換（牆是幾步之內陸續碎開，不會先破一個洞）。150 個分 4 步、共 33 毫秒；甩尾一次掃到三棟也是全場一步 40 個。
 # 開視窗量過：一步生 150 個要 6～10 毫秒（120 Hz 的一格才 8.3）；40 個約 2 毫秒
+# 額度照物理步的編號算（_budget）。不在物理步裡叫的（客戶端收到 RPC、測試直接呼叫）沒有步可以對，退回一棟一次 40 個
 const SPAWN_PER_TICK := 40
-# 上限是一棟一棟算的：甩尾同一步掃到三棟就是 120 個。要更緊就改成全場共用一個額度
-var _spawn_n := 0                 # 這一次鬆脫當步已經生了幾個會飛的碎塊
+static var _tick := -1            # 額度是哪一步物理的（Engine.get_physics_frames）
+static var _spawn_left := 0       # 這一步全場還能生幾個會飛的碎塊
+static var _settle_left := 0      # 這一步全場還能停幾個碎塊
+var _spawn_n := 0                 # 不在物理步裡時：這一次鬆脫已經生了幾個
+
+
+## 這一步物理的額度（換步就補滿）。不在物理步裡回傳 false
+static func _budget() -> bool:
+	if not Engine.is_in_physics_frame():
+		return false
+	if _tick != Engine.get_physics_frames():
+		_tick = Engine.get_physics_frames()
+		_spawn_left = SPAWN_PER_TICK
+		_settle_left = SETTLE_PER_TICK
+	return true
+
+
+## 還能不能再生一個會飛的碎塊（能就扣一個）。n：不在物理步裡時，這一次已經生了幾個
+static func _spawn_ok(n: int) -> bool:
+	if not _budget():
+		return n < SPAWN_PER_TICK
+	_spawn_left -= 1
+	return _spawn_left >= 0
 
 
 ## bricks：每塊 [Transform3D（相對這棟）, 尺寸 Vector3, 等級 int, 顏色 Color, 有沒有碰撞 bool（可省）, 材質 StringName（可省）]（Greybox.bricks 切出來的）。
@@ -310,7 +332,7 @@ func _spawn(mem: PackedInt32Array, local: Transform3D, xf: Transform3D, flying: 
 		if lands:
 			# ponytail: 專用伺服器的碎塊不飛：直接靜態、落到正下方，不是真的散落；要真的散落就用少一點的剛體模擬
 			_landed[mem[0]] = 0.0
-		if lands or _spawn_n >= SPAWN_PER_TICK:
+		if lands or not _spawn_ok(_spawn_n):
 			_land_q.append([mem[0], xf, from, power, lands])   # 排隊（_physics_process 分幀生）；晚加入補送前由 _flush 全部做完
 			return null
 		_spawn_n += 1
@@ -617,7 +639,7 @@ func _ready() -> void:
 ## 每幀：先生排隊的碎塊（分幀）；主機再看碎塊睡著或飛滿 SETTLE_TIME 秒的，送 _settle（連同它的位置）
 func _physics_process(delta: float) -> void:
 	var k := 0
-	while not _land_q.is_empty() and k < (LAND_PER_TICK if _land_q[0][4] else SPAWN_PER_TICK):
+	while not _land_q.is_empty() and (k < LAND_PER_TICK if _land_q[0][4] else _spawn_ok(k)):
 		_land_next()
 		k += 1
 	if not multiplayer.is_server():
@@ -626,13 +648,15 @@ func _physics_process(delta: float) -> void:
 		return
 	var ids := PackedInt32Array()
 	var xfs := []
+	var ticked := _budget()   # 在物理步裡：停幾個照全場的額度；不然照這棟自己數
 	for key in _pieces:
 		var n: Node3D = _pieces[key]
 		if not n is RigidBody3D:
 			continue
 		_age[key] = _age.get(key, 0.0) + delta
 		# 已經停了（睡著或飛滿 SETTLE_TIME）才看卡不卡：凍在尼諾拉身體裡會把牠頂起來：等牠出來再凍；但最多等 SETTLE_TIME 的 3 倍，之後不管重疊直接凍
-		if ids.size() < SETTLE_PER_TICK and ((n as RigidBody3D).sleeping or _age[key] >= SETTLE_TIME) and not (_age[key] < SETTLE_TIME * 3.0 and _in_boss(n)):
+		if (_settle_left > 0 if ticked else ids.size() < SETTLE_PER_TICK) and ((n as RigidBody3D).sleeping or _age[key] >= SETTLE_TIME) and not (_age[key] < SETTLE_TIME * 3.0 and _in_boss(n)):
+			_settle_left -= 1
 			ids.append(key)
 			xfs.append(n.global_transform)
 	for key in _landed.keys():   # 專用伺服器落地的碎塊：落地滿 SETTLE_TIME 秒才送最後位置（各台的碎塊飛完才對齊）

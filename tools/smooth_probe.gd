@@ -10,7 +10,7 @@ extends SceneTree
 ##   照玩家的玩法（恐龍沙盒、自己開尼諾拉，要開視窗）  VSYNC=1 SCEN=pilot godot --path . --screen 1 --resolution 1920x1080 --script tools/smooth_probe.gd
 ##     走大廳「恐龍沙盒」同一個函式、同一個鏡頭，按鍵用 Input 假裝按：全速撞穿 → 甩尾 → 轉身火球 → 跑回來咬。房子之後再撞幾個小的（樹、柵欄、掩體）。
 ##     --screen 選螢幕（1＝外接的 50 Hz）。掉幀的門檻照那個螢幕：兩幀隔超過 1.5 格＝少畫一張。慢的幀拆成：物理腳本、物理引擎、上一幀的 _process、剩下的（畫面＋等螢幕）
-##     VSYNC=1／0 開關垂直同步（不給就照玩家的設定檔 user://settings.cfg）、FPS=n 鎖幀率、HOUSES／SMALL 大的小的各幾個。
+##     最後多一段「一次甩尾掃好幾棟」（MULTI=0 不要）。VSYNC=1／0 開關垂直同步（不給就照玩家的設定檔 user://settings.cfg）、FPS=n 鎖幀率、HOUSES／SMALL 大的小的各幾個。
 ##     垂直同步關掉又不鎖幀率時，macOS 大約每秒有一幀卡兩格（空專案也量到過），不是遊戲的；前後比要開垂直同步。說明見 docs/技術筆記/拆東西順暢.md
 ## 每段印一行「順暢 …」；最後一行「SMOOTH OK」才算跑完（Godot 解析錯誤也回 0）。
 
@@ -45,6 +45,9 @@ var _f_pp_us := 0        # 這一幀第一步物理開始的時刻
 var _f_boss := 0.0       # 這一幀尼諾拉移動花的毫秒
 var _move_ms := 0.0      # 尼諾拉移動一步（含撞、踢）最久幾毫秒
 var _windowed := DisplayServer.get_name() != "headless"
+var _multi: ToyBuild      # SCEN=pilot 最後一段：周圍積木最多的那一個
+var _multi_i := -1        # 那一段是 _houses 的第幾個
+var _multi_hit := 0       # 甩之前場上挨過打的積木有幾棟
 var PILOT := OS.get_environment("SCEN") == "pilot"   # SCEN=pilot：照玩家的玩法，見檔頭
 var _f_script := 0.0     # 這一幀物理腳本（所有節點的 _physics_process）共幾毫秒
 var _f_engine := 0.0     # 這一幀物理引擎（Jolt 一步＋導航同步＋延後呼叫）共幾毫秒
@@ -153,6 +156,10 @@ func _process(d: float) -> bool:
 					seen[tb.brick_count()] = true
 					_houses.append(tb)
 			_boss = _m._boss()
+			_multi = _cluster()   # 最後加一段「一次甩尾掃好幾棟」（到時候再挑一次還沒拆過的）
+			if _multi and OS.get_environment("MULTI") != "0":
+				_houses.append(_multi)
+				_multi_i = _houses.size() - 1
 		if OS.get_environment("PROFILE") != "":
 			_profile()
 			return true
@@ -190,6 +197,14 @@ func _process(d: float) -> bool:
 		_boss.rotation.y = atan2(-dir.x, -dir.z)
 		_boss._cam_yaw = _boss.rotation.y
 		_boss.reset_physics_interpolation()
+		if _hi == _multi_i:   # 站在那一堆旁邊、背對它（甩尾只掃後方半圈）
+			_multi = _cluster()
+			bb = _multi.global_transform * _multi._all
+			_boss.global_position = _m.boss_on_ground(bb.get_center() + dir * 5.0)
+			_boss.sweep_left = 0.0   # 上一段剛甩過，冷卻還沒好
+			_multi_hit = _m.map._toys.filter(func(t: ToyBuild) -> bool: return t.has_damage()).size()
+			_begin("駕駛：一次甩尾掃好幾棟")
+			return false
 		_begin("駕駛：撞穿、甩尾、火球、咬 第 %d 個（%d 塊）" % [_hi + 1, h.brick_count()])
 		return false
 	if PLOW:   # 尼諾拉全速跑過去撞穿，後半段再跑回來（踢碎塊）；照 tools/debris_walk.gd 的開法
@@ -238,13 +253,28 @@ func _physics_process(delta: float) -> bool:
 	return false
 
 
+## 周圍 10 公尺內「可拆、還沒拆過」的積木最多的那一個
+func _cluster() -> ToyBuild:
+	var ok: Array = _m.map._toys.filter(func(t: ToyBuild) -> bool: return t.can_break and t.visible and not t.has_damage())
+	var best: ToyBuild
+	var most := 0
+	for a: ToyBuild in ok:
+		var ca: Vector3 = a.global_transform * a._all.get_center()
+		var n := ok.filter(func(t: ToyBuild) -> bool: return (t.global_transform * t._all.get_center()).distance_to(ca) < 10.0).size()
+		if n > most:
+			most = n
+			best = a
+	return best
+
+
 ## SCEN=pilot 的按鍵（每步物理設一次，boss.gd 的 _pilot_local 照常讀 Input）：
 ## 0～3.5 秒 往前全速跑（撞穿）→ 3.5～4 右鍵甩尾（尾巴朝剛撞穿的那棟）→ 5.5 轉身、Q 火球 → 6.5 之後跑回來、7.5 咬
 func _drive() -> void:
 	var on := _boss != null and _hi >= 0 and _hi < _houses.size()
-	var run := on and (_t < 3.5 or _t > 6.5)
-	var keys := {&"move_forward": run, &"sprint": run, &"aim": on and _t > 3.5 and _t < 4.0,
-		&"dino_fireball": on and _t > 5.5 and _t < 5.8, &"fire": on and _t > 7.5 and _t < 7.7}
+	var multi := _hi == _multi_i   # 這一段只甩尾（第 1 秒按）
+	var run := on and not multi and (_t < 3.5 or _t > 6.5)
+	var keys := {&"move_forward": run, &"sprint": run, &"aim": on and (_t > 1.0 and _t < 1.5 if multi else _t > 3.5 and _t < 4.0),
+		&"dino_fireball": on and not multi and _t > 5.5 and _t < 5.8, &"fire": on and not multi and _t > 7.5 and _t < 7.7}
 	for k: StringName in keys:
 		if keys[k]:
 			Input.action_press(k)
@@ -254,7 +284,7 @@ func _drive() -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED   # 沒抓滑鼠 _pilot_local 不送按鍵
 		_boss.stamina = _boss.STAMINA_MAX
 		_boss.exhausted = false
-		if _t > 5.5:   # 轉身看回那一棟
+		if _t > 5.5 and not multi:   # 轉身看回那一棟
 			var d := _to - _boss.global_position
 			_boss._cam_yaw = atan2(-d.x, -d.z)
 
@@ -308,6 +338,8 @@ func _report() -> void:
 		ta.sort()
 		s += "；物理一步（腳本＋引擎）最久 %.1f 毫秒、超過 4 毫秒的 %d 步、超過 8.3 的 %d 步（共 %d 步）；一步最久：腳本 %.1f、引擎 %.1f 毫秒" % [
 			ta[-1] if not ta.is_empty() else 0.0, ta.size() - ta.bsearch(4.0), ta.size() - ta.bsearch(8.3), ta.size(), _tick_script, _tick_engine]
+		if _hi == _multi_i:
+			s += "；這一下新拆到 %d 棟" % (_m.map._toys.filter(func(t: ToyBuild) -> bool: return t.has_damage()).size() - _multi_hit)
 		if not _worst.is_empty():
 			s += "；最慢的幾幀（毫秒@第幾秒）" + str(_worst.slice(0, 5).map(func(w: Array) -> String: return "%.0f@%.1f（物理 %d 步、物理腳本 %.1f、物理引擎 %.1f、上一幀的 _process %.1f、畫面和等螢幕 %.1f）" % w))
 	elif not _worst.is_empty():
