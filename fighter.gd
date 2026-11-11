@@ -236,7 +236,9 @@ func net_step(now: float) -> void:
 func _notification(what: int) -> void:
 	# 牛仔、恐龍各有自己的 _process；這裡用通知，子類別不用記得呼叫
 	if what == NOTIFICATION_PROCESS and net_smooth:
-		net_step(float(Time.get_ticks_msec()))
+		# 用微秒的鐘：get_ticks_msec 是整數毫秒，一幀 16 毫秒時每幀的時間差有 ±1 毫秒的誤差（±6%），補出來的位置跟著忽快忽慢
+		# （量到客戶端看尼諾拉走路，每幀速度差的中位數 0.24 公尺／秒；幀率越高越糟，300 幀時 ±30%）
+		net_step(Time.get_ticks_usec() / 1000.0)
 	if what == NOTIFICATION_PROCESS and burn_left > 0.0 and multiplayer.is_server():   # 沒在燒就不碰 multiplayer（沒有連線時會報錯）
 		burn_step(get_process_delta_time())
 
