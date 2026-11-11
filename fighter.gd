@@ -37,7 +37,7 @@ static var diag := {}       # 診斷（暫時，滑鼠視角卡住的 bug 修好
 static var _frame_ms := 0   # 上一幀跑完的時刻（毫秒），main.gd 每幀寫
 
 # --- 別人的角色：平滑顯示 ---
-# 同步器只同步 net_state = [送出時的時間, 位置, 朝向]。收到的先存起來，畫面刻意晚 NET_DELAY 毫秒，
+# 同步器只同步 net_state = [送出時的時間（net_clock）, 位置, 朝向]。收到的先存起來，畫面刻意晚 NET_DELAY 毫秒，
 # 在前後兩筆之間補（跟 FPS 遊戲的「插值」同一招）：網路一時慢了、一次來兩包，看起來還是順的。
 # 只有客戶端這樣做。主機（含測試站）收到就直接套：恐龍咬人、boss 找人都在主機算，不能看慢了的位置。
 # 客戶端自己判定打中（Bullet），打的就是畫面上看到的位置，所以「看到哪、打哪」還是對得上。
@@ -54,10 +54,22 @@ var net_smooth := false     # _ready 決定；測試會直接打開
 var _snaps: Array = []      # [送出時間, 收到時間, 位置, 朝向]，照時間排
 var net_state: Array:
 	get:
-		return [Time.get_ticks_msec(), position, rotation]
+		return [net_clock(), position, rotation]
 	set(v):
 		_net_push(v)
 
+
+## 位置包上的時間（毫秒）：照物理步數算，不看牆上的鐘。位置是物理步算出來的，一幀跑 1～3 步；用送出那一刻的鐘的話，
+## 兩包的時間都差 16 毫秒、位置卻差 1～3 步，對方照時間補出來忽快忽慢（量過：尼諾拉全速跑，兩包之間算出來的速度在 3～15 公尺／秒亂跳）。
+## 跟真的時間差超過 NET_CLOCK_SLIP（卡住太久、物理追不回來）就重新對時，不然對方會以為後面的包都晚到
+const NET_CLOCK_SLIP := 50.0
+static var _net_clock_off := 0.0
+static func net_clock() -> float:
+	var sim := Engine.get_physics_frames() * 1000.0 / Engine.physics_ticks_per_second
+	var now := float(Time.get_ticks_msec())
+	if absf(sim + _net_clock_off - now) > NET_CLOCK_SLIP:
+		_net_clock_off = now - sim
+	return sim + _net_clock_off
 
 ## 電腦（移動標靶、bot）用負數編號，由主機操控。
 ## 玩家的連線編號一定是正數（主機 1，其他人是很大的亂數，實測 251338328），負數保證不會撞。

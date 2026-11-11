@@ -121,7 +121,6 @@ const PLOW_DRAG := 300        # 撞穿之後這段時間內（毫秒）水平速
 const PLOW_GAP := 500         # 撞過之後這段時間內還算同一次撞；超過才算第一下（停頓只給第一下，見 _plow_fed）
 const PLOW_HITSTOP := 0.1     # 第一下的停頓（秒）
 const PLOW_SHAKE_FIRST := 0.08   # 第一下的鏡頭抖（和挨重打一樣）
-const PLOW_SHAKE := 0.02      # 之後每一下的鏡頭抖（只抖不停，像持續的低震）
 const PLOW_POWER_MAX := 7.5   # 碎塊飛出的速度上限（公尺／秒；2026-11-09 減半，原本 15 太強）
 static var SWEEP_COS: float = cos(deg_to_rad(Balance.num("sweep_angle") * 0.5))   # 甩尾扇形（後方）半角的餘弦
 static var SWEEP_ROOT_BACK: float = Balance.num("sweep_root_back") * GROW   # 尾根在身體中心後方幾公尺（表裡是放大前的 0.45），甩尾的圓心
@@ -187,7 +186,8 @@ const CAM_MARGIN := 0.6         # 鏡頭被牆擋住時，離牆留這麼遠（�
 const CAM_PULL_MIN := 0.35      # 最多拉近到原本的這個比例：再近鏡頭會進到身體裡
 const AIM_CONE := 0.6           # 火球最多偏離身體正面這麼多（弧度，約 34 度）：身體還沒轉過來時不能往旁邊、往後吐
 var _cam_t := Vector2.ONE       # 駕駛那台：鏡頭被擋住時拉近的比例（x 往右那段、y 往後那段；1 = 沒被擋）
-var _quake := 0.0               # 駕駛那台：打到可拆的東西，鏡頭抖的幅度（0～0.2，乘 QUAKE_METERS 是平移公尺），每幀衰減（add_shake）
+var _quake := 0.0               # 駕駛那台：打到可拆的東西，鏡頭現在抖的幅度（0～0.2，乘 QUAKE_METERS 是平移公尺），每幀追 _quake_to
+var _quake_to := 0.0            # 駕駛那台：add_shake 給的幅度，每幀衰減
 const QUAKE_METERS := 2.0       # 抖動幅度換成鏡頭平移：0.08（第一下）約 0.16 公尺、上限 0.2 是 0.4 公尺
 
 var director := Director.new()
@@ -237,6 +237,7 @@ func _ready() -> void:
 	blast_reach = 2.5 * GROW   # 炸藥算距離從身體中心往外扣這麼多（dino.gd 是放大前的 2.5）
 	$CamPivot/Camera3D.fov = Balance.num("dino_cam_fov")   # 鏡頭垂直視角（度）
 	$CamPivot.position = Vector3(0.0, CAM_UP, 0.0)
+	$CamPivot.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF   # 鏡頭每幀在 _process 自己擺（駕駛時，見那邊），不要再被物理插值補一次
 	$CamPivot/Camera3D.position = Vector3(CAM_SIDE, 0.0, CAM_DIST)
 	var voice := AudioStreamPlayer3D.new()
 	voice.name = "Voice"
@@ -273,16 +274,27 @@ func _process(delta: float) -> void:
 		_piloting = mine
 		cam.current = mine
 		_cam_yaw = rotation.y
+		# 駕駛時支點不跟著身體的節點走（top_level），每幀自己擺在世界裡；不駕駛就放回身體上原本的位置
+		$CamPivot.top_level = mine
+		$CamPivot.transform = Transform3D(Basis(), Vector3(0.0, CAM_UP, 0.0))
 	if mine:
-		$CamPivot.rotation = Vector3(CAM_TILT + _cam_pitch + randf_range(-1.0, 1.0) * _stagger * 0.08 * Settings.v.get(&"shake", 1.0), _cam_yaw - rotation.y, 0.0)
+		# 支點每幀擺到「畫面上的」身體（物理插值補過的）上方，角度直接用玩家要的。以前支點掛在身體底下、角度用 _cam_yaw - rotation.y 扣：
+		# rotation、global_position 是物理步的值（一秒跳 120 次），跟畫面上補過的身體差一點點、每幀差的不一樣，
+		# 而且引擎會把在 _process 改的鏡頭再照物理步補一次（會警告 Interpolated Camera3D triggered from outside physics process）。
+		# 身體轉身、背後有牆（拉近的射線起點跟著跳）時整個畫面就抖
+		var px := Transform3D(
+			Basis.from_euler(Vector3(CAM_TILT + _cam_pitch + randf_range(-1.0, 1.0) * _stagger * 0.08 * Settings.v.get(&"shake", 1.0), _cam_yaw, 0.0)),
+			get_global_transform_interpolated().origin + Vector3.UP * CAM_UP)
+		$CamPivot.global_transform = px
 		# 鏡頭被牆、地形、房子擋住就拉近（馬上拉近、慢慢放回去）。先看支點到肩膀外側那一段，再從那裡往後看：
 		# 只往前拉的話鏡頭還在同一條視線上，準心指的地方不變；肩膀那段被擋（右邊貼牆）才往中間收
-		var gb: Basis = $CamPivot.global_basis
-		var side := _cam_clear($CamPivot.global_position, gb.x * CAM_SIDE)
-		var want := Vector2(side, maxf(_cam_clear($CamPivot.global_position + gb.x * CAM_SIDE * side, gb.z * CAM_DIST), CAM_PULL_MIN))
+		var side := _cam_clear(px.origin, px.basis.x * CAM_SIDE)
+		var want := Vector2(side, maxf(_cam_clear(px.origin + px.basis.x * CAM_SIDE * side, px.basis.z * CAM_DIST), CAM_PULL_MIN))
 		_cam_t = want.min(_cam_t.lerp(want, 1.0 - exp(-6.0 * delta)))
 		cam.position = Vector3(CAM_SIDE * _cam_t.x, 0.0, CAM_DIST * _cam_t.y)
-		_quake = lerpf(_quake, 0.0, 1.0 - exp(-8.0 * delta))
+		# 抖一下＝很快升到 _quake_to、再慢慢退掉：幅度不會一幀跳上去（跳上去鏡頭會瞬間移位，看起來是頓一下不是晃一下）
+		_quake_to = lerpf(_quake_to, 0.0, 1.0 - exp(-8.0 * delta))
+		_quake = lerpf(_quake, _quake_to, 1.0 - exp(-30.0 * delta))
 		# 抖動：鏡頭平移（h_offset、v_offset），不轉鏡頭（轉的話整個畫面甩，暈）；用幾個正弦疊出平滑的晃動，不是每幀亂跳
 		var tq := Time.get_ticks_msec() * 0.001
 		var nz := Vector2(sin(tq * 23.0) + sin(tq * 37.0 + 1.3), sin(tq * 29.0 + 0.7) + sin(tq * 41.0 + 2.1)) * 0.5
@@ -449,7 +461,9 @@ func _clamp_cam_pitch(v: float) -> float:
 
 ## 積木挨打的鏡頭抖（ToyBuild.hit_fx 找這個方法）：鏡頭抖一下。只有操控的那台抖得到（鏡頭只在那台）
 func add_shake(amount: float) -> void:
-	_quake = minf(maxf(_quake, amount), 0.2)   # 取大的，不疊加：連續撞（每 0.1 秒一下）不會越抖越大
+	if is_plowing():   # 正在全速撞：只有撞進去的第一下抖（_plow_fed），之後每拆一批不再抖。每 0.1 秒補一下的話鏡頭一直嗡嗡抖（量過：撞的時候六成的畫面都在抖）
+		return
+	_quake_to = minf(maxf(_quake_to, amount), 0.2)   # 取大的，不疊加：同時拆好幾棟不會越抖越大
 
 ## 打擊停頓：只有操控牠的那台停，骨架凍住（trex.gd 的 hitstop）；別人看到的照常動
 func add_hitstop(sec: float) -> void:
@@ -1204,7 +1218,7 @@ func _smash_ahead(now: int, spd: float) -> bool:
 		_plow_hit(now)
 	return any
 
-## 撞穿了（主機）：第一下（距上一下超過 PLOW_GAP）停頓＋大抖，之後只抖。同步給駕駛那台（_plow_fed）；hit_fx 看 is_plowing 不再停
+## 撞穿了（主機）：第一下（距上一下超過 PLOW_GAP）停頓＋抖一下，之後不停也不抖。同步給駕駛那台（_plow_fed）；hit_fx 看 is_plowing 不再停
 func _plow_hit(now: int) -> void:
 	var first := now - _plow_t >= PLOW_GAP
 	if first:
@@ -1217,12 +1231,12 @@ func _plow_hit(now: int) -> void:
 func is_plowing() -> bool:
 	return Time.get_ticks_msec() - _plow_t < PLOW_GAP
 
-## 全速撞的回饋（主機送駕駛那台，各台也記 _plow_t）：每下抖一下，第一下多停一下
+## 全速撞的回饋（主機送駕駛那台，各台也記 _plow_t）：第一下抖一下、停一下，之後只記時間
 @rpc("authority", "call_local", "reliable")
 func _plow_fed(first: bool) -> void:
 	_plow_t = Time.get_ticks_msec()
-	add_shake(PLOW_SHAKE_FIRST if first else PLOW_SHAKE)
 	if first:
+		_quake_to = maxf(_quake_to, PLOW_SHAKE_FIRST)   # 不走 add_shake：_plow_t 剛設，那邊會當成「正在撞」不抖
 		add_hitstop(PLOW_HITSTOP)
 
 

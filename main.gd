@@ -1165,7 +1165,7 @@ func _parse_arena(nm: NavigationMesh, budget_ms := 0.0) -> NavigationMeshSourceG
 	var rest := []
 	var keep := {}
 	var t0 := Time.get_ticks_usec()
-	for b: Node in _static_bodies($Arena, []):
+	for b in _static_bodies($Arena, []):   # 不寫型別：等下一幀時清單裡的碎塊可能被刪了，寫 Node 會在指定時就出錯
 		# 重烘（budget_ms > 0）：這一幀做超過 budget_ms 毫秒就留到下一幀接著做。全場存好的幾何併起來就要 5～12 毫秒，一幀做完會頓一下
 		if budget_ms > 0.0 and Time.get_ticks_usec() - t0 > budget_ms * 1000.0:
 			await get_tree().process_frame
