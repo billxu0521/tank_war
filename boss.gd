@@ -596,9 +596,14 @@ func _cowboys() -> Array:
 		func(p: Node) -> bool: return p != self and not p.is_in_group(&"dino") and p.get(&"hp") > 0)
 	# 恐龍走路不被牛仔擋住（只對恐龍這邊：牛仔還是走不進恐龍身體裡）。
 	# 不然站著不動的人可以把恐龍卡死在原地（長時間模擬真的發生過）
+	# 每個牛仔只加一次：這個函式一步物理叫好幾次，引擎的例外清單不會去掉重複的，以前每秒多約 500 筆（玩 10 分鐘 30 萬筆）。
+	# 身體每碰到一個東西（碎塊、積木）都要把整份清單掃一遍，碎塊一多、玩越久就越卡（量到物理一步 63 毫秒）
 	for p: PhysicsBody3D in out:
-		add_collision_exception_with(p)
+		if not _excepted.has(p.get_instance_id()):
+			_excepted[p.get_instance_id()] = true
+			add_collision_exception_with(p)
 	return out
+var _excepted := {}   # 已經加過碰撞例外的牛仔（節點編號）
 
 func _game() -> Node:
 	return get_tree().get_first_node_in_group(&"match")

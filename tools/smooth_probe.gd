@@ -10,7 +10,9 @@ extends SceneTree
 ##   照玩家的玩法（恐龍沙盒、自己開尼諾拉，要開視窗）  VSYNC=1 SCEN=pilot godot --path . --screen 1 --resolution 1920x1080 --script tools/smooth_probe.gd
 ##     走大廳「恐龍沙盒」同一個函式、同一個鏡頭，按鍵用 Input 假裝按：全速撞穿 → 甩尾 → 轉身火球 → 跑回來咬。房子之後再撞幾個小的（樹、柵欄、掩體）。
 ##     --screen 選螢幕（1＝外接的 50 Hz）。掉幀的門檻照那個螢幕：兩幀隔超過 1.5 格＝少畫一張。慢的幀拆成：物理腳本、物理引擎、上一幀的 _process、剩下的（畫面＋等螢幕）
-##     最後多一段「一次甩尾掃好幾棟」（MULTI=0 不要）。VSYNC=1／0 開關垂直同步（不給就照玩家的設定檔 user://settings.cfg）、FPS=n 鎖幀率、HOUSES／SMALL 大的小的各幾個。
+##   當獵人（單人打恐龍，電腦尼諾拉），看拆完之後那 5 秒掉不掉幀  VSYNC=0 SCEN=hunter godot --path . --screen 1 --resolution 1920x1080 --script tools/smooth_probe.gd
+##     每棟兩段：尼諾拉那種拆法、獵人的炸藥；最後電腦尼諾拉自己過來。印平均每秒幾張和一幀拆開的時間。VSYNC=1 看掉幀、VSYNC=0 看一幀真的做多久；WARM=600 假裝已經玩了 10 分鐘；FIGHT=最後一段幾秒
+##     （pilot）最後多一段「一次甩尾掃好幾棟」（MULTI=0 不要）。VSYNC=1／0 開關垂直同步（不給就照玩家的設定檔 user://settings.cfg）、FPS=n 鎖幀率、HOUSES／SMALL 大的小的各幾個。
 ##     垂直同步關掉又不鎖幀率時，macOS 大約每秒有一幀卡兩格（空專案也量到過），不是遊戲的；前後比要開垂直同步。說明見 docs/技術筆記/拆東西順暢.md
 ## 每段印一行「順暢 …」；最後一行「SMOOTH OK」才算跑完（Godot 解析錯誤也回 0）。
 
@@ -48,7 +50,14 @@ var _windowed := DisplayServer.get_name() != "headless"
 var _multi: ToyBuild      # SCEN=pilot 最後一段：周圍積木最多的那一個
 var _multi_i := -1        # 那一段是 _houses 的第幾個
 var _multi_hit := 0       # 甩之前場上挨過打的積木有幾棟
-var PILOT := OS.get_environment("SCEN") == "pilot"   # SCEN=pilot：照玩家的玩法，見檔頭
+var HUNTER := OS.get_environment("SCEN") == "hunter"   # SCEN=hunter：當獵人（單人打恐龍），看拆完之後那 5 秒，見檔頭
+var PILOT := OS.get_environment("SCEN") == "pilot" or HUNTER   # SCEN=pilot：照玩家的玩法，見檔頭（量法 hunter 也共用）
+var _hstep := -1          # SCEN=hunter 做到第幾段
+var _hwait := 0.0         # 這一段開拆前等了幾秒
+var _me: Node3D           # 獵人
+var _look := Vector3.ZERO # 獵人看哪裡
+var _sum := [0.0, 0.0, 0.0, 0.0, 0.0]   # 這一段每幀加起來：物理腳本、物理引擎、_process、畫面的 CPU（引擎量的）、畫面的 GPU
+var _fly_max := 0         # 這一段同時在飛的碎塊最多幾個
 var _f_script := 0.0     # 這一幀物理腳本（所有節點的 _physics_process）共幾毫秒
 var _f_engine := 0.0     # 這一幀物理引擎（Jolt 一步＋導航同步＋延後呼叫）共幾毫秒
 var _f_proc := 0.0       # 上一幀所有節點的 _process 共幾毫秒
@@ -109,6 +118,8 @@ func _process(d: float) -> bool:
 		tail.process_physics_priority = 1000000
 		tail.process_priority = 1000000
 		root.add_child(tail)
+		if HUNTER:
+			RenderingServer.viewport_set_measure_render_time(root.get_viewport_rid(), true)
 		if PILOT:
 			# 垂直同步、幀率上限照玩家自己的設定檔（user://settings.cfg，main.gd 開場就套了）；VSYNC=1／0 蓋掉、FPS=n 鎖幀率
 			if OS.get_environment("VSYNC") != "":
@@ -118,7 +129,10 @@ func _process(d: float) -> bool:
 			FRAME_MS = 1500.0 / DisplayServer.screen_get_refresh_rate(DisplayServer.window_get_current_screen())
 			print("螢幕 %d，%.0f Hz，垂直同步%s，幀率上限 %d，兩幀隔超過 %.1f 毫秒算掉幀" % [DisplayServer.window_get_current_screen(), 1500.0 / FRAME_MS,
 				"開" if DisplayServer.window_get_vsync_mode() != DisplayServer.VSYNC_DISABLED else "關", Engine.max_fps, FRAME_MS])
-			_m._on_dino_sandbox_pressed()   # 大廳「恐龍沙盒」按鈕的同一個函式
+			if HUNTER:
+				_m._on_solo_dino_pressed()   # 大廳「單人打恐龍」按鈕的同一個函式：自己是獵人，尼諾拉是電腦
+			else:
+				_m._on_dino_sandbox_pressed()   # 大廳「恐龍沙盒」按鈕的同一個函式
 		elif _role == "":
 			_m.multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 			_m._offline = true
@@ -149,6 +163,15 @@ func _process(d: float) -> bool:
 				_houses.append(tb)
 		_houses.sort_custom(func(a: ToyBuild, b: ToyBuild) -> bool: return a.brick_count() > b.brick_count())
 		_houses = _houses.slice(0, NH)
+		if HUNTER:
+			_boss = _m._boss()
+			_me = _m.players.get_node(^"1")
+			# WARM=秒數：假裝已經玩了這麼久。電腦尼諾拉每秒叫 _cowboys() 約 500 次（量到的），以前每叫一次身上的碰撞例外就多一筆
+			for i in int(_env("WARM", 0.0) * 500.0):
+				_boss._cowboys()
+			print("尼諾拉身上的碰撞例外 %d 筆（WARM=%s 秒）" % [_boss.get_collision_exceptions().size(), OS.get_environment("WARM")])
+			_begin("")
+			return false
 		if PILOT:   # 再加幾個小的（樹、柵欄、掩體：塊數不一樣的各挑一個），看是不是只有房子會卡
 			var seen := {}
 			for tb: ToyBuild in _m.map._toys:
@@ -166,6 +189,8 @@ func _process(d: float) -> bool:
 		_begin("空轉")
 		return false
 	_sample(d)
+	if HUNTER:
+		return _hunter(d)
 	if _role == "server":
 		for p: Node in _m.players.get_children():
 			var c: Variant = p.get(&"_net_corrected")
@@ -233,6 +258,14 @@ func _physics_process(delta: float) -> bool:
 	if _f_steps == 0:
 		_f_pp_us = Time.get_ticks_usec()
 	_f_steps += 1
+	if HUNTER:
+		if _me and is_instance_valid(_me):   # 站著不動、看著那一棟；不會死（要一直看得到）
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+			_me.hp = _me.max_hp
+			var to: Vector3 = _look - (_me.global_position + Vector3.UP * 1.6)
+			_me.rotation.y = atan2(-to.x, -to.z)
+			_me.head.rotation.x = atan2(to.y, Vector2(to.x, to.z).length())
+		return false
 	if PILOT:
 		_drive()
 		return false
@@ -267,6 +300,91 @@ func _cluster() -> ToyBuild:
 	return best
 
 
+## SCEN=hunter：每棟兩段（先等 2 秒、拆、量拆完的 5 秒）：
+##   甲 尼諾拉那種拆法（在牆角用甩尾的半徑叫 smash，同舊的劇本）  乙 獵人的炸藥在另一個牆角爆（viewmodel._explode，真的那條路）
+## 最後一段把電腦尼諾拉放到房子後面，讓牠自己衝著獵人過來（8 秒整段量）。第 0 段是還沒拆的空轉（對照）。
+## 獵人站在離牆角 14 公尺的地方看著；尼諾拉是電腦，一直都在（會找路、會過來打）
+func _hunter(d: float) -> bool:
+	_hwait += d
+	var n := _houses.size()
+	var last := n * 2 + 1
+	if _hstep >= 0 and _hwait < (7.0 if _hstep < last else 2.0 + _env("FIGHT", 30.0)):
+		if _hstep == last and _phase != "":
+			_timeline(d)
+		if _phase == "" and _hwait >= 2.0 and _hstep > 0:   # 開拆
+			var h: ToyBuild = _houses[mini((_hstep - 1) / 2, n - 1)]
+			var bb: AABB = h.global_transform * h._all
+			if _hstep == last:
+				var away: Vector3 = (bb.get_center() - _me.global_position) * Vector3(1, 0, 1)
+				_boss.global_position = _m.boss_on_ground(_boss._clamp_arena(bb.get_center() + away.normalized() * 22.0))
+				_boss.velocity = Vector3.ZERO
+				_begin("獵人：電腦尼諾拉從房子後面過來打（整段）")
+			elif _hstep % 2 == 1:
+				_begin("獵人：尼諾拉拆第 %d 棟（%d 塊）之後 5 秒" % [(_hstep + 1) / 2, h.brick_count()])
+				h.smash(func(p: Vector3) -> bool: return p.distance_to(_look) < R, 2, _look)
+			else:
+				_begin("獵人：炸藥炸第 %d 棟之後 5 秒" % (_hstep / 2))
+				_me.viewmodel._explode(_look, 0)
+		return false
+	if _phase != "":
+		_report()
+	_hstep += 1
+	_hwait = 0.0
+	_phase = ""
+	if _hstep > last:
+		print("SMOOTH OK")
+		return true
+	if _hstep == 0:
+		_hwait = 2.0
+		_place(_houses[0], false)
+		_begin("獵人：還沒拆的空轉（對照）")
+		return false
+	if _hstep < last:
+		_place(_houses[(_hstep - 1) / 2], _hstep % 2 == 0)
+	else:
+		_place(_houses[n - 1], true)   # 最後一棟、還沒炸過的那個牆角… 站在牆角外，尼諾拉在房子另一邊
+	return false
+
+
+## 最後一段每秒印一行：這一秒幾張、最久一幀、物理腳本／引擎／_process 平均、場上的東西
+var _tl := [0.0, 0, 0.0, 0.0, 0.0, 0.0]   # 秒、幀、最久、腳本、引擎、_process
+func _timeline(d: float) -> void:
+	var ms: float = _gaps[-1]
+	_tl[0] += ms; _tl[1] += 1; _tl[2] = maxf(_tl[2], ms)
+	_tl[3] += _f_script_last; _tl[4] += _f_engine_last; _tl[5] += _f_proc
+	if _tl[0] < 1000.0:
+		return
+	var tree: SceneTree = _m.get_tree()
+	var pcs := tree.get_nodes_in_group(&"toy_piece")
+	var nf := float(_tl[1])
+	print("  第 %2d 秒：%3d 張、最久 %5.1f；每幀 物理腳本 %.2f 引擎 %.2f _process %.2f 其他 %.2f；碎塊 %d（飛 %d）、火 %d、粒子 %d、燈 %d、繪製指令 %d、尼諾拉 act %d 距離 %.0f、尼諾拉身上的碰撞例外 %d 筆" % [
+		int(_t), _tl[1], _tl[2], _tl[3] / nf, _tl[4] / nf, _tl[5] / nf, (_tl[0] - _tl[3] - _tl[4] - _tl[5]) / nf,
+		pcs.size(), pcs.filter(func(x: Node) -> bool: return x is RigidBody3D).size(), tree.get_nodes_in_group(&"oil_fire").size(),
+		root.find_children("*", "CPUParticles3D", true, false).size() + root.find_children("*", "GPUParticles3D", true, false).size(),
+		root.find_children("*", "OmniLight3D", true, false).size(),
+		Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME), _boss.act, _boss.global_position.distance_to(_me.global_position), _boss.get_collision_exceptions().size()])
+	_tl = [0.0, 0, 0.0, 0.0, 0.0, 0.0]
+var _f_script_last := 0.0
+var _f_engine_last := 0.0
+
+
+## 獵人站到這棟離場地中央最近的牆角（far：第二近的）往中央 14 公尺的地方、看著牆角；尼諾拉放到房子另一邊 60 公尺（牠自己會找過來）
+func _place(h: ToyBuild, far: bool) -> void:
+	var bb: AABB = h.global_transform * h._all
+	var c := bb.get_center()
+	var corners := [Vector3(bb.position.x, 0, bb.position.z), Vector3(bb.end.x, 0, bb.position.z), Vector3(bb.position.x, 0, bb.end.z), Vector3(bb.end.x, 0, bb.end.z)]
+	corners.sort_custom(func(a: Vector3, b: Vector3) -> bool: return a.length() < b.length())
+	var corner: Vector3 = corners[1 if far else 0]
+	var out := -corner.normalized()
+	_look = Vector3(corner.x, h.global_position.y + 1.0, corner.z)
+	_me.global_position = _m._on_ground(Vector3(corner.x + out.x * 14.0, 0.5, corner.z + out.z * 14.0))
+	_me.velocity = Vector3.ZERO
+	_me.reset_physics_interpolation()
+	if _hstep % 2 == 1 or _hstep == 0:
+		_boss.global_position = _m.boss_on_ground(_boss._clamp_arena(c - out * 60.0))
+		_boss.velocity = Vector3.ZERO
+
+
 ## SCEN=pilot 的按鍵（每步物理設一次，boss.gd 的 _pilot_local 照常讀 Input）：
 ## 0～3.5 秒 往前全速跑（撞穿）→ 3.5～4 右鍵甩尾（尾巴朝剛撞穿的那棟）→ 5.5 轉身、Q 火球 → 6.5 之後跑回來、7.5 咬
 func _drive() -> void:
@@ -293,6 +411,8 @@ func _begin(name: String) -> void:
 	_tick_script = 0.0
 	_tick_engine = 0.0
 	_tick_all.clear()
+	_sum = [0.0, 0.0, 0.0, 0.0, 0.0]
+	_fly_max = 0
 	_move_ms = 0.0
 	_phase = name
 	_t = 0.0
@@ -311,6 +431,14 @@ func _sample(d: float) -> void:
 		# 這一幀拆開看：跑了幾步物理、物理開始前等了多久（上一幀的 _process、畫面、鎖幀率的睡覺）、尼諾拉那一步、其他物理（節點的 _physics_process＋引擎）
 		var before := ((_f_pp_us if _f_steps > 0 else now) - (now - int(ms * 1000.0))) / 1000.0
 		_worst.append([ms, _t, _f_steps, _f_script, _f_engine, _f_proc, ms - _f_script - _f_engine - _f_proc] if PILOT else [ms, _t, _f_steps, before, _f_boss, ms - before - _f_boss])
+	_f_script_last = _f_script
+	_f_engine_last = _f_engine
+	if HUNTER:
+		_sum[0] += _f_script; _sum[1] += _f_engine; _sum[2] += _f_proc
+		_sum[3] += RenderingServer.viewport_get_measured_render_time_cpu(root.get_viewport_rid()) + RenderingServer.get_frame_setup_time_cpu()
+		_sum[4] += RenderingServer.viewport_get_measured_render_time_gpu(root.get_viewport_rid())
+		if _gaps.size() % 10 == 0:
+			_fly_max = maxi(_fly_max, _m.get_tree().get_nodes_in_group(&"toy_piece").filter(func(n: Node) -> bool: return n is RigidBody3D).size())
 	_f_steps = 0
 	_f_boss = 0.0
 	_f_script = 0.0
@@ -338,6 +466,13 @@ func _report() -> void:
 		ta.sort()
 		s += "；物理一步（腳本＋引擎）最久 %.1f 毫秒、超過 4 毫秒的 %d 步、超過 8.3 的 %d 步（共 %d 步）；一步最久：腳本 %.1f、引擎 %.1f 毫秒" % [
 			ta[-1] if not ta.is_empty() else 0.0, ta.size() - ta.bsearch(4.0), ta.size() - ta.bsearch(8.3), ta.size(), _tick_script, _tick_engine]
+		if HUNTER:
+			var nf := float(g.size())
+			var tot := 0.0
+			for ms in g:
+				tot += ms
+			s += "；平均每秒 %.1f 張（一幀平均 %.2f 毫秒＝物理腳本 %.2f＋物理引擎 %.2f＋_process %.2f＋其他 %.2f；引擎量的畫面 CPU %.2f、GPU %.2f）；同時在飛的碎塊最多 %d" % [
+				1000.0 * nf / tot, tot / nf, _sum[0] / nf, _sum[1] / nf, _sum[2] / nf, (tot - _sum[0] - _sum[1] - _sum[2]) / nf, _sum[3] / nf, _sum[4] / nf, _fly_max]
 		if _hi == _multi_i:
 			s += "；這一下新拆到 %d 棟" % (_m.map._toys.filter(func(t: ToyBuild) -> bool: return t.has_damage()).size() - _multi_hit)
 		if not _worst.is_empty():

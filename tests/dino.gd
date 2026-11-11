@@ -245,6 +245,9 @@ func _case_boss() -> void:
 	_ck(b.RUN > c.sprint_speed, "恐龍跑步要比牛仔衝刺快（%.1f vs %.1f）" % [b.RUN, c.sprint_speed])
 	_ck(is_instance_valid(m._nav_region), "生 boss 要順便烘導航網格")
 	_ck(m._match_hud.BOSS_ACTS.size() == b.ACT_SPOT + 1, "每個動作狀態都要有除錯名稱（BOSS_ACTS 有 %d 個）" % m._match_hud.BOSS_ACTS.size())
+	for _i in 50:   # 每步物理叫好幾次；例外清單不能越叫越長（以前玩 10 分鐘 30 萬筆，身體每碰一個碎塊就掃一遍）
+		b._cowboys()
+	_ck(b.get_collision_exceptions().size() <= b._cowboys().size(), "尼諾拉對牛仔的碰撞例外每人只加一次（%d 筆）" % b.get_collision_exceptions().size())
 	# 視力：放在沙盒靶場那條路上（整平、沒蓋東西，視線不會被擋）
 	b.global_position = m._on_ground(Vector3(0, BOSS_GD.LIFT, 40))
 	b.rotation.y = 0.0   # 面向 -Z
