@@ -83,6 +83,7 @@ func _process(_delta: float) -> bool:
 		_case_party_gameplay()
 		_case_safe()
 		_case_envelope()
+		_case_bot_safe()
 		_case_reconnect()
 		_case_balance()
 		_case_null_material()
