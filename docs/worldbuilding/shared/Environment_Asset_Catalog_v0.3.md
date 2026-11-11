@@ -10,7 +10,7 @@ Version 0.3 · October 19, 2026 · Draft for Review
 
 目錄登錄的是**設計需求**，不是已完成模型庫。選件與拆件以此為依據；來源檔、材質參數、匯出及檢核結果於製作時補齊，完成狀態統一記入[專案物件表](../../素材流水線/物件表.md)。
 
-<p class="table-caption">Table 1. 目錄欄位與使用</p>
+**Table 1. 目錄欄位與使用**
 
 | 項目 | 讀法 |
 |---|---|
@@ -20,17 +20,15 @@ Version 0.3 · October 19, 2026 · Draft for Review
 | 形體與搭配 | 第 9 節列已定義配置；其他項目開工時依編碼規則登錄實際 V／L。 |
 | 組織與地域 | 第 10 節列客製識別方式；不改變基礎物件身分。 |
 
-命名與組成依[編碼規則](Environment_Asset_Coding_Guide_v0.4.html)，製作與交付依[製作準則](Environment_Asset_Production_Guide_v0.3.html)。可處理的結構資料另見 [Asset Catalog](Asset_Catalog_v0.3.json)。CD-GBB 的使用限制見[地圖規格](../maps/CD-GBB/CD_GBB_Map_Brief_v1.2.html)。
+命名與組成依[編碼規則](Environment_Asset_Coding_Guide_v0.4.md)。可處理的結構資料另見 [Asset Catalog](Asset_Catalog_v0.3.json)。CD-GBB 的使用限制見[地圖規格](../maps/CD-GBB/CD_GBB_Map_Brief_v1.2.md)。
 
 常規製作單位 112 項；內部測試項目 5 項集中[第 11 節](#test-assets)。兩組共用登錄方式，但使用範圍分開。
 
-<!-- PAGE BREAK -->
-
 <a id="class-veg-0"></a>
 
-## 2. Vegetation 植被｜VEG-0001 至 VEG-0009
+## 2. Vegetation 植被
 
-<p class="table-caption">Table 2. Vegetation 植被｜VEG-0001 至 VEG-0009</p>
+**Table 2. Vegetation 植被｜VEG-0001 至 VEG-0009**
 
 | ID | 名稱 | 製作形態與尺度 | 查找關鍵字及採用範圍 |
 |---|---|---|---|
@@ -44,13 +42,11 @@ Version 0.3 · October 19, 2026 · Draft for Review
 | <a id="veg-0008"></a>VEG-0008 | 普通倒木 Dead Log | 長 2 至 4 m、徑 0.2 至 0.45 m；殘皮、縱向裂紋。 | fallen pinyon juniper log；不取石質橫裂。 |
 | <a id="veg-0009"></a>VEG-0009 | 立枯樹 Standing Dead Tree | 高 2 至 3 m；灰木縱裂、尖纖維斷端；配置數量與落點由地圖指定。 | standing dead juniper snag；與石化殘幹分形分材質。 |
 
-<!-- PAGE BREAK -->
-
 <a id="class-nat-0"></a>
 
-## 3. Natural Forms 自然形體｜NAT-0001 至 NAT-0009
+## 3. Natural Forms 自然形體
 
-<p class="table-caption">Table 3. Natural Forms 自然形體｜NAT-0001 至 NAT-0009</p>
+**Table 3. Natural Forms 自然形體｜NAT-0001 至 NAT-0009**
 
 | ID | 名稱 | 製作形態與尺度 | 查找關鍵字及採用範圍 |
 |---|---|---|---|
@@ -64,13 +60,11 @@ Version 0.3 · October 19, 2026 · Draft for Review
 | <a id="nat-0008"></a>NAT-0008 | 泥岩碎片 Mudstone Chips | 長 0.05 至 0.25 m；薄片混粗粒，避免石板鋪地感。 | mudstone chips talus。 |
 | <a id="nat-0009"></a>NAT-0009 | 崩積礫塊 Talus Stone | 長 0.03 至 0.4 m，少量 0.6 m；群配另由 ASM 控制。 | sandstone talus size mixture。 |
 
-<!-- PAGE BREAK -->
-
 <a id="class-nat-9"></a>
 
-## 3. Natural Forms 自然形體｜NAT-0010 至 NAT-0012
+### NAT-0010 至 NAT-0012
 
-<p class="table-caption">Table 4. Natural Forms 自然形體｜NAT-0010 至 NAT-0012</p>
+**Table 4. Natural Forms 自然形體｜NAT-0010 至 NAT-0012**
 
 | ID | 名稱 | 製作形態與尺度 | 查找關鍵字及採用範圍 |
 |---|---|---|---|
@@ -78,13 +72,11 @@ Version 0.3 · October 19, 2026 · Draft for Review
 | <a id="nat-0011"></a>NAT-0011 | 小標本岩塊 Fossil-Bearing Block | 約 0.4 至 1.1 m；骨與圍岩分層；對應採集包覆殼。 | fossil matrix block plaster jacket。 |
 | <a id="nat-0012"></a>NAT-0012 | 恐龍卵 Dinosaur Egg | 長 0.25 至 0.35 m；完整與殼片；物種與確切卵形待生物設計。 | 形體為創作候選，不從照片定種。 |
 
-<!-- PAGE BREAK -->
-
 <a id="class-mod-0"></a>
 
-## 4. Modules 拼裝構件｜MOD-0001 至 MOD-0009
+## 4. Modules 拼裝構件
 
-<p class="table-caption">Table 5. Modules 拼裝構件｜MOD-0001 至 MOD-0009</p>
+**Table 5. Modules 拼裝構件｜MOD-0001 至 MOD-0009**
 
 | ID | 名稱 | 製作形態與尺度 | 查找關鍵字及採用範圍 |
 |---|---|---|---|
@@ -98,13 +90,11 @@ Version 0.3 · October 19, 2026 · Draft for Review
 | <a id="mod-0008"></a>MOD-0008 | 土屋屋頂邊 Adobe Roof Edge | 木梁頭、土屋頂邊與排水口分型；控制於逐棟高度。 | adobe roof vigas canales；取構造，不整套複製特定建築。 |
 | <a id="mod-0009"></a>MOD-0009 | 木欄構件 Fence Module | 欄高 1.2 至 1.4 m；2 至 3 道橫桿；直段／圈門／斷段。 | timber cattle pen fence gate。 |
 
-<!-- PAGE BREAK -->
-
 <a id="class-mod-9"></a>
 
-## 4. Modules 拼裝構件｜MOD-0010 至 MOD-0012
+### MOD-0010 至 MOD-0012
 
-<p class="table-caption">Table 6. Modules 拼裝構件｜MOD-0010 至 MOD-0012</p>
+**Table 6. Modules 拼裝構件｜MOD-0010 至 MOD-0012**
 
 | ID | 名稱 | 製作形態與尺度 | 查找關鍵字及採用範圍 |
 |---|---|---|---|
@@ -112,13 +102,11 @@ Version 0.3 · October 19, 2026 · Draft for Review
 | <a id="mod-0011"></a>MOD-0011 | 木窗及窗框 Window Module | 依逐棟淨開口；固定窗、百葉、封板三型。 | timber sash fixed window shutter。 |
 | <a id="mod-0012"></a>MOD-0012 | 石階與短坡 Step and Ramp Module | 踏面深、高度需依入口高差量體確認；石邊與表面可拆。 | stone doorstep ramp masonry。 |
 
-<!-- PAGE BREAK -->
-
 <a id="class-prp-0"></a>
 
-## 5. Props 獨立物件｜PRP-0001 至 PRP-0009
+## 5. Props 獨立物件
 
-<p class="table-caption">Table 7. Props 獨立物件｜PRP-0001 至 PRP-0009</p>
+**Table 7. Props 獨立物件｜PRP-0001 至 PRP-0009**
 
 | ID | 名稱 | 製作形態與尺度 | 查找關鍵字及採用範圍 |
 |---|---|---|---|
@@ -132,13 +120,11 @@ Version 0.3 · October 19, 2026 · Draft for Review
 | <a id="prp-0008"></a>PRP-0008 | 包覆殼 Plaster Jacket | 長約 0.5 至 1.2 m；與 NAT-0011 對應凹模，破邊形體另列。 | fossil field plaster jacket burlap。 |
 | <a id="prp-0009"></a>PRP-0009 | 岩芯托盤 Core Tray | 槽長約 1 m；托盤、岩芯、編號分件；槽號是場內文字。 | geological core sample wooden tray。 |
 
-<!-- PAGE BREAK -->
-
 <a id="class-prp-9"></a>
 
-## 5. Props 獨立物件｜PRP-0010 至 PRP-0018
+### PRP-0010 至 PRP-0018
 
-<p class="table-caption">Table 8. Props 獨立物件｜PRP-0010 至 PRP-0018</p>
+**Table 8. Props 獨立物件｜PRP-0010 至 PRP-0018**
 
 | ID | 名稱 | 製作形態與尺度 | 查找關鍵字及採用範圍 |
 |---|---|---|---|
@@ -152,13 +138,11 @@ Version 0.3 · October 19, 2026 · Draft for Review
 | <a id="prp-0017"></a>PRP-0017 | 繩索 Rope | 直徑約 0.02 至 0.05 m；繩本身／盤繩形體，綁結配置另組。 | hemp rope coil splice。 |
 | <a id="prp-0018"></a>PRP-0018 | 吊鉤與滑輪 Hoist Hardware | 鉤長約 0.3 m；鉤、輪與軸分件；承重玩法尚未驗證。 | historic block and tackle iron hook。 |
 
-<!-- PAGE BREAK -->
-
 <a id="class-prp-18"></a>
 
-## 5. Props 獨立物件｜PRP-0019 至 PRP-0027
+### PRP-0019 至 PRP-0027
 
-<p class="table-caption">Table 9. Props 獨立物件｜PRP-0019 至 PRP-0027</p>
+**Table 9. Props 獨立物件｜PRP-0019 至 PRP-0027**
 
 | ID | 名稱 | 製作形態與尺度 | 查找關鍵字及採用範圍 |
 |---|---|---|---|
@@ -172,13 +156,11 @@ Version 0.3 · October 19, 2026 · Draft for Review
 | <a id="prp-0026"></a>PRP-0026 | 木凳 Stool | 約 0.35 × 0.35 × 0.45 m；磨損集中座沿。 | rough timber stool historic。 |
 | <a id="prp-0027"></a>PRP-0027 | 衣箱 Trunk | 約 0.8 × 0.45 × 0.5 m；箱身、蓋與把手分件。 | nineteenth century travel trunk wooden。 |
 
-<!-- PAGE BREAK -->
-
 <a id="class-prp-27"></a>
 
-## 5. Props 獨立物件｜PRP-0028 至 PRP-0036
+### PRP-0028 至 PRP-0036
 
-<p class="table-caption">Table 10. Props 獨立物件｜PRP-0028 至 PRP-0036</p>
+**Table 10. Props 獨立物件｜PRP-0028 至 PRP-0036**
 
 | ID | 名稱 | 製作形態與尺度 | 查找關鍵字及採用範圍 |
 |---|---|---|---|
@@ -192,13 +174,11 @@ Version 0.3 · October 19, 2026 · Draft for Review
 | <a id="prp-0035"></a>PRP-0035 | 車輪 Wagon Wheel | 直徑約 1 至 1.3 m；輪、軸分件，輪緣鐵圈。 | wooden wagon wheel iron tyre。 |
 | <a id="prp-0036"></a>PRP-0036 | 油布 Canvas Tarp | 長 1 至 3 m；展開、折疊、蓋箱三型；濕色為材質搭配。 | waxed canvas tarp patch stitch。 |
 
-<!-- PAGE BREAK -->
-
 <a id="class-prp-36"></a>
 
-## 5. Props 獨立物件｜PRP-0037 至 PRP-0044
+### PRP-0037 至 PRP-0044
 
-<p class="table-caption">Table 11. Props 獨立物件｜PRP-0037 至 PRP-0044</p>
+**Table 11. Props 獨立物件｜PRP-0037 至 PRP-0044**
 
 | ID | 名稱 | 製作形態與尺度 | 查找關鍵字及採用範圍 |
 |---|---|---|---|
@@ -210,13 +190,11 @@ Version 0.3 · October 19, 2026 · Draft for Review
 | <a id="prp-0043"></a>PRP-0043 | 撬槓 Pry Bar | 長約 0.8 至 1.2 m；彎端與磨亮接觸面。 | historic iron pry bar。 |
 | <a id="prp-0044"></a>PRP-0044 | 手鑽 Hand Drill | 長約 0.3 至 0.5 m；握把、曲柄、夾頭獨立，鑽頭引用 PRP-0033。 | historic hand brace drill。 |
 
-<!-- PAGE BREAK -->
-
 <a id="class-mat-0"></a>
 
-## 6. Materials 材質｜MAT-0001 至 MAT-0009
+## 6. Materials 材質
 
-<p class="table-caption">Table 12. Materials 材質｜MAT-0001 至 MAT-0009</p>
+**Table 12. Materials 材質｜MAT-0001 至 MAT-0009**
 
 | ID | 名稱 | 製作形態與尺度 | 查找關鍵字及採用範圍 |
 |---|---|---|---|
@@ -230,13 +208,11 @@ Version 0.3 · October 19, 2026 · Draft for Review
 | <a id="mat-0008"></a>MAT-0008 | 黃銅 Brass | 黃褐底、局部深綠斑；閥的手握處較亮，三銼痕可辨。 | aged brass copper patina。 |
 | <a id="mat-0009"></a>MAT-0009 | 粗帆布 Canvas | 粗織帆布、縫線和補片；油布可用不同材質搭配，毛毯另列。 | coarse canvas weave seams patches；毛毯引用 MAT-0022。 |
 
-<!-- PAGE BREAK -->
-
 <a id="class-mat-9"></a>
 
-## 6. Materials 材質｜MAT-0010 至 MAT-0018
+### MAT-0010 至 MAT-0018
 
-<p class="table-caption">Table 13. Materials 材質｜MAT-0010 至 MAT-0018</p>
+**Table 13. Materials 材質｜MAT-0010 至 MAT-0018**
 
 | ID | 名稱 | 製作形態與尺度 | 查找關鍵字及採用範圍 |
 |---|---|---|---|
@@ -250,13 +226,11 @@ Version 0.3 · October 19, 2026 · Draft for Review
 | <a id="mat-0017"></a>MAT-0017 | 乾縮泥面 Drying Mud | 小片 1 至 3 m；雨後仍可留在高處乾燥斑，面積受分區限制。 | drying mud cracks small patch。 |
 | <a id="mat-0018"></a>MAT-0018 | 濕土 Wet Soil | 近水暗色、細小泥邊；混回一般土面需漸變。 | seep muddy margin wet soil。 |
 
-<!-- PAGE BREAK -->
-
 <a id="class-mat-18"></a>
 
-## 6. Materials 材質｜MAT-0019 至 MAT-0022
+### MAT-0019 至 MAT-0022
 
-<p class="table-caption">Table 14. Materials 材質｜MAT-0019 至 MAT-0022</p>
+**Table 14. Materials 材質｜MAT-0019 至 MAT-0022**
 
 | ID | 名稱 | 製作形態與尺度 | 查找關鍵字及採用範圍 |
 |---|---|---|---|
@@ -265,13 +239,11 @@ Version 0.3 · October 19, 2026 · Draft for Review
 | <a id="mat-0021"></a>MAT-0021 | 銅 Copper | 銅燈偏紅棕，接觸處略亮，局部氧化；與黃銅閥分開。 | copper oil lamp patina。 |
 | <a id="mat-0022"></a>MAT-0022 | 毛毯 Wool Blanket | 粗毛織物低反光、邊縫與折痕；床卷用，非帆布。 | historic wool blanket texture。 |
 
-<!-- PAGE BREAK -->
-
 <a id="class-dec-0"></a>
 
-## 7. Decals and Surface Details 貼花與表面細節｜DEC-0001 至 DEC-0008
+## 7. Decals and Surface Details 貼花與表面細節
 
-<p class="table-caption">Table 15. Decals and Surface Details 貼花與表面細節｜DEC-0001 至 DEC-0008</p>
+**Table 15. Decals and Surface Details 貼花與表面細節｜DEC-0001 至 DEC-0008**
 
 | ID | 名稱 | 製作形態與尺度 | 查找關鍵字及採用範圍 |
 |---|---|---|---|
@@ -284,13 +256,11 @@ Version 0.3 · October 19, 2026 · Draft for Review
 | <a id="dec-0007"></a>DEC-0007 | 使用與濕痕 Use and Water Trace | 泥印、輪痕、水線以位置／方向配置，材質分層可減弱。 | mud footprint wheel rut water stain。 |
 | <a id="dec-0008"></a>DEC-0008 | 白色夾層 White Interlayer | 岩芯與一處露頭共用層色及厚度 0.01 至 0.05 m；不發光。 | 創作夾層；只取 sedimentary thin white layer 的視覺結構。 |
 
-<!-- PAGE BREAK -->
-
 <a id="class-asm-0"></a>
 
-## 8. Assemblies 組合｜ASM-0001 至 ASM-0006
+## 8. Assemblies 組合
 
-<p class="table-caption">Table 16. Assemblies 組合｜ASM-0001 至 ASM-0006</p>
+**Table 16. Assemblies 組合｜ASM-0001 至 ASM-0006**
 
 | ID | 名稱 | 製作形態與尺度 | 查找關鍵字及採用範圍 |
 |---|---|---|---|
@@ -301,15 +271,13 @@ Version 0.3 · October 19, 2026 · Draft for Review
 | <a id="asm-0005"></a>ASM-0005 | 測繪工作點 Survey Station | 三腳架、板、標樁、箱、凳按臺面配置，朝向骨床。 | 引用既有單件，留 2 m 觀測帶。 |
 | <a id="asm-0006"></a>ASM-0006 | 低樹叢組 Low Cover Cluster | 2 至 4 株檜叢搭矮灌木，冠緣相接但不連成牆；枝葉自下部開始。 | 遮蔽功能待尼諾拉實際試位。 |
 
-<!-- PAGE BREAK -->
-
 <a id="variant-register"></a>
 
 ## 9. Variant Register 變體與搭配
 
 完整配置以五欄碼識別，對照下表的形體、材質、組織與地域定義。這些配置可直接作製作摘要的選用項；完成時再固定檔案及依賴修訂。未列組合須登錄相容性，不能由五欄任意排列推定有效。
 
-<p class="table-caption">Table 17. 配置清單</p>
+**Table 17. 配置清單**
 
 | 配置碼 | 製作內容 |
 |---|---|
@@ -323,15 +291,13 @@ Version 0.3 · October 19, 2026 · Draft for Review
 | NAT-0002_V00_L01_NONE_CD-GBB | 相同形體，指定斷面加 MAT-0020 樹脂狀條痕；在 CD-GBB 中僅用於 BLD-19 的指定單件。 |
 | PRP-0002_V00_L00_LAND-RANC_CD-GBB | 滿糧袋；家庭舊記號與牧業新封記同時保留。 |
 
-<!-- PAGE BREAK -->
-
 <a id="configuration-definitions"></a>
 
-## 9. Variant Register 變體與搭配｜定義
+### 定義
 
 V 與 L 各以所屬資產為範圍；L01 不是全庫統一的「濕」或「塗漆」。NONE 表示無組織客製，STD 表示不加地域處理，均保留前面已選內容。
 
-<p class="table-caption">Table 18. 形體定義</p>
+**Table 18. 形體定義**
 
 | 資產／形體 | 定義 |
 |---|---|
@@ -340,7 +306,7 @@ V 與 L 各以所屬資產為範圍；L01 不是全庫統一的「濕」或「�
 | NAT-0002／V00 | 礦化倒幹；外皮、礦化木質與斷面分區，斷面允許獨立材質處理。 |
 | PRP-0002／V00 | 裝滿並束口的粗布糧袋，袋面與束繩分區，兩側保留記號區。 |
 
-<p class="table-caption">Table 19. 材質搭配定義</p>
+**Table 19. 材質搭配定義**
 
 | 資產／搭配 | 部位與材料 |
 |---|---|
@@ -353,13 +319,11 @@ V 與 L 各以所屬資產為範圍；L01 不是全庫統一的「濕」或「�
 
 模型完成時，BODY 等語義部位須對應實際表面索引；搭配參數與遮罩隨修訂保存。新增幾何、通孔或需要不同 UV 的表面處理，先查形體相容性。
 
-<!-- PAGE BREAK -->
-
 <a id="organization-register"></a>
 
 ## 10. Customization Keys 客製識別鍵
 
-<p class="table-caption">Table 20. 組織識別對照</p>
+**Table 20. 組織識別對照**
 
 | 鍵 | 關聯組織 | 可用物件 | 識別方式 |
 |---|---|---|---|
@@ -371,7 +335,6 @@ V 與 L 各以所屬資產為範圍；L01 不是全庫統一的「濕」或「�
 | CRMC | 考爾德鐵路礦業公司 | 機具銘牌、岩芯箱、新管支架、零件運輸箱 | 銘牌、批次號和新漆色形成一套辨識；不需在每件小工具印大商標。 |
 
 地域鍵 CD-GBB 表示本圖的額外色澤／使用處理；不是說基礎資產只屬於 GBB。組織與地域可各自引用，實際放置另記場所 ID。
-
 
 ### 10.1 Markings and Regions 識別與地域
 
@@ -385,15 +348,13 @@ V 與 L 各以所屬資產為範圍；L01 不是全庫統一的「濕」或「�
 
 機具、泵與交通器具先依用途確定尺寸及可動部位，再補足結構；參照關鍵字不構成特定年代型號的復原證明。普通石化木、活植物與異常表面分開製作；樹脂狀斷面在 CD-GBB 僅配置於 BLD-19 的指定單件。
 
-<!-- PAGE BREAK -->
-
 <a id="test-assets"></a>
 
 ## 11. Test Asset Register 內部測試資產
 
 TST 項目可跨圖重用，適用範圍為內部測試。這些是製作需求，尚非完成模型；發布條件依編碼規則第 7 節。地圖只記採用與落點，不重新定義資產身分。
 
-<p class="table-caption">Table 21. 測試製作單位</p>
+**Table 21. 測試製作單位**
 
 | ID | 中英文名稱 | 製作形態與尺度 |
 |---|---|---|
@@ -407,14 +368,11 @@ TST 項目可跨圖重用，適用範圍為內部測試。這些是製作需求�
 
 <aside class="footnote">1. FREIHH and leplubodeslapin, “aim_map,” Steam Workshop, accessed October 19, 2026, <a href="https://steamcommunity.com/sharedfiles/filedetails/?id=122443683">作品頁</a>。參照公開圖像的圍場、箱組及兩端低臺；本套件尺寸與表面為內部測試設計，未匯入原地圖資產，非精確復刻。</aside>
 
-
-<!-- PAGE BREAK -->
-
 <a id="test-variants"></a>
 
-## 11. Test Asset Register 內部測試資產｜形體與搭配
+### 形體與搭配
 
-<p class="table-caption">Table 22. TST-PRP-0001 箱體尺寸變體</p>
+**Table 22. TST-PRP-0001 箱體尺寸變體**
 
 | 變體 | 寬 × 深 × 高 |
 |---|---|
@@ -428,7 +386,7 @@ TST 項目可跨圖重用，適用範圍為內部測試。這些是製作需求�
 
 其餘四項以 Table 21 的形態作 V00。各單件以包絡西南底角為原點；X、Y 為水平，Z 向上。箱體保留 BODY／BRACE 部位，不含開蓋或互動；尺寸變體不由場內任意縮放代替。
 
-<p class="table-caption">Table 23. 測試搭配 L00</p>
+**Table 23. 測試搭配 L00**
 
 | 資產／搭配 | 部位與材料 |
 |---|---|
@@ -440,12 +398,9 @@ TST 項目可跨圖重用，適用範圍為內部測試。這些是製作需求�
 
 L00 適用該資產已登錄的各 V；NONE／STD 保留上述搭配。粗簡表面以本套件的局部搭配處理，不改寫所有常規物件引用的 MAT；亦不需要將粗紋理誤編成新的模型形體。
 
-
-<!-- PAGE BREAK -->
-
 <a id="test-assembly"></a>
 
-## 11. Test Asset Register 內部測試資產｜組合與配置
+### 組合與配置
 
 ### 11.1 Configurations 配置
 
@@ -455,7 +410,7 @@ L00 適用該資產已登錄的各 V；NONE／STD 保留上述搭配。粗簡表
 
 TST-ASM-0001 的 V00 保存子件引用及局部位置，見 [Test Assembly Layout](Test_Assembly_Layout_v0.1.json)。相對原點為 64 × 72 m 圍場的西南角地坪，軸向 X 東、Y 北、Z 上；基準地面為 Z=0。
 
-<p class="table-caption">Table 24. 組合內容與定位方式</p>
+**Table 24. 組合內容與定位方式**
 
 | 子件 | 數量 | 定位及接面 |
 |---|---|---|
