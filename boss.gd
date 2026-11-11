@@ -176,6 +176,17 @@ var _pin_age := 0.0
 var _cam_yaw := 0.0             # 駕駛那台：鏡頭的水平角（身體慢慢轉過來）
 var _cam_pitch := 0.0
 var _piloting := false          # 駕駛那台：現在是不是由我操作（變成駕駛、不再是駕駛的那一刻才換鏡頭）
+var _pin_pitch := 0.0           # 主機：駕駛鏡頭的俯仰（算準心指到哪，_aim）
+## 駕駛鏡頭：越肩第三人稱。支點在身體中心上方 CAM_UP，鏡頭在支點右邊 CAM_SIDE、後面 CAM_DIST，平視時略往下看（CAM_TILT）。
+## 主機照同一組數字重建鏡頭那條線（_aim），所以這幾個數字兩邊要一樣（都讀 balance.csv）
+static var CAM_UP: float = Balance.num("dino_cam_height") * GROW
+static var CAM_SIDE: float = Balance.num("dino_cam_side") * GROW
+static var CAM_DIST: float = Balance.num("dino_cam_dist") * GROW
+const CAM_TILT := -0.14         # 約 8 度（dino.gd 的 CAM_BASE 是 23 度俯視，準心會指到腳前的地上）
+const CAM_MARGIN := 0.6         # 鏡頭被牆擋住時，離牆留這麼遠（公尺）
+const CAM_PULL_MIN := 0.35      # 最多拉近到原本的這個比例：再近鏡頭會進到身體裡
+const AIM_CONE := 0.6           # 火球最多偏離身體正面這麼多（弧度，約 34 度）：身體還沒轉過來時不能往旁邊、往後吐
+var _cam_t := Vector2.ONE       # 駕駛那台：鏡頭被擋住時拉近的比例（x 往右那段、y 往後那段；1 = 沒被擋）
 var _quake := 0.0               # 駕駛那台：打到可拆的東西，鏡頭抖的幅度（0～0.2，乘 QUAKE_METERS 是平移公尺），每幀衰減（add_shake）
 const QUAKE_METERS := 2.0       # 抖動幅度換成鏡頭平移：0.08（第一下）約 0.16 公尺、上限 0.2 是 0.4 公尺
 
@@ -212,7 +223,7 @@ var _glimpse_at := Vector3.INF
 var _suspect := 0.0           # 確定的進度 0~1
 var _spot_pending := false    # 剛確定看到人，這一幀要吼
 var _look_left := 0.0         # 繞著找時停下來張望還剩多久
-var fireball_left := 0.0      # 火球冷卻還剩幾秒（只有主機算）
+@export var fireball_left := 0.0   # 火球冷卻還剩幾秒（主機算，同步出去：駕駛的準心看得到好了沒）
 var _charge: Node3D           # 嘴裡蓄的火（FireballFx.charge）
 const LAG_CATCH_MAX := 0.25   # 秒：客戶端的火球最多往前補這麼久（_spit_fire）
 static var FB_LOOK: float = FB_SIZE * 0.85    # 火球看起來的直徑：比判定的直徑小一點（外圈是火舌，不是打得到的範圍）
@@ -225,6 +236,8 @@ func _ready() -> void:
 	super()
 	blast_reach = 2.5 * GROW   # 炸藥算距離從身體中心往外扣這麼多（dino.gd 是放大前的 2.5）
 	$CamPivot/Camera3D.fov = Balance.num("dino_cam_fov")   # 鏡頭垂直視角（度）
+	$CamPivot.position = Vector3(0.0, CAM_UP, 0.0)
+	$CamPivot/Camera3D.position = Vector3(CAM_SIDE, 0.0, CAM_DIST)
 	var voice := AudioStreamPlayer3D.new()
 	voice.name = "Voice"
 	voice.unit_size = 12.0       # 大隻，遠遠就聽得到
@@ -261,7 +274,14 @@ func _process(delta: float) -> void:
 		cam.current = mine
 		_cam_yaw = rotation.y
 	if mine:
-		$CamPivot.rotation = Vector3(CAM_BASE + _cam_pitch + randf_range(-1.0, 1.0) * _stagger * 0.08 * Settings.v.get(&"shake", 1.0), _cam_yaw - rotation.y, 0.0)
+		$CamPivot.rotation = Vector3(CAM_TILT + _cam_pitch + randf_range(-1.0, 1.0) * _stagger * 0.08 * Settings.v.get(&"shake", 1.0), _cam_yaw - rotation.y, 0.0)
+		# 鏡頭被牆、地形、房子擋住就拉近（馬上拉近、慢慢放回去）。先看支點到肩膀外側那一段，再從那裡往後看：
+		# 只往前拉的話鏡頭還在同一條視線上，準心指的地方不變；肩膀那段被擋（右邊貼牆）才往中間收
+		var gb: Basis = $CamPivot.global_basis
+		var side := _cam_clear($CamPivot.global_position, gb.x * CAM_SIDE)
+		var want := Vector2(side, maxf(_cam_clear($CamPivot.global_position + gb.x * CAM_SIDE * side, gb.z * CAM_DIST), CAM_PULL_MIN))
+		_cam_t = want.min(_cam_t.lerp(want, 1.0 - exp(-6.0 * delta)))
+		cam.position = Vector3(CAM_SIDE * _cam_t.x, 0.0, CAM_DIST * _cam_t.y)
 		_quake = lerpf(_quake, 0.0, 1.0 - exp(-8.0 * delta))
 		# 抖動：鏡頭平移（h_offset、v_offset），不轉鏡頭（轉的話整個畫面甩，暈）；用幾個正弦疊出平滑的晃動，不是每幀亂跳
 		var tq := Time.get_ticks_msec() * 0.001
@@ -374,6 +394,7 @@ func pilot_input(move: Vector2, yaw: float, pitch: float, buttons: int) -> void:
 	_pin_yaw = yaw
 	_pin_buttons = buttons
 	_pin_age = 0.0
+	_pin_pitch = _clamp_cam_pitch(pitch)
 	look_pitch = clampf(pitch, BOSS_PITCH_MIN, PITCH_MAX)
 
 ## 駕駛這一幀：倒地、出招中照電腦版跑完；平常照輸入走、慢慢轉向鏡頭的方向、按鍵出招
@@ -416,7 +437,13 @@ func _unhandled_input(e: InputEvent) -> void:
 	_cam_yaw -= rel.x * MOUSE_SENS * 0.5   # 玩家恐龍原本的靈敏度是給會瞬間轉身的身體用的；這隻轉得慢，鏡頭也放慢一點
 	_cam_pitch = _clamp_cam_pitch(_cam_pitch - rel.y * MOUSE_SENS * 0.5)
 
-## 鏡頭的俯仰限制（只給鏡頭；火球的俯角走 pilot_input 的 BOSS_PITCH_MIN）
+## 從 from 沿 arm 走得到幾成（0～1）：被牆擋住就停在牆前 CAM_MARGIN
+func _cam_clear(from: Vector3, arm: Vector3) -> float:
+	var hit := get_world_3d().direct_space_state.intersect_ray(
+		PhysicsRayQueryParameters3D.create(from, from + arm, Fighter.SOLID_LAYER, [get_rid()]))
+	return 1.0 if hit.is_empty() else maxf((from.distance_to(hit.position) - CAM_MARGIN) / arm.length(), 0.0)
+
+## 鏡頭的俯仰限制（只給鏡頭；火球的俯角在 _aim 另外限制在 BOSS_PITCH_MIN）
 func _clamp_cam_pitch(v: float) -> float:
 	return clampf(v, CAM_PITCH_MIN, PITCH_MAX)
 
@@ -585,7 +612,38 @@ func mouth() -> Vector3:
 
 ## 火球口：頭的高度、往前幾公尺（dino.gd 的 _spit_muzzle 是原本的尺寸，這裡跟著放大）
 func _spit_muzzle() -> Vector3:
-	return global_position + Vector3.UP * HEAD_HEIGHT * GROW + _spit_dir() * MUZZLE_FWD * GROW
+	return _head() + _spit_dir() * MUZZLE_FWD * GROW
+
+func _head() -> Vector3:
+	return global_position + Vector3.UP * HEAD_HEIGHT * GROW
+
+## 駕駛的火球會打到哪（準心畫在這裡）。鏡頭轉到 yaw、pitch 時，從鏡頭沿畫面正中央拉一條線，打到的第一個東西就是瞄的點
+## （沒打到就取射程那麼遠）；火球從嘴巴朝那個點飛。線從嘴前那一截之後才開始算：鏡頭和嘴巴之間的東西（尾巴後面的牆、
+## 身邊的樹）不算，瞄的點也就一定在嘴巴前面，不會瞄到身後或嘴裡。
+## 主機只拿駕駛本來就在送的 yaw、pitch，鏡頭位置自己照 CAM_* 重算，不信客戶端報的點。
+## 身體還沒轉過來（偏離正面超過 AIM_CONE）或太陡（超過 BOSS_PITCH_MIN、PITCH_MAX）就夾住，回傳的是夾過之後真的會去的點
+func _aim(yaw: float, pitch: float) -> Vector3:
+	var cb := Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, CAM_TILT + pitch)
+	var eye := global_position + Vector3.UP * CAM_UP + cb * Vector3(CAM_SIDE, 0.0, CAM_DIST)
+	var fwd := -cb.z
+	var head := _head()
+	var from := eye + fwd * (maxf((head - eye).dot(fwd), 0.0) + MUZZLE_FWD * GROW)
+	var to := from + fwd * FB_RANGE
+	var q := PhysicsRayQueryParameters3D.create(from, to)
+	q.exclude = [get_rid()]
+	var hit := get_world_3d().direct_space_state.intersect_ray(q)
+	var d: Vector3 = (hit.position if not hit.is_empty() else to) - head
+	var y := rotation.y + clampf(angle_difference(rotation.y, atan2(-d.x, -d.z)), -AIM_CONE, AIM_CONE)
+	var p := clampf(asin(d.y / d.length()), BOSS_PITCH_MIN, PITCH_MAX)
+	return head + Basis(Vector3.UP, y) * Vector3(0.0, sin(p), -cos(p)) * d.length()
+
+## 準心的位置（match_hud.gd）：駕駛那台照自己的鏡頭算，跟主機用同一個算法
+func aim_point() -> Vector3:
+	return _aim(_cam_yaw, _cam_pitch)
+
+## 火球的方向：有駕駛就朝準心指的點（主機照駕駛送來的鏡頭角度算）；沒有駕駛照原本的（身體正面＋俯仰）
+func _spit_dir() -> Vector3:
+	return (_aim(_pin_yaw, _pin_pitch) - _head()).normalized() if pilot != 0 else super()
 
 ## 從頭拉線看有沒有牆擋（dino.gd 的版本是原本的頭高）
 func _blocked_by_wall(target: Node3D) -> bool:
@@ -731,7 +789,7 @@ func _sweep_hit() -> void:
 			_hit_once.append(p)
 			_hurt(p, SWEEP_DAMAGE)
 
-## 尼諾拉吐火球：方向跟鏡頭俯仰走（_spit_dir），各台都生一顆（dino.gd 的 _spit 沒有參數、設定不夠用，另寫一個）。
+## 尼諾拉吐火球：朝準心指的點（_spit_dir），各台都生一顆（dino.gd 的 _spit 沒有參數、設定不夠用，另寫一個）。
 ## 扣血和燃燒只在主機（Fireball 裡 is_server 才算）
 @rpc("authority", "call_local", "reliable")
 func _spit_fire(dir: Vector3, muzzle: Vector3) -> void:

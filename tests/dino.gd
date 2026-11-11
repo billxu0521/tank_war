@@ -66,9 +66,10 @@ func _case_boss_scale() -> void:
 		"膠囊半徑跟著放大（膠囊 %.2f，BODY_RADIUS %.2f）" % [cap.radius, b.BODY_RADIUS])
 	_ck(absf(t.scale.x - 1.5 * b.GROW) < 0.001 and absf(t.position.y + b.HALF_H) < 0.001,
 		"模型照倍率放大、腳底在膠囊下緣（scale %.3f，y %.3f）" % [t.scale.x, t.position.y])
-	_ck(absf(b.get_node(^"CamPivot").position.y - 2.0 * b.GROW) < 0.01 \
-		and absf(b.get_node(^"CamPivot/Camera3D").position.z - 17.0 * b.GROW) < 0.01,
-		"第三人稱鏡頭照倍率（高 %.2f、距 %.2f）" % [b.get_node(^"CamPivot").position.y, b.get_node(^"CamPivot/Camera3D").position.z])
+	_ck(absf(b.get_node(^"CamPivot").position.y - Balance.num("dino_cam_height") * b.GROW) < 0.01 \
+		and absf(b.get_node(^"CamPivot/Camera3D").position.z - Balance.num("dino_cam_dist") * b.GROW) < 0.01 \
+		and absf(b.get_node(^"CamPivot/Camera3D").position.x - Balance.num("dino_cam_side") * b.GROW) < 0.01,
+		"第三人稱鏡頭照表、照倍率（高 %.2f、距 %.2f）" % [b.get_node(^"CamPivot").position.y, b.get_node(^"CamPivot/Camera3D").position.z])
 	_ck(absf(b.get_node(^"CamPivot/Camera3D").fov - Balance.num("dino_cam_fov")) < 0.01, "駕駛鏡頭視角照表（%.1f 度）" % b.get_node(^"CamPivot/Camera3D").fov)
 	_ck(b.BITE_AT > b.BODY_RADIUS and absf(b.mouth().distance_to(b.global_position) - b.BITE_AT) < 0.01,
 		"嘴巴在身體外面、照倍率（%.2f）" % b.BITE_AT)
@@ -914,18 +915,40 @@ func _case_boss_fireball() -> void:
 	b.think(DT)
 	_ck(b.act == b.ACT_SPIT_WIND, "按 Q 要進火球預備（現在 act=%d）" % b.act)
 	var i := 0
+	var ball: Fireball = null
+	var aim := Vector3.ZERO   # 吐出去那一幀準心指的點（駕駛那台照自己的鏡頭算：aim_point）
 	while b.act != b.ACT_NONE and i < 600:
 		b.pilot_input(Vector2.ZERO, 0.0, 0.0, 0)
+		if ball == null:
+			aim = b.aim_point()
 		b.think(DT)
 		i += 1
+		for c in arena.get_children():
+			if ball == null and c is Fireball:
+				ball = c
+				# 火球朝準心：準心那點離火球那條線不到 0.2 公尺
+				_ck((aim - ball.global_position).cross(ball.vel.normalized()).length() < 0.2,
+					"火球要朝準心指的點飛（差 %.2f 公尺）" % (aim - ball.global_position).cross(ball.vel.normalized()).length())
 	_ck(_fireball_count(arena) == n0 + 1, "預備完要吐出一顆火球（現在 %d 顆）" % _fireball_count(arena))
-	var ball: Fireball = null
-	for c in arena.get_children():
-		if c is Fireball:
-			ball = c
+	# 準心指的點在駕駛鏡頭的正中央那條線上（主機照 yaw、pitch 重算的鏡頭，跟場景裡真的鏡頭是同一條線）
+	b._process(0.0)
+	var cam: Camera3D = b.get_node(^"CamPivot/Camera3D")
+	aim = b.aim_point()
+	_ck(b._cam_t.x < 1.0 or (aim - cam.global_position).cross(-cam.global_basis.z).length() < 0.2,
+		"準心指的點要在鏡頭正中央那條線上（差 %.2f 公尺）" % (aim - cam.global_position).cross(-cam.global_basis.z).length())
+	_ck((aim - b._head()).dot(-cam.global_basis.z) >= b.MUZZLE_FWD * b.GROW - 0.01, "瞄的點要在嘴巴前面")
+	# 鏡頭轉到身體還沒轉到的方向：火球最多偏離正面 AIM_CONE；往下看到底：俯角不超過 BOSS_PITCH_MIN
+	var side: Vector3 = b._aim(1.5, 0.0) - b._head()
+	_ck(absf(absf(atan2(-side.x, -side.z)) - b.AIM_CONE) < 0.01, "鏡頭轉到旁邊，火球只偏到 AIM_CONE（現在 %.2f）" % atan2(-side.x, -side.z))
+	var down: Vector3 = b._aim(0.0, b.CAM_PITCH_MIN) - b._head()
+	_ck(asin(down.normalized().y) >= b.BOSS_PITCH_MIN - 0.01, "往下看到底，火球俯角不超過 BOSS_PITCH_MIN")
+	# 電腦控制（沒有駕駛）：照原本的，身體正面＋俯仰
+	b.pilot = 0
+	_ck(b._spit_dir().is_equal_approx(b.global_basis * Vector3(0, sin(b.look_pitch), -cos(b.look_pitch))), "沒有駕駛時火球方向照原本的算法")
+	b.pilot = 1
 	_ck(ball != null and ball.gravity == 0.0 and absf(ball.radius - Balance.num("fireball_size") * 0.5) < 0.001 and ball.max_range == 60.0 \
 		and ball.damage == 50 and ball.burn and ball.speed == Balance.num("fireball_speed"), "火球設定：直線、半徑照 fireball_size、60 公尺、50 點、會燒")
-	_ck(ball != null and absf(ball.vel.y) < 0.001 and ball.vel.z < -(b.FB_SPEED - 0.1), "恐龍水平看的時候火球朝前飛（vel %s）" % str(ball.vel if ball else Vector3.ZERO))
+	_ck(ball != null and ball.vel.z < 0.0 and absf(ball.vel.length() - b.FB_SPEED) < 0.01, "火球朝前飛、速度照表（vel %s）" % str(ball.vel if ball else Vector3.ZERO))
 	_ck(Balance.num("fireball_speed") >= 35.0 and Balance.num("fireball_size") >= 3.0, "火球加快加大（回饋 0.8.13）")
 	# 冷卻中再按 Q 不出
 	b.pilot_input(Vector2.ZERO, 0.0, 0.0, b.PIN_FIREBALL)
@@ -948,7 +971,7 @@ func _case_pilot_feedback() -> void:
 		b.think(DT)
 	_ck(far.hp == far.max_hp and b.hit_until == 0, "咬空：駕駛沒有命中提示")
 	m._match_hud.update_match(b)
-	_ck(not m.crosshair.visible, "咬空：準心不閃")
+	_ck(m.crosshair.modulate != Color(1, 0.3, 0.25), "咬空：準心不閃紅")
 	var front: Node3D = m._add_player(m.COWBOY, 3)
 	front.global_position = m._on_ground(Vector3(0, 0, 60 - b.BODY_RADIUS - 3.0))
 	b._attack_gap = 0.0
@@ -960,7 +983,14 @@ func _case_pilot_feedback() -> void:
 	_ck(front.hp == front.max_hp - 40, "咬中扣 40（現在 %d）" % front.hp)
 	_ck(b.hit_until > 0, "咬中：駕駛那台有命中提示")
 	m._match_hud.update_match(b)
-	_ck(m.crosshair.visible, "咬中：畫面中間準心閃紅")
+	_ck(m.crosshair.modulate == Color(1, 0.3, 0.25), "咬中：準心閃紅")
+	b.fireball_left = 5.0
+	b.hit_until = 0
+	m._match_hud.update_match(b)
+	_ck(m.crosshair.modulate.a < 0.5 and m._match_hud._boss_label.text.contains("火球 5 秒"), "火球冷卻中：準心變淡、看得到還剩幾秒（現在「%s」）" % m._match_hud._boss_label.text)
+	b.pilot = 0
+	m._match_hud.update_match(b)
+	_ck(not m.crosshair.visible, "不是駕駛：沒有準心")
 	_end(m)
 
 func _fireball_count(arena: Node) -> int:

@@ -625,6 +625,7 @@ func _case_party_destruction() -> void:
 	# 自己操作恐龍時，畫面上看得到甩尾冷卻；冷卻要同步給操作的客戶端（冷卻在主機算）
 	var sync: MultiplayerSynchronizer = b.find_children("*", "MultiplayerSynchronizer")[0]
 	_ck(sync.replication_config.has_property(^".:sweep_left"), "甩尾冷卻要同步出去")
+	_ck(sync.replication_config.has_property(^".:fireball_left"), "火球冷卻要同步出去（駕駛的準心看得到好了沒）")
 	b.pilot = 1
 	b.sweep_left = 12.3
 	m._match_hud._update_boss_bar(b)
