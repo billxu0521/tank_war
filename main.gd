@@ -1181,6 +1181,12 @@ func _parse_arena(nm: NavigationMesh, budget_ms := 0.0) -> NavigationMeshSourceG
 			var v: int = b.geo_ver if b is ToyBuild else 0
 			var p = _piece_nav.get(b)
 			if p == null or p[0] != b.collision_layer or p[1] != b.global_transform or p[2] != v:
+				# 拆過的房子要整棟重解析（1659 塊約 3 毫秒）：這一幀已經做了一些就先讓出去，不然額度快用完時再疊上這 3 毫秒（量到一幀 6.4）
+				if b is ToyBuild and budget_ms > 0.0 and Time.get_ticks_usec() - t0 > 300:
+					await get_tree().process_frame
+					t0 = Time.get_ticks_usec()
+					if not is_instance_valid(b) or not b.is_inside_tree():
+						continue
 				p = [b.collision_layer, b.global_transform, v, _parse_group(nm, [b])]
 			keep[b] = p
 			src.merge(p[3])

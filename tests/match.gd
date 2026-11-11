@@ -1555,7 +1555,7 @@ func _merge_run(m: Node, spacing: float, label: String) -> void:
 	m.map.add_child(t)
 	t.position = m.map._on_ground(Vector3(-60, 0, -60))
 	t.smash(func(_p: Vector3) -> bool: return true, 1, t.global_position)
-	for _k in 12:   # 分幀藏、併成的大塊等它的塊都藏好才生
+	for _k in 12:   # 碎塊分幀生（一步最多 SPAWN_PER_TICK 個）
 		t._physics_process(0.0)
 	var n := t.brick_count()
 	var covered := {}

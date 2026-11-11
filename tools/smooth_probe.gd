@@ -7,9 +7,14 @@ extends SceneTree
 ##   尼諾拉真的跑去撞（碎塊多、會踢）  SCEN=plow godot --headless --path . --script tools/smooth_probe.gd
 ##   逐項計時（找誰最慢）            PROFILE=1 godot --headless --path . --script tools/smooth_probe.gd
 ##   真的連線（伺服器＋客戶端）       tools/smooth_probe.sh
+##   照玩家的玩法（恐龍沙盒、自己開尼諾拉，要開視窗）  VSYNC=1 SCEN=pilot godot --path . --screen 1 --resolution 1920x1080 --script tools/smooth_probe.gd
+##     走大廳「恐龍沙盒」同一個函式、同一個鏡頭，按鍵用 Input 假裝按：全速撞穿 → 甩尾 → 轉身火球 → 跑回來咬。房子之後再撞幾個小的（樹、柵欄、掩體）。
+##     --screen 選螢幕（1＝外接的 50 Hz）。掉幀的門檻照那個螢幕：兩幀隔超過 1.5 格＝少畫一張。慢的幀拆成：物理腳本、物理引擎、上一幀的 _process、剩下的（畫面＋等螢幕）
+##     VSYNC=1／0 開關垂直同步（不給就照玩家的設定檔 user://settings.cfg）、FPS=n 鎖幀率、HOUSES／SMALL 大的小的各幾個。
+##     垂直同步關掉又不鎖幀率時，macOS 大約每秒有一幀卡兩格（空專案也量到過），不是遊戲的；前後比要開垂直同步。說明見 docs/技術筆記/拆東西順暢.md
 ## 每段印一行「順暢 …」；最後一行「SMOOTH OK」才算跑完（Godot 解析錯誤也回 0）。
 
-const FRAME_MS := 16.7   # 超過算掉幀（每秒 60 張的一幀）
+var FRAME_MS := 16.7   # 超過算掉幀（每秒 60 張的一幀；SCEN=pilot 照螢幕的更新率，1.5 格）
 
 var _role := OS.get_environment("ROLE")   # ""＝單機、server、client
 var NH := _env("HOUSES", 4.0) as int
@@ -40,6 +45,41 @@ var _f_pp_us := 0        # 這一幀第一步物理開始的時刻
 var _f_boss := 0.0       # 這一幀尼諾拉移動花的毫秒
 var _move_ms := 0.0      # 尼諾拉移動一步（含撞、踢）最久幾毫秒
 var _windowed := DisplayServer.get_name() != "headless"
+var PILOT := OS.get_environment("SCEN") == "pilot"   # SCEN=pilot：照玩家的玩法，見檔頭
+var _f_script := 0.0     # 這一幀物理腳本（所有節點的 _physics_process）共幾毫秒
+var _f_engine := 0.0     # 這一幀物理引擎（Jolt 一步＋導航同步＋延後呼叫）共幾毫秒
+var _f_proc := 0.0       # 上一幀所有節點的 _process 共幾毫秒
+var _proc_us := 0        # 這一幀 _process 開始的時刻
+var _tick_us := 0        # 這一步物理開始的時刻
+var _tail_us := 0        # 這一步物理腳本跑完的時刻（_Tail 節點記的；0＝這一步的引擎時間已經算過）
+var _tick_script := 0.0  # 這一段裡，一步物理的腳本最久幾毫秒
+var _tick_engine := 0.0  # 這一段裡，一步物理的引擎最久幾毫秒
+var _tick_now := 0.0     # 這一步物理的腳本幾毫秒（等引擎那段量到再加起來）
+var _tick_all := PackedFloat32Array()   # 這一段每一步物理共幾毫秒（腳本＋引擎）
+
+
+## 排在所有節點後面跑的 _physics_process：記「物理腳本跑完」的時刻
+class _Tail extends Node:
+	var probe: Object
+	func _physics_process(_d: float) -> void:
+		probe._tail_us = Time.get_ticks_usec()
+		var ms: float = (probe._tail_us - probe._tick_us) / 1000.0
+		probe._f_script += ms
+		probe._tick_now = ms
+		probe._tick_script = maxf(probe._tick_script, ms)
+	func _process(_d: float) -> void:   # 所有節點的 _process 跑完：這一幀的 _process 腳本共幾毫秒（下一幀取樣時用）
+		probe._f_proc = (Time.get_ticks_usec() - probe._proc_us) / 1000.0
+
+
+## 上一步物理腳本跑完到現在＝引擎那一段
+func _close_tick() -> void:
+	if _tail_us == 0:
+		return
+	var ms := (Time.get_ticks_usec() - _tail_us) / 1000.0
+	_tail_us = 0
+	_f_engine += ms
+	_tick_engine = maxf(_tick_engine, ms)
+	_tick_all.append(_tick_now + ms)
 
 
 func _env(k: String, d: float) -> float:
@@ -58,9 +98,25 @@ func _initialize() -> void:
 
 
 func _process(d: float) -> bool:
+	_close_tick()
 	_f += 1
 	if _f == 2:
-		if _role == "":
+		var tail := _Tail.new()
+		tail.probe = self
+		tail.process_physics_priority = 1000000
+		tail.process_priority = 1000000
+		root.add_child(tail)
+		if PILOT:
+			# 垂直同步、幀率上限照玩家自己的設定檔（user://settings.cfg，main.gd 開場就套了）；VSYNC=1／0 蓋掉、FPS=n 鎖幀率
+			if OS.get_environment("VSYNC") != "":
+				DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if OS.get_environment("VSYNC") == "1" else DisplayServer.VSYNC_DISABLED)
+			if OS.get_environment("FPS") != "":
+				Engine.max_fps = int(OS.get_environment("FPS"))
+			FRAME_MS = 1500.0 / DisplayServer.screen_get_refresh_rate(DisplayServer.window_get_current_screen())
+			print("螢幕 %d，%.0f Hz，垂直同步%s，幀率上限 %d，兩幀隔超過 %.1f 毫秒算掉幀" % [DisplayServer.window_get_current_screen(), 1500.0 / FRAME_MS,
+				"開" if DisplayServer.window_get_vsync_mode() != DisplayServer.VSYNC_DISABLED else "關", Engine.max_fps, FRAME_MS])
+			_m._on_dino_sandbox_pressed()   # 大廳「恐龍沙盒」按鈕的同一個函式
+		elif _role == "":
 			_m.multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 			_m._offline = true
 			ToyBuild.no_flight = OS.get_environment("NOFLIGHT") != ""
@@ -90,6 +146,13 @@ func _process(d: float) -> bool:
 				_houses.append(tb)
 		_houses.sort_custom(func(a: ToyBuild, b: ToyBuild) -> bool: return a.brick_count() > b.brick_count())
 		_houses = _houses.slice(0, NH)
+		if PILOT:   # 再加幾個小的（樹、柵欄、掩體：塊數不一樣的各挑一個），看是不是只有房子會卡
+			var seen := {}
+			for tb: ToyBuild in _m.map._toys:
+				if tb.can_break and tb.visible and tb.brick_count() <= 200 and not seen.has(tb.brick_count()) and seen.size() < int(_env("SMALL", 4.0)):
+					seen[tb.brick_count()] = true
+					_houses.append(tb)
+			_boss = _m._boss()
 		if OS.get_environment("PROFILE") != "":
 			_profile()
 			return true
@@ -115,9 +178,20 @@ func _process(d: float) -> bool:
 	var h: ToyBuild = _houses[_hi]
 	var bb: AABB = h.global_transform * h._all
 	var at := Vector3(bb.position.x, h.global_position.y, bb.position.z)   # 牆角的地面
-	if _windowed and _role == "":
+	if _windowed and _role == "" and not PILOT:
 		var cam := root.get_children().filter(func(n: Node) -> bool: return n.has_meta(&"probe"))[0] as Camera3D
 		cam.look_at_from_position(bb.get_center() + Vector3(-25, 12, -25), bb.get_center())
+	if PILOT:
+		var dir := Vector3(cos(0.3 * _hi), 0, sin(0.3 * _hi))
+		_from = bb.get_center() - dir * 22.0
+		_to = bb.get_center()
+		_boss.global_position = _m.boss_on_ground(_from)
+		_boss.velocity = Vector3.ZERO
+		_boss.rotation.y = atan2(-dir.x, -dir.z)
+		_boss._cam_yaw = _boss.rotation.y
+		_boss.reset_physics_interpolation()
+		_begin("駕駛：撞穿、甩尾、火球、咬 第 %d 個（%d 塊）" % [_hi + 1, h.brick_count()])
+		return false
 	if PLOW:   # 尼諾拉全速跑過去撞穿，後半段再跑回來（踢碎塊）；照 tools/debris_walk.gd 的開法
 		if _boss == null:
 			_boss = _m._boss() if _m._boss() else _m.spawn_boss()
@@ -139,9 +213,14 @@ func _process(d: float) -> bool:
 
 
 func _physics_process(delta: float) -> bool:
+	_close_tick()
+	_tick_us = Time.get_ticks_usec()
 	if _f_steps == 0:
 		_f_pp_us = Time.get_ticks_usec()
 	_f_steps += 1
+	if PILOT:
+		_drive()
+		return false
 	if _boss == null or _hi < 0 or _hi >= _houses.size():
 		return false
 	var d := (_to if _t < GAP * 0.5 else _from) - _boss.global_position
@@ -159,7 +238,31 @@ func _physics_process(delta: float) -> bool:
 	return false
 
 
+## SCEN=pilot 的按鍵（每步物理設一次，boss.gd 的 _pilot_local 照常讀 Input）：
+## 0～3.5 秒 往前全速跑（撞穿）→ 3.5～4 右鍵甩尾（尾巴朝剛撞穿的那棟）→ 5.5 轉身、Q 火球 → 6.5 之後跑回來、7.5 咬
+func _drive() -> void:
+	var on := _boss != null and _hi >= 0 and _hi < _houses.size()
+	var run := on and (_t < 3.5 or _t > 6.5)
+	var keys := {&"move_forward": run, &"sprint": run, &"aim": on and _t > 3.5 and _t < 4.0,
+		&"dino_fireball": on and _t > 5.5 and _t < 5.8, &"fire": on and _t > 7.5 and _t < 7.7}
+	for k: StringName in keys:
+		if keys[k]:
+			Input.action_press(k)
+		else:
+			Input.action_release(k)
+	if on:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED   # 沒抓滑鼠 _pilot_local 不送按鍵
+		_boss.stamina = _boss.STAMINA_MAX
+		_boss.exhausted = false
+		if _t > 5.5:   # 轉身看回那一棟
+			var d := _to - _boss.global_position
+			_boss._cam_yaw = atan2(-d.x, -d.z)
+
+
 func _begin(name: String) -> void:
+	_tick_script = 0.0
+	_tick_engine = 0.0
+	_tick_all.clear()
 	_move_ms = 0.0
 	_phase = name
 	_t = 0.0
@@ -177,12 +280,15 @@ func _sample(d: float) -> void:
 	if ms > FRAME_MS:
 		# 這一幀拆開看：跑了幾步物理、物理開始前等了多久（上一幀的 _process、畫面、鎖幀率的睡覺）、尼諾拉那一步、其他物理（節點的 _physics_process＋引擎）
 		var before := ((_f_pp_us if _f_steps > 0 else now) - (now - int(ms * 1000.0))) / 1000.0
-		_worst.append([ms, _t, _f_steps, before, _f_boss, ms - before - _f_boss])
+		_worst.append([ms, _t, _f_steps, _f_script, _f_engine, _f_proc, ms - _f_script - _f_engine - _f_proc] if PILOT else [ms, _t, _f_steps, before, _f_boss, ms - before - _f_boss])
 	_f_steps = 0
 	_f_boss = 0.0
+	_f_script = 0.0
+	_f_engine = 0.0
 	if _windowed:
 		_draws.append(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME))
 		_tris.append(Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME))
+	_proc_us = Time.get_ticks_usec()
 
 
 func _report() -> void:
@@ -194,10 +300,17 @@ func _report() -> void:
 	for ms in g:
 		over += maxf(ms - FRAME_MS, 0.0)
 	_worst.sort_custom(func(a: Array, b: Array) -> bool: return a[0] > b[0])
-	var s := "順暢 [%s%s] %s：%d 幀，中位 %.2f、p95 %.2f、p99 %.2f、最久 %.1f 毫秒；掉幀（>16.7）%d 次共卡 %.0f 毫秒、>33 的 %d 次、>50 的 %d 次；碎塊 %d" % [
+	var s := "順暢 [%s%s] %s：%d 幀，中位 %.2f、p95 %.2f、p99 %.2f、最久 %.1f 毫秒；掉幀（>%.1f）%d 次共卡 %.0f 毫秒、>33 的 %d 次、>50 的 %d 次；碎塊 %d" % [
 		_role if _role != "" else "單機", "／落地" if ToyBuild.no_flight else "", _phase, g.size(), g[g.size() / 2], g[int(g.size() * 0.95)], g[int(g.size() * 0.99)], g[-1],
-		_worst.size(), over, g.size() - g.bsearch(33.0), g.size() - g.bsearch(50.0), _m.get_tree().get_nodes_in_group(&"toy_piece").size()]
-	if not _worst.is_empty():
+		FRAME_MS, _worst.size(), over, g.size() - g.bsearch(33.0), g.size() - g.bsearch(50.0), _m.get_tree().get_nodes_in_group(&"toy_piece").size()]
+	if PILOT:
+		var ta := _tick_all.duplicate()
+		ta.sort()
+		s += "；物理一步（腳本＋引擎）最久 %.1f 毫秒、超過 4 毫秒的 %d 步、超過 8.3 的 %d 步（共 %d 步）；一步最久：腳本 %.1f、引擎 %.1f 毫秒" % [
+			ta[-1] if not ta.is_empty() else 0.0, ta.size() - ta.bsearch(4.0), ta.size() - ta.bsearch(8.3), ta.size(), _tick_script, _tick_engine]
+		if not _worst.is_empty():
+			s += "；最慢的幾幀（毫秒@第幾秒）" + str(_worst.slice(0, 5).map(func(w: Array) -> String: return "%.0f@%.1f（物理 %d 步、物理腳本 %.1f、物理引擎 %.1f、上一幀的 _process %.1f、畫面和等螢幕 %.1f）" % w))
+	elif not _worst.is_empty():
 		s += "；最慢的幾幀（毫秒@第幾秒）" + str(_worst.slice(0, 4).map(func(w: Array) -> String: return "%.0f@%.1f（物理 %d 步、物理前 %.1f、尼諾拉 %.1f、其他物理 %.1f）" % w))
 	if PLOW and _boss:
 		s += "；尼諾拉一步最久 %.1f 毫秒" % _move_ms
@@ -342,12 +455,15 @@ func _profile() -> void:
 		if top.size() < ToyBuild.MAX_PIECES and h._lv[i] < 3 and h._sidx[i] >= 0:
 			top.append(i)
 	top.sort()
-	_time("鬆脫 150 塊 _break（客戶端的路：150 個會飛的碎塊）", func() -> void: h._break(top, PackedInt32Array(), at, ToyBuild.FALL_SPEED, Vector3.ZERO))
+	_time("鬆脫 150 塊 _break＋_flush（客戶端的路：150 個會飛的碎塊；遊戲裡一步只生 SPAWN_PER_TICK 個）", func() -> void:
+		h._break(top, PackedInt32Array(), at, ToyBuild.FALL_SPEED, Vector3.ZERO)
+		h._flush())
 	_time("    150 個碎塊停下 _settle（刪掉飛的、各生一個靜態的）", func() -> void: h._settle(top, top_xf(h, top)))
 	h.restore()
 	_time("    其中：藏 150 塊 _hide_bricks", func() -> void: h._hide_bricks(top))
 	_time("    其中：生 150 個碎塊節點 _spawn＋_make", func() -> void:
-		for i in top: h._spawn(PackedInt32Array([i]), h._xf[i], h.global_transform * h._xf[i], true))
+		for i in top: h._spawn(PackedInt32Array([i]), h._xf[i], h.global_transform * h._xf[i], true)
+		h._flush())
 	h.restore()
 	ToyBuild.no_flight = true
 	_time("鬆脫 150 塊 _break（伺服器的路：直接落地）", func() -> void: h._break(top, PackedInt32Array(), at, ToyBuild.FALL_SPEED, Vector3.ZERO))
