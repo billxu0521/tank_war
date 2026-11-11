@@ -19,9 +19,35 @@ var damage := DAMAGE
 var burn := false          # 打中人就點著（燃燒見 fighter.gd）
 var wreck := false         # 打中可拆的積木扣一下（尼諾拉的火球；toy_build.gd 自己擋等級 3）
 var _flown := 0.0          # 飛了多遠
+# 外觀（FireballFx，純表演，沒畫面的伺服器不建）
+var look_size := 1.4            # 火球看起來的直徑（公尺）
+var look_from := Vector3.INF    # 外觀從這裡（嘴裡蓄火的位置）出發，BLEND 秒內滑到真正的位置；判定不受影響
+const BLEND := 0.12
+var _look: Node3D
+var _age := 0.0
+var _off := Vector3.ZERO
 
 func _ready() -> void:
-	get_tree().create_timer(5.0).timeout.connect(queue_free)
+	get_tree().create_timer(5.0).timeout.connect(_end.bind(false))
+	set_process(FireballFx.on)
+	if FireballFx.on:
+		_look = FireballFx.flight(self, look_size)
+
+## 每幀（只有有畫面的那台）：外觀從嘴裡滑到真正的位置、芯自己轉
+func _process(delta: float) -> void:
+	if _age == 0.0 and look_from != Vector3.INF:
+		_off = look_from - global_position
+	_age += delta
+	_look.position = _off * (1.0 - smoothstep(0.0, BLEND, _age))
+	_look.get_node(^"Ball").rotate(Vector3(0.3, 1.0, 0.2).normalized(), delta * 9.0)
+
+## 火球沒了。hit = 打到東西（爆開在 FireballFx.impact），不是的話是飛到底自己熄掉
+func _end(hit: bool) -> void:
+	if _look and not is_queued_for_deletion():
+		FireballFx.release(_look, get_parent())
+		if not hit:
+			FireballFx.fizzle(get_parent(), _look.global_position, look_size)
+	queue_free()
 
 func _physics_process(delta: float) -> void:
 	vel.y -= gravity * delta
@@ -29,7 +55,7 @@ func _physics_process(delta: float) -> void:
 	var to := from + vel * delta
 	_flown += (to - from).length()
 	if max_range > 0.0 and _flown > max_range:
-		queue_free()
+		_end(false)
 		return
 	var hit := get_world_3d().direct_space_state.intersect_ray(
 		PhysicsRayQueryParameters3D.create(from, to))
@@ -38,8 +64,11 @@ func _physics_process(delta: float) -> void:
 	if hit.is_empty():
 		global_position = to
 		return
-	Fx.burst(get_tree().get_first_node_in_group(&"arena"), SphereMesh.new(),
-		Color(1, 0.45, 0.1, 0.9), hit.position, Vector3.ONE * 0.8, Vector3.ONE * 5.0, 0.3)
+	if FireballFx.on:
+		var world := get_tree().get_first_node_in_group(&"arena") as Node3D
+		var normal: Vector3 = hit.get(&"normal", -vel.normalized())   # 擦到人（_near）沒有法線：朝來的方向爆
+		if world:
+			FireballFx.impact(world, hit.position, normal, look_size, normal.y > 0.6 and (hit.collider as Node).is_in_group(&"ground"))
 	if hit.collider.has_method("take_damage"):
 		if is_instance_valid(shooter):
 			shooter.on_hit()
@@ -52,7 +81,7 @@ func _physics_process(delta: float) -> void:
 		var reach := radius * 2.0
 		hit.collider.fireball_fire(at, reach)   # 打到可燃的塊留一灘火（物理規則第二版）。認方法不認型別：寫 ToyBuild 會循環載入（toy_build → … → fireball.tscn）
 		hit.collider.smash(func(p: Vector3) -> bool: return p.distance_to(at) < reach, Balance.whole("hit_fireball_force"), from, AABB(at - Vector3.ONE * reach, Vector3.ONE * reach * 2.0))
-	queue_free()
+	_end(true)
 
 ## 射線沒打到的時候，看半徑之內有沒有會受傷的人（擦過去也算）。發射者不算
 func _near(at: Vector3) -> Dictionary:

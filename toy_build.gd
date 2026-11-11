@@ -810,18 +810,11 @@ func set_on(on: bool) -> void:
 ## 挨打的回饋：碎裂聲在 at，鏡頭震離 at 越遠越小，操作恐龍的那台停一下。回傳鏡頭震了多少（測試用）
 static func hit_fx(on: Node3D, at: Vector3, down: bool) -> float:
 	sfx(on, HIT_SOUND, 40.0, at)
-	var cam := on.get_viewport().get_camera_3d()
-	if cam == null:
-		return 0.0
-	# 從鏡頭往上找第一個有 add_shake 的（牛仔的鏡頭在 Head 底下，恐龍的在 CamPivot 底下）
-	var who: Node = cam.get_parent()
-	while who and not who.has_method(&"add_shake"):
-		who = who.get_parent()
+	var r := Fx.shake(on, at, 0.08 if down else 0.03, SHAKE_RANGE)
+	var who: Node = r[0]
+	var amount: float = r[1]
 	if who == null:
 		return 0.0
-	var k: float = clampf(1.0 - cam.global_position.distance_to(at) / SHAKE_RANGE, 0.0, 1.0) * Settings.v.get(&"shake", 1.0)
-	var amount: float = (0.08 if down else 0.03) * k
-	who.add_shake(amount)
 	# 尼諾拉正在全速撞：停頓只在第一下給（boss.gd _plow_fed），這裡不再停
 	if who.has_method(&"add_hitstop") and not (who.has_method(&"is_plowing") and who.is_plowing()):
 		who.add_hitstop(0.1 if down else 0.06)
