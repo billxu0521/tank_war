@@ -1162,7 +1162,7 @@ func _case_safe() -> void:
 	var st: Dictionary = p.state()
 	_ck(st.safe.size() == 4 and not str(st).contains("code"), "party 那包沒有密碼（%s）" % [st.safe.keys()])
 	var props: Array = (s.get_node(^"MultiplayerSynchronizer") as MultiplayerSynchronizer).replication_config.get_properties()
-	_ck(props.size() == 1 and String(props[0]).ends_with(":position"), "保險箱的同步器只送位置（%s）" % [props])
+	_ck(props.size() == 2 and String(props[0]).ends_with(":position") and String(props[1]).ends_with(":rotation"), "保險箱的同步器只送位置和角度（%s）" % [props])
 	var bots: Array = [-1, -2, -3].map(func(id: int) -> Node3D: return m.players.get_node(NodePath(str(id))))
 	for c: Node3D in bots:
 		c.global_position = Vector3(0, 800, 0)
@@ -2033,3 +2033,207 @@ func _case_egg_unbury() -> void:
 		_ck(egg.global_position.is_equal_approx(before), "沒被包住的蛋不該動")
 		_free_map(m)
 	)
+
+## ---- 保險箱的物理（safe.gd 第 4 步）：接在自動跨上矮碎塊後面（_phase 8，每個物理幀推）。
+## 尼諾拉、牛仔的物理關掉，照 _physics_process 的順序直接推；對局本身（party.step、箱子的救回）照常每個物理幀跑
+var _sp_m: Node
+var _sp_s: Safe
+var _sp_b: Node3D
+var _sp_c: Node3D
+var _sp_stage := 0
+var _sp_t := 0.0
+var _sp_from := Vector3.ZERO
+var _sp_code := -1
+const SP_AT := Vector3(-30, 0, 40)
+var _sp_plat: Node
+var _sp_wall: Node
+
+func _sp_box(m: Node, at: Vector3, size: Vector3) -> StaticBody3D:
+	var b := StaticBody3D.new()
+	b.collision_layer = 1 | Fighter.SOLID_LAYER
+	var cs := CollisionShape3D.new()
+	var sh := BoxShape3D.new()
+	sh.size = size
+	cs.shape = sh
+	b.add_child(cs)
+	m.map.add_child(b)
+	b.global_position = at
+	return b   # 牧場這附近是空地
+
+func _su_end() -> bool:
+	_free_map(_su_m)
+	_start_safe_physics()
+	return false
+
+func _physics_process(delta: float) -> bool:
+	if _phase == 8:
+		return _sp_physics(delta)
+	return super(delta)
+
+func _start_safe_physics() -> void:
+	_phase = 8
+	_case_safe_client()
+	var m := _isolated_match()   # 自己的物理世界：前面的案例留下的地圖不會撞到
+	_sp_m = m
+	m._on_mode_picked(m.RULES.keys().find(&"party"))
+	m._apply_rules()
+	m._physics_process(DT)   # 開場：主機（1）當恐龍，-1～-3 是電腦牛仔
+	_sp_s = m.safe
+	_sp_b = m._boss()
+	_sp_b.set_physics_process(false)
+	_sp_b.global_position = Vector3(0, 800, 0)
+	for id in [-1, -2, -3]:
+		var c: Node3D = m.players.get_node(NodePath(str(id)))
+		c.set_physics_process(false)
+		c.global_position = Vector3(id * 5, 800, 0)
+	_sp_c = m.players.get_node(^"-1")
+	m.party._hide_egg_at(SP_AT)
+	m.party.time_left = 0.0
+	m._physics_process(DT)
+	_sp_s.place(m._on_ground(SP_AT + Vector3(0, Safe.HALF, 0)))
+	_sp_code = _sp_s._code
+	_ck(m.party.phase == &"play" and _sp_s.locked() and not _sp_s.freeze, "遊戲開始：箱子鎖著、主機算物理")
+	_sp_next(0)
+
+## 客戶端的箱子不自己算：凍著，推了也不動
+func _case_safe_client() -> void:
+	var vp := SubViewport.new()
+	root.add_child(vp)
+	var mp := SceneMultiplayer.new()
+	var peer := ENetMultiplayerPeer.new()
+	peer.create_client("127.0.0.1", 1)
+	mp.multiplayer_peer = peer
+	set_multiplayer(mp, vp.get_path())
+	var s := Safe.new()
+	vp.add_child(s)
+	s.reset(true)
+	s.place(Vector3(0, 50, 0))
+	s.push(Vector3.UP * 10.0)
+	_ck(not s.multiplayer.is_server() and s.freeze and s.linear_velocity == Vector3.ZERO, "客戶端的保險箱凍著，不自己算物理")
+	peer.close()
+	root.remove_child(vp)
+	vp.free()
+
+func _sp_next(stage: int) -> void:
+	_sp_stage = stage
+	_sp_t = 0.0
+	_sp_from = _sp_s.global_position
+
+func _sp_moved() -> float:
+	var d := _sp_s.global_position - _sp_from
+	return Vector2(d.x, d.z).length()
+
+## 箱子鎖著時蛋跟著（party.step 每幀擺）
+func _sp_egg_follows() -> bool:
+	return _sp_s.locked() and _sp_m.egg.global_position.distance_to(_sp_s.global_position) < 0.5 and _sp_m.egg.carrier == 0
+
+func _sp_physics(delta: float) -> bool:
+	_sp_t += delta
+	var s := _sp_s
+	var m := _sp_m
+	var c := _sp_c
+	var b := _sp_b
+	match _sp_stage:
+		0:   # 放好，等它站穩、凍住
+			if _sp_t > 1.5:
+				_ck(s.freeze, "保險箱停下來就凍住（當牆，角色推不動）")
+				_sp_next(1)
+				c.global_position = s.global_position + Vector3(-2.0, -Safe.HALF, 0)
+				c.velocity = Vector3.ZERO
+		1:   # 牛仔一直往箱子走：推不太動
+			if not c.is_on_floor():
+				c.velocity += c.get_gravity() * delta
+			c._move_flat(Vector3.RIGHT * c.walk_speed, delta)
+			if _sp_t > 2.0:
+				_ck(_sp_moved() < 0.3, "牛仔走路撞保險箱：推不太動（動了 %.2f 公尺）" % _sp_moved())
+				c.global_position = Vector3(0, 800, 0)
+				b.rotation.y = -PI * 0.5   # 面向 +X
+				b.global_position = m.boss_on_ground(s.global_position + Vector3(-(b.BODY_RADIUS + 1.0), 0, 0))
+				b.velocity = Vector3.ZERO
+				_sp_next(2)
+		2:   # 尼諾拉走路、跑步撞上去：推不太動
+			b._move(Vector3.RIGHT, _sp_t > 1.5, delta)
+			if _sp_t > 3.0:
+				_ck(_sp_moved() < 1.0, "尼諾拉走路跑步撞保險箱：推不太動（動了 %.2f 公尺）" % _sp_moved())
+				_ck(_sp_egg_follows(), "撞過之後蛋還鎖在箱子裡、跟著箱子")
+				_ck(s.freeze, "撞完還凍著")
+				b.global_position = Vector3(0, 800, 0)
+				_sp_from = s.global_position   # 炸凍著的箱子（實戰幾乎都是凍著的時候被炸）
+				c.global_position = s.global_position + Vector3(0, -Safe.HALF, Safe.RANGE - 0.5)   # 站旁邊，不擋在箱子飛的方向（+X）
+				_ck(s.try_code(-1, (_sp_code + 37) % 100), "炸之前有人在試")
+				_sp_stage = 3
+				_sp_t = 0.0
+				var at := s.global_position + Vector3(-2.0, -Safe.HALF, 0)
+				_with_first(m, func() -> void: Explosive.damage(m.map, at, 6.0, 0, null))   # 前面的案例可能留著別的對局：爆炸找第一個
+		3:   # 炸藥：被炸飛；試的人站著不動，箱子飛走了這次作廢
+			if _sp_t > 1.5:
+				_ck(_sp_moved() > 2.0, "炸藥把保險箱炸飛（飛了 %.2f 公尺）" % _sp_moved())
+				_ck(s.busy == 0 and Array(s.tried).count(1) == 0, "試到一半箱子被炸走（離開互動距離）：這次作廢")
+				_ck(_sp_egg_follows(), "炸飛之後蛋還鎖在箱子裡、跟著箱子")
+				c.global_position = Vector3(0, 800, 0)
+				s.place(m._on_ground(SP_AT + Vector3(0, Safe.HALF, 0)))
+				_sp_next(10)
+		10:   # 等它凍住再甩
+			if _sp_t > 1.5:
+				_ck(s.freeze, "放好停下來凍住")
+				b.rotation.y = 0.0   # 面向 -Z，後方是 +Z：箱子擺在尾根後面 4 公尺
+				b.global_position = m.boss_on_ground(s.global_position - Vector3(0, 0, b.SWEEP_ROOT_BACK + 4.0))
+				_sp_next(4)
+				_with_first(m, func() -> void: b._strike_sweep())
+		4:   # 甩尾：掃飛（往 +Z）
+			if _sp_t > 1.5:
+				_ck(_sp_moved() > 3.0 and s.global_position.z > _sp_from.z, "甩尾把保險箱掃飛（飛了 %.2f 公尺）" % _sp_moved())
+				_ck(_sp_egg_follows(), "甩飛之後蛋還鎖在箱子裡、跟著箱子")
+				b.global_position = Vector3(0, 800, 0)
+				# 擺在一塊 2 公尺高的平台上（像積木屋頂），旁邊貼一面牆；凍住之後把平台拿掉，要掉下來
+				var g: Vector3 = m._on_ground(SP_AT)
+				_sp_plat = _sp_box(m, g + Vector3(0, 1.75, 0), Vector3(3, 0.5, 3))
+				_sp_wall = _sp_box(m, g + Vector3(Safe.HALF + 0.25, 3.0, 0), Vector3(0.5, 2.0, 3))
+				s.place(g + Vector3(0, 2.0 + Safe.HALF, 0))
+				_sp_next(11)
+		11:
+			if _sp_t > 1.5:
+				_ck(s.freeze, "停在平台上凍住")
+				_sp_plat.free()
+				_sp_next(12)
+		12:   # 平台拆了：底下空了就解凍、掉回地面（旁邊貼著牆也一樣）
+			if _sp_t > 1.5:
+				var g: float = m._on_ground(Vector3(s.global_position.x, 0, s.global_position.z)).y
+				_ck(s.global_position.y < g + 1.0, "底下的平台拆掉，凍著的箱子掉回地面（高 %.2f）" % (s.global_position.y - g))
+				_sp_wall.free()
+				s.global_position = Vector3(m.ARENA, -30.0, 0)   # 飛出場外、掉到地下
+				_sp_next(5)
+		5:   # 救回：搬回場內的地面
+			if _sp_t > 0.1:
+				var g: float = m._on_ground(Vector3(s.global_position.x, 0, s.global_position.z)).y
+				_ck(absf(s.global_position.x) < m.ARENA * 0.5 and s.global_position.y > g - 0.1 and s.global_position.y < g + 2.0,
+					"掉出場外的保險箱搬回場內地面（%s）" % s.global_position)
+				s.global_position.y = g - 3.0
+				_sp_next(6)
+		6:
+			if _sp_t > 0.1:
+				var g: float = m._on_ground(Vector3(s.global_position.x, 0, s.global_position.z)).y
+				_ck(s.global_position.y > g - 0.1 and _sp_egg_follows(), "掉到地面以下也搬回地面，蛋跟著（高 %.2f）" % (s.global_position.y - g))
+				var ex: Vector2 = m.map.exit_spots()[0]
+				s.place(m._on_ground(Vector3(ex.x, Safe.HALF, ex.y)))
+				_sp_next(7)
+		7:   # 滾進撤離圈不算撤離
+			if _sp_t > 1.0:
+				_ck(m.party.phase == &"play" and m.egg.extract == 0.0 and _sp_egg_follows(), "保險箱在撤離圈裡不算撤離")
+				s.place(m._on_ground(SP_AT + Vector3(0, Safe.HALF, 0)))
+				s.rotation = Vector3(PI * 0.5, 0.7, 0)   # 被炸翻過：躺著、轉了
+				c.global_position = s.global_position + Vector3(1.6, -Safe.HALF, 0)
+				_ck(s.try_code(-1, _sp_code), "箱子翻過還是試得開")
+				_sp_next(8)
+		8:   # 開箱：蛋放在箱頂，撿得起來
+			if _sp_t > Safe.TRY_SECONDS + 0.3:
+				var top := s.global_position + Vector3.UP * Safe.HALF
+				_ck(s.open and m.egg.carrier == 0 and m.egg.global_position.y > top.y and Vector2(m.egg.global_position.x - top.x, m.egg.global_position.z - top.z).length() < 0.3,
+					"箱子翻過再打開：蛋在箱頂（蛋 %s，箱 %s）" % [m.egg.global_position, s.global_position])
+				_sp_next(9)
+		9:
+			if _sp_t > m.pickup_seconds() + 0.5:
+				_ck(m.egg.carrier == -1, "箱子動過之後，開了蛋照舊撿得起來")
+				_free_map(m)
+				return _done()
+	return false
