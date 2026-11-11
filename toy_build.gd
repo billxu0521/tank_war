@@ -53,7 +53,7 @@ var _age := {}                    # 碎塊飛了多久（主機用）
 var _kick_t := {}                 # 踢過的碎塊：代表塊編號 -> 上次踢的毫秒（主機用）
 var _touched := false             # 挨過打（鬆脫、或只挨一下），新的一場要還原
 var _need_bake := false           # 有碎塊還在飛：停下來之後主機要烘一次導航
-var _land_q: Array = []           # 專用伺服器：排隊等落地的碎塊：[代表塊編號, 落地前的位置]（見 LAND_PER_TICK）
+var _land_q: Array = []           # 排隊等著生的碎塊：[代表塊編號, 位置, 從哪裡飛出去, 速度, 是不是專用伺服器的落地]。專用伺服器是等落地（LAND_PER_TICK），其他是這一步生太多（SPAWN_PER_TICK）
 var _adj: Array[PackedInt32Array] = []   # 連通檢查用：每塊相接的塊（_ensure_adj 建一次）
 var _base := PackedInt32Array()          # 著地的塊（頂面在 BASE_TOP 以下，或等級 3）：連通檢查的起點
 var _grid := {}                   # 連通檢查用的鄰居表：格子（Vector3i）-> 蓋到這格的塊編號。第一次要用時建，塊不會動
@@ -66,6 +66,15 @@ const MAX_PIECES := 150
 const MERGE_CELL := 3.0
 # ponytail: 專用伺服器的落地每塊要往下掃一次（約 45 微秒），排隊分幀做，每幀最多這麼多塊；超過的留到下一幀
 const LAND_PER_TICK := 30
+# ponytail: 同一次鬆脫的碎塊飛滿 SETTLE_TIME 會在同一步一起停（150 個剛體刪掉、150 個靜態的加進物理，開視窗量到那一步 5～9 毫秒）。
+# 這棟一步最多停這麼多個，剩下的下一步（150 個分 5 步，共 42 毫秒）
+const SETTLE_PER_TICK := 30
+# ponytail: 會飛的碎塊（單機、自己開房、客戶端）一次鬆脫當步最多生這麼多個，超過的排隊（_land_q）之後每步再生這麼多：塊的碰撞當步全關（尼諾拉不會被擋），
+# 畫面等輪到它的碎塊生出來才換（牆是幾步之內陸續碎開，不會先破一個洞）。150 個分 4 步、共 33 毫秒。
+# 開視窗量過：一步生 150 個要 6～10 毫秒（120 Hz 的一格才 8.3）；40 個約 2 毫秒
+const SPAWN_PER_TICK := 40
+# 上限是一棟一棟算的：甩尾同一步掃到三棟就是 120 個。要更緊就改成全場共用一個額度
+var _spawn_n := 0                 # 這一次鬆脫當步已經生了幾個會飛的碎塊
 
 
 ## bricks：每塊 [Transform3D（相對這棟）, 尺寸 Vector3, 等級 int, 顏色 Color, 有沒有碰撞 bool（可省）, 材質 StringName（可省）]（Greybox.bricks 切出來的）。
@@ -80,7 +89,7 @@ static func make(bricks: Array, can_break_ := true, layer := -1) -> ToyBuild:
 	t._mm = MultiMesh.new()
 	t._mm.transform_format = MultiMesh.TRANSFORM_3D
 	t._mm.use_colors = true
-	t._mm.mesh = BoxMesh.new()
+	t._mm.mesh = box_mesh()
 	t._mm.instance_count = bricks.size()
 	var mmi := MultiMeshInstance3D.new()
 	mmi.multimesh = t._mm
@@ -118,6 +127,14 @@ static func make(bricks: Array, can_break_ := true, layer := -1) -> ToyBuild:
 		t._off[i] = 0
 		t._loose[i] = 0
 	return t
+
+
+## 全場的積木和碎塊共用一個 1 公尺的方塊網格（大小、顏色在每個實例上）
+static var _box: BoxMesh
+static func box_mesh() -> BoxMesh:
+	if _box == null:
+		_box = BoxMesh.new()
+	return _box
 
 
 static func material() -> ShaderMaterial:
@@ -219,7 +236,7 @@ func _ensure_adj() -> void:
 
 
 ## 鬆脫（每台一樣）：ids 每塊馬上生一個碎塊（塊藏起來、碎塊往外飛）；gone 是超過上限的，照位置併成大塊，每組生一個。
-## 塊一次全部藏好（_set_off 一批）才生碎塊。主機重烘導航（碎塊還沒停下，先不算進去）
+## 塊的碰撞一次全部關掉（_set_off 一批）才生碎塊；一步生不完的排隊（SPAWN_PER_TICK）。主機重烘導航（碎塊還沒停下，先不算進去）
 @rpc("authority", "call_local", "reliable")
 func _break(ids: PackedInt32Array, gone: PackedInt32Array, from: Vector3, power: float, dir: Vector3) -> void:
 	_touched = true
@@ -233,11 +250,10 @@ func _break(ids: PackedInt32Array, gone: PackedInt32Array, from: Vector3, power:
 	for i in gone:
 		_loose[i] = 1
 		at += global_transform * _xf[i].origin
-	_hide_bricks(ids + gone)
+	_spawn_n = 0
+	_set_off(ids + gone, true)   # 碰撞這一步全關；畫面等碎塊生出來才換（_spawn、_land_next）
 	for i in order:
-		var n := _spawn(PackedInt32Array([i]), _xf[i], _plow_xf(global_transform * _xf[i], from, dir, power), true)
-		if n is RigidBody3D:   # 專用伺服器落地的是靜態的，不用飛
-			_fling(n as RigidBody3D, from, power)
+		_spawn(PackedInt32Array([i]), _xf[i], _plow_xf(global_transform * _xf[i], from, dir, power), true, from, power)
 	for g: PackedInt32Array in _merge(gone):
 		_spawn_group(g, from, power, dir)
 	at /= float(maxi(ids.size() + gone.size(), 1))
@@ -270,7 +286,8 @@ func _merge(ids: PackedInt32Array) -> Array:
 
 ## 生一個碎塊（主機和各台都走這裡）：mem 是碎塊裡的塊，local 是碎塊的原點（相對這棟），xf 是它現在的世界位置。
 ## 碰撞用一個包住所有塊的方塊、畫面用一個 MultiMesh（每塊一個實例）。名字用代表塊編號
-func _spawn(mem: PackedInt32Array, local: Transform3D, xf: Transform3D, flying: bool) -> Node3D:
+## flying：剛鬆脫的（從 from 用 power 的速度飛出去）；這一步生太多、或專用伺服器要落地的，先排隊（回傳 null）
+func _spawn(mem: PackedInt32Array, local: Transform3D, xf: Transform3D, flying: bool, from := Vector3.ZERO, power := FALL_SPEED) -> Node3D:
 	var rel: Array = []
 	var box := AABB()
 	var vol := 0.0
@@ -288,15 +305,24 @@ func _spawn(mem: PackedInt32Array, local: Transform3D, xf: Transform3D, flying: 
 			mt = _mt[m]
 		lv = mini(lv, _lv[m])
 	_info[mem[0]] = {"m": mem, "rel": rel, "box": box, "vol": vol, "lv": lv, "mt": mt}
-	if flying and ToyBuild.no_flight and multiplayer.is_server():
-		# ponytail: 專用伺服器的碎塊不飛：直接靜態、落到正下方，不是真的散落；要真的散落就用少一點的剛體模擬
-		_landed[mem[0]] = 0.0
-		_land_q.append([mem[0], xf])   # 排隊落地（_physics_process 分幀算落點、生）；晚加入補送前由 _flush 全部做完
-		return null
-	return _make(mem[0], flying, xf)
+	if flying:
+		var lands := ToyBuild.no_flight and multiplayer.is_server()
+		if lands:
+			# ponytail: 專用伺服器的碎塊不飛：直接靜態、落到正下方，不是真的散落；要真的散落就用少一點的剛體模擬
+			_landed[mem[0]] = 0.0
+		if lands or _spawn_n >= SPAWN_PER_TICK:
+			_land_q.append([mem[0], xf, from, power, lands])   # 排隊（_physics_process 分幀生）；晚加入補送前由 _flush 全部做完
+			return null
+		_spawn_n += 1
+	_hide_look(mem)
+	var n := _make(mem[0], flying, xf)
+	if flying:
+		_fling(n as RigidBody3D, from, power)
+	return n
 
 
-## 大碎塊：等它的塊都藏好了（_physics_process）才生。原點取塊中心的平均；只有一塊的照那塊的位置
+
+## 大碎塊：原點取塊中心的平均；只有一塊的照那塊的位置
 func _spawn_group(mem: PackedInt32Array, from: Vector3, power: float, dir: Vector3) -> void:
 	var local := _xf[mem[0]]
 	if mem.size() > 1:
@@ -304,9 +330,7 @@ func _spawn_group(mem: PackedInt32Array, from: Vector3, power: float, dir: Vecto
 		for m in mem:
 			c += _xf[m].origin
 		local = Transform3D(Basis(), c / float(mem.size()))
-	var n := _spawn(mem, local, _plow_xf(global_transform * local, from, dir, power), true)
-	if n is RigidBody3D:
-		_fling(n as RigidBody3D, from, power)
+	_spawn(mem, local, _plow_xf(global_transform * local, from, dir, power), true, from, power)
 
 
 ## 專用伺服器的全速撞（碎塊不飛、直接落地）：落地前先往尼諾拉兩旁移開 KICK_SHIFT（同 boss.gd _kick_piece），不然碎塊落在路上、又擋住下一下。
@@ -457,11 +481,17 @@ func _flush() -> void:
 		_land_next()
 
 
-## 排隊的第一塊：算落點、生成靜態的碎塊
+## 排隊的第一塊：專用伺服器算落點、生成靜態的碎塊；其他生成會飛的
 func _land_next() -> void:
 	var p: Array = _land_q.pop_front()
-	var none: Array[RID] = []
-	_make(p[0], false, _land(p[1], _info[p[0]].box, none))
+	_hide_look(_info[p[0]].m)
+	if _pieces.has(p[0]):   # 排隊的時候已經照主機的位置生好了（_settle 先到）
+		return
+	if p[4]:   # 排隊那時候是專用伺服器的落地
+		var none: Array[RID] = []
+		_make(p[0], false, _land(p[1], _info[p[0]].box, none))
+	else:
+		_fling(_make(p[0], true, p[1]) as RigidBody3D, p[2], p[3])
 
 
 ## 新的一場（party.gd start、main.restore_terrain）：碎塊刪掉、每塊放回原位、血量回滿。碰撞層和群組由 set_on 管
@@ -584,10 +614,10 @@ func _ready() -> void:
 		_ensure_adj()   # 載入時先建好（全場約 12000 塊共幾十毫秒），不要留到第一次被撞的那一幀
 
 
-## 每幀：先落排隊的碎塊（專用伺服器，分幀）；主機再看碎塊睡著或飛滿 SETTLE_TIME 秒的，送 _settle（連同它的位置）
+## 每幀：先生排隊的碎塊（分幀）；主機再看碎塊睡著或飛滿 SETTLE_TIME 秒的，送 _settle（連同它的位置）
 func _physics_process(delta: float) -> void:
 	var k := 0
-	while k < LAND_PER_TICK and not _land_q.is_empty():
+	while not _land_q.is_empty() and k < (LAND_PER_TICK if _land_q[0][4] else SPAWN_PER_TICK):
 		_land_next()
 		k += 1
 	if not multiplayer.is_server():
@@ -602,7 +632,7 @@ func _physics_process(delta: float) -> void:
 			continue
 		_age[key] = _age.get(key, 0.0) + delta
 		# 已經停了（睡著或飛滿 SETTLE_TIME）才看卡不卡：凍在尼諾拉身體裡會把牠頂起來：等牠出來再凍；但最多等 SETTLE_TIME 的 3 倍，之後不管重疊直接凍
-		if ((n as RigidBody3D).sleeping or _age[key] >= SETTLE_TIME) and not (_age[key] < SETTLE_TIME * 3.0 and _in_boss(n)):
+		if ids.size() < SETTLE_PER_TICK and ((n as RigidBody3D).sleeping or _age[key] >= SETTLE_TIME) and not (_age[key] < SETTLE_TIME * 3.0 and _in_boss(n)):
 			ids.append(key)
 			xfs.append(n.global_transform)
 	for key in _landed.keys():   # 專用伺服器落地的碎塊：落地滿 SETTLE_TIME 秒才送最後位置（各台的碎塊飛完才對齊）
@@ -639,7 +669,7 @@ func _in_boss(n: Node3D) -> bool:
 	return false
 
 
-## 沒有排隊要落地的碎塊
+## 沒有排隊要生的碎塊
 func _idle() -> bool:
 	return _land_q.is_empty()
 
@@ -664,7 +694,10 @@ func bricks_near(area: AABB) -> PackedInt32Array:
 			out[i] = i
 		return out
 	_ensure_grid()
-	var la := global_transform.affine_inverse() * area
+	# 只看範圍和這棟重疊的部分：甩尾的範圍是 24 公尺的方塊（3000 多格），一格一格查要 1.3 毫秒，大部分在這棟外面
+	var la := (global_transform.affine_inverse() * area).intersection(_all.grow(GRID))
+	if not la.has_volume():
+		return out
 	var seen := PackedByteArray()
 	seen.resize(_xf.size())
 	for c: Vector3i in _cells(la):
@@ -717,6 +750,11 @@ func _set_off(ids: PackedInt32Array, off: bool) -> void:
 ## 藏起來：碰撞形狀停用、畫面縮成零
 func _hide_bricks(ids: PackedInt32Array) -> void:
 	_set_off(ids, true)
+	_hide_look(ids)
+
+
+## 只藏畫面（碰撞另外關）：塊換成碎塊的那一刻叫
+func _hide_look(ids: PackedInt32Array) -> void:
 	for i in ids:
 		_mm.set_instance_transform(i, Transform3D(Basis.from_scale(Vector3.ZERO), Vector3.ZERO))
 
@@ -743,15 +781,20 @@ func _make(key: int, flying: bool, xf: Transform3D) -> Node3D:
 	cs.shape = sh
 	cs.position = box.get_center()
 	n.add_child(cs)
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.use_colors = true
-	mm.mesh = BoxMesh.new()
-	mm.instance_count = mem.size()
-	for k in mem.size():
-		var r: Transform3D = info.rel[k]
-		mm.set_instance_transform(k, Transform3D(r.basis.scaled(_size[mem[k]]), r.origin))
-		mm.set_instance_color(k, _col[mem[k]])
+	# 碎塊的畫面只建一次、存在 info 裡：飛的換成靜態的（_freeze）、被踢（_kick）都是刪掉重生，重生時接著用。
+	# 開視窗量過：生 150 個碎塊 4.5 毫秒裡 2.6 毫秒是每個都新建一個方塊網格和 MultiMesh（沒畫面的量法看不到，那邊不用真的建）
+	var mm: MultiMesh = info.get("mm")
+	if mm == null:
+		mm = MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.use_colors = true
+		mm.mesh = box_mesh()
+		mm.instance_count = mem.size()
+		for k in mem.size():
+			var r: Transform3D = info.rel[k]
+			mm.set_instance_transform(k, Transform3D(r.basis.scaled(_size[mem[k]]), r.origin))
+			mm.set_instance_color(k, _col[mem[k]])
+		info.mm = mm
 	var mmi := MultiMeshInstance3D.new()
 	mmi.multimesh = mm
 	mmi.material_override = material()
