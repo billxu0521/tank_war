@@ -1297,6 +1297,59 @@ func _case_envelope() -> void:
 	_ck(p.my_digits == [-1, code % 10], "重連後補送給本人")
 	_end(m)
 
+## 電腦牛仔開保險箱（cowboy.gd 的 _bot_card、_bot_safe_act，規劃製作順序第 3 步）：看牌、去箱子、試對得上的組合、開了照舊撿蛋。
+## 恐龍（主機 1）不動。bot 不在物理幀裡，手動叫 _bot_step，走路用瞬移代替
+func _case_bot_safe() -> void:
+	var m := _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"party"))
+	m._apply_rules()
+	var p: Party = m.party
+	var s: Safe = m.safe
+	m._physics_process(DT)
+	p.place_egg()
+	p.time_left = 0.0
+	m._physics_process(DT)
+	var code: int = s._code
+	var b: Cowboy = m.players.get_node(^"-1")
+	var b2: Cowboy = m.players.get_node(^"-2")
+	b.bot_fire_range = 0.0   # 只看開箱，不打恐龍
+	b.global_position = s.global_position + Vector3(0, 0, 50)
+	var near_i := 0 if b._flat_to(p.env_pos[0]) < b._flat_to(p.env_pos[1]) else 1
+	_ck(p.phase == &"play" and b._bot_goal(m) == p.env_pos[near_i], "箱子沒開：bot 先去最近的信封")
+	b.global_position = p.env_pos[near_i] + Vector3(1, 0.5, 0)
+	b._bot_step(DT)
+	var k: Array = p._known.get(-1, [-1, -1])
+	_ck(k[near_i] == p.digit(near_i) and k[1 - near_i] == -1, "走到信封旁邊就看（%s）" % [k])
+	var near := s.global_position + Vector3(1.6, 0.5, 0)
+	b.global_position = near
+	_ck(b._bot_goal(m) == s.global_position and b._bot_should_hold(m), "看過牌、箱子比另一張近：去箱子旁邊站著")
+	# 別人在試：bot 在旁邊等，不送
+	b2.global_position = near + Vector3(0, 0, 0.8)
+	var other := (code + 50) % 100
+	_ck(s.try_code(-2, other), "另一個人先試")
+	for i in int(Safe.TRY_SECONDS / DT * 0.5):
+		b._bot_step(DT)
+		m._physics_process(DT)
+	_ck(s.busy == -2 and Array(s.tried).count(1) == 0, "箱子忙的時候 bot 不送試開")
+	b2.global_position = near + Vector3(0, 0, 80)
+	var frames := 0
+	while not s.open and frames < int(13.0 / DT):
+		b._bot_step(DT)
+		m._physics_process(DT)
+		frames += 1
+	var tries := Array(s.tried).count(1)
+	_ck(s.open and tries <= 11, "bot 試對得上的組合開箱（%.1f 秒、試了 %d 次）" % [frames * DT, tries])
+	var off := 0
+	for n in 100:
+		if s.tried[n] == 1 and n != other and (n / 10 if near_i == 0 else n % 10) != k[near_i]:
+			off += 1
+	_ck(off == 0, "只試跟看過的那一位對得上的")
+	for i in int(m.pickup_seconds() / DT) + 10:
+		b._bot_step(DT)
+		m._physics_process(DT)
+	_ck(m.egg.carrier == -1, "開了照舊撿蛋")
+	_end(m)
+
 ## 斷線重連：60 秒內同一個代號連回來，拿回命數、出局狀態、派對分數；過期、新局就當新人
 func _case_reconnect() -> void:
 	var m := _offline_match()

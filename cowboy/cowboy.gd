@@ -171,6 +171,7 @@ var focus: Node = null
 var _ladder: Node = null
 ## 這次騰空的最高點。-INF＝還沒落地過（剛出生從半空掉下來不算摔）
 var _fall_top := -INF
+var _bot_try_left := 0.0   # bot 下一次試密碼前還要等多久
 ## bot 繞牆：頂著牆走不動時沿牆面走一段
 var _detour := Vector3.ZERO
 var _detour_left := 0.0
@@ -599,6 +600,8 @@ func _bot_step(delta: float) -> void:
 		_walk_patrol(delta)
 		return
 
+	if g != null and g.safe.locked() and multiplayer.is_server():   # 看牌、試密碼只有主機算
+		_bot_safe_act(g, delta)
 	var want := Vector3.ZERO
 	if not _bot_should_hold(g):
 		var to := _bot_goal(g) - global_position
@@ -642,6 +645,8 @@ func _walk_patrol(delta: float) -> void:
 func _bot_should_hold(g: Node) -> bool:
 	if g == null:
 		return false
+	if g.safe.locked():   # 保險箱：看完牌，站在箱子旁邊試（別人在試也在旁邊等）
+		return _bot_card(g) < 0 and _flat_to(g.safe.global_position) < Safe.RANGE * 0.6
 	if g.egg.carrier == name.to_int():
 		return g._dist_to_exit(global_position) < g.EXIT_RADIUS * 0.5
 	if g.egg.carrier == 0:
@@ -656,6 +661,9 @@ func _bot_goal(g: Node) -> Vector3:
 		# 沙盒沒有蛋：直接去找玩家打，當陪練
 		var me := _bot_threat(g)
 		return me.global_position if me else global_position
+	if g.safe.locked():
+		var i := _bot_card(g)
+		return g.party.env_pos[i] if i >= 0 else g.safe.global_position   # 箱子之後會動：每次讀現在的位置
 	var my_id := name.to_int()
 	if g.egg.carrier == my_id:
 		var best: Vector3 = g._exits[0]
@@ -667,6 +675,41 @@ func _bot_goal(g: Node) -> Vector3:
 		return g.egg.global_position
 	var holder: Node3D = g.players.get_node_or_null(NodePath(str(g.egg.carrier)))
 	return holder.global_position if holder != null else g.egg.global_position
+
+
+## 保險箱沒開時要去看哪張牌（0 十位、1 個位），-1 = 直接去箱子。
+## 一張都沒看 -> 最近的那張；看過一張 -> 另一張比箱子近才順路去看
+## ponytail: 不管恐龍在哪、不分工，兩三行規則；要更像人再看恐龍距離、別的 bot 看過什麼
+func _bot_card(g: Node) -> int:
+	var k: Array = g.party._known.get(name.to_int(), [-1, -1])
+	var e: Array = g.party.env_pos
+	if k[0] < 0 and k[1] < 0:
+		return 0 if _flat_to(e[0]) < _flat_to(e[1]) else 1
+	var i := 0 if k[0] < 0 else 1 if k[1] < 0 else -1
+	return i if i >= 0 and _flat_to(e[i]) < _flat_to(g.safe.global_position) else -1
+
+
+func _flat_to(p: Vector3) -> float:
+	return Vector2(p.x - global_position.x, p.z - global_position.z).length()
+
+
+## 主機：經過信封就看（read 自己檢查距離）；在箱子旁邊、沒人在試就試一個跟看過的數字對得上、還沒試過的組合
+func _bot_safe_act(g: Node, delta: float) -> void:
+	var id := name.to_int()
+	var p: Node = g.party
+	var k: Array = p._known.get(id, [-1, -1])
+	for i in 2:
+		if k[i] < 0 and _flat_to(p.env_pos[i]) < Envelope.RANGE and p.read(id, i):
+			return
+	_bot_try_left -= delta
+	if _bot_try_left > 0.0 or g.safe.busy != 0 or _flat_to(g.safe.global_position) >= Safe.RANGE:
+		return
+	var left: Array = []
+	for n in 100:
+		if g.safe.tried[n] == 0 and (k[0] < 0 or n / 10 == k[0]) and (k[1] < 0 or n % 10 == k[1]):
+			left.append(n)
+	if not left.is_empty() and g.safe.try_code(id, left.pick_random()):
+		_bot_try_left = 1.0   # 一秒試一個（試本身也要 1 秒，箱子忙的時候不送）
 
 
 ## 瞄誰：有人拿著蛋就瞄他，否則瞄最近的敵人（恐龍或別的牛仔）
