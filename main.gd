@@ -40,6 +40,7 @@ const BOSS_ID := -999   # 負數＝電腦（主機操控）；固定編號，場
 @onready var menu: Control = $UI/Root/Menu
 @onready var players: Node3D = $Players
 @onready var egg: Egg = $Egg
+@onready var safe: Safe = $Safe   # 派對模式的保險箱（safe.gd）；其他模式收著
 @onready var mode_pick: OptionButton = $UI/Root/Lobby/ModeRow/ModePick
 
 ## 連線對戰的模式：開房的人在大廳選，加入的人照主機的（連進來時主機會送 _set_rules）。
@@ -56,6 +57,7 @@ var _auth_failed := false   # 這次加入是版本檢查逾時（不是主機�
 var party: Party   # 派對模式的回合、計分（party.gd）；不是派對模式是 null
 var _party_hud: PartyHud   # 派對模式的畫面（方位條要問它是不是在選重生點）
 var _buy_menu: BuyMenu   # 派對準備階段的選裝選單（buy_menu.gd）：開著時游標不鎖
+var _safe_panel: SafePanel   # 保險箱的密碼面板（safe_panel.gd）：開著時游標不鎖
 var _match_hud: MatchHud   # 局內的畫面資訊（match_hud.gd）：方位條、倒數、準心、boss 條、左上角那行字
 @onready var map: ArenaMap = $Arena   # 場地：地形、擺設、門、撤離區都在 arena_map.gd
 const ARENA := ArenaMap.ARENA
@@ -136,6 +138,9 @@ func _ready() -> void:
 	_buy_menu = BuyMenu.new()   # 派對準備階段的選裝（buy_menu.gd）；要加在 party_hud 後面：數字鍵先給它
 	_buy_menu.main = self
 	$UI/Root.add_child(_buy_menu)
+	_safe_panel = SafePanel.new()
+	_safe_panel.main = self
+	$UI/Root.add_child(_safe_panel)
 	ModelMaterials._flatten_models()
 	_use_cjk_font()
 	_add_settings()
@@ -266,7 +271,7 @@ func _unhandled_input(e: InputEvent) -> void:
 		return
 	if esc:
 		_set_menu(not menu.visible)
-	elif e is InputEventMouseButton and e.pressed and not menu.visible and not result.visible and not _buy_menu.visible:
+	elif e is InputEventMouseButton and e.pressed and not menu.visible and not result.visible and not _buy_menu.visible and not _safe_panel.visible:
 		Fighter.lock_mouse()  # 點畫面重新鎖回滑鼠
 
 # --- 問題回報（bug_report.gd）---
@@ -735,6 +740,7 @@ func _apply_rules() -> void:
 	if party:   # 換模式、回大廳都重來一份
 		party.free()
 		party = null
+	safe.reset(false)   # 派對開回合時才擺（party._start_round）
 	if RULES[rules].party:
 		party = Party.new()
 		party.name = &"Party"
@@ -1785,7 +1791,7 @@ func _process(delta: float) -> void:
 	var me := _me()
 	# 保險：遊戲中、沒開選單和勝負畫面，游標卻沒鎖住（系統自己放掉的，0.8.1 回饋「舉槍後跑出游標」），就鎖回去。
 	# 視窗沒焦點時鎖不住，等切回來再鎖
-	if not menu.visible and not result.visible and not _buy_menu.visible and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED \
+	if not menu.visible and not result.visible and not _buy_menu.visible and not _safe_panel.visible and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED \
 			and get_window().has_focus():
 		Fighter.lock_mouse()
 	_match_hud.update_match(me)
@@ -1839,6 +1845,8 @@ func extract_seconds() -> float:
 ## 撿蛋不是碰到就拿，要在旁邊連續待滿 PICKUP_SECONDS。
 ## 換人或走開就歸零——跟撤離同一個道理，讓拿蛋變成要承諾的動作。
 func _claim_step(delta: float) -> void:
+	if safe.locked():   # 保險箱還沒開，蛋撿不到
+		return
 	var near: Node3D = null
 	for p in players.get_children():
 		if p.is_in_group(&"dino"):

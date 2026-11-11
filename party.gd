@@ -35,6 +35,7 @@ var dino_id := 0
 var names := {}               # 連線編號 -> 顯示名稱
 var last_result := ""
 var egg_placed := false       # 準備階段恐龍放蛋了沒
+var use_safe := false         # 蛋鎖在保險箱（match_rules 的 safe，_ready 讀；測試可以先關掉走舊的藏蛋）
 
 var _roster: Array = []       # 參賽者（照當恐龍的順序）
 var _waiting := {}            # 主機：等重生的牛仔編號 -> [剩幾秒, 是不是電腦]
@@ -43,6 +44,10 @@ var _sync_left := 0.0
 
 @onready var main: Node = get_parent()
 const BOSS_GD := preload("res://boss.gd")   # 尼諾拉的身高（LIFT）：開局放回出生點用
+
+
+func _ready() -> void:
+	use_safe = bool(main.RULES[main.rules].get("safe", false))
 
 
 ## 照總分排的連線編號（高的在前）
@@ -62,7 +67,7 @@ func request_respawn_at(index: int) -> void:
 	_pick[from if from != 0 else multiplayer.get_unique_id()] = index
 
 
-## 準備階段恐龍按 F 把蛋放在腳下。客戶端送到主機
+## 準備階段恐龍按 F 把蛋放在腳下（保險箱模式：放保險箱，蛋在裡面）。客戶端送到主機
 @rpc("any_peer", "call_remote", "reliable")
 func place_egg() -> void:
 	if not multiplayer.is_server():
@@ -71,8 +76,7 @@ func place_egg() -> void:
 	var from := multiplayer.get_remote_sender_id()
 	if phase != &"prep" or egg_placed or (from if from != 0 else multiplayer.get_unique_id()) != dino_id:
 		return
-	_drop_egg_at(_dino_pos())
-	egg_placed = true
+	_hide_egg_at(_dino_pos())
 	_sync()
 
 
@@ -83,7 +87,8 @@ func _process(delta: float) -> void:
 		time_left = maxf(time_left - delta, 0.0)
 	var me := multiplayer.get_unique_id()
 	# 準備階段只有恐龍看得到蛋：牛仔要看恐龍往哪走，猜蛋藏在哪
-	main.egg.visible = phase != &"prep" or me == dino_id
+	main.egg.visible = (phase != &"prep" or me == dino_id) and not main.safe.locked()
+	main.safe.visible = main.safe.on and egg_placed and (phase != &"prep" or me == dino_id)
 	if phase == &"prep" and me == dino_id and not egg_placed and Input.is_action_just_pressed(&"interact") \
 			and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		place_egg()
@@ -104,14 +109,16 @@ func step(delta: float) -> void:
 				main.egg.global_position = main._on_ground(_flat(_dino_pos(), 0.5))   # 還沒放：蛋跟著恐龍走
 			if time_left <= 0.0:
 				if not egg_placed:   # 時間到沒放：放在恐龍腳下
-					_drop_egg_at(_dino_pos())
-					egg_placed = true
+					_hide_egg_at(_dino_pos())
 				phase = &"play"
 				time_left = PLAY_SECONDS
 				main._announce.rpc("開始！")
 				_sync()
 		&"play":
 			_respawn_step(delta)
+			main.safe.server_step(delta)   # 試密碼的 1 秒、作廢、開箱
+			if main.safe.locked():   # 鎖著：蛋跟著箱子（第 4 步箱子會被炸飛）
+				main.egg.global_position = main.safe.global_position
 			_drop_orphan_egg()
 			main._egg_step(delta)   # 撿蛋、帶著走、撤離（撤離成功會叫 extracted）
 			if phase != &"play":
@@ -181,6 +188,7 @@ func _start_round() -> void:
 	_pick.clear()
 	last_result = ""
 	egg_placed = false
+	main.safe.reset(use_safe)   # 每回合重抽密碼、清試過的表
 	dino_id = _roster[round_index % _roster.size()]
 	# 清場：boss 以外全部收掉再照這回合的角色生（刪掉重生，客戶端的位置才會跟著換；做法同 main._new_round）
 	# 恐龍的牛仔留著：make_pilot 要跟他交接（先叫他停送同步再收），不能現在就收
@@ -217,8 +225,7 @@ func _start_round() -> void:
 	if dino_id > 0 and _present(dino_id):
 		main.make_pilot(dino_id)   # 真人：操作尼諾拉（對抗模式那套）；電腦：boss 自己跑
 	else:   # 電腦不會藏蛋：開場就放在中央（不然蛋跟著牠追到站著不動的牛仔旁邊）
-		_drop_egg_at(b.global_position)
-		egg_placed = true
+		_hide_egg_at(b.global_position)
 	_sync()
 
 
@@ -297,6 +304,22 @@ func _drop_orphan_egg() -> void:
 		_drop_egg_at(egg.global_position)
 
 
+## 恐龍藏蛋（按 F、時間到、電腦開場）。保險箱模式：箱子放在恐龍前面（不要卡在牠身體裡），蛋鎖在箱子裡
+func _hide_egg_at(p: Vector3) -> void:
+	egg_placed = true
+	if not main.safe.on:
+		_drop_egg_at(p)
+		return
+	var b: Node3D = main._boss()
+	if b:
+		var fwd := -b.global_basis.z
+		p += Vector3(fwd.x, 0.0, fwd.z).normalized() * (BOSS_GD.BODY_RADIUS + Safe.HALF + 1.0)
+	main.safe.global_position = main._on_ground(_flat(p, Safe.HALF))
+	main.safe.reset_physics_interpolation()
+	main.egg.global_position = main.safe.global_position
+	main.egg.reset_physics_interpolation()
+
+
 func _drop_egg_at(p: Vector3) -> void:
 	main.egg.global_position = main._on_ground(_flat(p, 0.5))
 	main.egg.reset_physics_interpolation()
@@ -351,14 +374,22 @@ func _add(id: int, pts: int) -> void:
 
 func _sync() -> void:
 	_sync_left = 1.0
-	_recv.rpc({rounds = rounds, round_index = round_index, phase = phase, time_left = time_left, scores = scores,
-		round_scores = round_scores, lives = lives, dino_id = dino_id, names = names, last_result = last_result,
-		egg_placed = egg_placed})
+	_recv.rpc(state())
 	changed.emit()
+
+
+## 每秒送給大家的整包（公開的東西）。保險箱只有 safe.state()：密碼不在裡面
+func state() -> Dictionary:
+	return {rounds = rounds, round_index = round_index, phase = phase, time_left = time_left, scores = scores,
+		round_scores = round_scores, lives = lives, dino_id = dino_id, names = names, last_result = last_result,
+		egg_placed = egg_placed, safe = main.safe.state()}
 
 
 @rpc("authority", "call_remote", "reliable")
 func _recv(s: Dictionary) -> void:
 	for k: String in s:
-		set(k, s[k])
+		if k == "safe":
+			main.safe.set_state(s[k])
+		else:
+			set(k, s[k])
 	changed.emit()
