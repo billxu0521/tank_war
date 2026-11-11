@@ -212,20 +212,20 @@ func _update_pilot_hint(me: Node) -> void:
 		_root.add_child(_pilot_hint)
 	_pilot_hint.visible = me != null and me.is_in_group(&"boss") and me.pilot == main.multiplayer.get_unique_id()
 
-## 準心畫在「火球會落到哪」，不是螢幕正中央——抬頭時看得出彈道往上跑。
+## 準心畫在「火球會落到哪」，不是螢幕正中央——抬頭時看得出彈道往上跑（舊恐龍）。
 ## 牛仔的準心在自己的 HUD 裡（子彈是直線，畫正中央就對），沒有 aim_point，這裡就不顯示。
 func _update_crosshair(me: Node) -> void:
 	var cam := main.get_viewport().get_camera_3d()
-	if me != null and me.is_in_group(&"boss"):   # 操作尼諾拉：沒有火球準心，打中人時畫面中間閃紅
-		main.crosshair.visible = me.hit_until > Time.get_ticks_msec()
-		main.crosshair.modulate = Color(1, 0.3, 0.25)
-		main.crosshair.position = main.get_viewport().get_visible_rect().size * 0.5 - main.crosshair.size * 0.5
-		return
-	if me == null or cam == null or not me.has_method("aim_point"):
+	# 尼諾拉只有駕駛看得到準心（boss.gd 的 aim_point：鏡頭正中央指到的點，身體還沒轉過來時會偏向火球真的會去的地方）
+	if me == null or not me.has_method("aim_point") or (me.is_in_group(&"boss") and me.pilot != main.multiplayer.get_unique_id()):
 		main.crosshair.hide()
 		return
-	# 打中人準心閃紅。遠距離看不出血條掉，這是唯一的命中確認
-	main.crosshair.modulate = Color(1, 0.3, 0.25) if me.hit_until > Time.get_ticks_msec() else Color.WHITE
+	# 打中人準心閃紅。遠距離看不出血條掉，這是唯一的命中確認。尼諾拉的火球還在冷卻：準心變淡
+	main.crosshair.modulate = Color(1, 0.3, 0.25) if me.hit_until > Time.get_ticks_msec() \
+		else Color(1, 1, 1, 0.35) if me.get(&"fireball_left") else Color.WHITE
+	if cam == null:
+		main.crosshair.hide()
+		return
 	var p: Vector3 = me.aim_point()
 	main.crosshair.visible = not cam.is_position_behind(p)
 	main.crosshair.position = cam.unproject_position(p) - main.crosshair.size * 0.5
@@ -315,4 +315,5 @@ func _update_boss_bar(me: Node) -> void:
 		_boss_bar.modulate = Color.WHITE
 	_boss_label.text = "恐龍 boss　體力（%s）" % state
 	if b.pilot == main.multiplayer.get_unique_id():   # 自己操作的恐龍才看得到甩尾冷卻（牛仔看不到）
+		_boss_label.text += "　火球 %s" % ("可用" if b.fireball_left <= 0.0 else "%d 秒" % ceili(b.fireball_left))
 		_boss_label.text += "　甩尾 %s" % ("可用" if b.sweep_left <= 0.0 else "%d 秒" % ceili(b.sweep_left))
