@@ -47,6 +47,7 @@ var _pick := {}               # 主機：牛仔選的重生點（編號 -> spawn
 var _sync_left := 0.0
 var _known := {}              # 主機：牛仔編號 -> [十位, 個位]（-1 = 沒看過）。跟著人不跟著命，回合開始清掉
 var _noted: Array = [false, false]   # 這台已經提示過恐龍「信封被開了」
+var stats := RoundStats.new()   # 主機：每回合的指標，結束時印「回合指標」（tools/bot_sim.gd 也讀）
 
 @onready var main: Node = get_parent()
 const BOSS_GD := preload("res://boss.gd")   # 尼諾拉的身高（LIFT）：開局放回出生點用
@@ -138,10 +139,12 @@ func step(delta: float) -> void:
 					_hide_egg_at(_dino_pos())
 				phase = &"play"
 				time_left = PLAY_SECONDS
+				stats.reset()
 				main._announce.rpc("開始！")
 				_sync()
 		&"play":
 			_respawn_step(delta)
+			stats.tick(main, self, delta)
 			main.safe.server_step(delta)   # 試密碼的 1 秒、作廢、開箱
 			if main.safe.locked():   # 鎖著：蛋跟著箱子（箱子會被炸飛、甩飛）
 				main.egg.global_position = main.safe.global_position
@@ -193,6 +196,7 @@ func on_died(killer: Node, who: Node) -> void:
 	if is_instance_valid(killer) and killer.is_in_group(&"dino"):
 		_add(dino_id, SCORE_KILL)
 	lives[id] = int(lives.get(id, LIVES)) - 1
+	stats.died(who)
 	if int(lives[id]) > 0:
 		_waiting[id] = [RESPAWN_SECONDS, bool(who.get(&"bot"))]
 	_sync()
@@ -285,6 +289,8 @@ func _refresh_roster() -> void:
 
 
 func _end_round(dino_win: bool, msg: String) -> void:
+	if phase == &"play":
+		stats.report(self, dino_win, msg)
 	if dino_win:
 		_add(dino_id, SCORE_GUARD)
 	for p: Node in _cowboys():
