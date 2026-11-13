@@ -593,7 +593,8 @@ func _hurt_self(amount: int) -> void:
 ## 電腦操控的牛仔：去哪由 brain（bot_brain.gd，打分數選動作）決定，這裡只管身體：走路、看牌、試密碼、開槍。
 ## 走路方向和槍口方向分開：身體朝著威脅開槍，腳往目標走（Hunt 的側移射擊）。
 ## 沙盒照舊直接去找玩家打（陪練）。
-## ponytail: 不翻越、不蹲，沒有尋路。卡牆就沿牆繞一段；卡牆的秒數 tools/bot_sim.gd 量得到
+## 走路借尼諾拉的導航網格（照牠的體型烘的：牠走得過的地方牛仔一定走得過，不用另外烘）。最後一段（網格外，例如屋裡的牌）照舊直線，頂到牆沿牆繞一段。
+## ponytail: 不翻越；窄巷、室內不在網格上會繞大路。要更好再烘一張牛仔體型的（拆房子就要多重烘一次，主線程 6～17 毫秒）
 var brain: BotBrain
 var _bot_hit := false        # 上次想之後被打過（馬上重想、不管 LOCK）
 var _bot_now := false        # 動作做完了（看完牌）：馬上重想
@@ -602,6 +603,9 @@ var _bot_wait_for := ""      # 在等哪個動作
 var _bot_label: Label3D      # F3 開著時頭上那行字（只有主機有）
 var _bot_sense_dt := 0.0     # 上次看、聽之後過了幾秒
 var _bot_hit_ago := INF      # 上次被打幾秒前
+var _path := PackedVector3Array()   # 導航網格上的路（尼諾拉那張）
+var _path_goal := Vector3.INF
+var _path_age := 0.0
 var _bot_heal := 0.0         # 躲好了在用急救包：用了幾秒
 var _bot_spot := -1.0        # 看到恐龍、還沒反應過來：還剩幾秒（-1＝沒看到）
 var _bot_dino_down := false  # 看到恐龍倒地
@@ -638,10 +642,13 @@ func _bot_step(delta: float) -> void:
 	var hold := _bot_should_hold(g)
 	var want := Vector3.ZERO
 	if not hold:
-		var to := _bot_goal(g) - global_position
+		var goal := _bot_goal(g)
+		var to := goal - global_position
 		to.y = 0.0
 		if to.length() > 1.0:
-			var dir := to.normalized()
+			var step := _bot_waypoint(goal, delta) - global_position
+			step.y = 0.0
+			var dir := (step if step.length() > 0.1 else to).normalized()
 			_detour_left -= delta
 			if _detour_left > 0.0:
 				dir = _detour
@@ -792,6 +799,21 @@ func _bot_goal(g: Node) -> Vector3:
 		brain = brain if brain else BotBrain.new(name.to_int())
 		brain.think(_bot_ctx(g))
 	return brain.goal(brain.last_ctx)
+
+
+## 往 goal 的下一個路點：每秒（或目標移了 3 公尺）問一次路，照抄 boss._nav_go。網格還沒烘好、路走完了就直接回 goal
+func _bot_waypoint(goal: Vector3, delta: float) -> Vector3:
+	var map := get_world_3d().navigation_map
+	if NavigationServer3D.map_get_iteration_id(map) == 0:
+		return goal
+	_path_age += delta
+	if _path_age > 1.0 or _path_goal.distance_to(goal) > 3.0 or _path.is_empty():
+		_path = NavigationServer3D.map_get_path(map, global_position, goal, true)
+		_path_goal = goal
+		_path_age = 0.0
+	while _path.size() > 1 and _flat_to(_path[0]) < 1.5:
+		_path.remove_at(0)
+	return _path[0] if _path.size() > 1 else goal
 
 
 func _flat_to(p: Vector3) -> float:
