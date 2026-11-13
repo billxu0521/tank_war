@@ -1,5 +1,5 @@
 #!/bin/sh
-# 真的連線的檢查：本機開專用伺服器＋兩個客戶端（tools/net_check.gd），看扣血、血量同步、槍聲有沒有傳到。
+# 真的連線的檢查：本機開專用伺服器＋兩個客戶端（tools/net_check.gd），看扣血、血量同步、槍聲有沒有傳到、兩邊的爆炸桶是不是同一批。
 # 改了連線（RPC、同步器、主機檢查）之後跑一次：tools/net_check.sh；指定模式：MODE=deathmatch tools/net_check.sh
 # 假網路很差：LAG=1 tools/net_check.sh，可加 LAG_MS／JITTER_MS／LOSS（預設 150／40／0.05），客戶端會經過 tools/lag_proxy.py
 # 斷線重連：RECONNECT=1 tools/net_check.sh（B 被扣一條命後斷線再連回，看命數有沒有回來）
@@ -33,4 +33,6 @@ grep -h "NET \|SCRIPT ERROR" "$LOG"/a.txt "$LOG"/b.txt
 grep -h "SCRIPT ERROR\|ERROR:" "$LOG/server.txt" | head -5
 echo "伺服器記錄的拉回／拒絕：$(grep -h -c "拉回\|不接受\|被拒" "$LOG/server.txt") 行（僅供參考）"
 grep -h "拉回\|不接受\|被拒" "$LOG/server.txt" | head -3 || true
+BA=$(grep -h -m1 "NET 桶" "$LOG/a.txt"); BB=$(grep -h -m1 "NET 桶" "$LOG/b.txt")
+if [ -z "$BA" ] || [ "$BA" != "$BB" ]; then echo "== 連線檢查失敗：兩個客戶端的爆炸桶不一樣（$BA / $BB）"; exit 1; fi
 if [ "$(grep -h -c "NET OK" "$LOG"/a.txt "$LOG"/b.txt | paste -sd+ - | bc)" = "2" ]; then echo "== 連線檢查通過"; else echo "== 連線檢查失敗（記錄在 ${LOG}）"; exit 1; fi

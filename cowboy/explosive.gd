@@ -117,6 +117,7 @@ static func damage(world: Node3D, at: Vector3, radius: float, max_damage: int, s
 	if game == null:
 		return
 	game.safe.blast(at, radius)   # 保險箱打不壞，只會被炸飛（不看有沒有擋住）
+	game.barrels.blast(at, radius, shooter)   # 範圍裡的爆炸桶跟著爆（連環爆，barrels.gd）
 	# 會受傷的都是牛仔或恐龍，都掛在 players 底下。不用範圍查詢：地形是很多小塊碰撞，結果名額會被地形塞滿
 	for target: Node in game.players.get_children():
 		if not target.has_method(&"take_damage") or not target is CollisionObject3D:

@@ -484,3 +484,67 @@ func _case_party_map() -> void:
 		"恐龍出生點要在中央、貼地（%s）" % m.dino_spawn)
 	_end(m)
 	Main.level_file = keep
+
+## 爆炸桶（barrels.gd）：每局隨機擺、位置合格、派對每回合重抽、打一槍就爆（扣血、連環爆）、客戶端收到同一批
+func _case_barrels() -> void:
+	var keep := Barrels.COUNT
+	Barrels.COUNT = 6
+	var m := _offline_match()
+	var bs: Barrels = m.barrels
+	_ck(bs.spots.size() == 6 and bs.count_alive() == 6 and bs.get_child_count() == 6, "開局擺 6 個爆炸桶（%d）" % bs.spots.size())
+	var flat := func(v: Vector3) -> Vector2: return Vector2(v.x, v.z)
+	for i in bs.spots.size():
+		var q: Vector3 = bs.spots[i]
+		var p: Vector2 = flat.call(q)
+		_ck(m._is_clear(p, 1.0) and not m.map._near_level(p, 0.5), "桶不在建築、石頭、樹裡（%s）" % q)
+		_ck(m._exits.all(func(x: Vector3) -> bool: return p.distance_to(flat.call(x)) > m.EXIT_RADIUS), "桶不在撤離圈（%s）" % q)
+		_ck(p.distance_to(flat.call(m.dino_spawn)) >= Barrels.FROM_CENTER - 0.01, "桶離中央（保險箱、蛋）夠遠（%s）" % q)
+		_ck(absf(q.y - m._on_ground(Vector3(q.x, 0, q.z)).y) < 0.01, "桶貼地（%s）" % q)
+		for j in i:
+			_ck(p.distance_to(flat.call(bs.spots[j])) > 5.0, "桶跟桶分開（%s %s）" % [q, bs.spots[j]])
+	# 客戶端：收到主機那包，擺出一樣的一批
+	var c := Barrels.new()   # 客戶端那份：掛在同一個 main 底下（main.map 拿模型），不另開對局（_end 會清掉共用的連線）
+	m.add_child(c)
+	c._recv(bs.spots, bs.alive)
+	_ck(c.get_child_count() == 6 and range(6).all(func(i: int) -> bool:
+		return (c.get_child(i) as Node3D).global_position.is_equal_approx(bs.spots[i])), "客戶端收到同一批桶")
+	m.remove_child(c)
+	c.free()
+	# 打一槍：爆、旁邊的牛仔扣血、範圍裡的桶連環爆、遠的不爆
+	var a: Vector3 = bs.spots[0]
+	bs._recv(PackedVector3Array([a, a + Vector3(3, 0, 0), a + Vector3(0, 0, 20)]), PackedByteArray([1, 1, 1]))
+	var cow: Node3D = m._add_player(m.COWBOY, 2)
+	cow.global_position = a + Vector3(-3, 0, 0)
+	var hp0: int = cow.hp
+	var delay := Barrels.CHAIN_DELAY
+	Barrels.CHAIN_DELAY = 0.0   # 當場爆完：不用等計時器（對局留著等會搶到別的案例的「第一個場地」）
+	_with_first(m, func() -> void: (bs.get_child(0) as Object).call(&"on_shot", a, null, Vector3.ZERO))
+	Barrels.CHAIN_DELAY = delay
+	_ck(bs.alive[0] == 0 and not (bs.get_child(0) as Node3D).visible and (bs.get_child(0) as CollisionObject3D).collision_layer == 0, "打到的桶爆掉、收起來")
+	_ck(cow.hp < hp0 and cow.hp > 0, "3 公尺外的牛仔被炸到扣血（%d -> %d）" % [hp0, cow.hp])
+	_ck(bs.alive[1] == 0 and not (bs.get_child(1) as Node3D).visible and bs.alive[2] == 1, "範圍裡的桶連環爆，遠的不爆")
+	_end(m)
+	# 派對：每回合重抽，避開信封
+	var pm := _offline_match()
+	pm._on_mode_picked(pm.RULES.keys().find(&"party"))
+	pm._apply_rules()
+	var before: PackedVector3Array = pm.barrels.spots
+	pm._physics_process(DT)   # 第一回合
+	var p: Party = pm.party
+	var r1: PackedVector3Array = pm.barrels.spots
+	_ck(r1.size() == 6 and r1 != before, "派對開回合重抽爆炸桶")
+	for q: Vector3 in r1:
+		_ck(p.env_pos.all(func(e: Vector3) -> bool: return flat.call(q).distance_to(flat.call(e)) >= Barrels.FROM_SPOT - 0.01), "桶不擋信封（%s）" % q)
+	pm.barrels.explode(0, null)
+	p._end_round(true, "test")
+	p.time_left = 0.0
+	pm._physics_process(DT)
+	_ck(p.phase == &"prep" and pm.barrels.spots != r1 and pm.barrels.count_alive() == 6, "下一回合重抽，爆掉的也補回來")
+	_end(pm)
+	# 練習場沒有桶
+	var sb := _offline_match()
+	sb._sandbox = true
+	sb._enter_game("test")
+	_ck(sb.barrels.spots.is_empty() and sb.barrels.get_child_count() == 0, "沙盒沒有爆炸桶")
+	_end(sb)
+	Barrels.COUNT = keep
