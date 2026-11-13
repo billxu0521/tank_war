@@ -196,7 +196,17 @@ func _update_net_info() -> void:
 			parts.append("掉包 %.1f%%" % (100.0 * p.get_statistic(ENetPacketPeer.PEER_PACKET_LOSS) / ENetPacketPeer.PACKET_LOSS_SCALE))
 	if not main.lobby.visible:
 		parts.append("%d FPS（最慢一幀 %.0f ms）" % [Engine.get_frames_per_second(), _slow_shown])
-	main.net_info.text = "　".join(parts)
+	main.net_info.text = "　".join(parts) + _bots_debug()
+
+## F3：每個電腦牛仔在做什麼（分數只有主機有，客戶端看不到這行）
+func _bots_debug() -> String:
+	if main.lobby.visible or not main.debug_hud or not main.multiplayer.is_server():
+		return ""
+	var out: Array[String] = []
+	for c: Node in main.players.get_children():
+		if c is Cowboy and c.brain:
+			out.append("%s %s" % [c._bot_name(main), BotBrain.NAMES.get(c.bot_action, c.bot_action)])
+	return "\n電腦：" + "　".join(out) if out.size() > 0 else ""
 
 ## 操作尼諾拉時左下角的操作提示（同 docs/發布/說明.txt）
 const PILOT_HINT := "左鍵 咬　右鍵 蓄力甩尾　Q 火球　Shift 跑"
