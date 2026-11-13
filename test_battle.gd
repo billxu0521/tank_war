@@ -87,6 +87,7 @@ func _process(_delta: float) -> bool:
 		_case_envelope()
 		_case_bot_safe()
 		_case_bot_brain()
+		_case_bot_sight()
 		_case_reconnect()
 		_case_balance()
 		_case_null_material()
@@ -106,7 +107,7 @@ func _process(_delta: float) -> bool:
 				_check_foot_ik()
 				_check_pierce_flight()
 				_hp_before_shot = _dino.hp
-				_shooter._bot_shoot(_dino)
+				_shooter._bot_shoot(_dino, 1.0)   # 一次轉到位（轉速上限是每秒 360 度）
 				_ck(_dino.hp == _hp_before_shot, "子彈會飛，開槍當下不該立刻扣血")
 			elif _frames > 3 and _dino.hp < _hp_before_shot:
 				_phase = 1

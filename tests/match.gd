@@ -2408,3 +2408,52 @@ func _case_bot_brain() -> void:
 	c.hit = true
 	b.think(c)
 	_ck(b.action == "看牌0", "被打到：2.5 秒內也馬上重選（%s）" % b.describe())
+	# 記憶：看到信心 1，8 秒降到 0；不知道在哪時險固定 0.1；只聽到不蓋掉看到的
+	b = BotBrain.new(-1)
+	b.remember(Vector3(0, 0, 10), 1.0)
+	b.tick(BotBrain.FORGET * 0.5)
+	_ck(absf(b.conf - 0.5) < 0.01, "沒再看到：信心慢慢降（%.2f）" % b.conf)
+	b.remember(Vector3(0, 0, 50), BotBrain.HEARD_CONF)
+	_ck(b.dino_mem == Vector3(0, 0, 50) and b.conf == BotBrain.HEARD_CONF, "信心比聽到的低了：聽到的蓋上去")
+	b.remember(Vector3(0, 0, 90), 0.3)
+	_ck(b.dino_mem == Vector3(0, 0, 50), "比較不確定的不蓋掉")
+	b.tick(BotBrain.FORGET)
+	c = base.call()
+	c.conf = 0.0
+	_ck(b.conf == 0.0 and is_equal_approx(b.risk(c, Vector3.ZERO), BotBrain.UNKNOWN_RISK), "忘了恐龍在哪：到處都有一點怕（%.2f）" % b.risk(c, Vector3.ZERO))
+	c.conf = 0.5
+	c.dino = Vector3(0, 0, 0)
+	_ck(is_equal_approx(b.risk(c, Vector3.ZERO), 0.5), "險＝信心 × 離記得的位置多近")
+
+## 電腦牛仔只看得到看得到的（cowboy.gd 的 _bot_sees，恐龍、牛仔同一套，只差距離）：中間有牆看不到、背後看不到、貼身一定知道。射線要等牆進物理世界，跨幀
+func _case_bot_sight() -> void:
+	var m := _offline_match()
+	var d: Node3D = m._add_player(m.COWBOY, 7)   # 看的對象用牛仔（恐龍編號 1 是本機操控，會搶後面槍的案例的那隻）
+	var c: Cowboy = m._add_player(m.COWBOY, -5)   # 不設 bot：只測眼睛，不讓它自己跑
+	_park(m)   # 要跨幀：不能搶後面案例的「第一個對局」
+	var wall := StaticBody3D.new()
+	var cs := CollisionShape3D.new()
+	cs.shape = BoxShape3D.new()
+	(cs.shape as BoxShape3D).size = Vector3(20, 30, 0.5)
+	wall.add_child(cs)
+	m.get_node(^"Arena").add_child(wall)
+	wall.global_position = Vector3(300, 600, -15)
+	var place := func(dz: float) -> void:
+		c.global_position = Vector3(300, 600, 0)
+		c.rotation.y = 0.0   # 面向 -Z
+		d.global_position = Vector3(300, 600, dz)
+	_defer(3, func() -> void:
+		place.call(-30.0)
+		_ck(not c._bot_sees(m, d, BotBrain.SIGHT_COWBOY), "中間有牆：看不到")
+		wall.global_position = Vector3(300, 900, -15)
+		_defer(3, func() -> void:
+			place.call(-30.0)
+			_ck(c._bot_sees(m, d, BotBrain.SIGHT_COWBOY), "拿掉牆：看得到")
+			place.call(30.0)
+			_ck(not c._bot_sees(m, d, BotBrain.SIGHT_COWBOY), "在背後：看不到")
+			place.call(4.0)
+			_ck(c._bot_sees(m, d, BotBrain.SIGHT_COWBOY), "貼身：不管方向都知道")
+			place.call(-90.0)
+			_ck(not c._bot_sees(m, d, BotBrain.SIGHT_COWBOY), "太遠看不到")
+			root.remove_child(m)   # 不用 _end：它會關掉共用的連線，這時候槍的案例還在跑
+			m.free()))

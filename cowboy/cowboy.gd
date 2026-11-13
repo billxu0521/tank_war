@@ -255,6 +255,10 @@ var _voice: AudioStreamPlayer3D
 func _on_hurt(amount: int, from: Vector3) -> void:
 	_bot_alert = BOT_ALERT
 	_bot_hit = true
+	if brain and from.is_finite():   # 被恐龍打到：馬上知道牠在哪
+		for c: Node in get_parent().get_children():
+			if c.is_in_group(&"dino") and (c as Node3D).global_position.distance_to(from) < 20.0:
+				brain.remember((c as Node3D).global_position, 1.0)
 	if _rig:
 		_rig.hit()
 	if hp - amount <= 0:
@@ -595,6 +599,19 @@ var _bot_now := false        # 動作做完了（看完牌）：馬上重想
 var _bot_wait := INF         # 看牌、試密碼的手腳：還要等幾秒（INF＝還沒走到）
 var _bot_wait_for := ""      # 在等哪個動作
 var _bot_label: Label3D      # F3 開著時頭上那行字（只有主機有）
+var _bot_sense_dt := 0.0     # 上次看、聽之後過了幾秒
+var _bot_spot := -1.0        # 看到恐龍、還沒反應過來：還剩幾秒（-1＝沒看到）
+var _bot_dino_down := false  # 看到恐龍倒地
+var _bot_target: Node3D      # 看得到、要打的（每次想的時候選）
+var _bot_shot_wait := 0.0    # 每發之間多等的
+var _bot_turned := 0.0       # 剛大轉身：瞄準多偏一點（剩幾秒）
+var _aim_err := Vector2.ZERO # 瞄準偏多少（弧度：左右、上下），慢慢滑向 _aim_goal
+var _aim_goal := Vector2.ZERO
+var _aim_t := 0.0
+var _look_yaw := 0.0         # 沒有要打的時候看哪（走的方向）
+var _glance_t := 4.0         # 下一次往旁邊瞄還有幾秒
+var _glance_left := 0.0
+var _glance_off := 0.0
 var bot_action: String:      # 正在做的動作（round_stats.gd、除錯用）
 	get: return brain.action if brain else ""
 
@@ -636,18 +653,25 @@ func _bot_step(delta: float) -> void:
 			_sprinting = update_stamina(true, delta)
 			want = dir * (sprint_speed if _sprinting else walk_speed)
 	_move_flat(want, delta)
-	# 站在牌前、箱子旁邊（看牌、試密碼）時跟真人一樣不開槍（真人開著密碼盤拿不到槍），挨打才還手
-	if not (hold and bot_action in ["看牌0", "看牌1", "試密碼"] and _bot_alert <= 0.0):
-		_bot_shoot(_bot_threat(g))
+	_bot_hands(delta, want)
+	# 開槍是反射：腳照動作走，看得到就打。站在牌前、箱子旁邊（看牌、試密碼）時跟真人一樣不開槍（真人開著密碼盤拿不到槍），挨打才還手
+	var threat := _bot_threat(g)
+	if threat and not (hold and bot_action in ["看牌0", "看牌1", "試密碼"] and _bot_alert <= 0.0):
+		_bot_shoot(threat, delta)
+	else:
+		_bot_look(delta, want)
 
 
 ## 到時間（或被打）就重想一次動作；換了動作照 BOT_LOG 印一行。頭上的字跟著換
 func _bot_think(g: Node, delta: float) -> void:
 	if brain == null:
 		brain = BotBrain.new(name.to_int())
+	_bot_sense_dt += delta
 	if not brain.tick(delta, _bot_hit or _bot_now or brain.action == ""):
 		_bot_show(g)
 		return
+	_bot_sense(g, _bot_sense_dt)
+	_bot_sense_dt = 0.0
 	var ctx := _bot_ctx(g)
 	ctx.hit = _bot_hit
 	_bot_hit = false
@@ -687,22 +711,20 @@ func _bot_ctx(g: Node) -> Dictionary:
 	var id := name.to_int()
 	var p: Node = g.party
 	var safe_on: bool = g.safe.locked()
-	var dino: Variant = null   # 恐龍倒地、不在場＝null（不怕）
+	var dino: Variant = null   # 記得的恐龍位置；看到牠倒地、不在場＝null（不怕）
 	var carrier := 0 if g.egg.carrier == 0 else (1 if g.egg.carrier == id else 2)
 	var holder: Node3D = g.players.get_node_or_null(NodePath(str(g.egg.carrier))) if carrier == 2 else null
 	var mates: Array = []
 	for c: Node in g.players.get_children():
-		if c.is_in_group(&"dino") and dino == null:
-			var down = c.get(&"down_left")
-			if down == null or down <= 0.0:
-				dino = (c as Node3D).global_position
+		if c.is_in_group(&"dino"):
+			dino = null if _bot_dino_down else brain.dino_mem
 		elif c != self and c is Cowboy:
 			mates.append({"pos": c.global_position, "vel": c.velocity, "act": (c as Cowboy).bot_action if c.bot else ""})
 	return {"me": global_position, "hp": float(hp) / max_hp, "last_life": p != null and int(p.lives.get(id, 2)) <= 1,
 		"time_left": p.time_left if p else 999.0, "locked": safe_on, "safe": g.safe.global_position,
 		"cards": p.env_pos if p else [], "known": p._known.get(id, [-1, -1]) if p else [-1, -1],
 		"carrier": carrier, "holder": holder.global_position if holder else g.egg.global_position, "egg": g.egg.global_position,
-		"exits": g._exits, "ffa": p != null, "dino": dino, "mates": mates}
+		"exits": g._exits, "ffa": p != null, "dino": dino, "conf": brain.conf, "mates": mates}
 
 
 ## 移動標靶：來回走，走到端點就回頭，身體朝著走的方向（打側面比打正面難）
@@ -726,7 +748,7 @@ func _bot_should_hold(g: Node) -> bool:
 		return false
 	match brain.action:
 		"看牌0", "看牌1":
-			return _flat_to(g.party.env_pos[int(brain.action[-1])]) < Envelope.RANGE * 0.8
+			return _flat_to(brain.last_ctx.cards[int(brain.action[-1])]) < Envelope.RANGE * 0.8
 		"試密碼":
 			return _flat_to(g.safe.global_position) < Safe.RANGE * 0.6
 		"撿蛋":
@@ -763,7 +785,7 @@ func _bot_safe_act(g: Node, delta: float) -> void:
 		_bot_wait_for = act
 		_bot_wait = INF
 		return
-	if not g.safe.locked() or not act in ["看牌0", "看牌1", "試密碼"]:
+	if not g.safe.locked() or g.party == null or not act in ["看牌0", "看牌1", "試密碼"]:
 		return
 	if _bot_wait == INF:
 		_bot_wait = randf_range(BotBrain.ARRIVE_MIN, BotBrain.ARRIVE_MAX) if act == "試密碼" else randf_range(BotBrain.READ_MIN, BotBrain.READ_MAX)
@@ -787,7 +809,7 @@ func _bot_safe_act(g: Node, delta: float) -> void:
 		_bot_wait = Safe.TRY_SECONDS + randf_range(BotBrain.GAP_MIN, BotBrain.GAP_MAX)
 
 
-## 瞄誰：有人拿著蛋就瞄他，否則瞄最近的敵人（恐龍或別的牛仔）
+## 瞄誰：沙盒照舊找玩家；其他時候是上次看、聽時選的（_bot_sense，只有看得到的）
 func _bot_threat(g: Node) -> Node3D:
 	if g == null:
 		return null
@@ -795,19 +817,100 @@ func _bot_threat(g: Node) -> Node3D:
 		# 沙盒裡只打玩家，不去打站樁的靶；恐龍沙盒的玩家是尼諾拉（boss）
 		var me: Node3D = g._boss() if g._dino_sandbox else g.players.get_node_or_null(^"1")
 		return null if me and _bush_hides(g, me) else me
-	var my_id := name.to_int()
-	if g.egg.carrier != 0 and g.egg.carrier != my_id:
-		var holder: Node3D = g.players.get_node_or_null(NodePath(str(g.egg.carrier)))
-		if holder != null:
-			return holder
-	var best: Node3D = null
-	for p in g.players.get_children():
-		if p == self or _bush_hides(g, p):
+	return _bot_target if is_instance_valid(_bot_target) and _bot_target.is_inside_tree() else null
+
+
+## 主機、每次想之前：看、聽恐龍（記進 brain），選要打的（看得到的人裡：別人拿著蛋就打他，不然最近的）。
+## 看到恐龍要過 REACT 秒（越遠越久）才算數；貼身馬上知道。別的牛仔先不算反應時間
+func _bot_sense(g: Node, dt: float) -> void:
+	_bot_target = null
+	_bot_dino_down = false
+	var best := INF
+	for c: Node in g.players.get_children():
+		if c == self or not c is Node3D or c.get(&"hp") == null or c.hp <= 0:
 			continue
-		if best == null or global_position.distance_to(p.global_position) \
-				< global_position.distance_to(best.global_position):
-			best = p
-	return best
+		var n := c as Node3D
+		var d := _flat_to(n.global_position)
+		var see := false
+		if c.is_in_group(&"dino"):
+			if _bot_sees(g, n, BotBrain.SIGHT_DINO):
+				if _bot_spot < 0.0:
+					_bot_spot = 0.0 if d < BotBrain.FEEL else BotBrain.REACT + BotBrain.REACT_PER_M * d
+				_bot_spot -= dt
+				if _bot_spot <= 0.0:
+					see = true
+					brain.remember(n.global_position, 1.0)
+					var down = c.get(&"down_left")
+					_bot_dino_down = down != null and down > 0.0
+			else:
+				_bot_spot = -1.0
+				var act = c.get(&"act")
+				var loud: bool = act != null and act != 0   # 吼叫、出招
+				var run := Vector2((c as CharacterBody3D).velocity.x, (c as CharacterBody3D).velocity.z).length() > 5.0 if c is CharacterBody3D else false
+				if (loud and d < BotBrain.HEAR_LOUD) or (run and d < BotBrain.HEAR_RUN):
+					var r := randf() * minf(d * BotBrain.HEAR_FUZZ, BotBrain.HEAR_FUZZ_MAX)
+					brain.remember(n.global_position + Vector3.FORWARD.rotated(Vector3.UP, randf() * TAU) * r, BotBrain.HEARD_CONF)
+		elif c is Cowboy:
+			see = _bot_sees(g, n, BotBrain.SIGHT_COWBOY)
+		if not see:
+			continue
+		if g.egg.carrier == c.name.to_int():
+			d = -1.0   # 別人拿著蛋：先打他
+		if d < best:
+			best = d
+			_bot_target = n
+
+
+## 看得到嗎（抄 boss.can_see，數字換成人的）：貼身一定知道；草叢裡看不到；太遠、不在視野錐、中間有牆都看不到
+func _bot_sees(g: Node, p: Node3D, sight: float) -> bool:
+	var to := p.global_position - global_position
+	var flat := Vector2(to.x, to.z).length()
+	if flat < BotBrain.FEEL:
+		return true
+	if g.hidden_in_bush(p) or flat > sight:
+		return false
+	var fwd := -global_basis.z
+	if Vector2(fwd.x, fwd.z).normalized().dot(Vector2(to.x, to.z) / flat) < BotBrain.SIGHT_COS:
+		return false
+	var at: Vector3 = p.head_position() if p.has_method(&"head_position") else p.global_position + Vector3.UP * 1.5
+	var hit := _ray(_camera.global_position, at)
+	return hit.is_empty() or hit.collider == p or p.is_ancestor_of(hit.collider)
+
+
+## 手的節奏：開槍間隔、剛轉身、瞄準偏差（每 AIM_SLIDE 秒換個方向、慢慢滑過去，不是每幀亂跳）
+func _bot_hands(delta: float, want: Vector3) -> void:
+	_bot_shot_wait -= delta
+	_bot_turned -= delta
+	_aim_t -= delta
+	var deg := BotBrain.AIM_BASE + (BotBrain.AIM_MOVING if want.length() > 0.5 else 0.0) + (BotBrain.AIM_TURNED if _bot_turned > 0.0 else 0.0)
+	if _aim_t <= 0.0:
+		_aim_t = BotBrain.AIM_SLIDE
+		_aim_goal = Vector2.from_angle(randf() * TAU) * deg_to_rad(deg)
+	_aim_err = _aim_err.move_toward(_aim_goal, deg_to_rad(deg) * 2.0 / BotBrain.AIM_SLIDE * delta)
+
+
+## 沒有要打的：看走的方向，每 3～5 秒往旁邊或後面瞄一眼（不然背後來的恐龍永遠不知道）
+func _bot_look(delta: float, want: Vector3) -> void:
+	_glance_t -= delta
+	_glance_left -= delta
+	if _glance_t <= 0.0:
+		_glance_t = randf_range(BotBrain.GLANCE_MIN, BotBrain.GLANCE_MAX)
+		_glance_left = BotBrain.GLANCE_TIME
+		_glance_off = randf_range(0.4 * PI, PI) * (1.0 if randf() < 0.5 else -1.0)
+	if Vector2(want.x, want.z).length() > 0.5:
+		_look_yaw = atan2(-want.x, -want.z)
+	_bot_turn(_look_yaw + (_glance_off if _glance_left > 0.0 else 0.0), 0.0, delta)
+
+
+## 轉身有速度上限（TURN），回傳還差幾度（弧度）
+func _bot_turn(yaw: float, pitch: float, delta: float) -> float:
+	var dy := angle_difference(rotation.y, yaw)
+	var step := BotBrain.TURN * delta
+	if absf(dy) > step:
+		_bot_turned = 0.5
+	rotation.y += clampf(dy, -step, step)
+	head.rotation.x = move_toward(head.rotation.x, pitch, step)
+	return absf(angle_difference(rotation.y, yaw))
 
 
 ## 蹲在灌木叢裡的人 bot 看不到，除非走到 6 公尺內
@@ -815,22 +918,26 @@ func _bush_hides(g: Node, p: Node3D) -> bool:
 	return global_position.distance_to(p.global_position) > 6.0 and g.hidden_in_bush(p)
 
 
-## 轉身、抬頭對準，然後照一般玩家的流程扣扳機（散布、後座力、裝填都一樣）。
-func _bot_shoot(threat: Node3D) -> void:
+## 轉身、抬頭對準（有轉速上限、會偏），轉過來了才照一般玩家的流程扣扳機（散布、後座力、裝填都一樣），每發之間多等一下
+func _bot_shoot(threat: Node3D, delta := 1.0 / 60.0) -> void:
 	if threat == null:
 		return
 	# 牛仔的原點在腳底，恐龍的原點在身體中心
 	var aim := threat.global_position + (Vector3.ZERO if threat.is_in_group(&"dino") else Vector3.UP * 1.2)
 	var to := aim - _camera.global_position
 	var flat := Vector2(to.x, to.z).length()
-	rotation.y = atan2(-to.x, -to.z)
-	head.rotation.x = atan2(to.y, flat)
+	var off := _bot_turn(atan2(-to.x, -to.z) + _aim_err.x, atan2(to.y, flat) + _aim_err.y, delta)
+	_look_yaw = rotation.y
 	# 換彈中不扣扳機：try_fire 會中止逐發裝填，每幀都按的話永遠換不完
-	if flat < bot_fire_range and not viewmodel._reloading:
-		if viewmodel.weapon.mag == 0:
-			viewmodel.try_reload()   # 打空不會自動換彈（硬派規則），bot 要自己按
-		else:
-			viewmodel.try_fire()
+	if off > deg_to_rad(8.0) or flat >= bot_fire_range or viewmodel._reloading or _bot_shot_wait > 0.0:
+		return
+	if viewmodel.weapon.mag == 0:
+		viewmodel.try_reload()   # 打空不會自動換彈（硬派規則），bot 要自己按
+		return
+	var before: int = viewmodel.weapon.mag
+	viewmodel.try_fire()
+	if viewmodel.weapon.mag < before:
+		_bot_shot_wait = randf_range(BotBrain.SHOT_GAP_MIN, BotBrain.SHOT_GAP_MAX)
 
 
 # --- 開槍打中：走主機 ---
