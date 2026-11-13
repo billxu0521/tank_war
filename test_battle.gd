@@ -44,6 +44,7 @@ func _process(_delta: float) -> bool:
 		_case_stamina()
 		_case_sprint_skill()
 		_case_egg()
+		_case_random_exits()
 		_case_dino_cannot_take_egg()
 		_case_respawn()
 		_case_corpse()

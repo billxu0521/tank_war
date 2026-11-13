@@ -451,7 +451,7 @@ func _case_party_map() -> void:
 		q.exclude = [ground.get_rid()]
 		q.transform = Transform3D(body.global_basis, body.global_transform * (at + Vector3.UP * (cap.height * 0.5 + Greybox.FLOOR + 0.05)))
 		return not space.intersect_shape(q, 1).is_empty()
-	var exits: Array = ArenaMap.exit_spots()
+	var exits: Array = ArenaMap.exit_spots(m.greybox)
 	for rec: Dictionary in m.map._level:
 		if rec.kind != &"gb_safe":
 			continue

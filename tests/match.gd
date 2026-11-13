@@ -510,6 +510,65 @@ func _case_versus() -> void:
 	_ck(b.pilot == 0, "這局已經抽過：斷線後電腦接手到局末，不再抽別人")
 	_end(m)
 
+## 隨機撤離點（WDR77 11-10）：灰盒四個候選，主機每場（派對每回合）抽兩個開；沒開的不顯示、不擋路、不算撤離；
+## 抽到的記在 egg.exits，跟著蛋同步（晚進來的也拿得到）
+func _case_random_exits() -> void:
+	var Main: GDScript = load("res://main.gd")
+	var keep: String = Main.level_file
+	Main.level_file = ""   # 主地圖（灰盒）才有四個候選；其他案例照牧場寫的
+	var m := _offline_match()
+	m._add_player(m.DINO, 1)
+	m._add_player(m.COWBOY, 3)
+	var on := func() -> Array: return range(m.map._exits.size()).filter(func(i: int) -> bool: return (m.egg.exits >> i) & 1 == 1)
+	_ck(m.map._exits.size() == 4 and m.EXITS_OPEN == 2 and on.call().size() == 2 and m._exits.size() == 2,
+		"灰盒四個撤離區候選，開場抽兩個（候選 %d、開 %s）" % [m.map._exits.size(), on.call()])
+	var shown := range(4).filter(func(i: int) -> bool: return m.map._exit_pads[i].visible)
+	_ck(shown == on.call(), "只看得到開著的撤離區（看得到 %s、開著 %s）" % [shown, on.call()])
+	var off: int = range(4).filter(func(i: int) -> bool: return not i in on.call())[0]
+	var pipe: Node3D = m.map._exit_pipes[off][-1]
+	_ck(not pipe.visible and not pipe.can_process(), "沒開的撤離區水管藏起來、碰撞關掉")
+	# 電腦牛仔拿著蛋：去開著的撤離區，不去沒開的
+	var t3: Node3D = m.players.get_node(^"3")
+	m.players.get_node(^"1").global_position = Vector3(0, 500, 0)
+	t3.global_position = m.map._exits[off] + Vector3(0, 1, 0)
+	m.egg.global_position = t3.global_position
+	m.egg.carrier = 3
+	var goal: Vector3 = t3._bot_goal(m)
+	_ck(m._exits.has(goal), "電腦牛仔帶蛋去開著的撤離區（%s）" % goal)
+	# 站在沒開的撤離區待再久也不算
+	for i in int(m.EXTRACT_SECONDS / DT) + 2:
+		m._egg_step(DT)
+	_ck(not m._over and m.egg.extract == 0.0, "沒開的撤離區不算撤離")
+	# 每場重抽：每次都是兩個，而且不會每次同一組
+	var seen := {}
+	for k in 30:
+		m.roll_exits()
+		_ck(on.call().size() == 2, "每次都開兩個（%s）" % [on.call()])
+		seen[m.egg.exits] = true
+	_ck(seen.size() > 1, "每場重抽，不會永遠同一組（%s）" % [seen.keys()])
+	m._new_round()
+	_ck(on.call().size() == 2, "開新的一局也重抽")
+	# 客戶端：egg.exits 在蛋的同步清單裡（含晚進來的那一包），收到就換顯示
+	var cfg: SceneReplicationConfig = m.egg.get_node(^"MultiplayerSynchronizer").replication_config
+	_ck(cfg.has_property(^".:exits") and cfg.property_get_spawn(^".:exits"), "撤離區要跟著蛋同步，晚進來的也拿得到")
+	m.egg.exits = 0b0101
+	_ck(m.map._exit_pads[0].visible and not m.map._exit_pads[1].visible and m.map._exit_pads[2].visible and not m.map._exit_pads[3].visible,
+		"收到主機抽的撤離區就換顯示")
+	_end(m)
+	# 派對模式：每回合開場重抽（信封也避開抽到的）
+	var pm := _offline_match()
+	pm._on_mode_picked(pm.RULES.keys().find(&"party"))
+	pm._apply_rules()
+	pm._physics_process(DT)
+	pm.egg.exits = 0
+	pm.party._start_round()
+	var n := 0
+	for i in 4:
+		n += (pm.egg.exits >> i) & 1
+	_ck(n == 2, "派對每回合開場重抽兩個撤離區（%d）" % n)
+	_end(pm)
+	Main.level_file = keep
+
 ## 蛋：牛仔靠近撿走、跟著人跑、持有者死了掉在原地、帶進撤離區就贏
 func _case_egg() -> void:
 	var m := _new_game()

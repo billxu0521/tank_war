@@ -215,7 +215,7 @@ func _case_ui() -> void:
 	_ck(m.players.get_node(NodePath(bot_id)).bot, "重開一局後 bot 還是 bot")
 	m._match_hud._update_net_info()
 	_ck(m.net_info.text.contains("本機 IP") and m.net_info.text.contains("FPS"), "右上角要有本機 IP 和 FPS（現在「%s」）" % m.net_info.text)
-	_ck(m.get_tree().get_nodes_in_group(&"exit_pipe").size() == m._exits.size() * 2, "每個撤離點中間都要有綠色水管")
+	_ck(m.get_tree().get_nodes_in_group(&"exit_pipe").size() == m.map._exits.size() * 2, "每個撤離點中間都要有綠色水管")
 	m._to_lobby("")
 	_ck(not m.result.visible and not m._match_hud._boss_bar.visible, "回大廳後勝負畫面和 boss 體力條都要收掉")
 	_end(m)

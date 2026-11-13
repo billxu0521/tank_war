@@ -8,6 +8,13 @@ extends Node3D
 @export var pickup := 0.0
 ## 撤離進度（秒）。離開圈子或陣亡就歸零；敵人站在圈內不會中斷。
 @export var extract := 0.0
+## 這一場開了哪幾個撤離區（第 i 位 = main 的撤離區候選 i）。主機每場抽（main.roll_exits），跟著蛋同步，晚進來的也拿得到
+@export var exits := 0b1111:
+	set(v):
+		if v != exits:
+			exits = v
+			exits_changed.emit()
+signal exits_changed
 
 const UNBURY_STEP := 0.25   # 每次往上抬多少（公尺）
 const UNBURY_MAX := 40      # 最多抬 10 公尺（碎塊堆不會更高）
