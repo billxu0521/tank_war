@@ -172,6 +172,8 @@ var _ladder: Node = null
 ## 這次騰空的最高點。-INF＝還沒落地過（剛出生從半空掉下來不算摔）
 var _fall_top := -INF
 var _bot_try_left := 0.0   # bot 下一次試密碼前還要等多久
+var _bot_alert := 0.0      # bot 剛被打：還剩幾秒不試密碼、專心還手
+const BOT_ALERT := 1.5     # ponytail: 挨打後還手多久，憑感覺；要調再拉出來
 ## bot 繞牆：頂著牆走不動時沿牆面走一段
 var _detour := Vector3.ZERO
 var _detour_left := 0.0
@@ -252,6 +254,7 @@ var _voice: AudioStreamPlayer3D
 
 ## 被打了：叫一聲；自己的話畫面四周閃紅、準心外圍標出打你的方向、鏡頭抖一下（傷越重抖越大）
 func _on_hurt(amount: int, from: Vector3) -> void:
+	_bot_alert = BOT_ALERT
 	if _rig:
 		_rig.hit()
 	if hp - amount <= 0:
@@ -600,10 +603,12 @@ func _bot_step(delta: float) -> void:
 		_walk_patrol(delta)
 		return
 
-	if g != null and g.safe.locked() and multiplayer.is_server():   # 看牌、試密碼只有主機算
+	_bot_alert -= delta
+	if g != null and g.safe.locked() and multiplayer.is_server() and _bot_alert <= 0.0:   # 看牌、試密碼只有主機算；挨打就先停
 		_bot_safe_act(g, delta)
+	var hold := _bot_should_hold(g)
 	var want := Vector3.ZERO
-	if not _bot_should_hold(g):
+	if not hold:
 		var to := _bot_goal(g) - global_position
 		to.y = 0.0
 		if to.length() > 1.0:
@@ -623,7 +628,9 @@ func _bot_step(delta: float) -> void:
 			_sprinting = update_stamina(true, delta)
 			want = dir * (sprint_speed if _sprinting else walk_speed)
 	_move_flat(want, delta)
-	_bot_shoot(_bot_threat(g))
+	# 站在箱子旁邊試密碼（或排隊）時跟真人一樣不開槍（真人開著密碼盤拿不到槍），挨打才還手
+	if not (hold and g.safe.locked() and _bot_alert <= 0.0):
+		_bot_shoot(_bot_threat(g))
 
 
 ## 移動標靶：來回走，走到端點就回頭，身體朝著走的方向（打側面比打正面難）

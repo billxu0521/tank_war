@@ -1391,6 +1391,23 @@ func _case_bot_safe() -> void:
 		m._physics_process(DT)
 	_ck(s.busy == -2 and Array(s.tried).count(1) == 0, "箱子忙的時候 bot 不送試開")
 	b2.global_position = near + Vector3(0, 0, 80)
+	# 在箱子旁邊試密碼時不開槍，恐龍就在面前也一樣；挨打才還手
+	var d: Node3D = m.players.get_children().filter(func(n: Node) -> bool: return n.is_in_group(&"dino"))[0]   # 不用 get_first_node_in_group：前面案例的對局還沒真的刪掉
+	d.global_position = near + Vector3(3, 0, 0)
+	b.bot_fire_range = 40.0
+	b.viewmodel._fire_cooldown = 0.0   # 這裡只跑 _bot_step，viewmodel 的冷卻不會自己倒數：先清掉，扣扳機就真的會射
+	var mag: int = b.viewmodel.weapon.mag
+	for i in int(1.0 / DT):
+		b._bot_step(DT)
+		m._physics_process(DT)
+	_ck(b._bot_threat(m) == d and b.viewmodel.weapon.mag == mag, "在箱子旁邊試密碼：恐龍在面前也不開槍（瞄 %s、彈匣 %d -> %d）" % [b._bot_threat(m), mag, b.viewmodel.weapon.mag])
+	b.take_damage(1)
+	for i in int(Cowboy.BOT_ALERT / DT) + 5:
+		b._bot_step(DT)
+		m._physics_process(DT)
+	_ck(b.viewmodel.weapon.mag < mag, "挨打就還手（彈匣 %d -> %d）" % [mag, b.viewmodel.weapon.mag])
+	b.bot_fire_range = 0.0
+	d.global_position = near + Vector3(0, 0, 80)
 	var frames := 0
 	while not s.open and frames < int(13.0 / DT):
 		b._bot_step(DT)
