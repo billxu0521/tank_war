@@ -215,6 +215,7 @@ func _start_round() -> void:
 	last_result = ""
 	egg_placed = false
 	main.safe.reset(use_safe)   # 每回合重抽密碼、清試過的表
+	main.roll_exits()   # 每回合重抽撤離區（信封要避開抽到的，所以先抽）
 	_known.clear()   # 看過的牌、信封開過沒：每回合重來
 	my_digits = [-1, -1]
 	env_open = [false, false]

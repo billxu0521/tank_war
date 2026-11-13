@@ -18,6 +18,7 @@ const PICKUP_HEIGHT := 3.0     # 高度差在這裡面才算（撿蛋看水平�
 # 以下從 balance.csv 讀（見 balance.gd），改數字去改表
 static var PICKUP_SECONDS: float = Balance.num("pickup_seconds")   # 撿蛋要連續待滿這麼久，不是碰到就拿
 static var EXTRACT_SECONDS: float = Balance.num("extract_seconds")   # 要在撤離區內連續待滿這麼久
+static var EXITS_OPEN: int = Balance.whole("exits_open")   # 每場從撤離區候選裡開幾個（灰盒四個候選）
 const EGG_HOLD_HEIGHT := 2.4  # 蛋舉在牛仔頭上多高（腳底算起），低了會擋住自己的鏡頭
 const MATCH_SECONDS := 240.0  # 一局四分鐘
 const RESPAWN_DELAY := 5.0    # 死亡的代價是節奏，不是失去參賽資格
@@ -69,8 +70,14 @@ var _props: Dictionary:
 	get: return map._props
 var _exit_pads: Array[Node3D]:
 	get: return map._exit_pads
+## 這一場開著的撤離區（候選裡 egg.exits 有勾的）：撤離判定、方位條、電腦牛仔都看這個
 var _exits: Array[Vector3]:
-	get: return map._exits
+	get:
+		var out: Array[Vector3] = []
+		for i in map._exits.size():
+			if (egg.exits >> i) & 1:
+				out.append(map._exits[i])
+		return out
 var spawn_points: Array[Vector3]:
 	get: return map.spawn_points
 var dino_spawn: Vector3:
@@ -164,6 +171,7 @@ func _ready() -> void:
 	map._dark_windows()
 	if mode != &"range":
 		map._build_exits()
+	egg.exits_changed.connect(_show_exits)   # 客戶端收到主機抽的撤離區就換顯示
 	_load_period()
 	_add_dino_volunteer()
 	_build_home()
@@ -735,8 +743,7 @@ func _apply_rules() -> void:
 	var has_egg: bool = RULES[rules].egg
 	egg.visible = has_egg
 	map.set_party_house(party_mode())
-	for pad in _exit_pads:
-		pad.visible = has_egg
+	_show_exits()
 	if party:   # 換模式、回大廳都重來一份
 		party.free()
 		party = null
@@ -1334,9 +1341,11 @@ func _enter_game(msg: String) -> void:
 		_claimer = 0
 		egg.pickup = 0.0
 		egg.carrier = 0
+		roll_exits()
 		var at := _spawn_point(ARENA * 0.22)  # 放中央附近，不要一開始就在出口旁邊
 		egg.global_position = _on_ground(Vector3(at.x, 0.5, at.z))
 		egg.reset_physics_interpolation()   # 瞬移：不要從上一局的位置滑過來
+	_show_exits()   # 沙盒才在進場前設好
 	lobby.hide()
 	menu.hide()
 	status.text = msg
@@ -1825,6 +1834,19 @@ func _on_save_ip_pressed() -> void:
 	cfg.save(saved_ips_path)
 	_load_saved_ips()
 	status.text = "存好了：" + a
+
+## 主機：每場（派對是每回合）從撤離區候選裡隨機開 EXITS_OPEN 個，存進 egg.exits 同步給大家
+func roll_exits() -> void:
+	var idx := range(map._exits.size())
+	idx.shuffle()
+	var mask := 0
+	for i: int in idx.slice(0, EXITS_OPEN):
+		mask |= 1 << i
+	egg.exits = mask
+
+## 顯示開著的撤離區（每台都跑）：沒有蛋的模式、沙盒全藏（灰盒南邊那個在沙盒靶道上）
+func _show_exits() -> void:
+	map.show_exits(egg.exits if RULES[rules].egg and not _sandbox else 0)
 
 func _dist_to_exit(p: Vector3) -> float:
 	var best := 9999.0

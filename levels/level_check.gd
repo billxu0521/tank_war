@@ -89,7 +89,7 @@ static func run(recs: Array, lane: Variant = Main.SANDBOX_RANGE) -> Array:
 			continue
 		if lane != null and (lane as Rect2).grow(-SHRINK).intersects(fp.box):
 			problems.append([name, "擋到沙盒靶場"])
-		for e: Vector2 in ArenaMap.exit_spots() if lane != null else []:
+		for e: Vector2 in ArenaMap.exit_spots(lane == Main.GREYBOX_LANE) if lane != null else []:
 			if (fp.c as Vector2).distance_to(e) < Main.EXIT_RADIUS:
 				problems.append([name, "擋在撤離區裡"])
 		for other: Array in placed:

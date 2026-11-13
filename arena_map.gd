@@ -68,6 +68,7 @@ const WALL_H := 40.0
 const WALL_T := 4.0
 const EXIT_RADIUS := 14.0     # 撤離區半徑
 var _exit_pads: Array[Node3D] = []   # 撤離區的地面標示：沒有蛋的模式藏起來
+var _exit_pipes: Array[Array] = []    # 每個撤離區的水管（兩個網格＋碰撞）：沒抽到的藏起來、關碰撞（show_exits）
 var _props := {}   # 物件名 -> Mesh，從 props.glb 拿出來共用
 var _terrain: Terrain
 var _level: Array[Dictionary] = []   # 擺設清單：場地上每樣東西一筆（見 _build_level）
@@ -83,7 +84,7 @@ var _roads: Array[Rect2] = []          # 城鎮主街這類另外鋪的土路（
 var _blocked: Array[Rect2] = []  # 建築物在 XZ 平面佔的範圍
 var _drift: Node3D   # 落葉飛蟲，跟著鏡頭走（Fx.drift）
 var _bushes: Array[Vector3] = []  # 灌木叢的根部位置（bot 判斷人是不是躲在裡面）
-var _exits: Array[Vector3] = []  # 四個撤離區的中心
+var _exits: Array[Vector3] = []  # 撤離區的候選中心（灰盒四個）；這一場開哪幾個看 main.egg.exits
 func _build_arena() -> void:
 	# 擺設清單：有手調過的場景檔就照它，沒有就自動擺一份初稿（見 docs/素材流水線/場景編輯.md）
 	Trails.enabled = main.mode != &"range" and not greybox   # 自動擺設、地面上色、草都會查小路，最先設
@@ -1087,10 +1088,14 @@ func _reserved() -> Array[Rect2]:
 		out.append(Rect2(e.x - EXIT_RADIUS - 4, e.y - EXIT_RADIUS - 4, EXIT_RADIUS * 2 + 8, EXIT_RADIUS * 2 + 8))
 	return out
 
-## 兩個撤離區的中心：東西兩端（南北向那條路留給沙盒靶場）
-static func exit_spots() -> Array[Vector2]:
+## 撤離區的中心：東西兩端（南北向那條路留給沙盒靶場）。
+## grey：灰盒多兩個候選——北邊小鎮主街正中、南邊森林中間的空地（離房子、樹都 15 公尺以上）。每場從裡面抽幾個開（main.roll_exits）
+static func exit_spots(grey := false) -> Array[Vector2]:
 	var d := ARENA * 0.5 - 22.0
-	return [Vector2(d, 0), Vector2(-d, 0)]
+	var out: Array[Vector2] = [Vector2(d, 0), Vector2(-d, 0)]
+	if grey:
+		out.append_array([Vector2(0, -51), Vector2(2, 64)])
+	return out
 
 ## 農莊：穀倉＋農舍＋筒倉，外面一圈柵欄。穀倉是恐龍爬上去看全場的制高點
 func _farmstead(c: Vector3, rng: RandomNumberGenerator) -> void:
@@ -1685,10 +1690,10 @@ func _block(p: Vector3, size: Vector2, clearance: float) -> void:
 	_blocked.append(Rect2(p.x - size.x * 0.5 - clearance, p.z - size.y * 0.5 - clearance,
 		size.x + clearance * 2, size.y + clearance * 2))
 
-## 兩個撤離區，對邊各一個。只有一個出口的話恐龍蹲在那裡就好；
-## 兩個保留了選擇，但競爭比四個集中，撤離區更容易變成三方交會的爭奪點。
+## 撤離區：灰盒有四個候選，每場只開兩個（main.roll_exits）。只有一個出口的話恐龍蹲在那裡就好；
+## 兩個保留了選擇，但競爭比四個集中，撤離區更容易變成三方交會的爭奪點。每場換一組，出口就不能背。
 func _build_exits() -> void:
-	for e: Vector2 in exit_spots():
+	for e: Vector2 in exit_spots(greybox):
 		var c := _on_ground(Vector3(e.x, 0, e.y))
 		_exits.append(c)
 		# 地面標示用貼花（Decal）從上往下投在地上：撤離區沒整平（高低差可到 10 公尺），平板會一半埋進坡裡、一半浮在空中。
@@ -1708,11 +1713,12 @@ func _build_exits() -> void:
 		d.position = c
 		add_child(d)
 		_exit_pads.append(d)
-		_exit_pipe(c)   # 旁邊的篷車和貨在擺設清單裡（_generate_level）
+		_exit_pipes.append(_exit_pipe(c))   # 旁邊的篷車和貨在擺設清單裡（_generate_level）
 
 ## 撤離點中間的綠色水管：遠遠就看得到撤離點在哪（0.8.1 回饋 U14）。
 ## ponytail: 佔位用的，之後換正式的撤離標的物模型。有碰撞，不然會變成看得到摸不到的東西
-func _exit_pipe(c: Vector3) -> void:
+func _exit_pipe(c: Vector3) -> Array:
+	var out := []
 	const R := 1.2
 	const H := 6.0   # 比柵欄、乾草高很多，隔著小丘也看得到管口
 	var mat := StandardMaterial3D.new()
@@ -1729,7 +1735,20 @@ func _exit_pipe(c: Vector3) -> void:
 		mi.position = c + Vector3(0, part[2], 0)
 		mi.add_to_group(&"exit_pipe")
 		add_child(mi)
-	_solid_cyl(c + Vector3(0, H * 0.5, 0), R + 0.25, H).collision_layer |= Fighter.SOLID_LAYER   # 擺設不是樹：關碰撞物件也擋（這在 _build_arena 的掃描之後才蓋，要自己加）
+		out.append(mi)
+	var body := _solid_cyl(c + Vector3(0, H * 0.5, 0), R + 0.25, H)
+	body.collision_layer |= Fighter.SOLID_LAYER   # 擺設不是樹：關碰撞物件也擋（這在 _build_arena 的掃描之後才蓋，要自己加）
+	out.append(body)
+	return out
+
+## 只顯示 mask 裡的撤離區（第 i 位 = _exits[i]）：地面標示和水管一起藏，水管的碰撞也關掉（不然藏起來還擋路、擋子彈）
+func show_exits(mask: int) -> void:
+	for i in _exit_pads.size():
+		var on := (mask >> i) & 1 == 1
+		_exit_pads[i].visible = on
+		for n: Node3D in _exit_pipes[i]:
+			n.visible = on
+			n.process_mode = Node.PROCESS_MODE_INHERIT if on else Node.PROCESS_MODE_DISABLED   # 停用的碰撞體會離開物理世界
 
 ## 找一個不在建築物裡面的出生點
 func _spawn_point(span := ARENA * 0.45) -> Vector3:
