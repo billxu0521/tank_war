@@ -1114,6 +1114,7 @@ func _start_toyb_case() -> void:
 	_tb_m = _isolated_match()
 	Main.level_file = keep
 	_park(_tb_m)   # 不是正式對局：boss 不讀開關，碰撞遮罩全開（只撞 1 層的也撞得到）
+	_tb_m.map.show_exits(0)   # 撤離點的水管有碰撞、每場隨機開兩個，灰盒的候選 (2, 64)、(0, -51) 正好在車道上（_is_clear 看不到）：全關，不然隨機擋路
 	_tb_z0 = _tb_clear_z(-40.0)
 	_tb_z1 = _tb_clear_z(_tb_z0 + 12.0)
 	_tb_wall = _tb_block(Vector3(0, 0, _tb_z0), 4, 12, Vector3(0.3, 0.5, 1.0))   # 墙面朝 X（尼諾拉沿 +X 跑來撞）。6 公尺高：圓的身體底部爬不過去
@@ -1152,6 +1153,13 @@ func _tb_place(x: float, z: float) -> void:
 	_tb_b.global_position = _tb_m.boss_on_ground(Vector3(x, 0, z))
 	_tb_b.rotation.y = -PI * 0.5
 	_tb_b.velocity = Vector3.ZERO
+	_tb_unplow()
+
+## 換一段（瞬移）：上一段撞過的積木不算（撞穿後的阻力、卡一下是照牆上的鐘算 300 多毫秒，上一段跑到車道外撞到地圖的房子，帶到這一段會把速度壓住）
+func _tb_unplow() -> void:
+	_tb_b._plow_t = -1000000
+	_tb_b._plow_first = -1000000
+	_tb_b._charge_t.clear()
 
 func _tb_next(stage: int) -> void:
 	_tb_stage = stage
@@ -1168,6 +1176,7 @@ func _tb_setup_kick() -> void:
 	_tb_kick_checked = false
 	_tb_b.global_position = _tb_m.boss_on_ground(Vector3(_tb_kx - (_tb_b.BODY_RADIUS + 2.3), 0, z2))
 	_tb_b.velocity = Vector3(_tb_b.RUN, 0, 0)   # 已經在跑（踢只在跑步的速度時做）
+	_tb_unplow()
 	_tb_b.rotation.y = -PI * 0.5
 
 ## 走路撞的碎塊：一塊碎塊擺在空車道上（停下、凍住），尼諾拉從 -9 公尺處走來（不跑）。_tb_kick_checked 這段拿來記「碎塊沒被當成牆」
