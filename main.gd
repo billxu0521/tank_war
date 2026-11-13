@@ -42,6 +42,7 @@ const BOSS_ID := -999   # 負數＝電腦（主機操控）；固定編號，場
 @onready var players: Node3D = $Players
 @onready var egg: Egg = $Egg
 @onready var safe: Safe = $Safe   # 派對模式的保險箱（safe.gd）；其他模式收著
+var barrels: Barrels   # 隨機擺的爆炸桶（barrels.gd）；_ready 建，每局（派對每回合）主機重抽
 @onready var mode_pick: OptionButton = $UI/Root/Lobby/ModeRow/ModePick
 
 ## 連線對戰的模式：開房的人在大廳選，加入的人照主機的（連進來時主機會送 _set_rules）。
@@ -148,6 +149,9 @@ func _ready() -> void:
 	_safe_panel = SafePanel.new()
 	_safe_panel.main = self
 	$UI/Root.add_child(_safe_panel)
+	barrels = Barrels.new()
+	barrels.name = &"Barrels"   # 名字固定：RPC 每台找得到
+	add_child(barrels)
 	ModelMaterials._flatten_models()
 	_use_cjk_font()
 	_add_settings()
@@ -1345,6 +1349,10 @@ func _enter_game(msg: String) -> void:
 		var at := _spawn_point(ARENA * 0.22)  # 放中央附近，不要一開始就在出口旁邊
 		egg.global_position = _on_ground(Vector3(at.x, 0.5, at.z))
 		egg.reset_physics_interpolation()   # 瞬移：不要從上一局的位置滑過來
+		if _practice():
+			barrels.clear()
+		else:
+			barrels.roll()   # 每局重抽爆炸桶（派對每回合再抽一次，party._start_round）
 	_show_exits()   # 沙盒才在進場前設好
 	lobby.hide()
 	menu.hide()
@@ -1366,6 +1374,7 @@ func _spawn(id: int) -> void:
 		_set_period.rpc_id(id, Period.current)
 		_set_dino_collide.rpc_id(id, dino_collide)   # 晚來的人也要拿到碰撞開關的狀態
 		_broadcast_lives()
+		barrels.send_to(id)   # 爆炸桶的位置、爆了沒
 		for d in _doors:   # 門的開關不走同步器，晚來的人要補送一次
 			if d.is_open:
 				d._set_open.rpc_id(id, true)

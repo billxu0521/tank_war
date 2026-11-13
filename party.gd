@@ -221,6 +221,7 @@ func _start_round() -> void:
 	env_open = [false, false]
 	if main.safe.on:
 		_place_envelopes()
+	main.barrels.roll()   # 爆炸桶每回合重抽（要在信封之後：避開信封）
 	dino_id = _roster[round_index % _roster.size()]
 	# 清場：boss 以外全部收掉再照這回合的角色生（刪掉重生，客戶端的位置才會跟著換；做法同 main._new_round）
 	# 恐龍的牛仔留著：make_pilot 要跟他交接（先叫他停送同步再收），不能現在就收

@@ -17,6 +17,7 @@ var _reconnect := OS.get_environment("RECONNECT") != ""   # 斷線重連檢查�
 var _b_old := 0      # B：斷線前的編號
 var _rejoin_at := 0  # B：斷線的時刻（毫秒），隔 1 秒再連
 var _crash := OS.get_environment("RECONNECT") == "crash"   # B 不正常斷線（遊戲當掉、網路掉）：不送離開，舊連線只留參照、不 close、不 poll
+var _barrels_told := false
 var _old_peer: MultiplayerPeer   # B：crash 時舊的連線（留著參照，讓它不被釋放）
 
 
@@ -54,6 +55,11 @@ func _process(_d: float) -> bool:
 	var want := OS.get_environment("MODE")   # 伺服器用 --mode 開的話，客戶端要收到同一個模式和重生次數
 	if want != "" and (String(_m.rules) != want or _m._lives.size() < 2):
 		return false
+	if _m.barrels.spots.is_empty():   # 晚進來也要收到主機擺的爆炸桶（net_check.sh 比兩邊是不是同一批）
+		return false
+	if not _barrels_told:
+		_barrels_told = true
+		print("NET 桶 %d 個 %s" % [_m.barrels.spots.size(), str(_m.barrels.spots).md5_text().left(8)])
 	if _reconnect:
 		# A 一直打 B（每 0.5 秒 30 點）直到 B 少一條命（3 -> 2）；B 扣掉一條命後斷線，連回來命數要是 2
 		var bid := _b.name.to_int()

@@ -9,6 +9,7 @@ func _process(_delta: float) -> bool:
 	if _frames == 1:
 		var Main: GDScript = load("res://main.gd")
 		Main.level_file = Main.RANCH_LEVEL   # 舊案例都是照牧場寫的（穀倉門、柵欄、農舍）；灰盒另外測（_case_greybox）
+		Barrels.COUNT = 0   # 舊案例不擺爆炸桶：亂擺的桶會擋子彈、跟著爆炸連環爆；_case_barrels 自己開
 		_case_greybox()
 		_case_timeout()
 		_case_dino_death()
@@ -88,6 +89,7 @@ func _process(_delta: float) -> bool:
 		_case_reconnect()
 		_case_balance()
 		_case_null_material()
+		_case_barrels()
 		_start_gun_case()
 		return false
 	# 剩下的要跨好幾個 frame 才驗得到。總幀數設上限：腳本編譯壞掉時各階段等不到條件，
