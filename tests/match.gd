@@ -1356,8 +1356,8 @@ func _case_envelope() -> void:
 	_ck(p.my_digits == [-1, code % 10], "重連後補送給本人")
 	_end(m)
 
-## 電腦牛仔開保險箱（cowboy.gd 的 _bot_card、_bot_safe_act，規劃製作順序第 3 步）：看牌、去箱子、試對得上的組合、開了照舊撿蛋。
-## 恐龍（主機 1）不動。bot 不在物理幀裡，手動叫 _bot_step，走路用瞬移代替
+## 電腦牛仔開保險箱（cowboy.gd 的 _bot_safe_act、bot_brain.gd）：看牌、去箱子、試對得上的組合、開了照舊撿蛋。
+## 看牌要站一下、試密碼放慢（規劃「試密碼放慢」）。恐龍（主機 1）不動。bot 不在物理幀裡，手動叫 _bot_step，走路用瞬移代替
 func _case_bot_safe() -> void:
 	var m := _offline_match()
 	m._on_mode_picked(m.RULES.keys().find(&"party"))
@@ -1371,59 +1371,79 @@ func _case_bot_safe() -> void:
 	var code: int = s._code
 	var b: Cowboy = m.players.get_node(^"-1")
 	var b2: Cowboy = m.players.get_node(^"-2")
+	m.players.get_node(^"-3").global_position = Vector3(0, 800, 0)
+	var d: Node3D = m.players.get_children().filter(func(n: Node) -> bool: return n.is_in_group(&"dino"))[0]   # 不用 get_first_node_in_group：前面案例的對局還沒真的刪掉
+	d.global_position = s.global_position + Vector3(0, 0, -200)   # 恐龍放遠：不怕
 	b.bot_fire_range = 0.0   # 只看開箱，不打恐龍
 	b.global_position = s.global_position + Vector3(0, 0, 50)
-	var near_i := 0 if b._flat_to(p.env_pos[0]) < b._flat_to(p.env_pos[1]) else 1
-	_ck(p.phase == &"play" and b._bot_goal(m) == p.env_pos[near_i], "箱子沒開：bot 先去最近的信封")
-	b.global_position = p.env_pos[near_i] + Vector3(1, 0.5, 0)
-	b._bot_step(DT)
-	var k: Array = p._known.get(-1, [-1, -1])
-	_ck(k[near_i] == p.digit(near_i) and k[1 - near_i] == -1, "走到信封旁邊就看（%s）" % [k])
+	var run := func(sec: float, until: Callable) -> float:
+		var f := 0
+		while not until.call() and f < int(sec / DT):
+			b._bot_step(DT)
+			m._physics_process(DT)
+			f += 1
+		return f * DT
+	var goal: Vector3 = b._bot_goal(m)
+	var ci: int = p.env_pos.find(goal)
+	_ck(p.phase == &"play" and ci >= 0 and b.bot_action == "看牌%d" % ci, "箱子沒開：bot 先去看牌（%s）" % b.bot_action)
+	b.global_position = p.env_pos[ci] + Vector3(1, 0.5, 0)
+	var k: Array = []
+	var t: float = run.call(BotBrain.READ_MAX + 0.2, func() -> bool: return int(p._known.get(-1, [-1, -1])[ci]) >= 0)
+	k = p._known.get(-1, [-1, -1])
+	_ck(k[ci] == p.digit(ci) and k[1 - ci] == -1 and t >= BotBrain.READ_MIN - 0.05, "走到牌前站一下才看到（%.1f 秒，%s）" % [t, k])
 	var near := s.global_position + Vector3(1.6, 0.5, 0)
 	b.global_position = near
-	_ck(b._bot_goal(m) == s.global_position and b._bot_should_hold(m), "看過牌、箱子比另一張近：去箱子旁邊站著")
+	run.call(1.0, func() -> bool: return b.bot_action == "試密碼")
+	_ck(b.bot_action == "試密碼" and b._bot_goal(m) == s.global_position and b._bot_should_hold(m), "看過一張：去箱子旁邊站著試（%s）" % b.bot_action)
+	m.debug_hud = true   # F3：頭上一行字、右上角一行
+	run.call(0.1, func() -> bool: return false)
+	_ck(b._bot_label != null and b._bot_label.visible and b._bot_label.text.contains("試密碼") and m._match_hud._bots_debug().contains("試密碼"),
+		"F3 開著：電腦頭上和右上角寫它在做什麼（%s）" % (b._bot_label.text if b._bot_label else "沒有字"))
+	m.debug_hud = false
 	# 別人在試：bot 在旁邊等，不送
 	b2.global_position = near + Vector3(0, 0, 0.8)
 	var other := (code + 50) % 100
 	_ck(s.try_code(-2, other), "另一個人先試")
-	for i in int(Safe.TRY_SECONDS / DT * 0.5):
-		b._bot_step(DT)
-		m._physics_process(DT)
+	run.call(Safe.TRY_SECONDS * 0.5, func() -> bool: return false)
 	_ck(s.busy == -2 and Array(s.tried).count(1) == 0, "箱子忙的時候 bot 不送試開")
 	b2.global_position = near + Vector3(0, 0, 80)
-	# 在箱子旁邊試密碼時不開槍，恐龍就在面前也一樣；挨打才還手
-	var d: Node3D = m.players.get_children().filter(func(n: Node) -> bool: return n.is_in_group(&"dino"))[0]   # 不用 get_first_node_in_group：前面案例的對局還沒真的刪掉
+	# 在箱子旁邊試密碼時不開槍，恐龍就在面前也一樣（恐龍倒地：不怕，不會跑去躲）；挨打才還手
 	d.global_position = near + Vector3(3, 0, 0)
+	d.down_left = 999.0
 	b.bot_fire_range = 40.0
 	b.viewmodel._fire_cooldown = 0.0   # 這裡只跑 _bot_step，viewmodel 的冷卻不會自己倒數：先清掉，扣扳機就真的會射
 	var mag: int = b.viewmodel.weapon.mag
-	for i in int(1.0 / DT):
-		b._bot_step(DT)
-		m._physics_process(DT)
+	run.call(1.0, func() -> bool: return false)
 	_ck(b._bot_threat(m) == d and b.viewmodel.weapon.mag == mag, "在箱子旁邊試密碼：恐龍在面前也不開槍（瞄 %s、彈匣 %d -> %d）" % [b._bot_threat(m), mag, b.viewmodel.weapon.mag])
 	b.take_damage(1)
-	for i in int(Cowboy.BOT_ALERT / DT) + 5:
-		b._bot_step(DT)
-		m._physics_process(DT)
+	run.call(Cowboy.BOT_ALERT, func() -> bool: return b.viewmodel.weapon.mag < mag)
 	_ck(b.viewmodel.weapon.mag < mag, "挨打就還手（彈匣 %d -> %d）" % [mag, b.viewmodel.weapon.mag])
 	b.bot_fire_range = 0.0
-	d.global_position = near + Vector3(0, 0, 80)
-	var frames := 0
-	while not s.open and frames < int(13.0 / DT):
+	d.global_position = near + Vector3(0, 0, -200)
+	d.down_left = 0.0
+	# 試密碼放慢：到箱子先等、每次試完再等；看過一張最多 10 次，最慢約 2 + 10 × 4 秒
+	var tried: Array = []
+	var stamps: Array = []
+	var f := 0
+	while not s.open and f < int(45.0 / DT):
 		b._bot_step(DT)
 		m._physics_process(DT)
-		frames += 1
+		f += 1
+		var n := Array(s.tried).count(1)
+		if n > tried.size():
+			tried.append(n)
+			stamps.append(f * DT)
 	var tries := Array(s.tried).count(1)
-	_ck(s.open and tries <= 11, "bot 試對得上的組合開箱（%.1f 秒、試了 %d 次）" % [frames * DT, tries])
+	var gap: float = (stamps[-1] - stamps[0]) / (stamps.size() - 1) if stamps.size() > 1 else 3.0
+	_ck(s.open and tries <= 11, "bot 試對得上的組合開箱（%.1f 秒、試了 %d 次）" % [f * DT, tries])
+	_ck(gap >= Safe.TRY_SECONDS + BotBrain.GAP_MIN - 0.05, "每次試開隔 2.5 秒以上（平均 %.1f 秒）" % gap)
 	var off := 0
 	for n in 100:
-		if s.tried[n] == 1 and n != other and (n / 10 if near_i == 0 else n % 10) != k[near_i]:
+		if s.tried[n] == 1 and n != other and (n / 10 if ci == 0 else n % 10) != k[ci]:
 			off += 1
 	_ck(off == 0, "只試跟看過的那一位對得上的")
-	for i in int(m.pickup_seconds() / DT) + 10:
-		b._bot_step(DT)
-		m._physics_process(DT)
-	_ck(m.egg.carrier == -1, "開了照舊撿蛋")
+	run.call(m.pickup_seconds() + 1.0, func() -> bool: return m.egg.carrier == -1)
+	_ck(m.egg.carrier == -1, "開了照舊撿蛋（%s）" % b.bot_action)
 	_end(m)
 
 ## 斷線重連：60 秒內同一個代號連回來，拿回命數、出局狀態、派對分數；過期、新局就當新人
@@ -2313,3 +2333,78 @@ func _sp_physics(delta: float) -> bool:
 				_free_map(m)
 				return _done()
 	return false
+
+## 電腦牛仔的腦（bot_brain.gd）：給一組狀況，看最高分的動作（docs/企劃/2026-11-13-電腦牛仔像真人.md「測試」）
+func _case_bot_brain() -> void:
+	var base := func() -> Dictionary:
+		return {"me": Vector3.ZERO, "hp": 1.0, "last_life": false, "time_left": 200.0, "locked": true,
+			"safe": Vector3(0, 0, -40), "cards": [Vector3(-40, 0, 0), Vector3(40, 0, 0)], "known": [-1, -1],
+			"carrier": 0, "holder": Vector3.ZERO, "egg": Vector3(0, 0, -40), "exits": [Vector3(100, 0, 0), Vector3(-100, 0, 0)],
+			"ffa": true, "dino": Vector3(0, 0, 200), "mates": []}
+	var pick := func(ctx: Dictionary) -> String:
+		var b := BotBrain.new(-1)
+		b.think(ctx)
+		return b.action
+	var c: Dictionary = base.call()
+	var a: String = pick.call(c)
+	_ck(a in ["看牌0", "看牌1"], "開局：去看牌（%s）" % a)
+	# 有人搶：隊友（電腦）比我近、也要去看牌0 → 我去看牌1
+	c.cards = [Vector3(-30, 0, 0), Vector3(40, 0, 0)]
+	c.mates = [{"pos": Vector3(-20, 0, 0), "vel": Vector3.ZERO, "act": "看牌0"}]
+	_ck(pick.call(c) == "看牌1", "隊友比我近、要去同一張：我去另一張（%s）" % pick.call(c))
+	# 真人隊友：比我近 10 公尺以上、正朝那張牌走，也算有人搶
+	c.mates = [{"pos": Vector3(-15, 0, 0), "vel": Vector3(-5, 0, 0), "act": ""}]
+	_ck(pick.call(c) == "看牌1", "真人隊友朝那張牌跑：我去另一張（%s）" % pick.call(c))
+	# 箱子有人在試：看過一張的我不擠過去試，去看另一張
+	c = base.call()
+	c.known = [4, -1]
+	c.mates = [{"pos": Vector3(0, 0, -39), "vel": Vector3.ZERO, "act": "試密碼"}]
+	_ck(pick.call(c) == "看牌1", "箱子有人在試：我不試（%s）" % pick.call(c))
+	c.mates = []
+	_ck(pick.call(c) == "試密碼", "看過一張、沒人在試：去試（第二張扣 25 分）（%s）" % pick.call(c))
+	# 恐龍貼身、半血：躲
+	c.dino = Vector3(0, 0, 3)
+	c.hp = 0.5
+	_ck(pick.call(c) == "躲", "恐龍貼身、半血：躲（%s）" % pick.call(c))
+	var b := BotBrain.new(-1)
+	b.think(c)
+	var g: Vector3 = b.goal(c)
+	_ck(g.distance_to(c.dino) > 40.0 and g.z < 0.0, "躲：往遠離恐龍的方向跑（%s）" % g)
+	# 恐龍倒地（null）：險歸 0，箱子開了就衝去撿蛋
+	c = base.call()
+	c.locked = false
+	c.dino = null
+	_ck(pick.call(c) == "撿蛋", "箱子開了、恐龍倒地：撿蛋（%s）" % pick.call(c))
+	# 拿著蛋：撤離，挑沒有恐龍的那個撤離點
+	c.carrier = 1
+	c.dino = Vector3(95, 0, 0)
+	b = BotBrain.new(-1)
+	b.think(c)
+	_ck(b.action == "撤離" and b.goal(c) == c.exits[1], "拿著蛋：撤離，避開恐龍守著的撤離點（%s %s）" % [b.action, b.goal(c)])
+	# 別人拿著蛋（各自為隊）：追他（決定 1）
+	c.carrier = 2
+	c.holder = Vector3(10, 0, 0)
+	c.dino = Vector3(0, 0, 200)
+	_ck(pick.call(c) == "追蛋", "別人拿著蛋：追他（%s）" % pick.call(c))
+	# 不反覆：選了看牌0 之後，別的只高一點不換；2.5 秒內高很多也不換；被打到馬上換
+	c = base.call()
+	c.cards = [Vector3(-10, 0, 0), Vector3(60, 0, 0)]
+	b = BotBrain.new(-1)
+	b.think(c)
+	_ck(b.action == "看牌0", "近的那張先（%s）" % b.action)
+	b.since = BotBrain.LOCK + 1.0
+	c.cards = [Vector3(-30, 0, 0), Vector3(20, 0, 0)]   # 看牌1 只多 3 分
+	b.think(c)
+	_ck(b.action == "看牌0", "別的只高一點：不換（%s）" % b.describe())
+	b.since = 0.5
+	c.dino = Vector3(-30, 0, 8)   # 恐龍守著看牌0：看牌1 高很多
+	b.think(c)
+	_ck(b.action == "看牌0", "剛換動作 2.5 秒內：不換（%s）" % b.describe())
+	b.since = BotBrain.LOCK + 0.1
+	b.think(c)
+	_ck(b.action == "看牌1", "過了 2.5 秒：換（%s）" % b.describe())
+	b.since = 0.5
+	c.dino = Vector3(20, 0, 3)   # 恐龍改守看牌1
+	c.hit = true
+	b.think(c)
+	_ck(b.action == "看牌0", "被打到：2.5 秒內也馬上重選（%s）" % b.describe())

@@ -171,7 +171,6 @@ var focus: Node = null
 var _ladder: Node = null
 ## 這次騰空的最高點。-INF＝還沒落地過（剛出生從半空掉下來不算摔）
 var _fall_top := -INF
-var _bot_try_left := 0.0   # bot 下一次試密碼前還要等多久
 var _bot_alert := 0.0      # bot 剛被打：還剩幾秒不試密碼、專心還手
 const BOT_ALERT := 1.5     # ponytail: 挨打後還手多久，憑感覺；要調再拉出來
 ## bot 繞牆：頂著牆走不動時沿牆面走一段
@@ -255,6 +254,7 @@ var _voice: AudioStreamPlayer3D
 ## 被打了：叫一聲；自己的話畫面四周閃紅、準心外圍標出打你的方向、鏡頭抖一下（傷越重抖越大）
 func _on_hurt(amount: int, from: Vector3) -> void:
 	_bot_alert = BOT_ALERT
+	_bot_hit = true
 	if _rig:
 		_rig.hit()
 	if hp - amount <= 0:
@@ -585,13 +585,19 @@ func _hurt_self(amount: int) -> void:
 
 # --- bot ---
 
-## 電腦操控的牛仔。優先序跟以前的坦克 bot 一樣，行為固定才好拿來量平衡：
-##   1. 拿著蛋 -> 去最近的撤離區
-##   2. 蛋沒人拿 -> 去撿
-##   3. 別人拿著 -> 追那個人（打死他蛋就掉下來）
+## 電腦操控的牛仔：去哪由 brain（bot_brain.gd，打分數選動作）決定，這裡只管身體：走路、看牌、試密碼、開槍。
 ## 走路方向和槍口方向分開：身體朝著威脅開槍，腳往目標走（Hunt 的側移射擊）。
-## ponytail: 不翻越、不蹲，沒有尋路。卡牆就沿牆繞一段，場地都是大方塊，夠用；
-## 場地變複雜（巷弄、室內）再換 NavigationAgent3D，FNE 那邊已經有烘 navmesh 的做法。
+## 沙盒照舊直接去找玩家打（陪練）。
+## ponytail: 不翻越、不蹲，沒有尋路。卡牆就沿牆繞一段；卡牆的秒數 tools/bot_sim.gd 量得到
+var brain: BotBrain
+var _bot_hit := false        # 上次想之後被打過（馬上重想、不管 LOCK）
+var _bot_now := false        # 動作做完了（看完牌）：馬上重想
+var _bot_wait := INF         # 看牌、試密碼的手腳：還要等幾秒（INF＝還沒走到）
+var _bot_wait_for := ""      # 在等哪個動作
+var _bot_label: Label3D      # F3 開著時頭上那行字（只有主機有）
+var bot_action: String:      # 正在做的動作（round_stats.gd、除錯用）
+	get: return brain.action if brain else ""
+
 func _bot_step(delta: float) -> void:
 	if frozen():
 		_hold_still(delta)
@@ -604,8 +610,10 @@ func _bot_step(delta: float) -> void:
 		return
 
 	_bot_alert -= delta
-	if g != null and g.safe.locked() and multiplayer.is_server() and _bot_alert <= 0.0:   # 看牌、試密碼只有主機算；挨打就先停
-		_bot_safe_act(g, delta)
+	if g != null and not g._sandbox and multiplayer.is_server():
+		_bot_think(g, delta)
+		if _bot_alert <= 0.0:   # 看牌、試密碼只有主機算；挨打就先停
+			_bot_safe_act(g, delta)
 	var hold := _bot_should_hold(g)
 	var want := Vector3.ZERO
 	if not hold:
@@ -628,9 +636,73 @@ func _bot_step(delta: float) -> void:
 			_sprinting = update_stamina(true, delta)
 			want = dir * (sprint_speed if _sprinting else walk_speed)
 	_move_flat(want, delta)
-	# 站在箱子旁邊試密碼（或排隊）時跟真人一樣不開槍（真人開著密碼盤拿不到槍），挨打才還手
-	if not (hold and g.safe.locked() and _bot_alert <= 0.0):
+	# 站在牌前、箱子旁邊（看牌、試密碼）時跟真人一樣不開槍（真人開著密碼盤拿不到槍），挨打才還手
+	if not (hold and bot_action in ["看牌0", "看牌1", "試密碼"] and _bot_alert <= 0.0):
 		_bot_shoot(_bot_threat(g))
+
+
+## 到時間（或被打）就重想一次動作；換了動作照 BOT_LOG 印一行。頭上的字跟著換
+func _bot_think(g: Node, delta: float) -> void:
+	if brain == null:
+		brain = BotBrain.new(name.to_int())
+	if not brain.tick(delta, _bot_hit or _bot_now or brain.action == ""):
+		_bot_show(g)
+		return
+	var ctx := _bot_ctx(g)
+	ctx.hit = _bot_hit
+	_bot_hit = false
+	_bot_now = false
+	var was := brain.action
+	if brain.think(ctx) and BotBrain.LOG:
+		print("BOT %.1f %s：%s → %s（%s）" % [Engine.get_physics_frames() / float(Engine.physics_ticks_per_second),
+			_bot_name(g), BotBrain.NAMES.get(was, was), BotBrain.NAMES.get(brain.action, brain.action), brain.describe()])
+	_bot_show(g)
+
+
+func _bot_name(g: Node) -> String:
+	return g.party.names.get(name.to_int(), String(name)) if g.party else "電腦 %s" % name
+
+
+## F3 開著時頭上一行字：誰、在做什麼、前三名分數。分數只有主機有，所以只有主機那台看得到
+func _bot_show(g: Node) -> void:
+	if g.get(&"_dedicated"):
+		return
+	if g.debug_hud and _bot_label == null:
+		_bot_label = Label3D.new()
+		_bot_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		_bot_label.no_depth_test = true
+		_bot_label.fixed_size = true
+		_bot_label.pixel_size = 0.0015
+		_bot_label.font_size = 20
+		_bot_label.outline_size = 6
+		_bot_label.position = Vector3.UP * 2.3
+		add_child(_bot_label)
+	if _bot_label:
+		_bot_label.visible = g.debug_hud
+		_bot_label.text = "%s｜%s" % [_bot_name(g), brain.describe()]
+
+
+## 給 brain 的狀況（欄位見 BotBrain.think）
+func _bot_ctx(g: Node) -> Dictionary:
+	var id := name.to_int()
+	var p: Node = g.party
+	var safe_on: bool = g.safe.locked()
+	var dino: Variant = null   # 恐龍倒地、不在場＝null（不怕）
+	var carrier := 0 if g.egg.carrier == 0 else (1 if g.egg.carrier == id else 2)
+	var holder: Node3D = g.players.get_node_or_null(NodePath(str(g.egg.carrier))) if carrier == 2 else null
+	var mates: Array = []
+	for c: Node in g.players.get_children():
+		if c.is_in_group(&"dino") and dino == null:
+			var down = c.get(&"down_left")
+			if down == null or down <= 0.0:
+				dino = (c as Node3D).global_position
+		elif c != self and c is Cowboy:
+			mates.append({"pos": c.global_position, "vel": c.velocity, "act": (c as Cowboy).bot_action if c.bot else ""})
+	return {"me": global_position, "hp": float(hp) / max_hp, "last_life": p != null and int(p.lives.get(id, 2)) <= 1,
+		"time_left": p.time_left if p else 999.0, "locked": safe_on, "safe": g.safe.global_position,
+		"cards": p.env_pos if p else [], "known": p._known.get(id, [-1, -1]) if p else [-1, -1],
+		"carrier": carrier, "holder": holder.global_position if holder else g.egg.global_position, "egg": g.egg.global_position,
+		"exits": g._exits, "ffa": p != null, "dino": dino, "mates": mates}
 
 
 ## 移動標靶：來回走，走到端點就回頭，身體朝著走的方向（打側面比打正面難）
@@ -648,16 +720,21 @@ func _walk_patrol(delta: float) -> void:
 	_move_flat(to.normalized() * WALKER_SPEED, delta)
 
 
-## 撿蛋和撤離都要在原地待滿時間，跑掉就歸零
+## 照動作看要不要站著：看牌、試密碼、撿蛋、撤離都要在原地待滿時間（跑掉就歸零），躲到了也站著
 func _bot_should_hold(g: Node) -> bool:
-	if g == null:
+	if g == null or g._sandbox or brain == null:
 		return false
-	if g.safe.locked():   # 保險箱：看完牌，站在箱子旁邊試（別人在試也在旁邊等）
-		return _bot_card(g) < 0 and _flat_to(g.safe.global_position) < Safe.RANGE * 0.6
-	if g.egg.carrier == name.to_int():
-		return g._dist_to_exit(global_position) < g.EXIT_RADIUS * 0.5
-	if g.egg.carrier == 0:
-		return global_position.distance_to(g.egg.global_position) < g.pickup_range() * 0.9   # 0.9：恐龍站在蛋上時，牛仔貼著身體還走得到這裡
+	match brain.action:
+		"看牌0", "看牌1":
+			return _flat_to(g.party.env_pos[int(brain.action[-1])]) < Envelope.RANGE * 0.8
+		"試密碼":
+			return _flat_to(g.safe.global_position) < Safe.RANGE * 0.6
+		"撿蛋":
+			return global_position.distance_to(g.egg.global_position) < g.pickup_range() * 0.9   # 0.9：恐龍站在蛋上時，牛仔貼著身體還走得到這裡
+		"撤離":
+			return g._dist_to_exit(global_position) < g.EXIT_RADIUS * 0.5
+		"躲":
+			return _flat_to(brain.goal(brain.last_ctx)) < 2.0
 	return false
 
 
@@ -668,55 +745,46 @@ func _bot_goal(g: Node) -> Vector3:
 		# 沙盒沒有蛋：直接去找玩家打，當陪練
 		var me := _bot_threat(g)
 		return me.global_position if me else global_position
-	if g.safe.locked():
-		var i := _bot_card(g)
-		return g.party.env_pos[i] if i >= 0 else g.safe.global_position   # 箱子之後會動：每次讀現在的位置
-	var my_id := name.to_int()
-	if g.egg.carrier == my_id:
-		var best: Vector3 = g._exits[0]
-		for e: Vector3 in g._exits:
-			if global_position.distance_to(e) < global_position.distance_to(best):
-				best = e
-		return best
-	if g.egg.carrier == 0:
-		return g.egg.global_position
-	var holder: Node3D = g.players.get_node_or_null(NodePath(str(g.egg.carrier)))
-	return holder.global_position if holder != null else g.egg.global_position
-
-
-## 保險箱沒開時要去看哪張牌（0 十位、1 個位），-1 = 直接去箱子。
-## 一張都沒看 -> 最近的那張；看過一張 -> 另一張比箱子近才順路去看
-## ponytail: 不管恐龍在哪、不分工，兩三行規則；要更像人再看恐龍距離、別的 bot 看過什麼
-func _bot_card(g: Node) -> int:
-	var k: Array = g.party._known.get(name.to_int(), [-1, -1])
-	var e: Array = g.party.env_pos
-	if k[0] < 0 and k[1] < 0:
-		return 0 if _flat_to(e[0]) < _flat_to(e[1]) else 1
-	var i := 0 if k[0] < 0 else 1 if k[1] < 0 else -1
-	return i if i >= 0 and _flat_to(e[i]) < _flat_to(g.safe.global_position) else -1
+	if brain == null or brain.action == "":   # 還沒想過（剛生出來、測試直接問）：先想一次
+		brain = brain if brain else BotBrain.new(name.to_int())
+		brain.think(_bot_ctx(g))
+	return brain.goal(brain.last_ctx)
 
 
 func _flat_to(p: Vector3) -> float:
 	return Vector2(p.x - global_position.x, p.z - global_position.z).length()
 
 
-## 主機：經過信封就看（read 自己檢查距離）；在箱子旁邊、沒人在試就試一個跟看過的數字對得上、還沒試過的組合
+## 主機：看牌、試密碼的手。看牌要站在牌前 READ 秒才看到；試密碼到箱子旁先等 ARRIVE 秒，之後每次試完再等 GAP 秒，
+## 沒人在試才從「跟看過的數字對得上、還沒試過」的組合隨機挑一個
 func _bot_safe_act(g: Node, delta: float) -> void:
+	var act := bot_action
+	if act != _bot_wait_for or not _bot_should_hold(g):
+		_bot_wait_for = act
+		_bot_wait = INF
+		return
+	if not g.safe.locked() or not act in ["看牌0", "看牌1", "試密碼"]:
+		return
+	if _bot_wait == INF:
+		_bot_wait = randf_range(BotBrain.ARRIVE_MIN, BotBrain.ARRIVE_MAX) if act == "試密碼" else randf_range(BotBrain.READ_MIN, BotBrain.READ_MAX)
+	_bot_wait -= delta
+	if _bot_wait > 0.0:
+		return
 	var id := name.to_int()
 	var p: Node = g.party
-	var k: Array = p._known.get(id, [-1, -1])
-	for i in 2:
-		if k[i] < 0 and _flat_to(p.env_pos[i]) < Envelope.RANGE and p.read(id, i):
-			return
-	_bot_try_left -= delta
-	if _bot_try_left > 0.0 or g.safe.busy != 0 or _flat_to(g.safe.global_position) >= Safe.RANGE:
+	if act != "試密碼":
+		if p.read(id, int(act[-1])):
+			_bot_now = true
 		return
+	if g.safe.busy != 0:
+		return
+	var k: Array = p._known.get(id, [-1, -1])
 	var left: Array = []
 	for n in 100:
 		if g.safe.tried[n] == 0 and (k[0] < 0 or n / 10 == k[0]) and (k[1] < 0 or n % 10 == k[1]):
 			left.append(n)
 	if not left.is_empty() and g.safe.try_code(id, left.pick_random()):
-		_bot_try_left = 1.0   # 一秒試一個（試本身也要 1 秒，箱子忙的時候不送）
+		_bot_wait = Safe.TRY_SECONDS + randf_range(BotBrain.GAP_MIN, BotBrain.GAP_MAX)
 
 
 ## 瞄誰：有人拿著蛋就瞄他，否則瞄最近的敵人（恐龍或別的牛仔）
