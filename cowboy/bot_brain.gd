@@ -16,6 +16,32 @@ const FORCE_TRY := 60.0       # 剩不到這麼多秒，一張牌都沒看也硬
 const HUMAN_LEAD := 10.0      # 真人隊友比我近這麼多、又朝那邊走，就當他要去
 const HIDE_DIST := 45.0       # 躲：跑到離恐龍這麼遠
 
+# 感知（第 2 步）：只知道看得到、聽得到的
+const FORGET := 8.0           # 沒再看到，信心幾秒降到 0
+const HEARD_CONF := 0.6       # 只聽到：信心從這裡起跳
+const UNKNOWN_RISK := 0.1     # 完全不知道恐龍在哪：到處都有一點怕
+const SIGHT_DINO := 70.0      # 看得到恐龍多遠（牠 12 公尺高）
+const SIGHT_COWBOY := 40.0
+const SIGHT_COS := 0.574      # 視野：正前方左右各 55 度（cos 55°）
+const FEEL := 6.0             # 貼身：不管方向都知道（腳步震動）
+const HEAR_LOUD := 60.0       # 吼叫、出招聽得到多遠
+const HEAR_RUN := 25.0        # 跑步
+const HEAR_FUZZ := 0.15       # 聽到的位置偏多少（距離的比例，最多 HEAR_FUZZ_MAX 公尺）
+const HEAR_FUZZ_MAX := 10.0
+const REACT := 0.4            # 發現恐龍到有反應（秒），越遠越久：再加每公尺 REACT_PER_M
+const REACT_PER_M := 0.004
+# 手腳
+const TURN := TAU             # 每秒最多轉多少（弧度）
+const AIM_BASE := 1.5         # 瞄準偏差（度）
+const AIM_MOVING := 3.0       # 走路再加
+const AIM_TURNED := 2.0       # 剛轉過來再加
+const AIM_SLIDE := 0.4        # 偏的方向每幾秒換一次，慢慢滑過去
+const SHOT_GAP_MIN := 0.15    # 每發之間多等
+const SHOT_GAP_MAX := 0.4
+const GLANCE_MIN := 3.0       # 每 3～5 秒往旁邊或後面瞄一眼
+const GLANCE_MAX := 5.0
+const GLANCE_TIME := 0.5
+
 # 看牌、試密碼的手腳（秒）
 const READ_MIN := 0.8         # 站在牌前多久才看到數字
 const READ_MAX := 1.5
@@ -33,6 +59,9 @@ var since := 99.0             # 換到這個動作幾秒了
 var scores := {}              # 上次想的分數（含隨機、含 STICK），除錯字和 BOT_LOG 用
 var last_ctx := {}            # 上次想的狀況（goal 用：位置晚 0.4 秒沒關係）
 static var LOG := OS.get_environment("BOT_LOG") != ""   # BOT_LOG=1：換動作時印一行
+var dino_mem := Vector3.ZERO  # 記得的恐龍位置
+var conf := 0.0               # 有多確定（看到 1，FORGET 秒降到 0）
+var seen_ago := INF           # 上次看到（或聽到）幾秒前
 var _noise := {}
 var _think_left := 0.0
 var _was_close := false
@@ -46,6 +75,8 @@ func _init(bot_id: int) -> void:
 ## 每個物理幀叫：到時間（或 now）就回 true，叫的人再組狀況叫 think
 func tick(delta: float, now := false) -> bool:
 	since += delta
+	conf = maxf(conf - delta / FORGET, 0.0)
+	seen_ago += delta
 	_think_left -= delta
 	if _think_left > 0.0 and not now:
 		return false
@@ -53,17 +84,26 @@ func tick(delta: float, now := false) -> bool:
 	return true
 
 
+## 看到（c = 1）、聽到（HEARD_CONF）恐龍在 pos。只聽到不蓋掉比較確定的記憶
+func remember(pos: Vector3, c: float) -> void:
+	if c < conf:
+		return
+	dino_mem = pos
+	conf = c
+	seen_ago = 0.0
+
+
 ## 狀況 ctx（cowboy._bot_ctx 組，測試自己組）：
 ##   me 位置、hp 血量比例、last_life 剩一命、time_left 剩幾秒、hit 上次想之後被打過
 ##   locked 箱子關著、safe 箱子位置、cards 兩張牌位置、known [十位, 個位]（-1 沒看）
 ##   carrier 0 沒人拿／1 我拿著／2 別人拿著、holder 拿蛋的人在哪、egg 蛋在哪、exits 開著的撤離點、ffa 各自為隊
-##   dino 恐龍在哪（null＝倒地或不在場）
+##   dino 記得的恐龍位置（null＝看到牠倒地、或不在場）、conf 信心（0＝不知道在哪）
 ##   mates 別的牛仔 [{pos, vel, act（電腦的動作，真人是 ""）}]
 ## 回傳有沒有換動作
 func think(ctx: Dictionary) -> bool:
 	last_ctx = ctx
 	var s := score_all(ctx)
-	var close := ctx.dino != null and (ctx.me as Vector3).distance_to(ctx.dino) < CLOSE
+	var close := ctx.dino != null and float(ctx.get("conf", 1.0)) > 0.0 and (ctx.me as Vector3).distance_to(ctx.dino) < CLOSE
 	var force: bool = ctx.get("hit", false) or (close and not _was_close) or not s.has(action)
 	_was_close = close
 	for k: String in s:
@@ -122,12 +162,14 @@ func score_all(ctx: Dictionary) -> Dictionary:
 	return out
 
 
-## 那個地方離恐龍多近（0～1）。恐龍倒地或不在場是 0
-## ponytail: 第 1 步恐龍位置直接讀（全知），第 2 步換成記得的位置和信心
+## 那個地方多危險（0～1）：信心 × 離記得的恐龍位置多近。看到恐龍倒地是 0；完全不知道在哪固定 UNKNOWN_RISK
 func risk(ctx: Dictionary, p: Vector3) -> float:
 	if ctx.dino == null:
 		return 0.0
-	return clampf(1.0 - p.distance_to(ctx.dino) / NEAR_R, 0.0, 1.0)
+	var c := float(ctx.get("conf", 1.0))
+	if c <= 0.0:
+		return UNKNOWN_RISK
+	return c * clampf(1.0 - p.distance_to(ctx.dino) / NEAR_R, 0.0, 1.0)
 
 
 ## 有沒有別人正要去同一個地方、而且比我近（1／0）。電腦看他的動作；真人看「比我近 HUMAN_LEAD 以上又朝那邊走」，或已經站在那裡
@@ -163,7 +205,7 @@ func goal(ctx: Dictionary) -> Vector3:
 		"撤離":
 			return _pick_exit(ctx)
 		"躲":
-			if ctx.dino == null:
+			if ctx.dino == null or float(ctx.get("conf", 1.0)) <= 0.0:
 				return me
 			var away: Vector3 = me - ctx.dino
 			away.y = 0.0
@@ -193,7 +235,8 @@ func describe() -> String:
 	var parts: Array = []
 	for k: String in keys.slice(0, 3):
 		parts.append("%s %d" % [NAMES.get(k, k), roundi(scores[k])])
-	return "%s｜%s" % [NAMES.get(action, action), "　".join(parts)]
+	var mem := "恐龍：%s" % ("不知道" if conf <= 0.0 else ("看得到" if seen_ago < 0.5 else "%d 秒前" % roundi(seen_ago)))
+	return "%s｜%s｜%s" % [NAMES.get(action, action), "　".join(parts), mem]
 
 
 static func _flat(a: Vector3, b: Vector3) -> float:
