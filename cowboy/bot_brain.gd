@@ -50,10 +50,29 @@ const ARRIVE_MAX := 2.0
 const GAP_MIN := 1.5          # 每次試完等多久才試下一個（加上試本身 1 秒）
 const GAP_MAX := 3.0
 
+# 守箱、護送、還擊（第 3 步）
+const GUARD_DIST := 10.0      # 守箱站在箱子外多遠（面向恐龍最後出現的方向）
+const ESCORT_DIST := 8.0      # 護送走在拿蛋的人和恐龍之間，離他多遠
+const FIGHT_RANGE := 40.0     # 還擊：看得到恐龍、在這個距離內
+const HIT_RECENT := 3.0       # 幾秒內被打過算「剛被打」
+const PROTECT := 20.0         # 恐龍離正在試密碼、拿蛋的隊友這麼近：要還擊
+const STRAFE := 4.0           # 還擊時往旁邊挪多遠
+const BUSH_REACH := 40.0      # 躲：找多遠內的草叢
+const HEAL_BELOW := 0.6       # 躲好了、血比這個少就用急救包
+
+## 個性：同一張分數表乘不同倍數（risk 乘在「險」上，越大越怕）。照編號固定：-1 勇敢、-2 膽小、-3 投機，-4 又是勇敢（決定 3）
+const PERSONAS := [
+	{"name": "勇敢", "risk": 0.6, "還擊": 1.4, "躲": 0.6, "試密碼": 1.1, "守箱": 0.8, "撿蛋": 1.0, "護送": 1.2, "react": 0.3, "aim": 0.8},
+	{"name": "膽小", "risk": 1.5, "還擊": 0.6, "躲": 1.5, "試密碼": 0.9, "守箱": 1.0, "撿蛋": 0.9, "護送": 1.0, "react": 0.5, "aim": 1.2},
+	{"name": "投機", "risk": 1.0, "還擊": 0.8, "躲": 1.0, "試密碼": 0.6, "守箱": 1.6, "撿蛋": 1.4, "護送": 0.8, "react": 0.4, "aim": 1.0},
+]
+const MULT_AS := {"追蛋": "撿蛋"}   # 追蛋用撿蛋的倍數（投機的最想搶）
+
 const CARD := ["看牌0", "看牌1"]
 const NAMES := {"看牌0": "看牌(十位)", "看牌1": "看牌(個位)"}
 
 var id := 0
+var persona: Dictionary       # PERSONAS 其中一個；{}＝普通（測試用，全部 1 倍）
 var action := ""              # 正在做的動作（""＝還沒想過）
 var since := 99.0             # 換到這個動作幾秒了
 var scores := {}              # 上次想的分數（含隨機、含 STICK），除錯字和 BOT_LOG 用
@@ -67,8 +86,9 @@ var _think_left := 0.0
 var _was_close := false
 
 
-func _init(bot_id: int) -> void:
+func _init(bot_id: int, p: Variant = null) -> void:
 	id = bot_id
+	persona = p if p != null else PERSONAS[(absi(bot_id) - 1) % PERSONAS.size()]
 	_think_left = THINK * (absi(bot_id) % 3) / 3.0   # 三個人錯開，不擠在同一幀
 
 
@@ -98,7 +118,8 @@ func remember(pos: Vector3, c: float) -> void:
 ##   locked 箱子關著、safe 箱子位置、cards 兩張牌位置、known [十位, 個位]（-1 沒看）
 ##   carrier 0 沒人拿／1 我拿著／2 別人拿著、holder 拿蛋的人在哪、egg 蛋在哪、exits 開著的撤離點、ffa 各自為隊
 ##   dino 記得的恐龍位置（null＝看到牠倒地、或不在場）、conf 信心（0＝不知道在哪）
-##   mates 別的牛仔 [{pos, vel, act（電腦的動作，真人是 ""）}]
+##   mates 別的牛仔 [{pos, vel, act（電腦的動作，真人是 ""）, carry 拿著蛋}]
+##   sees 現在看得到恐龍、hit_ago 上次被打幾秒前、bushes 草叢位置
 ## 回傳有沒有換動作
 func think(ctx: Dictionary) -> bool:
 	last_ctx = ctx
@@ -122,7 +143,7 @@ func think(ctx: Dictionary) -> bool:
 	action = best
 	since = 0.0
 	_noise.clear()
-	for k: String in ["看牌0", "看牌1", "試密碼", "撿蛋", "撤離", "躲", "追蛋"]:
+	for k: String in s:
 		_noise[k] = randf_range(-NOISE, NOISE)
 	return true
 
@@ -145,6 +166,8 @@ func score_all(ctx: Dictionary) -> Dictionary:
 			var sp: Vector3 = ctx.safe
 			out["試密碼"] = 55.0 + (15.0 if seen == 2 else 0.0) + 25.0 * urgent - minf(0.2 * _flat(me, sp), 30.0) \
 				- 45.0 * risk(ctx, sp) - 35.0 * _taken(ctx, "試密碼", sp)
+		if _mate_doing(ctx, "試密碼", ctx.safe):
+			out["守箱"] = 35.0 - minf(0.1 * _flat(me, ctx.safe), 15.0) - 30.0 * risk(ctx, me)
 	else:
 		match int(ctx.get("carrier", 0)):
 			0:
@@ -154,12 +177,31 @@ func score_all(ctx: Dictionary) -> Dictionary:
 				if not (ctx.exits as Array).is_empty():
 					out["撤離"] = 95.0
 			2:
+				var h: Vector3 = ctx.holder
 				if ctx.get("ffa", false):   # 各自為隊：打死拿蛋的人，蛋掉下來再撿（決定 1）
-					var h: Vector3 = ctx.holder
 					out["追蛋"] = 60.0 + 25.0 * urgent - minf(0.2 * _flat(me, h), 30.0) - 30.0 * risk(ctx, h)
+				else:
+					out["護送"] = 55.0 - minf(0.15 * _flat(me, h), 25.0)
 	if int(ctx.get("carrier", 0)) != 1:   # 拿蛋的人只管跑
 		out["躲"] = 10.0 + 80.0 * risk(ctx, me) * (0.4 + 0.6 * hurt) + 15.0 * last
+	if ctx.get("sees", false) and ctx.dino != null and _flat(me, ctx.dino) < FIGHT_RANGE:
+		var guard := 0.0   # 恐龍離正在試密碼或拿蛋的隊友很近
+		for m: Dictionary in ctx.get("mates", []):
+			if (m.act == "試密碼" or m.get("carry", false) or (m.act == "" and ctx.get("locked", false) and _flat(m.pos, ctx.safe) < 3.0)) \
+					and _flat(m.pos, ctx.dino) < PROTECT:
+				guard = 1.0
+		out["還擊"] = 10.0 + 25.0 * float(ctx.hp) + (25.0 if float(ctx.get("hit_ago", INF)) < HIT_RECENT else 0.0) + 25.0 * guard - 20.0 * last
+	for k: String in out:
+		out[k] *= float(persona.get(MULT_AS.get(k, k), 1.0))
 	return out
+
+
+## 有沒有隊友在做這件事（電腦看動作；真人站在 p 旁邊 3 公尺內就算）
+func _mate_doing(ctx: Dictionary, key: String, p: Vector3) -> bool:
+	for m: Dictionary in ctx.get("mates", []):
+		if m.act == key or (m.act == "" and _flat(m.pos, p) < 3.0):
+			return true
+	return false
 
 
 ## 那個地方多危險（0～1）：信心 × 離記得的恐龍位置多近。看到恐龍倒地是 0；完全不知道在哪固定 UNKNOWN_RISK
@@ -168,8 +210,8 @@ func risk(ctx: Dictionary, p: Vector3) -> float:
 		return 0.0
 	var c := float(ctx.get("conf", 1.0))
 	if c <= 0.0:
-		return UNKNOWN_RISK
-	return c * clampf(1.0 - p.distance_to(ctx.dino) / NEAR_R, 0.0, 1.0)
+		return UNKNOWN_RISK * float(persona.get("risk", 1.0))
+	return c * clampf(1.0 - p.distance_to(ctx.dino) / NEAR_R, 0.0, 1.0) * float(persona.get("risk", 1.0))
 
 
 ## 有沒有別人正要去同一個地方、而且比我近（1／0）。電腦看他的動作；真人看「比我近 HUMAN_LEAD 以上又朝那邊走」，或已經站在那裡
@@ -204,14 +246,27 @@ func goal(ctx: Dictionary) -> Vector3:
 			return ctx.holder
 		"撤離":
 			return _pick_exit(ctx)
+		"守箱":   # 箱子外 GUARD_DIST，朝恐龍最後出現的方向（不知道就朝我這邊）
+			var sp: Vector3 = ctx.safe
+			return sp + _dir(sp, ctx.dino if ctx.dino != null and float(ctx.get("conf", 1.0)) > 0.0 else me) * GUARD_DIST
+		"護送":   # 走在拿蛋的人和恐龍之間
+			var h: Vector3 = ctx.holder
+			return h + _dir(h, ctx.dino if ctx.dino != null and float(ctx.get("conf", 1.0)) > 0.0 else me) * ESCORT_DIST
+		"還擊":   # 橫著走：往恐龍的側邊挪，每次換動作換邊
+			var side := _dir(me, ctx.dino).cross(Vector3.UP) * (1.0 if _noise.get("還擊", 0.0) > 0.0 else -1.0)
+			return me + side * STRAFE
 		"躲":
 			if ctx.dino == null or float(ctx.get("conf", 1.0)) <= 0.0:
 				return me
-			var away: Vector3 = me - ctx.dino
-			away.y = 0.0
-			if away.length() < 0.1:
-				away = Vector3.FORWARD
-			return (ctx.dino as Vector3) + away.normalized() * HIDE_DIST
+			# 草叢：BUSH_REACH 內、比我離恐龍遠（不往牠那邊跑）的最近一個；沒有就往反方向跑
+			var dino: Vector3 = ctx.dino
+			var best := Vector3.INF
+			for b: Vector3 in ctx.get("bushes", []):
+				if _flat(me, b) < BUSH_REACH and _flat(b, dino) > _flat(me, dino) and (best == Vector3.INF or _flat(me, b) < _flat(me, best)):
+					best = b
+			if best != Vector3.INF:
+				return Vector3(best.x, me.y, best.z)
+			return dino + _dir(dino, me) * HIDE_DIST
 	return me
 
 
@@ -236,7 +291,13 @@ func describe() -> String:
 	for k: String in keys.slice(0, 3):
 		parts.append("%s %d" % [NAMES.get(k, k), roundi(scores[k])])
 	var mem := "恐龍：%s" % ("不知道" if conf <= 0.0 else ("看得到" if seen_ago < 0.5 else "%d 秒前" % roundi(seen_ago)))
-	return "%s｜%s｜%s" % [NAMES.get(action, action), "　".join(parts), mem]
+	return "%s｜%s｜%s｜%s" % [persona.get("name", "普通"), NAMES.get(action, action), "　".join(parts), mem]
+
+
+## from 往 to 的水平方向（同一點就往前）
+static func _dir(from: Vector3, to: Vector3) -> Vector3:
+	var d := Vector3(to.x - from.x, 0.0, to.z - from.z)
+	return d.normalized() if d.length() > 0.1 else Vector3.FORWARD
 
 
 static func _flat(a: Vector3, b: Vector3) -> float:

@@ -2342,7 +2342,7 @@ func _case_bot_brain() -> void:
 			"carrier": 0, "holder": Vector3.ZERO, "egg": Vector3(0, 0, -40), "exits": [Vector3(100, 0, 0), Vector3(-100, 0, 0)],
 			"ffa": true, "dino": Vector3(0, 0, 200), "mates": []}
 	var pick := func(ctx: Dictionary) -> String:
-		var b := BotBrain.new(-1)
+		var b := BotBrain.new(-1, {})
 		b.think(ctx)
 		return b.action
 	var c: Dictionary = base.call()
@@ -2359,14 +2359,14 @@ func _case_bot_brain() -> void:
 	c = base.call()
 	c.known = [4, -1]
 	c.mates = [{"pos": Vector3(0, 0, -39), "vel": Vector3.ZERO, "act": "試密碼"}]
-	_ck(pick.call(c) == "看牌1", "箱子有人在試：我不試（%s）" % pick.call(c))
+	_ck(pick.call(c) in ["看牌1", "守箱"], "箱子有人在試：我不試，去看另一張或守箱（%s）" % pick.call(c))
 	c.mates = []
 	_ck(pick.call(c) == "試密碼", "看過一張、沒人在試：去試（第二張扣 25 分）（%s）" % pick.call(c))
 	# 恐龍貼身、半血：躲
 	c.dino = Vector3(0, 0, 3)
 	c.hp = 0.5
 	_ck(pick.call(c) == "躲", "恐龍貼身、半血：躲（%s）" % pick.call(c))
-	var b := BotBrain.new(-1)
+	var b := BotBrain.new(-1, {})
 	b.think(c)
 	var g: Vector3 = b.goal(c)
 	_ck(g.distance_to(c.dino) > 40.0 and g.z < 0.0, "躲：往遠離恐龍的方向跑（%s）" % g)
@@ -2378,7 +2378,7 @@ func _case_bot_brain() -> void:
 	# 拿著蛋：撤離，挑沒有恐龍的那個撤離點
 	c.carrier = 1
 	c.dino = Vector3(95, 0, 0)
-	b = BotBrain.new(-1)
+	b = BotBrain.new(-1, {})
 	b.think(c)
 	_ck(b.action == "撤離" and b.goal(c) == c.exits[1], "拿著蛋：撤離，避開恐龍守著的撤離點（%s %s）" % [b.action, b.goal(c)])
 	# 別人拿著蛋（各自為隊）：追他（決定 1）
@@ -2389,7 +2389,7 @@ func _case_bot_brain() -> void:
 	# 不反覆：選了看牌0 之後，別的只高一點不換；2.5 秒內高很多也不換；被打到馬上換
 	c = base.call()
 	c.cards = [Vector3(-10, 0, 0), Vector3(60, 0, 0)]
-	b = BotBrain.new(-1)
+	b = BotBrain.new(-1, {})
 	b.think(c)
 	_ck(b.action == "看牌0", "近的那張先（%s）" % b.action)
 	b.since = BotBrain.LOCK + 1.0
@@ -2409,7 +2409,7 @@ func _case_bot_brain() -> void:
 	b.think(c)
 	_ck(b.action == "看牌0", "被打到：2.5 秒內也馬上重選（%s）" % b.describe())
 	# 記憶：看到信心 1，8 秒降到 0；不知道在哪時險固定 0.1；只聽到不蓋掉看到的
-	b = BotBrain.new(-1)
+	b = BotBrain.new(-1, {})
 	b.remember(Vector3(0, 0, 10), 1.0)
 	b.tick(BotBrain.FORGET * 0.5)
 	_ck(absf(b.conf - 0.5) < 0.01, "沒再看到：信心慢慢降（%.2f）" % b.conf)
@@ -2424,6 +2424,35 @@ func _case_bot_brain() -> void:
 	c.conf = 0.5
 	c.dino = Vector3(0, 0, 0)
 	_ck(is_equal_approx(b.risk(c, Vector3.ZERO), 0.5), "險＝信心 × 離記得的位置多近")
+	# 個性（照編號固定）：恐龍 10 公尺、半血、剛被打 → 膽小的躲、勇敢的還擊
+	_ck(BotBrain.new(-1).persona.name == "勇敢" and BotBrain.new(-2).persona.name == "膽小" and BotBrain.new(-3).persona.name == "投機"
+		and BotBrain.new(-4).persona.name == "勇敢", "個性照編號固定")
+	c = base.call()
+	c.dino = Vector3(0, 0, 10)
+	c.hp = 0.5
+	c.sees = true
+	c.hit_ago = 0.5
+	var timid := BotBrain.new(-2)
+	timid.think(c)
+	var brave := BotBrain.new(-1)
+	brave.think(c)
+	_ck(timid.action == "躲" and brave.action == "還擊", "恐龍 10 公尺、半血、剛被打：膽小的躲（%s）、勇敢的還擊（%s）" % [timid.describe(), brave.describe()])
+	# 投機的：有人在試密碼，我去守箱（站在箱子外 10 公尺、朝恐龍那邊）
+	c = base.call()
+	c.known = [4, -1]
+	c.mates = [{"pos": Vector3(0, 0, -39), "vel": Vector3.ZERO, "act": "試密碼"}]
+	var opp := BotBrain.new(-3)
+	opp.think(c)
+	var gp: Vector3 = opp.goal(c)
+	_ck(opp.action == "守箱" and is_equal_approx(gp.distance_to(c.safe), BotBrain.GUARD_DIST) and gp.z > (c.safe as Vector3).z,
+		"有人在試：投機的去守箱，面向恐龍那邊（%s %s）" % [opp.describe(), gp])
+	# 不是各自為隊的模式：隊友拿著蛋就護送
+	c = base.call()
+	c.locked = false
+	c.carrier = 2
+	c.holder = Vector3(10, 0, 0)
+	c.ffa = false
+	_ck(pick.call(c) == "護送", "隊友拿著蛋（同一隊）：護送（%s）" % pick.call(c))
 
 ## 電腦牛仔只看得到看得到的（cowboy.gd 的 _bot_sees，恐龍、牛仔同一套，只差距離）：中間有牆看不到、背後看不到、貼身一定知道。射線要等牆進物理世界，跨幀
 func _case_bot_sight() -> void:

@@ -255,6 +255,7 @@ var _voice: AudioStreamPlayer3D
 func _on_hurt(amount: int, from: Vector3) -> void:
 	_bot_alert = BOT_ALERT
 	_bot_hit = true
+	_bot_hit_ago = 0.0
 	if brain and from.is_finite():   # 被恐龍打到：馬上知道牠在哪
 		for c: Node in get_parent().get_children():
 			if c.is_in_group(&"dino") and (c as Node3D).global_position.distance_to(from) < 20.0:
@@ -600,6 +601,8 @@ var _bot_wait := INF         # 看牌、試密碼的手腳：還要等幾秒（I
 var _bot_wait_for := ""      # 在等哪個動作
 var _bot_label: Label3D      # F3 開著時頭上那行字（只有主機有）
 var _bot_sense_dt := 0.0     # 上次看、聽之後過了幾秒
+var _bot_hit_ago := INF      # 上次被打幾秒前
+var _bot_heal := 0.0         # 躲好了在用急救包：用了幾秒
 var _bot_spot := -1.0        # 看到恐龍、還沒反應過來：還剩幾秒（-1＝沒看到）
 var _bot_dino_down := false  # 看到恐龍倒地
 var _bot_target: Node3D      # 看得到、要打的（每次想的時候選）
@@ -627,6 +630,7 @@ func _bot_step(delta: float) -> void:
 		return
 
 	_bot_alert -= delta
+	_bot_hit_ago += delta
 	if g != null and not g._sandbox and multiplayer.is_server():
 		_bot_think(g, delta)
 		if _bot_alert <= 0.0:   # 看牌、試密碼只有主機算；挨打就先停
@@ -654,6 +658,7 @@ func _bot_step(delta: float) -> void:
 			want = dir * (sprint_speed if _sprinting else walk_speed)
 	_move_flat(want, delta)
 	_bot_hands(delta, want)
+	_bot_hide(g, hold, delta)
 	# 開槍是反射：腳照動作走，看得到就打。站在牌前、箱子旁邊（看牌、試密碼）時跟真人一樣不開槍（真人開著密碼盤拿不到槍），挨打才還手
 	var threat := _bot_threat(g)
 	if threat and not (hold and bot_action in ["看牌0", "看牌1", "試密碼"] and _bot_alert <= 0.0):
@@ -719,12 +724,14 @@ func _bot_ctx(g: Node) -> Dictionary:
 		if c.is_in_group(&"dino"):
 			dino = null if _bot_dino_down else brain.dino_mem
 		elif c != self and c is Cowboy:
-			mates.append({"pos": c.global_position, "vel": c.velocity, "act": (c as Cowboy).bot_action if c.bot else ""})
+			mates.append({"pos": c.global_position, "vel": c.velocity, "act": (c as Cowboy).bot_action if c.bot else "",
+				"carry": g.egg.carrier == c.name.to_int()})
 	return {"me": global_position, "hp": float(hp) / max_hp, "last_life": p != null and int(p.lives.get(id, 2)) <= 1,
 		"time_left": p.time_left if p else 999.0, "locked": safe_on, "safe": g.safe.global_position,
 		"cards": p.env_pos if p else [], "known": p._known.get(id, [-1, -1]) if p else [-1, -1],
 		"carrier": carrier, "holder": holder.global_position if holder else g.egg.global_position, "egg": g.egg.global_position,
-		"exits": g._exits, "ffa": p != null, "dino": dino, "conf": brain.conf, "mates": mates}
+		"exits": g._exits, "ffa": p != null, "dino": dino, "conf": brain.conf, "mates": mates,
+		"sees": brain.seen_ago < BotBrain.THINK + 0.1 and not _bot_dino_down, "hit_ago": _bot_hit_ago, "bushes": g.map._bushes}
 
 
 ## 移動標靶：來回走，走到端點就回頭，身體朝著走的方向（打側面比打正面難）
@@ -755,9 +762,23 @@ func _bot_should_hold(g: Node) -> bool:
 			return global_position.distance_to(g.egg.global_position) < g.pickup_range() * 0.9   # 0.9：恐龍站在蛋上時，牛仔貼著身體還走得到這裡
 		"撤離":
 			return g._dist_to_exit(global_position) < g.EXIT_RADIUS * 0.5
-		"躲":
+		"躲", "守箱":
 			return _flat_to(brain.goal(brain.last_ctx)) < 2.0
 	return false
+
+
+## 躲好了：在草叢裡就蹲下（藏得住，見 hidden_in_bush）；血少就用急救包（站著不動 medkit_seconds 秒，跟真人一樣）
+func _bot_hide(g: Node, hold: bool, delta: float) -> void:
+	var hiding := hold and bot_action == "躲"
+	var crouch: bool = hiding and g.map._bushes.any(func(b: Vector3) -> bool: return _flat_to(b) < 1.2)
+	sync_crouching = crouch   # 膠囊、頭高由 _process 照這個縮（bot 在主機上是「遠端」身分）
+	if hiding and float(hp) / max_hp < BotBrain.HEAL_BELOW and medkits > 0:
+		_bot_heal += delta
+		if _bot_heal >= Fighter.medkit_seconds:
+			_bot_heal = 0.0
+			request_heal()
+	else:
+		_bot_heal = 0.0
 
 
 func _bot_goal(g: Node) -> Vector3:
@@ -835,7 +856,7 @@ func _bot_sense(g: Node, dt: float) -> void:
 		if c.is_in_group(&"dino"):
 			if _bot_sees(g, n, BotBrain.SIGHT_DINO):
 				if _bot_spot < 0.0:
-					_bot_spot = 0.0 if d < BotBrain.FEEL else BotBrain.REACT + BotBrain.REACT_PER_M * d
+					_bot_spot = 0.0 if d < BotBrain.FEEL else float(brain.persona.get("react", BotBrain.REACT)) + BotBrain.REACT_PER_M * d
 				_bot_spot -= dt
 				if _bot_spot <= 0.0:
 					see = true
@@ -882,7 +903,8 @@ func _bot_hands(delta: float, want: Vector3) -> void:
 	_bot_shot_wait -= delta
 	_bot_turned -= delta
 	_aim_t -= delta
-	var deg := BotBrain.AIM_BASE + (BotBrain.AIM_MOVING if want.length() > 0.5 else 0.0) + (BotBrain.AIM_TURNED if _bot_turned > 0.0 else 0.0)
+	var deg := (BotBrain.AIM_BASE + (BotBrain.AIM_MOVING if want.length() > 0.5 else 0.0) + (BotBrain.AIM_TURNED if _bot_turned > 0.0 else 0.0)) \
+		* (float(brain.persona.get("aim", 1.0)) if brain else 1.0)
 	if _aim_t <= 0.0:
 		_aim_t = BotBrain.AIM_SLIDE
 		_aim_goal = Vector2.from_angle(randf() * TAU) * deg_to_rad(deg)
