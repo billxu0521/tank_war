@@ -63,9 +63,9 @@ const HEAL_BELOW := 0.6       # 躲好了、血比這個少就用急救包
 
 ## 個性：同一張分數表乘不同倍數（risk 乘在「險」上，越大越怕）。照編號固定：-1 勇敢、-2 膽小、-3 投機，-4 又是勇敢（決定 3）
 const PERSONAS := [
-	{"name": "勇敢", "risk": 0.6, "還擊": 1.4, "躲": 0.6, "試密碼": 1.1, "守箱": 0.8, "撿蛋": 1.0, "護送": 1.2, "react": 0.3, "aim": 0.8},
-	{"name": "膽小", "risk": 1.5, "還擊": 0.6, "躲": 1.5, "試密碼": 0.9, "守箱": 1.0, "撿蛋": 0.9, "護送": 1.0, "react": 0.5, "aim": 1.2},
-	{"name": "投機", "risk": 1.0, "還擊": 0.8, "躲": 1.0, "試密碼": 0.6, "守箱": 1.6, "撿蛋": 1.4, "護送": 0.8, "react": 0.4, "aim": 1.0},
+	{"name": "勇敢", "risk": 0.6, "還擊": 1.4, "躲": 0.6, "試密碼": 1.1, "守箱": 0.8, "撿蛋": 1.0, "護送": 1.2, "星星": 1.1, "react": 0.3, "aim": 0.8},
+	{"name": "膽小", "risk": 1.5, "還擊": 0.6, "躲": 1.5, "試密碼": 0.9, "守箱": 1.0, "撿蛋": 0.9, "護送": 1.0, "星星": 0.7, "react": 0.5, "aim": 1.2},
+	{"name": "投機", "risk": 1.0, "還擊": 0.8, "躲": 1.0, "試密碼": 0.6, "守箱": 1.6, "撿蛋": 1.4, "護送": 0.8, "星星": 1.5, "react": 0.4, "aim": 1.0},
 ]
 const MULT_AS := {"追蛋": "撿蛋"}   # 追蛋用撿蛋的倍數（投機的最想搶）
 
@@ -121,6 +121,7 @@ func remember(pos: Vector3, c: float) -> void:
 ##   dino 記得的恐龍位置（null＝看到牠倒地、或不在場）、conf 信心（0＝不知道在哪）
 ##   mates 別的牛仔 [{pos, vel, act（電腦的動作，真人是 ""）, carry 拿著蛋}]
 ##   sees 現在看得到恐龍、hit_ago 上次被打幾秒前、bushes 草叢位置
+##   star 追分星星要去哪（金色小恐龍、地上的星星、別人拿著就是他；null＝沒有或我拿著）
 ## 回傳有沒有換動作
 func think(ctx: Dictionary) -> bool:
 	last_ctx = ctx
@@ -183,6 +184,9 @@ func score_all(ctx: Dictionary) -> Dictionary:
 					out["追蛋"] = 60.0 + 25.0 * urgent - minf(0.2 * _flat(me, h), 30.0) - 30.0 * risk(ctx, h)
 				else:
 					out["護送"] = 55.0 - minf(0.15 * _flat(me, h), 25.0)
+	if ctx.get("star") != null and int(ctx.get("carrier", 0)) != 1:   # 追分星星：打金色小恐龍、撿星星、搶拿著的人（投機的最想）
+		var st: Vector3 = ctx.star
+		out["星星"] = 50.0 + 25.0 * urgent - minf(0.2 * _flat(me, st), 30.0) - 30.0 * risk(ctx, st)
 	if int(ctx.get("carrier", 0)) != 1:   # 拿蛋的人只管跑
 		out["躲"] = 10.0 + 80.0 * risk(ctx, me) * (0.4 + 0.6 * hurt) + 15.0 * last
 	if ctx.get("sees", false) and ctx.dino != null and _flat(me, ctx.dino) < FIGHT_RANGE:
@@ -245,6 +249,8 @@ func goal(ctx: Dictionary) -> Vector3:
 			return ctx.egg
 		"追蛋":
 			return ctx.holder
+		"星星":
+			return ctx.star if ctx.get("star") != null else me
 		"撤離":
 			return _pick_exit(ctx)
 		"守箱":   # 箱子外 GUARD_DIST，朝恐龍最後出現的方向（不知道就朝我這邊）

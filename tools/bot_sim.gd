@@ -11,6 +11,8 @@ var _m: Node
 var _f := 0
 var _rounds: Array = []
 var _t0 := 0
+var _gold := ""   # 最後一回合：金色小恐龍死了沒
+var _star := ""   # 最後一回合：星星在誰身上
 
 
 func _initialize() -> void:
@@ -40,6 +42,13 @@ func _process(_d: float) -> bool:
 		return false
 	if p.phase in [&"prep", &"result", &"final"] and p.time_left > 0.1:
 		p.time_left = 0.1   # 準備、結算不用等（牛仔本來就不能動）
+	if p.phase == &"play" and p.round_index == p.rounds - 1:   # 追分星星：最後一回合記金色小恐龍死了沒、星星在誰身上
+		var r: Raptors = _m.raptors
+		_gold = "打死了" if r.gold >= 0 and r.alive[r.gold] == 0 else "還活著"
+		_star = p.names.get(p.star_holder, "") if p.star_holder != 0 else ("地上" if p.star_on else "沒掉出來")
+	elif p.phase == &"result" and _gold != "":
+		print("BOT_SIM 星星：金色小恐龍%s，回合結束時星星在 %s" % [_gold, _star])
+		_gold = ""
 	if p.stats.last.size() > 0 and not (_rounds.size() > 0 and is_same(p.stats.last, _rounds.back())):   # report 每回合換一個新的字典
 		_rounds.append(p.stats.last)
 		if _rounds.size() >= ROUNDS:

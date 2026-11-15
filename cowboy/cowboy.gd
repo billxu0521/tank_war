@@ -733,7 +733,17 @@ func _bot_ctx(g: Node) -> Dictionary:
 		elif c != self and c is Cowboy:
 			mates.append({"pos": c.global_position, "vel": c.velocity, "act": (c as Cowboy).bot_action if c.bot else "",
 				"carry": g.egg.carrier == c.name.to_int()})
-	return {"me": global_position, "hp": float(hp) / max_hp, "last_life": p != null and int(p.lives.get(id, 2)) <= 1,
+	var star: Variant = null   # 追分星星：金色小恐龍、地上的星星、別人身上的星星
+	if p and p.phase == &"play":
+		var gold: Node3D = g.raptors.gold_body()
+		var holder_n: Node3D = p.star_node()
+		if gold:
+			star = gold.global_position
+		elif p.star_on:
+			star = p.star_pos
+		elif holder_n and p.star_holder != id:
+			star = holder_n.global_position
+	return {"star": star, "me": global_position, "hp": float(hp) / max_hp, "last_life": p != null and int(p.lives.get(id, 2)) <= 1,
 		"time_left": p.time_left if p else 999.0, "locked": safe_on, "safe": g.safe.global_position,
 		"cards": p.env_pos if p else [], "known": p._known.get(id, [-1, -1]) if p else [-1, -1],
 		"carrier": carrier, "holder": holder.global_position if holder else g.egg.global_position, "egg": g.egg.global_position,
@@ -897,15 +907,16 @@ func _bot_sense(g: Node, dt: float) -> void:
 			see = _bot_sees(g, n, BotBrain.SIGHT_COWBOY)
 		if not see:
 			continue
-		if g.egg.carrier == c.name.to_int():
-			d = -1.0   # 別人拿著蛋：先打他
+		if g.egg.carrier == c.name.to_int() or (g.party and g.party.star_holder == c.name.to_int()):
+			d = -1.0   # 別人拿著蛋、星星：先打他
 		if d < best:
 			best = d
 			_bot_target = n
 	if _bot_target == null:   # 沒有人可以打：看得到的小恐龍打掉（一槍死；不打牠會叫來尼諾拉）
 		for r: Node3D in g.raptors.get_children():
 			var d := _flat_to(r.global_position)
-			if r.visible and d < BotBrain.RAPTOR_SHOOT and d < best and _bot_sees(g, r, BotBrain.RAPTOR_SHOOT):
+			var reach := BotBrain.SIGHT_COWBOY if r == g.raptors.gold_body() else BotBrain.RAPTOR_SHOOT   # 金色的（有星星）遠一點也打
+			if r.visible and d < reach and d < best and _bot_sees(g, r, reach):
 				best = d
 				_bot_target = r
 

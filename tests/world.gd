@@ -863,6 +863,20 @@ func _case_golden_star() -> void:
 	p._end_round(true, "test")
 	_ck(int(p.round_scores.get(p.dino_id, 0)) == (Party.SCORE_KILL + Party.SCORE_GUARD) * 2 and int(p.round_scores.get(who, 0)) == Party.SCORE_SURVIVE,
 		"尼諾拉拿星星守住：殺人加守住全部 × 2（%s）" % [p.round_scores])
+	# 電腦：牛仔的「星星」動作（投機的比膽小的想搶），看到金色小恐龍遠一點也打、ctx 帶星星要去哪
+	var ctx := {"me": Vector3.ZERO, "hp": 1.0, "time_left": 200.0, "locked": false, "carrier": 2, "holder": Vector3(0, 0, 500),
+		"egg": Vector3(0, 0, 500), "exits": [], "ffa": true, "dino": Vector3(0, 0, 200), "mates": [], "star": Vector3(20, 0, 0)}
+	var sc := func(persona: int) -> float: return BotBrain.new(-1, BotBrain.PERSONAS[persona]).score_all(ctx).get("星星", 0.0)
+	_ck(sc.call(2) > sc.call(1) and sc.call(2) > 0.0, "投機的比膽小的想搶星星（%.0f %.0f）" % [sc.call(2), sc.call(1)])
+	var bb := BotBrain.new(-3)
+	bb.think(ctx)
+	_ck(bb.action == "星星" and bb.goal(ctx) == Vector3(20, 0, 0), "沒別的事：投機的去搶星星（%s）" % bb.action)
+	p.phase = &"play"
+	p.star_holder = 0
+	p.star_on = true
+	var bc: Cowboy = p._cowboys().filter(func(n: Node) -> bool: return n.name != "1")[0]
+	bc.brain = BotBrain.new(bc.name.to_int())
+	_ck(bc._bot_ctx(m).star == p.star_pos, "電腦牛仔知道星星在哪")
 	_end(m)
 	# 非派對模式沒有
 	var e := _offline_match()
