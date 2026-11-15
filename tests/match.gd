@@ -1047,6 +1047,31 @@ func request_respawn_at(i: int) -> void:
 	for i in range(5, cells.size(), 4):
 		names.append(cells[i].text)
 	_ck(names == ["小華", "大雄", "阿明（你）", "胖虎"], "分數板要照總分排（現在：%s）" % [names])
+	# 左上的計分欄：每列 [名次, 名字, 總分, (+10)]（色塊不是字）
+	var bar := func() -> Array:
+		return hud.scorebar.get_children().map(func(r: Node) -> Array:
+			return r.get_child(0).get_children().filter(func(c: Node) -> bool: return c is Label).map(func(l: Label) -> String: return l.text))
+	var rows: Array = bar.call()
+	_ck(hud.scorebar.visible and rows.map(func(r: Array) -> String: return r[2]) == ["12", "7", "3", "0"], "計分欄照總分排（現在：%s）" % [rows])
+	_ck(rows.all(func(r: Array) -> bool: return r.size() == 3), "沒人拿蛋：沒有「+」")
+	_ck(rows[0][1].contains("恐龍") and not rows[1][1].contains("恐龍"), "當恐龍的那列有恐龍記號（%s）" % [rows])
+	var mine_row: Label = hud.scorebar.get_child(2).get_child(0).get_child(2)
+	_ck(mine_row.text.begins_with("阿明") and mine_row.get_theme_color(&"font_color") == hud.GOLD, "自己那列是金色")
+	m.egg.carrier = 3
+	hud._process(0.0)
+	rows = bar.call()
+	var plus := "+%d" % (Party.SCORE_EXTRACT + Party.SCORE_SURVIVE)
+	_ck(rows[1][1] == "大雄" and rows[1].size() == 4 and rows[1][3] == plus and rows.filter(func(r: Array) -> bool: return r.size() == 4).size() == 1,
+		"只有拿蛋的那列有 %s（現在：%s）" % [plus, rows])
+	m._match_hud.update_text(null)
+	_ck(m.hud.text.contains("被 大雄 拿走了"), "左下角寫拿蛋的人的名字（%s）" % m.hud.text)
+	p.scores[4] = 20
+	p.changed.emit()
+	rows = bar.call()
+	_ck(rows.map(func(r: Array) -> String: return r[2]) == ["20", "12", "7", "3"], "分數變了計分欄跟著重排（現在：%s）" % [rows])
+	m.egg.carrier = 0
+	p.scores[4] = 0
+	p.changed.emit()
 	# 選重生點：自己死了（場上沒有自己）才有
 	m.spawn_points.assign([Vector3(0, 0, -50), Vector3(60, 0, 0), Vector3(0, 0, 40)])
 	var mine: Node = m._me()
@@ -1068,6 +1093,7 @@ func request_respawn_at(i: int) -> void:
 	p.changed.emit()
 	hud._process(0.0)
 	_ck(hud.popup.visible and hud.popup_title.text == p.last_result, "結算要顯示怎麼結束的")
+	_ck(not hud.scorebar.visible, "結算時計分欄收起來")
 	hud._process(hud.RESULT_SHOW + 0.1)
 	_ck(not hud.popup.visible, "結算框幾秒後要自己消失")
 	# 四回合結束：冠軍放大

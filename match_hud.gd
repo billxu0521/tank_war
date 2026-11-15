@@ -40,7 +40,7 @@ func update_text(me: Node) -> void:
 	if main.egg.carrier == main.multiplayer.get_unique_id():
 		egg_state = "在你身上！帶去撤離區"
 	elif main.egg.carrier != 0:
-		egg_state = "被牛仔 %d 拿走了" % main.egg.carrier
+		egg_state = "被 %s 拿走了" % _who(main.egg.carrier)
 	var mine := str(me.hp) if me != null else "陣亡"
 	if main.mode == &"range":
 		main.hud.text = "靶場    準星距離：%s    上一發：%s" % [_aim_distance(me), main._last_hit]
@@ -68,6 +68,10 @@ func update_text(me: Node) -> void:
 		("恐龍血量：%d    " % dino.hp) if dino else "",
 		main.players.get_child_count() - (1 if dino else 0),
 		egg_state]
+
+## 拿蛋的人叫什麼：派對模式用名單上的名字，其他模式只有連線編號
+func _who(id: int) -> String:
+	return main.party.names.get(id, "牛仔 %d" % id) if main.party else "牛仔 %d" % id
 
 ## 回大廳（_to_lobby）：局內的畫面全收起來
 func reset() -> void:
@@ -162,7 +166,7 @@ func _update_center_info(me: Node) -> void:
 		var delay: float = Party.RESPAWN_SECONDS if main.party else main.RESPAWN_DELAY
 		t = "%d 秒後重生" % maxi(1, ceili(delay - (now - _dead_ms) / 1000.0))
 	elif main.egg.extract > 0.0:
-		var who := "你" if main.egg.carrier == main.multiplayer.get_unique_id() else "牛仔 %d" % main.egg.carrier
+		var who := "你" if main.egg.carrier == main.multiplayer.get_unique_id() else _who(main.egg.carrier)
 		t = "%s撤離中：還剩 %.1f 秒" % [who, maxf(main.extract_seconds() - main.egg.extract, 0.0)]
 	elif main.egg.pickup > 0.0:
 		t = "有人在撿蛋：還剩 %.1f 秒" % maxf(main.pickup_seconds() - main.egg.pickup, 0.0)
