@@ -74,6 +74,7 @@ var _terrain: Terrain
 var _level: Array[Dictionary] = []   # 擺設清單：場地上每樣東西一筆（見 _build_level）
 var spawn_points: Array[Vector3] = []   # 牛仔出生／重生候選點（擺設種類 spawn，派對模式用）；空的就用 _spawn_point()
 var dino_spawn := Vector3.ZERO           # 恐龍出生點（擺設種類 dino_spawn）；沒放就是場地中央貼地
+var safe_spots: Array[Vector3] = []     # 保險箱候選點（擺設種類 safe_spot，派對每回合抽一個）；空的就放恐龍前面
 var _houses_built := 0   # 第幾棟農舍：三種輪流蓋（不用亂數，後面擺的東西位置才不會跟著變）
 var _doors: Array[Door] = []   # 晚加入的人連進來時，把開著的門補送給他
 var _party_at := Vector3.INF   # 派對方塊房子的位置（灰盒才找；INF = 沒有）
@@ -276,6 +277,7 @@ func _build_level() -> void:
 				_place_greybox(safe, p, rec.yaw)
 			&"spawn": spawn_points.append(_on_ground(p))
 			&"dino_spawn": dino_spawn = _on_ground(p)
+			&"safe_spot": safe_spots.append(_on_ground(p))
 			&"tree": _tree(rec)
 			&"rock": _rock(rec.mesh, p, rec.s, rec.yaw, rec.solid)
 			&"prop": _prop(rec.name, _on_ground(p)).rotation.y = rec.yaw

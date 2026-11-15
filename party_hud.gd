@@ -140,7 +140,9 @@ func update_live() -> void:
 		_fill_scorebar()
 	hint.text = ""
 	if p.phase == &"prep":
-		if me != p.dino_id:
+		if main.safe.on:   # 保險箱模式：箱子開場就抽好位置
+			hint.text = "保險箱在方位條上，先去你想守的地方" if me == p.dino_id else "看恐龍往哪走"
+		elif me != p.dino_id:
 			hint.text = "看恐龍把蛋藏去哪"
 		else:
 			hint.text = "蛋放好了，等牛仔進場" if p.egg_placed else "按 F 把蛋放在腳下"

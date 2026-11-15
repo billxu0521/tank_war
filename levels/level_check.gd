@@ -10,7 +10,7 @@ extends RefCounted
 ##   - 不能擺到場外
 ##   - 型號要存在（打錯字會變成看不見的空氣）
 ##   - 建築不能高過「恐龍爬得到的上限」（圍牆就是照這個高度算的）
-##   - 出生點（spawn、dino_spawn）不能卡在會擋人的東西裡
+##   - 出生點（spawn、dino_spawn）、保險箱點（safe_spot）不能卡在會擋人的東西裡；保險箱點也不能在撤離圈裡
 
 const Main := preload("res://main.gd")
 const SHRINK := 0.05   # 貼在一起不算重疊（木桶並排、草捆疊起來）
@@ -81,8 +81,12 @@ static func run(recs: Array, lane: Variant = Main.SANDBOX_RANGE) -> Array:
 				problems.append([name, "灰盒房子太窄，斜坡旁邊沒有樓板（寬 %.1f）" % rec.size.x])
 			if rec.big and rec.size.y < Greybox.BIG_DOOR.y + 0.5:
 				problems.append([name, "大門要每層高 %.1f 以上，不然恐龍進不去（現在 %.1f）" % [Greybox.BIG_DOOR.y + 0.5, rec.size.y]])
-		if rec.kind == &"spawn" or rec.kind == &"dino_spawn":   # 出生點：最後再比，要跟所有會擋人的東西比
+		if rec.kind in [&"spawn", &"dino_spawn", &"safe_spot"]:   # 出生點：最後再比，要跟所有會擋人的東西比
 			spawns.append([name, rec])
+			if rec.kind == &"safe_spot":
+				for e: Vector2 in ArenaMap.exit_spots(lane == Main.GREYBOX_LANE) if lane != null else []:
+					if Vector2(p.x, p.z).distance_to(e) < Main.EXIT_RADIUS:
+						problems.append([name, "保險箱點在撤離區裡"])
 			continue
 		var fp := footprint(rec)
 		if fp.is_empty():
@@ -102,5 +106,5 @@ static func run(recs: Array, lane: Variant = Main.SANDBOX_RANGE) -> Array:
 			box = Rect2(sp[1].pos.x - r, sp[1].pos.z - r, r * 2, r * 2), y0 = 0.0, y1 = TALL}
 		for other: Array in placed:
 			if overlap(fp, other[1]):
-				problems.append([sp[0], "出生點卡在「%s」裡" % other[0]])
+				problems.append([sp[0], "%s卡在「%s」裡" % ["保險箱點" if sp[1].kind == &"safe_spot" else "出生點", other[0]]])
 	return problems
