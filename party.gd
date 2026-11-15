@@ -23,6 +23,11 @@ static var SCORE_SURVIVE: int = Balance.whole("score_survive")   # 回合結束�
 static var SCORE_EXTRACT: int = Balance.whole("score_extract")   # 帶蛋撤離（另外加，合計 10）
 static var SCORE_KILL: int = Balance.whole("score_kill")   # 恐龍殺一個牛仔
 static var SCORE_GUARD: int = Balance.whole("score_guard")   # 恐龍守住蛋（時間到、或牛仔的命用完）
+# 追分星星（docs/企劃/2026-11-15-畫面與保險箱位置.md 的 1.1）：最後一回合的金色小恐龍（raptors.gd）身上有，死了掉在地上，
+# 碰到就撿（不用按鍵）；拿著的牛仔死掉、尼諾拉倒地就掉在原地。回合結束時拿著的人，這回合的分數 × STAR_MULT
+static var STAR_REACH: float = Balance.num("star_pickup_reach")
+static var STAR_MULT: int = Balance.whole("star_multiplier")
+const STAR_EDGE := 6.0        # 掉出場外：搬回離場地邊緣這麼遠（同 safe.gd 的 EDGE）
 
 var rounds := ROUNDS
 var round_index := 0
@@ -40,6 +45,10 @@ var env_pos: Array = [Vector3.ZERO, Vector3.ZERO]   # 兩個信封的位置（�
 var env_open: Array = [false, false]                # 信封有沒有人看過（公開，只分有沒有、不分誰）
 var my_digits: Array = [-1, -1]   # 這台的人看過的數字（十位、個位，-1 = 沒看過）。主機只用 rpc_id 送本人，不在 state() 裡
 var envelopes: Array[Envelope] = []
+var star_holder := 0          # 拿著星星的人（連線編號；尼諾拉是 dino_id）。0 = 沒人拿
+var star_on := false          # 星星掉在地上（star_pos）
+var star_pos := Vector3.ZERO  # 地上的星星在哪；有人拿著時主機記他最後的位置（掉的時候用）
+var _star_mesh: MeshInstance3D   # 每台：地上的星星、頭上的星星（同一顆）
 
 var _roster: Array = []       # 參賽者（照當恐龍的順序）
 var _waiting := {}            # 主機：等重生的牛仔編號 -> [剩幾秒, 是不是電腦]
@@ -116,6 +125,7 @@ func _process(delta: float) -> void:
 		if env_open[i] and not _noted[i] and me == dino_id and phase == &"play" and not main.safe.open:   # 恐龍：第一次被開跳一行字（箱子開了就沒用了）
 			main.status.text = "%s的信封被打開了" % Envelope.NAMES[i]
 		_noted[i] = bool(env_open[i])
+	_show_star()
 	if phase == &"prep" and me == dino_id and not egg_placed and Input.is_action_just_pressed(&"interact") \
 			and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		place_egg()
@@ -145,6 +155,7 @@ func step(delta: float) -> void:
 		&"play":
 			_respawn_step(delta)
 			main.raptors.step(delta)   # 小恐龍看、叫（準備階段牛仔站著不動，不看）
+			_star_step()
 			stats.tick(main, self, delta)
 			main.safe.server_step(delta)   # 試密碼的 1 秒、作廢、開箱
 			if main.safe.locked():   # 鎖著：蛋跟著箱子（箱子會被炸飛、甩飛）
@@ -197,6 +208,8 @@ func on_died(killer: Node, who: Node) -> void:
 	if is_instance_valid(killer) and killer.is_in_group(&"dino"):
 		_add(dino_id, SCORE_KILL)
 	lives[id] = int(lives.get(id, LIVES)) - 1
+	if id == star_holder:
+		drop_star(who.global_position)
 	stats.died(who)
 	if int(lives[id]) > 0:
 		_waiting[id] = [RESPAWN_SECONDS, bool(who.get(&"bot"))]
@@ -268,6 +281,10 @@ func _start_round() -> void:
 	main.raptors.clear()   # 小恐龍：上回合的清掉，這回合尼諾拉重放
 	if not (dino_id > 0 and _present(dino_id)):
 		main.raptors.auto_place()   # 電腦當恐龍：開回合自己放（要在信封之後：放在信封附近）
+	star_holder = 0
+	star_on = false
+	if round_index == rounds - 1:
+		main.raptors.add_gold()   # 最後一回合：金色小恐龍（身上有星星）
 	main.barrels.roll()   # 爆炸桶每回合重抽（要在信封、箱子之後：避開信封和蛋）
 	_sync()
 
@@ -312,6 +329,8 @@ func _end_round(dino_win: bool, msg: String) -> void:
 		_add(dino_id, SCORE_GUARD)
 	for p: Node in _cowboys():
 		_add(p.name.to_int(), SCORE_SURVIVE)
+	if star_holder != 0:   # 拿著星星：這回合的分數（含剛加的守住、活著、撤離）× STAR_MULT
+		_add(star_holder, int(round_scores.get(star_holder, 0)) * (STAR_MULT - 1))
 	phase = &"result"
 	time_left = RESULT_SECONDS
 	last_result = msg
@@ -421,6 +440,8 @@ func rekey(old: int, new: int) -> void:
 	_order_scores()
 	if dino_id == old:
 		dino_id = new
+	if star_holder == old:
+		star_holder = new
 	_sync()
 
 
@@ -441,7 +462,8 @@ func _sync() -> void:
 func state() -> Dictionary:
 	return {rounds = rounds, round_index = round_index, phase = phase, time_left = time_left, scores = scores,
 		round_scores = round_scores, lives = lives, dino_id = dino_id, names = names, last_result = last_result,
-		egg_placed = egg_placed, safe = main.safe.state(), env_pos = env_pos, env_open = env_open}
+		egg_placed = egg_placed, safe = main.safe.state(), env_pos = env_pos, env_open = env_open,
+		star_holder = star_holder, star_on = star_on, star_pos = star_pos}
 
 
 @rpc("authority", "call_remote", "reliable")
@@ -525,3 +547,88 @@ func _got_digits(k: Array) -> void:
 	if phase == &"play":
 		my_digits = k.duplicate()
 	changed.emit()
+
+
+## 主機：星星掉在 at（金色小恐龍死了、拿著的人死了或倒地）。出場外的搬回場內、掉到地下的放回地面（同 safe._rescue）
+func drop_star(at: Vector3) -> void:
+	var half: float = main.ARENA * 0.5 - STAR_EDGE
+	star_holder = 0
+	star_on = true
+	star_pos = main._on_ground(Vector3(clampf(at.x, -half, half), 0.0, clampf(at.z, -half, half)))
+	_sync()
+
+
+## 星星在誰身上（場上的節點）：尼諾拉是 boss；牛仔不在場（死了、斷線）是 null
+func star_node() -> Node3D:
+	if star_holder == 0:
+		return null
+	if star_holder == dino_id:
+		return main._boss()
+	return main.players.get_node_or_null(NodePath(str(star_holder))) as Node3D
+
+
+## 主機、遊戲中每幀：拿著的人不見了（斷線）、尼諾拉倒地就掉；地上的星星誰先碰到（STAR_REACH）誰拿
+func _star_step() -> void:
+	if star_holder != 0:
+		var n := star_node()
+		if n == null or n.is_queued_for_deletion() or n.get(&"hp") <= 0 or float(n.get(&"down_left") if &"down_left" in n else 0.0) > 0.0:
+			drop_star(n.global_position if n else star_pos)
+		else:
+			star_pos = n.global_position
+		return
+	if not star_on:
+		return
+	var b: Node3D = main._boss()
+	if b and b.down_left <= 0.0 and _flat(b.global_position, 0).distance_to(_flat(star_pos, 0)) < BOSS_GD.BODY_RADIUS + STAR_REACH:
+		_take_star(dino_id)
+		return
+	for c: Node3D in _cowboys():
+		if _flat(c.global_position, 0).distance_to(_flat(star_pos, 0)) < STAR_REACH and absf(c.global_position.y - star_pos.y) < 2.5:
+			_take_star(c.name.to_int())
+			return
+
+
+func _take_star(id: int) -> void:
+	star_holder = id
+	star_on = false
+	main._announce.rpc("%s 拿到星星" % names.get(id, "玩家 %d" % id))
+	_sync()
+
+
+## 每台每幀：星星擺在地上（轉著）或拿著的人頭上；都沒有就藏起來
+func _show_star() -> void:
+	if _star_mesh == null:
+		_star_mesh = MeshInstance3D.new()
+		_star_mesh.mesh = star_mesh()
+		_star_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(_star_mesh)
+	var n := star_node() if phase in [&"prep", &"play"] else null
+	_star_mesh.visible = n != null or (star_on and phase == &"play")
+	_star_mesh.scale = Vector3.ONE * (3.0 if n and n.is_in_group(&"boss") else 1.0)   # 尼諾拉 12 公尺高，小星星看不到
+	if n:
+		_star_mesh.global_position = (n.head_position() + Vector3.UP * 3.0) if n.has_method(&"head_position") else n.global_position + Vector3.UP * 2.6
+	elif star_on:
+		_star_mesh.global_position = star_pos + Vector3.UP * (1.0 + 0.15 * sin(Time.get_ticks_msec() * 0.004))
+
+
+## 一顆五角星（平的、永遠面向鏡頭、會發光）。ponytail: 程式畫的，美術給模型再換
+static func star_mesh() -> ArrayMesh:
+	var pts := PackedVector3Array()
+	for k in 10:
+		var a := TAU * k / 10.0
+		pts.append(Vector3(sin(a), cos(a), 0) * (0.5 if k % 2 == 0 else 0.22))
+	var tris := PackedVector3Array()
+	for k in 10:
+		tris.append_array([Vector3.ZERO, pts[(k + 1) % 10], pts[k]])
+	var arr := []
+	arr.resize(Mesh.ARRAY_MAX)
+	arr[Mesh.ARRAY_VERTEX] = tris
+	var m := ArrayMesh.new()
+	m.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.albedo_color = Color(1.0, 0.85, 0.2)
+	m.surface_set_material(0, mat)
+	return m

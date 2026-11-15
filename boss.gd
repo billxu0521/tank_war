@@ -382,7 +382,7 @@ func _stomp(delta: float) -> void:
 	_stomp_clock += delta
 	if Vector2(velocity.x, velocity.z).length() <= STOMP_MIN_SPEED:
 		return
-	for p: Node3D in _cowboys():
+	for p: Node3D in _victims():
 		var to := p.global_position - global_position
 		to.y = 0.0
 		if to.length() >= BODY_RADIUS + STOMP_REACH or absf(p.global_position.y - (global_position.y - HALF_H)) >= STOMP_HEIGHT:
@@ -596,6 +596,15 @@ func _nearest_seen() -> Node3D:
 			best = p
 	return best
 
+## 咬、甩尾、踩打得到的：牛仔，加上金色小恐龍（追分星星，raptors.gd；一般小恐龍尼諾拉傷不到）
+func _victims() -> Array:
+	var out := _cowboys()
+	var g := _game()
+	var r: Node3D = g.raptors.gold_body() if g and g.get(&"raptors") else null
+	if r:
+		out.append(r)
+	return out
+
 func _cowboys() -> Array:
 	var out := get_parent().get_children().filter(
 		func(p: Node) -> bool: return p != self and not p.is_in_group(&"dino") and p.get(&"hp") > 0)
@@ -771,7 +780,7 @@ func _next(a: int, t: float) -> void:
 ## 輕攻擊的判定：胸前扇形，中心算到身體半徑＋light_reach 為止，夾角在 light_angle 以內。
 ## 高度、擋牆跟 _sweep_hit 一樣
 func _hit_cone() -> void:
-	for p: Node3D in _cowboys():
+	for p: Node3D in _victims():
 		if p not in _hit_once and can_bite(p):
 			_hit_once.append(p)
 			_hurt(p, LIGHT_DAMAGE)
@@ -818,7 +827,7 @@ func _strike_sweep() -> void:
 func _sweep_hit() -> void:
 	var root := _sweep_root()
 	var back := _back_dir()
-	for p: Node3D in _cowboys():
+	for p: Node3D in _victims():
 		if p in _hit_once or not _in_fan(root, back, p.global_position, SWEEP_RADIUS, SWEEP_COS):
 			continue
 		if absf(p.global_position.y - (global_position.y - HALF_H)) < 4.0 * GROW and not _blocked_by_wall(p):

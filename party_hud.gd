@@ -26,6 +26,7 @@ var _result_left := 0.0
 var top: Label        # 左上
 var scorebar: VBoxContainer   # 左上、top 下面的計分欄：每人一列
 var _carrier := 0     # 計分欄上次畫的時候誰拿著蛋（換人才重畫）
+var _star := 0        # 計分欄上次畫的時候誰拿著星星
 var hint: Label       # 中間的提示（準備階段、選重生點）
 var board: PanelContainer   # Tab 分數板
 var board_rows: GridContainer
@@ -136,7 +137,7 @@ func update_live() -> void:
 	if me != p.dino_id and p.lives.has(me) and p.phase in [&"prep", &"play"]:
 		lines.append("你剩 %d 條命" % int(p.lives[me]))
 	top.text = "\n".join(lines)
-	if main.egg.carrier != _carrier:
+	if main.egg.carrier != _carrier or p.star_holder != _star:
 		_fill_scorebar()
 	hint.text = ""
 	if p.phase == &"prep":
@@ -243,9 +244,10 @@ func _fill(g: GridContainer, ids: Array, first := 1) -> void:
 
 
 ## 左上的計分欄：名次、色塊、名字、總分。拿著蛋的那列多一個「+10」（撤離＋活著，照 balance.csv）、底色變亮；
-## 當恐龍的寫「恐龍」；自己那列金色
+## 當恐龍的寫「恐龍」；自己那列金色。拿著星星的那列名字後面一顆 ★，他也拿著蛋就寫成 × 倍數（+20）
 func _fill_scorebar() -> void:
 	_carrier = main.egg.carrier
+	_star = _party.star_holder
 	for c in scorebar.get_children():
 		scorebar.remove_child(c)
 		c.queue_free()
@@ -267,8 +269,8 @@ func _fill_scorebar() -> void:
 		sw.color = SWATCH[order.find(id) % SWATCH.size()]
 		var pad := Control.new()   # 沒拿蛋的列也留「+10」那格的寬，分數才對得齊
 		pad.custom_minimum_size.x = 44
-		var cells := [str(i + 1), sw, name_of(id) + ("　恐龍" if id == _party.dino_id else ""), str(int(_party.scores.get(id, 0))),
-			"+%d" % (Party.SCORE_EXTRACT + Party.SCORE_SURVIVE) if id == _carrier else pad]
+		var cells := [str(i + 1), sw, name_of(id) + ("　恐龍" if id == _party.dino_id else "") + ("　★" if id == _star else ""), str(int(_party.scores.get(id, 0))),
+			"+%d" % ((Party.SCORE_EXTRACT + Party.SCORE_SURVIVE) * (Party.STAR_MULT if id == _star else 1)) if id == _carrier else pad]
 		for c: Variant in cells:
 			if c is Control:
 				h.add_child(c)

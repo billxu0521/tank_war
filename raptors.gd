@@ -8,6 +8,10 @@ extends Node3D
 ## 主機說了算：放、死、叫、要走去哪都在主機決定，位置、目標點和死活整包送（_recv）：只有換目標、停下來時送，
 ## 每台自己照 SPEED 往目標點走（_physics_process），收到新的一包就對齊主機的位置。晚進來的人在 main._spawn 補送（send_to）。照 barrels.gd 的寫法。
 ## 不放在 Players 底下：那裡的每個節點都會被當成玩家（算牛仔、算存活、找目標）。
+##
+## 金色小恐龍（追分星星，docs/企劃/2026-11-15-畫面與保險箱位置.md 的 1.1）：派對第四回合開場 party 叫 add_gold 生一隻（第 gold 隻）。
+## 不當哨兵（不看、不尖叫、不報信），一直隨機走（不綁在家附近）；每 GOLD_CALL 秒叫一聲，大家都聽得到；方位條大家都標。
+## 血 GOLD_HP，尼諾拉也打得死（boss._victims），炸藥照距離扣血不是一炸就死。死了 party.drop_star 把星星丟在牠的位置。
 
 # 以下從 balance.csv 讀（見 balance.gd），改數字去改表
 static var MAX: int = Balance.whole("raptor_max")
@@ -21,6 +25,9 @@ static var CLEAR: float = Balance.num("raptor_place_clear")
 static var WANDER: float = Balance.num("raptor_wander_radius")
 static var SPEED: float = Balance.num("raptor_walk_speed")
 static var PAUSE: float = Balance.num("raptor_pause")
+static var GOLD_HP: int = Balance.whole("gold_raptor_hp")
+static var GOLD_CALL: float = Balance.num("gold_raptor_call_seconds")
+const GOLD_COLOR := Color(1.0, 0.78, 0.2)
 const FEEL := 3.0            # 這麼近不管方向都會發現
 const CONE := 0.5            # cos 60°：正前方左右各 60 度
 const EYE := 1.5             # 眼睛離地多高
@@ -43,13 +50,14 @@ var _cd := PackedFloat32Array()     # 主機：還要幾秒才能再叫
 var _home := PackedVector3Array()   # 主機：放下的地方（只在這附近走）
 var _wait := PackedFloat32Array()   # 主機：走到了還要停幾秒
 var _acc := 0.0
+var gold := -1                      # 金色小恐龍是第幾隻（-1 = 沒有）
 
 @onready var main: Node = get_parent()
 
 
 ## 這回合還能放幾隻（死掉的不補回）
 func left() -> int:
-	return maxi(MAX - spots.size(), 0)
+	return maxi(MAX - spots.size() + (1 if gold >= 0 else 0), 0)
 
 
 ## 主機：清空（新的回合、新的一局）
@@ -63,6 +71,7 @@ func clear() -> void:
 	_cd = PackedFloat32Array()
 	_home = PackedVector3Array()
 	_wait = PackedFloat32Array()
+	gold = -1
 	_send()
 
 
@@ -78,6 +87,24 @@ func add(q: Vector3, yaw: float) -> void:
 	_home.append(q)
 	_wait.append(randf() * PAUSE)
 	_send()
+
+
+## 主機：在隨機空地（爆炸桶的抽法）生金色小恐龍。抽不到合格的就放在最後抽的那點
+func add_gold() -> void:
+	var q := Vector3.ZERO
+	for tries in 100:
+		q = main._on_ground(main._spawn_point() * Vector3(1, 0, 1))
+		if why_not(q) == "" and main.barrels._ok(q, PackedVector3Array(), 0.0):
+			break
+	gold = spots.size()
+	add(q, randf() * TAU)
+	_hp[gold] = GOLD_HP
+	_cd[gold] = GOLD_CALL * 0.5
+
+
+## 活著的金色小恐龍（沒有就 null）：尼諾拉的攻擊、方位條用
+func gold_body() -> Node3D:
+	return get_child(gold) as Node3D if gold >= 0 and gold < alive.size() and gold < get_child_count() and alive[gold] == 1 else null
 
 
 ## 放不放得下（空字串 = 可以）：離保險箱、信封、牛仔出生點至少 CLEAR；不在建築、石頭、樹裡
@@ -174,10 +201,15 @@ func step(delta: float) -> void:
 			continue
 		_cd[i] -= dt
 		var who: Node3D = null
-		for c: Node3D in cows:
-			if can_see(i, c):
-				who = c
-				break
+		if i == gold:   # 金色：不看人，時間到就叫
+			if _cd[i] <= 0.0:
+				_cd[i] = GOLD_CALL
+				_scream.rpc(i)
+		else:
+			for c: Node3D in cows:
+				if can_see(i, c):
+					who = c
+					break
 		_stare[i] = _stare[i] + dt if who else 0.0
 		if _stare[i] >= STARE and _cd[i] <= 0.0:
 			_stare[i] = 0.0
@@ -215,7 +247,7 @@ func step(delta: float) -> void:
 func _pick(i: int) -> Vector3:
 	var a := spots[i]
 	for tries in 8:
-		var t: Vector3 = main._on_ground((_home[i] + Vector3.FORWARD.rotated(Vector3.UP, randf() * TAU) * randf_range(2.0, WANDER)) * Vector3(1, 0, 1))
+		var t: Vector3 = main._on_ground(((spots[i] if i == gold else _home[i]) + Vector3.FORWARD.rotated(Vector3.UP, randf() * TAU) * randf_range(2.0, WANDER)) * Vector3(1, 0, 1))
 		var n := ceili(a.distance_to(t) / 0.5)   # ponytail: 每半公尺抽查一點，轉角可能擦過幾公分
 		if range(1, n + 1).all(func(k: int) -> bool: return why_not(a.lerp(t, float(k) / n)) == "") and _ray_clear(a, t, i):
 			return t
@@ -263,19 +295,28 @@ func can_see(i: int, c: Node3D) -> bool:
 func _scream(i: int) -> void:
 	if i < 0 or i >= spots.size() or i >= get_child_count():
 		return
+	if i == gold:   # 金色：低一點、傳很遠，大家都跳一行字
+		_play(i, 0.8, 60.0)
+		if main.party:
+			main.status.text = "金色小恐龍在叫！打死牠拿星星"
+		return
 	marks[i] = Time.get_ticks_msec() + int(MARK * 1000.0)
+	_play(i, 1.7, 15.0)
+	var p: Party = main.party
+	if p and multiplayer.multiplayer_peer != null and p.dino_id == multiplayer.get_unique_id():
+		main.status.text = "小恐龍在叫！"
+
+
+func _play(i: int, pitch: float, unit: float) -> void:
 	var s := AudioStreamPlayer3D.new()
 	s.stream = SCREAM
-	s.pitch_scale = 1.7
-	s.unit_size = 15.0
+	s.pitch_scale = pitch
+	s.unit_size = unit
 	s.max_db = 4.0
 	get_child(i).add_child(s)
 	s.position.y = EYE
 	s.play()
 	s.finished.connect(s.queue_free)
-	var p: Party = main.party
-	if p and multiplayer.multiplayer_peer != null and p.dino_id == multiplayer.get_unique_id():
-		main.status.text = "小恐龍在叫！"
 
 
 ## 尼諾拉的方位條：正在標的小恐龍位置
@@ -288,22 +329,27 @@ func marked() -> Array:
 	return out
 
 
-## 主機：第 i 隻挨打（Raptor.take_damage）。尼諾拉打的不算
+## 主機：第 i 隻挨打（Raptor.take_damage）。尼諾拉打的不算（金色的算）
 func hurt(i: int, amount: int, source: Node) -> void:
 	if not multiplayer.is_server() or i < 0 or i >= alive.size() or alive[i] == 0 or amount <= 0:
 		return
-	if is_instance_valid(source) and source.is_in_group(&"dino"):
+	if i != gold and is_instance_valid(source) and source.is_in_group(&"dino"):
 		return
 	_hp[i] -= amount
 	if _hp[i] <= 0:
 		kill(i)
 
 
-## 主機：爆炸（Explosive.damage）範圍裡的都死。ponytail: 不看有沒有擋住（同爆炸桶的 blast）
-func blast(at: Vector3, radius: float) -> void:
+## 主機：爆炸（Explosive.damage）範圍裡的都死；金色的照距離扣血（中心 dmg、邊緣 0）。ponytail: 不看有沒有擋住（同爆炸桶的 blast）
+func blast(at: Vector3, radius: float, dmg := 0) -> void:
 	var hit := false
 	for i in spots.size():
-		if alive[i] == 1 and (spots[i] + Vector3.UP).distance_to(at) < radius:
+		var d := (spots[i] + Vector3.UP).distance_to(at)
+		if alive[i] == 0 or d >= radius:
+			continue
+		if i == gold:
+			hurt(i, int(dmg * (1.0 - d / radius)), null)
+		else:
 			alive[i] = 0
 			hit = true
 	if hit:
@@ -313,21 +359,24 @@ func blast(at: Vector3, radius: float) -> void:
 func kill(i: int) -> void:
 	alive[i] = 0
 	_send()
+	if i == gold and main.party:
+		main.party.drop_star(spots[i])
 
 
 func _send() -> void:
-	_recv(spots, yaws, alive, goals)
+	_recv(spots, yaws, alive, goals, gold)
 	if multiplayer.multiplayer_peer != null and multiplayer.is_server():
-		_recv.rpc(spots, yaws, alive, goals)
+		_recv.rpc(spots, yaws, alive, goals, gold)
 
 
 ## 主機：晚進來的人補送一次（現在的位置和要去的點：接著自己走，跟主機一樣）
 func send_to(id: int) -> void:
-	_recv.rpc_id(id, spots, yaws, alive, goals)
+	_recv.rpc_id(id, spots, yaws, alive, goals, gold)
 
 
 @rpc("authority", "call_remote", "reliable")
-func _recv(pts: PackedVector3Array, ys: PackedFloat32Array, a: PackedByteArray, gs: PackedVector3Array) -> void:
+func _recv(pts: PackedVector3Array, ys: PackedFloat32Array, a: PackedByteArray, gs: PackedVector3Array, g := -1) -> void:
+	gold = g
 	spots = pts.duplicate()
 	goals = gs.duplicate()
 	yaws = ys.duplicate()
@@ -351,7 +400,7 @@ func _make(i: int) -> void:
 	r.name = "R%d" % i
 	r.index = i
 	r.raptors = self
-	r.max_hp = HP
+	r.max_hp = GOLD_HP if i == gold else HP
 	var shape := CollisionShape3D.new()
 	var box := BoxShape3D.new()
 	box.size = BODY
@@ -362,8 +411,9 @@ func _make(i: int) -> void:
 	var m: Node3D = Trex.MODEL_TRIPO.instantiate()
 	m.scale = Vector3.ONE * HEIGHT / MODEL_HEIGHT
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = COLOR
-	mat.roughness = 0.9
+	mat.albedo_color = GOLD_COLOR if i == gold else COLOR
+	mat.roughness = 0.35 if i == gold else 0.9
+	mat.metallic = 0.8 if i == gold else 0.0
 	for mi: Node in m.find_children("*", "MeshInstance3D", true, false):
 		(mi as MeshInstance3D).material_override = mat
 	r.add_child(m)

@@ -325,6 +325,16 @@ func compass_marks(at: Vector3) -> Array:
 	if main.party and main.party.dino_id == main.multiplayer.get_unique_id():   # 尼諾拉：小恐龍叫了，標牠的位置（不標牛仔）
 		for q: Vector3 in main.raptors.marked():
 			marks.append({"deg": Compass.bearing(at, q), "dist": at.distance_to(q), "color": Color(1.0, 0.4, 0.3), "label": "小恐龍叫"})
+	if main.party:   # 追分星星：金色小恐龍、地上的星星、拿著星星的人，大家都標（自己拿著不標）
+		var gold: Node3D = main.raptors.gold_body()
+		if gold:
+			marks.append({"deg": Compass.bearing(at, gold.global_position), "dist": at.distance_to(gold.global_position),
+				"color": Raptors.GOLD_COLOR, "label": "金色小恐龍"})
+		var holder: Node3D = main.party.star_node()
+		var star: Variant = main.party.star_pos if main.party.star_on and main.party.phase == &"play" \
+			else (holder.global_position if holder and main.party.star_holder != main.multiplayer.get_unique_id() else null)
+		if star != null:
+			marks.append({"deg": Compass.bearing(at, star), "dist": at.distance_to(star), "color": Raptors.GOLD_COLOR, "label": "★星星"})
 	var boss := main.get_tree().get_first_node_in_group(&"boss") as Node3D
 	if main.party and main._party_hud._party == main.party and main._party_hud.waiting_respawn():   # 畫面還沒換到新的 Party 時別問它   # 派對模式等重生：標出能選的重生點
 		var pts: Array = main._party_hud.spawn_points()
