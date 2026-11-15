@@ -2,9 +2,11 @@ class_name Raptors
 extends Node3D
 ## 小恐龍哨兵（docs/企劃/2026-11-13-小恐龍.md 的「已決定（2026-11-15）」）：只有派對模式有。
 ## 尼諾拉按 E 在腳邊放一隻，每回合最多 MAX 隻（死了不補），下回合清空。
-## 第一版不會動、只會叫：遊戲中看到牛仔、一直盯滿 STARE 秒就尖叫，尼諾拉的方位條標「這隻小恐龍」的位置 MARK 秒（不標牛仔）。
+## 第二步會閒晃：遊戲中在放下的地方 WANDER 公尺內走到隨機點、停 PAUSE 秒左右再換一點（直線走，走之前檢查路上沒牆、不進禁止範圍）。
+## 看到牛仔就停下來、面向他，一直盯滿 STARE 秒就尖叫，尼諾拉的方位條標「這隻小恐龍」的位置 MARK 秒（不標牛仔）。
 ## 同一隻 COOLDOWN 秒叫一次。尼諾拉傷不到；子彈、槍托、炸藥、爆炸桶都打得死（血 HP）。
-## 主機說了算：放、死、叫都在主機決定，位置和死活整包送（_recv），晚進來的人在 main._spawn 補送（send_to）。照 barrels.gd 的寫法。
+## 主機說了算：放、死、叫、要走去哪都在主機決定，位置、目標點和死活整包送（_recv）：只有換目標、停下來時送，
+## 每台自己照 SPEED 往目標點走（_physics_process），收到新的一包就對齊主機的位置。晚進來的人在 main._spawn 補送（send_to）。照 barrels.gd 的寫法。
 ## 不放在 Players 底下：那裡的每個節點都會被當成玩家（算牛仔、算存活、找目標）。
 
 # 以下從 balance.csv 讀（見 balance.gd），改數字去改表
@@ -16,9 +18,13 @@ static var STARE: float = Balance.num("raptor_stare")
 static var COOLDOWN: float = Balance.num("raptor_scream_cd")
 static var MARK: float = Balance.num("raptor_mark_seconds")
 static var CLEAR: float = Balance.num("raptor_place_clear")
+static var WANDER: float = Balance.num("raptor_wander_radius")
+static var SPEED: float = Balance.num("raptor_walk_speed")
+static var PAUSE: float = Balance.num("raptor_pause")
 const FEEL := 3.0            # 這麼近不管方向都會發現
 const CONE := 0.5            # cos 60°：正前方左右各 60 度
 const EYE := 1.5             # 眼睛離地多高
+const KNEE := 0.7            # 檢查路上有沒有東西的射線離地多高
 const LOOK_EVERY := 0.1      # 主機每幾秒看一次（不用每個物理幀打射線）
 const HEIGHT := 2.0          # 身高（公尺）
 const MODEL_HEIGHT := 5.4    # 尼諾拉模型原本的身高（dino.tscn：膠囊 8.1 ÷ 模型縮放 1.5）
@@ -26,13 +32,16 @@ const BODY := Vector3(0.9, 1.7, 2.6)   # 碰撞方塊（寬、高、長）：子
 const COLOR := Color(0.36, 0.55, 0.3)  # 換色：綠色的小尼諾拉
 const SCREAM := preload("res://assets/audio/dino/yelp.wav")   # ponytail: 先把尼諾拉的叫聲調高頂著，正式的尖叫聲之後用 moss-sfx 生
 
-var spots := PackedVector3Array()   # 每隻的位置（地面）
-var yaws := PackedFloat32Array()    # 每隻面向哪（跟放的時候的尼諾拉一樣）
+var spots := PackedVector3Array()   # 每隻現在的位置（地面；每台自己往 goals 走）
+var goals := PackedVector3Array()   # 每隻要走去哪（地面；跟 spots 一樣就是站著）
+var yaws := PackedFloat32Array()    # 每隻面向哪（放的時候跟尼諾拉一樣；走路面向走的方向、盯人面向牛仔）
 var alive := PackedByteArray()      # 1 = 還活著
 var marks := {}                     # 每台：第幾隻 -> 方位條標到幾點（毫秒）
 var _hp := PackedInt32Array()       # 主機
 var _stare := PackedFloat32Array()  # 主機：盯了幾秒
 var _cd := PackedFloat32Array()     # 主機：還要幾秒才能再叫
+var _home := PackedVector3Array()   # 主機：放下的地方（只在這附近走）
+var _wait := PackedFloat32Array()   # 主機：走到了還要停幾秒
 var _acc := 0.0
 
 @onready var main: Node = get_parent()
@@ -46,22 +55,28 @@ func left() -> int:
 ## 主機：清空（新的回合、新的一局）
 func clear() -> void:
 	spots = PackedVector3Array()
+	goals = PackedVector3Array()
 	yaws = PackedFloat32Array()
 	alive = PackedByteArray()
 	_hp = PackedInt32Array()
 	_stare = PackedFloat32Array()
 	_cd = PackedFloat32Array()
+	_home = PackedVector3Array()
+	_wait = PackedFloat32Array()
 	_send()
 
 
 ## 主機：在 q（地面）放一隻，面向 yaw
 func add(q: Vector3, yaw: float) -> void:
 	spots.append(q)
+	goals.append(q)
 	yaws.append(yaw)
 	alive.append(1)
 	_hp.append(HP)
 	_stare.append(0.0)
 	_cd.append(0.0)
+	_home.append(q)
+	_wait.append(randf() * PAUSE)
 	_send()
 
 
@@ -153,18 +168,79 @@ func step(delta: float) -> void:
 	_acc = 0.0
 	var cows: Array = main.players.get_children().filter(func(c: Node) -> bool:
 		return c is Cowboy and c.hp > 0 and not c.is_queued_for_deletion())
+	var changed := false
 	for i in spots.size():
 		if alive[i] == 0:
 			continue
 		_cd[i] -= dt
-		_stare[i] = _stare[i] + dt if cows.any(func(c: Node3D) -> bool: return can_see(i, c)) else 0.0
+		var who: Node3D = null
+		for c: Node3D in cows:
+			if can_see(i, c):
+				who = c
+				break
+		_stare[i] = _stare[i] + dt if who else 0.0
 		if _stare[i] >= STARE and _cd[i] <= 0.0:
 			_stare[i] = 0.0
 			_cd[i] = COOLDOWN
+			_wait[i] = PAUSE   # 叫完站一下再走
 			_scream.rpc(i)
 			var b: Node = main._boss()
 			if b and b.pilot == 0:   # 電腦尼諾拉：跑過去看
 				b.alarm(spots[i])
+		elif who and _cd[i] <= 0.0:   # 盯著：停下來、面向牛仔（轉超過 10 度才送）
+			var d := who.global_position - spots[i]
+			var y := atan2(-d.x, -d.z)
+			if goals[i] != spots[i] or absf(angle_difference(yaws[i], y)) > 0.17:
+				goals[i] = spots[i]
+				yaws[i] = y
+				changed = true
+		elif goals[i] == spots[i]:   # 站著：停夠了就換一點
+			_wait[i] -= dt
+			if _wait[i] <= 0.0:
+				var t := _pick(i)   # 抽不到就下次再抽
+				if t != spots[i]:
+					_wait[i] = PAUSE * randf_range(0.5, 1.5)
+					goals[i] = t
+					yaws[i] = atan2(spots[i].x - t.x, spots[i].z - t.z)
+					changed = true
+		elif not _ray_clear(spots[i], spots[i] + (goals[i] - spots[i]).normalized() * 1.2, i):   # 走著：前面被擋（倒下的積木、人）就停，下次換一點
+			goals[i] = spots[i]
+			_wait[i] = 0.0
+			changed = true
+	if changed:
+		_send()
+
+
+## 主機：第 i 隻下一個要走去的點：家附近隨機抽，路上不進禁止範圍、沒有東西擋。抽不到就原地（回傳 spots[i]）
+func _pick(i: int) -> Vector3:
+	var a := spots[i]
+	for tries in 8:
+		var t: Vector3 = main._on_ground((_home[i] + Vector3.FORWARD.rotated(Vector3.UP, randf() * TAU) * randf_range(2.0, WANDER)) * Vector3(1, 0, 1))
+		var n := ceili(a.distance_to(t) / 0.5)   # ponytail: 每半公尺抽查一點，轉角可能擦過幾公分
+		if range(1, n + 1).all(func(k: int) -> bool: return why_not(a.lerp(t, float(k) / n)) == "") and _ray_clear(a, t, i):
+			return t
+	return a
+
+
+## 從 a 到 b（地面）膝蓋高的地方有沒有東西擋（第 i 隻自己不算）
+func _ray_clear(a: Vector3, b: Vector3, i: int) -> bool:
+	var q := PhysicsRayQueryParameters3D.create(a + Vector3.UP * KNEE, b + Vector3.UP * KNEE, 1, [(get_child(i) as CollisionObject3D).get_rid()])
+	return get_world_3d().direct_space_state.intersect_ray(q).is_empty()
+
+
+## 每台每個物理幀：往目標點走（照地形貼地）、身體慢慢轉到 yaws、走路時上下晃
+func _physics_process(delta: float) -> void:
+	for i in mini(spots.size(), get_child_count()):
+		if alive[i] == 0:
+			continue
+		var to := (goals[i] - spots[i]) * Vector3(1, 0, 1)
+		var walking := goals[i] != spots[i]
+		if walking:
+			spots[i] = goals[i] if to.length() <= SPEED * delta else main._on_ground((spots[i] + to.normalized() * SPEED * delta) * Vector3(1, 0, 1))
+		var r := get_child(i) as Raptor
+		r.global_position = spots[i]
+		r.rotation.y = lerp_angle(r.rotation.y, yaws[i], minf(1.0, delta * 8.0))
+		r.model.position.y = absf(sin(Time.get_ticks_msec() * 0.012)) * 0.12 if walking else 0.0   # ponytail: 沒跑骨架動畫，走路只上下晃
 
 
 ## 第 i 隻看不看得到 c：3 公尺內一定看到；蹲在灌木裡看不到；站著 SIGHT、蹲著 SIGHT_CROUCH；只看前方；被牆擋住看不到
@@ -240,20 +316,21 @@ func kill(i: int) -> void:
 
 
 func _send() -> void:
-	_recv(spots, yaws, alive)
+	_recv(spots, yaws, alive, goals)
 	if multiplayer.multiplayer_peer != null and multiplayer.is_server():
-		_recv.rpc(spots, yaws, alive)
+		_recv.rpc(spots, yaws, alive, goals)
 
 
-## 主機：晚進來的人補送一次
+## 主機：晚進來的人補送一次（現在的位置和要去的點：接著自己走，跟主機一樣）
 func send_to(id: int) -> void:
-	_recv.rpc_id(id, spots, yaws, alive)
+	_recv.rpc_id(id, spots, yaws, alive, goals)
 
 
 @rpc("authority", "call_remote", "reliable")
-func _recv(pts: PackedVector3Array, ys: PackedFloat32Array, a: PackedByteArray) -> void:
-	spots = pts
-	yaws = ys
+func _recv(pts: PackedVector3Array, ys: PackedFloat32Array, a: PackedByteArray, gs: PackedVector3Array) -> void:
+	spots = pts.duplicate()
+	goals = gs.duplicate()
+	yaws = ys.duplicate()
 	alive = a
 	while get_child_count() > spots.size():
 		var c := get_child(get_child_count() - 1)
@@ -290,6 +367,7 @@ func _make(i: int) -> void:
 	for mi: Node in m.find_children("*", "MeshInstance3D", true, false):
 		(mi as MeshInstance3D).material_override = mat
 	r.add_child(m)
+	r.model = m
 	r.add_to_group(&"raptor")
 	add_child(r)
 	r.global_position = spots[i]
@@ -303,6 +381,7 @@ class Raptor extends StaticBody3D:
 	var index := 0
 	var raptors: Raptors
 	var max_hp := 1
+	var model: Node3D
 
 	## 子彈、槍托（主機，Cowboy.deal_damage／main.request_damage）
 	func take_damage(amount: int, source: Node = null) -> void:
