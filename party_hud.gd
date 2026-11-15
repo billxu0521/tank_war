@@ -265,9 +265,10 @@ func _fill_scorebar() -> void:
 		sw.custom_minimum_size = Vector2(14, 14)
 		sw.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		sw.color = SWATCH[order.find(id) % SWATCH.size()]
-		var cells := [str(i + 1), sw, name_of(id) + ("　恐龍" if id == _party.dino_id else ""), str(int(_party.scores.get(id, 0)))]
-		if id == _carrier:
-			cells.append("+%d" % (Party.SCORE_EXTRACT + Party.SCORE_SURVIVE))
+		var pad := Control.new()   # 沒拿蛋的列也留「+10」那格的寬，分數才對得齊
+		pad.custom_minimum_size.x = 44
+		var cells := [str(i + 1), sw, name_of(id) + ("　恐龍" if id == _party.dino_id else ""), str(int(_party.scores.get(id, 0))),
+			"+%d" % (Party.SCORE_EXTRACT + Party.SCORE_SURVIVE) if id == _carrier else pad]
 		for c: Variant in cells:
 			if c is Control:
 				h.add_child(c)
@@ -276,7 +277,15 @@ func _fill_scorebar() -> void:
 			l.text = c
 			if id == my_id():
 				l.add_theme_color_override(&"font_color", GOLD)
-			if String(c).begins_with("+"):
+			if h.get_child_count() == 2:   # 名字：撐滿，把分數推到右邊成一欄
+				l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			elif h.get_child_count() == 3:   # 分數：固定寬、靠右
+				l.custom_minimum_size.x = 36
+				l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+			elif String(c).begins_with("+"):   # 大一級、粗描邊，跟自己那列的金色分得開
+				l.custom_minimum_size.x = 44
+				l.add_theme_font_size_override(&"font_size", 24)
+				l.add_theme_constant_override(&"outline_size", 10)
 				l.add_theme_color_override(&"font_color", CARRY)
 			h.add_child(l)
 		scorebar.add_child(row)
