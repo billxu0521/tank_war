@@ -658,7 +658,7 @@ func _case_raptors() -> void:
 		and (cl.get_child(3) as Node3D).visible and not (cl.get_child(0) as Node3D).visible, "晚加入的人看得到現有的小恐龍")
 	m.remove_child(cl)
 	cl.free()
-	# 閒晃：沒人看到時在家附近走，不超過半徑、不進禁止範圍，身體面向走的方向
+	# 全場遊走：沒人看到時一段一段走開，走得比一段遠、不出場、不進禁止範圍，身體面向走的方向
 	r.clear()
 	r.add(q, 0.0)
 	for n: Node3D in cows:
@@ -666,17 +666,17 @@ func _case_raptors() -> void:
 	var far := 0.0
 	var bad := 0
 	var faced := true
-	for k in 600:   # 60 秒
+	for k in 1200:   # 120 秒
 		r.step(0.1)
 		r._physics_process(0.1)
 		far = maxf(far, Vector2(r.spots[0].x - q.x, r.spots[0].z - q.z).length())
 		var sp := Vector2(r.spots[0].x, r.spots[0].z)   # 禁止範圍：留 0.3 公尺給抽查的間隔
 		var near := func(o: Vector3) -> bool: return sp.distance_to(Vector2(o.x, o.z)) < Raptors.CLEAR - 0.3
-		bad += int((m.safe.on and near.call(m.safe.global_position)) or p.env_pos.any(near) or m.spawn_points.any(near) or not m._is_clear(sp, 0.3))
+		bad += int((m.safe.on and near.call(m.safe.global_position)) or p.env_pos.any(near) or m.spawn_points.any(near) or not m._is_clear(sp, 0.3) or not m.map._inside(r.spots[0], 2.9))
 		var go := Vector2(r.goals[0].x - r.spots[0].x, r.goals[0].z - r.spots[0].z)
 		if go.length() > 0.5:
 			faced = faced and Vector2(-sin(r.yaws[0]), -cos(r.yaws[0])).dot(go.normalized()) > 0.99
-	_ck(far > 1.0 and far <= Raptors.WANDER + 0.05 and bad == 0, "閒晃：會離開原點、不超過 %.0f 公尺、不進禁止範圍（最遠 %.1f、違規 %d）" % [Raptors.WANDER, far, bad])
+	_ck(far > 20.0 and bad == 0, "全場遊走：離起點超過 20 公尺、不出場、不進禁止範圍（最遠 %.1f、違規 %d）" % [far, bad])
 	_ck(faced, "走路時面向走的方向")
 	# 走到一半：晚加入的人收到那一包，接著自己走，位置跟主機一樣
 	for k in 200:
@@ -695,6 +695,25 @@ func _case_raptors() -> void:
 		"晚加入的人看到的位置跟主機一樣（%s %s）" % [late.spots[0], r.spots[0]])
 	m.remove_child(late)
 	late.free()
+	# 走著前面被擋（擺一個箱子）：停下來、換一個方向走
+	var dir := (r.goals[0] - r.spots[0]).normalized()
+	var wall := StaticBody3D.new()
+	var shape := CollisionShape3D.new()
+	shape.shape = BoxShape3D.new()
+	(shape.shape as BoxShape3D).size = Vector3(3, 3, 0.5)
+	wall.add_child(shape)
+	m.add_child(wall)
+	wall.global_position = r.spots[0] + dir * 1.0 + Vector3.UP
+	wall.look_at(wall.global_position + dir)
+	PhysicsServer3D.body_set_state(wall.get_rid(), PhysicsServer3D.BODY_STATE_TRANSFORM, wall.global_transform)   # 不等物理幀，射線馬上打得到
+	r.step(0.1)
+	var stopped := r.goals[0] == r.spots[0]
+	for k in 20:
+		if r.goals[0] != r.spots[0]:
+			break
+		r.step(0.1)
+	_ck(stopped and r.goals[0] != r.spots[0] and (r.goals[0] - r.spots[0]).normalized().dot(dir) < 0.99, "前面被擋就停下來，換一個方向走")
+	wall.free()
 	# 盯人：停下來、面向牛仔；叫完站一下再走
 	var head: Vector3 = r.spots[0]
 	c.global_position = r.spots[0] + (r.goals[0] - r.spots[0]).normalized().rotated(Vector3.UP, 1.0) * 2.5   # 3 公尺內：不管方向都看得到
