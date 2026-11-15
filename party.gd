@@ -266,6 +266,8 @@ func _start_round() -> void:
 	elif not (dino_id > 0 and _present(dino_id)):   # 電腦不會藏蛋：開場就放在中央（不然蛋跟著牠追到站著不動的牛仔旁邊）
 		_hide_egg_at(b.global_position)
 	main.raptors.clear()   # 小恐龍：上回合的清掉，這回合尼諾拉重放
+	if not (dino_id > 0 and _present(dino_id)):
+		main.raptors.auto_place()   # 電腦當恐龍：開回合自己放（要在信封之後：放在信封附近）
 	main.barrels.roll()   # 爆炸桶每回合重抽（要在信封、箱子之後：避開信封和蛋）
 	_sync()
 

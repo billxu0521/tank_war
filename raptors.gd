@@ -80,6 +80,21 @@ func why_not(q: Vector3) -> String:
 	return ""
 
 
+## 主機：電腦當恐龍時開回合放滿：雙數隻放在信封附近（離信封 CLEAR～CLEAR+10 公尺、面向信封），其餘放隨機空地、隨便面向。
+## 抽不到合格的位置就少放一隻
+func auto_place() -> void:
+	var envs: Array = main.party.env_pos if main.party and main.safe.on else []
+	for k in MAX:
+		for tries in 50:
+			var e: Vector3 = envs[(k / 2) % envs.size()] if k % 2 == 0 and not envs.is_empty() else Vector3.INF
+			var q: Vector3 = main._spawn_point() if e == Vector3.INF \
+				else e + Vector3.FORWARD.rotated(Vector3.UP, randf() * TAU) * randf_range(CLEAR, CLEAR + 10.0)
+			q = main._on_ground(Vector3(q.x, 0.0, q.z))
+			if why_not(q) == "":
+				add(q, randf() * TAU if e == Vector3.INF else atan2(q.x - e.x, q.z - e.z))
+				break
+
+
 ## 主機：id 這個人要放一隻（在尼諾拉前面腳邊）。回傳空字串 = 放了，不然是不能放的原因
 func place_by(id: int) -> String:
 	var p: Party = main.party
@@ -147,6 +162,9 @@ func step(delta: float) -> void:
 			_stare[i] = 0.0
 			_cd[i] = COOLDOWN
 			_scream.rpc(i)
+			var b: Node = main._boss()
+			if b and b.pilot == 0:   # 電腦尼諾拉：跑過去看
+				b.alarm(spots[i])
 
 
 ## 第 i 隻看不看得到 c：3 公尺內一定看到；蹲在灌木裡看不到；站著 SIGHT、蹲著 SIGHT_CROUCH；只看前方；被牆擋住看不到
