@@ -227,6 +227,7 @@ func _update_pilot_hint(me: Node) -> void:
 		_pilot_hint.add_theme_constant_override(&"outline_size", 6)
 		_pilot_hint.text = PILOT_HINT
 		_root.add_child(_pilot_hint)
+	_pilot_hint.text = PILOT_HINT + ("　E 放小恐龍（剩 %d 隻）" % main.raptors.left() if main.party else "")
 	_pilot_hint.visible = me != null and me.is_in_group(&"boss") and me.pilot == main.multiplayer.get_unique_id()
 
 ## 準心畫在「火球會落到哪」，不是螢幕正中央——抬頭時看得出彈道往上跑（舊恐龍）。
@@ -287,6 +288,9 @@ func compass_marks(at: Vector3) -> Array:
 		if main.safe.visible and (dino or p.my_digits != [-1, -1]):
 			marks.append({"deg": Compass.bearing(at, main.safe.global_position), "dist": at.distance_to(main.safe.global_position),
 				"color": Compass.EGG_COLOR, "label": "保險箱", "row": 1})
+	if main.party and main.party.dino_id == main.multiplayer.get_unique_id():   # 尼諾拉：小恐龍叫了，標牠的位置（不標牛仔）
+		for q: Vector3 in main.raptors.marked():
+			marks.append({"deg": Compass.bearing(at, q), "dist": at.distance_to(q), "color": Color(1.0, 0.4, 0.3), "label": "小恐龍叫"})
 	var boss := main.get_tree().get_first_node_in_group(&"boss") as Node3D
 	if main.party and main._party_hud._party == main.party and main._party_hud.waiting_respawn():   # 畫面還沒換到新的 Party 時別問它   # 派對模式等重生：標出能選的重生點
 		var pts: Array = main._party_hud.spawn_points()

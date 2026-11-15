@@ -144,6 +144,7 @@ func step(delta: float) -> void:
 				_sync()
 		&"play":
 			_respawn_step(delta)
+			main.raptors.step(delta)   # 小恐龍看、叫（準備階段牛仔站著不動，不看）
 			stats.tick(main, self, delta)
 			main.safe.server_step(delta)   # 試密碼的 1 秒、作廢、開箱
 			if main.safe.locked():   # 鎖著：蛋跟著箱子（箱子會被炸飛、甩飛）
@@ -264,6 +265,7 @@ func _start_round() -> void:
 		_place_envelopes()   # 信封離箱子夠遠，所以箱子先放
 	elif not (dino_id > 0 and _present(dino_id)):   # 電腦不會藏蛋：開場就放在中央（不然蛋跟著牠追到站著不動的牛仔旁邊）
 		_hide_egg_at(b.global_position)
+	main.raptors.clear()   # 小恐龍：上回合的清掉，這回合尼諾拉重放
 	main.barrels.roll()   # 爆炸桶每回合重抽（要在信封、箱子之後：避開信封和蛋）
 	_sync()
 
