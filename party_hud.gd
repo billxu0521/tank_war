@@ -27,6 +27,7 @@ var top: Label        # 左上
 var scorebar: VBoxContainer   # 左上、top 下面的計分欄：每人一列
 var _carrier := 0     # 計分欄上次畫的時候誰拿著蛋（換人才重畫）
 var _star := 0        # 計分欄上次畫的時候誰拿著星星
+var _shown := 0       # refresh 上次畫的內容的雜湊值：一樣就不重建（_sync 每秒都發 changed）
 var hint: Label       # 中間的提示（準備階段、選重生點）
 var board: PanelContainer   # Tab 分數板
 var board_rows: GridContainer
@@ -114,6 +115,7 @@ func _process(delta: float) -> void:
 			_party.changed.disconnect(refresh)
 		_party = p
 		_phase = &""
+		_shown = 0
 		if p:
 			p.changed.connect(refresh)
 			refresh()
@@ -198,9 +200,13 @@ func _unhandled_input(e: InputEvent) -> void:
 	get_viewport().set_input_as_handled()
 
 
-## changed 來了：分數板、結算框重排
+## changed 來了：分數板、結算框重排。內容跟上次一樣就不動（約 70 個節點，每秒重建一次在 2 核主機頓 40 毫秒）
 func refresh() -> void:
 	var p := _party
+	var key := hash([p.phase, p.scores, p.round_scores, p.names, p.dino_id, p.last_result, main.egg.carrier, p.star_holder, my_id()])
+	if key == _shown:
+		return
+	_shown = key
 	if p.phase != _phase:
 		_phase = p.phase
 		if _phase == &"result":

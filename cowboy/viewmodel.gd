@@ -174,8 +174,10 @@ func _ready() -> void:
 		_weapons.append(w)
 		_hip_positions.append(w.position)
 		w.visible = false
+		w.set_process(false)   # 沒拿在手上的槍不跑 _process（一個牛仔 11 把）
 	weapon = _weapons[_index]
 	weapon.visible = true
+	weapon.set_process(true)
 	_hand_stick = _make_stick_hand()
 	_hand_stick.visible = false
 	add_child(_hand_stick)
@@ -362,12 +364,14 @@ func switch_weapon(index: int) -> void:
 	cancel_heal()
 	_fire_queued = false
 	weapon.visible = false
+	weapon.set_process(false)
 	_index = index
 	if index > 0:
 		_last_long = index
 	_player.gun = index   # 別人看到你手上換槍
 	weapon = _weapons[index]
 	weapon.visible = true
+	weapon.set_process(true)
 	weapon.position = _hip_positions[index].lerp(weapon.ads_position, ads)
 	_refresh_ammo()
 	# 有 wield 動畫就播，播完前不能開火

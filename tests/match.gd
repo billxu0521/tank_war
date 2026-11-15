@@ -2572,3 +2572,34 @@ func _case_bot_sight() -> void:
 			_ck(not c._bot_sees(m, d, BotBrain.SIGHT_COWBOY), "太遠看不到")
 			root.remove_child(m)   # 不用 _end：它會關掉共用的連線，這時候槍的案例還在跑
 			m.free()))
+
+
+## party_hud.refresh：內容沒變不重建（_sync 每秒都發 changed，重建約 70 個節點會讓主機頓一下）
+func _case_party_hud_same() -> void:
+	var m := _offline_match()
+	var hud: PartyHud = m.get_node("UI/Root").get_children().filter(func(n: Node) -> bool: return n is PartyHud).front()
+	var me: int = m.multiplayer.get_unique_id()
+	var p := Party.new()   # 不放進場景樹：只拿來裝值
+	p.phase = &"play"
+	p.names = {me: "阿明", 2: "小華"}
+	p.scores = {me: 3, 2: 12}
+	p.round_scores = {me: 1, 2: 10}
+	p.dino_id = 2
+	m.party = p
+	hud._process(0.0)
+	var rows := hud.scorebar.get_children()
+	var cells := hud.board_rows.get_children()
+	p.changed.emit()
+	p.changed.emit()
+	_ck(hud.scorebar.get_children() == rows and hud.board_rows.get_children() == cells, "狀態沒變時 refresh 不重建計分欄和分數板")
+	p.scores[me] = 30   # 原地改：雜湊要看內容
+	p.changed.emit()
+	_ck(hud.scorebar.get_children() != rows, "分數變了要重建")
+	var first: Label = hud.scorebar.get_child(0).get_child(0).get_child(2)
+	_ck(first.text.begins_with("阿明"), "分數變了重排（現在第一列：%s）" % first.text)
+	p.star_holder = me
+	p.changed.emit()
+	_ck("★" in (hud.scorebar.get_child(0).get_child(0).get_child(2) as Label).text, "拿到星星要畫 ★")
+	m.party = null
+	p.free()
+	_end(m)
