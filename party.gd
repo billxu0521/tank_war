@@ -27,6 +27,7 @@ static var SCORE_GUARD: int = Balance.whole("score_guard")   # 恐龍守住蛋�
 # 碰到就撿（不用按鍵）；拿著的牛仔死掉、尼諾拉倒地就掉在原地。回合結束時拿著的人，這回合的分數 × STAR_MULT
 static var STAR_REACH: float = Balance.num("star_pickup_reach")
 static var STAR_MULT: int = Balance.whole("star_multiplier")
+const STAR_BOT_SEE := 40.0    # 電腦尼諾拉看得到多遠的星星
 const STAR_EDGE := 6.0        # 掉出場外：搬回離場地邊緣這麼遠（同 safe.gd 的 EDGE）
 
 var rounds := ROUNDS
@@ -579,6 +580,8 @@ func _star_step() -> void:
 	if not star_on:
 		return
 	var b: Node3D = main._boss()
+	if b and b.pilot == 0 and Engine.get_physics_frames() % 120 == 0 and _flat(b.global_position, 0).distance_to(_flat(star_pos, 0)) < STAR_BOT_SEE:
+		b.alarm(star_pos)   # 電腦尼諾拉：附近有星星就走過去（碰到就撿）
 	if b and b.down_left <= 0.0 and _flat(b.global_position, 0).distance_to(_flat(star_pos, 0)) < BOSS_GD.BODY_RADIUS + STAR_REACH:
 		_take_star(dino_id)
 		return
