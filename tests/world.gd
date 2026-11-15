@@ -548,3 +548,122 @@ func _case_barrels() -> void:
 	_ck(sb.barrels.spots.is_empty() and sb.barrels.get_child_count() == 0, "沙盒沒有爆炸桶")
 	_end(sb)
 	Barrels.COUNT = keep
+
+## 小恐龍哨兵（raptors.gd）：尼諾拉放（上限、距離限制、倒地）、看見才叫（站著、蹲著、灌木、背後）、方位條、一槍死、尼諾拉傷不到、
+## 炸死、死了不補、晚加入看得到、下回合清空、不混進 Players、非派對模式沒有
+func _case_raptors() -> void:
+	_ck(InputMap.has_action(&"dino_raptor") and InputMap.action_get_events(&"dino_raptor").any(func(e: InputEvent) -> bool: return e is InputEventKey)
+		and InputMap.action_get_events(&"dino_raptor").any(func(e: InputEvent) -> bool: return e is InputEventJoypadButton), "放小恐龍要綁鍵盤和手把")
+	var m := _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"party"))
+	m._apply_rules()
+	m._physics_process(DT)   # 開場：主機（1）當恐龍
+	var p: Party = m.party
+	var r: Raptors = m.raptors
+	var b: Node3D = m._boss()
+	_ck(p.phase == &"prep" and b.pilot == 1 and r.left() == Raptors.MAX and Raptors.MAX == 5, "開回合：尼諾拉有 5 隻可以放")
+	# 距離限制
+	var safe: Vector3 = m.safe.global_position
+	_ck(r.why_not(safe + Vector3(2, 0, 0)).contains("保險箱"), "保險箱旁邊不能放")
+	_ck(r.why_not(p.env_pos[0] + Vector3(2, 0, 0)) != "" and r.why_not(p.env_pos[1] + Vector3(0, 0, 2)) != "", "信封旁邊不能放")
+	_ck(m.spawn_points.all(func(s: Vector3) -> bool: return r.why_not(s + Vector3(2, 0, 0)) != ""), "牛仔出生點旁邊不能放")
+	# 找一塊放得下的空地，尼諾拉站在它後面、面向 -Z
+	var q := Vector3.INF
+	for k in 400:
+		var t: Vector3 = m._on_ground(m._spawn_point() * Vector3(1, 0, 1))
+		var flat_ok := [-13.0, -8.0, 8.0].all(func(dz: float) -> bool: return absf(m._on_ground(Vector3(t.x, 0, t.z + dz)).y - t.y) < 0.4)   # 前後平的：射線不被坡擋
+		if r.why_not(t) == "" and r.why_not(t + Vector3(0, 0, -12)) == "" and flat_ok:
+			q = t
+			break
+	_ck(q != Vector3.INF, "找得到放小恐龍的空地")
+	if q == Vector3.INF:
+		_end(m)
+		return
+	b.rotation.y = 0.0
+	b.global_position = m.boss_on_ground(q + Vector3(0, 0, BOSS_GD.BODY_RADIUS + 1.0))
+	b.down_left = 1.0
+	_ck(r.place_by(1) != "" and r.spots.is_empty(), "倒地中不能放")
+	b.down_left = 0.0
+	_ck(r.place_by(-1) != "" and r.spots.is_empty(), "不是尼諾拉不能放")
+	_ck(r.place_by(1) == "" and r.spots.size() == 1 and Vector2(r.spots[0].x - q.x, r.spots[0].z - q.z).length() < 0.5, "尼諾拉按 E：放在腳邊（%s）" % [r.spots])
+	_ck(r.get_child_count() == 1 and (r.get_child(0) as Node3D).visible and m.players.get_children().all(func(c: Node) -> bool: return not c.is_in_group(&"raptor")),
+		"小恐龍生出來，不在 Players 底下")
+	m._match_hud._update_pilot_hint(b)
+	_ck(m._match_hud._pilot_hint.text.contains("E 放小恐龍（剩 4 隻）"), "左下角提示剩幾隻（%s）" % m._match_hud._pilot_hint.text)
+	for k in 4:
+		r.place_by(1)
+	_ck(r.spots.size() == 5 and r.left() == 0 and r.place_by(1).contains("放完了"), "每回合最多 5 隻")
+	# 看見、盯、叫：只留一隻在 q、面向 -Z
+	r.clear()
+	r.add(q, 0.0)
+	var cows: Array = [-1, -2, -3].map(func(id: int) -> Node3D: return m.players.get_node(NodePath(str(id))))
+	for c: Node3D in cows:
+		c.global_position = Vector3(0, 800, 0)
+	var c: Node3D = cows[0]
+	var at := func(off: Vector3, crouch: bool) -> bool:
+		c.global_position = m._on_ground(Vector3(q.x + off.x, 0, q.z + off.z))
+		c.set(&"sync_crouching", crouch)
+		return r.can_see(0, c)
+	_ck(at.call(Vector3(0, 0, -8), false), "站著 8 公尺、在正前方：看得到")
+	_ck(not at.call(Vector3(0, 0, -13), false), "站著 13 公尺：看不到")
+	_ck(not at.call(Vector3(0, 0, -8), true) and at.call(Vector3(0, 0, -5), true), "蹲著 8 公尺看不到、5 公尺看得到")
+	_ck(not at.call(Vector3(0, 0, 8), false) and at.call(Vector3(0, 0, 2), false), "背後 8 公尺看不到、2 公尺不管方向都會發現")
+	var bush: Vector3 = m.map._bushes[0]
+	r.clear()
+	r.add(m._on_ground(Vector3(bush.x, 0, bush.z + 4)), 0.0)
+	var spot: Vector3 = m._on_ground(Vector3(bush.x + 0.3, 0, bush.z))
+	var hid: bool = at.call(spot - q, true)
+	var stood: bool = at.call(spot - q, false)
+	_ck(not hid and stood, "蹲在灌木裡看不到，站起來就看得到（%s %s）" % [hid, stood])
+	r.clear()
+	r.add(q, 0.0)
+	p.phase = &"play"
+	at.call(Vector3(0, 0, -8), false)
+	for k in 7:
+		r.step(0.1)
+	_ck(r.marked().is_empty(), "盯不到 0.8 秒還不叫")
+	r.step(0.1)
+	r.step(0.1)
+	_ck(r.marked().size() == 1 and r.marked()[0] == q and m.status.text.contains("小恐龍"), "盯滿 0.8 秒尖叫，尼諾拉知道是哪一隻")
+	var marks: Array = m._match_hud.compass_marks(q + Vector3(30, 0, 0))
+	_ck(marks.any(func(k: Dictionary) -> bool: return k.label == "小恐龍叫" and absf(k.dist - 30.0) < 1.0), "尼諾拉的方位條標叫聲（小恐龍的位置）")
+	var first: int = r.marks.get(0, -1)
+	for k in 100:
+		r.step(0.1)
+	_ck(int(r.marks.get(0, -2)) == first, "同一隻 20 秒內不再叫")
+	r.marks[0] = Time.get_ticks_msec() - 1
+	_ck(r.marked().is_empty() and not m._match_hud.compass_marks(q).any(func(k: Dictionary) -> bool: return k.label == "小恐龍叫"), "標示時間到就收掉")
+	# 打：尼諾拉傷不到；一槍（散彈一顆也算）就死；死了不補
+	var body: Node = r.get_child(0)
+	body.take_damage(100, b)
+	_ck(r.alive[0] == 1, "尼諾拉傷不到小恐龍")
+	c.global_position = q + Vector3(0, 0, -8)
+	_ck(m.apply_damage_request(-1, body, 7, c.global_position + Vector3.UP * 1.6) and r.alive[0] == 0
+		and not (body as Node3D).visible and (body as CollisionObject3D).collision_layer == 0, "一顆散彈就打死、收起來")
+	_ck(r.left() == 4, "打死的不補回可以放的數量")
+	r.add(q + Vector3(1, 0, 0), 0.0)
+	r.get_child(1).take_damage(25, c)
+	_ck(r.alive[1] == 0, "輕槍托一下就死")
+	r.add(q + Vector3(2, 0, 0), 0.0)
+	r.add(q + Vector3(40, 0, 0), 0.0)
+	_with_first(m, func() -> void: Explosive.damage(m.map, q + Vector3(3, 0.5, 0), 6.0, 150, null))
+	_ck(r.alive[2] == 0 and r.alive[3] == 1, "炸藥炸死旁邊的，遠的沒事")
+	# 晚加入：收到主機那包，看得到一樣的一批（死的收著）
+	var cl := Raptors.new()
+	m.add_child(cl)
+	cl._recv(r.spots, r.yaws, r.alive)
+	_ck(cl.get_child_count() == 4 and (cl.get_child(3) as Node3D).global_position.is_equal_approx(r.spots[3])
+		and (cl.get_child(3) as Node3D).visible and not (cl.get_child(0) as Node3D).visible, "晚加入的人看得到現有的小恐龍")
+	m.remove_child(cl)
+	cl.free()
+	# 下回合清空
+	p._end_round(true, "test")
+	p.time_left = 0.0
+	m._physics_process(DT)
+	_ck(p.phase == &"prep" and r.spots.is_empty() and r.get_child_count() == 0 and r.left() == 5, "下回合清空，重新有 5 隻")
+	_end(m)
+	# 非派對模式沒有小恐龍
+	var e := _offline_match()
+	e._add_player(e.COWBOY, 1)
+	_ck(e.raptors.place_by(1) != "" and e.raptors.spots.is_empty() and e.raptors.get_child_count() == 0, "非派對模式沒有小恐龍")
+	_end(e)
