@@ -288,6 +288,17 @@ func _refresh_roster() -> void:
 			_roster[slot] = h
 		else:
 			_roster.append(h)
+	_order_scores()
+
+
+## scores 照 _roster 重排：計分欄的色塊照 scores 的順序給，整包送到客戶端順序也跟著。
+## 頂替的人接手被頂掉的那格顏色，重連換編號也不換色
+func _order_scores() -> void:
+	var s := {}
+	for id: int in _roster:
+		s[id] = scores.get(id, 0)
+	s.merge(scores)   # 不在名單上的（照理沒有）留在後面
+	scores = s
 
 
 func _end_round(dino_win: bool, msg: String) -> void:
@@ -403,6 +414,7 @@ func rekey(old: int, new: int) -> void:
 	var i := _roster.find(old)
 	if i >= 0:
 		_roster[i] = new
+	_order_scores()
 	if dino_id == old:
 		dino_id = new
 	_sync()

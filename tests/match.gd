@@ -1394,6 +1394,14 @@ func _case_envelope() -> void:
 	p.my_digits = [-1, -1]
 	p.rekey(7, 1)
 	_ck(p.my_digits == [-1, code % 10], "重連後補送給本人")
+	# 計分欄的色塊照 scores 的順序：重連、頂替都不能換位置
+	var before := p.scores.keys()
+	p.rekey(1, 7)
+	_ck(p.scores.keys() == before.map(func(id: int) -> int: return 7 if id == 1 else id), "重連後 scores 順序不變（%s → %s）" % [before, p.scores.keys()])
+	before = p.scores.keys()
+	p._refresh_roster()   # 主機（1）又連著、不在名單上 → 頂掉一個還沒當過恐龍的電腦
+	var slot := p._roster.find(1)
+	_ck(slot >= 0 and before[slot] < 0 and p.scores.keys() == p._roster, "頂替的人接手電腦那格的顏色（%s → %s）" % [before, p.scores.keys()])
 	_end(m)
 
 ## 保險箱四選一（規劃 docs/企劃/2026-11-15-畫面與保險箱位置.md 第 3 步）：灰盒有四個保險箱點，每回合主機抽一個放箱子，恐龍不用放
