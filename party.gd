@@ -113,7 +113,7 @@ func _process(delta: float) -> void:
 			e.global_position = env_pos[i]
 		if e.opened != bool(env_open[i]):
 			e.set_opened(env_open[i])
-		if env_open[i] and not _noted[i] and me == dino_id and phase == &"play":   # 恐龍：第一次被開跳一行字
+		if env_open[i] and not _noted[i] and me == dino_id and phase == &"play" and not main.safe.open:   # 恐龍：第一次被開跳一行字（箱子開了就沒用了）
 			main.status.text = "%s的信封被打開了" % Envelope.NAMES[i]
 		_noted[i] = bool(env_open[i])
 	if phase == &"prep" and me == dino_id and not egg_placed and Input.is_action_just_pressed(&"interact") \

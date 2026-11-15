@@ -128,6 +128,13 @@ func _case_compass() -> void:
 	_ck(is_equal_approx(Compass.bearing(Vector3.ZERO, Vector3(10, 0, 0)), 90.0), "正東（+X）是 90 度")
 	_ck(is_equal_approx(Compass.bearing(Vector3.ZERO, Vector3(0, 0, 10)), 180.0), "正南（+Z）是 180 度")
 	_ck(is_equal_approx(Compass.bearing(Vector3.ZERO, Vector3(-10, 0, 0)), 270.0), "正西（-X）是 270 度")
+	# 同一行的字擺開：想放同一個地方的不疊；貼在兩端的不超出方位條
+	var xs: Array = Compass.spread([100.0, 100.0], [50.0, 50.0])
+	_ck(absf(xs[0] - xs[1]) >= 50.0 + Compass.PAD, "兩個字想放同一處，排開不疊（%s）" % [xs])
+	xs = Compass.spread([Compass.WIDTH - 20.0, Compass.WIDTH - 20.0, -30.0], [60.0, 60.0, 60.0])
+	_ck(xs.all(func(x: float) -> bool: return x >= 0.0 and x + 60.0 <= Compass.WIDTH) and absf(xs[0] - xs[1]) >= 60.0 + Compass.PAD,
+		"擠在右邊的兩個往左推開、左邊的不超出（%s）" % [xs])
+	_ck(Compass.spread([10.0, 300.0], [40.0, 40.0]) == [10.0, 300.0], "沒疊的不動")
 
 ## 0.8.1 回饋的介面：大廳順序和存 IP、勝負畫面、重開一局、倒數、boss 體力條、右上角
 ## 問題回報：錯誤會被記下來、警告不算，F8 存出來的檔有版本、遊戲狀況和錯誤內容

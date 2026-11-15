@@ -254,16 +254,21 @@ func _update_compass() -> void:
 	if cam == null:
 		return
 	_compass.set_view(cam)
-	var at := cam.global_position
+	_compass.marks = compass_marks(cam.global_position)
+	_compass.queue_redraw()
+
+## 方位條上的標記（從 at 看）。第 0 行：蛋、撤離、重生點；第 1 行：信封、保險箱
+func compass_marks(at: Vector3) -> Array:
 	var marks := []
-	# 派對模式蛋是恐龍藏的：沒人拿起來之前不標
-	if main.egg.visible and main.egg.carrier != main.multiplayer.get_unique_id() and (main.party == null or main.egg.carrier != 0):
+	# 派對模式蛋是恐龍藏的：沒人拿起來之前不標。保險箱開了就大家都標（開箱有聲音，本來就是公開的事）
+	var opened: bool = main.party != null and main.safe.on and main.safe.open
+	if main.egg.visible and main.egg.carrier != main.multiplayer.get_unique_id() and (main.party == null or main.egg.carrier != 0 or opened):
 		marks.append({"deg": Compass.bearing(at, main.egg.global_position), "dist": at.distance_to(main.egg.global_position),
 			"color": Compass.EGG_COLOR, "label": "蛋"})
 	for e: Vector3 in (main._exits if main.RULES[main.rules].egg and not main._solo_dino else []):
 		marks.append({"deg": Compass.bearing(at, e), "dist": at.distance_to(e),
 			"color": Compass.EXIT_COLOR, "label": "撤離"})
-	if main.party and main.safe.on:   # 保險箱模式：兩個信封大家都標；保險箱只有看過牌的人和恐龍標
+	if main.party and main.safe.on and not opened:   # 保險箱模式：兩個信封大家都標；保險箱只有看過牌的人和恐龍標。開了就換成標蛋
 		var p: Party = main.party
 		var dino: bool = p.dino_id == main.multiplayer.get_unique_id()
 		for i in p.envelopes.size():
@@ -274,10 +279,10 @@ func _update_compass() -> void:
 			elif dino and p.env_open[i]:
 				label += "（已開）"
 			marks.append({"deg": Compass.bearing(at, e), "dist": at.distance_to(e),
-				"color": Color(0.6, 0.55, 0.5) if p.env_open[i] else Color(0.95, 0.9, 0.75), "label": label})
+				"color": Color(0.6, 0.55, 0.5) if p.env_open[i] else Color(0.95, 0.9, 0.75), "label": label, "row": 1})
 		if main.safe.visible and (dino or p.my_digits != [-1, -1]):
 			marks.append({"deg": Compass.bearing(at, main.safe.global_position), "dist": at.distance_to(main.safe.global_position),
-				"color": Compass.EGG_COLOR, "label": "保險箱"})
+				"color": Compass.EGG_COLOR, "label": "保險箱", "row": 1})
 	var boss := main.get_tree().get_first_node_in_group(&"boss") as Node3D
 	if main.party and main._party_hud._party == main.party and main._party_hud.waiting_respawn():   # 畫面還沒換到新的 Party 時別問它   # 派對模式等重生：標出能選的重生點
 		var pts: Array = main._party_hud.spawn_points()
@@ -289,8 +294,7 @@ func _update_compass() -> void:
 	if main._solo_dino and boss:   # 測恐龍行為：標出恐龍在哪
 		marks.append({"deg": Compass.bearing(at, boss.global_position), "dist": at.distance_to(boss.global_position),
 			"color": Color(1, 0.35, 0.3), "label": "恐龍"})
-	_compass.marks = marks
-	_compass.queue_redraw()
+	return marks
 
 ## boss 的體力條（畫面上方中間，每個人都看得到）：看牠還跑不跑得動，決定現在要逃還是要躲。
 ## 跑不動（力竭）變紅、倒地變灰
@@ -308,15 +312,15 @@ func _update_boss_bar(me: Node) -> void:
 		_boss_bar.set_anchors_preset(Control.PRESET_CENTER_TOP)
 		_boss_bar.offset_left = -160
 		_boss_bar.offset_right = 160
-		_boss_bar.offset_top = 140   # 在方位條（compass.gd）和倒數（CenterInfo）下面
-		_boss_bar.offset_bottom = 154
+		_boss_bar.offset_top = 158   # 在方位條（compass.gd）和倒數（CenterInfo）下面
+		_boss_bar.offset_bottom = 172
 		_boss_bar.add_theme_stylebox_override(&"background", main.stamina_bar.get_theme_stylebox(&"background"))
 		_boss_bar.add_theme_stylebox_override(&"fill", main.stamina_bar.get_theme_stylebox(&"fill"))
 		_boss_label = Label.new()
 		_boss_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
 		_boss_label.offset_left = -240   # 比體力條寬：操作恐龍時後面多「甩尾 N 秒」
 		_boss_label.offset_right = 240
-		_boss_label.offset_top = 116
+		_boss_label.offset_top = 134
 		_boss_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_root.add_child(_boss_label)
 		_root.add_child(_boss_bar)
