@@ -975,9 +975,11 @@ func _case_pilot_feedback() -> void:
 	_ck(far.hp == far.max_hp and b.hit_until == 0, "咬空：駕駛沒有命中提示")
 	m._match_hud.update_match(b)
 	_ck(m.crosshair.modulate != Color(1, 0.3, 0.25), "咬空：準心不閃紅")
+	_ck(not b.bite_ready() and m.crosshair.text == "", "扇形外沒人：準心圓圈不變紅；尼諾拉的準心是圓圈不是 +（現在「%s」）" % m.crosshair.text)
 	var front: Node3D = m._add_player(m.COWBOY, 3)
 	front.global_position = m._on_ground(Vector3(0, 0, 60 - b.BODY_RADIUS - 3.0))
 	b._attack_gap = 0.0
+	_ck(b.bite_ready(), "扇形裡有人：準心圓圈變紅")
 	for i in 200:
 		b.pilot_input(Vector2.ZERO, 0.0, 0.0, b.PIN_BITE if i == 0 else 0)
 		b.think(DT)

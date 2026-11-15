@@ -23,7 +23,10 @@ const SHOTS := [
 	["ground", 0.0, -0.25, true],
 	["side", 0.5, 0.0, true],
 	["wall", 0.0, 0.0, false],
+	["bite_in", 0.0, 0.0, false],    # 牛仔站在咬得到的扇形裡：準心圓圈變紅
+	["bite_out", 0.0, 0.0, false],   # 牛仔站在扇形外一點：圓圈白的
 ]
+var _cow: Node3D
 
 func _initialize() -> void:
 	_out = OS.get_environment("OUT")
@@ -51,7 +54,14 @@ func _process(_d: float) -> bool:
 	var s: Array = SHOTS[_step]
 	_wait += 1
 	if _wait == 1:
-		_place(s[0] in ["idle", "wall"], 5.0 if s[0] == "wall" else 22.0)
+		_place(s[0] in ["idle", "wall", "bite_in", "bite_out"], 5.0 if s[0] == "wall" else 22.0)
+		if s[0].begins_with("bite"):
+			if _cow == null:
+				_cow = _main._add_player(_main.COWBOY, 2)
+			var fwd: Vector3 = -_boss.global_basis.z
+			var d: float = _boss.BODY_RADIUS + (_boss.LIGHT_REACH * 0.6 if s[0] == "bite_in" else _boss.LIGHT_REACH + 4.0)
+			var q: Vector3 = _boss.global_position + fwd * d + Vector3.RIGHT.rotated(Vector3.UP, _boss.rotation.y) * 3.5
+			_cow.global_position = _main._on_ground(Vector3(q.x, 0, q.z))
 		_boss._cam_yaw = _boss.rotation.y + s[1]
 		_boss._cam_pitch = s[2]
 		_got_ball = false
