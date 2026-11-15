@@ -94,6 +94,7 @@ func _process(_delta: float) -> bool:
 		_case_null_material()
 		_case_barrels()
 		_case_raptors()
+		_case_golden_star()
 		_start_gun_case()
 		return false
 	# 剩下的要跨好幾個 frame 才驗得到。總幀數設上限：腳本編譯壞掉時各階段等不到條件，

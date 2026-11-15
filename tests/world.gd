@@ -752,3 +752,121 @@ func _case_raptors() -> void:
 	e._add_player(e.COWBOY, 1)
 	_ck(e.raptors.place_by(1) != "" and e.raptors.spots.is_empty() and e.raptors.get_child_count() == 0, "非派對模式沒有小恐龍")
 	_end(e)
+
+
+## 追分星星（docs/企劃/2026-11-15-畫面與保險箱位置.md 的 1.1）：只有派對第四回合有金色小恐龍，打死掉星星、碰到就撿、
+## 拿著的人死掉或倒地就掉、回合結束拿著的人分數 × 2
+func _case_golden_star() -> void:
+	var m := _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"party"))
+	m._apply_rules()
+	m._physics_process(DT)
+	var p: Party = m.party
+	var r: Raptors = m.raptors
+	_ck(r.gold == -1 and r.gold_body() == null and not p.star_on and p.star_holder == 0, "第一回合沒有金色小恐龍")
+	for k in 3:
+		p._end_round(true, "test")
+		p.time_left = 0.0
+		m._physics_process(DT)
+		_ck(p.round_index == k + 1 and (r.gold >= 0) == (k == 2), "第 %d 回合%s金色小恐龍" % [k + 2, "有" if k == 2 else "沒有"])
+	var g: Node3D = r.gold_body()
+	_ck(g != null and r._hp[r.gold] == Raptors.GOLD_HP and Raptors.GOLD_HP == 150 and r.left() == 0 and m.players.get_children().all(func(c: Node) -> bool: return c != g),
+		"第四回合：金色小恐龍 150 血，不佔可以放的數量，不在 Players 底下")
+	if g == null:
+		_end(m)
+		return
+	p.phase = &"play"
+	p.time_left = 100.0
+	var cows: Array = m.players.get_children().filter(func(c: Node) -> bool: return c is Cowboy)
+	for c: Node3D in cows:
+		c.global_position = Vector3(0, 800, 0)
+	var c: Cowboy = cows.filter(func(n: Node) -> bool: return n.name != "1")[0]   # 不是自己（自己拿著不標）
+	var cid := c.name.to_int()
+	c.global_position = r.spots[r.gold] + Vector3(0, 0, -2)   # 貼著也不報信
+	r._cd[r.gold] = 0.0
+	r.step(0.1)
+	_ck(r.marked().is_empty() and m.status.text.contains("金色小恐龍"), "金色小恐龍不報信，時間到叫一聲大家都聽得到")
+	var far := r.spots[r.gold] + Vector3(40, 0, 0)
+	_ck(m._match_hud.compass_marks(far).any(func(k: Dictionary) -> bool: return k.label == "金色小恐龍" and absf(k.dist - 40.0) < 2.0), "大家的方位條都標金色小恐龍")
+	# 尼諾拉打得到；死了星星掉在原地
+	var b: Node3D = m._boss()
+	var at: Vector3 = r.spots[r.gold]
+	g.take_damage(100, b)
+	_ck(r.alive[r.gold] == 1 and r._hp[r.gold] == 50, "尼諾拉打得到金色小恐龍（還剩 50）")
+	b.global_position = Vector3(0, 0, 300)
+	g.take_damage(60, c)
+	_ck(r.alive[r.gold] == 0 and p.star_on and p.star_holder == 0 and Vector2(p.star_pos.x - at.x, p.star_pos.z - at.z).length() < 0.5, "打死掉星星")
+	_ck(m._match_hud.compass_marks(far).any(func(k: Dictionary) -> bool: return k.label == "★星星"), "地上的星星標在方位條")
+	# 碰到就撿
+	c.global_position = p.star_pos + Vector3(3, 0, 0)
+	p._star_step()
+	_ck(p.star_on, "還沒碰到不撿")
+	c.global_position = p.star_pos + Vector3(0.5, 0, 0)
+	p._star_step()
+	_ck(not p.star_on and p.star_holder == cid, "碰到就撿起來")
+	p._show_star()
+	_ck(p._star_mesh.visible and p._star_mesh.global_position.y > c.global_position.y + 2.0, "頭上浮一顆星")
+	_ck(m._match_hud.compass_marks(far).any(func(k: Dictionary) -> bool: return k.label == "★星星" and k.dist < 45.0), "拿星星的人標在方位條")
+	# 計分欄：★、拿蛋的 +20
+	m.egg.carrier = cid
+	m._party_hud._party = p
+	m._party_hud._fill_scorebar()
+	var texts: Array = m._party_hud.scorebar.find_children("*", "Label", true, false).map(func(l: Label) -> String: return l.text)
+	_ck(texts.any(func(t: String) -> bool: return t.contains("★")) and texts.has("+20"), "計分欄：拿星星有 ★，也拿著蛋寫 +20（%s）" % [texts])
+	m.egg.carrier = 0
+	# 拿星星的人死掉：掉在原地
+	var died_at := c.global_position
+	p.on_died(null, c)
+	_ck(p.star_on and p.star_holder == 0 and Vector2(p.star_pos.x - died_at.x, p.star_pos.z - died_at.z).length() < 0.5, "拿星星的牛仔死了，星星掉在原地")
+	# 尼諾拉撿、倒地就掉
+	b.global_position = m.boss_on_ground(p.star_pos)
+	p._star_step()
+	_ck(p.star_holder == p.dino_id, "尼諾拉也撿得到")
+	b.down_left = 1.0
+	p._star_step()
+	_ck(p.star_on and p.star_holder == 0, "尼諾拉被打倒，星星掉在原地")
+	b.down_left = 0.0
+	# 掉出場外、地下：搬回場內地面
+	p.drop_star(Vector3(9999, -80, 0))
+	var ground: float = m._on_ground(Vector3(p.star_pos.x, 0, p.star_pos.z)).y
+	_ck(absf(p.star_pos.x) < m.ARENA * 0.5 and absf(p.star_pos.y - ground) < 0.1, "掉出場外、地下：搬回地面（%s）" % p.star_pos)
+	# 晚加入、重連
+	var cl := Raptors.new()
+	m.add_child(cl)
+	cl._recv(r.spots, r.yaws, r.alive, r.goals, r.gold)
+	_ck(cl.gold == r.gold and (cl.get_child(r.gold) as Raptors.Raptor).max_hp == 150, "晚加入的人知道哪隻是金色的")
+	m.remove_child(cl)
+	cl.free()
+	p.star_holder = cid
+	p.star_on = false
+	var st := p.state()
+	_ck(st.star_holder == cid and st.has("star_on") and st.has("star_pos"), "星星的狀態在每秒送的那包裡（晚加入看得到）")
+	p.rekey(cid, 77)
+	_ck(p.star_holder == 77, "斷線重連：星星跟著換編號")
+	p.rekey(77, cid)
+	# × 2：牛仔活到最後、撤離、尼諾拉守住
+	var live: Array = p._cowboys()
+	var who: int = live[0].name.to_int()
+	p.round_scores.clear()
+	p.star_holder = who
+	p._end_round(true, "test")
+	_ck(int(p.round_scores.get(who, 0)) == Party.SCORE_SURVIVE * 2 and int(p.round_scores.get(p.dino_id, 0)) == Party.SCORE_GUARD, "拿星星活到最後：分數 × 2（%s）" % [p.round_scores])
+	p.phase = &"play"
+	p.round_scores.clear()
+	p.star_holder = who
+	p.extracted(who)
+	_ck(int(p.round_scores.get(who, 0)) == (Party.SCORE_EXTRACT + Party.SCORE_SURVIVE) * 2, "拿星星帶蛋撤離：× 2（%s）" % [p.round_scores])
+	p.phase = &"play"
+	p.round_scores.clear()
+	p._add(p.dino_id, Party.SCORE_KILL)
+	p.star_holder = p.dino_id
+	p._end_round(true, "test")
+	_ck(int(p.round_scores.get(p.dino_id, 0)) == (Party.SCORE_KILL + Party.SCORE_GUARD) * 2 and int(p.round_scores.get(who, 0)) == Party.SCORE_SURVIVE,
+		"尼諾拉拿星星守住：殺人加守住全部 × 2（%s）" % [p.round_scores])
+	_end(m)
+	# 非派對模式沒有
+	var e := _offline_match()
+	e._add_player(e.COWBOY, 1)
+	e._physics_process(DT)
+	_ck(e.party == null and e.raptors.gold == -1 and e.raptors.gold_body() == null, "非派對模式沒有金色小恐龍")
+	_end(e)
