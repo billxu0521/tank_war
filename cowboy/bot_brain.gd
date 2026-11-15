@@ -22,6 +22,7 @@ const HEARD_CONF := 0.6       # 只聽到：信心從這裡起跳
 const UNKNOWN_RISK := 0.1     # 完全不知道恐龍在哪：到處都有一點怕
 const SIGHT_DINO := 70.0      # 看得到恐龍多遠（牠 12 公尺高）
 const SIGHT_COWBOY := 40.0
+const RAPTOR_SHOOT := 25.0    # 看得到的小恐龍在這麼近就開槍打（牠看 12 公尺，先打掉就不會叫）
 const SIGHT_COS := 0.574      # 視野：正前方左右各 55 度（cos 55°）
 const FEEL := 6.0             # 貼身：不管方向都知道（腳步震動）
 const HEAR_LOUD := 60.0       # 吼叫、出招聽得到多遠

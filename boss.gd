@@ -548,6 +548,11 @@ func hear(at: Vector3) -> void:
 	if director.phase != Director.Phase.RETREAT and global_position.distance_to(at) <= reach:
 		_heard(at)
 
+## 小恐龍尖叫（raptors.gd）：不管多遠都去看（槍聲放鬆時只理近的，這個不管）。退開時不理
+func alarm(at: Vector3) -> void:
+	if director.phase != Director.Phase.RETREAT:
+		_heard(at)
+
 ## 聽到 at 那裡有聲音：只記得大概位置，越遠偏越多。偏到房子裡就拉回導航網格上（不然走不到）
 func _heard(at: Vector3) -> void:
 	var a := _rng.randf() * TAU

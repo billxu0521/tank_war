@@ -660,7 +660,34 @@ func _case_raptors() -> void:
 	p._end_round(true, "test")
 	p.time_left = 0.0
 	m._physics_process(DT)
-	_ck(p.phase == &"prep" and r.spots.is_empty() and r.get_child_count() == 0 and r.left() == 5, "下回合清空，重新有 5 隻")
+	# 下回合：上回合的清掉；這回合電腦當恐龍，開回合自己放滿（一半在信封附近）
+	var near_env := func(v: Vector3) -> bool: return p.env_pos.any(func(e: Vector3) -> bool: return Vector2(v.x - e.x, v.z - e.z).length() < Raptors.CLEAR + 10.5)
+	_ck(p.phase == &"prep" and p.dino_id < 0 and r.spots.size() == 5 and r.get_child_count() == 5 and r.alive.count(1) == 5,
+		"下回合清空；電腦當恐龍自己放滿 5 隻（%d）" % r.spots.size())
+	_ck(Array(r.spots).all(func(v: Vector3) -> bool: return r.why_not(v) == "") and Array(r.spots).filter(near_env).size() >= 2,
+		"電腦放的位置合格，信封附近有（%s）" % [r.spots])
+	# 電腦尼諾拉聽到叫聲跑過去；電腦牛仔看得到小恐龍就打
+	b = m._boss()
+	_ck(b.pilot == 0, "這回合尼諾拉是電腦")
+	r.clear()
+	r.add(q, 0.0)
+	p.phase = &"play"
+	b.global_position = q + Vector3(0, 0, 150)
+	var all: Array = m.players.get_children().filter(func(n: Node) -> bool: return n is Cowboy)
+	for n: Node3D in all:
+		n.global_position = q + Vector3(300, 0, 0)
+	var shooter: Node3D = all[0]
+	shooter.global_position = m._on_ground(Vector3(q.x, 0, q.z - 8))
+	shooter.rotation.y = PI   # 面向 +Z：看著小恐龍
+	shooter.set(&"sync_crouching", false)
+	shooter.call(&"_bot_sense", m, 0.1)
+	_ck(shooter.get(&"_bot_target") == r.get_child(0), "電腦牛仔看得到小恐龍就當成要打的（%s）" % shooter.get(&"_bot_target"))
+	b._noise_left = 0.0
+	for k in 10:
+		r.step(0.1)
+	_ck(r.marked().size() == 1 and b._noise_left > 0.0 and Vector2(b._noise.x - q.x, b._noise.z - q.z).length() < 16.0, "電腦尼諾拉聽到叫聲，往那裡去（%s）" % b._noise)
+	r.kill(0)
+	_ck(shooter.call(&"_bot_threat", m) == null, "小恐龍死了，電腦牛仔不再打牠")
 	_end(m)
 	# 非派對模式沒有小恐龍
 	var e := _offline_match()

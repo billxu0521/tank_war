@@ -860,7 +860,7 @@ func _bot_threat(g: Node) -> Node3D:
 		# 沙盒裡只打玩家，不去打站樁的靶；恐龍沙盒的玩家是尼諾拉（boss）
 		var me: Node3D = g._boss() if g._dino_sandbox else g.players.get_node_or_null(^"1")
 		return null if me and _bush_hides(g, me) else me
-	return _bot_target if is_instance_valid(_bot_target) and _bot_target.is_inside_tree() else null
+	return _bot_target if is_instance_valid(_bot_target) and _bot_target.is_inside_tree() and _bot_target.visible else null   # 打死的小恐龍收起來（visible 關掉）就不打了
 
 
 ## 主機、每次想之前：看、聽恐龍（記進 brain），選要打的（看得到的人裡：別人拿著蛋就打他，不然最近的）。
@@ -902,6 +902,12 @@ func _bot_sense(g: Node, dt: float) -> void:
 		if d < best:
 			best = d
 			_bot_target = n
+	if _bot_target == null:   # 沒有人可以打：看得到的小恐龍打掉（一槍死；不打牠會叫來尼諾拉）
+		for r: Node3D in g.raptors.get_children():
+			var d := _flat_to(r.global_position)
+			if r.visible and d < BotBrain.RAPTOR_SHOOT and d < best and _bot_sees(g, r, BotBrain.RAPTOR_SHOOT):
+				best = d
+				_bot_target = r
 
 
 ## 看得到嗎（抄 boss.can_see，數字換成人的）：貼身一定知道；草叢裡看不到；太遠、不在視野錐、中間有牆都看不到
