@@ -2603,3 +2603,55 @@ func _case_party_hud_same() -> void:
 	m.party = null
 	p.free()
 	_end(m)
+
+## 電腦牛仔卡在積木房子的牆角（docs/企劃/2026-11-16-未完成事項.md 第 2 項）：離導航網格遠、頂著牆 2 秒，就照走過的點退回網格再問路。
+## 灰盒 Toy193 旁的牆角（bot_sim SEED=2 卡了 91 秒的那個），往撤離點 (62, 0) 走：10 秒內要離開原地 5 公尺以上。導航網格在背景烘，烘好才跑。
+## ponytail: 靜態擺出來的牆角改前也走得出來（bot_sim 那種卡法要先繞進去），這裡只守「退得出來、不出錯」；真的驗收看 bot_sim 的「卡超過 20 秒」
+func _case_bot_corner() -> void:
+	var Main: GDScript = load("res://main.gd")
+	var keep: String = Main.level_file
+	Main.level_file = ""
+	var m := _isolated_match()
+	Main.level_file = keep
+	_park(m)
+	m._on_mode_picked(m.RULES.keys().find(&"party"))
+	m._apply_rules()
+	m._physics_process(DT)
+	m.party.time_left = 0.0
+	m._physics_process(DT)
+	m.bake_nav()
+	var b: Cowboy = m.players.get_node(^"-1")
+	for c: Node in m.players.get_children():
+		if c is Cowboy:
+			c.bot_fire_range = 0.0   # 等網格的時候電腦自己會跑：不開槍（子彈找不到收起來的場地）
+		if c != b:
+			c.global_position = Vector3(0, 800, 0)   # 別人和恐龍放遠：不怕、不擋
+	_bot_corner_wait(m, 0)
+
+func _bot_corner_wait(m: Node, n: int) -> void:
+	var map: RID = m.map.get_world_3d().navigation_map
+	var ready: bool = is_instance_valid(m._nav_region) and m._nav_region.navigation_mesh != null and NavigationServer3D.map_get_iteration_id(map) > 0
+	if not ready and n < 1200:
+		_defer(1, func() -> void: _bot_corner_wait(m, n + 1))
+		return
+	_ck(ready, "導航網格烘好了")
+	var b: Cowboy = m.players.get_node(^"-1")
+	var corner: Vector3 = m._on_ground(Vector3(30.9, 1.0, 18.9))
+	b.brain.action = "撿蛋"   # 借「撿蛋」的目標：直接指定要去哪，不重想
+	b.brain.last_ctx = {"egg": Vector3(62, 0, 0), "me": corner}
+	b.brain._think_left = 999.0
+	var out := NavigationServer3D.map_get_closest_point(map, corner)
+	_ck(corner.distance_to(out) > 1.5, "牆角離導航網格 1.5 公尺以上（%.1f 公尺）" % corner.distance_to(out))
+	b.global_position = corner
+	b.velocity = Vector3.ZERO
+	b._trail = PackedVector3Array([out, out.lerp(corner, 0.5), corner])   # 走幾步進來的路
+	var far := [0.0]   # lambda 抓的是複本：用陣列帶出來
+	_with_first(m, func() -> void:
+		for f in int(10.0 / DT):
+			b._bot_step(DT)
+			m._physics_process(DT)
+			far[0] = maxf(far[0], Vector2(b.global_position.x - corner.x, b.global_position.z - corner.z).length())
+			if far[0] > 5.0:
+				break)
+	_ck(far[0] > 5.0, "卡在牆角：10 秒內離開原地 5 公尺以上（最遠 %.1f 公尺，在 %s）" % [far[0], b.global_position])
+	_free_map(m)

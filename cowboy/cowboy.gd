@@ -177,6 +177,13 @@ const BOT_ALERT := 1.5     # ponytail: 挨打後還手多久，憑感覺；要�
 var _detour := Vector3.ZERO
 var _detour_left := 0.0
 var _detour_sign := 0.0
+## bot 退出牆角（docs/企劃/2026-11-16-未完成事項.md 第 2 項）：導航網格照尼諾拉體型烘，離牆 3.6 公尺內和室內都不在網格上，
+## 走進兩面牆的夾角，沿牆繞只會在兩面牆之間來回。卡 2 秒、又離網格遠，就照記下的路退回網格；退 4 秒還卡就隨機走 2 秒
+var _trail := PackedVector3Array()   # 最近走過的點（每 1.5 公尺一點，留 20 點）
+var _stuck_t := 0.0     # 頂著牆走不動幾秒了
+var _back_left := 0.0   # 還在照原路退：剩幾秒
+var _wander := Vector3.ZERO
+var _wander_left := 0.0
 
 
 func _ready() -> void:
@@ -650,7 +657,10 @@ func _bot_step(delta: float) -> void:
 			step.y = 0.0
 			var dir := (step if step.length() > 0.1 else to).normalized()
 			_detour_left -= delta
-			if _detour_left > 0.0:
+			var back := _bot_back_out(delta)
+			if back != Vector3.ZERO:
+				dir = back
+			elif _detour_left > 0.0:
 				dir = _detour
 			elif is_on_wall() and Vector2(velocity.x, velocity.z).length() < 1.0:
 				# 頂著牆走不動（正面撞牆或卡牆角）：沿牆面繞一段再回頭找路。
@@ -672,6 +682,51 @@ func _bot_step(delta: float) -> void:
 		_bot_shoot(threat, delta)
 	else:
 		_bot_look(delta, want)
+
+
+## 卡牆角時往哪走（照原路退、隨機走）；沒事回 ZERO 照平常走。順便記走過的點
+func _bot_back_out(delta: float) -> Vector3:
+	var pos := global_position
+	if _trail.is_empty() or pos.distance_to(_trail[-1]) > 6.0:   # 剛重生（或被傳送）：舊的路不算
+		_trail = PackedVector3Array([pos])
+	if _wander_left > 0.0:
+		_wander_left -= delta
+		return _wander
+	var map := get_world_3d().navigation_map
+	if _back_left > 0.0:
+		_back_left -= delta
+		while _trail.size() > 0 and _flat_to(_trail[-1]) < 0.7:
+			_trail.remove_at(_trail.size() - 1)
+		if pos.distance_to(NavigationServer3D.map_get_closest_point(map, pos)) < 1.0:
+			_bot_back_done()   # 回到網格：重新問路，沿牆繞換另一邊
+			return Vector3.ZERO
+		if _back_left > 0.0 and _trail.size() > 0:
+			var to := _trail[-1] - pos
+			to.y = 0.0
+			return to.normalized()
+		_bot_back_done()   # 退了 4 秒還在網格外、或記的點走完了：隨機挑個方向走 2 秒再試
+		var a := randf() * TAU
+		_wander = Vector3(cos(a), 0.0, sin(a))
+		_wander_left = 2.0
+		return _wander
+	if _flat_to(_trail[-1]) > 1.5:
+		_trail.append(pos)
+		if _trail.size() > 20:
+			_trail.remove_at(0)
+	_stuck_t = _stuck_t + delta if Vector2(velocity.x, velocity.z).length() < RoundStats.STUCK_SPEED and RoundStats._on_wall(self) else 0.0
+	if _stuck_t > 2.0 and NavigationServer3D.map_get_iteration_id(map) > 0 \
+			and pos.distance_to(NavigationServer3D.map_get_closest_point(map, pos)) > 1.5:
+		_back_left = 4.0
+		_stuck_t = 0.0
+		_detour_left = 0.0
+	return Vector3.ZERO
+
+
+func _bot_back_done() -> void:
+	_back_left = 0.0
+	_stuck_t = 0.0
+	_path.clear()
+	_detour_sign = -_detour_sign
 
 
 ## 到時間（或被打）就重想一次動作；換了動作照 BOT_LOG 印一行。頭上的字跟著換
