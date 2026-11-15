@@ -410,7 +410,7 @@ func _do_heal() -> void:
 	medkits -= 1
 	medkits_changed.emit()
 	_sync_hp.rpc(mini(hp + medkit_heal, max_hp))   # 血變多，_sync_hp 不會當受傷
-	if name.to_int() != 1:   # 主機自己那台的包數就是 medkits，不用再送
+	if name.to_int() > 1:   # 主機自己那台的包數就是 medkits，不用再送；電腦牛仔（負的編號）沒有連線
 		_medkit_left.rpc_id(name.to_int(), medkits)
 
 @rpc("any_peer", "call_remote", "reliable")

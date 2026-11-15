@@ -39,7 +39,7 @@ func _init() -> void:
 	hint.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	hint.offset_left = -400
 	hint.offset_right = 400
-	hint.offset_top = 170   # 方位條、CenterInfo、恐龍體力條都在這上面
+	hint.offset_top = 188   # 方位條、CenterInfo、恐龍體力條都在這上面
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(hint)
 	board = _panel()

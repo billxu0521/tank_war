@@ -11,9 +11,11 @@ const WIDTH := 640.0
 const HEIGHT := 30.0
 const EGG_COLOR := Color(1.0, 0.95, 0.8)
 const EXIT_COLOR := Color(1.0, 0.72, 0.2)
+const ROW_GAP := 18.0         # 第二行字（信封、保險箱）往下多少
+const PAD := 8.0              # 同一行兩個字之間至少留多少
 
 var heading := 0.0
-## [{"deg": 方位, "dist": 公尺, "color": Color, "label": String}]
+## [{"deg": 方位, "dist": 公尺, "color": Color, "label": String, "row": 0 或 1（沒給就是 0）}]
 var marks: Array = []
 
 
@@ -22,7 +24,7 @@ func _init() -> void:
 	offset_left = -WIDTH * 0.5
 	offset_right = WIDTH * 0.5
 	offset_top = 8
-	offset_bottom = 8 + HEIGHT + 40
+	offset_bottom = 8 + HEIGHT + 40 + ROW_GAP
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
@@ -72,6 +74,7 @@ func _draw() -> void:
 	draw_line(Vector2(WIDTH * 0.5, 0), Vector2(WIDTH * 0.5, HEIGHT), Color.WHITE, 2.0)
 	_text(font, Vector2(WIDTH * 0.5 - hw * 0.5, HEIGHT + 18), h, 18, Color.WHITE)
 	# 目標：蛋、撤離區。視野外的貼在兩端、畫成箭頭
+	var rows := [[], []]   # 每行的字：[想放的左緣, 寬, 字, 顏色]
 	for m: Dictionary in marks:
 		var x := _x_of(m["deg"])
 		var c: Color = m["color"]
@@ -89,5 +92,26 @@ func _draw() -> void:
 			draw_polyline(tri + PackedVector2Array([tri[0]]), Color(0.12, 0.07, 0.05), 1.5)
 		var t: String = "%s %dm" % [m["label"], int(m["dist"])] if m.has("dist") else m["label"]   # 沒給距離只寫名字（一排重生點）
 		var w := font.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x
-		var tx := clampf(x - w * 0.5, 0.0, WIDTH - w)
-		_text(font, Vector2(tx, HEIGHT + 36), t, 16, c)
+		rows[int(m.get("row", 0))].append([x - w * 0.5, w, t, c])
+	for r in rows.size():
+		var xs := spread(rows[r].map(func(a: Array) -> float: return a[0]), rows[r].map(func(a: Array) -> float: return a[1]))
+		for i in xs.size():
+			_text(font, Vector2(xs[i], HEIGHT + 36 + r * ROW_GAP), rows[r][i][2], 16, rows[r][i][3])
+
+
+## 同一行的字擺開：want = 每個字想放的左緣，w = 寬。回傳實際的左緣（順序照輸入）：
+## 照左右順序排，後面的往右推開、中間留 PAD，全部不超出方位條（太多擠不下才會疊）
+static func spread(want: Array, w: Array) -> Array:
+	var order := range(want.size())
+	order.sort_custom(func(a: int, b: int) -> bool: return want[a] < want[b])
+	var xs := want.duplicate()
+	var edge := 0.0
+	for i: int in order:   # 左到右：不疊上一個
+		xs[i] = maxf(clampf(want[i], 0.0, WIDTH - w[i]), edge)
+		edge = xs[i] + w[i] + PAD
+	edge = WIDTH
+	for k in range(order.size() - 1, -1, -1):   # 右到左：推出右邊界的往回拉
+		var i: int = order[k]
+		xs[i] = maxf(minf(xs[i], edge - w[i]), 0.0)
+		edge = xs[i] - PAD
+	return xs

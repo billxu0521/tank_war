@@ -1303,7 +1303,18 @@ func _case_envelope() -> void:
 	_ck(Vector2(e0.x - e1.x, e0.z - e1.z).length() > 20.0 and m._exits.all(func(x: Vector3) -> bool:
 		return Vector2(e0.x - x.x, e0.z - x.z).length() > m.EXIT_RADIUS and Vector2(e1.x - x.x, e1.z - x.z).length() > m.EXIT_RADIUS),
 		"兩個信封分開、不在撤離圈（%s %s）" % [e0, e1])
+	# 方位條：信封、保險箱在第二行，蛋、撤離在第一行；箱子開了信封拿掉、大家都標蛋
+	var rows := func(label: String) -> Array:
+		return m._match_hud.compass_marks(Vector3.ZERO).filter(func(k: Dictionary) -> bool: return String(k.label).begins_with(label)).map(func(k: Dictionary) -> int: return int(k.get("row", 0)))
+	_ck(rows.call(Envelope.NAMES[0]) == [1] and rows.call(Envelope.NAMES[1]) == [1] and rows.call("撤離") == [0, 0], "方位條：兩個信封在第二行、兩個撤離在第一行")
 	p.place_egg()
+	p._process(0.0)
+	_ck(rows.call("保險箱") == [1] and rows.call("蛋").is_empty(), "恐龍看得到保險箱（第二行），蛋鎖著不標")
+	s.open = true
+	p._process(0.0)
+	_ck(rows.call(Envelope.NAMES[0]).is_empty() and rows.call(Envelope.NAMES[1]).is_empty() and rows.call("保險箱").is_empty()
+		and rows.call("蛋") == [0] and rows.call("撤離").size() == 2, "箱子開了：信封拿掉、標蛋（第一行），撤離還在")
+	s.open = false
 	var bots: Array = [-1, -2, -3].map(func(id: int) -> Node3D: return m.players.get_node(NodePath(str(id))))
 	_ck(not p.read(-1, 0), "準備階段不能看牌")
 	p.time_left = 0.0
@@ -1320,11 +1331,13 @@ func _case_envelope() -> void:
 	p._process(0.0)   # 外觀每幀照公開狀態套
 	_ck(p.envelopes[0].opened and not p.envelopes[1].opened and p.envelopes[0].global_position == e0, "開過的信封換樣子、擺在抽到的位置")
 	_ck(p.read(-1, 0) and p._known[-1] == [code / 10, -1], "牌沒被拿走，可以再看")
-	# 下一回合：主機變回牛仔，看過的、開過的都清掉
+	# 下一回合：主機變回牛仔，看過的、開過的都清掉（箱子開著進下一回合，方位條的信封要回來）
+	s.open = true
 	p._end_round(true, "test")
 	p.time_left = 0.0
 	m._physics_process(DT)
 	_ck(p.dino_id == -1 and p._known.is_empty() and p.env_open == [false, false] and p.my_digits == [-1, -1], "新回合：看過的牌、開過的信封清掉")
+	_ck(rows.call(Envelope.NAMES[0]).size() == 1 and rows.call(Envelope.NAMES[1]).size() == 1, "新回合：方位條的信封回來")
 	p.time_left = 0.0
 	m._physics_process(DT)
 	code = s._code
