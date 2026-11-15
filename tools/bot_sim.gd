@@ -13,6 +13,7 @@ var _rounds: Array = []
 var _t0 := 0
 var _gold := ""   # 最後一回合：金色小恐龍死了沒
 var _star := ""   # 最後一回合：星星在誰身上
+var _ms: PackedFloat32Array = []   # 遊戲中每幀的腳本時間（毫秒）：_process＋_physics_process
 
 
 func _initialize() -> void:
@@ -40,6 +41,8 @@ func _process(_d: float) -> bool:
 	var p: Party = _m.party
 	if p == null:
 		return false
+	if p.phase == &"play":
+		_ms.append(1000.0 * (Performance.get_monitor(Performance.TIME_PROCESS) + Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)))
 	if p.phase in [&"prep", &"result", &"final"] and p.time_left > 0.1:
 		p.time_left = 0.1   # 準備、結算不用等（牛仔本來就不能動）
 	if p.phase == &"play" and p.round_index == p.rounds - 1:   # 追分星星：最後一回合記金色小恐龍死了沒、星星在誰身上
@@ -100,5 +103,26 @@ func _summary() -> void:
 	print("  命中 %d/%d（%.0f%%）" % [hits, shots, 100.0 * hits / maxi(shots, 1)])
 	print("  離恐龍 15 公尺內 %.0f 秒／人／回合" % (near / maxi(cows, 1)))
 	print("  卡牆 %.0f 秒／人／回合（活著的 %.1f%%）" % [stuck / maxi(cows, 1), 100.0 * stuck / maxf(alive, 0.001)])
+	var stuck_long := 0
+	var dino_safe := 0.0
+	var safe_t := 0.0
+	var dists: Array = []
+	for r: Dictionary in _rounds:
+		stuck_long += int(r.stuck_long)
+		dino_safe += r.dino_safe
+		safe_t += r.safe_t
+		if r.open_dist >= 0.0:
+			dists.append(r.open_dist)
+	dists.sort()
+	print("  卡超過 20 秒 %d 次" % stuck_long)
+	print("  恐龍離保險箱 30 公尺內 %.0f%% 的時間；開箱時恐龍離箱 %s" % [100.0 * dino_safe / maxf(safe_t, 0.001),
+		"%.0f～%.0f 公尺（中間值 %.0f）" % [dists[0], dists[-1], dists[dists.size() / 2]] if dists.size() > 0 else "-"])
+	var ms := _ms.duplicate()
+	ms.sort()
+	var tot := 0.0
+	for v in ms:
+		tot += v
+	print("  每幀腳本時間 平均 %.2f 毫秒，最慢 1%% %.2f 毫秒（%d 幀）" % [tot / maxi(ms.size(), 1),
+		ms[int(ms.size() * 0.99)] if ms.size() > 0 else 0.0, ms.size()])
 	print("  卡在哪：%s" % "、".join(by.keys().map(func(k: String) -> String: return "%s %.0f 秒" % [k, by[k]])))
 	print("BOT_SIM OK")
