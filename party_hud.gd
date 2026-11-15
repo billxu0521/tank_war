@@ -2,7 +2,7 @@ class_name PartyHud
 extends Control
 ## 派對模式的畫面資訊（規格：docs/企劃/派對玩法.md）。
 ## 只讀 main.party（Party 節點）的值和 changed 訊號，不改規則；main.party 是 null 時整個藏起來。
-## - 左上：第幾回合、階段倒數、誰是恐龍、自己剩幾條命
+## - 左上：第幾回合、階段倒數、誰是恐龍、自己剩幾條命；下面一個直的計分欄（準備、遊戲階段）
 ## - 中間：準備階段的提示、死掉等重生時的選點清單
 ## - Tab 按住：分數板；回合結算、四回合結束：中間的大框
 ## main.gd 在 _ready 建一個掛到 $UI/Root 底下（那邊的主題有中文字型）。
@@ -12,6 +12,10 @@ const PHASES := {&"prep": "準備", &"play": "遊戲", &"result": "結算", &"fi
 const DIRS := ["北", "東北", "東", "東南", "南", "西南", "西", "西北"]
 const OUTLINE := Color(0.12, 0.07, 0.05, 0.85)   # 跟 CenterInfo、方位條的字一樣的深色描邊
 const GOLD := Color(1.0, 0.85, 0.4)
+const CARRY := Color(1.0, 0.9, 0.2)   # 拿著蛋的人：計分欄的「+10」
+## 計分欄每個參賽者固定一個顏色（照加入的順序）。ponytail: 之後美術給頭像，只換色塊那一格
+const SWATCH := [Color(0.9, 0.3, 0.25), Color(0.3, 0.6, 0.95), Color(0.35, 0.8, 0.4), Color(0.85, 0.5, 0.9),
+	Color(0.95, 0.6, 0.2), Color(0.3, 0.85, 0.85), Color(0.9, 0.9, 0.9), Color(0.6, 0.45, 0.3)]
 
 var main: Node
 var picked := -1   # 這次死掉選了第幾個重生點（-1 = 還沒選）
@@ -20,6 +24,8 @@ var _phase: StringName = &""
 var _result_left := 0.0
 
 var top: Label        # 左上
+var scorebar: VBoxContainer   # 左上、top 下面的計分欄：每人一列
+var _carrier := 0     # 計分欄上次畫的時候誰拿著蛋（換人才重畫）
 var hint: Label       # 中間的提示（準備階段、選重生點）
 var board: PanelContainer   # Tab 分數板
 var board_rows: GridContainer
@@ -32,9 +38,15 @@ var popup_rows: GridContainer
 func _init() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var left := VBoxContainer.new()
+	left.position = Vector2(16, 12)
+	left.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(left)
 	top = _label(22)
-	top.position = Vector2(16, 12)
-	add_child(top)
+	left.add_child(top)
+	scorebar = VBoxContainer.new()
+	scorebar.add_theme_constant_override(&"separation", 2)
+	left.add_child(scorebar)
 	hint = _label(26)
 	hint.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	hint.offset_left = -400
@@ -109,6 +121,7 @@ func _process(delta: float) -> void:
 	_result_left -= delta
 	board.visible = Input.is_physical_key_pressed(KEY_TAB) and p.phase != &"final"
 	popup.visible = p.phase == &"final" or (p.phase == &"result" and _result_left > 0.0)
+	scorebar.visible = p.phase in [&"prep", &"play"]   # 結算、最終排名中間有大框
 	update_live()
 
 
@@ -123,6 +136,8 @@ func update_live() -> void:
 	if me != p.dino_id and p.lives.has(me) and p.phase in [&"prep", &"play"]:
 		lines.append("你剩 %d 條命" % int(p.lives[me]))
 	top.text = "\n".join(lines)
+	if main.egg.carrier != _carrier:
+		_fill_scorebar()
 	hint.text = ""
 	if p.phase == &"prep":
 		if me != p.dino_id:
@@ -191,6 +206,7 @@ func refresh() -> void:
 			picked = -1
 	var ranked: Array = p.ranking()
 	_fill(board_rows, ranked)
+	_fill_scorebar()
 	if p.phase == &"final":
 		popup_title.text = "最終排名"
 		popup_champ.text = "冠軍　%s　%d 分" % [name_of(ranked[0]), int(p.scores.get(ranked[0], 0))] if ranked else ""
@@ -222,3 +238,43 @@ func _fill(g: GridContainer, ids: Array, first := 1) -> void:
 			if id == my_id():
 				l.add_theme_color_override(&"font_color", GOLD)
 			g.add_child(l)
+
+
+## 左上的計分欄：名次、色塊、名字、總分。拿著蛋的那列多一個「+10」（撤離＋活著，照 balance.csv）、底色變亮；
+## 當恐龍的寫「恐龍」；自己那列金色
+func _fill_scorebar() -> void:
+	_carrier = main.egg.carrier
+	for c in scorebar.get_children():
+		scorebar.remove_child(c)
+		c.queue_free()
+	var order: Array = _party.scores.keys()
+	var ranked: Array = _party.ranking()
+	for i in ranked.size():
+		var id: int = ranked[i]
+		var row := PanelContainer.new()
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(1.0, 0.9, 0.5, 0.35) if id == _carrier else Color(0.1, 0.06, 0.04, 0.45)
+		sb.set_content_margin_all(3)
+		row.add_theme_stylebox_override(&"panel", sb)
+		var h := HBoxContainer.new()
+		h.add_theme_constant_override(&"separation", 8)
+		row.add_child(h)
+		var sw := ColorRect.new()
+		sw.custom_minimum_size = Vector2(14, 14)
+		sw.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		sw.color = SWATCH[order.find(id) % SWATCH.size()]
+		var cells := [str(i + 1), sw, name_of(id) + ("　恐龍" if id == _party.dino_id else ""), str(int(_party.scores.get(id, 0)))]
+		if id == _carrier:
+			cells.append("+%d" % (Party.SCORE_EXTRACT + Party.SCORE_SURVIVE))
+		for c: Variant in cells:
+			if c is Control:
+				h.add_child(c)
+				continue
+			var l := _label(20)
+			l.text = c
+			if id == my_id():
+				l.add_theme_color_override(&"font_color", GOLD)
+			if String(c).begins_with("+"):
+				l.add_theme_color_override(&"font_color", CARRY)
+			h.add_child(l)
+		scorebar.add_child(row)
