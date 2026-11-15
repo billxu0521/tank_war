@@ -525,6 +525,9 @@ func read(id: int, i: int) -> bool:
 	k[i] = digit(i)
 	_known[id] = k
 	env_open[i] = true
+	var b: Node = main._boss()
+	if b:   # 信封被開：叫恐龍過去
+		b.alarm(env_pos[i], true)
 	_sync()   # 公開的「開過了」＋補送本人
 	return true
 

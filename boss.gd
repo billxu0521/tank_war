@@ -259,11 +259,12 @@ func _ready() -> void:
 		BT.Seq.new([BT.Cond.new(func() -> bool: return director.phase == Director.Phase.RETREAT), BT.Act.new(_act_retreat)]),
 		BT.Seq.new([BT.Cond.new(_start_spot), BT.Act.new(_act_attack)]),
 		BT.Seq.new([BT.Cond.new(_start_attack), BT.Act.new(_act_attack)]),
-		BT.Seq.new([BT.Cond.new(func() -> bool: return _sees_now != null), BT.Act.new(_act_chase)]),
-		BT.Seq.new([BT.Cond.new(func() -> bool: return _glimpse != null), BT.Act.new(_act_glimpse)]),
-		BT.Seq.new([BT.Cond.new(func() -> bool: return _seen_left > 0.0), BT.Act.new(_act_last_seen)]),
-		BT.Seq.new([BT.Cond.new(func() -> bool: return _noise_left > 0.0), BT.Act.new(_act_investigate)]),
+		BT.Seq.new([BT.Cond.new(func() -> bool: return _sees_now != null and _guard_lets(_sees_now.global_position)), BT.Act.new(_act_chase)]),
+		BT.Seq.new([BT.Cond.new(func() -> bool: return _glimpse != null and _guard_lets(_glimpse_at)), BT.Act.new(_act_glimpse)]),
+		BT.Seq.new([BT.Cond.new(func() -> bool: return _seen_left > 0.0 and _guard_lets(_last_seen)), BT.Act.new(_act_last_seen)]),
+		BT.Seq.new([BT.Cond.new(func() -> bool: return _noise_left > 0.0 and _guard_lets(_noise) and not (_guarding() and _game().safe.open)), BT.Act.new(_act_investigate)]),   # 守箱、箱子開了：不找聲音，直接去蛋
 		BT.Seq.new([BT.Cond.new(func() -> bool: return _hint != Vector3.INF), BT.Act.new(_act_hint)]),
+		BT.Seq.new([BT.Cond.new(_guarding), BT.Act.new(_act_guard)]),
 		BT.Act.new(_act_wander),
 	])
 
@@ -375,7 +376,11 @@ func think(delta: float) -> void:
 	_listen_steps(delta)
 	_look(delta)
 	var hint := director.step(delta, _sees_now, _seen_left > 0.0 or _noise_left > 0.0 or _glimpse != null, _cowboys(), _rng)
-	if hint != Vector3.INF:
+	if _guarding() and _game().safe.open and director.phase != Director.Phase.BUILD:   # 守箱、蛋出來了：不退開、不放鬆，拼到底
+		director.phase = Director.Phase.BUILD
+	if director.phase != Director.Phase.RETREAT:   # 退開結束就忘了退去哪（不然下次退開還往上次的點跑）
+		_retreat_to = Vector3.INF
+	if hint != Vector3.INF and not _guarding():   # 守箱時不理導演的提示
 		_hint = hint
 		_search_left = SEARCH_TIME
 		_hint_reached = false
@@ -556,12 +561,13 @@ func _mood() -> int:
 ## 聽到槍聲（viewmodel 開槍時在主機上呼叫，見 Viewmodel._alert_boss）
 func hear(at: Vector3) -> void:
 	var reach := Director.RELAX_HEAR if director.phase == Director.Phase.RELAX else HEAR_GUN
-	if director.phase != Director.Phase.RETREAT and global_position.distance_to(at) <= reach:
+	if director.phase != Director.Phase.RETREAT and global_position.distance_to(at) <= reach and _guard_hears(at):
 		_heard(at)
 
 ## 小恐龍尖叫（raptors.gd）：不管多遠都去看（槍聲放鬆時只理近的，這個不管）。退開時不理
-func alarm(at: Vector3) -> void:
-	if director.phase != Director.Phase.RETREAT:
+## guard：守箱的三件事（信封被開、猜錯、開箱）叫的，守箱時不管多遠都去；其他的守箱時離守點遠就不理
+func alarm(at: Vector3, guard := false) -> void:
+	if director.phase != Director.Phase.RETREAT and (guard or _guard_hears(at)):
 		_heard(at)
 
 ## 聽到 at 那裡有聲音：只記得大概位置，越遠偏越多。偏到房子裡就拉回導航網格上（不然走不到）
@@ -570,9 +576,19 @@ func _heard(at: Vector3) -> void:
 	var r := _rng.randf() * minf(_flat_dist(at) * NOISE_FUZZ, NOISE_FUZZ_MAX)
 	_noise = at + Vector3(cos(a), 0, sin(a)) * r
 	var map := get_world_3d().navigation_map
-	if NavigationServer3D.map_get_iteration_id(map) > 0:
+	if _guarding():
+		_noise = _reachable(_noise)
+	elif NavigationServer3D.map_get_iteration_id(map) > 0:
 		_noise = NavigationServer3D.map_get_closest_point(map, _noise)
 	_noise_left = NOISE_FORGET
+
+## 守箱時離守點遠的槍聲、腳步聲、小恐龍尖叫不理（不然整場被拉著跑）
+func _guard_hears(at: Vector3) -> bool:
+	return not _guarding() or _near_guard(at, GUARD_HEAR)
+
+## 守箱時追人、找聲音不離守點超過 GUARD_LEASH（追出去就放掉，回來守）
+func _guard_lets(at: Vector3) -> bool:
+	return not _guarding() or _near_guard(at, GUARD_LEASH)
 
 ## 附近有人跑步：主機只拿得到同步來的位置，用位置差算速度
 func _listen_steps(delta: float) -> void:
@@ -582,7 +598,7 @@ func _listen_steps(delta: float) -> void:
 		_last_pos[p] = now
 		var speed := Vector2(now.x - before.x, now.z - before.z).length() / maxf(delta, 1e-4)
 		if speed > RUN_SPEED_HEARD and global_position.distance_to(now) < HEAR_RUN \
-				and director.phase != Director.Phase.RETREAT:
+				and director.phase != Director.Phase.RETREAT and _guard_hears(now):
 			_heard(now)
 
 func can_see(p: Node3D) -> bool:
@@ -602,7 +618,11 @@ func can_see(p: Node3D) -> bool:
 
 func _nearest_seen() -> Node3D:
 	var best: Node3D = null
+	var g := _game()
+	var holder := str(g.egg.carrier) if _guarding() and g.egg.carrier != 0 else ""   # 守箱：看得到拿蛋的人就先追他
 	for p: Node3D in _cowboys():
+		if holder != "" and p.name == holder and can_see(p):
+			return p
 		if can_see(p) and (best == null or _flat_dist(p.global_position) < _flat_dist(best.global_position)):
 			best = p
 	return best
@@ -1021,6 +1041,89 @@ func _act_wander(delta: float) -> int:
 		_wander_to = _clamp_arena(global_position + Vector3(cos(a), 0, sin(a)) * _rng.randf_range(10.0, 25.0))
 	return BT.RUNNING
 
+## 守箱（docs/企劃/2026-11-16-未完成事項.md 第 1 項）：派對有保險箱、電腦操作時取代亂逛和導演的提示。
+## 知道的跟真人駕駛方位條上一樣：箱子、兩個信封（開過沒）、開箱後蛋在哪
+static var GUARD_RING: float = Balance.num("dino_guard_ring")
+static var GUARD_LOOK: float = Balance.num("dino_guard_look")
+static var GUARD_HEAR: float = Balance.num("dino_guard_hear")
+static var GUARD_LEASH: float = Balance.num("dino_guard_leash")
+const GUARD_LEG_MAX := 30.0   # 一段走這麼久還沒到（路不通）就換下一點
+var _guard_i := 0
+var _guard_leg := 0.0
+var _guard_goal := Vector3.INF   # 現在要去守的點（箱子、信封、箱子旁邊）
+var _guard_to := Vector3.INF     # 它換成走得到的點（_reachable），放進 _wander_to
+
+func _guarding() -> bool:
+	var g := _game()
+	return pilot == 0 and _party() and g.safe.on and g.party.egg_placed
+
+func _act_guard(delta: float) -> int:
+	var g := _game()
+	if g.safe.open:   # 開了：去蛋那裡；有人拿著就去他和最近的撤離點中間堵（跟在後面追不上：跑 10 秒就沒體力）
+		var to := _guard_center()
+		if g.egg.carrier != 0 and not g._exits.is_empty():
+			var ex: Vector3 = g._exits[0]
+			for e: Vector3 in g._exits:
+				if Vector2(e.x - to.x, e.z - to.z).length() < Vector2(ex.x - to.x, ex.z - to.z).length():
+					ex = e
+			to = (to + ex) * 0.5
+		_nav_go(to, true, delta)
+		return BT.RUNNING
+	if _look_left > 0.0:
+		_look_left -= delta
+		_move(Vector3.ZERO, false, delta)
+		return BT.RUNNING
+	_guard_leg += delta
+	# 換點：沒有點、點是別的動作留下來的、走太久、或那個點已經不用守（信封被開了）
+	if _wander_to == Vector3.INF or _wander_to != _guard_to or _guard_leg > GUARD_LEG_MAX or not _near_guard(_guard_goal, GUARD_RING + 1.0):
+		_guard_goal = _guard_next(g)
+		_wander_to = _reachable(_guard_goal)
+		_guard_to = _wander_to
+		_guard_leg = 0.0
+	if _nav_go(_wander_to, false, delta):
+		_look_left = GUARD_LOOK
+		_wander_to = Vector3.INF
+	return BT.RUNNING
+
+## at 離守點（箱子、沒開的信封；開了是蛋）在 r 內
+func _near_guard(at: Vector3, r: float) -> bool:
+	var g := _game()
+	var pts: Array = [_guard_center()]
+	if not g.safe.open:
+		for i in 2:
+			if not g.party.env_open[i]:
+				pts.append(g.party.env_pos[i])
+	return pts.any(func(q: Vector3) -> bool: return Vector2(q.x - at.x, q.z - at.z).length() < r)
+
+## 守的中心：箱子；開了是蛋
+func _guard_center() -> Vector3:
+	var g := _game()
+	return g.egg.global_position if g.safe.open else g.safe.global_position
+
+## 下一個守點：還有信封沒開就在「箱子 ↔ 沒開的信封」之間輪流；都開了就在箱子周圍 GUARD_RING 內繞
+func _guard_next(g: Node) -> Vector3:
+	var pts: Array = [g.safe.global_position]
+	for i in 2:
+		if not g.party.env_open[i]:
+			pts.append(g.party.env_pos[i])
+	var to: Vector3
+	if pts.size() > 1:
+		_guard_i = (_guard_i + 1) % pts.size()
+		to = pts[_guard_i]
+	else:
+		var a := _rng.randf() * TAU
+		to = g.safe.global_position + Vector3(cos(a), 0, sin(a)) * _rng.randf_range(2.0, GUARD_RING)
+	return to
+
+## 守箱的目的地換成走得到的點：網格上離它最近、而且從這裡有路到的地方（路徑的終點）。
+## 箱子、信封可能在房子裡或窪地裡，網格上最近的點常在另一塊走不到的網格上，直接走會一直繞圈
+func _reachable(to: Vector3) -> Vector3:
+	var map := get_world_3d().navigation_map
+	if NavigationServer3D.map_get_iteration_id(map) == 0:
+		return to
+	var path := NavigationServer3D.map_get_path(map, global_position, to, true)
+	return path[-1] if not path.is_empty() else NavigationServer3D.map_get_closest_point(map, to)
+
 ## 退開：往離最近的人遠的那一邊跑
 func _act_retreat(delta: float) -> int:
 	if _retreat_to == Vector3.INF or _flat_dist(_retreat_to) < ARRIVE * 2.0:
@@ -1032,9 +1135,9 @@ func _act_retreat(delta: float) -> int:
 		if away == Vector3.ZERO:
 			away = -global_basis.z
 		_retreat_to = _clamp_arena(global_position + away.normalized() * RETREAT_DIST)
+		if _guarding():   # 守箱：退到箱子（開了是蛋）的另一邊，不跑遠
+			_retreat_to = _guard_center() + away.normalized() * GUARD_RING
 	_nav_go(_retreat_to, true, delta)
-	if director.phase != Director.Phase.RETREAT:
-		_retreat_to = Vector3.INF
 	return BT.RUNNING
 
 func _clamp_arena(at: Vector3) -> Vector3:
