@@ -1326,3 +1326,44 @@ func _tb_down(w: ToyBuild) -> int:
 		if not w.is_standing(i):
 			n += 1
 	return n
+
+## 咬所見即所得：按下時圈紅圈到的人（駕駛送來的名字）主機鎖定，前搖時跑出去照樣咬到。
+## 亂報（太遠）不收；鎖定的人前搖時死了不扣、不出錯；沒送名字照原本的判斷
+func _case_bite_claim() -> void:
+	var m := _offline_match()
+	var b: Node3D = m.spawn_boss()
+	b.pilot = 1
+	b.global_position = m._on_ground(Vector3(0, BOSS_GD.LIFT, 60))
+	b.rotation.y = 0.0
+	var r: float = b.BODY_RADIUS
+	var run: Node3D = m._add_player(m.COWBOY, 2)    # 圈到、前搖時跑走
+	var stay: Node3D = m._add_player(m.COWBOY, 3)   # 圈到、留在原地
+	var liar: Node3D = m._add_player(m.COWBOY, 4)   # 太遠還報
+	var dead: Node3D = m._add_player(m.COWBOY, 5)   # 圈到、前搖時死了
+	var free: Node3D = m._add_player(m.COWBOY, 6)   # 沒圈到、前搖時跑走
+	for c: Node3D in [run, stay, dead, free]:
+		c.global_position = m._on_ground(Vector3(0, 0, 60 - r - 3.0))
+	liar.global_position = m._on_ground(Vector3(0, 0, 60 - r - b.LIGHT_REACH - b.BITE_CLAIM_SLACK - 2.0))
+	var seen: Array = b.bite_targets()
+	_ck(b.bite_ready() and run in seen and free in seen and liar not in seen, "圈紅：圈到的就是 bite_targets")
+	var claim := PackedStringArray([run.name, stay.name, liar.name, dead.name])   # free 故意不報：當成按下時圈不到他
+	var bitten := false
+	for i in 200:
+		b.pilot_input(Vector2.ZERO, 0.0, 0.0, b.PIN_BITE if i == 0 else 0, claim if i == 0 else PackedStringArray())
+		b.think(DT)
+		if i == 0:
+			_ck(b.act == b.ACT_BITE_WIND, "按咬進前搖")
+			run.global_position = m._on_ground(Vector3(0, 0, 80))   # 跑到身後遠處
+			free.global_position = m._on_ground(Vector3(0, 0, 80))
+			dead.hp = 0
+		if b.act == b.ACT_BITE:
+			bitten = true
+		if bitten and b.act == b.ACT_RECOVER:
+			break
+	_ck(bitten, "咬要真的出手")
+	_ck(run.hp == run.max_hp - 40, "圈紅時圈到、前搖時跑走：照樣咬到（現在 %d）" % run.hp)
+	_ck(stay.hp == stay.max_hp - 40, "鎖定又在範圍內：只扣一次 40（現在 %d）" % stay.hp)
+	_ck(liar.hp == liar.max_hp, "報了但主機上太遠：不收（現在 %d）" % liar.hp)
+	_ck(dead.hp == 0, "鎖定的人前搖時死了：不再扣（現在 %d）" % dead.hp)
+	_ck(free.hp == free.max_hp, "沒報的人照原本的判斷：跑出去就沒中（現在 %d）" % free.hp)
+	_end(m)

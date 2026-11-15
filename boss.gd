@@ -88,6 +88,9 @@ static var BODY_RADIUS: float = 2.4 * GROW   # 身體碰撞膠囊的半徑（bos
 static var LIGHT_DAMAGE: int = Balance.whole("light_damage")
 static var LIGHT_REACH: float = Balance.num("light_reach")
 static var LIGHT_COS: float = cos(deg_to_rad(Balance.num("light_angle") * 0.5))   # 扇形半角的餘弦，判定用
+## 駕駛按咬時畫面上圈到的人（bite_targets）：主機在這個寬容內就鎖定，前搖期間跑出去照樣咬到（連線延遲、前搖都偏袒咬的人）
+static var BITE_CLAIM_SLACK: float = Balance.num("bite_claim_slack")
+static var BITE_CLAIM_COS: float = cos(deg_to_rad(Balance.num("light_angle") * 0.5 + Balance.num("bite_claim_slack_angle")))
 static var BITE_TRIGGER: float = BODY_RADIUS + LIGHT_REACH + 0.5   # 電腦：牛仔在咬的扇形（_hit_cone 同一個）再外面 0.5 公尺內就起咬，不乘倍率
 # 踩踏：移動中貼著牛仔走過去就踩，站著不動不踩。以下從 balance.csv 讀
 static var STOMP_DAMAGE: int = Balance.whole("stomp_damage")
@@ -206,6 +209,8 @@ var _last_pos := {}           # 牛仔 → 上一幀的位置（算誰在跑）
 var _act_left := 0.0          # 這個動作狀態還剩多久
 var _attack_gap := 0.0
 var _hit_once := []           # 這一招已經打過的人（一招內不重複扣）
+var _pin_bite := PackedStringArray()   # 主機：駕駛最近一次送來、他畫面上咬得到的牛仔（節點名）
+var _bite_lock := []          # 主機：這一口鎖定的人（按下時圈紅圈到的），出手時不看範圍照樣咬
 var _sees_now: Node3D = null
 var _path := PackedVector3Array()
 var _path_goal := Vector3.INF
@@ -396,7 +401,7 @@ func _stomp(delta: float) -> void:
 
 ## 主機收駕駛的輸入（只收駕駛本人送的；主機自己當駕駛時直接呼叫）
 @rpc("any_peer", "call_remote", "unreliable_ordered")
-func pilot_input(move: Vector2, yaw: float, pitch: float, buttons: int) -> void:
+func pilot_input(move: Vector2, yaw: float, pitch: float, buttons: int, bite := PackedStringArray()) -> void:
 	var from := multiplayer.get_remote_sender_id()
 	if from == 0:
 		from = multiplayer.get_unique_id()
@@ -405,6 +410,7 @@ func pilot_input(move: Vector2, yaw: float, pitch: float, buttons: int) -> void:
 	_pin_move = move.limit_length(1.0)
 	_pin_yaw = yaw
 	_pin_buttons = buttons
+	_pin_bite = bite.slice(0, 16)
 	_pin_age = 0.0
 	_pin_pitch = _clamp_cam_pitch(pitch)
 	look_pitch = clampf(pitch, BOSS_PITCH_MIN, PITCH_MAX)
@@ -428,6 +434,7 @@ func _pilot_step(delta: float) -> void:
 		_target = null   # 沒有目標：咬照面對的方向
 		if _pin_buttons & PIN_BITE:
 			_begin(ACT_BITE_WIND, PILOT_BITE_WIND)
+			_bite_lock = _cowboys().filter(_claim_ok)
 			return
 		if _pin_buttons & PIN_SWEEP and sweep_left <= 0.0:
 			sweep_left = _sweep_cd_time()
@@ -489,15 +496,19 @@ func _pilot_local() -> void:
 	var free := Input.mouse_mode == Input.MOUSE_MODE_CAPTURED   # 開選單、結算畫面時不送按鍵
 	var mv := Input.get_vector(&"move_left", &"move_right", &"move_forward", &"move_back") if free else Vector2.ZERO
 	var b := 0
+	var bite := PackedStringArray()
 	if free:
 		b |= PIN_BITE if Input.is_action_pressed(&"fire") else 0
 		b |= PIN_SWEEP if Input.is_action_pressed(&"aim") else 0
 		b |= PIN_FIREBALL if Input.is_action_pressed(&"dino_fireball") else 0
 		b |= PIN_RUN if Input.is_action_pressed(&"sprint") else 0
+	if b & PIN_BITE:   # 圈紅圈到誰就送誰（圈的顏色也是 bite_targets，紅＝會中）
+		for p: Node3D in bite_targets():
+			bite.append(p.name)
 	if multiplayer.is_server():
-		pilot_input(mv, _cam_yaw, _cam_pitch, b)
+		pilot_input(mv, _cam_yaw, _cam_pitch, b, bite)
 	else:
-		pilot_input.rpc_id(1, mv, _cam_yaw, _cam_pitch, b)
+		pilot_input.rpc_id(1, mv, _cam_yaw, _cam_pitch, b, bite)
 
 ## 看：瞄到人要盯一下才確定（越遠越久）。已經在追的人（剛看丟沒多久）一瞄到就確定。
 ## 確定之前人躲回去了，就去他剛才在的地方找（當成聽到聲音）
@@ -715,6 +726,7 @@ func _begin(a: int, t: float) -> void:
 	act = a
 	_act_left = t
 	_hit_once.clear()
+	_bite_lock = []
 	_spot_pending = false
 	if a in [ACT_BITE_WIND, ACT_CHARGE_WIND, ACT_SPIT_WIND]:
 		director.attacked()
@@ -781,7 +793,7 @@ func _next(a: int, t: float) -> void:
 ## 高度、擋牆跟 _sweep_hit 一樣
 func _hit_cone() -> void:
 	for p: Node3D in _victims():
-		if p not in _hit_once and can_bite(p):
+		if p not in _hit_once and (p in _bite_lock or can_bite(p)):   # 鎖定的人死了就不在 _victims；無敵、凍結由 take_damage 擋
 			_hit_once.append(p)
 			_hurt(p, LIGHT_DAMAGE)
 
@@ -792,9 +804,20 @@ func can_bite(p: Node3D) -> bool:
 	return _in_fan(global_position, fwd.normalized(), p.global_position, BODY_RADIUS + LIGHT_REACH, LIGHT_COS) \
 		and absf(p.global_position.y - (global_position.y - HALF_H)) < 4.0 * GROW and not _blocked_by_wall(p)
 
+## 駕駛畫面上咬得到的人：圓圈變紅（bite_ready）和按咬時送給主機的是同一份
+func bite_targets() -> Array:
+	return _cowboys().filter(can_bite)
+
 ## 駕駛準心的圓圈：有牛仔在咬得到的範圍就變紅（match_hud.gd）
 func bite_ready() -> bool:
-	return _cowboys().any(can_bite)
+	return not bite_targets().is_empty()
+
+## 主機：駕駛說咬得到的人，在主機上也差不多在範圍內（距離、角度各放寬 bite_claim_slack），才鎖定。防亂報
+func _claim_ok(p: Node3D) -> bool:
+	var fwd := -global_basis.z
+	fwd.y = 0.0
+	return String(p.name) in _pin_bite and _in_fan(global_position, fwd.normalized(), p.global_position,
+		BODY_RADIUS + LIGHT_REACH + BITE_CLAIM_SLACK, BITE_CLAIM_COS)
 
 ## 扇形判定（輕攻擊、甩尾共用）：at 在 from 往 dir 那邊（水平）、距離在 reach 以內、夾角 cos 在 cos_half 以上
 func _in_fan(from: Vector3, dir: Vector3, at: Vector3, reach: float, cos_half: float) -> bool:
