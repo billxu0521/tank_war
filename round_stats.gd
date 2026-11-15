@@ -9,6 +9,10 @@ const SPLIT_SECONDS := 30.0   # 開局多久內看「分頭」
 const NEAR_CARD := 8.0        # 走到信封幾公尺內算「去了這張」
 const NEAR_DINO := 15.0
 const STUCK_SPEED := 0.5      # 想走（不是站著等）卻比這個慢＝卡住
+const STUCK_LOG := 5.0        # 連續卡這麼久印一行「卡住」
+const STUCK_LONG := 20.0      # 總表數「卡超過 20 秒」幾次
+const STUCK_GRACE := 0.5      # 沒卡這麼久才算脫困（速度一閃一閃不算）
+const SAFE_NEAR := 30.0       # 恐龍離保險箱幾公尺內算「守著」
 
 var t := 0.0                  # 這回合遊戲時間（準備階段不算）
 var first_card := -1.0        # 第一張牌被看的時刻
@@ -18,6 +22,10 @@ var last: Dictionary = {}     # 上一回合的結果（bot_sim 讀）
 var _tried := 0
 var _cow := {}                # 牛仔編號 -> 這回合的數字（見 _row）
 var stuck_by := {}            # 動作 -> 卡住幾秒（看卡在哪種路上，決定要不要接導航網格）
+var stuck_long := 0           # 這回合連續卡超過 STUCK_LONG 的次數
+var dino_safe := 0.0          # 恐龍離保險箱 SAFE_NEAR 內的秒數
+var safe_t := 0.0             # 有保險箱的遊戲秒數（佔比的分母）
+var open_dist := -1.0         # 開箱那一刻恐龍離箱子幾公尺
 
 
 func reset() -> void:
@@ -26,6 +34,10 @@ func reset() -> void:
 	open_at = -1.0
 	tries.clear()
 	stuck_by = {}
+	stuck_long = 0
+	dino_safe = 0.0
+	safe_t = 0.0
+	open_dist = -1.0
 	_tried = 0
 	_cow.clear()
 
@@ -34,7 +46,8 @@ func _row(c: Node) -> Dictionary:
 	var id := c.name.to_int()
 	if not _cow.has(id):
 		_cow[id] = {"bot": bool(c.get(&"bot")), "deaths": 0, "near": 0.0, "alive": 0.0, "stuck": 0.0,
-			"changes": 0, "act": "", "shots": 0, "hits": 0, "mag": -1, "hit_until": 0, "first_card": -2}
+			"changes": 0, "act": "", "shots": 0, "hits": 0, "mag": -1, "hit_until": 0, "first_card": -2,
+			"run": 0.0, "free": 0.0}
 	return _cow[id]
 
 
@@ -48,9 +61,15 @@ func tick(m: Node, p: Node, delta: float) -> void:
 		if n > _tried:
 			tries.append(t)
 			_tried = n
+	var dino: Node3D = m._boss()
+	if s.on:
 		if s.open and open_at < 0.0:
 			open_at = t
-	var dino: Node3D = m._boss()
+			if dino:
+				open_dist = dino.global_position.distance_to(s.global_position)
+		safe_t += delta
+		if dino and dino.global_position.distance_to(s.global_position) < SAFE_NEAR:
+			dino_safe += delta
 	for c: Node in m.players.get_children():
 		if c.is_in_group(&"dino") or not c is Cowboy:
 			continue
@@ -83,6 +102,38 @@ func tick(m: Node, p: Node, delta: float) -> void:
 		if not hold and Vector2(to.x, to.z).length() > 1.5 and Vector2(cb.velocity.x, cb.velocity.z).length() < STUCK_SPEED and _on_wall(cb):
 			r.stuck += delta
 			stuck_by[act] = float(stuck_by.get(act, 0.0)) + delta
+			r.free = 0.0
+			var was: float = r.run
+			r.run += delta
+			if was < STUCK_LOG and r.run >= STUCK_LOG:
+				_log_stuck(cb, p, act, to)
+			if was < STUCK_LONG and r.run >= STUCK_LONG:
+				stuck_long += 1
+				print("卡住 第%d回合 %s 卡超過 %.0f 秒（%s）" % [p.round_index + 1, p.names.get(cb.name.to_int(), cb.name), STUCK_LONG, act])
+		elif r.run > 0.0:
+			r.free += delta
+			if r.free > STUCK_GRACE:
+				r.run = 0.0
+
+
+## 連續卡 STUCK_LOG 秒印一行：誰、動作、位置、目標、離導航網格多遠、撞到什麼和牆的方向
+func _log_stuck(c: Cowboy, p: Node, act: String, to: Vector3) -> void:
+	var pos := c.global_position
+	var map := c.get_world_3d().navigation_map
+	var nav := "-"
+	if NavigationServer3D.map_get_iteration_id(map) > 0:
+		nav = "%.1f 公尺" % pos.distance_to(NavigationServer3D.map_get_closest_point(map, pos))
+	var hit := "-"
+	for i in c.get_slide_collision_count():
+		var k := c.get_slide_collision(i)
+		if absf(k.get_normal().y) < 0.7 and not k.get_collider() is Fighter:
+			var o := k.get_collider() as Node
+			var n := k.get_normal()
+			hit = "%s 牆朝 (%.1f, %.1f)" % [o.name if o else "?", n.x, n.z]
+			break
+	var g := pos + to
+	print("卡住 第%d回合 %s 卡 %.0f 秒 動作 %s 在 (%.1f, %.1f) 目標 (%.1f, %.1f) 離導航網格 %s 撞到 %s" % [p.round_index + 1,
+		p.names.get(c.name.to_int(), c.name), STUCK_LOG, act, pos.x, pos.z, g.x, g.z, nav, hit])
 
 
 ## 頂著牆、房子、碎塊（不算頂著人或恐龍：那是被擋，不是路不通）
@@ -123,9 +174,11 @@ func report(p: Node, dino_win: bool, msg: String) -> void:
 	for r: Dictionary in _cow.values():
 		firsts[r.first_card] = true
 	last = {"round": p.round_index + 1, "extract": not dino_win, "t": t, "first_card": first_card, "open": open_at,
-		"tries": tries.size(), "gap": _mean(gaps), "split": firsts.size() > 1, "stuck_by": stuck_by, "cow": _cow.duplicate(true)}
-	print("回合指標 第%d回合 %s（%.0f 秒）第一張牌 %s 開箱 %s 試 %d 次 間隔 %s 分頭 %s" % [last.round, msg, t,
-		_sec(first_card), _sec(open_at), tries.size(), "%.1f 秒" % last.gap if gaps.size() > 0 else "-", "是" if last.split else "否"])
+		"tries": tries.size(), "gap": _mean(gaps), "split": firsts.size() > 1, "stuck_by": stuck_by, "stuck_long": stuck_long,
+		"dino_safe": dino_safe, "safe_t": safe_t, "open_dist": open_dist, "cow": _cow.duplicate(true)}
+	print("回合指標 第%d回合 %s（%.0f 秒）第一張牌 %s 開箱 %s 試 %d 次 間隔 %s 分頭 %s 恐龍守箱 %s 開箱時恐龍離箱 %s" % [last.round, msg, t,
+		_sec(first_card), _sec(open_at), tries.size(), "%.1f 秒" % last.gap if gaps.size() > 0 else "-", "是" if last.split else "否",
+		"%.0f%%" % (100.0 * dino_safe / safe_t) if safe_t > 0.0 else "-", "%.0f 公尺" % open_dist if open_dist >= 0.0 else "-"])
 	for id: int in _cow:
 		var r: Dictionary = _cow[id]
 		var b: bool = r.bot
