@@ -2,7 +2,8 @@ class_name Raptors
 extends Node3D
 ## 小恐龍哨兵（docs/企劃/2026-11-13-小恐龍.md 的「已決定（2026-11-15）」）：只有派對模式有。
 ## 尼諾拉按 E 在腳邊放一隻，每回合最多 MAX 隻（死了不補），下回合清空。
-## 第二步會閒晃：遊戲中在放下的地方 WANDER 公尺內走到隨機點、停 PAUSE 秒左右再換一點（直線走，走之前檢查路上沒牆、不進禁止範圍）。
+## 會全場遊走：遊戲中從目前位置抽 LEG×0.4～LEG 公尺外的隨機點走過去、停 PAUSE 秒左右再換一點，一段一段走遍全場（放下的地方只是起點）。
+## 直線走，走之前檢查路上沒牆、不進禁止範圍、不出場；走著前面被擋就停、馬上換一點（換方向）。
 ## 看到牛仔就停下來、面向他，一直盯滿 STARE 秒就尖叫，尼諾拉的方位條標「這隻小恐龍」的位置 MARK 秒（不標牛仔）。
 ## 同一隻 COOLDOWN 秒叫一次。尼諾拉傷不到；子彈、槍托、炸藥、爆炸桶都打得死（血 HP）。
 ## 主機說了算：放、死、叫、要走去哪都在主機決定，位置、目標點和死活整包送（_recv）：只有換目標、停下來時送，
@@ -10,7 +11,7 @@ extends Node3D
 ## 不放在 Players 底下：那裡的每個節點都會被當成玩家（算牛仔、算存活、找目標）。
 ##
 ## 金色小恐龍（追分星星，docs/企劃/2026-11-15-畫面與保險箱位置.md 的 1.1）：派對第四回合開場 party 叫 add_gold 生一隻（第 gold 隻）。
-## 不當哨兵（不看、不尖叫、不報信），一直隨機走（不綁在家附近）；每 GOLD_CALL 秒叫一聲，大家都聽得到；方位條大家都標。
+## 不當哨兵（不看、不尖叫、不報信），一樣全場走；每 GOLD_CALL 秒叫一聲，大家都聽得到；方位條大家都標。
 ## 血 GOLD_HP，尼諾拉也打得死（boss._victims），炸藥照距離扣血不是一炸就死。死了 party.drop_star 把星星丟在牠的位置。
 
 # 以下從 balance.csv 讀（見 balance.gd），改數字去改表
@@ -22,7 +23,7 @@ static var STARE: float = Balance.num("raptor_stare")
 static var COOLDOWN: float = Balance.num("raptor_scream_cd")
 static var MARK: float = Balance.num("raptor_mark_seconds")
 static var CLEAR: float = Balance.num("raptor_place_clear")
-static var WANDER: float = Balance.num("raptor_wander_radius")
+static var LEG: float = Balance.num("raptor_leg")
 static var SPEED: float = Balance.num("raptor_walk_speed")
 static var PAUSE: float = Balance.num("raptor_pause")
 static var GOLD_HP: int = Balance.whole("gold_raptor_hp")
@@ -47,7 +48,6 @@ var marks := {}                     # 每台：第幾隻 -> 方位條標到幾�
 var _hp := PackedInt32Array()       # 主機
 var _stare := PackedFloat32Array()  # 主機：盯了幾秒
 var _cd := PackedFloat32Array()     # 主機：還要幾秒才能再叫
-var _home := PackedVector3Array()   # 主機：放下的地方（只在這附近走）
 var _wait := PackedFloat32Array()   # 主機：走到了還要停幾秒
 var _acc := 0.0
 var gold := -1                      # 金色小恐龍是第幾隻（-1 = 沒有）
@@ -69,7 +69,6 @@ func clear() -> void:
 	_hp = PackedInt32Array()
 	_stare = PackedFloat32Array()
 	_cd = PackedFloat32Array()
-	_home = PackedVector3Array()
 	_wait = PackedFloat32Array()
 	gold = -1
 	_send()
@@ -84,7 +83,6 @@ func add(q: Vector3, yaw: float) -> void:
 	_hp.append(HP)
 	_stare.append(0.0)
 	_cd.append(0.0)
-	_home.append(q)
 	_wait.append(randf() * PAUSE)
 	_send()
 
@@ -107,7 +105,7 @@ func gold_body() -> Node3D:
 	return get_child(gold) as Node3D if gold >= 0 and gold < alive.size() and gold < get_child_count() and alive[gold] == 1 else null
 
 
-## 放不放得下（空字串 = 可以）：離保險箱、信封、牛仔出生點至少 CLEAR；不在建築、石頭、樹裡
+## 放不放得下、走不走得到（空字串 = 可以）：離保險箱、信封、牛仔出生點至少 CLEAR；不在建築、石頭、樹裡；不在場外
 func why_not(q: Vector3) -> String:
 	var p := Vector2(q.x, q.z)
 	var near := func(o: Vector3) -> bool: return p.distance_to(Vector2(o.x, o.z)) < CLEAR
@@ -117,7 +115,7 @@ func why_not(q: Vector3) -> String:
 		return "離信封太近，不能放小恐龍"
 	if main.spawn_points.any(near):
 		return "離牛仔出生點太近，不能放小恐龍"
-	if not main._is_clear(p, 0.6):
+	if not main._is_clear(p, 0.6) or not main.map._inside(q, 3.0):
 		return "這裡放不下小恐龍"
 	return ""
 
@@ -243,11 +241,11 @@ func step(delta: float) -> void:
 		_send()
 
 
-## 主機：第 i 隻下一個要走去的點：家附近隨機抽，路上不進禁止範圍、沒有東西擋。抽不到就原地（回傳 spots[i]）
+## 主機：第 i 隻下一段要走去的點：目前位置 LEG×0.4～LEG 公尺外隨機抽，路上不進禁止範圍、不出場、沒有東西擋。抽不到就原地（回傳 spots[i]）
 func _pick(i: int) -> Vector3:
 	var a := spots[i]
 	for tries in 8:
-		var t: Vector3 = main._on_ground(((spots[i] if i == gold else _home[i]) + Vector3.FORWARD.rotated(Vector3.UP, randf() * TAU) * randf_range(2.0, WANDER)) * Vector3(1, 0, 1))
+		var t: Vector3 = main._on_ground((a + Vector3.FORWARD.rotated(Vector3.UP, randf() * TAU) * randf_range(LEG * 0.4, LEG)) * Vector3(1, 0, 1))
 		var n := ceili(a.distance_to(t) / 0.5)   # ponytail: 每半公尺抽查一點，轉角可能擦過幾公分
 		if range(1, n + 1).all(func(k: int) -> bool: return why_not(a.lerp(t, float(k) / n)) == "") and _ray_clear(a, t, i):
 			return t
