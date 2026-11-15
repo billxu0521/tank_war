@@ -1532,6 +1532,77 @@ func _case_bot_safe() -> void:
 	_ck(m.egg.carrier == -1, "開了照舊撿蛋（%s）" % b.bot_action)
 	_end(m)
 
+## 電腦尼諾拉守箱（boss.gd 的 _act_guard，docs/企劃/2026-11-16-未完成事項.md 第 1 項）：看不到人時巡箱子和沒開的信封；
+## 開信封、猜錯、開箱叫牠過去；開箱後往蛋走；真人駕駛不守。boss 不在物理幀裡，手動叫 think
+func _case_boss_guard() -> void:
+	var m := _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"party"))
+	m._apply_rules()
+	var p: Party = m.party
+	var s: Safe = m.safe
+	m._physics_process(DT)
+	p.time_left = 0.0
+	m._physics_process(DT)   # 遊戲開始
+	var b: Node3D = m._boss()
+	var c: Cowboy = m.players.get_node(^"-1")
+	for id in [-1, -2, -3]:
+		m.players.get_node(NodePath(str(id))).global_position = Vector3(0, 800, 0)   # 看不到、聽不到
+	b.pilot = 0
+	var flat := func(a: Vector3, z: Vector3) -> float: return Vector2(a.x - z.x, a.z - z.z).length()
+	var near_guard := func() -> float:   # 離箱子、沒開的信封最近多遠
+		var d: float = flat.call(b.global_position, s.global_position)
+		for i in 2:
+			if not p.env_open[i]:
+				d = minf(d, flat.call(b.global_position, p.env_pos[i]))
+		return d
+	var best := Vector3.ZERO   # 起點：場上離三個點都遠的地方
+	var far := 0.0
+	for k in 16:
+		var at: Vector3 = b._clamp_arena(s.global_position + Vector3(cos(k * TAU / 16), 0, sin(k * TAU / 16)) * 60.0)
+		b.global_position = m._on_ground(Vector3(at.x, BOSS_GD.LIFT, at.z))
+		if near_guard.call() > far:
+			far = near_guard.call()
+			best = b.global_position
+	b.global_position = best
+	_ck(b._guarding() and far > 25.0, "派對有保險箱、電腦操作：守箱（起點離最近的守點 %.0f 公尺）" % far)
+	# 測試在第一格跑，物理還沒開始算、位置不會動：看目的地和速度
+	for i in int(1.0 / DT):
+		b.think(DT)
+	var wt: Vector3 = b._wander_to
+	var wt_ok: bool = wt != Vector3.INF and (flat.call(wt, s.global_position) < 25.0 or [0, 1].any(func(i: int) -> bool: return flat.call(wt, p.env_pos[i]) < 25.0))
+	_ck(wt_ok and Vector2(b.velocity.x, b.velocity.z).length() > 1.0, "看不到人：往箱子或沒開的信封走（目的地 %s、速度 %.1f）" % [wt, Vector2(b.velocity.x, b.velocity.z).length()])
+	b.global_position = best
+	# 信封被開：叫牠過去
+	c.global_position = p.env_pos[0] + Vector3(0.5, 0.5, 0)
+	_ck(p.read(-1, 0), "牛仔看牌")
+	_ck(b._noise_left > 0.0 and flat.call(b._noise, p.env_pos[0]) < BOSS_GD.NOISE_FUZZ_MAX + 5.0, "信封被開：恐龍往那個信封去（偏 %.0f 公尺）" % flat.call(b._noise, p.env_pos[0]))
+	# 猜錯：叫牠去箱子
+	b._noise_left = 0.0
+	c.global_position = s.global_position + Vector3(1.6, 0.5, 0)
+	var code: int = s._code
+	_ck(s.try_code(-1, (code + 37) % 100), "牛仔試錯的組合")
+	for i in int(Safe.TRY_SECONDS / DT) + 2:
+		m._physics_process(DT)
+	_ck(s.locked() and b._noise_left > 0.0 and flat.call(b._noise, s.global_position) < BOSS_GD.NOISE_FUZZ_MAX + 5.0, "猜錯：恐龍往箱子去（偏 %.0f 公尺）" % flat.call(b._noise, s.global_position))
+	# 開箱：往蛋走
+	b._noise_left = 0.0
+	_ck(s.try_code(-1, code), "牛仔試對的組合")
+	for i in int(Safe.TRY_SECONDS / DT) + 2:
+		m._physics_process(DT)
+	_ck(s.open and b._noise_left > 0.0, "開箱：叫恐龍過去")
+	c.global_position = Vector3(0, 800, 0)
+	b._noise_left = 0.0
+	for i in int(1.0 / DT):
+		b.think(DT)
+	var to_egg: Vector3 = (m.egg.global_position - b.global_position) * Vector3(1, 0, 1)
+	var goal_ok: bool = b._path_goal.distance_to(m.egg.global_position) < 2.0 if NavigationServer3D.map_get_iteration_id(b.get_world_3d().navigation_map) > 0 \
+		else Vector3(b.velocity.x, 0, b.velocity.z).normalized().dot(to_egg.normalized()) > 0.7
+	_ck(goal_ok and b.running, "開箱後跑去蛋那裡（路的終點 %s、蛋 %s）" % [b._path_goal, m.egg.global_position])
+	# 真人駕駛：不守
+	b.pilot = 1
+	_ck(not b._guarding(), "真人駕駛不守箱")
+	_end(m)
+
 ## 斷線重連：60 秒內同一個代號連回來，拿回命數、出局狀態、派對分數；過期、新局就當新人
 func _case_reconnect() -> void:
 	var m := _offline_match()

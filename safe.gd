@@ -192,6 +192,9 @@ func server_step(delta: float) -> void:
 	if _try_left > 0.0:
 		return
 	tried[_try] = 1
+	var b: Node = main._boss()
+	if b:   # 猜錯、開箱都叫恐龍過來（真人駕駛畫面上也看得到）
+		b.alarm(global_position, true)
 	if _try == _code:
 		open = true
 		_apply()
