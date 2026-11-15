@@ -176,12 +176,12 @@ var _cam_yaw := 0.0             # 駕駛那台：鏡頭的水平角（身體慢�
 var _cam_pitch := 0.0
 var _piloting := false          # 駕駛那台：現在是不是由我操作（變成駕駛、不再是駕駛的那一刻才換鏡頭）
 var _pin_pitch := 0.0           # 主機：駕駛鏡頭的俯仰（算準心指到哪，_aim）
-## 駕駛鏡頭：越肩第三人稱。支點在身體中心上方 CAM_UP，鏡頭在支點右邊 CAM_SIDE、後面 CAM_DIST，平視時略往下看（CAM_TILT）。
+## 駕駛鏡頭：第三人稱。支點在身體中心上方 CAM_UP，鏡頭在支點右邊 CAM_SIDE（現在 0 = 正後方）、後面 CAM_DIST，平視時略往下看（CAM_TILT）。
 ## 主機照同一組數字重建鏡頭那條線（_aim），所以這幾個數字兩邊要一樣（都讀 balance.csv）
 static var CAM_UP: float = Balance.num("dino_cam_height") * GROW
 static var CAM_SIDE: float = Balance.num("dino_cam_side") * GROW
 static var CAM_DIST: float = Balance.num("dino_cam_dist") * GROW
-const CAM_TILT := -0.14         # 約 8 度（dino.gd 的 CAM_BASE 是 23 度俯視，準心會指到腳前的地上）
+const CAM_TILT := -0.22         # 約 13 度（正後方：拉高往下看，看得到頭前面；越肩時是 -0.14。dino.gd 的 CAM_BASE 是 23 度俯視，準心會指到腳前的地上）
 const CAM_MARGIN := 0.6         # 鏡頭被牆擋住時，離牆留這麼遠（公尺）
 const CAM_PULL_MIN := 0.35      # 最多拉近到原本的這個比例：再近鏡頭會進到身體裡
 const AIM_CONE := 0.6           # 火球最多偏離身體正面這麼多（弧度，約 34 度）：身體還沒轉過來時不能往旁邊、往後吐
@@ -766,15 +766,21 @@ func _next(a: int, t: float) -> void:
 ## 輕攻擊的判定：胸前扇形，中心算到身體半徑＋light_reach 為止，夾角在 light_angle 以內。
 ## 高度、擋牆跟 _sweep_hit 一樣
 func _hit_cone() -> void:
-	var fwd := -global_basis.z
-	fwd.y = 0.0
-	fwd = fwd.normalized()
 	for p: Node3D in _cowboys():
-		if p in _hit_once or not _in_fan(global_position, fwd, p.global_position, BODY_RADIUS + LIGHT_REACH, LIGHT_COS):
-			continue
-		if absf(p.global_position.y - (global_position.y - HALF_H)) < 4.0 * GROW and not _blocked_by_wall(p):
+		if p not in _hit_once and can_bite(p):
 			_hit_once.append(p)
 			_hurt(p, LIGHT_DAMAGE)
+
+## 這個人在不在咬得到的範圍（_hit_cone 判定；駕駛準心的圓圈變紅也用這個）
+func can_bite(p: Node3D) -> bool:
+	var fwd := -global_basis.z
+	fwd.y = 0.0
+	return _in_fan(global_position, fwd.normalized(), p.global_position, BODY_RADIUS + LIGHT_REACH, LIGHT_COS) \
+		and absf(p.global_position.y - (global_position.y - HALF_H)) < 4.0 * GROW and not _blocked_by_wall(p)
+
+## 駕駛準心的圓圈：有牛仔在咬得到的範圍就變紅（match_hud.gd）
+func bite_ready() -> bool:
+	return _cowboys().any(can_bite)
 
 ## 扇形判定（輕攻擊、甩尾共用）：at 在 from 往 dir 那邊（水平）、距離在 reach 以內、夾角 cos 在 cos_half 以上
 func _in_fan(from: Vector3, dir: Vector3, at: Vector3, reach: float, cos_half: float) -> bool:

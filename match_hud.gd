@@ -241,12 +241,47 @@ func _update_crosshair(me: Node) -> void:
 	# 打中人準心閃紅。遠距離看不出血條掉，這是唯一的命中確認。尼諾拉的火球還在冷卻：準心變淡
 	main.crosshair.modulate = Color(1, 0.3, 0.25) if me.hit_until > Time.get_ticks_msec() \
 		else Color(1, 1, 1, 0.35) if me.get(&"fireball_left") else Color.WHITE
+	var boss: bool = me.is_in_group(&"boss")
+	main.crosshair.text = "" if boss else "+"   # 尼諾拉的準心是圓圈（_draw_ring）
 	if cam == null:
 		main.crosshair.hide()
 		return
 	var p: Vector3 = me.aim_point()
 	main.crosshair.visible = not cam.is_position_behind(p)
 	main.crosshair.position = cam.unproject_position(p) - main.crosshair.size * 0.5
+	# 尼諾拉：準心是圓心一點（火球朝這裡飛），另外在地上畫咬得到的範圍：扇形外半段的中心、照透視畫成橢圓（地上的圓）。
+	# 正後方看，咬的範圍在頭前面、常被身體擋住，圓圈畫在上面看得到；有牛仔咬得到就變紅
+	_ring = Rect2()
+	if me.is_in_group(&"boss"):
+		var fwd: Vector3 = -me.global_basis.z
+		fwd.y = 0.0
+		fwd = fwd.normalized()
+		var r: float = me.LIGHT_REACH * 0.5   # 扇形從膠囊前緣伸出 LIGHT_REACH，圓圈罩住這一段
+		var c3: Vector3 = me.global_position + fwd * (me.BODY_RADIUS + r) + Vector3.DOWN * (me.HALF_H - 1.0)   # 牛仔胸口高
+		var side: Vector3 = fwd.cross(Vector3.UP) * (me.BODY_RADIUS + me.LIGHT_REACH) * sqrt(1.0 - me.LIGHT_COS * me.LIGHT_COS)   # 扇形最遠那端的半寬
+		if not cam.is_position_behind(c3 + fwd * r):
+			var c: Vector2 = cam.unproject_position(c3)
+			_ring = Rect2(c - main.crosshair.position, Vector2(c.distance_to(cam.unproject_position(c3 + side)),
+				c.distance_to(cam.unproject_position(c3 + fwd * r))))
+		_ring_red = me.bite_ready()
+		if not main.crosshair.draw.is_connected(_draw_ring):
+			main.crosshair.draw.connect(_draw_ring)
+	main.crosshair.queue_redraw()
+
+var _ring := Rect2()   # 咬的範圍：position 是圓心（準心 Label 裡的座標），size 是橫、直半徑（像素）
+var _ring_red := false
+func _draw_ring() -> void:
+	if _ring.size.x <= 0.0:
+		return
+	var col := Color(1, 0.25, 0.2) if _ring_red else Color.WHITE
+	main.crosshair.draw_circle(main.crosshair.size * 0.5, 5.0, Color(0.12, 0.07, 0.05, 0.85))   # 準心：火球朝這裡飛（深色描邊，天空上也看得到）
+	main.crosshair.draw_circle(main.crosshair.size * 0.5, 3.0, col)
+	var pts := PackedVector2Array()   # 橢圓：地上的圓照透視壓扁
+	for i in 65:
+		var t := TAU * i / 64.0
+		pts.append(_ring.position + Vector2(cos(t) * _ring.size.x, sin(t) * maxf(_ring.size.y, 4.0)))
+	main.crosshair.draw_polyline(pts, Color(0.12, 0.07, 0.05, 0.6), 5.0, true)   # 外框，跟其他字的描邊一樣
+	main.crosshair.draw_polyline(pts, col, 2.5, true)
 
 ## 上方的方位條：看著的方向、蛋在哪、兩個撤離區在哪（都附距離）。
 ## 蛋在自己身上就不標蛋；沙盒沒有蛋也不標
