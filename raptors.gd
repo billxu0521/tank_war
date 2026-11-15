@@ -33,6 +33,7 @@ const FEEL := 3.0            # 這麼近不管方向都會發現
 const CONE := 0.5            # cos 60°：正前方左右各 60 度
 const EYE := 1.5             # 眼睛離地多高
 const KNEE := 0.7            # 檢查路上有沒有東西的射線離地多高
+const RAY_STEP := 2.0        # 檢查路上的射線每段多長（每段兩頭貼地，跟著地形起伏）
 const LOOK_EVERY := 0.1      # 主機每幾秒看一次（不用每個物理幀打射線）
 const HEIGHT := 2.0          # 身高（公尺）
 const MODEL_HEIGHT := 5.4    # 尼諾拉模型原本的身高（dino.tscn：膠囊 8.1 ÷ 模型縮放 1.5）
@@ -252,10 +253,19 @@ func _pick(i: int) -> Vector3:
 	return a
 
 
-## 從 a 到 b（地面）膝蓋高的地方有沒有東西擋（第 i 隻自己不算）
+## 從 a 到 b（地面）膝蓋高的地方有沒有東西擋（第 i 隻自己不算）。
+## 每 RAY_STEP 公尺一段、每段兩頭貼地：一條直線拉過起伏的地形會打到中間隆起的坡，山坡上就一直抽不到點、卡著不走
 func _ray_clear(a: Vector3, b: Vector3, i: int) -> bool:
-	var q := PhysicsRayQueryParameters3D.create(a + Vector3.UP * KNEE, b + Vector3.UP * KNEE, 1, [(get_child(i) as CollisionObject3D).get_rid()])
-	return get_world_3d().direct_space_state.intersect_ray(q).is_empty()
+	var space := get_world_3d().direct_space_state
+	var me := [(get_child(i) as CollisionObject3D).get_rid()]
+	var n := maxi(ceili(a.distance_to(b) / RAY_STEP), 1)
+	var from := a
+	for k in range(1, n + 1):
+		var to: Vector3 = b if k == n else main._on_ground(a.lerp(b, float(k) / n) * Vector3(1, 0, 1))
+		if not space.intersect_ray(PhysicsRayQueryParameters3D.create(from + Vector3.UP * KNEE, to + Vector3.UP * KNEE, 1, me)).is_empty():
+			return false
+		from = to
+	return true
 
 
 ## 每台每個物理幀：往目標點走（照地形貼地）、身體慢慢轉到 yaws、走路時上下晃

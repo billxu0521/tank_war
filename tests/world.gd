@@ -510,11 +510,12 @@ func _case_barrels() -> void:
 		return (c.get_child(i) as Node3D).global_position.is_equal_approx(bs.spots[i])), "客戶端收到同一批桶")
 	m.remove_child(c)
 	c.free()
-	# 打一槍：爆、旁邊的牛仔扣血、範圍裡的桶連環爆、遠的不爆
-	var a: Vector3 = bs.spots[0]
-	bs._recv(PackedVector3Array([a, a + Vector3(3, 0, 0), a + Vector3(0, 0, 20)]), PackedByteArray([1, 1, 1]))
+	# 打一槍：爆、旁邊的牛仔扣血、範圍裡的桶連環爆、遠的不爆。
+	# 擺在沙盒靶場那條路上（整平、沒蓋東西）：用隨機的桶位的話，坡上中間隆起的地形會擋住爆炸（照規則就炸不到），測試時好時壞
+	var a: Vector3 = m._on_ground(Vector3(0, 0, 40))
+	bs._recv(PackedVector3Array([a, m._on_ground(Vector3(0, 0, 43)), m._on_ground(Vector3(0, 0, 60))]), PackedByteArray([1, 1, 1]))
 	var cow: Node3D = m._add_player(m.COWBOY, 2)
-	cow.global_position = a + Vector3(-3, 0, 0)
+	cow.global_position = m._on_ground(Vector3(0, 0, 37))
 	var hp0: int = cow.hp
 	var delay := Barrels.CHAIN_DELAY
 	Barrels.CHAIN_DELAY = 0.0   # 當場爆完：不用等計時器（對局留著等會搶到別的案例的「第一個場地」）
@@ -552,6 +553,9 @@ func _case_barrels() -> void:
 ## 小恐龍哨兵（raptors.gd）：尼諾拉放（上限、距離限制、倒地）、看見才叫（站著、蹲著、灌木、背後）、方位條、一槍死、尼諾拉傷不到、
 ## 炸死、死了不補、晚加入看得到、閒晃（不超過半徑、不進禁止範圍、盯人停下、晚加入位置對）、下回合清空、不混進 Players、非派對模式沒有
 func _case_raptors() -> void:
+	# 固定亂數種子：信封、放的位置、每段走去哪都是抽的。不固定的話偶爾抽到地圖邊角被出生點、信封禁止範圍圍住的一小塊，
+	# 走不遠、前面一擋就沒別的方向可走（照規則就是站著），測試時好時壞
+	seed(20261116)
 	_ck(InputMap.has_action(&"dino_raptor") and InputMap.action_get_events(&"dino_raptor").any(func(e: InputEvent) -> bool: return e is InputEventKey)
 		and InputMap.action_get_events(&"dino_raptor").any(func(e: InputEvent) -> bool: return e is InputEventJoypadButton), "放小恐龍要綁鍵盤和手把")
 	var m := _offline_match()
