@@ -1236,11 +1236,13 @@ func _case_safe() -> void:
 	var p: Party = m.party
 	var s: Safe = m.safe
 	m._physics_process(DT)   # 開場：主機（1）當恐龍
+	_ck(m.safe_spots.is_empty() and p.egg_placed and s.locked() and Vector2(s.global_position.x - m.dino_spawn.x, s.global_position.z - m.dino_spawn.z).length() < BOSS_GD.BODY_RADIUS + 3.0,
+		"地圖沒有保險箱點（牧場）：箱子開場放在恐龍出生點前面（%s）" % s.global_position)
 	var b: Node3D = m._boss()
 	b.global_position = m._on_ground(Vector3(0, BOSS_GD.LIFT, 40))
-	p.place_egg()
+	p._hide_egg_at(p._dino_pos())   # 牧場沒有保險箱點：開場已經放在恐龍前面；挪到 (0, 40) 照原本的位置測
 	_ck(p.egg_placed and s.locked() and m.egg.global_position.distance_to(s.global_position) < 0.1
-		and Vector2(s.global_position.x, s.global_position.z - 40).length() < BOSS_GD.BODY_RADIUS + 3.0, "恐龍按 F 放保險箱（在牠前面），蛋鎖在裡面")
+		and Vector2(s.global_position.x, s.global_position.z - 40).length() < BOSS_GD.BODY_RADIUS + 3.0, "保險箱放在恐龍前面，蛋鎖在裡面")
 	var code: int = s._code
 	_ck(code >= 0 and code <= 99, "主機抽了兩位數密碼（%d）" % code)
 	# 密碼不在送出去的東西裡：party 那包只有公開的欄位；同步器只送位置
@@ -1333,7 +1335,6 @@ func _case_envelope() -> void:
 	var rows := func(label: String) -> Array:
 		return m._match_hud.compass_marks(Vector3.ZERO).filter(func(k: Dictionary) -> bool: return String(k.label).begins_with(label)).map(func(k: Dictionary) -> int: return int(k.get("row", 0)))
 	_ck(rows.call(Envelope.NAMES[0]) == [1] and rows.call(Envelope.NAMES[1]) == [1] and rows.call("撤離") == [0, 0], "方位條：兩個信封在第二行、兩個撤離在第一行")
-	p.place_egg()
 	p._process(0.0)
 	_ck(rows.call("保險箱") == [1] and rows.call("蛋").is_empty(), "恐龍看得到保險箱（第二行），蛋鎖著不標")
 	s.open = true
@@ -1395,6 +1396,45 @@ func _case_envelope() -> void:
 	_ck(p.my_digits == [-1, code % 10], "重連後補送給本人")
 	_end(m)
 
+## 保險箱四選一（規劃 docs/企劃/2026-11-15-畫面與保險箱位置.md 第 3 步）：灰盒有四個保險箱點，每回合主機抽一個放箱子，恐龍不用放
+func _case_safe_spots() -> void:
+	var Main: GDScript = load("res://main.gd")
+	var keep: String = Main.level_file
+	Main.level_file = ""   # 灰盒才有保險箱點
+	var m := _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"party"))
+	m._apply_rules()
+	var p: Party = m.party
+	var s: Safe = m.safe
+	var spots: Array[Vector3] = m.safe_spots
+	var exits: Array = ArenaMap.exit_spots(true)
+	_ck(spots.size() == 4 and spots.all(func(q: Vector3) -> bool:
+		return exits.all(func(e: Vector2) -> bool: return Vector2(q.x, q.z).distance_to(e) > m.EXIT_RADIUS)), "灰盒有四個保險箱點、都不在撤離圈（%s）" % [spots])
+	var at := func() -> int:   # 箱子在第幾個點（水平 1 公尺內），不在就 -1
+		for i in spots.size():
+			if Vector2(s.global_position.x - spots[i].x, s.global_position.z - spots[i].z).length() < 1.0:
+				return i
+		return -1
+	m._physics_process(DT)
+	_ck(p.phase == &"prep" and p.egg_placed and s.locked() and at.call() >= 0 and m.egg.global_position.distance_to(s.global_position) < 0.1,
+		"回合開始不用按 F：箱子在保險箱點上、蛋鎖在裡面（%s）" % s.global_position)
+	var before := s.global_position
+	p.place_egg()
+	_ck(s.global_position == before, "保險箱模式按 F 不會搬箱子")
+	var seen := {}
+	var far := 0
+	for i in 20:
+		p._start_round()
+		seen[at.call()] = true
+		far += int(p.env_pos.all(func(e: Vector3) -> bool: return Vector2(e.x - s.global_position.x, e.z - s.global_position.z).length() >= Party.ENV_FROM_SAFE))
+	_ck(not seen.has(-1) and seen.size() >= 2, "連開 20 回合：每次都在點上、抽到兩個以上的點（%s）" % [seen.keys()])
+	_ck(far >= 15, "信封離箱子 %d 公尺以上（20 回合有 %d 回合沒放寬）" % [Party.ENV_FROM_SAFE, far])
+	p.round_index = 1   # 第二個人（電腦 -1）當恐龍
+	p._start_round()
+	_ck(p.dino_id < 0 and at.call() >= 0 and Vector2(s.global_position.x, s.global_position.z).length() > 20.0, "電腦當恐龍：箱子也在保險箱點，不在中央")
+	_end(m)
+	Main.level_file = keep
+
 ## 電腦牛仔開保險箱（cowboy.gd 的 _bot_safe_act、bot_brain.gd）：看牌、去箱子、試對得上的組合、開了照舊撿蛋。
 ## 看牌要站一下、試密碼放慢（規劃「試密碼放慢」）。恐龍（主機 1）不動。bot 不在物理幀裡，手動叫 _bot_step，走路用瞬移代替
 func _case_bot_safe() -> void:
@@ -1403,8 +1443,7 @@ func _case_bot_safe() -> void:
 	m._apply_rules()
 	var p: Party = m.party
 	var s: Safe = m.safe
-	m._physics_process(DT)
-	p.place_egg()
+	m._physics_process(DT)   # 牧場沒有保險箱點：箱子開場放在恐龍前面（中央）
 	p.time_left = 0.0
 	m._physics_process(DT)
 	var code: int = s._code

@@ -92,11 +92,12 @@ static func build(it: LevelItem, root: Node3D) -> void:
 			root.add_child(Greybox.block(it.size))
 		"gb_safe":
 			root.add_child(Greybox.house(it.size, 1))
-		"spawn", "dino_spawn":   # 出生點：一根半透明的柱子（牛仔綠、恐龍紅）
+		"spawn", "dino_spawn", "safe_spot":   # 出生點、保險箱點：一根半透明的柱子（牛仔綠、恐龍紅、保險箱黃）
 			var c := CylinderMesh.new()
-			c.top_radius = 0.6 if it.kind == "spawn" else 2.4
+			c.top_radius = 2.4 if it.kind == "dino_spawn" else 0.6
 			c.bottom_radius = c.top_radius
 			c.height = 3.0
-			zone(root, c, Color(0.2, 0.9, 0.3, 0.4) if it.kind == "spawn" else Color(1.0, 0.2, 0.2, 0.35)).position.y = 1.5
+			zone(root, c, {"spawn": Color(0.2, 0.9, 0.3, 0.4), "dino_spawn": Color(1.0, 0.2, 0.2, 0.35),
+				"safe_spot": Color(1.0, 0.85, 0.1, 0.45)}[it.kind]).position.y = 1.5
 		"wheel":
 			_add(root, &"Wheel", ArenaMap.WHEEL_POSE.origin, Vector3.ONE, ArenaMap.WHEEL_POSE.basis)

@@ -1119,6 +1119,28 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -42, 0, 81)
 script = ExtResource("2_wwx2q")
 kind = "spawn"
 
+[node name="派對_保險箱點" type="Node3D" parent="." unique_id=873421652]
+
+[node name="保險箱點0" type="Node3D" parent="派對_保險箱點" unique_id=2128052161]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33, 0, -15)
+script = ExtResource("2_wwx2q")
+kind = "safe_spot"
+
+[node name="保險箱點1" type="Node3D" parent="派對_保險箱點" unique_id=2065121944]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27, 0, 29)
+script = ExtResource("2_wwx2q")
+kind = "safe_spot"
+
+[node name="保險箱點2" type="Node3D" parent="派對_保險箱點" unique_id=1378456261]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28, 0, 32)
+script = ExtResource("2_wwx2q")
+kind = "safe_spot"
+
+[node name="保險箱點3" type="Node3D" parent="派對_保險箱點" unique_id=1110331861]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36, 0, -25)
+script = ExtResource("2_wwx2q")
+kind = "safe_spot"
+
 [node name="派對_遮蔽" type="Node3D" parent="." unique_id=2009628998]
 
 [node name="樹0" type="Node3D" parent="派對_遮蔽" unique_id=1912406943]

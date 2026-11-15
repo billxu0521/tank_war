@@ -4,7 +4,7 @@ extends Node
 ## 派對模式時 main 底下有一個 $Party（main._apply_rules 建）。規則全在主機算（main._physics_process 每幀呼叫 step），
 ## 算完整包同步給客戶端（_recv）；客戶端只自己倒數 time_left 讓畫面順。畫面在 party_hud.gd，這裡不畫東西。
 ##
-## 一回合：準備 PREP_SECONDS（恐龍藏蛋，牛仔站著不能動、不能開槍）→ 遊戲 PLAY_SECONDS → 結算 RESULT_SECONDS。
+## 一回合：準備 PREP_SECONDS（恐龍藏蛋；保險箱模式箱子已經抽好位置，恐龍先去守。牛仔站著不能動、不能開槍）→ 遊戲 PLAY_SECONDS → 結算 RESULT_SECONDS。
 ## 參賽者：真人照連線編號排序，不到四個用電腦補在後面。第 N 回合由第 N 個人當恐龍（真人操作尼諾拉、電腦就是 boss 自己跑）。
 
 signal changed
@@ -223,9 +223,6 @@ func _start_round() -> void:
 	_known.clear()   # 看過的牌、信封開過沒：每回合重來
 	my_digits = [-1, -1]
 	env_open = [false, false]
-	if main.safe.on:
-		_place_envelopes()
-	main.barrels.roll()   # 爆炸桶每回合重抽（要在信封之後：避開信封）
 	dino_id = _roster[round_index % _roster.size()]
 	# 清場：boss 以外全部收掉再照這回合的角色生（刪掉重生，客戶端的位置才會跟著換；做法同 main._new_round）
 	# 恐龍的牛仔留著：make_pilot 要跟他交接（先叫他停送同步再收），不能現在就收
@@ -261,8 +258,13 @@ func _start_round() -> void:
 	main._announce.rpc("第 %d 回合：%s 當恐龍" % [round_index + 1, names.get(dino_id, "")])
 	if dino_id > 0 and _present(dino_id):
 		main.make_pilot(dino_id)   # 真人：操作尼諾拉（對抗模式那套）；電腦：boss 自己跑
-	else:   # 電腦不會藏蛋：開場就放在中央（不然蛋跟著牠追到站著不動的牛仔旁邊）
+	if main.safe.on:   # 保險箱：地圖上的幾個點隨機抽一個（可以重複），恐龍不用放；地圖沒放點就放在恐龍前面
+		var pts: Array[Vector3] = main.safe_spots
+		_hide_egg_at(pts.pick_random() if not pts.is_empty() else b.global_position, pts.is_empty())
+		_place_envelopes()   # 信封離箱子夠遠，所以箱子先放
+	elif not (dino_id > 0 and _present(dino_id)):   # 電腦不會藏蛋：開場就放在中央（不然蛋跟著牠追到站著不動的牛仔旁邊）
 		_hide_egg_at(b.global_position)
+	main.barrels.roll()   # 爆炸桶每回合重抽（要在信封、箱子之後：避開信封和蛋）
 	_sync()
 
 
@@ -343,14 +345,15 @@ func _drop_orphan_egg() -> void:
 		_drop_egg_at(egg.global_position)
 
 
-## 恐龍藏蛋（按 F、時間到、電腦開場）。保險箱模式：箱子放在恐龍前面（不要卡在牠身體裡），蛋鎖在箱子裡
-func _hide_egg_at(p: Vector3) -> void:
+## 恐龍藏蛋（按 F、時間到、電腦開場）、保險箱模式回合開始放箱子（蛋鎖在箱子裡）。
+## ahead：p 是恐龍的位置，箱子往牠前面挪（不然卡在牠身體裡）；抽到的保險箱點就直接放
+func _hide_egg_at(p: Vector3, ahead := true) -> void:
 	egg_placed = true
 	if not main.safe.on:
 		_drop_egg_at(p)
 		return
 	var b: Node3D = main._boss()
-	if b:
+	if b and ahead:
 		var fwd := -b.global_basis.z
 		p += Vector3(fwd.x, 0.0, fwd.z).normalized() * (BOSS_GD.BODY_RADIUS + Safe.HALF + 1.0)
 	main.safe.place(main._on_ground(_flat(p, Safe.HALF)))
@@ -437,20 +440,20 @@ func _recv(s: Dictionary) -> void:
 	changed.emit()
 
 
-## 信封：兩個隨機的空地（main._spawn_point，搶蛋模式放蛋也用它），不在撤離圈、離中央（恐龍放箱子的地方）和彼此夠遠。
+## 信封：兩個隨機的空地（main._spawn_point，搶蛋模式放蛋也用它），不在撤離圈、離保險箱和彼此夠遠。
 ## 抽不到合格的就放寬距離再抽
 const ENV_APART := 60.0       # 兩個信封至少相距
-const ENV_FROM_CENTER := 30.0 # 離恐龍出生點（箱子大概放在那附近）
+const ENV_FROM_SAFE := 40.0   # 離保險箱
 func _place_envelopes() -> void:
 	var apart := ENV_APART
-	var center := ENV_FROM_CENTER
+	var center := ENV_FROM_SAFE
 	for tries in 200:
 		if tries % 40 == 39:
 			apart *= 0.7
 			center *= 0.7
 		var pts: Array = [_env_spot(), _env_spot()]
 		var ok := pts.all(func(q: Vector3) -> bool:
-			return _flat(q, 0).distance_to(_flat(main.dino_spawn, 0)) >= center \
+			return _flat(q, 0).distance_to(_flat(main.safe.global_position, 0)) >= center \
 				and main._exits.all(func(x: Vector3) -> bool: return _flat(q, 0).distance_to(_flat(x, 0)) > main.EXIT_RADIUS + 3.0))
 		if ok and _flat(pts[0], 0).distance_to(_flat(pts[1], 0)) >= apart or tries == 199:
 			env_pos = pts

@@ -83,6 +83,8 @@ var spawn_points: Array[Vector3]:
 	get: return map.spawn_points
 var dino_spawn: Vector3:
 	get: return map.dino_spawn
+var safe_spots: Array[Vector3]:
+	get: return map.safe_spots
 var _doors: Array[Door]:
 	get: return map._doors
 var _toys: Array[ToyBuild]:

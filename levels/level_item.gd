@@ -25,11 +25,11 @@ extends Node3D
 ##   gb_house 灰盒房子（greybox.gd），size = 寬 × 每層高 × 深，amount = 層數，flag = 前門換成恐龍進得去的大門。正面朝自己的 +Z
 ##   gb_block 灰盒方塊（半身牆、木箱、平台），size = 寬 × 高 × 深
 ##   gb_safe  安全屋（派對模式）：一層的灰盒房，size 同 gb_house。門窗恐龍擠不進、甩尾拆不掉
-##   spawn    牛仔出生／重生點、dino_spawn 恐龍出生點：只看位置，遊戲裡看不到
+##   spawn    牛仔出生／重生點、dino_spawn 恐龍出生點、safe_spot 保險箱候選點（派對每回合抽一個）：只看位置，遊戲裡看不到
 ##   windmill 風車、hay_shed 倉庫、hitch 繫柱架、wheel 靠牆的車輪、water_tower 水塔：只看位置和朝向
 
 @export_enum("flat", "wheat", "barn", "house", "silo", "fence", "gate", "hay_bale", "kit", "prop",
-	"tree", "rock", "bush", "windmill", "hay_shed", "hitch", "wheel", "shop", "road", "water_tower", "gb_house", "gb_block", "gb_safe", "spawn", "dino_spawn") var kind := "kit":
+	"tree", "rock", "bush", "windmill", "hay_shed", "hitch", "wheel", "shop", "road", "water_tower", "gb_house", "gb_block", "gb_safe", "spawn", "dino_spawn", "safe_spot") var kind := "kit":
 	set(v):
 		kind = v
 		_refresh()
