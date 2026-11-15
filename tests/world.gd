@@ -550,7 +550,7 @@ func _case_barrels() -> void:
 	Barrels.COUNT = keep
 
 ## 小恐龍哨兵（raptors.gd）：尼諾拉放（上限、距離限制、倒地）、看見才叫（站著、蹲著、灌木、背後）、方位條、一槍死、尼諾拉傷不到、
-## 炸死、死了不補、晚加入看得到、下回合清空、不混進 Players、非派對模式沒有
+## 炸死、死了不補、晚加入看得到、閒晃（不超過半徑、不進禁止範圍、盯人停下、晚加入位置對）、下回合清空、不混進 Players、非派對模式沒有
 func _case_raptors() -> void:
 	_ck(InputMap.has_action(&"dino_raptor") and InputMap.action_get_events(&"dino_raptor").any(func(e: InputEvent) -> bool: return e is InputEventKey)
 		and InputMap.action_get_events(&"dino_raptor").any(func(e: InputEvent) -> bool: return e is InputEventJoypadButton), "放小恐龍要綁鍵盤和手把")
@@ -572,7 +572,9 @@ func _case_raptors() -> void:
 	for k in 400:
 		var t: Vector3 = m._on_ground(m._spawn_point() * Vector3(1, 0, 1))
 		var flat_ok := [-13.0, -8.0, 8.0].all(func(dz: float) -> bool: return absf(m._on_ground(Vector3(t.x, 0, t.z + dz)).y - t.y) < 0.4)   # 前後平的：射線不被坡擋
-		if r.why_not(t) == "" and r.why_not(t + Vector3(0, 0, -12)) == "" and flat_ok:
+		var los := [-5.0, -8.0, -13.0].all(func(dz: float) -> bool: return m.get_world_3d().direct_space_state.intersect_ray(   # 前面沒東西擋（樹、碎塊）
+			PhysicsRayQueryParameters3D.create(t + Vector3.UP * 1.5, m._on_ground(Vector3(t.x, 1.0, t.z + dz)))).is_empty())
+		if r.why_not(t) == "" and r.why_not(t + Vector3(0, 0, -12)) == "" and flat_ok and los:
 			q = t
 			break
 	_ck(q != Vector3.INF, "找得到放小恐龍的空地")
@@ -651,11 +653,67 @@ func _case_raptors() -> void:
 	# 晚加入：收到主機那包，看得到一樣的一批（死的收著）
 	var cl := Raptors.new()
 	m.add_child(cl)
-	cl._recv(r.spots, r.yaws, r.alive)
+	cl._recv(r.spots, r.yaws, r.alive, r.goals)
 	_ck(cl.get_child_count() == 4 and (cl.get_child(3) as Node3D).global_position.is_equal_approx(r.spots[3])
 		and (cl.get_child(3) as Node3D).visible and not (cl.get_child(0) as Node3D).visible, "晚加入的人看得到現有的小恐龍")
 	m.remove_child(cl)
 	cl.free()
+	# 閒晃：沒人看到時在家附近走，不超過半徑、不進禁止範圍，身體面向走的方向
+	r.clear()
+	r.add(q, 0.0)
+	for n: Node3D in cows:
+		n.global_position = Vector3(0, 800, 0)
+	var far := 0.0
+	var bad := 0
+	var faced := true
+	for k in 600:   # 60 秒
+		r.step(0.1)
+		r._physics_process(0.1)
+		far = maxf(far, Vector2(r.spots[0].x - q.x, r.spots[0].z - q.z).length())
+		var sp := Vector2(r.spots[0].x, r.spots[0].z)   # 禁止範圍：留 0.3 公尺給抽查的間隔
+		var near := func(o: Vector3) -> bool: return sp.distance_to(Vector2(o.x, o.z)) < Raptors.CLEAR - 0.3
+		bad += int((m.safe.on and near.call(m.safe.global_position)) or p.env_pos.any(near) or m.spawn_points.any(near) or not m._is_clear(sp, 0.3))
+		var go := Vector2(r.goals[0].x - r.spots[0].x, r.goals[0].z - r.spots[0].z)
+		if go.length() > 0.5:
+			faced = faced and Vector2(-sin(r.yaws[0]), -cos(r.yaws[0])).dot(go.normalized()) > 0.99
+	_ck(far > 1.0 and far <= Raptors.WANDER + 0.05 and bad == 0, "閒晃：會離開原點、不超過 %.0f 公尺、不進禁止範圍（最遠 %.1f、違規 %d）" % [Raptors.WANDER, far, bad])
+	_ck(faced, "走路時面向走的方向")
+	# 走到一半：晚加入的人收到那一包，接著自己走，位置跟主機一樣
+	for k in 200:
+		if r.goals[0].distance_to(r.spots[0]) > 1.0:
+			break
+		r.step(0.1)
+		r._physics_process(0.1)
+	_ck(r.goals[0].distance_to(r.spots[0]) > 1.0, "找得到正在走的時候")
+	var late := Raptors.new()
+	m.add_child(late)
+	late._recv(r.spots, r.yaws, r.alive, r.goals)
+	for k in 3:
+		r._physics_process(0.1)
+		late._physics_process(0.1)
+	_ck(late.spots[0].distance_to(r.spots[0]) < 0.01 and (late.get_child(0) as Node3D).global_position.distance_to(r.spots[0]) < 0.01,
+		"晚加入的人看到的位置跟主機一樣（%s %s）" % [late.spots[0], r.spots[0]])
+	m.remove_child(late)
+	late.free()
+	# 盯人：停下來、面向牛仔；叫完站一下再走
+	var head: Vector3 = r.spots[0]
+	c.global_position = r.spots[0] + (r.goals[0] - r.spots[0]).normalized().rotated(Vector3.UP, 1.0) * 2.5   # 3 公尺內：不管方向都看得到
+	r._cd[0] = 0.0
+	r.step(0.1)
+	r._physics_process(0.1)
+	var tc := c.global_position - r.spots[0]
+	_ck(r.goals[0] == r.spots[0] and r.spots[0].is_equal_approx(head) and absf(angle_difference(r.yaws[0], atan2(-tc.x, -tc.z))) < 0.01, "看到牛仔就停下來、面向他")
+	for k in 9:
+		r.step(0.1)
+		r._physics_process(0.1)
+	_ck(r.marked().size() == 1 and r.spots[0].is_equal_approx(head), "盯的時候不走，盯滿就叫")
+	var again := false
+	for k in 150:
+		r.step(0.1)
+		r._physics_process(0.1)
+		again = again or r.goals[0].distance_to(r.spots[0]) > 0.5
+	_ck(again, "叫完再回去閒晃")
+	r.clear()
 	# 下回合清空
 	p._end_round(true, "test")
 	p.time_left = 0.0
