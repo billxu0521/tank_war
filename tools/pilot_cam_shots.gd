@@ -145,4 +145,9 @@ func _center_hit() -> Vector3:
 func _save(name: String) -> void:
 	var path := "%s/%s.png" % [_out, name]
 	root.get_texture().get_image().save_png(path)
-	print("存圖 ", path)
+	var cam := root.get_camera_3d()
+	var foot: float = _boss.global_position.y - _boss.LIFT
+	print("存圖 %s（鏡頭離腳底 %.2f 公尺）" % [path, cam.global_position.y - foot])
+	if name.begins_with("bite"):   # 牛仔在畫面哪裡（畫面座標是 1600x900；可能躲在麥田裡，要看圖）
+		var sp := cam.unproject_position(_cow.global_position + Vector3.UP * 1.2)
+		print("  牛仔在畫面 (%d, %d)%s" % [sp.x, sp.y, "" if Rect2(Vector2.ZERO, root.get_visible_rect().size).has_point(sp) else "（畫面外）"])
