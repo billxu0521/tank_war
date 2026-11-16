@@ -269,7 +269,7 @@ func _update_crosshair(me: Node) -> void:
 	main.crosshair.queue_redraw()
 
 const RING_MIN := 24.0
-const RING_MAX := 90.0
+const RING_MAX := 120.0   # 鏡頭拉近後圈圈變大（2026-11-16 從 90 放寬）
 var _ring := Vector3.ZERO   # 咬的範圍：x、y 是圓心（準心 Label 裡的座標），z 是半徑（像素，0 = 不畫）
 var _ring_red := false
 func _draw_ring() -> void:
