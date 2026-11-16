@@ -186,7 +186,7 @@ static var CAM_SIDE: float = Balance.num("dino_cam_side") * GROW
 static var CAM_DIST: float = Balance.num("dino_cam_dist") * GROW
 const CAM_TILT := -0.22         # 約 13 度（正後方：拉高往下看，看得到頭前面；越肩時是 -0.14。dino.gd 的 CAM_BASE 是 23 度俯視，準心會指到腳前的地上）
 const CAM_MARGIN := 0.6         # 鏡頭被牆擋住時，離牆留這麼遠（公尺）
-const CAM_PULL_MIN := 0.35      # 最多拉近到原本的這個比例：再近鏡頭會進到身體裡
+const CAM_PULL_MIN := 0.5       # 最多拉近到原本的這個比例：再近鏡頭會進到身體裡
 const AIM_CONE := 0.6           # 火球最多偏離身體正面這麼多（弧度，約 34 度）：身體還沒轉過來時不能往旁邊、往後吐
 var _cam_t := Vector2.ONE       # 駕駛那台：鏡頭被擋住時拉近的比例（x 往右那段、y 往後那段；1 = 沒被擋）
 var _quake := 0.0               # 駕駛那台：打到可拆的東西，鏡頭現在抖的幅度（0～0.2，乘 QUAKE_METERS 是平移公尺），每幀追 _quake_to
