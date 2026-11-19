@@ -209,7 +209,7 @@ func _ready() -> void:
 		_meat_hud.position = Vector2(bar.offset_right - bar.offset_left + 8.0, -8.0)
 		_meat_hud.size = Vector2(26, 26)
 		_meat_hud.visible = false
-		_meat_hud.draw.connect(func() -> void: draw_meat_icon(_meat_hud, 26.0))
+		_meat_hud.draw.connect(func() -> void: Icons.draw(_meat_hud, &"meat", Vector2(13, 13), 26.0, Color.WHITE))
 		bar.add_child(_meat_hud)
 		_meat_secs = Label.new()
 		_meat_secs.position = Vector2(30, 0)
@@ -1076,14 +1076,3 @@ func _arena() -> Node3D:
 	var world := get_tree().get_first_node_in_group(&"arena") as Node3D
 	return world if world else get_tree().current_scene as Node3D
 
-
-## 恐龍肉的圖示（一塊肉、骨頭、右上一個綠色＋），s 是邊長。ponytail: 程式畫的，A7 做圖示檔（icons.gd）時搬過去
-static func draw_meat_icon(ci: CanvasItem, s: float) -> void:
-	var bone := Color(0.95, 0.92, 0.85)
-	ci.draw_line(Vector2(0.55, 0.62) * s, Vector2(0.9, 0.92) * s, bone, 0.12 * s)
-	ci.draw_circle(Vector2(0.9, 0.92) * s, 0.08 * s, bone)
-	ci.draw_circle(Vector2(0.4, 0.55) * s, 0.34 * s, Color(0.55, 0.2, 0.14))
-	ci.draw_circle(Vector2(0.34, 0.5) * s, 0.2 * s, Color(0.8, 0.36, 0.28))
-	var green := Color(0.3, 0.9, 0.35)
-	ci.draw_rect(Rect2(Vector2(0.74, 0.02) * s, Vector2(0.1, 0.34) * s), green)
-	ci.draw_rect(Rect2(Vector2(0.62, 0.14) * s, Vector2(0.34, 0.1) * s), green)

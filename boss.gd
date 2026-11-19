@@ -1107,13 +1107,13 @@ func _guard_center() -> Vector3:
 	var g := _game()
 	return g.egg.global_position if g.safe.open else g.safe.global_position
 
-## 下一個守點：沒人試過密碼就在「箱子 ↔ 兩個信封」之間輪流；試過了就在箱子周圍 GUARD_RING 內繞
+## 下一個守點：沒人試過密碼就照「信封 0 → 箱子 → 信封 1 → 箱子」輪流；試過了就在箱子周圍 GUARD_RING 內繞
 func _guard_next(g: Node) -> Vector3:
 	var pts := _guard_points()
 	var to: Vector3
-	if pts.size() > 1:
-		_guard_i = (_guard_i + 1) % pts.size()
-		to = pts[_guard_i]
+	if pts.size() > 1:   # 每巡完一個信封先回箱子（箱子佔一半的路程）：0.8.16 起不分信封開過沒，三點平均輪會離箱子太久
+		_guard_i = (_guard_i + 1) % (2 * (pts.size() - 1))
+		to = pts[0] if _guard_i % 2 == 0 else pts[1 + _guard_i / 2]
 	else:
 		var a := _rng.randf() * TAU
 		to = g.safe.global_position + Vector3(cos(a), 0, sin(a)) * _rng.randf_range(2.0, GUARD_RING)

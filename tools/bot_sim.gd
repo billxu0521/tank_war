@@ -14,6 +14,7 @@ var _t0 := 0
 var _gold := ""   # 最後一回合：金色小恐龍死了沒
 var _star := ""   # 最後一回合：星星在誰身上
 var _ms: PackedFloat32Array = []   # 遊戲中每幀的腳本時間（毫秒）：_process＋_physics_process
+var _pts: Array = []   # 每回合結算後的 [恐龍得分, 獵人裡最高的得分, 獵人平均]（0.8.16 第 1 節：恐龍固定之後公不公平）
 
 
 func _initialize() -> void:
@@ -54,6 +55,8 @@ func _process(_d: float) -> bool:
 		_gold = ""
 	if p.stats.last.size() > 0 and not (_rounds.size() > 0 and is_same(p.stats.last, _rounds.back())):   # report 每回合換一個新的字典
 		_rounds.append(p.stats.last)
+		var hs: Array = p._roster.filter(func(id: int) -> bool: return id != p.dino_id).map(func(id: int) -> int: return int(p.round_scores.get(id, 0)))
+		_pts.append([int(p.round_scores.get(p.dino_id, 0)), hs.max() if hs.size() > 0 else 0, hs.reduce(func(a: int, b: int) -> int: return a + b, 0) / maxf(hs.size(), 1.0)])
 		if _rounds.size() >= ROUNDS:
 			_summary()
 			return true
@@ -124,5 +127,16 @@ func _summary() -> void:
 		tot += v
 	print("  每幀腳本時間 平均 %.2f 毫秒，最慢 1%% %.2f 毫秒（%d 幀）" % [tot / maxi(ms.size(), 1),
 		ms[int(ms.size() * 0.99)] if ms.size() > 0 else 0.0, ms.size()])
+	print("  搜刮 %s 次／回合、吃肉 %s 次／回合；獵人新得分（信封、開箱、打死拿蛋的）%s 分／回合" % [avg.call(_rounds, "loots"),
+		avg.call(_rounds, "meals"), avg.call(_rounds, "new_pts")])
+	var dsum := 0.0
+	var tsum := 0.0
+	var hsum := 0.0
+	for v: Array in _pts:
+		dsum += v[0]
+		tsum += v[1]
+		hsum += v[2]
+	print("  恐龍 %.1f 分／回合、獵人最高 %.1f、獵人平均 %.1f；恐龍是獵人最高的 %.2f 倍（星星 ×2 只在每 4 回合的最後一回合）" % [dsum / maxi(n, 1),
+		tsum / maxi(n, 1), hsum / maxi(n, 1), dsum / maxf(tsum, 0.001)])
 	print("  卡在哪：%s" % "、".join(by.keys().map(func(k: String) -> String: return "%s %.0f 秒" % [k, by[k]])))
 	print("BOT_SIM OK")
