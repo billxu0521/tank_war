@@ -2773,3 +2773,69 @@ func _case_new_scores() -> void:
 	var want := (1 + (Party.SCORE_SURVIVE if alive else 0)) * Party.STAR_MULT
 	_ck(sc.call(-1) == want and p._env_bonus.is_empty(), "結算：A 的信封分公開、拿星星一起 × 2（%d，要 %d）" % [sc.call(-1), want])
 	_end(m)
+
+## 0.8.16 搜刮倒地的尼諾拉（第 3.1 節，hold_action.gd）：沒倒地搜不了、按滿才拿到肉、差一點放開沒有、同一次倒地只能搜一次、
+## 兩個人各算各的、走遠或牠起來就停、肉最多帶 1 塊；電腦會挑搜刮、會走過去按住
+func _case_loot() -> void:
+	var m := _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"party"))
+	m._apply_rules()
+	var p: Party = m.party
+	var h: HoldAction = m.hold
+	m._physics_process(DT)   # 開場：主機（1）當恐龍，電腦 -1～-3 當牛仔
+	p.time_left = 0.0
+	m._physics_process(DT)
+	var b: Node3D = m._boss()
+	var a: Cowboy = m.players.get_node(^"-1")
+	var a2: Cowboy = m.players.get_node(^"-2")
+	var near := Party.loot_dist() - 0.5
+	a.global_position = b.global_position + Vector3(near, 0, 0)
+	a2.global_position = b.global_position + Vector3(-near, 0, 0)
+	b.down_left = 0.0
+	_ck(not h.start(-1, &"loot", b) and b.prompt == "", "尼諾拉沒倒地：搜不了、沒有提示")
+	b.down_left = 15.0
+	var secs := Party.LOOT_SECONDS
+	_ck(b.prompt != "", "倒地：看著有「按住搜刮」的提示（%s）" % b.prompt)
+	_ck(h.start(-1, &"loot", b), "倒地、夠近：開始搜")
+	h._physics_process(secs - 0.1)
+	h.stop(-1)
+	_ck(a.meat == 0 and not b.looted.has(-1), "搜到差 0.1 秒放開：什麼都沒有")
+	_ck(h.start(-1, &"loot", b) and h.start(-2, &"loot", b), "兩個人可以同時搜")
+	h._physics_process(secs * 0.5)
+	a2.global_position = b.global_position + Vector3(-(Party.loot_dist() + 1.0), 0, 0)
+	h._physics_process(secs * 0.5 + 0.01)
+	_ck(a.meat == 1 and b.looted.has(-1) and h.doing(-1) == &"", "按滿 %.0f 秒：拿到一塊肉（%d）" % [secs, a.meat])
+	_ck(h.doing(-2) == &"" and a2.meat == 0, "另一個人搜到一半走遠：停、沒拿到")
+	_ck(not h.start(-1, &"loot", b), "同一次倒地搜第二次不行")
+	a2.global_position = b.global_position + Vector3(-near, 0, 0)
+	h.start(-2, &"loot", b)
+	b.down_left = 0.0
+	h._physics_process(0.1)
+	_ck(h.doing(-2) == &"", "搜到一半牠起來：停")
+	# 下一次倒地（_knock 清掉 looted）：可以再搜，但肉最多帶 1 塊
+	b.down_left = 15.0
+	b.looted.clear()
+	h.start(-1, &"loot", b)
+	h._physics_process(secs + 0.01)
+	_ck(b.looted.has(-1) and a.meat == Fighter.MEAT_MAX, "已經帶滿：搜完也不再給（%d）" % a.meat)
+	# 電腦：尼諾拉倒在附近、血少（或一張牌都沒看）就去搜；走到了自己按住，搜完拿到肉
+	a2.hp = 40
+	a2.brain = BotBrain.new(-2, {})
+	var ctx: Dictionary = a2._bot_ctx(m)
+	_ck(ctx.loot != null, "電腦的狀況裡有倒地的尼諾拉")
+	a2.brain.think(ctx)
+	_ck(a2.bot_action == "搜刮", "電腦血少、尼諾拉倒在旁邊：去搜刮（%s）" % a2.brain.describe())
+	a2.global_position = b.global_position + Vector3(-(Party.loot_dist() - 1.5), 0, 0)   # 走到了（貼著牠的身體）
+	for i in 3:
+		a2._bot_loot(m)
+	_ck(h.doing(-2) == &"loot", "電腦走到了自己按住")
+	h._physics_process(secs + 0.01)
+	a2._bot_loot(m)
+	_ck(a2.meat == 1 and a2._bot_now, "電腦搜完拿到肉、馬上重想")
+	var brain := BotBrain.new(-3, {})
+	var c3: Dictionary = ctx.duplicate()
+	c3.hp = 1.0
+	c3.known = [3, -1]
+	brain.think(c3)
+	_ck(brain.action != "搜刮", "血多、看過牌的電腦不去搜（%s）" % brain.action)
+	_end(m)

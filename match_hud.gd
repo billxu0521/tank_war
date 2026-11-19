@@ -149,7 +149,7 @@ func _dist_to_boss(b: Node3D) -> int:
 	var me := main.players.get_node_or_null(^"1") as Node3D
 	return roundi(me.global_position.distance_to(b.global_position)) if me else -1
 
-## 方位條下面的倒數：重生、撤離、撿蛋。重生倒數用自己這台的時間算（主機的重生佇列客戶端看不到）
+## 方位條下面的倒數：重生、搜刮、撤離、撿蛋。重生倒數用自己這台的時間算（主機的重生佇列客戶端看不到）
 func _update_center_info(me: Node) -> void:
 	var now := Time.get_ticks_msec()
 	if me != null:
@@ -165,6 +165,8 @@ func _update_center_info(me: Node) -> void:
 	elif me == null and _dead_ms >= 0:
 		var delay: float = Party.RESPAWN_SECONDS if main.party else main.RESPAWN_DELAY
 		t = "%d 秒後重生" % maxi(1, ceili(delay - (now - _dead_ms) / 1000.0))
+	elif main.hold.mine != &"":
+		t = main.hold.mine_text()   # 按住幾秒的互動（搜刮）的進度
 	elif main.egg.extract > 0.0:
 		var who := "你" if main.egg.carrier == main.multiplayer.get_unique_id() else _who(main.egg.carrier)
 		t = "%s撤離中：還剩 %.1f 秒" % [who, maxf(main.extract_seconds() - main.egg.extract, 0.0)]

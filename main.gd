@@ -44,6 +44,7 @@ const BOSS_ID := -999   # 負數＝電腦（主機操控）；固定編號，場
 @onready var safe: Safe = $Safe   # 派對模式的保險箱（safe.gd）；其他模式收著
 var barrels: Barrels   # 隨機擺的爆炸桶（barrels.gd）；_ready 建，每局（派對每回合）主機重抽
 var raptors: Raptors   # 派對模式尼諾拉放的小恐龍哨兵（raptors.gd）；_ready 建，每回合清空
+var hold: HoldAction   # 按住幾秒的互動（hold_action.gd）：搜刮；_ready 建
 @onready var mode_pick: OptionButton = $UI/Root/Lobby/ModeRow/ModePick
 
 ## 連線對戰的模式：開房的人在大廳選，加入的人照主機的（連進來時主機會送 _set_rules）。
@@ -158,6 +159,9 @@ func _ready() -> void:
 	raptors = Raptors.new()
 	raptors.name = &"Raptors"   # 名字固定：RPC 每台找得到。不放 Players 底下（那裡的都算玩家）
 	add_child(raptors)
+	hold = HoldAction.new()
+	hold.name = &"Hold"   # 名字固定：RPC 每台找得到（按住幾秒的互動，hold_action.gd）
+	add_child(hold)
 	ModelMaterials._flatten_models()
 	_use_cjk_font()
 	_add_settings()

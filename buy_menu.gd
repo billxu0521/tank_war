@@ -46,7 +46,7 @@ func _init() -> void:
 		v.add_child(b)
 		_btns[idx] = b
 	v.add_child(_label(20, "副武器（2 鍵）　左輪"))
-	v.add_child(_label(20, "裝備　補血包 ×%d（3 鍵）　炸藥（4 鍵）" % Balance.whole("medkit_count")))
+	v.add_child(_label(20, "裝備　補血包 ×%d（3 鍵）　炸藥（G 鍵）" % Balance.whole("medkit_count")))
 	v.add_child(_label(18, "B／Esc 關閉"))
 	hide()
 

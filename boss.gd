@@ -162,6 +162,11 @@ var downed: bool:
 	get: return down_left > 0.0
 var invulnerable: bool:
 	get: return guard_left > 0.0
+## 這次倒地誰搜刮過了（連線編號 -> true）。主機搜完送大家（mark_looted），倒地那一刻（_knock）清掉
+var looted := {}
+## 看著倒地的尼諾拉時畫面上的提示（cowboy.gd 的 update_focus 讀這個；"" 就不算看著能互動的東西）
+var prompt: String:
+	get: return "按住搜刮（恐龍肉）" if _can_loot_here() else ""
 signal knocked_down   # 各台：倒地那一刻
 signal got_up         # 各台：起身那一刻
 ## 對抗模式：玩家操作尼諾拉（docs/規劃/2026-10-18-對抗模式.md）。0 = 電腦。有駕駛時行為樹不跑，照駕駛送來的輸入動，
@@ -1415,6 +1420,7 @@ func _knock() -> void:
 	if multiplayer.get_remote_sender_id() != 1:
 		return
 	down_left = PARTY_KNOCK_TIME if _party() else KNOCK_TIME
+	looted.clear()   # 每次倒地，每個獵人能搜一次
 	hp = max_hp
 	act = ACT_NONE
 	_target = null
@@ -1422,3 +1428,23 @@ func _knock() -> void:
 	_suspect = 0.0
 	_spot_pending = false
 	director.peak()
+
+
+# --- 搜刮（docs/企劃/2026-11-19-0.8.16-一般模式與規則改動.md 第 3.1 節）：規則在 party.gd 的 can_loot，這裡只有提示和按 F ---
+
+## 這台的人能不能對牠按住 F（只看畫面：倒地、派對遊戲中、這次倒地還沒搜過）。主機照 party.can_loot 再全部檢查
+func _can_loot_here() -> bool:
+	var g := _game()
+	return down_left > 0.0 and g != null and g.party != null and g.party.phase == &"play" \
+		and not looted.has(g.multiplayer.get_unique_id())
+
+
+func interact(who: Node) -> void:
+	var g := _game()
+	if g and who == g._me() and _can_loot_here() and not who.viewmodel.using_item():
+		g.hold.press(&"loot", self)
+
+
+@rpc("authority", "call_local", "reliable")
+func mark_looted(id: int) -> void:
+	looted[id] = true
