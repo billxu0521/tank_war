@@ -484,6 +484,9 @@ func _physics_process(delta: float) -> void:
 	update_focus()
 	if focus and Input.is_action_just_pressed("interact"):
 		focus.interact(self)
+	var g := _match()
+	if g and g.hold.mine != &"" and not Input.is_action_pressed("interact"):   # 按住幾秒的互動（搜刮）：放開 F 就停
+		g.hold.release()
 
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var dir := (transform.basis * Vector3(input.x, 0.0, input.y)).normalized()
@@ -613,7 +616,8 @@ var _bot_hit_ago := INF      # 上次被打幾秒前
 var _path := PackedVector3Array()   # 導航網格上的路（尼諾拉那張）
 var _path_goal := Vector3.INF
 var _path_age := 0.0
-var _bot_heal := 0.0         # 躲好了在用急救包：用了幾秒
+var _bot_heal := 0.0         # 躲好了在用急救包（或吃肉）：用了幾秒
+var _bot_looting := false    # 正在搜刮（主機的 hold 在數）
 var _bot_spot := -1.0        # 看到恐龍、還沒反應過來：還剩幾秒（-1＝沒看到）
 var _bot_dino_down := false  # 看到恐龍倒地
 var _bot_target: Node3D      # 看得到、要打的（每次想的時候選）
@@ -646,6 +650,7 @@ func _bot_step(delta: float) -> void:
 		_bot_think(g, delta)
 		if _bot_alert <= 0.0:   # 看牌、試密碼只有主機算；挨打就先停
 			_bot_safe_act(g, delta)
+		_bot_loot(g)
 	var hold := _bot_should_hold(g)
 	var want := Vector3.ZERO
 	if not hold:
@@ -678,7 +683,9 @@ func _bot_step(delta: float) -> void:
 	_bot_hide(g, hold, delta)
 	# 開槍是反射：腳照動作走，看得到就打。站在牌前、箱子旁邊（看牌、試密碼）時跟真人一樣不開槍（真人開著密碼盤拿不到槍），挨打才還手
 	var threat := _bot_threat(g)
-	if threat and not (hold and bot_action in ["看牌0", "看牌1", "試密碼"] and _bot_alert <= 0.0):
+	if threat and not (hold and bot_action in ["看牌0", "看牌1", "試密碼", "搜刮"] and _bot_alert <= 0.0):
+		if g and g.hold.doing(name.to_int()) != &"":   # 搜刮中挨打還手：先放開（搜的時候不能開槍）
+			g.hold.stop(name.to_int())
 		_bot_shoot(threat, delta)
 	else:
 		_bot_look(delta, want)
@@ -798,7 +805,12 @@ func _bot_ctx(g: Node) -> Dictionary:
 			star = p.star_pos
 		elif holder_n and p.star_holder != id:
 			star = holder_n.global_position
-	return {"star": star, "me": global_position, "hp": float(hp) / max_hp, "last_life": p != null and int(p.lives.get(id, 2)) <= 1,
+	var loot: Variant = null   # 搜刮：尼諾拉倒地、BotBrain.LOOT_REACH 內、這次倒地我還沒搜過、肉還沒帶滿
+	var b: Node3D = g._boss()
+	if p and p.phase == &"play" and b and b.down_left > 0.0 and not b.looted.has(id) and meat < MEAT_MAX \
+			and _flat_to(b.global_position) < BotBrain.LOOT_REACH:
+		loot = b.global_position
+	return {"star": star, "loot": loot, "me": global_position, "hp": float(hp) / max_hp, "last_life": p != null and int(p.lives.get(id, 2)) <= 1,
 		"time_left": p.time_left if p else 999.0, "locked": safe_on, "safe": g.safe.global_position,
 		"cards": p.env_pos if p else [], "known": p._known.get(id, [-1, -1]) if p else [-1, -1],
 		"carrier": carrier, "holder": holder.global_position if holder else g.egg.global_position, "egg": g.egg.global_position,
@@ -836,6 +848,8 @@ func _bot_should_hold(g: Node) -> bool:
 			return g._dist_to_exit(global_position) < g.EXIT_RADIUS * 0.5
 		"躲", "守箱":
 			return _flat_to(brain.goal(brain.last_ctx)) < 2.0
+		"搜刮":
+			return brain.last_ctx.get("loot") != null and _flat_to(brain.last_ctx.loot) < Party.loot_dist() - Party.LOOT_RANGE * 0.2
 	return false
 
 
@@ -844,11 +858,16 @@ func _bot_hide(g: Node, hold: bool, delta: float) -> void:
 	var hiding := hold and bot_action == "躲"
 	var crouch: bool = hiding and g.map._bushes.any(func(b: Vector3) -> bool: return _flat_to(b) < 1.2)
 	sync_crouching = crouch   # 膠囊、頭高由 _process 照這個縮（bot 在主機上是「遠端」身分）
-	if hiding and float(hp) / max_hp < BotBrain.HEAL_BELOW and medkits > 0:
+	# 先用快的（補血包）；用完了、沒在回肉的血才吃肉
+	var eat := medkits <= 0 and meat > 0 and meat_left <= 0.0
+	if hiding and float(hp) / max_hp < BotBrain.HEAL_BELOW and (medkits > 0 or eat):
 		_bot_heal += delta
-		if _bot_heal >= Fighter.medkit_seconds:
+		if _bot_heal >= (meat_seconds if eat else Fighter.medkit_seconds):
 			_bot_heal = 0.0
-			request_heal()
+			if eat:
+				request_eat()
+			else:
+				request_heal()
 	else:
 		_bot_heal = 0.0
 
@@ -915,6 +934,24 @@ func _bot_safe_act(g: Node, delta: float) -> void:
 			left.append(n)
 	if not left.is_empty() and g.safe.try_code(id, left.pick_random()):
 		_bot_wait = Safe.TRY_SECONDS + randf_range(BotBrain.GAP_MIN, BotBrain.GAP_MAX)
+
+
+## 主機：搜刮的手。走到了就開始按住（hold_action.gd），搜完、被打斷就馬上重想；換了動作就放開
+func _bot_loot(g: Node) -> void:
+	var id := name.to_int()
+	var doing: bool = g.hold.doing(id) == &"loot"
+	if bot_action != "搜刮":
+		if doing:
+			g.hold.stop(id)
+		_bot_looting = false
+		return
+	if _bot_looting and not doing:   # 搜完了（或牠起來了）
+		_bot_looting = false
+		_bot_now = true
+	elif not doing and _bot_should_hold(g):
+		_bot_looting = g.hold.start(id, &"loot", g._boss())
+		if not _bot_looting:
+			_bot_now = true
 
 
 ## 瞄誰：沙盒照舊找玩家；其他時候是上次看、聽時選的（_bot_sense，只有看得到的）
@@ -1119,7 +1156,7 @@ func update_focus() -> void:
 	var hit := _ray(from, from - _camera.global_transform.basis.z * interact_range)
 	var c: Object = hit.get("collider")
 	var was := focus
-	focus = c if c and c.has_method(&"interact") else null
+	focus = c if c and c.has_method(&"interact") and c.prompt != "" else null   # 提示是空的（沒倒地的尼諾拉）＝不能互動
 	if focus != was:
 		Accent.focus(was, false)
 		Accent.focus(focus, true)

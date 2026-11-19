@@ -162,8 +162,12 @@ var _fire_queued := false   # 等槍好了自動射的那一發：裝填中按�
 var _aim_latched := false   # aim_toggle 開著時：現在是不是舉著
 var _fire_hold := 0.0       # 開火鍵這一次已經按住多久
 # --- 補血包（3）：按一下開始補，補 medkit_seconds 秒，時間到扣一包、請主機加血。補的時候不能開槍、換槍、近戰、丟炸藥、換彈（一動就取消）、不能跑（鎖住只能走）；再按 3 取消，不扣包 ---
-var _heal_t := -1.0         # 補了多久，-1 = 沒在補
-var _heal_hud: Label        # 補血中：畫面中間（準心下面），沒在補就藏起來
+# 恐龍肉（4）共用這一段：「正在用東西」。_eating 分是哪一樣；時間、取消規則都一樣，吃要 Fighter.meat_seconds 秒
+var _heal_t := -1.0         # 用了多久（補血包或吃肉），-1 = 沒在用
+var _eating := false        # 正在用的是恐龍肉
+var _heal_hud: Label        # 補血中、吃肉中：畫面中間（準心下面），沒在用就藏起來
+var _meat_hud: Control      # 吃了肉在回血：血條右邊一個肉加綠色＋的圖示，旁邊寫剩幾秒
+var _meat_secs: Label
 
 
 func _ready() -> void:
@@ -199,6 +203,18 @@ func _ready() -> void:
 	_heal_hud.visible = false
 	if ammo_label:
 		ammo_label.get_parent().add_child(_heal_hud)
+	var bar := _player.get_node_or_null(^"HUD/HealthBar") as Control
+	if bar:
+		_meat_hud = Control.new()
+		_meat_hud.position = Vector2(bar.offset_right - bar.offset_left + 8.0, -8.0)
+		_meat_hud.size = Vector2(26, 26)
+		_meat_hud.visible = false
+		_meat_hud.draw.connect(func() -> void: draw_meat_icon(_meat_hud, 26.0))
+		bar.add_child(_meat_hud)
+		_meat_secs = Label.new()
+		_meat_secs.position = Vector2(30, 0)
+		_meat_secs.add_theme_font_size_override(&"font_size", 16)
+		_meat_hud.add_child(_meat_secs)
 
 
 ## 描線（outline.gdshader）認槍和手的記號：粗糙度剛好 OUTLINE_MARK。以前用「離鏡頭 1.5 公尺內」認，
@@ -311,13 +327,15 @@ func _process(delta: float) -> void:
 			switch_weapon(0)
 		elif Input.is_action_just_pressed("heal"):
 			_heal_press()
+		elif Input.is_action_just_pressed("eat"):
+			_eat_press()
 		_update_melee_input(delta)
 		_update_heal(delta)
-		if _cook < 0.0 and _melee_held < 0.0 and dynamite != 0 and Input.is_action_just_pressed("throw"):
+		if _cook < 0.0 and _melee_held < 0.0 and dynamite != 0 and Input.is_action_just_pressed("throw") and not _holding():
 			_light_dynamite()
 	_update_cook(delta)
 	# 翻越、爬梯子、拿著炸藥時槍放低（手去撐東西了）
-	weapon.lower = move_toward(weapon.lower, 1.0 if (_player.vaulting or _player.is_climbing() or _cook >= 0.0 or _heal_t >= 0.0) else 0.0, delta * 6.0)
+	weapon.lower = move_toward(weapon.lower, 1.0 if (_player.vaulting or _player.is_climbing() or _cook >= 0.0 or using_item()) else 0.0, delta * 6.0)
 	weapon.aim = ads
 	_fire_hold = _fire_hold + delta if Input.is_action_pressed("fire") else 0.0
 	var wants_aim := Input.is_action_pressed("aim")
@@ -327,7 +345,10 @@ func _process(delta: float) -> void:
 		if _player.is_sprinting():
 			_aim_latched = false   # 衝刺會放下槍，切換模式也一樣
 		wants_aim = _aim_latched
-	_update_ads(wants_aim and _melee_held < 0.0 and _heal_t < 0.0, delta)
+	_update_ads(wants_aim and _melee_held < 0.0 and not using_item(), delta)
+	if _meat_hud:
+		_meat_hud.visible = _player.meat_left > 0.0
+		_meat_secs.text = "%d" % ceili(_player.meat_left)
 	_update_breath(Input.is_action_pressed("sprint"), delta)
 	_update_sway(delta)
 	_update_anim(delta)
@@ -357,7 +378,7 @@ func _party_loadout() -> bool:
 
 
 func switch_weapon(index: int) -> void:
-	if index == _index or index < 0 or index >= _weapons.size():
+	if index == _index or index < 0 or index >= _weapons.size() or _holding():
 		return
 	# 換槍等於放棄這輪裝填，排隊中的那一發也不射
 	cancel_reload()
@@ -466,7 +487,7 @@ func _update_breath(want_hold: bool, delta: float) -> void:
 ## 點一下＝輕擊，按住蓄力、放開＝重擊（跟 Hunt 一樣是「放開」才揮出去）。
 ## 蓄力中槍會往後拉，讓自己和旁人看得出要來一記重的。
 func _update_melee_input(delta: float) -> void:
-	if Input.is_action_just_pressed("melee"):
+	if Input.is_action_just_pressed("melee") and not _holding():   # 按住 F 搜刮中不能揮槍托
 		_melee_held = 0.0
 	elif _melee_held >= 0.0:
 		if Input.is_action_pressed("melee"):
@@ -501,8 +522,10 @@ static func is_headshot(target: Object, at: Vector3) -> bool:
 
 
 func try_fire(fanning := false) -> void:
-	if _heal_t >= 0.0:   # 補血中按開火＝取消補血，這一下不射
+	if _heal_t >= 0.0:   # 補血中（吃肉中）按開火＝取消，這一下不射
 		cancel_heal()
+		return
+	if _holding():   # 按住 F 搜刮中：不能開槍（要停就放開 F）
 		return
 	if _fire_cooldown > 0.0:
 		return
@@ -758,20 +781,46 @@ func _play_move(base: StringName) -> float:
 ## 按 3：沒在補、血沒滿、有包、沒在換彈／開槍／近戰／丟炸藥才開始。再按一次＝取消
 func _heal_press() -> void:
 	if _heal_t >= 0.0:
-		cancel_heal()
+		if not _eating:
+			cancel_heal()
 		return
 	if _player.hp <= 0 or _player.hp >= _player.max_hp or _player.medkits <= 0:
 		return
-	if _reloading or _fire_cooldown > 0.0 or _anim_lock > 0.0 or _melee_cooldown > 0.0 or _melee_held >= 0.0 or _cook >= 0.0:
+	_start_use(false)
+
+
+## 按 4：有肉、沒在用別的就開始吃（滿血也可以）。吃的時候再按一次＝取消
+func _eat_press() -> void:
+	if _heal_t >= 0.0:
+		if _eating:
+			cancel_heal()
+		return
+	if _player.hp <= 0 or _player.meat <= 0:
+		return
+	_start_use(true)
+
+
+## 補血、吃肉共同的開始條件：沒在換彈／開槍／近戰／丟炸藥／搜刮
+func _start_use(eating: bool) -> void:
+	if _reloading or _fire_cooldown > 0.0 or _anim_lock > 0.0 or _melee_cooldown > 0.0 or _melee_held >= 0.0 or _cook >= 0.0 or _holding():
 		return
 	_fire_queued = false
+	_eating = eating
 	_heal_t = 0.0
 	_refresh_ammo()
 
 
-## 正在用東西（補血包）：這段時間不能跑
+## 正在用東西（補血包、吃肉、按住 F 搜刮）：這段時間不能跑
 func using_item() -> bool:
-	return _heal_t >= 0.0
+	return _heal_t >= 0.0 or _holding()
+
+
+## 本人正在按住幾秒的互動（hold_action.gd 的 mine；別人的牛仔、電腦不算，電腦的手在 cowboy._bot_loot）
+func _holding() -> bool:
+	if not _player.is_local:
+		return false
+	var g := get_tree().get_first_node_in_group(&"match")
+	return g != null and g.get(&"hold") != null and g.hold.mine != &""
 
 
 func cancel_heal() -> void:
@@ -789,9 +838,12 @@ func _update_heal(delta: float) -> void:
 		cancel_heal()
 		return
 	_heal_t += delta
-	if _heal_t >= Fighter.medkit_seconds:
+	if _heal_t >= (Fighter.meat_seconds if _eating else Fighter.medkit_seconds):
 		_heal_t = -1.0
-		_player.request_heal()
+		if _eating:
+			_player.request_eat()
+		else:
+			_player.request_heal()
 	_refresh_ammo()
 
 
@@ -802,10 +854,11 @@ func _refresh_ammo() -> void:
 			"∞" if weapon.reserve < 0 else str(weapon.reserve),
 			"∞" if dynamite < 0 else str(dynamite),
 			_player.medkits,
-		]
+		] + ("    肉 ×%d" % _player.meat if _player.meat > 0 else "")
 	if _heal_hud:
 		_heal_hud.visible = _heal_t >= 0.0
-		_heal_hud.text = "補血中… %d%%" % roundi(_heal_t / Fighter.medkit_seconds * 100.0)
+		_heal_hud.text = "吃肉中… %d%%" % roundi(_heal_t / Fighter.meat_seconds * 100.0) if _eating \
+			else "補血中… %d%%" % roundi(_heal_t / Fighter.medkit_seconds * 100.0)
 
 
 ## 沙盒、靶場：子彈和炸藥都無限
@@ -1022,3 +1075,15 @@ func _explode(at: Vector3, kind: int) -> void:
 func _arena() -> Node3D:
 	var world := get_tree().get_first_node_in_group(&"arena") as Node3D
 	return world if world else get_tree().current_scene as Node3D
+
+
+## 恐龍肉的圖示（一塊肉、骨頭、右上一個綠色＋），s 是邊長。ponytail: 程式畫的，A7 做圖示檔（icons.gd）時搬過去
+static func draw_meat_icon(ci: CanvasItem, s: float) -> void:
+	var bone := Color(0.95, 0.92, 0.85)
+	ci.draw_line(Vector2(0.55, 0.62) * s, Vector2(0.9, 0.92) * s, bone, 0.12 * s)
+	ci.draw_circle(Vector2(0.9, 0.92) * s, 0.08 * s, bone)
+	ci.draw_circle(Vector2(0.4, 0.55) * s, 0.34 * s, Color(0.55, 0.2, 0.14))
+	ci.draw_circle(Vector2(0.34, 0.5) * s, 0.2 * s, Color(0.8, 0.36, 0.28))
+	var green := Color(0.3, 0.9, 0.35)
+	ci.draw_rect(Rect2(Vector2(0.74, 0.02) * s, Vector2(0.1, 0.34) * s), green)
+	ci.draw_rect(Rect2(Vector2(0.62, 0.14) * s, Vector2(0.34, 0.1) * s), green)

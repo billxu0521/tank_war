@@ -27,6 +27,9 @@ static var SCORE_GUARD: int = Balance.whole("score_guard")   # 恐龍守住蛋�
 static var SCORE_ENVELOPE_FIRST: int = Balance.whole("score_envelope_first")   # 第一個看這個信封（結算才公開）
 static var SCORE_SAFE_FIRST: int = Balance.whole("score_safe_first")   # 試對密碼開保險箱
 static var SCORE_KILL_CARRIER: int = Balance.whole("score_kill_carrier")   # 獵人打死拿蛋的人
+# 搜刮倒地的尼諾拉（0.8.16 第 3.1 節）：按住 F（hold_action.gd）LOOT_SECONDS 秒，拿一塊恐龍肉（fighter.gd）。每次倒地每個獵人一次
+static var LOOT_SECONDS: float = Balance.num("loot_seconds")
+static var LOOT_RANGE: float = Balance.num("loot_range")   # 離牠身體邊緣
 # 追分星星（docs/企劃/2026-11-15-畫面與保險箱位置.md 的 1.1）：最後一回合的金色小恐龍（raptors.gd）身上有，死了掉在地上，
 # 碰到就撿（不用按鍵）；拿著的牛仔死掉、尼諾拉倒地就掉在原地。回合結束時拿著的人，這回合的分數 × STAR_MULT
 static var STAR_REACH: float = Balance.num("star_pickup_reach")
@@ -79,6 +82,12 @@ func _ready() -> void:
 		e.collision_layer = 0
 		add_child(e)
 		envelopes.append(e)
+	main.hold.register(&"loot", LOOT_SECONDS, can_loot, _loot_done, "搜刮中")
+
+
+func _exit_tree() -> void:
+	if is_instance_valid(main.hold):
+		main.hold.unregister(&"loot")   # 換模式（party 收掉）：不留指到這裡的規則
 
 
 ## 照總分排的連線編號（高的在前）
@@ -662,3 +671,25 @@ static func star_mesh() -> ArrayMesh:
 	mat.albedo_color = Color(1.0, 0.85, 0.2)
 	m.surface_set_material(0, mat)
 	return m
+
+
+## 牛仔離尼諾拉中心多遠內能搜刮（身體半徑＋LOOT_RANGE，水平）
+static func loot_dist() -> float:
+	return BOSS_GD.BODY_RADIUS + LOOT_RANGE
+
+
+## 主機：id 現在能不能搜 b（hold_action 每個物理幀問）。遊戲中、牠倒地、這次倒地沒搜過、活著的牛仔、夠近
+func can_loot(id: int, b: Node) -> bool:
+	if phase != &"play" or id == dino_id or not b.is_in_group(&"boss") or b.down_left <= 0.0 or b.looted.has(id):
+		return false
+	var c := main.players.get_node_or_null(NodePath(str(id))) as Cowboy
+	return c != null and c.hp > 0 and not c.is_queued_for_deletion() \
+		and _flat(c.global_position, 0).distance_to(_flat(b.global_position, 0)) <= loot_dist()
+
+
+## 主機：搜完了。記下這次倒地他搜過（大家都知道，提示才會消失），給一塊肉（帶滿就沒有），只提示本人
+func _loot_done(id: int, b: Node) -> void:
+	b.mark_looted.rpc(id)
+	var c := main.players.get_node_or_null(NodePath(str(id))) as Cowboy
+	var got := c != null and c.give_meat()
+	_whisper(id, "搜到一塊恐龍肉（按 4 吃）" if got else "沒搜到東西（肉最多帶 %d 塊）" % Fighter.MEAT_MAX)

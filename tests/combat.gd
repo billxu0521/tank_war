@@ -167,15 +167,17 @@ func _case_cowboy() -> void:
 		"步槍要有兩隻手：右手在拉桿上、左手托護木")
 	_end(m)
 
-## 按鍵（草案 3.2）：1 主武器、2 副武器（左輪）、4 也丟炸藥。headless 鎖不住滑鼠，按鍵分派跑不到，所以綁定查 InputMap、換槍邏輯直接測 _main_pick
+## 按鍵（草案 3.2）：1 主武器、2 副武器（左輪）、4 吃恐龍肉（0.8.16 起，炸藥只留 G）。headless 鎖不住滑鼠，按鍵分派跑不到，所以綁定查 InputMap、換槍邏輯直接測 _main_pick
 func _case_hunt_keys() -> void:
 	var m := _new_offline_game()
 	var vm: Node = m.players.get_node(^"1").viewmodel
-	for pair in [["weapon_1", KEY_1], ["weapon_2", KEY_2], ["throw", KEY_4]]:
+	for pair in [["weapon_1", KEY_1], ["weapon_2", KEY_2], ["eat", KEY_4], ["throw", KEY_G]]:
 		var bound := false
 		for e in InputMap.action_get_events(pair[0]):
 			bound = bound or (e is InputEventKey and e.physical_keycode == pair[1])
 		_ck(bound, "%s 要綁 %s 鍵" % [pair[0], OS.get_keycode_string(pair[1])])
+	_ck(not InputMap.action_get_events("throw").any(func(e: InputEvent) -> bool: return e is InputEventKey and e.physical_keycode == KEY_4),
+		"4 改成吃肉，炸藥只留 G（0.8.16）")
 	vm.switch_weapon(0)
 	var seen: Array = []
 	for i in 4:
@@ -334,6 +336,61 @@ func _case_medkit() -> void:
 	me.medkits = 0
 	var again: Node = m._add_player(m.COWBOY, 5)
 	_ck(again.medkits == 3, "重生的牛仔回到 3 個（現在 %d）" % again.medkits)
+	_end(m)
+
+## 恐龍肉（0.8.16 第 3.3 節）：沒肉不能吃、最多帶 1 塊、吃 3 秒（開槍取消、肉還在）、吃完 30 秒每秒回 5（共 150，不超過上限）、
+## 回血中再吃一塊時間重算、滿血也能吃、吃的時候不能跑
+func _case_meat() -> void:
+	var m := _new_offline_game()
+	var me: Node = m.players.get_node(^"1")
+	var vm: Node = me.viewmodel
+	vm._fire_cooldown = 0.0
+	vm._anim_lock = 0.0
+	vm._eat_press()
+	_ck(vm._heal_t < 0.0, "沒肉按 4 不能吃")
+	_ck(me.give_meat() and not me.give_meat() and me.meat == Fighter.MEAT_MAX and Fighter.MEAT_MAX == 1, "肉最多帶 1 塊")
+	me.hp = 1
+	vm._eat_press()
+	_ck(vm.using_item() and vm._eating, "有肉按 4 開始吃")
+	vm._update_heal(Fighter.meat_seconds * 0.5)
+	vm.try_fire()
+	_ck(vm._heal_t < 0.0 and me.meat == 1 and me.meat_left == 0.0, "吃到一半開槍：取消，肉還在")
+	vm._eat_press()
+	vm._update_heal(Fighter.meat_seconds * 0.5)
+	_ck(me.meat == 1, "吃到一半還沒扣")
+	vm._update_heal(Fighter.meat_seconds * 0.5 + 0.01)
+	_ck(me.meat == 0 and me.meat_left > 0.0, "吃完：扣一塊、開始回血（剩 %.1f 秒）" % me.meat_left)
+	for i in 59:
+		me.meat_step(0.5)
+	_ck(me.hp == 1 + Fighter.MEAT_HPS * 29, "29.5 秒：回了 29 次（血 %d）" % me.hp)
+	for i in 4:
+		me.meat_step(0.5)
+	_ck(me.hp == mini(1 + Fighter.MEAT_HPS * Fighter.MEAT_DURATION, me.max_hp) and me.meat_left == 0.0,
+		"30 秒共回 %d，不超過上限 %d（血 %d）" % [Fighter.MEAT_HPS * Fighter.MEAT_DURATION, me.max_hp, me.hp])
+	# 滿血也能吃；回血中再吃一塊：時間重算、不疊加
+	me.give_meat()
+	me._meat_ms = -100000000   # 測試：假裝已經過了很久（主機防狂送的間隔）
+	vm._eat_press()
+	vm._update_heal(Fighter.meat_seconds + 0.01)
+	_ck(me.meat == 0 and me._meat_ticks == Fighter.MEAT_DURATION, "滿血也能吃")
+	me.meat_step(10.0)
+	me.give_meat()
+	me._meat_ms = -100000000
+	me._do_eat()
+	_ck(me._meat_ticks == Fighter.MEAT_DURATION, "回血中再吃：時間重算 %d 次（現在 %d）" % [Fighter.MEAT_DURATION, me._meat_ticks])
+	# 吃的時候按住跑：不跑
+	me.give_meat()
+	me._meat_ms = -100000000
+	me.hp = 50
+	vm._eat_press()
+	me.stamina = 100.0
+	Input.action_press("sprint")
+	Input.action_press("move_forward")
+	for i in 5:
+		me._physics_process(0.1)
+	_ck(vm.using_item() and not me.is_sprinting(), "吃肉中按住跑：不跑")
+	Input.action_release("sprint")
+	Input.action_release("move_forward")
 	_end(m)
 
 ## Hunt 式的三把槍和它們的規則

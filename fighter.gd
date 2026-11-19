@@ -241,6 +241,8 @@ func _notification(what: int) -> void:
 		net_step(Time.get_ticks_usec() / 1000.0)
 	if what == NOTIFICATION_PROCESS and burn_left > 0.0 and multiplayer.is_server():   # 沒在燒就不碰 multiplayer（沒有連線時會報錯）
 		burn_step(get_process_delta_time())
+	if what == NOTIFICATION_PROCESS and meat_left > 0.0:   # 吃了恐龍肉在回血（沒在回就不碰 multiplayer）
+		meat_step(get_process_delta_time())
 
 ## 自己射出去的彈打中有血的東西時呼叫。純本機回饋，不走網路。
 func on_hit() -> void:
@@ -417,4 +419,82 @@ func _do_heal() -> void:
 func _medkit_left(n: int) -> void:
 	if multiplayer.get_remote_sender_id() == 1:
 		medkits = n
+		medkits_changed.emit()
+
+
+# --- 恐龍肉（docs/企劃/2026-11-19-0.8.16-一般模式與規則改動.md 第 3.3 節）：搜刮倒地的尼諾拉拿到（party.gd），按 4 吃 meat_seconds 秒，
+# 之後 MEAT_DURATION 秒內每秒回 MEAT_HPS。被打不中斷、死了就沒了（新節點）。回血中再吃一塊時間重算、不疊加。數值在 balance.csv
+static var meat_seconds: float = Balance.num("meat_seconds")
+static var MEAT_HPS: int = Balance.whole("meat_heal_per_second")
+static var MEAT_DURATION: int = Balance.whole("meat_duration")
+static var MEAT_MAX: int = Balance.whole("meat_max")
+var meat := 0             # 身上幾塊。主機記帳，本人那台跟著主機回報（_meat_state）；變了也發 medkits_changed（彈藥那行重畫）
+var meat_left := 0.0      # 回血還剩幾秒（主機算；本人那台收到後自己倒數，畫血條旁邊的圖示）
+var _meat_ticks := 0      # 主機：還要回幾次
+var _meat_acc := 0.0      # 主機：距離下一次回血累積了幾秒
+var _meat_ms := -100000000   # 主機：上次吃的時刻（毫秒），防狂送
+
+
+## 主機：搜到一塊肉。帶滿了就不給（回 false）
+func give_meat() -> bool:
+	if meat >= MEAT_MAX:
+		return false
+	meat += 1
+	_tell_meat()
+	return true
+
+
+## 本人吃完了（時間到）：主機自己直接算，客戶端送給主機
+func request_eat() -> void:
+	if multiplayer.is_server():
+		_do_eat()
+	else:
+		_request_eat.rpc_id(1)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _request_eat() -> void:
+	if multiplayer.is_server() and multiplayer.get_remote_sender_id() == name.to_int():
+		_do_eat()
+
+
+## 只有主機算：有肉、活著，離上次吃至少 meat_seconds × 0.8。滿血也可以吃（先吃起來放著回）
+func _do_eat() -> void:
+	var now := Time.get_ticks_msec()
+	if meat <= 0 or hp <= 0 or now - _meat_ms < meat_seconds * 800.0:
+		return
+	_meat_ms = now
+	meat -= 1
+	_meat_ticks = MEAT_DURATION
+	_meat_acc = 0.0
+	meat_left = MEAT_DURATION
+	_tell_meat()
+
+
+## 每幀（回血中）：主機滿一秒回一次血；本人那台只倒數給畫面看
+func meat_step(delta: float) -> void:
+	if not multiplayer.is_server():
+		meat_left = maxf(meat_left - delta, 0.0)
+		return
+	_meat_acc += delta
+	while _meat_acc >= 1.0 and _meat_ticks > 0:
+		_meat_acc -= 1.0
+		_meat_ticks -= 1
+		if hp > 0 and hp < max_hp:
+			_sync_hp.rpc(mini(hp + MEAT_HPS, max_hp))   # 血變多，_sync_hp 不會當受傷
+	meat_left = maxf(_meat_ticks - _meat_acc, 0.0)
+
+
+## 主機：肉數、回血剩幾秒回報給本人（電腦、主機自己不用送）
+func _tell_meat() -> void:
+	medkits_changed.emit()
+	if name.to_int() > 1:
+		_meat_state.rpc_id(name.to_int(), meat, meat_left)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _meat_state(n: int, left: float) -> void:
+	if multiplayer.get_remote_sender_id() == 1:
+		meat = n
+		meat_left = left
 		medkits_changed.emit()
