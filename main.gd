@@ -293,7 +293,7 @@ func _unhandled_input(e: InputEvent) -> void:
 		return
 	if esc:
 		_set_menu(not menu.visible)
-	elif e is InputEventMouseButton and e.pressed and not menu.visible and not result.visible and not _buy_menu.visible and not _safe_panel.visible:
+	elif e is InputEventMouseButton and e.pressed and not menu.visible and not result.visible and not _buy_menu.visible and not _safe_panel.visible and not _party_hud.minimap.visible:
 		Fighter.lock_mouse()  # 點畫面重新鎖回滑鼠
 
 # --- 問題回報（bug_report.gd）---
@@ -1841,7 +1841,7 @@ func _process(delta: float) -> void:
 	var me := _me()
 	# 保險：遊戲中、沒開選單和勝負畫面，游標卻沒鎖住（系統自己放掉的，0.8.1 回饋「舉槍後跑出游標」），就鎖回去。
 	# 視窗沒焦點時鎖不住，等切回來再鎖
-	if not menu.visible and not result.visible and not _buy_menu.visible and not _safe_panel.visible and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED \
+	if not menu.visible and not result.visible and not _buy_menu.visible and not _safe_panel.visible and not _party_hud.minimap.visible and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED \
 			and get_window().has_focus():
 		Fighter.lock_mouse()
 	_match_hud.update_match(me)

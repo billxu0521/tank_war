@@ -16,6 +16,7 @@ func _initialize() -> void:
 ## 沒放進場景樹的 Party：自己不跑規則，只拿來裝畫面要的值
 func _fake_party() -> Party:
 	var p := Party.new()
+	p.main = _main   # 沒進場景樹，@onready 不會跑；knows_exits 要讀 main.safe
 	p.round_index = 1
 	p.phase = &"prep"
 	p.time_left = 12.0

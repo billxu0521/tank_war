@@ -19,6 +19,8 @@ const FINAL_SECONDS := 30.0   # 四回合結束後停多久自動開新的一場
 # 以下從 balance.csv 讀（見 balance.gd），改數字去改表
 static var LIVES: int = Balance.whole("party_lives")   # 牛仔每回合幾條命
 static var RESPAWN_SECONDS: float = Balance.num("party_respawn_seconds")
+static var SPAWN_BLOCK: float = Balance.num("respawn_block_radius")   # 重生點這麼近內有敵人就不能選（0.8.16 第 6 節）
+const RED_EVERY := 0.5        # 主機每幾秒重算哪些重生點是紅的
 static var SCORE_SURVIVE: int = Balance.whole("score_survive")   # 回合結束時還活著
 static var SCORE_EXTRACT: int = Balance.whole("score_extract")   # 帶蛋撤離（另外加，合計 10）
 static var SCORE_KILL: int = Balance.whole("score_kill")   # 恐龍殺一個牛仔
@@ -64,7 +66,9 @@ var _star_mesh: MeshInstance3D   # 每台：地上的星星、頭上的星星（
 
 var _roster: Array = []       # 參賽者（照當恐龍的順序）
 var _waiting := {}            # 主機：等重生的牛仔編號 -> [剩幾秒, 是不是電腦]
-var _pick := {}               # 主機：牛仔選的重生點（編號 -> spawn_points 的索引）
+var _pick := {}               # 主機：牛仔選的重生點（編號 -> spawn_points 的索引）。每次死掉清掉重選
+var spawn_red := 0            # 哪些重生點現在是紅的（第 i 位 = spawn_points[i]）：主機每 RED_EVERY 秒算，變了就送
+var _red_left := 0.0
 var _sync_left := 0.0
 var _known := {}              # 主機：牛仔編號 -> [十位, 個位]（-1 = 沒看過）。跟著人不跟著命，回合開始清掉
 var touched_egg := false     # 這台的人這回合拿過蛋（每台自己記，回合外清掉）：知道撤離點
@@ -256,6 +260,7 @@ func on_died(killer: Node, who: Node) -> void:
 	stats.died(who)
 	if int(lives[id]) > 0:
 		_waiting[id] = [RESPAWN_SECONDS, bool(who.get(&"bot"))]
+	_pick.erase(id)   # 每次死都重選（上次的點這次可能是紅的）
 	_sync()
 
 
@@ -401,7 +406,76 @@ func _respawn_step(delta: float) -> void:
 		var bot: bool = _waiting[id][1]
 		_waiting.erase(id)
 		if _present(id) and not main.players.has_node(NodePath(str(id))):
-			_spawn_cowboy(id, bot, int(_pick.get(id, -1)))   # 選的點整回合有效（畫面也一直亮著那個）
+			_spawn_cowboy(id, bot, respawn_index(int(_pick.get(id, -1)), bot))
+	_red_left -= delta
+	if _red_left <= 0.0:
+		_red_left = RED_EVERY
+		var red := red_mask()
+		if red != spawn_red:
+			spawn_red = red
+			_recv_red.rpc(red)
+
+
+## 每個重生點離最近的敵人多遠（其他活著的獵人；尼諾拉從身體邊緣算）。重生的人自己已經死了，不在場上
+func _enemy_gaps() -> Array:
+	var b: Node3D = main._boss()
+	var out := []
+	for q: Vector3 in main.spawn_points:
+		var d := INF
+		for c: Node3D in _cowboys():
+			d = minf(d, _flat(c.global_position, 0).distance_to(_flat(q, 0)))
+		if b:
+			d = minf(d, _flat(b.global_position, 0).distance_to(_flat(q, 0)) - BOSS_GD.BODY_RADIUS)
+		out.append(d)
+	return out
+
+
+## 主機：哪些重生點現在是紅的（SPAWN_BLOCK 內有敵人）
+func red_mask() -> int:
+	var gaps := _enemy_gaps()
+	var m := 0
+	for i in gaps.size():
+		if gaps[i] < SPAWN_BLOCK:
+			m |= 1 << i
+	return m
+
+
+## 主機：要重生的那一刻決定放哪個點（spawn_points 的索引；地圖沒放點是 -1）。
+## 電腦：綠點裡離尼諾拉最遠的。真人：選的點還是綠的就用；變紅了換離它最近的綠點；沒選隨機一個綠點。全紅：離所有敵人最遠的
+func respawn_index(want: int, bot: bool) -> int:
+	var pts: Array[Vector3] = main.spawn_points
+	if pts.is_empty():
+		return -1
+	var gaps := _enemy_gaps()
+	var green := range(pts.size()).filter(func(i: int) -> bool: return gaps[i] >= SPAWN_BLOCK)
+	if green.is_empty():
+		var far := 0
+		for i in pts.size():
+			if gaps[i] > gaps[far]:
+				far = i
+		return far
+	var key := Callable()
+	if bot:
+		var b: Node3D = main._boss()
+		if b == null:
+			return green.pick_random()
+		key = func(i: int) -> float: return -_flat(pts[i], 0).distance_to(_flat(b.global_position, 0))
+	elif want >= 0 and want < pts.size():
+		if green.has(want):
+			return want
+		key = func(i: int) -> float: return pts[i].distance_to(pts[want])
+	else:
+		return green.pick_random()
+	var best: int = green[0]
+	for i: int in green:
+		if key.call(i) < key.call(best):
+			best = i
+	return best
+
+
+@rpc("authority", "call_remote", "unreliable_ordered")
+func _recv_red(m: int) -> void:
+	spawn_red = m
 
 
 func _spawn_cowboy(id: int, bot: bool, index: int) -> void:
@@ -574,7 +648,7 @@ func state() -> Dictionary:
 	return {rounds = rounds, round_index = round_index, phase = phase, time_left = time_left, scores = scores,
 		round_scores = round_scores, lives = lives, dino_id = dino_id, names = names, last_result = last_result,
 		egg_placed = egg_placed, safe = main.safe.state(), env_pos = env_pos, env_open = env_open,
-		star_holder = star_holder, star_on = star_on, star_pos = star_pos}
+		star_holder = star_holder, star_on = star_on, star_pos = star_pos, spawn_red = spawn_red}
 
 
 @rpc("authority", "call_remote", "reliable")

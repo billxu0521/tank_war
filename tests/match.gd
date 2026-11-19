@@ -1079,7 +1079,7 @@ func request_respawn_at(i: int) -> void:
 		mine.get_parent().remove_child(mine)
 		mine.free()
 	hud._process(0.0)
-	_ck(hud.hint.text.begins_with("按 1～3 選重生點"), "死了要提示按 1～3 選重生點（現在：%s）" % hud.hint.text)
+	_ck(hud.hint.text.contains("1～3") and hud.minimap.visible and hud.picked == -1, "死了：顯示俯視圖、提示按 1～3 或點圖（現在：%s）" % hud.hint.text)
 	var key := InputEventKey.new()
 	key.pressed = true
 	key.physical_keycode = KEY_2
@@ -1087,6 +1087,17 @@ func request_respawn_at(i: int) -> void:
 	key.physical_keycode = KEY_9   # 超過點數的鍵不理
 	hud._unhandled_input(key)
 	_ck(p.asked == [1], "按 2 要呼叫 request_respawn_at(1)（現在：%s）" % [p.asked])
+	p.spawn_red = 0b100   # 第 3 個附近有敵人
+	key.physical_keycode = KEY_3
+	hud._unhandled_input(key)
+	hud.minimap.chosen.emit(2)
+	_ck(p.asked == [1] and hud.picked == 1, "紅的點按鍵、點圖都選不了")
+	hud.minimap.chosen.emit(0)   # 點圖選綠點
+	_ck(p.asked == [1, 0] and hud.picked == 0, "點圖上的綠點：選第 1 個")
+	var mm := hud.minimap
+	_ck(mm.point_at(Minimap.to_map(m.spawn_points[0], m.ARENA, Minimap.SIZE) + Vector2(3, 3)) == 0 and mm.point_at(Vector2(-50, -50)) == -1, "點到圖示附近算點到那個重生點")
+	p.spawn_red = 0
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	# 回合結算：中間顯示怎麼結束的，幾秒後自動消失
 	p.phase = &"result"
 	p.last_result = "時間到，恐龍守住蛋"
@@ -1610,6 +1621,54 @@ func _case_boss_guard() -> void:
 	# 真人駕駛：不守
 	b.pilot = 1
 	_ck(not b._guarding(), "真人駕駛不守箱")
+	_end(m)
+
+## 選重生點（0.8.16 第 6 節）：10 公尺內有敵人（其他活著的獵人、尼諾拉從身體邊緣算）是紅的；重生那一刻再檢查，
+## 變紅換最近的綠點、全紅放離敵人最遠的；電腦挑綠點裡離尼諾拉最遠的；圖上的座標
+func _case_respawn_pick() -> void:
+	var m := _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"party"))
+	m._apply_rules()
+	var p: Party = m.party
+	m._physics_process(DT)
+	p.time_left = 0.0
+	m._physics_process(DT)
+	var a := Vector3(-60, 0, 0)
+	var bb := Vector3(0, 0, 0)
+	var c := Vector3(60, 0, 0)
+	m.spawn_points.assign([a, bb, c])
+	var cows: Array = [-1, -2, -3].map(func(id: int) -> Node3D: return m.players.get_node(NodePath(str(id))))
+	for k: Node3D in cows:
+		k.global_position = Vector3(0, 0, 5000)
+	var boss: Node3D = m._boss()
+	boss.global_position = Vector3(5000, 0, 0)
+	_ck(p.red_mask() == 0, "附近沒人：全部綠的")
+	cows[0].global_position = a + Vector3(9, 0, 0)
+	_ck(p.red_mask() == 0b001, "獵人站在重生點 9 公尺：紅")
+	cows[0].global_position = a + Vector3(11, 0, 0)
+	_ck(p.red_mask() == 0, "11 公尺：綠")
+	boss.global_position = bb + Vector3(0, 0, BOSS_GD.BODY_RADIUS + 9.0)
+	_ck(p.red_mask() == 0b010, "尼諾拉身體邊緣離 9 公尺：紅")
+	p._red_left = 0.0
+	p._respawn_step(DT)
+	_ck(p.spawn_red == 0b010 and p.state().spawn_red == 0b010, "主機每半秒算一次、放進同步的那包")
+	_ck(p.respawn_index(1, false) == 0, "選的點變紅：換離它最近的綠點（左邊那個比右邊近：%d）" % p.respawn_index(1, false))
+	_ck(p.respawn_index(2, false) == 2, "選的點還是綠的：用它")
+	_ck(p.respawn_index(-1, false) in [0, 2], "沒選：隨機一個綠點")
+	boss.global_position = c + Vector3(0, 0, BOSS_GD.BODY_RADIUS + 9.0)
+	_ck(p.respawn_index(-1, true) == 0, "電腦：尼諾拉在右邊，挑左邊")
+	cows[1].global_position = bb + Vector3(5, 0, 0)
+	cows[2].global_position = a + Vector3(2, 0, 0)
+	_ck(p.red_mask() == 0b111 and p.respawn_index(0, false) == 2, "全紅：放離所有敵人最遠的（右邊那個，尼諾拉 9 公尺；左 2、中 5）")
+	# 死了：選的點清掉（每次死都重選）
+	p._pick[-1] = 2
+	cows[0].take_damage(9999)
+	_ck(not p._pick.has(-1), "死了清掉上次選的點")
+	# 圖上的座標：四個角、中央
+	var half: float = m.ARENA * 0.5
+	_ck(Minimap.to_map(Vector3.ZERO, m.ARENA, 400.0) == Vector2(200, 200) and Minimap.to_map(Vector3(-half, 0, -half), m.ARENA, 400.0) == Vector2.ZERO
+		and Minimap.to_map(Vector3(half, 0, half), m.ARENA, 400.0) == Vector2(400, 400) and Minimap.to_map(Vector3(half, 0, -half), m.ARENA, 400.0) == Vector2(400, 0)
+		and Minimap.to_map(Vector3(-half, 0, half), m.ARENA, 400.0) == Vector2(0, 400), "世界座標換成圖上座標（四個角、中央；北在上）")
 	_end(m)
 
 ## 戰場資訊（0.8.16 第 4 節）：尼諾拉不知道信封開過；保險箱開場大家都標；蛋的標記每 5 秒跟上一次（尼諾拉也是）

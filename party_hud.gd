@@ -3,13 +3,12 @@ extends Control
 ## 派對模式的畫面資訊（規格：docs/企劃/派對玩法.md）。
 ## 只讀 main.party（Party 節點）的值和 changed 訊號，不改規則；main.party 是 null 時整個藏起來。
 ## - 左上：第幾回合、階段倒數、誰是恐龍、自己剩幾條命；下面一個直的計分欄（準備、遊戲階段）
-## - 中間：準備階段的提示、死掉等重生時的選點清單
+## - 中間：準備階段的提示；死掉等重生時的俯視圖（minimap.gd），點綠點或按 1～9 選重生點
 ## - Tab 按住：分數板；回合結算、四回合結束：中間的大框
 ## main.gd 在 _ready 建一個掛到 $UI/Root 底下（那邊的主題有中文字型）。
 
 const RESULT_SHOW := 6.0   # 回合結算框留幾秒
 const PHASES := {&"prep": "準備", &"play": "遊戲", &"result": "結算", &"final": "結束"}
-const DIRS := ["北", "東北", "東", "東南", "南", "西南", "西", "西北"]
 const OUTLINE := Color(0.12, 0.07, 0.05, 0.85)   # 跟 CenterInfo、方位條的字一樣的深色描邊
 const GOLD := Color(1.0, 0.85, 0.4)
 const CARRY := Color(1.0, 0.9, 0.2)   # 拿著蛋的人：計分欄的「+10」
@@ -35,6 +34,9 @@ var popup: PanelContainer   # 回合結算／最終排名
 var popup_title: Label
 var popup_champ: Label
 var popup_rows: GridContainer
+var minimap: Minimap  # 等重生時的俯視圖（minimap.gd）
+var _was_waiting := false
+var _last_pos := Vector3.INF   # 自己最後活著的位置（圖上畫死在哪）
 
 
 func _init() -> void:
@@ -49,6 +51,10 @@ func _init() -> void:
 	scorebar = VBoxContainer.new()
 	scorebar.add_theme_constant_override(&"separation", 2)
 	left.add_child(scorebar)
+	minimap = Minimap.new()
+	minimap.hide()
+	minimap.chosen.connect(_choose)
+	add_child(minimap)
 	hint = _label(26)
 	hint.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	hint.offset_left = -400
@@ -149,8 +155,23 @@ func update_live() -> void:
 			hint.text = "看恐龍把蛋藏去哪"
 		else:
 			hint.text = "蛋放好了，等牛仔進場" if p.egg_placed else "按 F 把蛋放在腳下"
-	elif waiting_respawn():
-		hint.text = respawn_text()
+	var waiting := waiting_respawn()
+	if waiting and not _was_waiting:
+		picked = -1   # 每次死都重選
+	_was_waiting = waiting
+	var me_node: Node3D = main._me()
+	if me_node:
+		_last_pos = me_node.global_position
+	minimap.visible = waiting and not spawn_points().is_empty()
+	if minimap.visible:
+		minimap.main = main
+		minimap.red = p.spawn_red
+		minimap.picked = picked
+		minimap.dead_at = _last_pos
+		minimap.queue_redraw()
+		if Input.mouse_mode != Input.MOUSE_MODE_VISIBLE:   # 要點圖：游標放出來（重生時 main 會鎖回去）
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		hint.text = "點地圖上的綠點、或按 1～%d 選重生點（紅的附近有人，選不了）" % spawn_points().size()
 
 
 func my_id() -> int:
@@ -174,30 +195,22 @@ func spawn_points() -> Array:
 	return pts.slice(0, 9)   # 數字鍵只有 1～9
 
 
-## 「按 1～N 選重生點」＋每個點的方位和距離（從現在的鏡頭位置看）
-func respawn_text() -> String:
-	var pts := spawn_points()
-	if pts.is_empty():
-		return ""
-	var cam := get_viewport().get_camera_3d()
-	var from := cam.global_position if cam else Vector3.ZERO
-	var lines := ["按 1～%d 選重生點" % pts.size()]
-	for i in pts.size():
-		var deg := Compass.bearing(from, pts[i])
-		var row := "%d　%s　%dm" % [i + 1, DIRS[int(round(deg / 45.0)) % 8], int(from.distance_to(pts[i]))]
-		lines.append(("▶ " + row + " ◀") if i == picked else row)
-	return "\n".join(lines)
-
-
 func _unhandled_input(e: InputEvent) -> void:
 	if _party == null or not (e is InputEventKey and e.pressed and not e.echo):
 		return
 	var i: int = e.physical_keycode - KEY_1
 	if i < 0 or i >= spawn_points().size() or not waiting_respawn():
 		return
+	_choose(i)
+	get_viewport().set_input_as_handled()
+
+
+## 選第 i 個重生點（按數字鍵或點圖）。紅的選不了
+func _choose(i: int) -> void:
+	if _party == null or not waiting_respawn() or (_party.spawn_red >> i) & 1:
+		return
 	picked = i
 	_party.request_respawn_at(i)
-	get_viewport().set_input_as_handled()
 
 
 ## changed 來了：分數板、結算框重排。內容跟上次一樣就不動（約 70 個節點，每秒重建一次在 2 核主機頓 40 毫秒）
