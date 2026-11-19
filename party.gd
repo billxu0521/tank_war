@@ -30,6 +30,8 @@ static var SCORE_KILL_CARRIER: int = Balance.whole("score_kill_carrier")   # 獵
 # 搜刮倒地的尼諾拉（0.8.16 第 3.1 節）：按住 F（hold_action.gd）LOOT_SECONDS 秒，拿一塊恐龍肉（fighter.gd）。每次倒地每個獵人一次
 static var LOOT_SECONDS: float = Balance.num("loot_seconds")
 static var LOOT_RANGE: float = Balance.num("loot_range")   # 離牠身體邊緣
+# 吞掉的信封（第 3.2 節）：搜完還知道每一位是哪 HINT_COUNT 個之一（一定含正確的）。每回合開場抽好、每個人拿到的一樣，每人每回合一次
+static var HINT_COUNT: int = Balance.whole("loot_candidates")
 # 追分星星（docs/企劃/2026-11-15-畫面與保險箱位置.md 的 1.1）：最後一回合的金色小恐龍（raptors.gd）身上有，死了掉在地上，
 # 碰到就撿（不用按鍵）；拿著的牛仔死掉、尼諾拉倒地就掉在原地。回合結束時拿著的人，這回合的分數 × STAR_MULT
 static var STAR_REACH: float = Balance.num("star_pickup_reach")
@@ -64,6 +66,9 @@ var _pick := {}               # 主機：牛仔選的重生點（編號 -> spawn
 var _sync_left := 0.0
 var _known := {}              # 主機：牛仔編號 -> [十位, 個位]（-1 = 沒看過）。跟著人不跟著命，回合開始清掉
 var _noted: Array = [false, false]   # 這台已經提示過恐龍「信封被開了」
+var my_hint: Array = []       # 這台的人搜到的候選 [[十位], [個位]]（[] = 沒搜到）。主機只用 rpc_id 送本人，不在 state() 裡
+var _cands: Array = []        # 主機：這回合吞掉的信封（每位 HINT_COUNT 個），_start_round 抽
+var _hinted := {}             # 主機：這回合拿過候選的人（編號 -> true）。跟著人不跟著命
 var _env_bonus := {}          # 主機：第一個開信封的分，連線編號 -> 分。不進 state()，回合結算才併進 _add（不然恐龍從計分欄就知道信被開了）
 var stats := RoundStats.new()   # 主機：每回合的指標，結束時印「回合指標」（tools/bot_sim.gd 也讀）
 
@@ -256,6 +261,9 @@ func _start_round() -> void:
 	_known.clear()   # 看過的牌、信封開過沒：每回合重來
 	_env_bonus.clear()
 	my_digits = [-1, -1]
+	_hinted.clear()
+	my_hint = []
+	_cands = roll_candidates(main.safe._code) if main.safe.on else []
 	env_open = [false, false]
 	dino_id = _roster[round_index % _roster.size()]
 	# 清場：boss 以外全部收掉再照這回合的角色生（刪掉重生，客戶端的位置才會跟著換；做法同 main._new_round）
@@ -453,7 +461,7 @@ func _present(id: int) -> bool:
 
 ## 斷線重連（main._reclaim）：舊編號的分數、名字、命數、名單位置、看過的牌都換成新編號（看過的牌在 _sync 補送）
 func rekey(old: int, new: int) -> void:
-	for d: Dictionary in [scores, round_scores, lives, names, _waiting, _pick, _known, _env_bonus]:
+	for d: Dictionary in [scores, round_scores, lives, names, _waiting, _pick, _known, _env_bonus, _hinted]:
 		if d.has(old):
 			d[new] = d[old]
 			d.erase(old)
@@ -478,6 +486,8 @@ func _sync() -> void:
 	_recv.rpc(state())
 	for id: int in _known:   # 看過的牌每次跟著補送本人：重連、晚建好 Party 的也拿得到
 		_tell(id)
+	for id: int in _hinted:   # 吞掉的信封也一樣
+		_tell_hint(id)
 	changed.emit()
 
 
@@ -498,6 +508,7 @@ func _recv(s: Dictionary) -> void:
 			set(k, s[k])
 	if phase != &"play":   # 回合外看過的牌作廢（主機在 _start_round 清 _known）
 		my_digits = [-1, -1]
+		my_hint = []
 	changed.emit()
 
 
@@ -692,4 +703,49 @@ func _loot_done(id: int, b: Node) -> void:
 	b.mark_looted.rpc(id)
 	var c := main.players.get_node_or_null(NodePath(str(id))) as Cowboy
 	var got := c != null and c.give_meat()
-	_whisper(id, "搜到一塊恐龍肉（按 4 吃）" if got else "沒搜到東西（肉最多帶 %d 塊）" % Fighter.MEAT_MAX)
+	var parts: Array = []
+	if got:
+		parts.append("搜到一塊恐龍肉（按 4 吃）")
+	if not _hinted.has(id) and not _cands.is_empty():
+		_hinted[id] = true
+		_tell_hint(id)
+		parts.append("吞掉的信封：十位是 %s 之一，個位是 %s 之一" % [_digits_text(_cands[0]), _digits_text(_cands[1])])
+	_whisper(id, "　".join(parts) if not parts.is_empty() else "沒搜到東西（肉最多帶 %d 塊）" % Fighter.MEAT_MAX)
+
+
+## 吞掉的信封：每一位 HINT_COUNT 個不重複的數字，一定含密碼那一位，排好
+static func roll_candidates(code: int) -> Array:
+	var out: Array = []
+	for d: int in [code / 10, code % 10]:
+		var pool: Array = range(10)
+		pool.erase(d)
+		pool.shuffle()
+		var c: Array = pool.slice(0, HINT_COUNT - 1)
+		c.append(d)
+		c.sort()
+		out.append(c)
+	return out
+
+
+static func _digits_text(c: Array) -> String:
+	return " ".join(c.map(func(d: int) -> String: return str(d)))
+
+
+## 這台的人：第 row 位（0 十位、1 個位）的數字 d 在不在搜到的候選裡（沒搜到就都算在）
+func in_hint(row: int, d: int) -> bool:
+	return my_hint.is_empty() or (my_hint[row] as Array).has(d)
+
+
+## 主機：吞掉的信封只送本人（電腦不用送，直接讀 _cands）
+func _tell_hint(id: int) -> void:
+	if id == multiplayer.get_unique_id():
+		_got_hint(_cands)
+	elif id > 0 and multiplayer.get_peers().has(id):
+		_got_hint.rpc_id(id, _cands)
+
+
+@rpc("authority", "call_remote", "reliable")
+func _got_hint(c: Array) -> void:
+	if phase == &"play":
+		my_hint = c.duplicate(true)
+	changed.emit()

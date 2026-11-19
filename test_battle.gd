@@ -90,6 +90,7 @@ func _process(_delta: float) -> bool:
 		_case_envelope()
 		_case_new_scores()
 		_case_loot()
+		_case_swallowed_envelope()
 		_case_bot_safe()
 		_case_bot_corner()
 		_case_boss_guard()

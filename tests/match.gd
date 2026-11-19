@@ -2839,3 +2839,75 @@ func _case_loot() -> void:
 	brain.think(c3)
 	_ck(brain.action != "搜刮", "血多、看過牌的電腦不去搜（%s）" % brain.action)
 	_end(m)
+
+## 0.8.16 吞掉的信封（第 3.2 節）：每位 5 個候選、一定含正確的、每回合開場抽好大家一樣、每人每回合一次、只送本人、
+## 死了還記得、回合重來清掉；面板上候選以外變暗；小抄括號列候選；電腦只從候選裡試
+func _case_swallowed_envelope() -> void:
+	var m := _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"party"))
+	m._apply_rules()
+	var p: Party = m.party
+	var h: HoldAction = m.hold
+	var s: Safe = m.safe
+	m._physics_process(DT)   # 開場：主機（1）當恐龍，電腦 -1～-3 當牛仔
+	p.time_left = 0.0
+	m._physics_process(DT)
+	var code: int = s._code
+	_ck(p._cands.size() == 2 and p._cands[0].size() == Party.HINT_COUNT and p._cands[1].size() == Party.HINT_COUNT
+		and p._cands[0].has(code / 10) and p._cands[1].has(code % 10), "候選每位 %d 個、含正確的（%s，密碼 %02d）" % [Party.HINT_COUNT, p._cands, code])
+	for t in 20:
+		var c: Array = Party.roll_candidates(t * 5)
+		_ck(c[0].has(t * 5 / 10) and c[1].has(t * 5 % 10) and c[0].size() == 5, "抽 %02d 的候選一定含正確的" % (t * 5))
+	var b: Node3D = m._boss()
+	var a: Cowboy = m.players.get_node(^"-1")
+	var a2: Cowboy = m.players.get_node(^"-2")
+	a.global_position = b.global_position + Vector3(Party.loot_dist() - 0.5, 0, 0)
+	a2.global_position = b.global_position + Vector3(-(Party.loot_dist() - 0.5), 0, 0)
+	b.down_left = 15.0
+	h.start(-1, &"loot", b)
+	h.start(-2, &"loot", b)
+	h._physics_process(Party.LOOT_SECONDS + 0.01)
+	_ck(p._hinted.has(-1) and p._hinted.has(-2) and p.my_hint.is_empty(), "兩個人都拿到（同一份 _cands）、主機自己（恐龍）沒拿到")
+	_ck(not p.state().has("_cands") and not p.state().has("my_hint"), "候選不在公開的整包裡")
+	# 下一次倒地再搜：吞掉的信封每回合一次，拿過的不會換一份
+	var before: Array = p._cands.duplicate(true)
+	b.looted.clear()
+	h.start(-1, &"loot", b)
+	h._physics_process(Party.LOOT_SECONDS + 0.01)
+	_ck(p._cands == before, "同一回合候選不變")
+	# 死了還記得（跟著人不跟著命）
+	p.on_died(null, a)
+	_ck(p._hinted.has(-1), "死了還記得")
+	# 這台（主機）收到候選：面板變暗、小抄列候選
+	p._got_hint(p._cands)
+	var panel: SafePanel = m._safe_panel
+	var out := -1
+	for d in 10:
+		if not p._cands[0].has(d):
+			out = d
+	_ck(panel.is_gray(0, out) and not panel.is_gray(0, code / 10), "面板：十位不在候選裡的變暗（%d），正確的不暗" % out)
+	_ck(p.in_hint(1, code % 10) and not p.in_hint(0, out), "in_hint 對得上")
+	p.my_digits = [code / 10, -1]
+	m._match_hud.update_text(null)
+	_ck(m.hud.text.contains("密碼 %d ?（%s）" % [code / 10, Party._digits_text(p._cands[1])]), "小抄：看過十位，個位括號列候選（%s）" % m.hud.text)
+	# 電腦只從候選裡試
+	a2.global_position = s.global_position + Vector3(1.6, 0, 0)
+	a2.brain = BotBrain.new(-2, {})
+	a2.brain.action = "試密碼"
+	a2.brain.last_ctx = a2._bot_ctx(m)
+	var cands: Array = p._cands
+	var ok := true
+	for t in 15:
+		a2._bot_wait_for = "試密碼"
+		a2._bot_wait = 0.0
+		s.busy = 0
+		a2._bot_safe_act(m, 0.01)
+		if s.busy == -2:
+			var n: int = s._try
+			ok = ok and cands[0].has(n / 10) and cands[1].has(n % 10)
+			s.busy = 0
+	_ck(ok, "電腦只從候選裡試")
+	# 回合重來：清掉
+	p._start_round()
+	_ck(p._hinted.is_empty() and p.my_hint.is_empty(), "新回合清掉吞掉的信封")
+	_end(m)

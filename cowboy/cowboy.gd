@@ -805,9 +805,9 @@ func _bot_ctx(g: Node) -> Dictionary:
 			star = p.star_pos
 		elif holder_n and p.star_holder != id:
 			star = holder_n.global_position
-	var loot: Variant = null   # 搜刮：尼諾拉倒地、BotBrain.LOOT_REACH 內、這次倒地我還沒搜過、肉還沒帶滿
+	var loot: Variant = null   # 搜刮：尼諾拉倒地、BotBrain.LOOT_REACH 內、這次倒地我還沒搜過、肉還沒帶滿或還沒拿過吞掉的信封
 	var b: Node3D = g._boss()
-	if p and p.phase == &"play" and b and b.down_left > 0.0 and not b.looted.has(id) and meat < MEAT_MAX \
+	if p and p.phase == &"play" and b and b.down_left > 0.0 and not b.looted.has(id) and (meat < MEAT_MAX or not p._hinted.has(id)) \
 			and _flat_to(b.global_position) < BotBrain.LOOT_REACH:
 		loot = b.global_position
 	return {"star": star, "loot": loot, "me": global_position, "hp": float(hp) / max_hp, "last_life": p != null and int(p.lives.get(id, 2)) <= 1,
@@ -928,9 +928,10 @@ func _bot_safe_act(g: Node, delta: float) -> void:
 	if g.safe.busy != 0:
 		return
 	var k: Array = p._known.get(id, [-1, -1])
+	var hc: Array = p._cands if p._hinted.has(id) else [range(10), range(10)]   # 搜過吞掉的信封：只從候選裡試
 	var left: Array = []
 	for n in 100:
-		if g.safe.tried[n] == 0 and (k[0] < 0 or n / 10 == k[0]) and (k[1] < 0 or n % 10 == k[1]):
+		if g.safe.tried[n] == 0 and (k[0] < 0 or n / 10 == k[0]) and (k[1] < 0 or n % 10 == k[1]) and n / 10 in hc[0] and n % 10 in hc[1]:
 			left.append(n)
 	if not left.is_empty() and g.safe.try_code(id, left.pick_random()):
 		_bot_wait = Safe.TRY_SECONDS + randf_range(BotBrain.GAP_MIN, BotBrain.GAP_MAX)

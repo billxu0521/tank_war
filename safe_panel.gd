@@ -120,8 +120,10 @@ func _submit() -> void:
 	main.safe.request_try(_sent)
 
 
-## 這顆是不是灰的：選了另一排的數字，而且這個組合試過了
+## 這顆是不是灰的：不在吞掉的信封的候選裡（還是可以按），或選了另一排的數字、而且這個組合試過了
 func is_gray(row: int, d: int) -> bool:
+	if main.party and not main.party.in_hint(row, d):
+		return true
 	var other := ones if row == 0 else tens
 	if other < 0:
 		return false
@@ -131,7 +133,7 @@ func is_gray(row: int, d: int) -> bool:
 
 func _refresh() -> void:
 	var s: Safe = main.safe
-	var sig := [tens, ones, s.tried, s.busy, _sent]
+	var sig := [tens, ones, s.tried, s.busy, _sent, main.party.my_hint if main.party else []]
 	if sig == _last:   # 每幀叫：沒變就不重做按鈕樣式
 		return
 	_last = sig

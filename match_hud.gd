@@ -55,8 +55,15 @@ func update_text(me: Node) -> void:
 	if main.party:   # 回合、倒數、命數在左上（party_hud.gd）
 		main.hud.text = "我的血量：%s    蛋：%s" % [mine, egg_state]
 		var k: Array = main.party.my_digits
-		if k != [-1, -1]:   # 看過牌的小抄
+		var h: Array = main.party.my_hint
+		if k != [-1, -1] or not h.is_empty():   # 看過牌的小抄；搜過吞掉的信封，沒看過的那位後面括號列候選
 			main.hud.text += "    密碼 %s %s" % [str(k[0]) if k[0] >= 0 else "?", str(k[1]) if k[1] >= 0 else "?"]
+			var left: Array = []
+			for i in 2:
+				if k[i] < 0 and not h.is_empty():
+					left.append(Party._digits_text(h[i]))
+			if not left.is_empty():
+				main.hud.text += "（%s）" % "／".join(left)
 		return
 	if main._uses_lives():
 		var left := "出局" if main._out.has(my_id) else "剩 %d 次" % int(main._lives.get(my_id, 0))
