@@ -599,6 +599,12 @@ func _on_mode_picked(i: int) -> void:
 	rules = RULES.keys()[i]
 	mode_pick.select(i)
 	$UI/Root/Lobby/ModeDesc.text = RULES[rules].desc
+	if _rounds_pick:
+		_rounds_pick.visible = rules == &"normal"
+
+## 一般模式打幾局（大廳的「1 局／4 局」，主機選；party._ready 讀進 rounds）
+var normal_rounds := 4
+var _rounds_pick: OptionButton
 
 ## 時段（period.gd）：大廳選，存在設定檔。開房、沙盒、靶場都用這個；加入別人的房間時照主機的（_set_period）
 var period := &"sunset"
@@ -631,11 +637,18 @@ var _pilot_picked := false   # 這局已經抽過了（make_pilot 設、_new_rou
 func _add_dino_volunteer() -> void:
 	var c := CheckBox.new()
 	c.name = &"DinoVolunteer"
-	c.text = "我想當恐龍（對抗模式）"
+	c.text = "我想當恐龍（對抗、一般）"
 	c.toggled.connect(func(on: bool) -> void: want_dino = on)
 	var lobby_box := $UI/Root/Lobby
 	lobby_box.add_child(c)
 	lobby_box.move_child(c, $UI/Root/Lobby/ModeRow.get_index() + 1)
+	_rounds_pick = OptionButton.new()
+	_rounds_pick.name = &"RoundsPick"
+	_rounds_pick.add_item("4 局", 4)
+	_rounds_pick.add_item("1 局", 1)
+	_rounds_pick.item_selected.connect(func(i: int) -> void: normal_rounds = _rounds_pick.get_item_id(i))
+	_rounds_pick.visible = rules == &"normal"
+	$UI/Root/Lobby/ModeRow.add_child(_rounds_pick)
 
 ## 連上之後告訴主機自己想不想當恐龍
 @rpc("any_peer", "call_remote", "reliable")
@@ -658,11 +671,16 @@ func _pick_pilot() -> void:
 	# 沙盒、單人打恐龍、靶場的 rules 還是大廳選的那個，不能誤抽
 	if not RULES[rules].pilot or b == null or b.pilot != 0 or _pilot_picked or _practice():
 		return
+	var pool := dino_pool()
+	if not pool.is_empty():
+		make_pilot(pool.pick_random())
+
+## 想當恐龍、現在連著的人（對抗模式、一般模式抽恐龍用）
+func dino_pool() -> Array:
 	var pool: Array = _volunteers.keys().filter(func(id: int) -> bool: return multiplayer.get_peers().has(id))
 	if want_dino and not _dedicated:   # 開房的人自己勾的（他不用送 _volunteer）
 		pool.append(1)
-	if not pool.is_empty():
-		make_pilot(pool.pick_random())
+	return pool
 
 ## 交接中的遠端玩家（_stop_sync 送出、還沒收到回覆）：0 = 沒有
 var _handover := 0
@@ -750,7 +768,7 @@ func _set_rules(r: StringName) -> void:
 
 ## 派對模式（不是沙盒）：甩尾、火球、炸藥拆得掉地形，方塊房子也只在這時候有。boss.gd、viewmodel.gd、fireball.gd 的判斷都看這個
 func party_mode() -> bool:
-	return rules == &"party" and not _sandbox
+	return RULES[rules].party and not _sandbox
 
 ## 照模式藏起用不到的東西（每台都跑）
 func _apply_rules() -> void:
@@ -1378,6 +1396,8 @@ func _spawn(id: int) -> void:
 	_reclaim(id)   # 斷線重連：先把舊編號的資料搬過來（要在 _add_player 前面，不然次數會補滿）
 	if party and party.dino_id == id and party.phase in [&"prep", &"play"]:
 		make_pilot(id)   # 這回合輪到他當恐龍：拿回尼諾拉
+	elif party and party.fixed and party.phase in [&"prep", &"play"] and not party.in_roster(id):
+		party.take_bot(id)   # 一般模式這一局中間進來：接手一個活著的電腦獵人，沒有就觀戰到下一局
 	elif not _is_out(id):   # 出局的人連回來還是觀戰
 		_add_player(COWBOY, id)
 	if id != 1:

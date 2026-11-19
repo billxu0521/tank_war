@@ -122,9 +122,9 @@ func _process(delta: float) -> void:
 	if p == null:
 		return
 	_result_left -= delta
-	board.visible = Input.is_physical_key_pressed(KEY_TAB) and p.phase != &"final"
+	board.visible = Input.is_physical_key_pressed(KEY_TAB) and p.phase != &"final" and p.rounds > 1   # 1 局（一般模式）不看分數
 	popup.visible = p.phase == &"final" or (p.phase == &"result" and _result_left > 0.0)
-	scorebar.visible = p.phase in [&"prep", &"play"]   # 結算、最終排名中間有大框
+	scorebar.visible = p.phase in [&"prep", &"play"] and p.rounds > 1   # 結算、最終排名中間有大框
 	update_live()
 
 
@@ -216,7 +216,8 @@ func refresh() -> void:
 	var ranked: Array = p.ranking()
 	_fill(board_rows, ranked)
 	_fill_scorebar()
-	if p.phase == &"final":
+	popup_rows.visible = p.rounds > 1
+	if p.phase == &"final" and p.rounds > 1:
 		popup_title.text = "最終排名"
 		popup_champ.text = "冠軍　%s　%d 分" % [name_of(ranked[0]), int(p.scores.get(ranked[0], 0))] if ranked else ""
 		popup_champ.show()

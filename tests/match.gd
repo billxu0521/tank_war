@@ -2911,3 +2911,77 @@ func _case_swallowed_envelope() -> void:
 	p._start_round()
 	_ck(p._hinted.is_empty() and p.my_hint.is_empty(), "新回合清掉吞掉的信封")
 	_end(m)
+
+## 一般模式（0.8.16 第 1 節）：整場固定一個人當恐龍，準備結束那一刻從想當的人裡抽；沒人勾電腦當；1 局直接到最終畫面
+func _case_normal_mode() -> void:
+	var m := _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"normal"))
+	m.want_dino = true
+	m._apply_rules()
+	var p: Party = m.party
+	_ck(m.party_mode() and p.fixed and p.rounds == 4, "一般模式：派對那套、固定恐龍、預設 4 局")
+	m._physics_process(DT)
+	_ck(p.dino_id < 0 and p.names[p.dino_id] == "電腦尼諾拉" and m.players.has_node(^"1"), "準備階段先由電腦當恐龍，主機站在牛仔那邊")
+	p.time_left = 0.0
+	m._physics_process(DT)
+	var hunters := p._roster.filter(func(id: int) -> bool: return id != p.dino_id)
+	_ck(p.phase == &"play" and p.dino_id == 1 and p.fixed_id == 1 and m._boss().pilot == 1 and hunters.size() == 3 and hunters.all(func(id: int) -> bool: return id < 0),
+		"準備結束：勾的人當恐龍、電腦補滿 3 個獵人（%s）" % [p._roster])
+	_ck(not p.scores.keys().any(func(id: int) -> bool: return p.names.get(id, "") == "電腦尼諾拉"), "電腦恐龍那格拿掉")
+	for r in 3:
+		p._end_round(true, "test")
+		p.time_left = 0.0
+		m._physics_process(DT)
+		_ck(p.phase == &"prep" and p.dino_id == 1, "第 %d 局還是同一個人當恐龍" % (r + 2))
+		p.time_left = 0.0
+		m._physics_process(DT)
+	_end(m)
+	# 沒人勾：電腦當恐龍、主機當獵人，每局都是
+	m = _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"normal"))
+	m._apply_rules()
+	p = m.party
+	m._physics_process(DT)
+	for r in 2:
+		p.time_left = 0.0
+		m._physics_process(DT)
+		_ck(p.phase == &"play" and p.dino_id < 0 and m._boss().pilot == 0 and m.players.has_node(^"1"), "沒人勾：電腦當恐龍、主機當獵人（第 %d 局）" % (r + 1))
+		p._end_round(true, "test")
+		p.time_left = 0.0
+		m._physics_process(DT)
+	# 中途連進來：接手一個活著的電腦獵人（位置、血、命數、看過的牌）
+	p.time_left = 0.0
+	m._physics_process(DT)
+	var bot: Cowboy = p._cowboys().filter(func(c: Node) -> bool: return c.name.to_int() < 0)[0]
+	var old := bot.name.to_int()
+	bot.global_position = Vector3(12, 1, 7)
+	bot.hp = 80
+	p.lives[old] = 2
+	p._known[old] = [3, -1]
+	p.take_bot(7)
+	var c := m.players.get_node_or_null(^"7") as Cowboy
+	_ck(c != null and not p._roster.has(old) and p._roster.has(7) and c.global_position.distance_to(Vector3(12, 1, 7)) < 0.1 and c.hp == 80
+		and int(p.lives[7]) == 2 and p._known[7] == [3, -1], "中途加入：接手電腦獵人的位置、血、命數、看過的牌")
+	_end(m)
+	# 1 局：撤離就直接到最終畫面，不出金色小恐龍
+	m = _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"normal"))
+	m.normal_rounds = 1
+	m._apply_rules()
+	p = m.party
+	m._physics_process(DT)
+	_ck(p.rounds == 1 and p.state().rounds == 1, "1 局：送給客戶端的也是 1 局")
+	p.time_left = 0.0
+	m._physics_process(DT)
+	p.extracted(1)
+	_ck(p.phase == &"final" and p.last_result.ends_with("獲勝"), "1 局：帶蛋撤離直接到最終畫面（%s）" % p.last_result)
+	_end(m)
+	# 專用伺服器：沒有真人不開第一局
+	m = _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"normal"))
+	m._apply_rules()
+	m._dedicated = true
+	m.party.step(DT)
+	_ck(m.party.phase == &"", "專用伺服器沒有真人：不開第一局")
+	m._dedicated = false
+	_end(m)
