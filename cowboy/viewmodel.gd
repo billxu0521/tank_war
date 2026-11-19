@@ -161,7 +161,7 @@ var _reload_id := 0
 var _fire_queued := false   # 等槍好了自動射的那一發：裝填中按開火（槍回正後射），或 fire_buffer 開著時提早按的
 var _aim_latched := false   # aim_toggle 開著時：現在是不是舉著
 var _fire_hold := 0.0       # 開火鍵這一次已經按住多久
-# --- 補血包（3）：按一下開始補，補 medkit_seconds 秒，時間到扣一包、請主機加血。補的時候不能開槍、換槍、近戰、丟炸藥、換彈（一動就取消）；再按 3 取消，不扣包 ---
+# --- 補血包（3）：按一下開始補，補 medkit_seconds 秒，時間到扣一包、請主機加血。補的時候不能開槍、換槍、近戰、丟炸藥、換彈（一動就取消）、不能跑（鎖住只能走）；再按 3 取消，不扣包 ---
 var _heal_t := -1.0         # 補了多久，-1 = 沒在補
 var _heal_hud: Label        # 補血中：畫面中間（準心下面），沒在補就藏起來
 
@@ -767,6 +767,11 @@ func _heal_press() -> void:
 	_fire_queued = false
 	_heal_t = 0.0
 	_refresh_ammo()
+
+
+## 正在用東西（補血包）：這段時間不能跑
+func using_item() -> bool:
+	return _heal_t >= 0.0
 
 
 func cancel_heal() -> void:

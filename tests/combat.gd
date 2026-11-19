@@ -300,6 +300,26 @@ func _case_medkit() -> void:
 	vm.switch_weapon(2)
 	_ck(vm._heal_t < 0.0 and me.medkits == 3, "補血中換槍要取消，不扣包")
 	vm.switch_weapon(1)
+	# 補血中按住跑：鎖住，只能走（0.8.16）
+	me.hp = 50
+	vm._anim_lock = 0.0
+	vm._fire_cooldown = 0.0
+	vm._heal_press()
+	_ck(vm.using_item(), "補血中 using_item() 是真的")
+	me.stamina = 100.0
+	Input.action_press("sprint")
+	Input.action_press("move_forward")
+	for i in 5:
+		me._physics_process(0.1)
+	var hv := Vector2(me.velocity.x, me.velocity.z).length()
+	_ck(vm.using_item() and not me.is_sprinting() and hv <= me.walk_speed + 0.01,
+		"補血中按住跑：不跑，速度不超過走路 %.1f（現在 %.2f）" % [me.walk_speed, hv])
+	vm.cancel_heal()
+	for i in 5:
+		me._physics_process(0.1)
+	_ck(me.is_sprinting(), "沒在補血就跑得起來")
+	Input.action_release("sprint")
+	Input.action_release("move_forward")
 	# 主機拒絕：包是 0 不加血；連送兩次只加一次（間隔不到）
 	me.medkits = 0
 	me.hp = 50

@@ -488,9 +488,9 @@ func _physics_process(delta: float) -> void:
 	var input := Input.get_vector("move_left", "move_right", "move_forward", "move_back")
 	var dir := (transform.basis * Vector3(input.x, 0.0, input.y)).normalized()
 
-	# 舉槍時 Shift 是閉氣（viewmodel 在處理），不是跑步
+	# 舉槍時 Shift 是閉氣（viewmodel 在處理），不是跑步。補血（之後吃肉）時鎖住不能跑，只能走
 	var wants_sprint := Input.is_action_pressed("sprint") and not Input.is_action_pressed("aim") \
-		and input != Vector2.ZERO
+		and input != Vector2.ZERO and not viewmodel.using_item()
 	if Input.is_action_just_pressed("crouch_toggle"):
 		crouch_toggled = not crouch_toggled
 	if wants_sprint:
