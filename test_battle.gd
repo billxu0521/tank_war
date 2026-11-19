@@ -95,6 +95,7 @@ func _process(_delta: float) -> bool:
 		_case_bot_safe()
 		_case_bot_corner()
 		_case_boss_guard()
+		_case_battle_info()
 		_case_safe_spots()
 		_case_bot_brain()
 		_case_bot_sight()

@@ -67,7 +67,6 @@ var _waiting := {}            # 主機：等重生的牛仔編號 -> [剩幾秒,
 var _pick := {}               # 主機：牛仔選的重生點（編號 -> spawn_points 的索引）
 var _sync_left := 0.0
 var _known := {}              # 主機：牛仔編號 -> [十位, 個位]（-1 = 沒看過）。跟著人不跟著命，回合開始清掉
-var _noted: Array = [false, false]   # 這台已經提示過恐龍「信封被開了」
 var my_hint: Array = []       # 這台的人搜到的候選 [[十位], [個位]]（[] = 沒搜到）。主機只用 rpc_id 送本人，不在 state() 裡
 var _cands: Array = []        # 主機：這回合吞掉的信封（每位 HINT_COUNT 個），_start_round 抽
 var _hinted := {}             # 主機：這回合拿過候選的人（編號 -> true）。跟著人不跟著命
@@ -145,11 +144,9 @@ func _process(delta: float) -> void:
 		e.collision_layer = 1 if main.safe.on else 0
 		if e.global_position != env_pos[i]:
 			e.global_position = env_pos[i]
-		if e.opened != bool(env_open[i]):
-			e.set_opened(env_open[i])
-		if env_open[i] and not _noted[i] and me == dino_id and phase == &"play" and not main.safe.open:   # 恐龍：第一次被開跳一行字（箱子開了就沒用了）
-			main.status.text = "%s的信封被打開了" % Envelope.NAMES[i]
-		_noted[i] = bool(env_open[i])
+		var shown: bool = env_open[i] and me != dino_id   # 尼諾拉不知道信封有沒有被開（0.8.16 第 4.1 節）：牠看到的永遠是沒開的樣子
+		if e.opened != shown:
+			e.set_opened(shown)
 	_show_star()
 	if phase == &"prep" and me == dino_id and not egg_placed and Input.is_action_just_pressed(&"interact") \
 			and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
@@ -632,10 +629,7 @@ func read(id: int, i: int) -> bool:
 	if not env_open[i]:   # 第一個看這封：分數先記著，只提示本人
 		_env_bonus[id] = int(_env_bonus.get(id, 0)) + SCORE_ENVELOPE_FIRST
 		_whisper(id, "第一個開%s的信封 +%d（回合結算時加）" % [Envelope.NAMES[i], SCORE_ENVELOPE_FIRST])
-	env_open[i] = true
-	var b: Node = main._boss()
-	if b:   # 信封被開：叫恐龍過去
-		b.alarm(env_pos[i], true)
+	env_open[i] = true   # 不叫恐龍過去：尼諾拉不知道信封被開（0.8.16 第 4.1 節）
 	_sync()   # 公開的「開過了」＋補送本人
 	return true
 

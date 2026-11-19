@@ -570,7 +570,7 @@ func hear(at: Vector3) -> void:
 		_heard(at)
 
 ## 小恐龍尖叫（raptors.gd）：不管多遠都去看（槍聲放鬆時只理近的，這個不管）。退開時不理
-## guard：守箱的三件事（信封被開、猜錯、開箱）叫的，守箱時不管多遠都去；其他的守箱時離守點遠就不理
+## guard：守箱的兩件事（猜錯、開箱）叫的，守箱時不管多遠都去；其他的守箱時離守點遠就不理
 func alarm(at: Vector3, guard := false) -> void:
 	if director.phase != Director.Phase.RETREAT and (guard or _guard_hears(at)):
 		_heard(at)
@@ -1047,7 +1047,7 @@ func _act_wander(delta: float) -> int:
 	return BT.RUNNING
 
 ## 守箱（docs/企劃/2026-11-16-未完成事項.md 第 1 項）：派對有保險箱、電腦操作時取代亂逛和導演的提示。
-## 知道的跟真人駕駛方位條上一樣：箱子、兩個信封（開過沒）、開箱後蛋在哪
+## 知道的跟真人駕駛方位條上一樣：箱子、兩個信封（不知道開過沒，0.8.16 第 4.1 節）、有沒有人試過密碼（猜錯有聲音）、開箱後蛋在哪
 static var GUARD_RING: float = Balance.num("dino_guard_ring")
 static var GUARD_LOOK: float = Balance.num("dino_guard_look")
 static var GUARD_HEAR: float = Balance.num("dino_guard_hear")
@@ -1079,7 +1079,7 @@ func _act_guard(delta: float) -> int:
 		_move(Vector3.ZERO, false, delta)
 		return BT.RUNNING
 	_guard_leg += delta
-	# 換點：沒有點、點是別的動作留下來的、走太久、或那個點已經不用守（信封被開了）
+	# 換點：沒有點、點是別的動作留下來的、走太久、或那個點已經不用守（有人試過密碼，信封不守了）
 	if _wander_to == Vector3.INF or _wander_to != _guard_to or _guard_leg > GUARD_LEG_MAX or not _near_guard(_guard_goal, GUARD_RING + 1.0):
 		_guard_goal = _guard_next(g)
 		_wander_to = _reachable(_guard_goal)
@@ -1090,14 +1090,16 @@ func _act_guard(delta: float) -> int:
 		_wander_to = Vector3.INF
 	return BT.RUNNING
 
-## at 離守點（箱子、沒開的信封；開了是蛋）在 r 內
-func _near_guard(at: Vector3, r: float) -> bool:
+## 守點：箱子和兩個信封；有人試過密碼就只剩箱子；開了是蛋
+func _guard_points() -> Array:
 	var g := _game()
-	var pts: Array = [_guard_center()]
-	if not g.safe.open:
-		for i in 2:
-			if not g.party.env_open[i]:
-				pts.append(g.party.env_pos[i])
+	if g.safe.open or g.safe.tried.has(1):
+		return [_guard_center()]
+	return [g.safe.global_position] + g.party.env_pos
+
+## at 離守點在 r 內
+func _near_guard(at: Vector3, r: float) -> bool:
+	var pts := _guard_points()
 	return pts.any(func(q: Vector3) -> bool: return Vector2(q.x - at.x, q.z - at.z).length() < r)
 
 ## 守的中心：箱子；開了是蛋
@@ -1105,12 +1107,9 @@ func _guard_center() -> Vector3:
 	var g := _game()
 	return g.egg.global_position if g.safe.open else g.safe.global_position
 
-## 下一個守點：還有信封沒開就在「箱子 ↔ 沒開的信封」之間輪流；都開了就在箱子周圍 GUARD_RING 內繞
+## 下一個守點：沒人試過密碼就在「箱子 ↔ 兩個信封」之間輪流；試過了就在箱子周圍 GUARD_RING 內繞
 func _guard_next(g: Node) -> Vector3:
-	var pts: Array = [g.safe.global_position]
-	for i in 2:
-		if not g.party.env_open[i]:
-			pts.append(g.party.env_pos[i])
+	var pts := _guard_points()
 	var to: Vector3
 	if pts.size() > 1:
 		_guard_i = (_guard_i + 1) % pts.size()
