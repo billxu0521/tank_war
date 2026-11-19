@@ -47,6 +47,8 @@ var scores := {}              # 連線編號 -> 總分
 var round_scores := {}        # 連線編號 -> 本回合得分
 var lives := {}               # 牛仔連線編號 -> 剩幾條命
 var dino_id := 0
+var fixed := false            # 固定恐龍（一般模式；match_rules 的 fixed_dino，_ready 讀）：整場同一個人當，不輪
+var fixed_id := 0             # 主機：固定當恐龍的人。負的 = 電腦，每局準備結束那一刻再從想當的人裡抽（_pick_fixed）
 var names := {}               # 連線編號 -> 顯示名稱
 var last_result := ""
 var egg_placed := false       # 準備階段恐龍放蛋了沒
@@ -78,6 +80,9 @@ const BOSS_GD := preload("res://boss.gd")   # 尼諾拉的身高（LIFT）：開
 
 func _ready() -> void:
 	use_safe = bool(main.RULES[main.rules].get("safe", false))
+	fixed = bool(main.RULES[main.rules].get("fixed_dino", false))
+	if fixed:
+		rounds = main.normal_rounds
 	for i in 2:   # 每台都建、名字固定，看牌走 party 的 RPC，信封自己沒有 RPC
 		var e := Envelope.new()
 		e.name = "Envelope%d" % i
@@ -154,7 +159,8 @@ func _process(delta: float) -> void:
 ## 主機每個物理幀（main._physics_process）
 func step(delta: float) -> void:
 	if phase == &"":
-		start()
+		if not (fixed and _humans().is_empty()):   # 一般模式的專用伺服器：等第一個真人連進來才開
+			start()
 		return
 	time_left -= delta
 	_sync_left -= delta
@@ -165,6 +171,8 @@ func step(delta: float) -> void:
 			if not egg_placed:
 				main.egg.global_position = main._on_ground(_flat(_dino_pos(), 0.5))   # 還沒放：蛋跟著恐龍走
 			if time_left <= 0.0:
+				if fixed and fixed_id < 0:
+					_pick_fixed()
 				if not egg_placed:   # 時間到沒放：放在恐龍腳下
 					_hide_egg_at(_dino_pos())
 				phase = &"play"
@@ -194,7 +202,7 @@ func step(delta: float) -> void:
 				if round_index >= rounds:
 					phase = &"final"
 					time_left = FINAL_SECONDS
-					last_result = "四回合結束"
+					last_result = "%d 回合結束" % rounds
 					_sync()
 				else:
 					_start_round()
@@ -213,7 +221,12 @@ func start() -> void:
 	for i in _roster.size():
 		names[_roster[i]] = "玩家 %d" % (i + 1)
 	var bot := -1
-	while _roster.size() < PLAYERS:
+	if fixed:   # 固定恐龍：先由電腦當（也在名單上，不出牛仔），準備結束時有人想當再換（_pick_fixed）
+		fixed_id = bot
+		names[bot] = "電腦尼諾拉"
+		_roster.append(bot)
+		bot -= 1
+	while _roster.size() < PLAYERS:   # 固定恐龍時恐龍也在名單上，所以一樣是「獵人不到 3 個用電腦補」
 		names[bot] = "電腦 %d" % -bot
 		_roster.append(bot)
 		bot -= 1
@@ -265,7 +278,7 @@ func _start_round() -> void:
 	my_hint = []
 	_cands = roll_candidates(main.safe._code) if main.safe.on else []
 	env_open = [false, false]
-	dino_id = _roster[round_index % _roster.size()]
+	dino_id = fixed_id if fixed else _roster[round_index % _roster.size()]
 	# 清場：boss 以外全部收掉再照這回合的角色生（刪掉重生，客戶端的位置才會跟著換；做法同 main._new_round）
 	# 恐龍的牛仔留著：make_pilot 要跟他交接（先叫他停送同步再收），不能現在就收
 	var players: Node = main.players
@@ -311,7 +324,7 @@ func _start_round() -> void:
 		main.raptors.auto_place()   # 電腦當恐龍：開回合自己放（要在信封之後：放在信封附近）
 	star_holder = 0
 	star_on = false
-	if round_index == rounds - 1:
+	if round_index == rounds - 1 and rounds > 1:   # 1 局不計分，星星沒用
 		main.raptors.add_gold()   # 最後一回合：金色小恐龍（身上有星星）
 	main.barrels.roll()   # 爆炸桶每回合重抽（要在信封、箱子之後：避開信封和蛋）
 	_sync()
@@ -324,8 +337,8 @@ func _refresh_roster() -> void:
 		if _roster.has(h):
 			continue
 		var slot := -1
-		for i in range(round_index, _roster.size()):   # 這回合那格的電腦也還沒當過
-			if _roster[i] < 0:
+		for i in range(0 if fixed else round_index, _roster.size()):   # 這回合那格的電腦也還沒當過；固定恐龍：哪個電腦獵人都可以
+			if _roster[i] < 0 and _roster[i] != fixed_id:
 				slot = i
 				break
 		var n := _roster.size() - _roster.filter(func(id: int) -> bool: return id < 0).size() + 1
@@ -360,10 +373,12 @@ func _end_round(dino_win: bool, msg: String) -> void:
 		_add(dino_id, SCORE_GUARD)
 	for p: Node in _cowboys():
 		_add(p.name.to_int(), SCORE_SURVIVE)
+	if rounds == 1:   # 1 局：不看分數，直接到最終畫面
+		msg = "尼諾拉守住了蛋" if dino_win else msg + "，獲勝"
 	if star_holder != 0:   # 拿著星星：這回合的分數（含剛加的守住、活著、撤離）× STAR_MULT
 		_add(star_holder, int(round_scores.get(star_holder, 0)) * (STAR_MULT - 1))
-	phase = &"result"
-	time_left = RESULT_SECONDS
+	phase = &"final" if rounds == 1 else &"result"
+	time_left = FINAL_SECONDS if rounds == 1 else RESULT_SECONDS
 	last_result = msg
 	_waiting.clear()
 	main.egg.carrier = 0
@@ -471,8 +486,65 @@ func rekey(old: int, new: int) -> void:
 	_order_scores()
 	if dino_id == old:
 		dino_id = new
+	if fixed_id == old:
+		fixed_id = new
 	if star_holder == old:
 		star_holder = new
+	_sync()
+
+
+## 主機、一般模式準備結束那一刻（恐龍還是電腦）：想當的人裡抽一個，整場給他當。
+## 電腦恐龍那格拿掉；他原本是獵人，獵人不到 3 個就補一個電腦
+func _pick_fixed() -> void:
+	var pool: Array = main.dino_pool()
+	if pool.is_empty():
+		return
+	var h: int = pool.pick_random()
+	_roster.erase(fixed_id)
+	scores.erase(fixed_id)
+	names.erase(fixed_id)
+	fixed_id = h
+	dino_id = h
+	lives.erase(h)
+	if _roster.size() < PLAYERS:
+		var bot: int = mini(_roster.min(), 0) - 1
+		names[bot] = "電腦 %d" % -bot
+		scores[bot] = 0
+		_roster.append(bot)
+		_spawn_cowboy(bot, true, -1)
+	_order_scores()
+	main.make_pilot(h)
+	main._announce.rpc("%s 當恐龍" % names.get(h, ""))
+
+
+func in_roster(id: int) -> bool:
+	return _roster.has(id)
+
+
+## 主機、一般模式這一局中間連進來的真人：接手一個活著的電腦獵人（位置、血、命數、分數、看過的牌）。
+## 沒有活著的電腦就不生，觀戰到下一局（_refresh_roster 會排他進來）
+func take_bot(id: int) -> void:
+	var bots := _cowboys().filter(func(c: Node) -> bool: return c.name.to_int() < 0)
+	if bots.is_empty():
+		return
+	var b: Node3D = bots[0]
+	var old := b.name.to_int()
+	var at := b.global_transform
+	var hp: int = b.hp
+	main.players.remove_child(b)
+	b.queue_free()
+	main._cowboys -= 1
+	if main.egg.carrier == old:
+		main.egg.carrier = id
+	rekey(old, id)   # 分數、命數、名單位置、看過的牌（_sync 補送）
+	names[id] = "玩家 %d" % _roster.filter(func(r: int) -> bool: return r > 0).size()
+	var c: Node3D = main._add_player(main.COWBOY, id)
+	c.global_transform = at
+	c.hp = hp
+	if hp < c.max_hp:   # 等他那台生出這個牛仔再送血量（同一幀送會找不到節點）
+		get_tree().create_timer(0.5).timeout.connect(func() -> void:
+			if is_instance_valid(c):
+				c._sync_hp.rpc(c.hp))
 	_sync()
 
 
