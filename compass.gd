@@ -2,20 +2,22 @@ class_name Compass
 extends Control
 ## 畫面上方的方位條：0～360 度（0 = 北 = 場地的 -Z，順時針，90 = 東 = +X），
 ## 看著的方向在正中間，左右各看得到 COVER/2 度。
-## 上面標蛋和撤離區的方向＋距離；在視野外的就貼在兩端，箭頭指往那邊轉。
+## 標記畫成一排小圖示（icons.gd），只有最靠近正前方的那個寫距離；在視野外的就貼在兩端，箭頭指往那邊轉。
+## 撤離、星星、蛋不在這裡，是畫面上的標記（markers.gd）。
 ##
-## match_hud.gd 每幀呼叫 set_view() 並填 marks（蛋、撤離區），這裡只負責畫。
+## match_hud.gd 每幀呼叫 set_view() 並填 marks（compass_marks），這裡只負責畫。
 
 const COVER := 180.0          # 方位條總共涵蓋幾度
 const WIDTH := 640.0
 const HEIGHT := 30.0
 const EGG_COLOR := Color(1.0, 0.95, 0.8)
 const EXIT_COLOR := Color(1.0, 0.72, 0.2)
-const ROW_GAP := 18.0         # 第二行字（信封、保險箱）往下多少
-const PAD := 8.0              # 同一行兩個字之間至少留多少
+const ICON := 20.0            # 圖示寬（icons.gd）
+const PAD := 10.0             # 兩個圖示之間至少留多少（信封右下角的「十」「個」會凸出一點）
+const FRONT := 10.0           # 正前方左右幾度內的標記寫距離（只寫最近正前方的一個）
 
 var heading := 0.0
-## [{"deg": 方位, "dist": 公尺, "color": Color, "label": String, "row": 0 或 1（沒給就是 0）}]
+## [{"deg": 方位, "dist": 公尺（沒給就不寫距離）, "color": Color, "label": String, "icon": StringName（沒給就寫 label）, "text": 圖示上的字（重生點編號）}]
 var marks: Array = []
 
 
@@ -24,7 +26,7 @@ func _init() -> void:
 	offset_left = -WIDTH * 0.5
 	offset_right = WIDTH * 0.5
 	offset_top = 8
-	offset_bottom = 8 + HEIGHT + 40 + ROW_GAP
+	offset_bottom = 8 + HEIGHT + 70
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
@@ -73,33 +75,49 @@ func _draw() -> void:
 	var hw := font.get_string_size(h, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x
 	draw_line(Vector2(WIDTH * 0.5, 0), Vector2(WIDTH * 0.5, HEIGHT), Color.WHITE, 2.0)
 	_text(font, Vector2(WIDTH * 0.5 - hw * 0.5, HEIGHT + 18), h, 18, Color.WHITE)
-	# 目標：蛋、撤離區。視野外的貼在兩端、畫成箭頭
-	var rows := [[], []]   # 每行的字：[想放的左緣, 寬, 字, 顏色]
-	for m: Dictionary in marks:
+	# 標記：條上一個小三角指方位（視野外的貼在兩端、畫成箭頭），下面一排圖示（擺開不疊）。
+	# 距離只寫最靠近正前方的那一個（左右 FRONT 度內），其他只有圖示
+	var items := []   # [想放的左緣, 寬, 標記, x]
+	var front := -1
+	var best := FRONT
+	for i in marks.size():
+		var m: Dictionary = marks[i]
 		var x := _x_of(m["deg"])
 		var c: Color = m["color"]
 		var inside := x >= 0.0 and x <= WIDTH
 		x = clampf(x, 8.0, WIDTH - 8.0)
 		if inside:
-			var tri := PackedVector2Array([Vector2(x, HEIGHT - 2), Vector2(x - 7, HEIGHT - 14), Vector2(x + 7, HEIGHT - 14)])
+			var tri := PackedVector2Array([Vector2(x, HEIGHT - 2), Vector2(x - 6, HEIGHT - 12), Vector2(x + 6, HEIGHT - 12)])
 			draw_colored_polygon(tri, c)
 			draw_polyline(tri + PackedVector2Array([tri[0]]), Color(0.12, 0.07, 0.05), 1.5)
 		else:
-			var s := -1.0 if x < WIDTH * 0.5 else 1.0
-			var tri := PackedVector2Array([Vector2(x + s * 7, HEIGHT * 0.5),
-				Vector2(x - s * 5, HEIGHT * 0.5 - 8), Vector2(x - s * 5, HEIGHT * 0.5 + 8)])
+			var sd := -1.0 if x < WIDTH * 0.5 else 1.0
+			var tri := PackedVector2Array([Vector2(x + sd * 7, HEIGHT * 0.5),
+				Vector2(x - sd * 5, HEIGHT * 0.5 - 8), Vector2(x - sd * 5, HEIGHT * 0.5 + 8)])
 			draw_colored_polygon(tri, c)
 			draw_polyline(tri + PackedVector2Array([tri[0]]), Color(0.12, 0.07, 0.05), 1.5)
-		var t: String = "%s %dm" % [m["label"], int(m["dist"])] if m.has("dist") else m["label"]   # 沒給距離只寫名字（一排重生點）
-		var w := font.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x
-		rows[int(m.get("row", 0))].append([x - w * 0.5, w, t, c])
-	for r in rows.size():
-		var xs := spread(rows[r].map(func(a: Array) -> float: return a[0]), rows[r].map(func(a: Array) -> float: return a[1]))
-		for i in xs.size():
-			_text(font, Vector2(xs[i], HEIGHT + 36 + r * ROW_GAP), rows[r][i][2], 16, rows[r][i][3])
+		var off := absf(wrapf(float(m["deg"]) - heading, -180.0, 180.0))
+		if m.has("dist") and off <= best:
+			best = off
+			front = i
+		var w := ICON if m.has("icon") else font.get_string_size(m["label"], HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x
+		items.append([x - w * 0.5, w, m])
+	var xs := spread(items.map(func(a: Array) -> float: return a[0]), items.map(func(a: Array) -> float: return a[1]))
+	var y := HEIGHT + 26.0 + ICON * 0.5   # 圖示中線：在中間的度數下面
+	for i in xs.size():
+		var m: Dictionary = items[i][2]
+		var cx: float = xs[i] + items[i][1] * 0.5
+		if m.has("icon"):
+			Icons.draw(self, m["icon"], Vector2(cx, y), ICON, m["color"], m.get("text", ""))
+		else:
+			_text(font, Vector2(xs[i], y + 6), m["label"], 16, m["color"])
+		if i == front:
+			var t := "%dm" % int(m["dist"])
+			var tw := font.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, 15).x
+			_text(font, Vector2(clampf(cx - tw * 0.5, 0.0, WIDTH - tw), y + ICON * 0.5 + 18), t, 15, Color.WHITE)
 
 
-## 同一行的字擺開：want = 每個字想放的左緣，w = 寬。回傳實際的左緣（順序照輸入）：
+## 同一排的圖示擺開：want = 每個想放的左緣，w = 寬。回傳實際的左緣（順序照輸入）：
 ## 照左右順序排，後面的往右推開、中間留 PAD，全部不超出方位條（太多擠不下才會疊）
 static func spread(want: Array, w: Array) -> Array:
 	var order := range(want.size())

@@ -819,7 +819,7 @@ func _case_golden_star() -> void:
 	b.global_position = Vector3(0, 0, 300)
 	g.take_damage(60, c)
 	_ck(r.alive[r.gold] == 0 and p.star_on and p.star_holder == 0 and Vector2(p.star_pos.x - at.x, p.star_pos.z - at.z).length() < 0.5, "打死掉星星")
-	_ck(m._match_hud.compass_marks(far).any(func(k: Dictionary) -> bool: return k.label == "★星星"), "地上的星星標在方位條")
+	_ck(m._match_hud.world_marks().any(func(k: Dictionary) -> bool: return k.label == "★星星"), "地上的星星標在畫面上")
 	# 碰到就撿
 	c.global_position = p.star_pos + Vector3(3, 0, 0)
 	p._star_step()
@@ -829,7 +829,7 @@ func _case_golden_star() -> void:
 	_ck(not p.star_on and p.star_holder == cid, "碰到就撿起來")
 	p._show_star()
 	_ck(p._star_mesh.visible and p._star_mesh.global_position.y > c.global_position.y + 2.0, "頭上浮一顆星")
-	_ck(m._match_hud.compass_marks(far).any(func(k: Dictionary) -> bool: return k.label == "★星星" and k.dist < 45.0), "拿星星的人標在方位條")
+	_ck(m._match_hud.world_marks().any(func(k: Dictionary) -> bool: return k.label == "★星星" and far.distance_to(k.pos) < 45.0), "拿星星的人標在畫面上")
 	# 計分欄：★、拿蛋的 +20
 	m.egg.carrier = cid
 	m._party_hud._party = p

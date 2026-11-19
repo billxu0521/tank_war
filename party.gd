@@ -67,6 +67,8 @@ var _waiting := {}            # 主機：等重生的牛仔編號 -> [剩幾秒,
 var _pick := {}               # 主機：牛仔選的重生點（編號 -> spawn_points 的索引）
 var _sync_left := 0.0
 var _known := {}              # 主機：牛仔編號 -> [十位, 個位]（-1 = 沒看過）。跟著人不跟著命，回合開始清掉
+var touched_egg := false     # 這台的人這回合拿過蛋（每台自己記，回合外清掉）：知道撤離點
+var _knew_exits := true       # 這台上次套到地圖的 knows_exits()
 var my_hint: Array = []       # 這台的人搜到的候選 [[十位], [個位]]（[] = 沒搜到）。主機只用 rpc_id 送本人，不在 state() 裡
 var _cands: Array = []        # 主機：這回合吞掉的信封（每位 HINT_COUNT 個），_start_round 抽
 var _hinted := {}             # 主機：這回合拿過候選的人（編號 -> true）。跟著人不跟著命
@@ -135,6 +137,13 @@ func _process(delta: float) -> void:
 	if not multiplayer.is_server():
 		time_left = maxf(time_left - delta, 0.0)
 	var me := multiplayer.get_unique_id()
+	if phase != &"play":
+		touched_egg = false
+	elif main.egg.carrier == me:
+		touched_egg = true
+	if knows_exits() != _knew_exits:   # 撤離點的光圈、水管：知道了才看得到（main._show_exits 問 knows_exits）
+		_knew_exits = not _knew_exits
+		main._show_exits()
 	# 準備階段只有恐龍看得到蛋：牛仔要看恐龍往哪走，猜蛋藏在哪
 	main.egg.visible = (phase != &"prep" or me == dino_id) and not main.safe.locked()
 	main.safe.visible = main.safe.on and egg_placed and (phase != &"prep" or me == dino_id)
@@ -632,6 +641,12 @@ func read(id: int, i: int) -> bool:
 	env_open[i] = true   # 不叫恐龍過去：尼諾拉不知道信封被開（0.8.16 第 4.1 節）
 	_sync()   # 公開的「開過了」＋補送本人
 	return true
+
+
+## 這台的人知不知道撤離點在哪（0.8.16 第 7 節）：尼諾拉一直知道；獵人這回合看過任何一封信（含吞掉的信封）、或拿過蛋才知道，
+## 死了還記得。沒有保險箱（舊的藏蛋）照舊大家都知道。撤離點是哪幾個還是每台都收得到，原型先不防
+func knows_exits() -> bool:
+	return not main.safe.on or multiplayer.get_unique_id() == dino_id or my_digits != [-1, -1] or not my_hint.is_empty() or touched_egg
 
 
 ## 主機：第 i 位的數字（0 十位、1 個位）。只在主機有意義（客戶端的 _code 是 -1）
