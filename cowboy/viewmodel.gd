@@ -487,7 +487,7 @@ func _update_breath(want_hold: bool, delta: float) -> void:
 ## 點一下＝輕擊，按住蓄力、放開＝重擊（跟 Hunt 一樣是「放開」才揮出去）。
 ## 蓄力中槍會往後拉，讓自己和旁人看得出要來一記重的。
 func _update_melee_input(delta: float) -> void:
-	if Input.is_action_just_pressed("melee"):
+	if Input.is_action_just_pressed("melee") and not _holding():   # 按住 F 搜刮中不能揮槍托
 		_melee_held = 0.0
 	elif _melee_held >= 0.0:
 		if Input.is_action_pressed("melee"):

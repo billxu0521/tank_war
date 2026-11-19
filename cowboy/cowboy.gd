@@ -684,6 +684,8 @@ func _bot_step(delta: float) -> void:
 	# 開槍是反射：腳照動作走，看得到就打。站在牌前、箱子旁邊（看牌、試密碼）時跟真人一樣不開槍（真人開著密碼盤拿不到槍），挨打才還手
 	var threat := _bot_threat(g)
 	if threat and not (hold and bot_action in ["看牌0", "看牌1", "試密碼", "搜刮"] and _bot_alert <= 0.0):
+		if g and g.hold.doing(name.to_int()) != &"":   # 搜刮中挨打還手：先放開（搜的時候不能開槍）
+			g.hold.stop(name.to_int())
 		_bot_shoot(threat, delta)
 	else:
 		_bot_look(delta, want)
