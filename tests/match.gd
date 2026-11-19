@@ -1356,7 +1356,7 @@ func _case_envelope() -> void:
 	var st: Dictionary = p.state()
 	_ck(st.env_open == [true, false] and not st.has("my_digits") and not st.has("_known"), "party 那包有開過沒，沒有誰知道什麼")
 	p._process(0.0)   # 外觀每幀照公開狀態套
-	_ck(p.envelopes[0].opened and not p.envelopes[1].opened and p.envelopes[0].global_position == e0, "開過的信封換樣子、擺在抽到的位置")
+	_ck(not p.envelopes[0].opened and p.envelopes[0].global_position == e0, "主機這台是恐龍：開過的信封看起來還是沒開（0.8.16 第 4.1 節），擺在抽到的位置")
 	_ck(p.read(-1, 0) and p._known[-1] == [code / 10, -1], "牌沒被拿走，可以再看")
 	# 下一回合：主機變回牛仔，看過的、開過的都清掉（箱子開著進下一回合，方位條的信封要回來）
 	s.open = true
@@ -1372,6 +1372,8 @@ func _case_envelope() -> void:
 	me.global_position = p.env_pos[1] + Vector3(0, 0.5, 1)
 	p.envelopes[1].interact(me)   # 按 F 那條路
 	_ck(p.my_digits == [-1, code % 10] and p.env_open == [false, true], "主機自己看個位數：收到 %d" % (code % 10))
+	p._process(0.0)
+	_ck(p.envelopes[1].opened and not p.envelopes[0].opened, "獵人那台：開過的信封換樣子")
 	_ck(p.envelopes[1].prompt.contains(str(code % 10)), "看過的信封提示寫數字（%s）" % p.envelopes[1].prompt)
 	m._match_hud.update_text(me)
 	_ck(m.hud.text.contains("密碼 ? %d" % (code % 10)), "左下角小抄（%s）" % m.hud.text)
@@ -1572,10 +1574,10 @@ func _case_boss_guard() -> void:
 	var wt_ok: bool = wt != Vector3.INF and (flat.call(wt, s.global_position) < 25.0 or [0, 1].any(func(i: int) -> bool: return flat.call(wt, p.env_pos[i]) < 25.0))
 	_ck(wt_ok and Vector2(b.velocity.x, b.velocity.z).length() > 1.0, "看不到人：往箱子或沒開的信封走（目的地 %s、速度 %.1f）" % [wt, Vector2(b.velocity.x, b.velocity.z).length()])
 	b.global_position = best
-	# 信封被開：叫牠過去
+	# 信封被開：尼諾拉不知道（0.8.16 第 4.1 節），不叫牠、守點照舊有兩個信封
 	c.global_position = p.env_pos[0] + Vector3(0.5, 0.5, 0)
 	_ck(p.read(-1, 0), "牛仔看牌")
-	_ck(b._noise_left > 0.0 and flat.call(b._noise, p.env_pos[0]) < BOSS_GD.NOISE_FUZZ_MAX + 5.0, "信封被開：恐龍往那個信封去（偏 %.0f 公尺）" % flat.call(b._noise, p.env_pos[0]))
+	_ck(b._noise_left <= 0.0 and b._guard_points().size() == 3, "信封被開：不叫恐龍，守點還是箱子＋兩個信封")
 	# 猜錯：叫牠去箱子
 	b._noise_left = 0.0
 	c.global_position = s.global_position + Vector3(1.6, 0.5, 0)
@@ -1584,6 +1586,7 @@ func _case_boss_guard() -> void:
 	for i in int(Safe.TRY_SECONDS / DT) + 2:
 		m._physics_process(DT)
 	_ck(s.locked() and b._noise_left > 0.0 and flat.call(b._noise, s.global_position) < BOSS_GD.NOISE_FUZZ_MAX + 5.0, "猜錯：恐龍往箱子去（偏 %.0f 公尺）" % flat.call(b._noise, s.global_position))
+	_ck(b._guard_points() == [s.global_position] and not b._near_guard(p.env_pos[0], BOSS_GD.GUARD_HEAR), "有人試過密碼：守點只剩箱子，信封那邊的聲音不理")
 	# 開箱：往蛋走
 	b._noise_left = 0.0
 	_ck(s.try_code(-1, code), "牛仔試對的組合")
@@ -1592,6 +1595,9 @@ func _case_boss_guard() -> void:
 	_ck(s.open and b._noise_left > 0.0, "開箱：叫恐龍過去")
 	c.global_position = Vector3(0, 800, 0)
 	b._noise_left = 0.0
+	b._stuck_t = 0.0   # 物理沒跑、位置不動：前面幾段累積的「卡住」計時清掉，不然這一秒裡會觸發脫困往旁邊退
+	b._stuck_at = Vector3.INF
+	b._unstick_left = 0.0
 	for i in int(1.0 / DT):
 		b.think(DT)
 	var to_egg: Vector3 = (m.egg.global_position - b.global_position) * Vector3(1, 0, 1)
@@ -1601,6 +1607,47 @@ func _case_boss_guard() -> void:
 	# 真人駕駛：不守
 	b.pilot = 1
 	_ck(not b._guarding(), "真人駕駛不守箱")
+	_end(m)
+
+## 戰場資訊（0.8.16 第 4 節）：尼諾拉不知道信封開過；保險箱開場大家都標；蛋的標記每 5 秒跟上一次（尼諾拉也是）
+func _case_battle_info() -> void:
+	var m := _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"party"))
+	m._apply_rules()
+	var p: Party = m.party
+	var s: Safe = m.safe
+	m._physics_process(DT)
+	p.time_left = 0.0
+	m._physics_process(DT)   # 遊戲開始：主機（1）是恐龍
+	var b: Node3D = m._boss()
+	b.pilot = 1   # 真人駕駛也不叫
+	var marks := func(label: String) -> Array:
+		return m._match_hud.compass_marks(Vector3.ZERO).filter(func(k: Dictionary) -> bool: return String(k.label).begins_with(label))
+	var c: Cowboy = m.players.get_node(^"-1")
+	c.global_position = p.env_pos[0] + Vector3(0.5, 0.5, 0)
+	b._noise_left = 0.0
+	_ck(p.read(-1, 0) and b._noise_left <= 0.0, "看牌不叫恐龍（真人駕駛）")
+	p._process(0.0)
+	var env: Array = marks.call(Envelope.NAMES[0])
+	_ck(env.size() == 1 and env[0].label == Envelope.NAMES[0] and env[0].color == marks.call(Envelope.NAMES[1])[0].color and not p.envelopes[0].opened,
+		"恐龍那台：開過的信封方位條不變灰、不寫已開，看起來也沒開")
+	_ck(marks.call("保險箱").size() == 1 and marks.call("蛋").is_empty(), "恐龍：保險箱標著，蛋鎖著不另外標")
+	p.dino_id = -2   # 換成從沒看過牌的獵人那台看
+	p._process(0.0)
+	env = marks.call(Envelope.NAMES[0])
+	_ck(env.size() == 1 and env[0].color != marks.call(Envelope.NAMES[1])[0].color and p.envelopes[0].opened, "獵人那台：開過的信封變灰")
+	_ck(p.my_digits == [-1, -1] and marks.call("保險箱").size() == 1, "沒看過牌的獵人：方位條上有保險箱")
+	p.dino_id = 1
+	# 箱子開了：標蛋，位置 5 秒跟上一次
+	s.open = true
+	p._process(0.0)
+	var at: Vector3 = m.egg.global_position
+	var egg: Array = marks.call("蛋")
+	_ck(egg.size() == 1 and marks.call("保險箱").is_empty() and absf(egg[0].dist - at.length()) < 0.1, "箱子開了：恐龍也標蛋、不標箱子")
+	m.egg.global_position = at + Vector3(20, 0, 0)
+	_ck(absf(marks.call("蛋")[0].dist - at.length()) < 0.1, "蛋動了：5 秒內標記停在原地")
+	m._match_hud._egg_seen_ms -= int(m._match_hud.EGG_REFRESH * 1000.0) + 1
+	_ck(absf(marks.call("蛋")[0].dist - m.egg.global_position.length()) < 0.1, "過 5 秒：跟上新位置")
 	_end(m)
 
 ## 斷線重連：60 秒內同一個代號連回來，拿回命數、出局狀態、派對分數；過期、新局就當新人

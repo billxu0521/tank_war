@@ -308,15 +308,18 @@ func _update_compass() -> void:
 ## 方位條上的標記（從 at 看）。第 0 行：蛋、撤離、重生點；第 1 行：信封、保險箱
 func compass_marks(at: Vector3) -> Array:
 	var marks := []
-	# 派對模式蛋是恐龍藏的：沒人拿起來之前不標。保險箱開了就大家都標（開箱有聲音，本來就是公開的事）
-	var opened: bool = main.party != null and main.safe.on and main.safe.open
-	if main.egg.visible and main.egg.carrier != main.multiplayer.get_unique_id() and (main.party == null or main.egg.carrier != 0 or opened):
-		marks.append({"deg": Compass.bearing(at, main.egg.global_position), "dist": at.distance_to(main.egg.global_position),
+	# 派對模式：所有人（含尼諾拉）都知道蛋在哪（0.8.16 第 4.2 節）。鎖在箱子裡就標箱子，沒鎖才標蛋，位置每 EGG_REFRESH 秒跳一次
+	var locked: bool = main.party != null and main.safe.on and not main.safe.open
+	if main.egg.visible and main.egg.carrier != main.multiplayer.get_unique_id() and not locked:
+		var q: Vector3 = _egg_seen_at() if main.party else main.egg.global_position
+		marks.append({"deg": Compass.bearing(at, q), "dist": at.distance_to(q),
 			"color": Compass.EGG_COLOR, "label": "蛋"})
+	else:
+		_egg_seen = Vector3.INF   # 下次標蛋從當下的位置開始
 	for e: Vector3 in (main._exits if main.RULES[main.rules].egg and not main._solo_dino else []):
 		marks.append({"deg": Compass.bearing(at, e), "dist": at.distance_to(e),
 			"color": Compass.EXIT_COLOR, "label": "撤離"})
-	if main.party and main.safe.on and not opened:   # 保險箱模式：兩個信封大家都標；保險箱只有看過牌的人和恐龍標。開了就換成標蛋
+	if locked:   # 保險箱模式：兩個信封、保險箱大家都標。開了就換成標蛋
 		var p: Party = main.party
 		var dino: bool = p.dino_id == main.multiplayer.get_unique_id()
 		for i in p.envelopes.size():
@@ -324,11 +327,10 @@ func compass_marks(at: Vector3) -> Array:
 			var label: String = Envelope.NAMES[i]
 			if int(p.my_digits[i]) >= 0:
 				label += "（看過）"
-			elif dino and p.env_open[i]:
-				label += "（已開）"
+			var gray: bool = p.env_open[i] and not dino   # 尼諾拉不知道信封有沒有被開（4.1）
 			marks.append({"deg": Compass.bearing(at, e), "dist": at.distance_to(e),
-				"color": Color(0.6, 0.55, 0.5) if p.env_open[i] else Color(0.95, 0.9, 0.75), "label": label, "row": 1})
-		if main.safe.visible and (dino or p.my_digits != [-1, -1]):
+				"color": Color(0.6, 0.55, 0.5) if gray else Color(0.95, 0.9, 0.75), "label": label, "row": 1})
+		if main.safe.visible:
 			marks.append({"deg": Compass.bearing(at, main.safe.global_position), "dist": at.distance_to(main.safe.global_position),
 				"color": Compass.EGG_COLOR, "label": "保險箱", "row": 1})
 	if main.party and main.party.dino_id == main.multiplayer.get_unique_id():   # 尼諾拉：小恐龍叫了，標牠的位置（不標牛仔）
@@ -356,6 +358,17 @@ func compass_marks(at: Vector3) -> Array:
 		marks.append({"deg": Compass.bearing(at, boss.global_position), "dist": at.distance_to(boss.global_position),
 			"color": Color(1, 0.35, 0.3), "label": "恐龍"})
 	return marks
+
+## 派對模式的蛋標記：停在上次記的位置，每 EGG_REFRESH 秒跟上一次（追得到大概，追不到精確）。每台自己記
+static var EGG_REFRESH: float = Balance.num("marker_refresh_seconds")
+var _egg_seen := Vector3.INF
+var _egg_seen_ms := 0
+func _egg_seen_at() -> Vector3:
+	var now := Time.get_ticks_msec()
+	if _egg_seen == Vector3.INF or now - _egg_seen_ms >= EGG_REFRESH * 1000.0:
+		_egg_seen = main.egg.global_position
+		_egg_seen_ms = now
+	return _egg_seen
 
 ## boss 的體力條（畫面上方中間，每個人都看得到）：看牠還跑不跑得動，決定現在要逃還是要躲。
 ## 跑不動（力竭）變紅、倒地變灰
