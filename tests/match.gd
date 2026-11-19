@@ -1331,16 +1331,18 @@ func _case_envelope() -> void:
 	_ck(Vector2(e0.x - e1.x, e0.z - e1.z).length() > 20.0 and m._exits.all(func(x: Vector3) -> bool:
 		return Vector2(e0.x - x.x, e0.z - x.z).length() > m.EXIT_RADIUS and Vector2(e1.x - x.x, e1.z - x.z).length() > m.EXIT_RADIUS),
 		"兩個信封分開、不在撤離圈（%s %s）" % [e0, e1])
-	# 方位條：信封、保險箱在第二行，蛋、撤離在第一行；箱子開了信封拿掉、大家都標蛋
-	var rows := func(label: String) -> Array:
-		return m._match_hud.compass_marks(Vector3.ZERO).filter(func(k: Dictionary) -> bool: return String(k.label).begins_with(label)).map(func(k: Dictionary) -> int: return int(k.get("row", 0)))
-	_ck(rows.call(Envelope.NAMES[0]) == [1] and rows.call(Envelope.NAMES[1]) == [1] and rows.call("撤離") == [0, 0], "方位條：兩個信封在第二行、兩個撤離在第一行")
+	# 方位條：信封、保險箱（圖示）；畫面上的標記：撤離、蛋。箱子開了信封、箱子拿掉，畫面上標蛋
+	var cm := func(label: String) -> int:
+		return m._match_hud.compass_marks(Vector3.ZERO).filter(func(k: Dictionary) -> bool: return String(k.label).begins_with(label) and k.has("icon")).size()
+	var wm := func(label: String) -> int:
+		return m._match_hud.world_marks().filter(func(k: Dictionary) -> bool: return k.label == label).size()
 	p._process(0.0)
-	_ck(rows.call("保險箱") == [1] and rows.call("蛋").is_empty(), "恐龍看得到保險箱（第二行），蛋鎖著不標")
+	_ck(cm.call(Envelope.NAMES[0]) == 1 and cm.call(Envelope.NAMES[1]) == 1 and wm.call("撤離") == 2 and cm.call("撤離") == 0, "方位條：兩個信封；撤離在畫面上的標記（恐龍一直知道）")
+	_ck(cm.call("保險箱") == 1 and wm.call("蛋") == 0, "恐龍看得到保險箱，蛋鎖著不標")
 	s.open = true
 	p._process(0.0)
-	_ck(rows.call(Envelope.NAMES[0]).is_empty() and rows.call(Envelope.NAMES[1]).is_empty() and rows.call("保險箱").is_empty()
-		and rows.call("蛋") == [0] and rows.call("撤離").size() == 2, "箱子開了：信封拿掉、標蛋（第一行），撤離還在")
+	_ck(cm.call(Envelope.NAMES[0]) == 0 and cm.call(Envelope.NAMES[1]) == 0 and cm.call("保險箱") == 0
+		and wm.call("蛋") == 1 and wm.call("撤離") == 2, "箱子開了：信封、箱子拿掉，畫面上標蛋，撤離還在")
 	s.open = false
 	var bots: Array = [-1, -2, -3].map(func(id: int) -> Node3D: return m.players.get_node(NodePath(str(id))))
 	_ck(not p.read(-1, 0), "準備階段不能看牌")
@@ -1364,7 +1366,7 @@ func _case_envelope() -> void:
 	p.time_left = 0.0
 	m._physics_process(DT)
 	_ck(p.dino_id == -1 and p._known.is_empty() and p.env_open == [false, false] and p.my_digits == [-1, -1], "新回合：看過的牌、開過的信封清掉")
-	_ck(rows.call(Envelope.NAMES[0]).size() == 1 and rows.call(Envelope.NAMES[1]).size() == 1, "新回合：方位條的信封回來")
+	_ck(cm.call(Envelope.NAMES[0]) == 1 and cm.call(Envelope.NAMES[1]) == 1, "新回合：方位條的信封回來")
 	p.time_left = 0.0
 	m._physics_process(DT)
 	code = s._code
@@ -1374,6 +1376,7 @@ func _case_envelope() -> void:
 	_ck(p.my_digits == [-1, code % 10] and p.env_open == [false, true], "主機自己看個位數：收到 %d" % (code % 10))
 	p._process(0.0)
 	_ck(p.envelopes[1].opened and not p.envelopes[0].opened, "獵人那台：開過的信封換樣子")
+	_ck(cm.call(Envelope.NAMES[1]) == 0 and cm.call(Envelope.NAMES[0]) == 1, "看過的信封從自己的方位條拿掉")
 	_ck(p.envelopes[1].prompt.contains(str(code % 10)), "看過的信封提示寫數字（%s）" % p.envelopes[1].prompt)
 	m._match_hud.update_text(me)
 	_ck(m.hud.text.contains("密碼 ? %d" % (code % 10)), "左下角小抄（%s）" % m.hud.text)
@@ -1642,12 +1645,61 @@ func _case_battle_info() -> void:
 	s.open = true
 	p._process(0.0)
 	var at: Vector3 = m.egg.global_position
-	var egg: Array = marks.call("蛋")
-	_ck(egg.size() == 1 and marks.call("保險箱").is_empty() and absf(egg[0].dist - at.length()) < 0.1, "箱子開了：恐龍也標蛋、不標箱子")
+	var egg := func() -> Array: return m._match_hud.world_marks().filter(func(k: Dictionary) -> bool: return k.label == "蛋")
+	_ck(egg.call().size() == 1 and marks.call("保險箱").is_empty() and egg.call()[0].pos == at, "箱子開了：恐龍也標蛋（畫面上）、不標箱子")
 	m.egg.global_position = at + Vector3(20, 0, 0)
-	_ck(absf(marks.call("蛋")[0].dist - at.length()) < 0.1, "蛋動了：5 秒內標記停在原地")
-	m._match_hud._egg_seen_ms -= int(m._match_hud.EGG_REFRESH * 1000.0) + 1
-	_ck(absf(marks.call("蛋")[0].dist - m.egg.global_position.length()) < 0.1, "過 5 秒：跟上新位置")
+	_ck(egg.call()[0].pos == at, "蛋動了：5 秒內標記停在原地")
+	m._match_hud._seen[&"egg"][1] -= int(m._match_hud.MARK_REFRESH * 1000.0) + 1
+	_ck(egg.call()[0].pos == m.egg.global_position, "過 5 秒：跟上新位置")
+	_end(m)
+
+## 撤離點誰知道、畫面上的標記（0.8.16 第 7 節）：獵人看過信、搜過吞掉的信封、拿過蛋才知道（死了還記得）；尼諾拉一直知道；
+## 不知道的人連地上的光圈、水管都看不到（碰撞照舊）。星星每 5 秒跟上
+func _case_exit_knowledge() -> void:
+	var m := _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"party"))
+	m._apply_rules()
+	var p: Party = m.party
+	m._physics_process(DT)
+	p.time_left = 0.0
+	m._physics_process(DT)   # 遊戲開始：主機（1）是恐龍
+	var exits := func() -> int: return m._match_hud.world_marks().filter(func(k: Dictionary) -> bool: return k.label == "撤離").size()
+	var pads := func() -> Array: return range(m.map._exit_pads.size()).filter(func(i: int) -> bool: return m.map._exit_pads[i].visible)
+	var on: Array = range(m.map._exits.size()).filter(func(i: int) -> bool: return (m.egg.exits >> i) & 1 == 1)
+	p._process(0.0)
+	_ck(p.knows_exits() and exits.call() == 2 and pads.call() == on, "尼諾拉一直知道撤離點、看得到光圈")
+	p.dino_id = -2   # 換成獵人那台
+	p._process(0.0)
+	var pipe: Node3D = m.map._exit_pipes[on[0]][-1]
+	_ck(not p.knows_exits() and exits.call() == 0 and pads.call().is_empty() and not pipe.visible and pipe.can_process(),
+		"沒看過信、沒拿過蛋的獵人：沒有標記、光圈水管看不到（碰撞還在）")
+	p.my_hint = [[1, 2, 3, 4, 5], [1, 2, 3, 4, 5]]
+	_ck(p.knows_exits(), "搜過吞掉的信封：知道")
+	p.my_hint = []
+	p.my_digits = [-1, 4]
+	p._process(0.0)
+	_ck(p.knows_exits() and exits.call() == 2 and pads.call() == on, "看過一封信：有標記、看得到光圈")
+	p.my_digits = [-1, -1]
+	m.egg.carrier = 1
+	p._process(0.0)
+	m.egg.carrier = 0
+	p._process(0.0)
+	_ck(p.touched_egg and p.knows_exits(), "拿過蛋：放下了還是知道")
+	p.phase = &"result"
+	p._process(0.0)
+	_ck(not p.knows_exits(), "回合外清掉")
+	p.phase = &"play"
+	# 星星：每 5 秒跟上
+	var star := func() -> Array: return m._match_hud.world_marks().filter(func(k: Dictionary) -> bool: return k.label == "★星星")
+	p.star_on = true
+	p.star_pos = Vector3(10, 0, 10)
+	var first: Vector3 = star.call()[0].pos
+	p.star_pos = Vector3(30, 0, 10)
+	_ck(star.call()[0].pos == first, "星星動了：5 秒內標記停在原地")
+	m._match_hud._seen[&"star"][1] -= int(m._match_hud.MARK_REFRESH * 1000.0) + 1
+	_ck(absf(star.call()[0].pos.x - 30.0) < 0.01, "過 5 秒：跟上新位置")
+	_ck(m._match_hud.compass_marks(Vector3.ZERO).all(func(k: Dictionary) -> bool: return k.has("icon") and not k.label in ["撤離", "蛋", "★星星"]),
+		"方位條全是圖示，撤離、蛋、星星不在方位條")
 	_end(m)
 
 ## 斷線重連：60 秒內同一個代號連回來，拿回命數、出局狀態、派對分數；過期、新局就當新人

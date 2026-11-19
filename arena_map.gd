@@ -1743,13 +1743,15 @@ func _exit_pipe(c: Vector3) -> Array:
 	out.append(body)
 	return out
 
-## 只顯示 mask 裡的撤離區（第 i 位 = _exits[i]）：地面標示和水管一起藏，水管的碰撞也關掉（不然藏起來還擋路、擋子彈）
-func show_exits(mask: int) -> void:
+## 只顯示 mask 裡的撤離區（第 i 位 = _exits[i]）：地面標示和水管一起藏，水管的碰撞也關掉（不然藏起來還擋路、擋子彈）。
+## seen：這台看得到哪幾個（派對模式不知道撤離點的獵人是 0）。看不到的只藏外觀、碰撞照 mask，每台的碰撞才一樣
+func show_exits(mask: int, seen := -1) -> void:
 	for i in _exit_pads.size():
 		var on := (mask >> i) & 1 == 1
-		_exit_pads[i].visible = on
+		var shown := on and (seen >> i) & 1 == 1
+		_exit_pads[i].visible = shown
 		for n: Node3D in _exit_pipes[i]:
-			n.visible = on
+			n.visible = shown
 			n.process_mode = Node.PROCESS_MODE_INHERIT if on else Node.PROCESS_MODE_DISABLED   # 停用的碰撞體會離開物理世界
 
 ## 找一個不在建築物裡面的出生點

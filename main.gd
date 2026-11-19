@@ -1887,7 +1887,8 @@ func roll_exits() -> void:
 
 ## 顯示開著的撤離區（每台都跑）：沒有蛋的模式、沙盒全藏（灰盒南邊那個在沙盒靶道上）
 func _show_exits() -> void:
-	map.show_exits(egg.exits if RULES[rules].egg and not _sandbox else 0)
+	var on: int = egg.exits if RULES[rules].egg and not _sandbox else 0
+	map.show_exits(on, on if party == null or party.knows_exits() else 0)   # 派對：不知道撤離點的獵人看不到光圈和水管（碰撞照舊）
 
 func _dist_to_exit(p: Vector3) -> float:
 	var best := 9999.0
