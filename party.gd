@@ -554,7 +554,7 @@ func _humans() -> Array:
 func _present(id: int) -> bool:
 	return id < 0 or (id == 1 and not main._dedicated) or multiplayer.get_peers().has(id)
 
-## 斷線重連（main._reclaim）：舊編號的分數、名字、命數、名單位置、看過的牌都換成新編號（看過的牌在 _sync 補送）
+## 斷線重連（main._reclaim）：舊編號的分數、名字、命數、名單位置、看過的牌、這次倒地搜過了都換成新編號（看過的牌在 _sync 補送）
 func rekey(old: int, new: int) -> void:
 	for d: Dictionary in [scores, round_scores, lives, names, _waiting, _pick, _known, _env_bonus, _hinted]:
 		if d.has(old):
@@ -570,6 +570,10 @@ func rekey(old: int, new: int) -> void:
 		fixed_id = new
 	if star_holder == old:
 		star_holder = new
+	var b: Node = main._boss()
+	if b and b.looted.has(old):   # 同一次倒地斷線重連：搜過的紀錄跟著換，不能再搜一次
+		b.looted.erase(old)
+		b.mark_looted.rpc(new)
 	_sync()
 
 
