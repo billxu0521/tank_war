@@ -33,6 +33,7 @@ party_prep_seconds,派對準備時間,秒；恐龍藏蛋，牛仔站著不能動
 party_play_seconds,派對遊戲時間,秒,210,現值
 party_lives,牛仔每回合命數,條（整數）,3,現值
 party_respawn_seconds,派對重生等待,秒,10,現值
+respawn_block_radius,重生點附近有敵人就不能選,公尺；其他活著的獵人、尼諾拉（從身體邊緣算）在重生點這麼近內，那個點變紅、選不了,10.0,0.8.16 原文
 score_survive,回合結束還活著的分數,分（整數）,2,現值
 score_extract,帶蛋撤離的分數,分（整數）；另外加,8,現值
 score_kill,恐龍殺一個牛仔的分數,分（整數）,1,現值

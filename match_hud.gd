@@ -338,9 +338,9 @@ func compass_marks(at: Vector3) -> Array:
 		var pts: Array = main._party_hud.spawn_points()
 		for i in pts.size():
 			if i == main._party_hud.picked:
-				marks.append({"deg": Compass.bearing(at, pts[i]), "dist": at.distance_to(pts[i]), "color": Color(0.4, 0.9, 0.5), "label": "重生點 %d" % (i + 1), "icon": &"spawn", "text": str(i + 1)})
+				marks.append({"deg": Compass.bearing(at, pts[i]), "dist": at.distance_to(pts[i]), "color": Minimap.RED if (main.party.spawn_red >> i) & 1 else Minimap.GREEN, "label": "重生點 %d" % (i + 1), "icon": &"spawn", "text": str(i + 1)})
 			elif main._party_hud.picked < 0:   # 還沒選：只寫編號（九個都寫距離會疊在一起，距離看中間的清單）
-				marks.append({"deg": Compass.bearing(at, pts[i]), "color": Color(0.4, 0.9, 0.5), "label": str(i + 1), "icon": &"spawn", "text": str(i + 1)})
+				marks.append({"deg": Compass.bearing(at, pts[i]), "color": Minimap.RED if (main.party.spawn_red >> i) & 1 else Minimap.GREEN, "label": str(i + 1), "icon": &"spawn", "text": str(i + 1)})
 	if main._solo_dino and boss:   # 測恐龍行為：標出恐龍在哪
 		marks.append({"deg": Compass.bearing(at, boss.global_position), "dist": at.distance_to(boss.global_position),
 			"color": Color(1, 0.35, 0.3), "label": "恐龍", "icon": &"dino"})
