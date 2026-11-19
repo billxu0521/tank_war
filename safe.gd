@@ -197,6 +197,9 @@ func server_step(delta: float) -> void:
 		b.alarm(global_position, true)
 	if _try == _code:
 		open = true
+		var p: Party = main.party
+		p._add(busy, Party.SCORE_SAFE_FIRST)   # 誰按下去試對就是誰的
+		main._announce.rpc("%s +%d 開保險箱" % [p.names.get(busy, "牛仔 %d" % busy), Party.SCORE_SAFE_FIRST])
 		_apply()
 		main.egg.global_position = _top()   # 蛋放到箱頂，照舊撿
 		main.egg.reset_physics_interpolation()

@@ -23,6 +23,10 @@ static var SCORE_SURVIVE: int = Balance.whole("score_survive")   # 回合結束�
 static var SCORE_EXTRACT: int = Balance.whole("score_extract")   # 帶蛋撤離（另外加，合計 10）
 static var SCORE_KILL: int = Balance.whole("score_kill")   # 恐龍殺一個牛仔
 static var SCORE_GUARD: int = Balance.whole("score_guard")   # 恐龍守住蛋（時間到、或牛仔的命用完）
+# 0.8.16 新得分（docs/企劃/2026-11-19-0.8.16-一般模式與規則改動.md 第 2 節）
+static var SCORE_ENVELOPE_FIRST: int = Balance.whole("score_envelope_first")   # 第一個看這個信封（結算才公開）
+static var SCORE_SAFE_FIRST: int = Balance.whole("score_safe_first")   # 試對密碼開保險箱
+static var SCORE_KILL_CARRIER: int = Balance.whole("score_kill_carrier")   # 獵人打死拿蛋的人
 # 追分星星（docs/企劃/2026-11-15-畫面與保險箱位置.md 的 1.1）：最後一回合的金色小恐龍（raptors.gd）身上有，死了掉在地上，
 # 碰到就撿（不用按鍵）；拿著的牛仔死掉、尼諾拉倒地就掉在原地。回合結束時拿著的人，這回合的分數 × STAR_MULT
 static var STAR_REACH: float = Balance.num("star_pickup_reach")
@@ -57,6 +61,7 @@ var _pick := {}               # 主機：牛仔選的重生點（編號 -> spawn
 var _sync_left := 0.0
 var _known := {}              # 主機：牛仔編號 -> [十位, 個位]（-1 = 沒看過）。跟著人不跟著命，回合開始清掉
 var _noted: Array = [false, false]   # 這台已經提示過恐龍「信封被開了」
+var _env_bonus := {}          # 主機：第一個開信封的分，連線編號 -> 分。不進 state()，回合結算才併進 _add（不然恐龍從計分欄就知道信被開了）
 var stats := RoundStats.new()   # 主機：每回合的指標，結束時印「回合指標」（tools/bot_sim.gd 也讀）
 
 @onready var main: Node = get_parent()
@@ -207,7 +212,11 @@ func start() -> void:
 func on_died(killer: Node, who: Node) -> void:
 	var id := who.name.to_int()
 	if is_instance_valid(killer) and killer.is_in_group(&"dino"):
-		_add(dino_id, SCORE_KILL)
+		_add(dino_id, SCORE_KILL)   # 咬死拿蛋的人也只有這 1 分
+	elif main.egg.carrier == id and killer is Cowboy and killer != who:   # 這時蛋還在他身上（_drop_orphan_egg 在後面）
+		var k := killer.name.to_int()
+		_add(k, SCORE_KILL_CARRIER)
+		main._announce.rpc("%s +%d 打死拿蛋的人" % [names.get(k, "牛仔 %d" % k), SCORE_KILL_CARRIER])
 	lives[id] = int(lives.get(id, LIVES)) - 1
 	if id == star_holder:
 		drop_star(who.global_position)
@@ -236,6 +245,7 @@ func _start_round() -> void:
 	main.safe.reset(use_safe)   # 每回合重抽密碼、清試過的表
 	main.roll_exits()   # 每回合重抽撤離區（信封要避開抽到的，所以先抽）
 	_known.clear()   # 看過的牌、信封開過沒：每回合重來
+	_env_bonus.clear()
 	my_digits = [-1, -1]
 	env_open = [false, false]
 	dino_id = _roster[round_index % _roster.size()]
@@ -326,6 +336,9 @@ func _order_scores() -> void:
 func _end_round(dino_win: bool, msg: String) -> void:
 	if phase == &"play":
 		stats.report(self, dino_win, msg)
+	for id: int in _env_bonus:   # 第一個開信封的分這時才公開（星星 × 2 之前）
+		_add(id, int(_env_bonus[id]))
+	_env_bonus.clear()
 	if dino_win:
 		_add(dino_id, SCORE_GUARD)
 	for p: Node in _cowboys():
@@ -431,7 +444,7 @@ func _present(id: int) -> bool:
 
 ## 斷線重連（main._reclaim）：舊編號的分數、名字、命數、名單位置、看過的牌都換成新編號（看過的牌在 _sync 補送）
 func rekey(old: int, new: int) -> void:
-	for d: Dictionary in [scores, round_scores, lives, names, _waiting, _pick, _known]:
+	for d: Dictionary in [scores, round_scores, lives, names, _waiting, _pick, _known, _env_bonus]:
 		if d.has(old):
 			d[new] = d[old]
 			d.erase(old)
@@ -524,6 +537,9 @@ func read(id: int, i: int) -> bool:
 	var k: Array = _known.get(id, [-1, -1])
 	k[i] = digit(i)
 	_known[id] = k
+	if not env_open[i]:   # 第一個看這封：分數先記著，只提示本人
+		_env_bonus[id] = int(_env_bonus.get(id, 0)) + SCORE_ENVELOPE_FIRST
+		_whisper(id, "第一個開%s的信封 +%d（回合結算時加）" % [Envelope.NAMES[i], SCORE_ENVELOPE_FIRST])
 	env_open[i] = true
 	var b: Node = main._boss()
 	if b:   # 信封被開：叫恐龍過去
@@ -544,6 +560,14 @@ func _tell(id: int) -> void:
 		_got_digits(_known[id])
 	elif id > 0 and multiplayer.get_peers().has(id):
 		_got_digits.rpc_id(id, _known[id])
+
+
+## 主機：只給 id 一個人的提示（電腦不用）
+func _whisper(id: int, msg: String) -> void:
+	if id == multiplayer.get_unique_id():
+		main._announce(msg)
+	elif id > 0 and multiplayer.get_peers().has(id):
+		main._announce.rpc_id(id, msg)
 
 
 @rpc("authority", "call_remote", "reliable")

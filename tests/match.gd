@@ -2726,3 +2726,50 @@ func _bot_corner_wait(m: Node, n: int) -> void:
 				break)
 	_ck(far[0] > 5.0, "卡在牆角：10 秒內離開原地 5 公尺以上（最遠 %.1f 公尺，在 %s）" % [far[0], b.global_position])
 	_free_map(m)
+
+## 0.8.16 新得分（docs/企劃/2026-11-19-0.8.16-一般模式與規則改動.md 第 2 節）：第一個開信封 1（結算才公開）、開箱 3、打死拿蛋的 1
+func _case_new_scores() -> void:
+	var m := _offline_match()
+	m._on_mode_picked(m.RULES.keys().find(&"party"))
+	m._apply_rules()
+	var p: Party = m.party
+	var s: Safe = m.safe
+	m._physics_process(DT)   # 開場：主機（1）當恐龍，電腦 -1～-3 當牛仔
+	var bots: Array = [-1, -2, -3].map(func(id: int) -> Node3D: return m.players.get_node(NodePath(str(id))))
+	for c: Node3D in bots:
+		c.global_position = Vector3(0, 800, 0)
+	p.time_left = 0.0
+	m._physics_process(DT)
+	var sc := func(id: int) -> int: return int(p.scores.get(id, 0))
+	# 信封：A 先看、B 後看同一封 → 只有 A 記 1 分，結算前計分欄不動
+	bots[0].global_position = p.env_pos[0] + Vector3(1, 0.5, 0)
+	bots[1].global_position = p.env_pos[0] + Vector3(-1, 0.5, 0)
+	_ck(p.read(-1, 0) and p.read(-2, 0) and p.read(-1, 0), "兩個人看同一封、A 再看一次")
+	_ck(p._env_bonus == {-1: 1} and sc.call(-1) == 0 and sc.call(-2) == 0 and not p.state().has("_env_bonus"), "第一個開信封：只記 A 1 分、還沒進計分欄（%s）" % p._env_bonus)
+	# 開箱：試對的人 +3
+	bots[1].global_position = s.global_position + Vector3(1.6, 0, 0)
+	_ck(s.try_code(-2, s._code), "B 試正確密碼")
+	s.server_step(Safe.TRY_SECONDS + 0.1)
+	_ck(s.open and sc.call(-2) == 3, "開箱：試對的 B +3（%d）" % sc.call(-2))
+	# 打死拿蛋的人：獵人 +1；自己炸死自己、恐龍咬死都不加
+	m.egg.carrier = -1
+	p.on_died(bots[2], bots[0])
+	_ck(sc.call(-3) == 1, "C 打死拿蛋的 A：+1（%d）" % sc.call(-3))
+	m.egg.carrier = -3
+	p.on_died(bots[2], bots[2])
+	_ck(sc.call(-3) == 1, "自己炸死自己不加")
+	p.on_died(null, bots[2])
+	_ck(sc.call(-3) == 1, "沒有兇手不加")
+	var d0: int = sc.call(1)
+	p.on_died(m._boss(), bots[2])
+	_ck(sc.call(1) == d0 + 1, "尼諾拉咬死拿蛋的：只拿殺人的 1 分（%d → %d）" % [d0, sc.call(1)])
+	m.egg.carrier = 0
+	p.on_died(bots[0], bots[1])
+	_ck(sc.call(-1) == 0, "打死沒拿蛋的不加")
+	# 結算：信封的分併進去、跟著星星 × 2
+	p.star_holder = -1
+	var alive := p._cowboys().has(bots[0])
+	p._end_round(false, "test")
+	var want := (1 + (Party.SCORE_SURVIVE if alive else 0)) * Party.STAR_MULT
+	_ck(sc.call(-1) == want and p._env_bonus.is_empty(), "結算：A 的信封分公開、拿星星一起 × 2（%d，要 %d）" % [sc.call(-1), want])
+	_end(m)
