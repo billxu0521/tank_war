@@ -26,6 +26,9 @@ var stuck_long := 0           # 這回合連續卡超過 STUCK_LONG 的次數
 var dino_safe := 0.0          # 恐龍離保險箱 SAFE_NEAR 內的秒數
 var safe_t := 0.0             # 有保險箱的遊戲秒數（佔比的分母）
 var open_dist := -1.0         # 開箱那一刻恐龍離箱子幾公尺
+var loots := 0                # 這回合搜刮倒地的尼諾拉幾次（看 boss.looted 變多）
+var meals := 0                # 這回合吃了幾塊恐龍肉（看 meat_left 往上跳）
+var _looted := 0
 
 
 func reset() -> void:
@@ -38,6 +41,9 @@ func reset() -> void:
 	dino_safe = 0.0
 	safe_t = 0.0
 	open_dist = -1.0
+	loots = 0
+	meals = 0
+	_looted = 0
 	_tried = 0
 	_cow.clear()
 
@@ -47,7 +53,7 @@ func _row(c: Node) -> Dictionary:
 	if not _cow.has(id):
 		_cow[id] = {"bot": bool(c.get(&"bot")), "deaths": 0, "near": 0.0, "alive": 0.0, "stuck": 0.0,
 			"changes": 0, "act": "", "shots": 0, "hits": 0, "mag": -1, "hit_until": 0, "first_card": -2,
-			"run": 0.0, "free": 0.0}
+			"run": 0.0, "free": 0.0, "meat_left": 0.0}
 	return _cow[id]
 
 
@@ -70,11 +76,19 @@ func tick(m: Node, p: Node, delta: float) -> void:
 		safe_t += delta
 		if dino and dino.global_position.distance_to(s.global_position) < SAFE_NEAR:
 			dino_safe += delta
+	if dino:   # 搜刮：looted 每次倒地清掉，變多的部分就是搜完的次數
+		var n: int = dino.looted.size()
+		if n > _looted:
+			loots += n - _looted
+		_looted = n
 	for c: Node in m.players.get_children():
 		if c.is_in_group(&"dino") or not c is Cowboy:
 			continue
 		var r := _row(c)
 		r.alive += delta
+		if c.meat_left > r.meat_left + 0.5:   # 吃完才開始回血：剩幾秒往上跳一次算吃一塊
+			meals += 1
+		r.meat_left = c.meat_left
 		if dino and (c as Node3D).global_position.distance_to(dino.global_position) < NEAR_DINO:
 			r.near += delta
 		if t < SPLIT_SECONDS and int(r.first_card) == -2:
@@ -175,16 +189,29 @@ func report(p: Node, dino_win: bool, msg: String) -> void:
 		firsts[r.first_card] = true
 	last = {"round": p.round_index + 1, "extract": not dino_win, "t": t, "first_card": first_card, "open": open_at,
 		"tries": tries.size(), "gap": _mean(gaps), "split": firsts.size() > 1, "stuck_by": stuck_by, "stuck_long": stuck_long,
-		"dino_safe": dino_safe, "safe_t": safe_t, "open_dist": open_dist, "cow": _cow.duplicate(true)}
-	print("回合指標 第%d回合 %s（%.0f 秒）第一張牌 %s 開箱 %s 試 %d 次 間隔 %s 分頭 %s 恐龍守箱 %s 開箱時恐龍離箱 %s" % [last.round, msg, t,
+		"dino_safe": dino_safe, "safe_t": safe_t, "open_dist": open_dist, "cow": _cow.duplicate(true),
+		"loots": loots, "meals": meals, "new_pts": _new_points(p, dino_win)}
+	print("回合指標 第%d回合 %s（%.0f 秒）第一張牌 %s 開箱 %s 試 %d 次 間隔 %s 分頭 %s 恐龍守箱 %s 開箱時恐龍離箱 %s 搜刮 %d 吃肉 %d 新得分 %d" % [last.round, msg, t,
 		_sec(first_card), _sec(open_at), tries.size(), "%.1f 秒" % last.gap if gaps.size() > 0 else "-", "是" if last.split else "否",
-		"%.0f%%" % (100.0 * dino_safe / safe_t) if safe_t > 0.0 else "-", "%.0f 公尺" % open_dist if open_dist >= 0.0 else "-"])
+		"%.0f%%" % (100.0 * dino_safe / safe_t) if safe_t > 0.0 else "-", "%.0f 公尺" % open_dist if open_dist >= 0.0 else "-", loots, meals, last.new_pts])
 	for id: int in _cow:
 		var r: Dictionary = _cow[id]
 		var b: bool = r.bot
 		print("回合指標   %s 死 %d 恐龍%d公尺內 %.0f 秒 活著 %.0f 秒 卡牆 %s 換動作 %s 開槍 %s 命中 %s" % [p.names.get(id, str(id)), r.deaths,
 			NEAR_DINO, r.near, r.alive, "%.0f 秒" % r.stuck if b else "-", "%d 次" % r.changes if b else "-",
 			r.shots if b else "-", r.hits if b else "-"])
+
+
+## 獵人這回合從 0.8.16 新得分拿到的總分（第一個開信封、開保險箱、打死拿蛋的人）。report 在 _end_round 加分之前叫：
+## 這時獵人的 round_scores 只有撤離和這兩種馬上加的，信封的分還在 _env_bonus
+func _new_points(p: Node, dino_win: bool) -> int:
+	var n := 0
+	for id: int in p.round_scores:
+		if id != p.dino_id:
+			n += int(p.round_scores[id])
+	for id: int in p._env_bonus:
+		n += int(p._env_bonus[id])
+	return n - (0 if dino_win else Party.SCORE_EXTRACT)
 
 
 static func _sec(v: float) -> String:
