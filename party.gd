@@ -227,7 +227,7 @@ func step(delta: float) -> void:
 					_start_round()
 		&"final":
 			if time_left <= 0.0:
-				if main.room.active and not main._dedicated:
+				if main.room.active and not main._autoplay:
 					main.back_to_room.call_deferred()   # 延後：back_to_room 會收掉 Party（現在還在 step 裡面）
 					phase = &"done"   # 等收掉之前不再進來
 				else:
@@ -418,7 +418,7 @@ func _end_round(dino_win: bool, msg: String) -> void:
 
 ## 最後結算：在房間裡的話每台跳出結算按鈕（同設定再來一場、回房間、離開房間）。排名框 party_hud 畫
 func _end_buttons() -> void:
-	if main.room.active and not main._dedicated:
+	if main.room.active and not main._autoplay:
 		main._finish.rpc("")
 
 

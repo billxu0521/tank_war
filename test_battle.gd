@@ -98,6 +98,7 @@ func _process(_delta: float) -> bool:
 		_case_room()
 		_case_room_return()
 		_case_room_dino()
+		_case_dedicated_room()
 		_case_bot_safe()
 		_case_bot_corner()
 		_case_boss_guard()

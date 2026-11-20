@@ -49,6 +49,10 @@ func _process(_d: float) -> bool:
 			_m._on_join_pressed()
 		if _rejoin_at > 0:
 			return false
+	if _m.lobby.visible and _m.lobby_page == &"room":   # 專用伺服器先進房間：最早進來的是房主，兩個人都到了就按開始
+		if _m.room.is_host() and _m.room.order.size() >= 2:
+			_m.room.ask(&"start")
+		return false
 	if not is_instance_valid(_a) or not is_instance_valid(_b):   # 角色死了重生就是新節點，要重找
 		_find()
 		return false

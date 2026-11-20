@@ -13,7 +13,7 @@ if [ -n "$BOTS" ]; then
 	exit 0
 fi
 N=${CLIENTS:-9}
-CLIENTS=$N ROLE=server godot --headless --path . --script tools/team_load.gd -- --server --mode party > "$LOG/server.txt" 2>&1 &
+CLIENTS=$N ROLE=server godot --headless --path . --script tools/team_load.gd -- --server --autoplay --mode party > "$LOG/server.txt" 2>&1 &
 SERVER=$!
 sleep 4
 PIDS=""

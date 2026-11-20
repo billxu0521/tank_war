@@ -444,6 +444,7 @@ func _case_back_to_lobby() -> void:
 func _case_dedicated_round() -> void:
 	var m := _offline_match()
 	m._dedicated = true
+	m._autoplay = true   # 舊做法（--autoplay）：一局結束自動開下一局
 	m._add_player(m.COWBOY, 2)
 	var dead: Node = m._add_player(m.COWBOY, -50)   # 電腦牛仔：局末剛死、還在等重生
 	dead.set(&"bot", true)
@@ -3296,6 +3297,45 @@ func _case_room_dino() -> void:
 	r.ask(&"start")
 	m._physics_process(DT)
 	_ck(m.party.dino_id == 1, "抽想當的人：按開始那一刻就抽")
+	_end(m)
+
+## 專用伺服器的房間（選單流程 M6）：沒人不開局；最早進來的人當房主，走了換下一個；沒人了設定回到預設；
+## 打完回房間不自動開下一局；打到一半所有人都走了，30 秒後回房間
+func _case_dedicated_room() -> void:
+	var m: Node = load("res://main.tscn").instantiate()
+	root.add_child(m)
+	m.multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()   # 不開真的連線（_start_dedicated 會改物理頻率）
+	m._on_mode_picked(m.RULES.keys().find(&"party"))   # 啟動參數 --mode party
+	m._open_dedicated_room()
+	var r: Room = m.room
+	m._physics_process(1.0)
+	_ck(r.active and not r.playing and r.host_id == 0 and m.players.get_child_count() == 0, "沒人：在房間、沒有房主、不開局不跑電腦")
+	r.join(5)
+	r.join(6)
+	_ck(r.host_id == 5, "最早進來的人當房主")
+	r.handle(6, &"start")
+	r.handle(5, &"mode", &"normal")
+	_ck(not r.playing and m.rules == &"normal", "房主能改模式，別人按不了開始")
+	r.leave(5)
+	_ck(r.host_id == 6 and m.status.text.contains("現在是房主"), "房主走了：交給下一個最早進來的，大家看到一行字")
+	r.join(5)
+	_ck(r.order == [6, 5] and r.host_id == 6, "原本的房主連回來排最後，不還給他")
+	r.leave(6)
+	r.leave(5)
+	_ck(m.rules == &"party" and r.host_id == 0, "沒人了：設定回到啟動參數給的預設")
+	r.join(8)
+	r.handle(8, &"mode", &"egg")
+	r.handle(8, &"start")
+	_ck(r.playing and not m.lobby.visible, "房主按開始才開打")
+	m._end_round()
+	m._physics_process(m.NEXT_ROUND_DELAY + 1.0)
+	_ck(not r.playing and m.lobby_page == &"room", "打完回房間，不自動開下一局")
+	r.handle(8, &"start")
+	m._physics_process(m.EMPTY_END - 1.0)
+	_ck(r.playing, "所有人都走了：先等")
+	m._physics_process(2.0)
+	_ck(not r.playing and m.rules == &"party" and m.players.get_child_count() == 0, "等 30 秒沒人回來：結束這場、回房間、設定回到預設")
+	m._dedicated = false
 	_end(m)
 
 func _case_normal_mode() -> void:
