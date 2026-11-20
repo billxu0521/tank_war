@@ -15,7 +15,7 @@ const KEEP_ERRORS := 30    # 最多記幾種錯誤（同一個錯誤只記一次
 const DIR := "user://bug_reports"
 ## 連線時已知、無害的錯誤：玩家加入或離開那一刻，同步資料比角色先到或晚到。每個玩家編號都不一樣，
 ## 以前一個編號算一種，30 種的名額被它塞滿、還一直跳「按 F8」的提示（0.8.10 測試站的回報有 24 種都是它）
-const JOIN_NOISE := ["Node not found: \"Main/Players/", "Failed to get cached node from peer", "Ignoring sync data from non-authority"]
+const JOIN_NOISE := ["Node not found: \"Main/Players/", "Failed to get cached node from peer", "Ignoring sync data from non-authority", "Unable to send packet on channel 0, max channels: 0"]
 
 static var instance: BugReport
 
@@ -57,7 +57,7 @@ func _log_error(function: String, file: String, line: int, code: String, rationa
 	var key := where + what
 	if noise:   # 全部併成一筆，不跳提示
 		key = "join_noise"
-		text = "[已知、無害] 玩家加入或離開那一刻同步資料的時間差（Node not found …/Sync、Failed to get cached node、Ignoring sync data）"
+		text = "[已知、無害] 玩家加入或離開那一刻同步資料的時間差（Node not found …/Sync、Failed to get cached node、Ignoring sync data、主機合包送到正在離線的人）"
 	_mutex.lock()
 	if _errors.has(key):
 		_errors[key].count += 1
