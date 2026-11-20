@@ -780,20 +780,17 @@ func _party_cubes_body() -> void:
 func _cubes_physics(m: Node, house: ToyBuild, one: int, three: int) -> void:
 	# 火球：走 boss._spit_fire（它設 wreck）；打中的塊半徑 2 公尺內都算。等級 3 的不扣
 	var boss: Node3D = m.spawn_boss()
-	var lone := _first_standing(house, 1, 3.5)   # 屋頂，等級 1（前面甩倒的那塊不算）
-	var lone2 := -1
-	for i in _standing(house, 1):   # 離 lone 2.5 公尺以上：火球半徑 2 公尺，lone 那一發已經會把近的一起扣掉
-		if house.center_of(i).y - house.global_position.y > 3.5 and house.center_of(i).distance_to(house.center_of(lone)) > 2.5:
-			lone2 = i
-			break
+	boss.global_position = m.boss_on_ground(house.global_position + Vector3(0, 0, -30))   # 生怪點是亂抽的：別讓牠的身體擋在射線上
+	var lone := _clear_target(house, 3.5)   # 屋頂，等級 1（前面甩倒的那塊不算）
 	var b3 := three   # 地基，等級 3
 	_spit_at(m, boss, house, lone)
 	_ck(not house.is_standing(lone), "派對模式尼諾拉的火球打中等級 1 的方塊：扣一下、倒")
 	_spit_at(m, boss, house, b3)
 	_ck(house.is_standing(b3) and house.hp_of(b3) == 3, "火球打中等級 3 的方塊不扣")
-	# 非派對：火球照拆（沒有模式的擋）
+	# 非派對：火球照拆（沒有模式的擋）。打完前兩發才挑：前面打下來的碎塊（還在飛）和沒倒的別塊可能擋在射線上
 	m.rules = &"egg"
 	m.map.set_party_house(true)
+	var lone2 := _clear_target(house, 3.5, lone)
 	_spit_at(m, boss, house, lone2)
 	_ck(not house.is_standing(lone2), "非派對模式尼諾拉的火球也拆方塊")
 	m.rules = &"party"
@@ -843,10 +840,16 @@ func _first_brick(t: ToyBuild, level: int, min_y := -INF) -> int:
 			return i
 	return -1
 
-## 第一塊還站著、等級 level、高於 min_y 的方塊編號
-func _first_standing(t: ToyBuild, level: int, min_y := -INF) -> int:
-	for i in _standing(t, level):
-		if t.center_of(i).y - t.global_position.y > min_y:
+## 屋頂（高於這棟原點 min_y）還站著的等級 1 方塊裡，從前面（-Z）4 公尺打得到的第一塊：射線先打到它，沒有碎塊或別塊擋著。
+## away：離這塊 2.5 公尺以上（火球半徑 2 公尺，那一發已經會把近的一起扣掉）
+func _clear_target(t: ToyBuild, min_y: float, away := -1) -> int:
+	var space: PhysicsDirectSpaceState3D = t.get_world_3d().direct_space_state
+	for i in _standing(t, 1):
+		if t.center_of(i).y - t.global_position.y <= min_y or (away >= 0 and t.center_of(i).distance_to(t.center_of(away)) <= 2.5):
+			continue
+		var start: Vector3 = t.center_of(i) + Vector3(0, 0, -4.0)
+		var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(start, start + Vector3(0, 0, 7.5)))
+		if hit.get(&"collider") == t and hit.get(&"shape") == i:
 			return i
 	return -1
 
@@ -1612,8 +1615,13 @@ func _case_boss_guard() -> void:
 	b._stuck_t = 0.0   # 物理沒跑、位置不動：前面幾段累積的「卡住」計時清掉，不然這一秒裡會觸發脫困往旁邊退
 	b._stuck_at = Vector3.INF
 	b._unstick_left = 0.0
+	# 這一段只看牠決定往哪走，不看撞牆：think 裡的 move_and_slide 真的會撞，起點（照信封亂抽）偶爾貼著房子或石頭，
+	# 貼牆時 _go 偏 0.9 弧度滑開，速度方向就不朝蛋（以前時好時壞的原因）。碰撞先關掉，看完再開
+	var mask: int = b.collision_mask
+	b.collision_mask = 0
 	for i in int(1.0 / DT):
 		b.think(DT)
+	b.collision_mask = mask
 	var to_egg: Vector3 = (m.egg.global_position - b.global_position) * Vector3(1, 0, 1)
 	var goal_ok: bool = b._path_goal.distance_to(m.egg.global_position) < 2.0 if NavigationServer3D.map_get_iteration_id(b.get_world_3d().navigation_map) > 0 \
 		else Vector3(b.velocity.x, 0, b.velocity.z).normalized().dot(to_egg.normalized()) > 0.7
@@ -2965,6 +2973,9 @@ func _case_loot() -> void:
 	_ck(a.meat == 1 and b.looted.has(-1) and h.doing(-1) == &"", "按滿 %.0f 秒：拿到一塊肉（%d）" % [secs, a.meat])
 	_ck(h.doing(-2) == &"" and a2.meat == 0, "另一個人搜到一半走遠：停、沒拿到")
 	_ck(not h.start(-1, &"loot", b), "同一次倒地搜第二次不行")
+	p.rekey(-1, 9)   # 同一次倒地斷線重連（換了編號）：搜過的紀錄跟著換
+	_ck(b.looted.has(9) and not b.looted.has(-1), "重連換編號：搜過的紀錄搬到新編號（%s）" % b.looted)
+	p.rekey(9, -1)
 	a2.global_position = b.global_position + Vector3(-near, 0, 0)
 	h.start(-2, &"loot", b)
 	b.down_left = 0.0
