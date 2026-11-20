@@ -5,7 +5,8 @@ extends VBoxContainer
 ## 狀態只在主機改：大家按的東西都走 ask 送到主機，主機檢查是不是房主才改；有變就整包送給所有人（_recv），畫面照那包畫。
 ## 名字固定（Room），RPC 每台找得到。
 
-const HOST_ONLY := [&"mode", &"rounds", &"start"]   # 只有房主能按的
+const HOST_ONLY := [&"mode", &"rounds", &"start", &"again", &"back"]   # 只有房主能按的
+const PLAY_ONLY := [&"again", &"back"]   # 打的時候才能按的（其他的只在房間裡）
 
 var main: Node
 var active := false     # 在房間流程裡（開房、加入，到離開房間為止）
@@ -171,9 +172,9 @@ func ask(what: StringName, v: Variant = null) -> void:
 	handle(from if from != 0 else multiplayer.get_unique_id(), what, v)
 
 
-## 主機：from 按了 what。只有房主能改設定、按開始；打的時候不收
+## 主機：from 按了 what。只有房主能改設定、按開始、再來一場、回房間；設定、開始只在房間裡，再來一場、回房間只在打的時候
 func handle(from: int, what: StringName, v: Variant = null) -> void:
-	if not active or playing or (what in HOST_ONLY and from != host_id):
+	if not active or (what in PLAY_ONLY) != playing or (what in HOST_ONLY and from != host_id):
 		return
 	match what:
 		&"mode":
@@ -186,6 +187,12 @@ func handle(from: int, what: StringName, v: Variant = null) -> void:
 		&"start":
 			main.start_match()
 			return
+		&"again":
+			main.play_again()
+			return
+		&"back":
+			main.back_to_room()
+			return
 	push()
 
 
@@ -196,6 +203,8 @@ func _recv(s: Dictionary) -> void:
 	_apply(s)
 	if playing and main.lobby.visible:   # 開打了（或連進來時已經在打）：進場
 		main._enter_game("已連線。WASD 移動，滑鼠瞄準，左鍵開槍，右鍵舉槍")
+	elif not playing and not main.lobby.visible:   # 打完回房間
+		main._show_room()
 
 
 func _apply(s: Dictionary) -> void:
