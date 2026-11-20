@@ -41,6 +41,7 @@ func _process(_delta: float) -> bool:
 		_case_back_to_lobby()
 		_case_cover()
 		_case_trex_rig()
+		_case_dedicated_trex_frozen()
 		_case_trex_lean()
 		_case_trex_flinch()
 		_case_stamina()
