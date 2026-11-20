@@ -1156,10 +1156,10 @@ func request_respawn_at(i: int) -> void:
 
 ## 派對模式（party.gd）：輪流當恐龍、計分、命數、蛋。舊模式不受影響
 func _case_party_gameplay() -> void:
-	# 大廳的單人派對：離線、一個人就開得了，電腦補到四個
+	# 跟電腦打（選單流程 M4）：離線的房間、只有自己（房主）；選派對按開始，電腦補到四個；打完回房間、離開回單人頁
 	var solo: Node = load("res://main.tscn").instantiate()
 	root.add_child(solo)
-	_ck(solo.has_node(^"UI/Root/Lobby/SoloPartyBtn"), "大廳要有單人派對")
+	_ck(solo.has_node(^"UI/Root/Lobby/VsBotsBtn"), "單人頁要有跟電腦打")
 	# 大廳的東西都要登記在某一頁（LOBBY_PAGES），沒登記的換頁時會被藏掉、玩家看不到
 	var listed := []
 	for pg: Array in solo.LOBBY_PAGES.values():
@@ -1167,11 +1167,24 @@ func _case_party_gameplay() -> void:
 	var unlisted: Array = solo.lobby.get_children().map(func(c: Node) -> String: return String(c.name)).filter(func(n: String) -> bool: return not n in listed)
 	_ck(unlisted.is_empty(), "大廳的按鈕都要登記在 LOBBY_PAGES（漏了 %s）" % [unlisted])
 	solo.lobby_go(&"practice")
-	_ck(solo.get_node(^"UI/Root/Lobby/SoloPartyBtn").visible, "單人練習那頁要看得到單人派對")
-	solo._on_solo_party_pressed()
+	_ck(solo.get_node(^"UI/Root/Lobby/VsBotsBtn").visible, "單人頁看得到跟電腦打")
+	solo.get_node(^"UI/Root/Lobby/VsBotsBtn").pressed.emit()
+	_ck(solo._offline and solo.lobby_page == &"room" and solo.room.order == [1] and solo.room.is_host() and solo.room._start.visible
+		and not solo.room._addr.visible and solo.players.get_child_count() == 0, "跟電腦打：先進房間，只有自己、自己是房主")
+	solo.room.ask(&"mode", &"party")
+	solo.room.ask(&"start")
 	solo._physics_process(DT)
-	_ck(solo.rules == &"party" and solo._offline and solo.party != null and solo.party.phase == &"prep"
-		and solo.party.scores.size() == 4, "單人派對要直接開第一回合，電腦補到四人")
+	_ck(solo.rules == &"party" and solo.party != null and solo.party.phase == &"prep"
+		and solo.party.scores.size() == 4, "按開始：派對直接開第一回合，電腦補到四人")
+	solo.room.ask(&"back")
+	_ck(solo.lobby_page == &"room" and solo.players.get_child_count() == 0, "跟電腦打也能回房間")
+	solo.room.ask(&"mode", &"normal")
+	solo.want_dino = true
+	solo.room.ask(&"start")
+	solo._physics_process(DT)
+	_ck(solo.party != null and solo.party.fixed and solo.party._roster.size() == 4, "一般模式也能打（電腦補滿）")
+	solo._to_lobby("")
+	_ck(solo.lobby_page == &"practice", "離開房間回單人頁")
 	_end(solo)
 	var m := _offline_match()
 	m._on_mode_picked(m.RULES.keys().find(&"party"))

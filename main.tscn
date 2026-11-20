@@ -196,9 +196,9 @@ text = "單人打恐龍（測恐龍行為，接關無限）"
 layout_mode = 2
 text = "恐龍沙盒（自己當尼諾拉，H 叫獵人來打）"
 
-[node name="SoloPartyBtn" type="Button" parent="UI/Root/Lobby" unique_id=1799944933]
+[node name="VsBotsBtn" type="Button" parent="UI/Root/Lobby" unique_id=1799944933]
 layout_mode = 2
-text = "單人派對（自己 + 3 個電腦）"
+text = "跟電腦打（電腦補滿，一般、派對都能選）"
 
 [node name="RangeBtn" type="Button" parent="UI/Root/Lobby" unique_id=1799944931]
 layout_mode = 2
@@ -422,7 +422,7 @@ show_percentage = false
 [connection signal="pressed" from="UI/Root/Lobby/RangeBtn" to="." method="_on_range_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/SoloDinoBtn" to="." method="_on_solo_dino_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/DinoSandboxBtn" to="." method="_on_dino_sandbox_pressed"]
-[connection signal="pressed" from="UI/Root/Lobby/SoloPartyBtn" to="." method="_on_solo_party_pressed"]
+[connection signal="pressed" from="UI/Root/Lobby/VsBotsBtn" to="." method="_on_vs_bots_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/ViewerBtn" to="." method="_on_viewer_pressed"]
 [connection signal="pressed" from="UI/Root/Menu/Box/ResumeBtn" to="." method="_on_resume_pressed"]
 [connection signal="pressed" from="UI/Root/Menu/Box/LeaveBtn" to="." method="_on_leave_pressed"]

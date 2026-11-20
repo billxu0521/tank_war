@@ -452,6 +452,7 @@ func _on_quit_pressed() -> void:
 
 ## 斷線 + 清乾淨，回到可以重新開房／加入的狀態
 func _to_lobby(msg: String) -> void:
+	var was_offline := _offline   # 跟電腦打的房間：回單人頁
 	if multiplayer.multiplayer_peer != null:
 		multiplayer.multiplayer_peer.close()
 		multiplayer.multiplayer_peer = null
@@ -471,7 +472,7 @@ func _to_lobby(msg: String) -> void:
 	_held.clear()
 	room.close()
 	if lobby_page == &"room":
-		lobby_go(&"online")
+		lobby_go(&"practice" if was_offline else &"online")
 	rules = _my_rules   # 加入別人的房間時被主機改過，回大廳換回自己選的
 	if Period.current != period:   # 時段也是
 		Period.apply(self, period)
@@ -635,7 +636,7 @@ const LOBBY_PAGES := {
 	&"home": ["Title", "HomeOnline", "HomePractice", "HomeSettings", "HomeQuit"],
 	&"online": ["Title", "OnlineLabel", "HostBtn", "JoinBtn", "IPRow", "TestServerBtn", "BackBtn"],
 	&"room": ["Room"],   # 開房、加入之後（room.gd）
-	&"practice": ["Title", "PracticeLabel", "SoloPartyBtn", "SandboxBtn", "DevBtn", "BackBtn"],
+	&"practice": ["Title", "PracticeLabel", "VsBotsBtn", "SandboxBtn", "DevBtn", "BackBtn"],
 	&"dev": ["Title", "DevLabel", "RangeBtn", "SoloDinoBtn", "DinoSandboxBtn", "ViewerBtn", "DevBackBtn"],   # 開發用的四個入口（單人頁的「其他」）
 }
 ## 按 Esc／返回回哪一頁（沒寫的回首頁）
@@ -658,7 +659,7 @@ func _build_home() -> void:
 	dev.text = "── 其他（開發用）──"
 	lobby.add_child(dev)
 	lobby.move_child(dev, $UI/Root/Lobby/RangeBtn.get_index())
-	lobby.move_child($UI/Root/Lobby/SandboxBtn, $UI/Root/Lobby/SoloPartyBtn.get_index() + 1)   # 練習場排在單人派對後面
+	lobby.move_child($UI/Root/Lobby/SandboxBtn, $UI/Root/Lobby/VsBotsBtn.get_index() + 1)   # 練習場排在跟電腦打後面
 	lobby.move_child($UI/Root/Lobby/DevBtn, $UI/Root/Lobby/SandboxBtn.get_index() + 1)
 	room = Room.new()
 	room.name = &"Room"   # 名字固定：RPC 每台找得到
@@ -1081,15 +1082,13 @@ func _on_dino_sandbox_pressed() -> void:
 	make_pilot(1)
 	_enter_game("恐龍沙盒：H 叫一個獵人、J 清掉所有獵人。Esc 回大廳")
 
-## 單人派對：不開房（離線），派對模式自己會用電腦補到 4 人，一個人就能測完整四回合
-func _on_solo_party_pressed() -> void:
+## 跟電腦打：同一個房間畫面，只是不連線（離線）、名單上只有自己、自己就是房主。選模式按開始，派對、一般模式電腦補滿
+func _on_vs_bots_pressed() -> void:
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 	_offline = true
-	_on_mode_picked(RULES.keys().find(&"party"))
-	_enter_game("單人派對：你和 3 個電腦輪流當恐龍。Esc 回大廳")
-	_apply_rules()
-	_spawn(1)
-	spawn_boss()
+	status.text = ""
+	lobby_go(&"room")
+	room.open(false)
 
 ## 靶場：另一張平地地圖（levels/range.tscn），專門測手感。打中跳傷害數字，畫面上有準星距離。
 ## 大廳按鈕只是切地圖、重載場景，重載完 _autostart 看到 mode 就會進來這裡
