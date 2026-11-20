@@ -292,6 +292,7 @@ func _case_modes() -> void:
 	for b in ["HostBtn", "JoinBtn", "SandboxBtn"]:
 		_ck(m.has_node(NodePath("UI/Root/Lobby/" + b)), "大廳要有 %s" % b)
 	m._on_host_pressed()
+	m.start_match()
 	var host: Node = m.players.get_node_or_null(^"1")
 	_ck(host != null and not host.is_in_group(&"dino"), "連線模式的主機也是牛仔")
 	m._set_menu(true)
@@ -308,7 +309,7 @@ func _case_modes() -> void:
 ## 大廳的對局模式：搶蛋、死鬥（重生 3 次、剩一人贏）、恐龍決鬥（重生 5 次、打死恐龍大家贏）
 func _case_match_rules() -> void:
 	var m := _offline_match()
-	_ck(m.mode_pick.item_count == m.RULES.size(), "大廳要能選每一種模式（現在 %d）" % m.mode_pick.item_count)
+	_ck(m.room._mode_btns.size() + m.room._other.item_count - 1 == m.RULES.size(), "房間要能選每一種模式")
 	# 死鬥：沒有蛋，每人重生 3 次，用完出局，剩一個人贏
 	m._on_mode_picked(m.RULES.keys().find(&"deathmatch"))
 	m._apply_rules()
@@ -433,6 +434,7 @@ func _case_back_to_lobby() -> void:
 	_ck(m._cowboys == 0 and not m._over, "計數和勝負狀態要歸零")
 
 	m._on_host_pressed()  # 連接埠要放掉了，才開得起第二局
+	m.start_match()
 	m._spawn(2)
 	_ck(m.players.get_child_count() == 3 and m._cowboys == 2, "要能馬上重開一局（連線模式大家都是牛仔）")
 	_ck(m.players.has_node(NodePath(str(m.BOSS_ID))), "連線模式開房要自動生恐龍 boss")
@@ -3155,6 +3157,43 @@ func _case_swallowed_envelope() -> void:
 	_end(m)
 
 ## 一般模式（0.8.16 第 1 節）：整場固定一個人當恐龍，準備結束那一刻從想當的人裡抽；沒人勾電腦當；1 局直接到最終畫面
+## 房間（選單流程 M2）：開房先進房間、不生人；房主改模式和局數、別人改不了；想當恐龍隨時改；按開始才生；晚加入接著打
+func _case_room() -> void:
+	var m: Node = load("res://main.tscn").instantiate()
+	root.add_child(m)
+	m._on_host_pressed()
+	var r: Room = m.room
+	_ck(m.lobby.visible and m.lobby_page == &"room" and r.visible and m.players.get_child_count() == 0,
+		"開房先進房間：大廳那一頁換成房間，還沒有人生出來")
+	_ck(r.order == [1] and r.host_id == 1 and r.is_host() and r._start.visible, "開房的人是房主，看得到開始")
+	m._on_peer_connected(7)
+	_ck(r.order == [1, 7] and not m.players.has_node(^"7"), "有人連進來：排在名單後面，房間裡不生牛仔")
+	r.ask(&"mode", &"party")
+	_ck(m.rules == &"party" and r.mode == &"party" and r._mode_btns[&"party"].button_pressed, "房主選派對")
+	r.handle(7, &"mode", &"egg")
+	r.handle(7, &"start")
+	_ck(m.rules == &"party" and not r.playing, "不是房主：改不了模式、按不了開始")
+	r.ask(&"mode", &"normal")
+	r.ask(&"rounds", 1)
+	_ck(m.normal_rounds == 1 and r.rounds == 1 and r._rounds_row.visible, "一般模式才有局數，房主選 1 局")
+	r._want.toggled.emit(true)
+	_ck(m.want_dino and r.want.has(1), "勾「我想當恐龍」：名單上看得到")
+	m._despawn(7)
+	_ck(r.order == [1], "離線的人從名單拿掉")
+	var esc := InputEventKey.new()
+	esc.keycode = KEY_ESCAPE
+	esc.pressed = true
+	m._unhandled_input(esc)
+	_ck(m.lobby_page == &"room", "房間按 Esc 不會離開")
+	r.ask(&"start")
+	_ck(r.playing and not m.lobby.visible and m.players.has_node(^"1") and m.party != null and m.party.rounds == 1,
+		"按開始：進場、生出房主、一般模式照房間選的 1 局")
+	m._on_peer_connected(9)
+	_ck(r.order == [1, 9] and m.players.has_node(^"9"), "打到一半連進來：排進名單、照舊生（晚加入）")
+	m._to_lobby("")
+	_ck(not r.active and m.lobby_page == &"online", "離開房間：斷線、回連線頁")
+	_end(m)
+
 func _case_normal_mode() -> void:
 	var m := _offline_match()
 	m._on_mode_picked(m.RULES.keys().find(&"normal"))

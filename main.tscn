@@ -148,30 +148,13 @@ text = "Outlaws vs Dinosaurs
 layout_mode = 2
 text = "── 連線對戰 ──"
 
-[node name="ModeRow" type="HBoxContainer" parent="UI/Root/Lobby" unique_id=1500016902]
-layout_mode = 2
-
-[node name="ModeLabel" type="Label" parent="UI/Root/Lobby/ModeRow" unique_id=1500016903]
-layout_mode = 2
-text = "模式"
-
-[node name="ModePick" type="OptionButton" parent="UI/Root/Lobby/ModeRow" unique_id=1500016904]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="ModeDesc" type="Label" parent="UI/Root/Lobby" unique_id=1500016905]
-custom_minimum_size = Vector2(0, 60)
-layout_mode = 2
-autowrap_mode = 3
-modulate = Color(1, 0.88, 0.65, 1)
-
 [node name="HostBtn" type="Button" parent="UI/Root/Lobby" unique_id=1944247746]
 layout_mode = 2
-text = "開房（用上面選的模式）"
+text = "開房"
 
 [node name="JoinBtn" type="Button" parent="UI/Root/Lobby" unique_id=315188606]
 layout_mode = 2
-text = "加入（模式照開房的人）"
+text = "加入"
 
 [node name="IPRow" type="HBoxContainer" parent="UI/Root/Lobby" unique_id=1514768845]
 layout_mode = 2
@@ -433,7 +416,6 @@ show_percentage = false
 [connection signal="pressed" from="UI/Root/Result/Box/RestartBtn" to="." method="_on_restart_pressed"]
 [connection signal="pressed" from="UI/Root/Result/Box/LobbyBtn" to="." method="_on_leave_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/HostBtn" to="." method="_on_host_pressed"]
-[connection signal="item_selected" from="UI/Root/Lobby/ModeRow/ModePick" to="." method="_on_mode_picked"]
 [connection signal="pressed" from="UI/Root/Lobby/JoinBtn" to="." method="_on_join_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/TestServerBtn" to="." method="_on_test_server_pressed"]
 [connection signal="pressed" from="UI/Root/Lobby/SandboxBtn" to="." method="_on_sandbox_pressed"]

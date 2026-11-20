@@ -43,7 +43,7 @@ func _process(_d: float) -> bool:
 			"、B 血 %d、A 開槍 %d" % [_b.hp, _a.viewmodel.remote_shots] if is_instance_valid(_a) and is_instance_valid(_b) else ""])
 		return true
 	if _reconnect and _role == "b" and _rejoin_at > 0:   # B 斷線中：1 秒後再連回來（大廳還看得到才按，只按一次）
-		if not _m.lobby.visible:   # 按了加入、大廳藏起來了：不用再等，照常找角色
+		if not _m.lobby.visible or _m.lobby_page == &"room":   # 按了加入（停在房間頁或已經進場）：不用再等，照常找角色
 			_rejoin_at = 0
 		elif Time.get_ticks_msec() - _rejoin_at >= 1000:
 			_m._on_join_pressed()
