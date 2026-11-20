@@ -206,6 +206,12 @@ func _ready() -> void:
 		for a in [_tail_yaw, _tail_yaw_v, _tail_pitch, _tail_pitch_v]:
 			a.append(0.0)
 	_last_pos = global_position
+	# 專用伺服器沒畫面：骨架動作（_process）整個不算，省主機一幀約 0.2～0.45 毫秒（docs/技術筆記/效能.md 11-20 S3）。
+	# 骨架停在靜止姿勢、模型停在生出來的地方。伺服器上讀骨頭的只有 boss.head_position()（電腦牛仔的子彈打頭、看不看得到牠）：
+	# 經 on_body 換到現在的身體上，位置跟著身體走、跟著倒地躺，只是不跟著低頭咬人、甩頭。咬、甩尾、火球的判定本來就不看骨頭
+	var g := get_tree().get_first_node_in_group(&"match")
+	if g and g.get(&"_dedicated"):
+		set_process(false)
 	for side in ["_l", "_r"]:   # 腿的長度和靜止角度（側面平面裡：從正下方往前量的角度）
 		var hip := _rest_pos("thigh" + side)
 		var knee := _rest_pos("shin" + side)
