@@ -1905,12 +1905,14 @@ func _toy_fire_case() -> void:
 	_ck(fires.call() == 1, "火球打木頭留一灘火")
 	for g: Node in tree.get_nodes_in_group(&"oil_fire"):
 		g.free()
-	# 炸藥推碎塊：先拆一塊變碎塊，爆炸在它旁邊，它要被踢一下
+	# 炸藥推碎塊：先拆一塊變碎塊、等它落地凍住，爆炸在它旁邊，它要被炸飛（變回會飛的）
 	_hit_brick(t, 3, 1)
 	var key := 3
 	_ck(t._info.has(key), "拆下來的木頭變成碎塊")
+	t._physics_process(ToyBuild.SETTLE_TIME + 0.1)
+	_ck(t._pieces[key] is StaticBody3D, "前提：木頭碎塊落地凍住")
 	ToyBuild.blast(m.map, t.center_of(3) + Vector3(0, 0, -1.0), 3.0)
-	_ck(t._kick_t.has(key), "炸藥推得動旁邊的木頭碎塊")
+	_ck(t._pieces[key] is RigidBody3D, "炸藥炸得飛落地的木頭碎塊（推不動只管走路、跑步、衝撞）")
 	Balance._vals["fire_burns_toys"] = "0"
 	_free_map(m)
 
@@ -2242,27 +2244,25 @@ func _toy_b_armor() -> void:
 	_ck(not HitRules.breaks(2, &"stone") and not HitRules.breaks(3, &"iron") and HitRules.breaks(2, &"brick") and not HitRules.breaks(1, &"tree"), "壞：力道 ≥ 耐久，耐久 3 永遠不壞")
 	_ck(HitRules.pierce(2, &"wood") == 1 and HitRules.pierce(1, &"brick") == HitRules.BLOCK and HitRules.pierce(3, &"iron") == 0, "穿：力道 ≥ 厚度才穿，剩力道 - 厚度")
 
-## 碎塊在尼諾拉身體裡（真的 boss，不在對局裡不跑思考）：時間到之前不凍，尼諾拉離開後就凍；最多等 SETTLE_TIME 的 3 倍，之後不管重疊直接凍
+## 碎塊在尼諾拉身體裡（真的 boss，不在對局裡不跑思考）：照時間凍（不等牠離開），飛的、凍住的都不跟牠相撞；比碎塊晚生的尼諾拉也一樣
 func _toy_b_freeze() -> void:
 	var m := _toy_map()
 	var boss: Node3D = m.spawn_boss()
 	boss.set_physics_process(false)
 	var a := _brick_at_ground(m, Vector3(-60, 0, 30))
-	var b := _brick_at_ground(m, Vector3(-60, 0, 60))
 	_defer(3, func() -> void:
 		_put_boss_over(boss, a)
-		_defer(2, func() -> void:   # 身體移過去要跑一個物理幀，查詢才看得到
-			a._physics_process(4.1)
-			_ck(a._pieces[0] is RigidBody3D, "碎塊在尼諾拉身體裡：時間到之前不凍")
-			boss.global_position += Vector3(40, 0, 0)   # 尼諾拉離開
-			_defer(2, func() -> void:
-				a._physics_process(0.01)
-				_ck(a._pieces[0] is StaticBody3D, "尼諾拉離開後，碎塊凍住（StaticBody3D）")
-				_put_boss_over(boss, b)
-				_defer(2, func() -> void:
-					b._physics_process(ToyBuild.SETTLE_TIME * 3.0 + 0.1)   # 還在身體裡，時間到了：照凍
-					_ck(b._pieces[0] is StaticBody3D, "身體還在裡面，但等滿 SETTLE_TIME 的 3 倍就照凍")
-					_free_map(m)))))
+		_defer(2, func() -> void:   # 身體移過去要跑一個物理幀
+			_ck((a._pieces[0] as PhysicsBody3D).get_collision_exceptions().has(boss), "飛的碎塊不跟尼諾拉相撞")
+			a._physics_process(ToyBuild.SETTLE_TIME + 0.1)
+			var st: PhysicsBody3D = a._pieces[0]
+			_ck(st is StaticBody3D, "碎塊在尼諾拉身體裡：時間到照凍（StaticBody3D）")
+			_ck(st.get_collision_exceptions().has(boss), "凍住的碎塊也不跟尼諾拉相撞（推不動，尼諾拉走得過去）")
+			var late: Node3D = load("res://boss.tscn").instantiate()
+			m.add_child(late)
+			_ck(st.get_collision_exceptions().has(late), "比碎塊晚生的尼諾拉也不跟它相撞")
+			late.free()
+			_free_map(m)))
 
 ## 一塊積木在 at（地面），炸開成碎塊（碎塊在原地飛）
 func _brick_at_ground(m: Node, at: Vector3) -> ToyBuild:
@@ -2319,13 +2319,13 @@ func _case_toy_nofly() -> void:
 			var gap := _rest_gap(t, key)
 			rest = rest and absf(gap) <= 0.3
 		_ck(rest, "每個碎塊底下都有東西擋：從中心往下射線打到的地方在底面 0.3 公尺內")
-		# 踢開（尼諾拉踢碎塊）：先水平移開 KICK_SHIFT 公尺再落下，還是靜態、落地
+		# 炸開（炸藥炸碎塊，ToyBuild.blast 走 kick）：先水平移開 KICK_SHIFT 公尺再落下，還是靜態、落地
 		var before := (t._pieces[3] as Node3D).global_position
 		ToyBuild.no_flight = true
 		t.kick(3, Vector3.RIGHT, 3.0)
 		ToyBuild.no_flight = false
 		var after := (t._pieces[3] as Node3D).global_position
-		_ck(t._pieces[3] is StaticBody3D and t._landed.has(3) and absf(after.x - before.x - ToyBuild.KICK_SHIFT) < 0.01 and absf(_rest_gap(t, 3)) <= 0.3, "踢開的碎塊：水平移開 %.1f 公尺、落地（底下有東西擋）、還是靜態" % ToyBuild.KICK_SHIFT)
+		_ck(t._pieces[3] is StaticBody3D and t._landed.has(3) and absf(after.x - before.x - ToyBuild.KICK_SHIFT) < 0.01 and absf(_rest_gap(t, 3)) <= 0.3, "炸開的碎塊：水平移開 %.1f 公尺、落地（底下有東西擋）、還是靜態" % ToyBuild.KICK_SHIFT)
 		# _settle：落地後 SETTLE_TIME 秒才送；送的位置就是落地的位置（前面還沒到時間，位置不動）
 		t._physics_process(ToyBuild.SETTLE_TIME * 0.5)
 		_ck(t._landed.size() == t._pieces.size(), "落地的碎塊還在等 SETTLE_TIME 秒（%d 個）" % t._landed.size())

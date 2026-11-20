@@ -1107,7 +1107,7 @@ func _fb_end() -> void:
 	_fb_world.free()
 	root.multiplayer.multiplayer_peer = null
 
-## ---- 玩具積木第二批的物理（docs/規劃/2026-11-08-玩具積木場景-二.md）：尼諾拉跑步撞積木就拆、走路撞不拆、跑過碎塊會踢開、不會卡住。
+## ---- 玩具積木第二批的物理（docs/規劃/2026-11-08-玩具積木場景-二.md）：尼諾拉跑步撞積木就拆、走路撞不拆、落地的碎塊推不動但走得過去、不會卡住。
 ## 接在碰撞物件後面（_phase 6，由 _physics_process 每個物理幀推）。boss 自己的思考關掉，這裡直接推 _move
 var _tb_m: Node
 var _tb_b: Node3D
@@ -1120,7 +1120,6 @@ var _tb_stage := 0
 var _tb_n := 0.0   # 這一段跑了幾秒（物理時間，不數幀）
 var _tb_before := {}   # 踢之前每個碎塊的位置（代表塊 -> 位置）
 var _tb_kick_block: ToyBuild
-var _tb_kx := 0.0
 var _tb_kick_pos0 := Vector3.ZERO
 var _tb_kick_checked := false
 var _tb_z0 := 0.0   # 墙的車道（沿 X 跑）：挑一段空地，不撞到房子
@@ -1184,20 +1183,6 @@ func _tb_unplow() -> void:
 func _tb_next(stage: int) -> void:
 	_tb_stage = stage
 	_tb_n = 0.0
-
-## 碎塊在前面 2 公尺的那一段：一塊碎塊（0.6 公尺見方）擺在車道上，尼諾拉從 5.9 公尺外（身體中心）跑來
-func _tb_setup_kick() -> void:
-	var z2 := _tb_clear_z(_tb_z1 + 12.0)
-	_tb_kick_block = _tb_block(Vector3(2, 0, z2), 1, 1, Vector3(0.6, 0.6, 0.6))
-	_tb_kick_block.smash(func(_p: Vector3) -> bool: return true, 1, Vector3(-3, 0, z2))
-	_tb_kick_block._physics_process(ToyBuild.SETTLE_TIME + 0.1)   # 停下來、凍住
-	_tb_kx = 2.0
-	_tb_kick_pos0 = (_tb_kick_block._pieces[0] as Node3D).global_position
-	_tb_kick_checked = false
-	_tb_b.global_position = _tb_m.boss_on_ground(Vector3(_tb_kx - (_tb_b.BODY_RADIUS + 2.3), 0, z2))
-	_tb_b.velocity = Vector3(_tb_b.RUN, 0, 0)   # 已經在跑（踢只在跑步的速度時做）
-	_tb_unplow()
-	_tb_b.rotation.y = -PI * 0.5
 
 ## 走路撞的碎塊：一塊碎塊擺在空車道上（停下、凍住），尼諾拉從 -9 公尺處走來（不跑）。_tb_kick_checked 這段拿來記「碎塊沒被當成牆」
 func _tb_setup_walk_piece() -> void:
@@ -1267,25 +1252,17 @@ func _toyb_physics(delta: float) -> bool:
 				_tb_setup_pile()
 				_tb_place(-9.0, _tb_z1)
 				_tb_next(2)
-		2:   # 跑步穿過一堆碎塊：碎塊被踢開（位置變了），尼諾拉走得過去、不卡住
+		2:   # 跑步穿過一堆落地的碎塊（2026-11-20 起推不動）：碎塊一塊都沒動、還是靜態的，尼諾拉直接走過去、不卡住
 			b._move(Vector3.RIGHT, true, delta)
 			if _tb_n >= 4.0:
 				var moved := 0.0
+				var still := true
 				for key in _tb_before:
 					moved = maxf(moved, (_tb_pile._pieces[key] as Node3D).global_position.distance_to(_tb_before[key]))
-				_ck(moved > 0.3, "跑步撞碎塊：碎塊被踢開（最遠移了 %.2f 公尺）" % moved)
+					still = still and _tb_pile._pieces[key] is StaticBody3D
+				_ck(moved < 0.01 and still, "跑步撞落地的碎塊：推不動（最遠移了 %.2f 公尺，都還是靜態）" % moved)
 				_ck(b.global_position.x > 5.0 and absf(b.global_position.z - _tb_z1) < 2.0, "跑過一堆碎塊不卡住：尼諾拉走到碎塊另一側（x=%.1f，z=%.1f）" % [b.global_position.x, b.global_position.z])
 				_ck(_tb_pile.has_damage(), "碎塊有記在積木上（新的一場要還原）")
-				_tb_setup_kick()
-				_tb_next(3)
-		3:   # 碎塊在前面 2 公尺（還沒撞上）：跑步時就踢開（_kick_ahead）；踢完等 SETTLE_TIME 又凍住
-			b._move(Vector3.RIGHT, true, delta)
-			if _tb_n >= 0.1 and not _tb_kick_checked:
-				_tb_kick_checked = true
-				var moved: float = (_tb_kick_block._pieces[0] as Node3D).global_position.distance_to(_tb_kick_pos0)
-				_ck(moved > 0.3 and b.global_position.x < _tb_kx - 0.9, "碎塊在前面 2 公尺：還沒撞上就踢開（移了 %.2f，尼諾拉 x=%.2f，碎塊 x=%.2f）" % [moved, b.global_position.x, _tb_kx])
-			if _tb_n >= ToyBuild.SETTLE_TIME + 0.6:
-				_ck(_tb_kick_block._pieces[0] is StaticBody3D, "踢完等 SETTLE_TIME 後又凍住（StaticBody3D）")
 				# 第四段：貼著墙按住跑。另一條車道，身體貼著墙面，速度起不來也要拆
 				var z3 := _tb_clear_z(-52.0)   # 挑地形中間的空車道（z 太大會掉出地形外）
 				_tb_wall2 = _tb_block(Vector3(0, 0, z3), 4, 12, Vector3(0.3, 0.5, 1.0))
@@ -1306,15 +1283,15 @@ func _toyb_physics(delta: float) -> bool:
 				_ck(_tb_down(_tb_wall2) >= 1, "駕駛貼著墙按住跑：墙的塊鬆脫（%d 塊）" % _tb_down(_tb_wall2))
 				_tb_setup_walk_piece()
 				_tb_next(6)
-		6:   # 碎塊（不是房子）擋在前面：走路撞上去輕輕推開（toy_nudge），不會卡死；碎塊不算牆（不拆房子）；踩在碎塊上（法線朝上）不踢
+		6:   # 落地的碎塊（不是房子）擋在前面：走路推不動，尼諾拉直接走過去（不跟碎塊相撞），不會卡死；碎塊不算牆（不拆房子）
 			b._move(Vector3.RIGHT, false, delta)
 			if b.get_slide_collision_count() > 0 and b._wall_is_toy():
 				_tb_kick_checked = false   # 撞到碎塊時被當成牆（貼房子拆）就記下來
-			if _tb_n >= 3.0:
+			if _tb_n >= 4.0:
 				var moved: float = (_tb_kick_block._pieces[0] as Node3D).global_position.distance_to(_tb_kick_pos0)
 				_ck(_tb_kick_checked, "走路撞碎塊：碎塊不算牆")
-				_ck(moved > 0.3, "走路撞碎塊會推開，不會卡死（碎塊移了 %.2f 公尺）" % moved)
-				_ck(not b._should_kick(Vector3.UP) and not b._should_kick(Vector3(0.3, 0.95, 0).normalized()) and b._should_kick(Vector3(0.8, 0.5, 0).normalized()) and b._should_kick(Vector3.RIGHT), "踩得上去的斜度不踢，更陡的邊角和側面才踢")
+				_ck(moved < 0.01 and _tb_kick_block._pieces[0] is StaticBody3D, "走路撞落地的碎塊：推不動（移了 %.2f 公尺）" % moved)
+				_ck(b.global_position.x > _tb_kick_pos0.x + 1.0, "走路撞碎塊不卡死：尼諾拉走過去（x=%.1f，碎塊 x=%.1f）" % [b.global_position.x, _tb_kick_pos0.x])
 				_tb_setup_plow()
 				_tb_next(7)
 		7:   # 全速穿過二級墻（等級 2）：撞進去卡一下、每下扣 toy_plow_dmg，還是撞得穿（先拆再走，不會整個停住）
