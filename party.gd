@@ -549,8 +549,10 @@ func _cowboys() -> Array:
 		return not p.is_in_group(&"dino") and not p.is_queued_for_deletion() and p.hp > 0)
 
 
-## 連著的真人，照連線編號排（專用伺服器的主機自己不算）
+## 連著的真人：在房間流程裡照進房間的順序（名字「玩家 N」跟房間名單一樣），不然照連線編號排（專用伺服器的主機自己不算）
 func _humans() -> Array:
+	if main.room and main.room.active:
+		return main.room.order.filter(_present)
 	var ids: Array = multiplayer.get_peers().duplicate()
 	if not main._dedicated:
 		ids.append(1)

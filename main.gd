@@ -45,9 +45,8 @@ const BOSS_ID := -999   # 負數＝電腦（主機操控）；固定編號，場
 var barrels: Barrels   # 隨機擺的爆炸桶（barrels.gd）；_ready 建，每局（派對每回合）主機重抽
 var raptors: Raptors   # 派對模式尼諾拉放的小恐龍哨兵（raptors.gd）；_ready 建，每回合清空
 var hold: HoldAction   # 按住幾秒的互動（hold_action.gd）：搜刮；_ready 建
-@onready var mode_pick: OptionButton = $UI/Root/Lobby/ModeRow/ModePick
 
-## 連線對戰的模式：開房的人在大廳選，加入的人照主機的（連進來時主機會送 _set_rules）。
+## 連線對戰的模式：房主在房間選（room.gd），加入的人照主機的（開打時主機會送 _set_rules）。
 ## 模式表在 match_rules.gd（欄位說明也在那裡）
 const RULES := MatchRules.RULES
 var rules := &"normal"   # 預設是規則表的第一個（一般）
@@ -170,9 +169,6 @@ func _ready() -> void:
 	_load_settings()
 	saved_ips.get_popup().index_pressed.connect(func(i: int) -> void:
 		ip_edit.text = saved_ips.get_popup().get_item_text(i))
-	for k: StringName in RULES:
-		mode_pick.add_item(RULES[k].name + ("（舊）" if RULES[k].legacy else ""))
-	_on_mode_picked(0)
 	map._use_sky()
 	map._use_outline()
 	Period.snapshot(self)   # 要在像素風疊上去之前：記下的是夕陽原本的天空、霧
@@ -187,17 +183,16 @@ func _ready() -> void:
 		map._build_exits()
 	egg.exits_changed.connect(_show_exits)   # 客戶端收到主機抽的撤離區就換顯示
 	_load_period()
-	_add_dino_volunteer()
 	_build_home()
 	Period.apply(self, period)
 	_match_hud = MatchHud.new(self)
 	multiplayer.auth_timeout = 15.0   # 預設 3 秒；網路差時版本檢查（掉包重送）來不及，會被當成主機斷線
 	multiplayer.auth_callback = _on_auth   # 版本檢查（連線認證）；SceneMultiplayer 本身不換，_to_lobby 重設 peer 也不會清掉
 	multiplayer.peer_authenticating.connect(_on_peer_authenticating)
-	multiplayer.peer_connected.connect(_spawn)
+	multiplayer.peer_connected.connect(_on_peer_connected)
 	multiplayer.peer_disconnected.connect(_despawn)
 	multiplayer.connected_to_server.connect(func() -> void:
-		status.text = "已連線。WASD 移動，滑鼠瞄準，左鍵開槍，右鍵舉槍"
+		status.text = ""   # 房間頁自己會寫
 		_volunteer.rpc_id(1, want_dino))
 	multiplayer.connection_failed.connect(
 		func() -> void: _to_lobby.call_deferred("連線失敗，檢查 IP 和防火牆"))
@@ -233,7 +228,9 @@ func _autostart() -> void:
 	elif args.has("--server"):
 		_start_dedicated()
 	elif args.has("--host"):
-		_on_host_pressed()
+		_on_host_pressed()   # 照舊直接開打（房間的等人在選單按開房才有）
+		if room.active:
+			start_match()
 	elif args.has("--sandbox"):
 		_on_sandbox_pressed()
 	elif args.has("--solo-dino"):
@@ -284,7 +281,7 @@ func _unhandled_input(e: InputEvent) -> void:
 		settings.hide()
 		return
 	if lobby.visible:
-		if esc and lobby_page != &"home":
+		if esc and lobby_page not in [&"home", &"room"]:   # 房間按 Esc 不動：要按「離開房間」才斷線
 			lobby_go(LOBBY_UP.get(lobby_page, &"home"))
 		return
 	if esc:
@@ -335,7 +332,7 @@ func report_bug() -> String:
 ## 報告裡的「遊戲」那一行：在哪、玩什麼、當誰、連線狀況
 func _game_state() -> String:
 	if lobby.visible:
-		return "在大廳"
+		return "在房間" if lobby_page == &"room" else "在大廳"
 	var me := _me()
 	var role := "觀戰" if me == null else ("恐龍" if me.is_in_group(&"dino") else "牛仔")
 	var where := "單人打恐龍" if _solo_dino else ("恐龍沙盒" if _dino_sandbox else ("沙盒" if _sandbox else ("靶場" if mode == &"range" else String(RULES.get(rules, {}).get("name", rules)))))
@@ -427,7 +424,10 @@ func _to_lobby(msg: String) -> void:
 	_out.clear()
 	_key_of.clear()
 	_held.clear()
-	rules = RULES.keys()[mode_pick.selected]   # 加入別人的房間時被主機改過，回大廳換回自己選的
+	room.close()
+	if lobby_page == &"room":
+		lobby_go(&"online")
+	rules = _my_rules   # 加入別人的房間時被主機改過，回大廳換回自己選的
 	if Period.current != period:   # 時段也是
 		Period.apply(self, period)
 	_apply_rules()
@@ -530,17 +530,39 @@ func _on_auth(id: int, data: PackedByteArray) -> void:
 		if id in multiplayer.get_authenticating_peers():   # 客戶端已經自己斷了就不用踢（踢不存在的連線會報錯）
 			multiplayer.multiplayer_peer.disconnect_peer(id))
 
+## 開房：先進房間等人（room.gd），房主按開始才開打（start_match）
 func _on_host_pressed() -> void:
 	var peer := ENetMultiplayerPeer.new()
 	if peer.create_server(PORT) != OK:
 		status.text = "開房失敗，連接埠 %d 可能被占用" % PORT
 		return
 	multiplayer.multiplayer_peer = peer
-	_enter_game("%s模式：等人加入…  本機 IP：%s" % [RULES[rules].name, _local_ips()])
+	status.text = ""
+	lobby_go(&"room")
+	room.open(false)
+
+## 主機：開打。房間裡的人照進來的順序生（派對、一般模式由 party.gd 自己排）；模式、時段送給每個人
+func start_match() -> void:
+	if not multiplayer.is_server():
+		return
+	room.playing = true
+	_enter_game("專用伺服器" if _dedicated else "%s模式開始" % RULES[rules].name)
 	_apply_rules()
-	_spawn(1)
+	_set_rules.rpc(rules)
+	_set_period.rpc(Period.current)
+	for id: int in room.order:
+		_spawn(id)
 	if RULES[rules].dino:
 		spawn_boss()
+	room.push()
+
+## 主機：有人連進來（版本檢查過了）。排進房間名單；已經在打就照舊生（晚加入）
+func _on_peer_connected(id: int) -> void:
+	if not multiplayer.is_server():
+		return
+	room.join(id)
+	if room.playing:
+		_spawn(id)
 
 ## 專用伺服器：開房但自己不下場（沒有編號 1 的牛仔），恐龍 boss 照生。
 ## 一局結束 NEXT_ROUND_DELAY 秒後自動開下一局，不用有人去按
@@ -557,10 +579,8 @@ func _start_dedicated() -> void:
 	# 測試站（1 顆處理器）跑 120 次算不完，遊戲時間會變慢（2026-10-18 測試站回報）
 	Engine.physics_ticks_per_second = 60
 	Engine.max_fps = 60   # 沒畫面也會一直空轉：不鎖的話吃滿一顆處理器，跟物理一樣次數就夠
-	_enter_game("專用伺服器")
-	_apply_rules()
-	if RULES[rules].dino:
-		spawn_boss()
+	room.open(true)
+	start_match()   # ponytail: 專用伺服器還是開了就打、一局結束自動開下一局（房主選模式是選單流程 M6）
 	print("測試站開好了，連接埠 %d（UDP）" % PORT)
 
 ## 主選單分兩層：首頁四顆按鈕，「連線對戰」「單人」各一頁（單人頁的「其他」再一層），按「返回」或 Esc 回首頁。
@@ -568,7 +588,8 @@ func _start_dedicated() -> void:
 ## Lobby 底下加新東西要登記在這裡，沒登記的換頁時會被藏掉
 const LOBBY_PAGES := {
 	&"home": ["Title", "HomeOnline", "HomePractice", "HomeSettings", "HomeQuit"],
-	&"online": ["Title", "OnlineLabel", "ModeRow", "DinoVolunteer", "ModeDesc", "HostBtn", "JoinBtn", "IPRow", "TestServerBtn", "BackBtn"],
+	&"online": ["Title", "OnlineLabel", "HostBtn", "JoinBtn", "IPRow", "TestServerBtn", "BackBtn"],
+	&"room": ["Room"],   # 開房、加入之後（room.gd）
 	&"practice": ["Title", "PracticeLabel", "SoloPartyBtn", "SandboxBtn", "DevBtn", "BackBtn"],
 	&"dev": ["Title", "DevLabel", "RangeBtn", "SoloDinoBtn", "DinoSandboxBtn", "ViewerBtn", "DevBackBtn"],   # 開發用的四個入口（單人頁的「其他」）
 }
@@ -594,6 +615,10 @@ func _build_home() -> void:
 	lobby.move_child(dev, $UI/Root/Lobby/RangeBtn.get_index())
 	lobby.move_child($UI/Root/Lobby/SandboxBtn, $UI/Root/Lobby/SoloPartyBtn.get_index() + 1)   # 練習場排在單人派對後面
 	lobby.move_child($UI/Root/Lobby/DevBtn, $UI/Root/Lobby/SandboxBtn.get_index() + 1)
+	room = Room.new()
+	room.name = &"Room"   # 名字固定：RPC 每台找得到
+	room.main = self
+	lobby.add_child(room)
 	lobby_go(&"home")
 
 func lobby_go(page: StringName) -> void:
@@ -601,17 +626,17 @@ func lobby_go(page: StringName) -> void:
 	for c: Node in lobby.get_children():
 		c.visible = String(c.name) in LOBBY_PAGES[page] and not (c.name == &"TestServerBtn" and TEST_SERVER == "")   # 沒有測試站就整顆藏起來
 
-## 大廳選模式：記下來、說明換成那個模式的
+## 房間（room.gd）：大廳的一頁
+var room: Room
+
+## 選模式（房主在房間按、啟動參數 --mode、測試）：記下來，開打時 _apply_rules 才套
 func _on_mode_picked(i: int) -> void:
 	rules = RULES.keys()[i]
-	mode_pick.select(i)
-	$UI/Root/Lobby/ModeDesc.text = RULES[rules].desc
-	if _rounds_pick:
-		_rounds_pick.visible = rules == &"normal"
+	_my_rules = rules
+var _my_rules := &"normal"   # 自己選的模式：加入別人的房間會被主機蓋掉，回大廳換回這個
 
-## 一般模式打幾局（大廳的「1 局／4 局」，主機選；party._ready 讀進 rounds）
+## 一般模式打幾局（房間的「4 局／1 局」，房主選；party._ready 讀進 rounds）
 var normal_rounds := 4
-var _rounds_pick: OptionButton
 
 ## 時段（period.gd）：大廳選，存在設定檔。開房、沙盒、靶場都用這個；加入別人的房間時照主機的（_set_period）
 var period := &"sunset"
@@ -636,28 +661,12 @@ func _on_period_picked(i: int) -> void:
 	if lobby.visible:   # 遊戲中只存下來，回大廳才換：時段是整間房間一起的，自己先換會跟別人不一樣（暗處看得比較清楚）
 		Period.apply(self, period)
 
-## 大廳「我想當恐龍」：對抗模式每局從勾的人裡抽一個操作尼諾拉（docs/規劃/2026-10-18-對抗模式.md）
+## 房間的「我想當恐龍」（隨時能改，改了馬上送給主機）：對抗模式每局從勾的人裡抽一個操作尼諾拉（docs/規劃/2026-10-18-對抗模式.md），一般模式整場抽一個
 var want_dino := false
 var _volunteers := {}   # 主機：想當恐龍的人（編號 -> true）
 var _pilot_picked := false   # 這局已經抽過了（make_pilot 設、_new_round 和回大廳清）
 
-func _add_dino_volunteer() -> void:
-	var c := CheckBox.new()
-	c.name = &"DinoVolunteer"
-	c.text = "我想當恐龍（對抗、一般）"
-	c.toggled.connect(func(on: bool) -> void: want_dino = on)
-	var lobby_box := $UI/Root/Lobby
-	lobby_box.add_child(c)
-	lobby_box.move_child(c, $UI/Root/Lobby/ModeRow.get_index() + 1)
-	_rounds_pick = OptionButton.new()
-	_rounds_pick.name = &"RoundsPick"
-	_rounds_pick.add_item("4 局", 4)
-	_rounds_pick.add_item("1 局", 1)
-	_rounds_pick.item_selected.connect(func(i: int) -> void: normal_rounds = _rounds_pick.get_item_id(i))
-	_rounds_pick.visible = rules == &"normal"
-	$UI/Root/Lobby/ModeRow.add_child(_rounds_pick)
-
-## 連上之後告訴主機自己想不想當恐龍
+## 連上之後、在房間改勾選時告訴主機自己想不想當恐龍
 @rpc("any_peer", "call_remote", "reliable")
 func _volunteer(on: bool) -> void:
 	if not multiplayer.is_server():
@@ -667,6 +676,7 @@ func _volunteer(on: bool) -> void:
 		_volunteers[id] = true
 	else:
 		_volunteers.erase(id)
+	room.push()   # 名單上「想當恐龍」跟著換
 
 func _boss() -> Node:
 	return players.get_node_or_null(NodePath(str(BOSS_ID)))
@@ -975,7 +985,9 @@ func _on_join_pressed() -> void:
 		status.text = "連線失敗，IP 格式不對？"
 		return
 	multiplayer.multiplayer_peer = peer
-	_enter_game("連線中…")
+	status.text = ""
+	lobby_go(&"room")   # 等主機送房間的狀態：在房間就停在這頁，已經在打就進場（room._recv）
+	room.wait_join()
 
 ## 沙盒：一個人在牧場的靶道練槍。前方 10／25／50／100 公尺各站一個牛仔靶，
 ## 旁邊一隻不會動的恐龍。靶不是 bot、也不是本機操控，所以站著不動、不會還擊。
@@ -1551,6 +1563,7 @@ func _add_player(scene: PackedScene, id: int) -> Node3D:
 func _despawn(id: int) -> void:
 	if not multiplayer.is_server():
 		return
+	room.leave(id)
 	_hold(id)   # 斷線先記下命數和出局狀態，RECONNECT_MS 內連回來還給他
 	_volunteers.erase(id)
 	if _handover == id:   # 交接中離線：不用再收了

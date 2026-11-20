@@ -7,7 +7,8 @@
 cd "$(dirname "$0")/.."
 [ -n "$RECONNECT" ] && MODE=${MODE:-deathmatch}   # 重連檢查要有命數的模式
 LOG=$(mktemp -d)
-godot --headless --path . -- --server ${MODE:+--mode $MODE} > "$LOG/server.txt" 2>&1 &
+# 沒指定模式用搶蛋（預設改成一般之後，一般模式有 15 秒準備階段不能開槍，檢查等不到）
+godot --headless --path . -- --server --mode ${MODE:-egg} > "$LOG/server.txt" 2>&1 &
 SERVER=$!
 sleep 4
 if [ -n "$LAG" ]; then

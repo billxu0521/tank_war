@@ -159,6 +159,7 @@ func _dump(tag: String) -> void:
 func _server() -> bool:
 	if _f == 2 and _host_kind == "listen":
 		_m._on_host_pressed()
+		_m.start_match()   # 開房先進房間（選單流程 M2），這裡直接開打
 	var need := int(OS.get_environment(N_CLIENTS_ENV))
 	if _t0 < 0:
 		if _m.multiplayer.multiplayer_peer == null or _m.multiplayer.get_peers().size() < need:
