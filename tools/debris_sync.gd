@@ -4,8 +4,9 @@ extends SceneTree
 ##   ROLE=server  主機（HOST=dedicated 專用伺服器、碎塊不飛；HOST=listen 自己開房、碎塊照飛）
 ##   ROLE=client  客戶端。LATE=1：等主機說「join」才連（晚加入）；DROP=1：主機說「drop」時斷線、場景重載、再連回（重連）
 ## 環境變數 DIR：各台交換訊號和檔案的資料夾（主機寫 DIR/<訊號>，客戶端看到就做）。
-## 每台每幀記每個碎塊經歷過什麼（生R＝生成會飛的、生S＝生成靜態的、停＝飛的換成靜態、踢＝靜態換成飛的、移＝靜態的被搬位置、併N＝N 塊併成一塊）。
-## 最後主機印「DEBRIS_SYNC OK」或「DEBRIS_SYNC FAIL」（Godot 解析錯誤也回 0，要看這行）。
+## 每台每幀記每個碎塊經歷過什麼（生R＝生成會飛的、生S＝生成靜態的、停＝飛的換成靜態、踢＝靜態換成飛的（炸藥）、移＝靜態的被搬位置、併N＝N 塊併成一塊）。
+## 時間表跟著 #169：落地的碎塊走路、衝撞推不動，只有炸藥推（爆炸推停下的碎塊）。
+## 最後主機印「DEBRIS_SYNC OK」或「DEBRIS_SYNC FAIL」（有對不上、有台沒有、掉到地底的就 FAIL；Godot 解析錯誤也回 0，要看這行）。
 
 var _role := OS.get_environment("ROLE")
 var _dir := OS.get_environment("DIR")
@@ -171,9 +172,8 @@ func _server() -> bool:
 	var plan := [
 		[2.0, "炸藥（爆炸拆牆）", _blast_wall],
 		[6.0, "火球", _fireball],
-		[10.0, "衝撞（全速撞＋前面的碎塊踢開）", _charge],
-		[17.0, "走路推（停下的碎塊每塊推一下）", _nudge],
-		[23.0, "炸碎塊（爆炸推停下的碎塊）", _blast_pieces],
+		[10.0, "衝撞（全速撞；落地的碎塊推不動，#169）", _charge],
+		[23.0, "炸碎塊（爆炸推停下的碎塊，這棟的碎塊這時都停了）", _blast_pieces],
 		[29.0, "晚加入", func() -> void: _say("join")],
 		[33.0, "斷線重連", func() -> void: _say("drop")],
 		[40.0, "第二棟撞垮半棟（併成大塊；晚加入、重連的人都在）", _blast_other],
@@ -191,10 +191,10 @@ func _server() -> bool:
 			want.append(n)
 		if want.all(func(n: String) -> bool: return FileAccess.file_exists("%s/%s_dump2.ok" % [_dir, n])):
 			_done = true
-			_compare(want, "dump1")
-			_compare(want, "dump2")
+			var ok1 := _compare(want, "dump1")
+			var ok2 := _compare(want, "dump2")
 			_say("quit")
-			print("DEBRIS_SYNC OK")
+			print("DEBRIS_SYNC OK" if ok1 and ok2 else "DEBRIS_SYNC FAIL: 有對不上、有台沒有、或掉到地底的碎塊")
 		elif t > 120.0:
 			print("DEBRIS_SYNC FAIL: 等不到每台的檔案")
 			_say("quit")
@@ -241,37 +241,15 @@ func _fireball_other() -> void:
 	_h2.smash(func(p: Vector3) -> bool: return p.distance_to(at) < 2.5, Balance.whole("hit_fireball_force"), at + Vector3(-2, 0, 0), AABB(at - Vector3.ONE * 2.5, Vector3.ONE * 5.0))
 
 
-## 像 boss.gd 的全速撞：從 +Z 那側往 -Z 撞進去，身體前面的方塊範圍；路上停下的碎塊先踢開（_kick_ahead）
+## 像 boss.gd 的全速撞：從 +Z 那側往 -Z 撞進去，身體前面的方塊範圍（落地的碎塊推不動，不踢）
 func _charge() -> void:
 	var c := _h.global_position + Vector3(0, 1.5, 0)
 	var from := c + Vector3(0, 0, 6)
 	var dir := Vector3(0, 0, -1)
-	_kick_near(from + dir * 3.0, 4.0, dir, Balance.num("toy_kick"))
 	_h.smash(func(p: Vector3) -> bool: return absf(p.x - c.x) < 3.6 and p.y < c.y + 6.0 and p.z > c.z - 2.0, 2, from, AABB(c - Vector3(4, 2, 4), Vector3(8, 9, 12)), 7.5, 1, dir)
 
 
-func _kick_near(at: Vector3, r: float, dir: Vector3, speed: float) -> int:
-	var k := 0
-	for key in _h._pieces.keys():
-		var n: Node3D = _h._pieces[key]
-		if n.global_position.distance_to(at) < r:
-			_h.kick(key, dir, speed)
-			k += 1
-	return k
-
-
-## 像尼諾拉走路撞到停下的碎塊（toy_nudge）：每塊靜態的推一下
-func _nudge() -> void:
-	var k := 0
-	for t: ToyBuild in [_h]:
-		for key in t._pieces.keys():
-			if t._pieces[key] is StaticBody3D and k < 25:
-				t.kick(key, Vector3(1, 0, 0.3).normalized(), Balance.num("toy_nudge"))
-				k += 1
-	print("DS 主機 推了 %d 塊" % k)
-
-
-## 炸停下的碎塊：爆心放在碎塊堆的中間，離還站著的牆遠一點（只推碎塊、不拆新的）
+## 炸停下的碎塊：爆心放在碎塊堆的中間，只做 ToyBuild.blast 推碎塊那一半（不拆新的塊；拆到新的塊會順便打開每幀處理，蓋掉「全停後被炸」的情況）
 func _blast_pieces() -> void:
 	var c := Vector3.ZERO
 	var n := 0
@@ -280,7 +258,24 @@ func _blast_pieces() -> void:
 		n += 1
 	if n == 0:
 		return
-	ToyBuild.blast(_m.map, c / n, 4.0)
+	c /= n
+	var best := INF   # 爆心：離碎塊堆中間最近的那塊（中間本身可能是空的）
+	var at := c
+	for key in _h._pieces:
+		var q := (_h._pieces[key] as Node3D).global_position
+		if HitRules.pushable(_h._info[key].mt) and q.distance_to(c) < best:
+			best = q.distance_to(c)
+			at = q + Vector3(0.5, 0, 0.5)
+	c = at
+	var r := 4.0
+	var k := 0
+	var was := "開著" if _h.is_physics_processing() else "關著"
+	for key in _h._pieces.keys():
+		var d := (_h._pieces[key] as Node3D).global_position - c
+		if d.length() < r and HitRules.pushable(_h._info[key].mt):
+			_h.kick(key, (d.normalized() + Vector3.UP * 0.6).normalized(), Balance.num("blast_push") * (1.0 - d.length() / r))
+			k += 1
+	print("DS 主機 炸到 %d 塊（炸之前這棟的每幀處理 %s）" % [k, was])
 
 
 ## 第二棟整片撞垮（等級 2 以下、半棟）：一次鬆脫超過 MAX_PIECES，走併成大塊（_merge）
@@ -294,8 +289,11 @@ func _blast_other() -> void:
 	_h2.smash(func(p: Vector3) -> bool: return p.x > c.x, 2, c + Vector3(-8, 1, 0), AABB(), 7.5, 2, Vector3(1, 0, 0))
 
 
+const DEEP := 10.0   # 比那棟原點低這麼多公尺算掉到地底
+
+
 ## 讀每台的檔、照碎塊編號對：印差最多的幾塊、它在每台經歷過什麼
-func _compare(names: Array, tag: String) -> void:
+func _compare(names: Array, tag: String) -> bool:
 	var data := {}   # 名字 -> {id: [cls, pos, hist]}
 	var loose := {}  # 名字 -> {toy: "數量/雜湊"}
 	for nm: String in names:
@@ -317,6 +315,15 @@ func _compare(names: Array, tag: String) -> void:
 	var rows := []
 	var missing := 0
 	var orphans := 0
+	var under := {}   # 名字 -> 掉到地底的塊數（比那棟原點低 DEEP 公尺）
+	var toy_y := {}
+	for t: ToyBuild in _m.map._toys:
+		toy_y[String(t.name)] = t.global_position.y
+	for nm in names:
+		under[nm] = 0
+		for id: String in data[nm]:
+			if (data[nm][id][1] as Vector3).y < toy_y.get(id.get_slice("/", 0), -INF) - DEEP:
+				under[nm] += 1
 	for id: String in ids:
 		if id.begins_with("orphan:"):
 			orphans += 1
@@ -335,7 +342,7 @@ func _compare(names: Array, tag: String) -> void:
 		rows.append([worst, id, miss])
 	rows.sort_custom(func(a: Array, b: Array) -> bool: return a[0] + (1e5 if not (a[2] as Array).is_empty() else 0.0) > b[0] + (1e5 if not (b[2] as Array).is_empty() else 0.0))
 	var bad := rows.filter(func(r: Array) -> bool: return r[0] > 0.05 or not (r[2] as Array).is_empty())
-	print("DS ==== %s：%d 個碎塊，對不上（差 > 5 公分）%d 個、有台沒有 %d 個、孤兒 %d 個" % [tag, rows.size(), bad.size(), missing, orphans])
+	print("DS ==== %s：%d 個碎塊，對不上（差 > 5 公分）%d 個、有台沒有 %d 個、孤兒 %d 個、掉到地底 %s" % [tag, rows.size(), bad.size(), missing, orphans, " ".join(names.map(func(nm: String) -> String: return "%s=%d" % [nm, under[nm]]))])
 	var toys := {}
 	for nm in names:
 		for t in loose[nm]:
@@ -365,6 +372,7 @@ func _compare(names: Array, tag: String) -> void:
 			if id.begins_with("orphan:"):
 				var e: Array = data[nm][id]
 				print("DS   孤兒 %s %s %s (%.2f,%.2f,%.2f)" % [nm, id, e[0], e[1].x, e[1].y, e[1].z])
+	return bad.is_empty() and missing == 0 and under.values().all(func(u: int) -> bool: return u == 0)
 
 
 ## 一塊對不上的情況：每台的 R／S 和主機的經歷，例如「主機 S [生S 踢] 客戶端 R」

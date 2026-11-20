@@ -2339,6 +2339,46 @@ func _case_toy_nofly() -> void:
 		_free_map(m)
 	)
 
+## 專用伺服器的碎塊對得上、不掉到地底（tools/debris_sync 抓到的兩個）：
+## 1. 埋在地裡的塊（房子最底排頂面在地面下）拆下來，落在地面上，不從地形底下掉 50 公尺
+## 2. 這棟的碎塊全停了（每幀處理關著）再被炸藥推：每幀處理要打開，SETTLE_TIME 秒後送 _settle（不然客戶端那塊一直飛）
+## 3. 早就穿到地底的（飛的碎塊從地形底下掉下去）停在地面上；底下什麼都沒有、又在地面上面的（推到地圖外）留在原高度
+func _case_toy_sync() -> void:
+	var m := _toy_map()
+	var t := ToyBuild.make([
+		[Transform3D(Basis(), Vector3(0, -0.5, 0)), Vector3(1.0, 0.5, 1.0), 1, Color.RED],   # 0 埋在地裡（頂面 -0.25）
+		[Transform3D(Basis(), Vector3(4, 0.25, 0)), Vector3(1.0, 0.5, 1.0), 3, Color.GRAY],  # 1 拆不掉
+	])
+	t.name = "ToySync"
+	m.map.add_child(t)
+	t.position = m.map._on_ground(Vector3(-60, 0, -40))
+	ToyBuild.no_flight = true
+	t.smash(func(p: Vector3) -> bool: return p.distance_to(t.center_of(0)) < 0.3, 1, t.global_position + Vector3(-2, 0, 0))
+	t._flush()
+	ToyBuild.no_flight = false
+	_ck(t._pieces.has(0) and t._pieces[0] is StaticBody3D, "埋在地裡的塊拆下來：專用伺服器上是靜態碎塊")
+	var bottom := _piece_bottom(t, 0) - t.global_position.y
+	_ck(bottom > -0.3 and bottom < 0.5, "埋在地裡的塊落在地面上（底面比原點 %.2f 公尺），不掉到地底" % bottom)
+	_defer(2, func() -> void:   # 靜態碰撞下一幀才在物理世界
+		for i in 3:
+			t._physics_process(ToyBuild.SETTLE_TIME)
+		_ck(t._landed.is_empty() and not t.is_physics_processing(), "落地滿 SETTLE_TIME 秒送完 _settle，每幀處理關掉")
+		ToyBuild.no_flight = true
+		t.kick(0, Vector3.RIGHT, 3.0)
+		ToyBuild.no_flight = false
+		_ck(t.is_physics_processing() and t._landed.has(0), "全停之後被炸：每幀處理打開、等著送 _settle")
+		t._physics_process(ToyBuild.SETTLE_TIME)
+		_ck(t._landed.is_empty(), "炸開的碎塊 SETTLE_TIME 秒後送 _settle（客戶端那塊會停下來）")
+		var box: AABB = t._info[0].box
+		var none: Array[RID] = []
+		var deep := t._land(Transform3D(Basis(), t.global_position + Vector3(0, -60, 0)), box, none)
+		var deep_b := (deep * box.get_center()).y - box.size.y * 0.5 - t.global_position.y
+		_ck(deep_b > -0.3 and deep_b < 0.5, "穿到地底的碎塊停在地面上（底面比原點 %.2f 公尺）" % deep_b)
+		var out := Transform3D(Basis(), Vector3(5000, t.global_position.y + 2.0, 5000))
+		_ck(absf(t._land(out, box, none).origin.y - out.origin.y) < 0.01, "推到地圖外、底下什麼都沒有：留在原高度，不往下掉 %d 公尺" % int(ToyBuild.LAND_DROP))
+		_free_map(m)
+	)
+
 ## 碎塊的底面高度（世界座標）：碎塊扶正（方塊本地的邊界框中心）算的
 func _piece_bottom(t: ToyBuild, key: int) -> float:
 	var n: Node3D = t._pieces[key]

@@ -22,6 +22,7 @@ const SHAKE_RANGE := 25.0         # 離鏡頭超過這個距離（公尺）就�
 const LAND_DROP := 50.0           # 專用伺服器：碎塊往下找落點最遠幾公尺（見 _land）
 const PLOW_CLEAR := 6.5          # 專用伺服器：衝撞拆下的塊落在離路中線這麼遠以外（尼諾拉身體半徑約 3.6，加塊的大小）
 const KICK_SHIFT := 4.0           # 專用伺服器：炸出去的碎塊（blast）先水平移開這麼遠再落下（公尺）；要比尼諾拉身體半徑（約 3.6）遠，才讓得出路
+const FELL := 5.0                 # 碎塊比這棟原點低這麼多（公尺）算穿到地底：主機停下時改停在地面上（_land）
 const LAND_LIFT := 0.5            # 專用伺服器：往下掃之前先抬高這麼多（剛好貼著地面或陷進去一點，掃不到東西）
 
 static var _mat: ShaderMaterial
@@ -372,8 +373,11 @@ func _plow_xf(xf: Transform3D, from: Vector3, dir: Vector3, power: float) -> Tra
 
 ## 專用伺服器的落地（no_flight）：xf 是碎塊現在的位置、box 是它的邊界框（碎塊本地）。扶正（保留偏航角），往正下方落到第一個擋住的。
 ## 擋的有兩種：這棟自己站著的塊（不在物理查詢裡，照本地的鄰居表算頂面）、其他東西（物理查詢，排除自己、skip、尼諾拉）。取近的那個。
-## 回傳落地後的位置（只改高度）。沒有擋的（物理查不到、這棟也沒有）就落 LAND_DROP 公尺
+## 回傳落地後的位置（只改高度）。沒有擋的（物理查不到、這棟也沒有）：在這棟地面以下的從地面上面重找，其他的不落（不然掉到地底）
 func _land(xf: Transform3D, box: AABB, skip: Array[RID]) -> Transform3D:
+	var g := global_position.y - box.position.y + 0.1   # 碎塊底面在這棟地面（原點高度）上面一點的高度
+	if xf.origin.y < global_position.y - FELL:   # 早就穿到地底的：直接從地面上面找（往下掃會掃到其他也在往下掉的碎塊）
+		xf.origin.y = g
 	var up := Transform3D(Basis(Vector3.UP, xf.basis.get_euler().y), xf.origin)
 	var wb := up * box
 	# 這棟自己的塊：沒鬆脫、沒藏、有碰撞，邊界框跟碎塊的水平範圍相接、頂面在碎塊底下的，取最高的
@@ -401,7 +405,13 @@ func _land(xf: Transform3D, box: AABB, skip: Array[RID]) -> Transform3D:
 		if b is CollisionObject3D:
 			ex.append((b as CollisionObject3D).get_rid())
 	q.exclude = ex
-	var drop := minf(maxf(get_world_3d().direct_space_state.cast_motion(q)[0] * (LAND_DROP + LAND_LIFT) - LAND_LIFT, 0.0), d)
+	var safe := get_world_3d().direct_space_state.cast_motion(q)[0]
+	if safe >= 1.0 and d == INF:
+		# 底下什麼都沒有：在地形底下（房子最底排埋在地裡、飛的碎塊穿到地底），從這棟的地面（原點高度）上面重找一次；已經在上面還找不到就不落
+		if xf.origin.y < g - 0.01:
+			return _land(Transform3D(xf.basis, Vector3(xf.origin.x, g, xf.origin.z)), box, skip)
+		return up
+	var drop := minf(maxf(safe * (LAND_DROP + LAND_LIFT) - LAND_LIFT, 0.0), d)
 	return Transform3D(up.basis, up.origin + Vector3.DOWN * drop)
 
 
@@ -561,6 +571,7 @@ func _kick(key: int, impulse: Vector3) -> void:
 		_make(key, false, _land(Transform3D(xf.basis, xf.origin + shift), _info[key].box, ex))
 		_need_bake = true
 		_age.erase(key)
+		set_physics_process(true)   # 這棟的碎塊可能早就全停了（每幀處理關著），不開的話 _landed 永遠不送 _settle，客戶端那塊一直飛
 		return
 	if n is StaticBody3D:
 		var xf := n.global_transform
@@ -651,7 +662,11 @@ func _physics_process(delta: float) -> void:
 		if (_settle_left > 0 if ticked else ids.size() < SETTLE_PER_TICK) and ((n as RigidBody3D).sleeping or _age[key] >= SETTLE_TIME):
 			_settle_left -= 1
 			ids.append(key)
-			xfs.append(n.global_transform)
+			var xf := n.global_transform
+			if xf.origin.y < global_position.y - FELL:   # 穿到地底（埋在地裡的塊飛出去，從地形底下掉下去）：停在地面上，不留在地底
+				var me: Array[RID] = [(n as RigidBody3D).get_rid()]
+				xf = _land(xf, _info[key].box, me)
+			xfs.append(xf)
 	for key in _landed.keys():   # 專用伺服器落地的碎塊：落地滿 SETTLE_TIME 秒才送最後位置（各台的碎塊飛完才對齊）
 		_landed[key] += delta
 		if _landed[key] >= SETTLE_TIME and _pieces.has(key):

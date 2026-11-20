@@ -80,6 +80,7 @@ func _process(_delta: float) -> bool:
 		_case_toy_more()
 		_case_toy_b()
 		_case_toy_nofly()
+		_case_toy_sync()
 		_case_toy_area()
 		_case_nav_parse()
 		_case_egg_unbury()
