@@ -357,7 +357,10 @@ func _physics_process(delta: float) -> void:
 		_pilot_local()
 	if not is_multiplayer_authority():
 		return
+	var t := Time.get_ticks_usec() if prof_on else 0
 	think(delta)
+	if prof_on:
+		prof_add(&"尼諾拉 think", t)
 
 ## 碰撞物件開關（main.gd 的 dino_collide，預設開）：關掉時遮罩只留第 5 層（地形、圍牆、建築、角色），只有樹穿過去。
 ## 每台每幀照開關設（移動在主機算，trex.gd 的腳掌射線也用這個遮罩）。沒有遊戲局（沒有 match）就照常撞

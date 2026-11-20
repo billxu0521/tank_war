@@ -35,6 +35,14 @@ var _last_hit_by: Node = null  # 只有主機需要，用來記誰殺了誰
 var last_from := Vector3.INF   # 最後一下從哪裡打來（每台都有）：屍體往反方向倒
 static var diag := {}       # 診斷（暫時，滑鼠視角卡住的 bug 修好就拿掉）：滑鼠事件走到哪一步，main.gd 每半秒印一次
 static var _frame_ms := 0   # 上一幀跑完的時刻（毫秒），main.gd 每幀寫
+## 量測（tools/team_load.gd 的 PROF=1 才開）：物理步裡幾個大塊各花多少微秒，累加。平常只多一個 if
+static var prof_on := OS.get_environment("PROF") != ""
+static var prof := {}
+
+
+static func prof_add(key: StringName, since: int) -> void:
+	prof[key] = prof.get(key, 0) + Time.get_ticks_usec() - since
+
 
 # --- 別人的角色：平滑顯示 ---
 # 同步器只同步 net_state = [送出時的時間（net_clock）, 位置, 朝向]。收到的先存起來，畫面刻意晚 NET_DELAY 毫秒，
