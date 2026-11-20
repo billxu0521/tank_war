@@ -1380,6 +1380,10 @@ func _case_envelope() -> void:
 	var wm := func(label: String) -> int:
 		return m._match_hud.world_marks().filter(func(k: Dictionary) -> bool: return k.label == label).size()
 	p._process(0.0)
+	var dino: PhysicsBody3D = m.get_tree().get_first_node_in_group(&"dino")
+	_ck(dino != null and p.envelopes.all(func(e: Envelope) -> bool: return dino.get_collision_exceptions().has(e)), "尼諾拉穿過信封（對兩個信封都有碰撞例外）")
+	p._process(0.0)
+	_ck(dino.get_collision_exceptions().filter(func(b: PhysicsBody3D) -> bool: return b is Envelope).size() == p.envelopes.size(), "每幀跑也不會重複加例外")
 	_ck(cm.call(Envelope.NAMES[0]) == 1 and cm.call(Envelope.NAMES[1]) == 1 and wm.call("撤離") == 2 and cm.call("撤離") == 0, "方位條：兩個信封；撤離在畫面上的標記（恐龍一直知道）")
 	_ck(cm.call("保險箱") == 1 and wm.call("蛋") == 0, "恐龍看得到保險箱，蛋鎖著不標")
 	s.open = true

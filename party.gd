@@ -59,6 +59,7 @@ var env_pos: Array = [Vector3.ZERO, Vector3.ZERO]   # 兩個信封的位置（�
 var env_open: Array = [false, false]                # 信封有沒有人看過（公開，只分有沒有、不分誰）
 var my_digits: Array = [-1, -1]   # 這台的人看過的數字（十位、個位，-1 = 沒看過）。主機只用 rpc_id 送本人，不在 state() 裡
 var envelopes: Array[Envelope] = []
+var _env_excepted := {}   # 已經對信封加過碰撞例外的恐龍（節點編號）
 var star_holder := 0          # 拿著星星的人（連線編號；尼諾拉是 dino_id）。0 = 沒人拿
 var star_on := false          # 星星掉在地上（star_pos）
 var star_pos := Vector3.ZERO  # 地上的星星在哪；有人拿著時主機記他最後的位置（掉的時候用）
@@ -160,6 +161,12 @@ func _process(delta: float) -> void:
 		var shown: bool = env_open[i] and me != dino_id   # 尼諾拉不知道信封有沒有被開（0.8.16 第 4.1 節）：牠看到的永遠是沒開的樣子
 		if e.opened != shown:
 			e.set_opened(shown)
+	# 尼諾拉直接穿過信封（牛仔照樣撞得到、按得到）。每隻恐龍只加一次：引擎的例外清單不會去掉重複的
+	for d: Node in get_tree().get_nodes_in_group(&"dino"):
+		if d is PhysicsBody3D and not _env_excepted.has(d.get_instance_id()):
+			_env_excepted[d.get_instance_id()] = true
+			for e: Envelope in envelopes:
+				(d as PhysicsBody3D).add_collision_exception_with(e)
 	_show_star()
 	if phase == &"prep" and me == dino_id and not egg_placed and Input.is_action_just_pressed(&"interact") \
 			and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
