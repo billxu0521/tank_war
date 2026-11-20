@@ -407,6 +407,21 @@ func _case_boss() -> void:
 	_ck(m.players.has_node(NodePath(str(m.BOSS_ID))), "清除 bot 不會把 boss 清掉")
 	_end(m)
 
+## 專用伺服器不算骨架動作（省主機時間）；打頭用的頭還是在頭上、跟著身體走
+func _case_dedicated_trex_frozen() -> void:
+	var m := _offline_match()
+	m._dedicated = true
+	var b: Node3D = m.spawn_boss()
+	var t: Node = b.get_node(^"Trex")
+	_ck(not t.is_processing(), "專用伺服器上骨架的 _process 不跑")
+	b.global_position += Vector3(10, 0, 0)
+	var h: Vector3 = b.head_position() - b.global_position
+	var fwd := -b.global_basis.z
+	_ck(h.y > 0.0 and h.y < b.HALF_H and Vector2(h.x, h.z).dot(Vector2(fwd.x, fwd.z)) > 0.0,
+		"頭在身體上半截、前面，跟著身體搬（相對身體 %s）" % h)
+	m._dedicated = false
+	_end(m)
+
 ## 暴龍骨架：骨頭要建得起來，跑起來兩隻腳要反相擺動
 func _case_trex_rig() -> void:
 	var m := _new_offline_game()
