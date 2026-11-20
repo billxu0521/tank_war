@@ -594,6 +594,8 @@ func start_match() -> void:
 	room.playing = true
 	_enter_game("專用伺服器" if _dedicated else "%s模式開始" % RULES[rules].name)
 	_apply_rules()
+	if party:
+		party.dino_rule = room.dino_pick   # 一般模式誰當恐龍（房間選的）
 	_set_rules.rpc(rules)
 	_set_period.rpc(Period.current)
 	for id: int in room.order:
@@ -1572,6 +1574,9 @@ func _spawn(id: int) -> void:
 	if not multiplayer.is_server():
 		return  # 只有主機生，MultiplayerSpawner 會同步給大家
 	_reclaim(id)   # 斷線重連：先把舊編號的資料搬過來（要在 _add_player 前面，不然次數會補滿）
+	if id != 1:   # 模式先送：他那台要先建好 Party，下面接手電腦時送的派對整包、那一行字才找得到地方收
+		_set_rules.rpc_id(id, rules)
+		_set_period.rpc_id(id, Period.current)
 	if party and party.dino_id == id and party.phase in [&"prep", &"play"]:
 		make_pilot(id)   # 這回合輪到他當恐龍：拿回尼諾拉
 	elif party and party.fixed and party.phase in [&"prep", &"play"] and not party.in_roster(id):
@@ -1579,8 +1584,6 @@ func _spawn(id: int) -> void:
 	elif not _is_out(id):   # 出局的人連回來還是觀戰
 		_add_player(COWBOY, id)
 	if id != 1:
-		_set_rules.rpc_id(id, rules)
-		_set_period.rpc_id(id, Period.current)
 		_set_dino_collide.rpc_id(id, dino_collide)   # 晚來的人也要拿到碰撞開關的狀態
 		_broadcast_lives()
 		barrels.send_to(id)   # 爆炸桶的位置、爆了沒
@@ -1899,6 +1902,7 @@ func back_to_room() -> void:
 	raptors.clear()
 	safe.reset(false)
 	room.playing = false
+	room.prepared.clear()   # 「準備」清掉，「想當恐龍」留著
 	_show_room()
 	room.push()
 

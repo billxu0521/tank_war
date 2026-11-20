@@ -28,6 +28,7 @@ func _process(_d: float) -> bool:
 			_m.room.join(2)
 			_m.room.join(3)
 			_m.room.want = [3]
+			_m.room.prepared = [1, 3]
 			_m.room.refresh()
 		elif pg == &"room_guest":   # 同一個房間，從加入的人看（房主換成別人：設定都是灰的、沒有開始）
 			_m.room.host_id = 2
