@@ -1693,7 +1693,10 @@ func _physics_process(delta: float) -> void:
 		_time_left -= delta
 		return
 	if party:   # 派對模式的計時、蛋、重生、勝負都在 party.gd
+		var t := Time.get_ticks_usec() if Fighter.prof_on else 0
 		party.step(delta)
+		if Fighter.prof_on:
+			Fighter.prof_add(&"party.step（含小恐龍看）", t)
 		return
 	_time_left -= delta   # 沒有時限的模式也要走：重生是用剩餘秒數排的
 	if not RULES[rules].timer:

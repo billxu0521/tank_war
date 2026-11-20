@@ -4,6 +4,7 @@
 #   CLIENTS=3 tools/team_load.sh  現在的人數（1＋3）對照
 #   BOTS=9 tools/team_load.sh     電腦版：不連線，9 個電腦牛仔＋電腦尼諾拉（BOTS=3 是現在的派對）
 #   DURATION=60 縮短量的時間（秒）
+#   SYNC=30 [SYNC_ROLE=client|server] 同步降頻（只在工具裡）；PROF=1 主機印物理步拆帳
 cd "$(dirname "$0")/.."
 LOG=$(mktemp -d)
 if [ -n "$BOTS" ]; then

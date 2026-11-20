@@ -457,7 +457,10 @@ func _ads_sens() -> float:
 
 func _physics_process(delta: float) -> void:
 	if bot:
+		var t := Time.get_ticks_usec() if prof_on else 0
 		_bot_step(delta)
+		if prof_on:
+			prof_add(&"電腦牛仔 _bot_step", t)
 		return
 	if not is_local:
 		return  # 位置、朝向全部由 MultiplayerSynchronizer 決定
