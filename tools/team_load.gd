@@ -9,7 +9,7 @@ extends SceneTree
 ##   ROLE=bots    godot --headless --path . --script tools/team_load.gd
 ##       電腦版：不連線，BOTS 個電腦牛仔＋電腦尼諾拉（照 bot_sim 的開法，但不快轉），量主機每幀忙多久。
 ## 環境變數：CLIENTS（預設 9）、BOTS（預設 9）、DURATION（預設 180）、ID（客戶端編號，分開 player_key）。
-## SYNC=30：試「不過關時」第 1 招，自己負責送的同步器（客戶端：自己的牛仔；主機：尼諾拉、蛋）改成每秒 SYNC 次。只在這個工具裡改，遊戲不動。
+## SYNC=30：自己負責送的同步器（客戶端：自己的牛仔；主機：尼諾拉、蛋）和主機合包（main.gd 的 net_pack_hz）改成每秒 SYNC 次。只在這個工具裡改，遊戲不動。
 ##   SYNC_ROLE=client：只降玩家自己的牛仔（主機的尼諾拉、蛋照舊）；SYNC_ROLE=server 反過來。分得出兩邊各省多少。
 ## PROF=1：主機多印物理步裡幾個大塊各花多少（Fighter.prof：尼諾拉 think、電腦牛仔 _bot_step、小恐龍、party.step）。
 ## 「每幀忙多久」＝從這一幀第一個物理步（沒有物理步就從 _process）開始，到最後一個節點的 _process 結束：
@@ -103,6 +103,8 @@ func _slow_sync(hz: float) -> void:
 	for n: Node in root.find_children("*", "MultiplayerSynchronizer", true, false):
 		if n.is_multiplayer_authority():
 			n.replication_interval = 1.0 / hz
+	if _m.multiplayer.multiplayer_peer and _m.multiplayer.is_server():
+		_m.net_pack_hz = hz   # 主機合包（S2）的頻率
 
 
 ## 回合不要結束：命補滿、時間不倒數到底（量的是 3 分鐘一直在打的負擔）
@@ -250,6 +252,9 @@ func _client(d: float) -> bool:
 		_reported = true
 		var h := _host()
 		var t := _elapsed()
+		var others: Array = _m.players.get_children().filter(func(c: Node) -> bool: return c != me and c is Fighter and c.get_multiplayer_authority() != 1)
+		var fresh := others.filter(func(c: Fighter) -> bool: return not c._snaps.is_empty() and Time.get_ticks_msec() - c._snaps[-1][1] < 500.0)
+		print("TEAM_LOAD 客戶端 %s：別的玩家 %d 個、半秒內有收到位置的 %d 個" % [OS.get_environment("ID"), others.size(), fresh.size()])
 		print("TEAM_LOAD 客戶端 %s：%s；%s" % [OS.get_environment("ID"), _traffic("收到",
 			h.pop_statistic(ENetConnection.HOST_TOTAL_RECEIVED_DATA), h.pop_statistic(ENetConnection.HOST_TOTAL_RECEIVED_PACKETS), t),
 			_traffic("送出", h.pop_statistic(ENetConnection.HOST_TOTAL_SENT_DATA), h.pop_statistic(ENetConnection.HOST_TOTAL_SENT_PACKETS), t)])

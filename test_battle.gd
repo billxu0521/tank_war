@@ -28,6 +28,7 @@ func _process(_delta: float) -> bool:
 		_case_range()
 		_case_net_smooth()
 		_case_net_check()
+		_case_net_pack()
 		_case_rural()
 		_case_fx_and_ambience()
 		_case_terrain()

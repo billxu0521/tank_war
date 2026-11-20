@@ -727,6 +727,119 @@ func _finish_handover(id: int) -> void:
 		return   # 回合已換、或人已離線：這次不交接，牛仔留著
 	_take_over(id)
 
+# --- 主機合成一包（docs/技術筆記/伺服器效能改善.md S2） ---
+# 玩家自己的同步器只寄給主機（Fighter._ready）。主機每秒 net_pack_hz 次，把每個玩家角色照它同步器的欄位（replication_config，
+# 牛仔、恐龍都適用）各編一筆，對每個人送一包「除了他自己以外的全部」。客戶端照編號找到角色、照同一份欄位解回去：
+# net_state 走原本的 _net_push（畫面平滑那套不變），時間是本人送出時的 net_clock。
+# 電腦、尼諾拉、蛋、保險箱、主機自己的牛仔是主機的同步器，Godot 本來就合成一包，不經過這裡。
+var net_pack_hz := 30.0   # tools/team_load.gd 的 SYNC= 會改
+
+
+func _net_pack_step() -> void:
+	if Engine.get_physics_frames() % maxi(1, roundi(Engine.physics_ticks_per_second / net_pack_hz)) != 0:
+		return
+	var peers := multiplayer.get_peers()
+	if peers.is_empty():
+		return
+	var rows := {}   # 角色的主人 → 那一筆
+	for c: Node in players.get_children():
+		var row := net_pack_row(c)
+		if not row.is_empty():
+			rows[c.get_multiplayer_authority()] = row
+	if rows.is_empty():
+		return
+	# ponytail: 客戶端離線那一刻主機會印一行「Unable to send packet on channel 0, max channels: 0」（查過 ENet 的狀態還是「連著」），無害，bug_report.gd 當成已知的雜訊
+	for id: int in peers:
+		var b := net_pack_for(rows, id)
+		if not b.is_empty():
+			_net_pack.rpc_id(id, b)
+
+
+## 給 id 的那一包：除了他自己以外的每一筆接起來
+func net_pack_for(rows: Dictionary, id: int) -> PackedByteArray:
+	var b := PackedByteArray()
+	for k: int in rows:
+		if k != id:
+			b.append_array(rows[k])
+	return b
+
+
+## 主機：一個玩家角色的一筆（不是別人的玩家角色、還沒收過位置就回傳空的）。格式：主人編號 s32、長度 u16、同步欄位依序
+func net_pack_row(c: Node) -> PackedByteArray:
+	var f := c as Fighter
+	var s := Fighter.sync_of(c) if f else null
+	if s == null or f.get_multiplayer_authority() == multiplayer.get_unique_id() or f._net_sent == 0.0:
+		return PackedByteArray()
+	var body := StreamPeerBuffer.new()
+	for p: NodePath in s.replication_config.get_properties():
+		if p == ^".:net_state":
+			var v := f.net_sent_state()
+			body.put_double(v[0])
+			_put_v3(body, v[1])
+			body.put_float(v[2].y)   # 身體只會左右轉（上下看是另一欄）
+			continue
+		var v: Variant = c.get_node(NodePath(p.get_concatenated_names())).get_indexed(NodePath(p.get_concatenated_subnames()))
+		match typeof(v):
+			TYPE_BOOL: body.put_u8(1 if v else 0)
+			TYPE_INT: body.put_16(v)   # ponytail: 同步的整數都是小的編號（拿哪把槍、動作）；要放大數字再改 put_32
+			TYPE_FLOAT: body.put_float(v)
+			TYPE_VECTOR3: _put_v3(body, v)
+			_: push_error("合包不認得 %s 的型別" % p)
+	var row := StreamPeerBuffer.new()
+	row.put_32(f.get_multiplayer_authority())
+	row.put_u16(body.data_array.size())
+	row.put_data(body.data_array)
+	return row.data_array
+
+
+func _put_v3(b: StreamPeerBuffer, v: Vector3) -> void:
+	b.put_float(v.x)
+	b.put_float(v.y)
+	b.put_float(v.z)
+
+
+func _get_v3(b: StreamPeerBuffer) -> Vector3:
+	var x := b.get_float()
+	var y := b.get_float()
+	return Vector3(x, y, b.get_float())
+
+
+@rpc("authority", "call_remote", "unreliable")
+func _net_pack(b: PackedByteArray) -> void:
+	net_pack_apply(b)
+
+
+## 客戶端：解一包。找不到的角色（剛加入、剛離開）照長度跳過；自己的不套
+func net_pack_apply(b: PackedByteArray) -> void:
+	var r := StreamPeerBuffer.new()
+	r.data_array = b
+	while r.get_position() + 6 <= b.size():
+		var id := r.get_32()
+		var n := r.get_u16()
+		var end := r.get_position() + n
+		var c := players.get_node_or_null(NodePath(str(id)))
+		var s := Fighter.sync_of(c) if c and id != multiplayer.get_unique_id() else null
+		if s:
+			for p: NodePath in s.replication_config.get_properties():
+				if p == ^".:net_state":
+					var t := r.get_double()
+					var pos := _get_v3(r)
+					c.net_state = [t, pos, Vector3(0, r.get_float(), 0)]
+					continue
+				var node := c.get_node(NodePath(p.get_concatenated_names()))
+				var sub := NodePath(p.get_concatenated_subnames())
+				var old: Variant = node.get_indexed(sub)
+				var v: Variant = old
+				match typeof(old):
+					TYPE_BOOL: v = r.get_u8() != 0
+					TYPE_INT: v = r.get_16()
+					TYPE_FLOAT: v = r.get_float()
+					TYPE_VECTOR3: v = _get_v3(r)
+				if v != old:
+					node.set_indexed(sub, v)
+		r.seek(end)
+
+
 ## 主機要收你的牛仔：先停止送同步，再回覆
 @rpc("authority", "call_remote", "reliable")
 func _stop_sync() -> void:
@@ -734,6 +847,7 @@ func _stop_sync() -> void:
 	var sync: MultiplayerSynchronizer = p.get_node_or_null(^"Sync") if p else null
 	if sync:
 		sync.public_visibility = false
+		sync.set_visibility_for(1, false)   # 平常只寄給主機（Fighter._ready），這個也要關
 	_sync_stopped.rpc_id(1)
 
 ## 客戶端回覆：他的同步已停，可以收牛仔了
@@ -1679,6 +1793,8 @@ func _on_restart_pressed() -> void:
 		_new_round()
 
 func _physics_process(delta: float) -> void:
+	if multiplayer.multiplayer_peer and multiplayer.is_server():
+		_net_pack_step()
 	if _over and _dedicated:
 		_next_round -= delta
 		if _next_round <= 0.0:
