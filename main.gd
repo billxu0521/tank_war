@@ -50,7 +50,7 @@ var hold: HoldAction   # 按住幾秒的互動（hold_action.gd）：搜刮；_r
 ## 連線對戰的模式：開房的人在大廳選，加入的人照主機的（連進來時主機會送 _set_rules）。
 ## 模式表在 match_rules.gd（欄位說明也在那裡）
 const RULES := MatchRules.RULES
-var rules := &"egg"
+var rules := &"normal"   # 預設是規則表的第一個（一般）
 var _lives := {}   # 牛仔的連線編號 -> 還能重生幾次。只有用得到次數的模式有；主機算，廣播給大家（_sync_lives）
 var _out := {}     # 出局的牛仔：連線編號 -> 是不是 bot（新的一局要生回來）
 var player_key := ""   # 這台電腦的玩家代號（斷線重連時主機靠它認人）。第一次連線時產生、存進 settings.cfg；net_check 會直接蓋掉
@@ -171,7 +171,7 @@ func _ready() -> void:
 	saved_ips.get_popup().index_pressed.connect(func(i: int) -> void:
 		ip_edit.text = saved_ips.get_popup().get_item_text(i))
 	for k: StringName in RULES:
-		mode_pick.add_item(RULES[k].name)
+		mode_pick.add_item(RULES[k].name + ("（舊）" if RULES[k].legacy else ""))
 	_on_mode_picked(0)
 	map._use_sky()
 	map._use_outline()
@@ -228,10 +228,6 @@ func _autostart() -> void:
 	var mi := args.find("--mode")   # --mode deathmatch / dino_duel / egg（開房和專用伺服器用）
 	if mi >= 0 and mi + 1 < args.size() and RULES.has(StringName(args[mi + 1])):
 		_on_mode_picked(RULES.keys().find(StringName(args[mi + 1])))
-	var test_btn: Button = $UI/Root/Lobby/TestServerBtn
-	test_btn.disabled = TEST_SERVER == ""
-	if test_btn.disabled:
-		test_btn.text = "連到測試站（還沒架好）"
 	if mode == &"range" or args.has("--range"):
 		_start_range()
 	elif args.has("--server"):
@@ -289,7 +285,7 @@ func _unhandled_input(e: InputEvent) -> void:
 		return
 	if lobby.visible:
 		if esc and lobby_page != &"home":
-			lobby_go(&"home")
+			lobby_go(LOBBY_UP.get(lobby_page, &"home"))
 		return
 	if esc:
 		_set_menu(not menu.visible)
@@ -567,32 +563,43 @@ func _start_dedicated() -> void:
 		spawn_boss()
 	print("測試站開好了，連接埠 %d（UDP）" % PORT)
 
-## 主選單分兩層：首頁四顆按鈕，「連線對戰」「單人練習」各一頁，按「返回」或 Esc 回首頁。
+## 主選單分兩層：首頁四顆按鈕，「連線對戰」「單人」各一頁（單人頁的「其他」再一層），按「返回」或 Esc 回首頁。
 ## 第二層的按鈕還是 Lobby 底下原本那些（場景裡接好的訊號不動），換頁只是藏起來。
 ## Lobby 底下加新東西要登記在這裡，沒登記的換頁時會被藏掉
 const LOBBY_PAGES := {
 	&"home": ["Title", "HomeOnline", "HomePractice", "HomeSettings", "HomeQuit"],
 	&"online": ["Title", "OnlineLabel", "ModeRow", "DinoVolunteer", "ModeDesc", "HostBtn", "JoinBtn", "IPRow", "TestServerBtn", "BackBtn"],
-	&"practice": ["Title", "PracticeLabel", "SandboxBtn", "SoloDinoBtn", "DinoSandboxBtn", "SoloPartyBtn", "RangeBtn", "ViewerBtn", "BackBtn"],
+	&"practice": ["Title", "PracticeLabel", "SoloPartyBtn", "SandboxBtn", "DevBtn", "BackBtn"],
+	&"dev": ["Title", "DevLabel", "RangeBtn", "SoloDinoBtn", "DinoSandboxBtn", "ViewerBtn", "DevBackBtn"],   # 開發用的四個入口（單人頁的「其他」）
 }
+## 按 Esc／返回回哪一頁（沒寫的回首頁）
+const LOBBY_UP := {&"dev": &"practice"}
 var lobby_page := &"home"
 
 func _build_home() -> void:
-	for b: Array in [["HomeOnline", "連線對戰", lobby_go.bind(&"online")], ["HomePractice", "單人練習", lobby_go.bind(&"practice")],
+	for b: Array in [["HomeOnline", "連線對戰", lobby_go.bind(&"online")], ["HomePractice", "單人", lobby_go.bind(&"practice")],
 			["HomeSettings", "設定", open_settings.bind(0)], ["HomeQuit", "離開遊戲", _on_quit_pressed],
-			["BackBtn", "← 返回", lobby_go.bind(&"home")]]:
+			["BackBtn", "← 返回", lobby_go.bind(&"home")], ["DevBtn", "其他 ▸（開發用）", lobby_go.bind(&"dev")],
+			["DevBackBtn", "← 返回", lobby_go.bind(&"practice")]]:
 		var btn := Button.new()
 		btn.name = b[0]
 		btn.text = b[1]
 		btn.custom_minimum_size.y = 48
 		btn.pressed.connect(b[2])
 		lobby.add_child(btn)
+	var dev := Label.new()
+	dev.name = &"DevLabel"
+	dev.text = "── 其他（開發用）──"
+	lobby.add_child(dev)
+	lobby.move_child(dev, $UI/Root/Lobby/RangeBtn.get_index())
+	lobby.move_child($UI/Root/Lobby/SandboxBtn, $UI/Root/Lobby/SoloPartyBtn.get_index() + 1)   # 練習場排在單人派對後面
+	lobby.move_child($UI/Root/Lobby/DevBtn, $UI/Root/Lobby/SandboxBtn.get_index() + 1)
 	lobby_go(&"home")
 
 func lobby_go(page: StringName) -> void:
 	lobby_page = page
 	for c: Node in lobby.get_children():
-		c.visible = String(c.name) in LOBBY_PAGES[page]
+		c.visible = String(c.name) in LOBBY_PAGES[page] and not (c.name == &"TestServerBtn" and TEST_SERVER == "")   # 沒有測試站就整顆藏起來
 
 ## 大廳選模式：記下來、說明換成那個模式的
 func _on_mode_picked(i: int) -> void:

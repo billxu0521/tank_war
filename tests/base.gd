@@ -75,6 +75,7 @@ func _isolated_match() -> Node:
 	vp.add_child(m)
 	m.multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 	m._offline = true
+	m.rules = &"egg"   # 同 _offline_match
 	m._enter_game("test")
 	return m
 
@@ -107,6 +108,7 @@ func _offline_match() -> Node:
 	root.add_child(m)
 	m.multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 	m._offline = true
+	m.rules = &"egg"   # 舊案例照以前的預設（搶蛋）寫的；預設改成一般之後（選單流程 M1）這裡固定回來，要別的模式各自選
 	m._enter_game("test")
 	return m
 
