@@ -3257,15 +3257,56 @@ func _case_room_return() -> void:
 	_ck(not r.playing and m.party == null and m.lobby_page == &"room", "最後結算時間到：回房間")
 	_end(m)
 
+## 房間的準備、誰當恐龍（選單流程 M5）：準備只是燈；抽想當的人在按開始那一刻抽、電腦就是電腦、指定就是他；回房間準備清掉
+func _case_room_dino() -> void:
+	var m: Node = load("res://main.tscn").instantiate()
+	root.add_child(m)
+	m._on_host_pressed()
+	var r: Room = m.room
+	m._on_peer_connected(7)
+	r.handle(7, &"ready")
+	_ck(r.prepared == [7] and r._list.get_child(1).text.contains("準備好了") and r._list.get_child(0).text.contains("還沒"), "按準備：名單上亮燈")
+	r.handle(7, &"ready")
+	_ck(r.prepared.is_empty(), "再按一次取消準備")
+	r.handle(7, &"ready")
+	r.handle(7, &"dino", 7)
+	_ck(r.dino_pick == 0, "不是房主不能指定恐龍")
+	_ck(r._dino_row.visible and r._dino_opt.item_count == 4, "一般模式：抽、電腦、指定玩家 1、玩家 2")
+	r.ask(&"dino", 7)
+	_ck(r.dino_pick == 7 and r._dino_opt.get_selected_metadata() == 7, "房主指定玩家 2")
+	m._despawn(7)
+	_ck(r.dino_pick == 0 and r.prepared.is_empty(), "指定的人走了：改回抽，準備也拿掉")
+	r.ask(&"dino", 1)
+	r.ask(&"start")
+	m._physics_process(DT)
+	var p: Party = m.party
+	_ck(p.dino_id == 1 and p.fixed_id == 1 and m._boss().pilot == 1 and p._roster.size() == 4 and not p.names.values().has("電腦尼諾拉"),
+		"指定自己：開場就當恐龍，獵人電腦補 3 個")
+	r.ask(&"back")
+	r.ask(&"dino", -1)
+	m.want_dino = true
+	r.ask(&"start")
+	m._physics_process(DT)
+	p = m.party
+	p.time_left = 0.0
+	m._physics_process(DT)
+	_ck(p.phase == &"play" and p.dino_id < 0 and m.players.has_node(^"1"), "選電腦：有人想當也是電腦當")
+	r.ask(&"back")
+	r.ask(&"dino", 0)
+	r.ask(&"start")
+	m._physics_process(DT)
+	_ck(m.party.dino_id == 1, "抽想當的人：按開始那一刻就抽")
+	_end(m)
+
 func _case_normal_mode() -> void:
 	var m := _offline_match()
 	m._on_mode_picked(m.RULES.keys().find(&"normal"))
-	m.want_dino = true
 	m._apply_rules()
 	var p: Party = m.party
 	_ck(m.party_mode() and p.fixed and p.rounds == 4, "一般模式：派對那套、固定恐龍、預設 4 局")
 	m._physics_process(DT)
-	_ck(p.dino_id < 0 and p.names[p.dino_id] == "電腦尼諾拉" and m.players.has_node(^"1"), "準備階段先由電腦當恐龍，主機站在牛仔那邊")
+	_ck(p.dino_id < 0 and p.names[p.dino_id] == "電腦尼諾拉" and m.players.has_node(^"1"), "開始時沒人想當：先由電腦當恐龍，主機站在牛仔那邊")
+	m.want_dino = true   # 補救：開場後才勾，準備結束那一刻換他
 	p.time_left = 0.0
 	m._physics_process(DT)
 	var hunters := p._roster.filter(func(id: int) -> bool: return id != p.dino_id)

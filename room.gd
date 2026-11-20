@@ -5,7 +5,7 @@ extends VBoxContainer
 ## 狀態只在主機改：大家按的東西都走 ask 送到主機，主機檢查是不是房主才改；有變就整包送給所有人（_recv），畫面照那包畫。
 ## 名字固定（Room），RPC 每台找得到。
 
-const HOST_ONLY := [&"mode", &"rounds", &"start", &"again", &"back"]   # 只有房主能按的
+const HOST_ONLY := [&"mode", &"rounds", &"dino", &"start", &"again", &"back"]   # 只有房主能按的
 const PLAY_ONLY := [&"again", &"back"]   # 打的時候才能按的（其他的只在房間裡）
 
 var main: Node
@@ -16,12 +16,17 @@ var host_id := 0        # 房主的連線編號；0 = 還沒有（專用伺服�
 var mode := &"normal"   # 現在選的模式（主機：main.rules）
 var rounds := 4         # 一般模式幾局（主機：main.normal_rounds）
 var want: Array = []    # 想當恐龍的人（主機：main.dino_pool()）
+var prepared: Array = []   # 按了「準備」的人（只是一盞燈給房主看，不擋開始）；回房間時清掉
+var dino_pick := 0      # 一般模式誰當恐龍：0 = 抽想當的人、-1 = 電腦、正的 = 房主指定的那個人（party.dino_rule）
 var connecting := false # 客戶端：按了加入、還沒收到主機的第一包
 
 var _mode_btns := {}    # 模式 -> 按鈕（一般、派對）
 var _other: OptionButton   # 其他模式（舊的四個）
 var _rounds_row: HBoxContainer
 var _round_btns := {}   # 局數 -> 按鈕
+var _dino_row: HBoxContainer
+var _dino_opt: OptionButton   # 誰當恐龍：抽、電腦、指定：玩家 N（項目的 metadata 是 dino_pick 的值）
+var _ready_btn: Button
 var _desc: Label
 var _list: VBoxContainer
 var _bots: Label
@@ -62,6 +67,11 @@ func _ready() -> void:
 	var rg := ButtonGroup.new()
 	for n: int in [4, 1]:
 		_round_btns[n] = _toggle(_rounds_row, "%d 局" % n, rg, ask.bind(&"rounds", n))
+	_dino_row = _row("恐龍")
+	_dino_opt = OptionButton.new()
+	_dino_opt.custom_minimum_size.x = 220
+	_dino_opt.item_selected.connect(func(i: int) -> void: ask(&"dino", _dino_opt.get_item_metadata(i)))
+	_dino_row.add_child(_dino_opt)
 	_desc = Label.new()
 	_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_desc.custom_minimum_size = Vector2(600, 48)
@@ -77,7 +87,12 @@ func _ready() -> void:
 	_want = CheckBox.new()
 	_want.text = "我想當恐龍"
 	_want.toggled.connect(_on_want)
-	add_child(_want)
+	var mine := HBoxContainer.new()
+	mine.add_theme_constant_override(&"separation", 24)
+	add_child(mine)
+	mine.add_child(_want)
+	_ready_btn = _button(mine, "準備", ask.bind(&"ready"))
+	_ready_btn.custom_minimum_size.x = 120
 	_addr = Label.new()
 	add_child(_addr)
 	var bottom := HBoxContainer.new()
@@ -144,6 +159,9 @@ func leave(id: int) -> void:
 	if not order.has(id):
 		return
 	order.erase(id)
+	prepared.erase(id)
+	if dino_pick == id:   # 指定的人走了：改回抽
+		dino_pick = 0
 	if host_id == id:
 		host_id = order[0] if not order.is_empty() else 0
 	push()
@@ -159,7 +177,8 @@ func push() -> void:
 
 
 func state() -> Dictionary:
-	return {playing = playing, order = order, host_id = host_id, mode = main.rules, rounds = main.normal_rounds, want = main.dino_pool()}
+	return {playing = playing, order = order, host_id = host_id, mode = main.rules, rounds = main.normal_rounds, want = main.dino_pool(),
+		prepared = prepared, dino_pick = dino_pick}
 
 
 ## 大家按的東西：客戶端送到主機；主機自己按直接處理
@@ -184,6 +203,14 @@ func handle(from: int, what: StringName, v: Variant = null) -> void:
 		&"rounds":
 			if v is int and v in [1, 4]:
 				main.normal_rounds = v
+		&"dino":
+			if v is int and (v <= 0 or order.has(v)):
+				dino_pick = maxi(v, -1)
+		&"ready":   # 準備：再按一次取消
+			if prepared.has(from):
+				prepared.erase(from)
+			else:
+				prepared.append(from)
 		&"start":
 			main.start_match()
 			return
@@ -280,9 +307,19 @@ func refresh() -> void:
 		c.queue_free()
 	for id: int in order:
 		var l := Label.new()
-		l.text = "%s %s%s%s%s" % ["★" if id == host_id else "　", name_of(id), "（房主）" if id == host_id else "",
-			"（你）" if id == me else "", "　　想當恐龍" if want.has(id) else ""]
+		l.text = "%s %s%s%s%s　　%s" % ["★" if id == host_id else "　", name_of(id), "（房主）" if id == host_id else "",
+			"（你）" if id == me else "", "　　想當恐龍" if want.has(id) else "", "準備好了" if prepared.has(id) else "還沒"]
 		_list.add_child(l)
+	_dino_row.visible = mode == &"normal"
+	_dino_opt.clear()
+	for pair: Array in [[0, "抽想當的人"], [-1, "電腦"]] + order.map(func(id: int) -> Array: return [id, "指定：" + name_of(id)]):
+		_dino_opt.add_item(pair[1])
+		_dino_opt.set_item_metadata(_dino_opt.item_count - 1, pair[0])
+		if pair[0] == dino_pick:
+			_dino_opt.select(_dino_opt.item_count - 1)
+	_dino_opt.disabled = not host
+	_ready_btn.text = "準備好了 ✓" if prepared.has(me) else "準備"
+	_ready_btn.disabled = connecting
 	if order.is_empty():
 		var l := Label.new()
 		l.text = "等主機回覆…" if connecting else "還沒有人"

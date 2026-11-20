@@ -51,6 +51,7 @@ var lives := {}               # 牛仔連線編號 -> 剩幾條命
 var dino_id := 0
 var fixed := false            # 固定恐龍（一般模式；match_rules 的 fixed_dino，_ready 讀）：整場同一個人當，不輪
 var fixed_id := 0             # 主機：固定當恐龍的人。負的 = 電腦，每局準備結束那一刻再從想當的人裡抽（_pick_fixed）
+var dino_rule := 0            # 主機：一般模式誰當恐龍（房間選的，main.start_match 設）：0 抽想當的人、-1 電腦、正的 = 指定的人
 var names := {}               # 連線編號 -> 顯示名稱
 var last_result := ""
 var egg_placed := false       # 準備階段恐龍放蛋了沒
@@ -188,7 +189,7 @@ func step(delta: float) -> void:
 			if not egg_placed:
 				main.egg.global_position = main._on_ground(_flat(_dino_pos(), 0.5))   # 還沒放：蛋跟著恐龍走
 			if time_left <= 0.0:
-				if fixed and fixed_id < 0:
+				if fixed and fixed_id < 0 and dino_rule == 0:   # 補救：開場沒人想當、後來有人勾了（選「電腦」、「指定」不換）
 					_pick_fixed()
 				if not egg_placed:   # 時間到沒放：放在恐龍腳下
 					_hide_egg_at(_dino_pos())
@@ -243,7 +244,10 @@ func start() -> void:
 	for i in _roster.size():
 		names[_roster[i]] = "玩家 %d" % (i + 1)
 	var bot := -1
-	if fixed:   # 固定恐龍：先由電腦當（也在名單上，不出牛仔），準備結束時有人想當再換（_pick_fixed）
+	var pre := _start_dino() if fixed else 0
+	if pre > 0:   # 開始那一刻就定好的人整場當（他在名單上），獵人不到 3 個用電腦補
+		fixed_id = pre
+	elif fixed:   # 固定恐龍：先由電腦當（也在名單上，不出牛仔），準備結束時有人想當再換（_pick_fixed）
 		fixed_id = bot
 		names[bot] = "電腦尼諾拉"
 		_roster.append(bot)
@@ -599,6 +603,14 @@ func rekey(old: int, new: int) -> void:
 	_sync()
 
 
+## 主機、一般模式開始那一刻誰當恐龍（房間的「誰當恐龍」）：指定的人還在就他；抽：想當的人裡抽一個；電腦、沒人想當：0（電腦當）
+func _start_dino() -> int:
+	if dino_rule != 0:
+		return dino_rule if dino_rule > 0 and _roster.has(dino_rule) else 0
+	var pool: Array = main.dino_pool().filter(func(id: int) -> bool: return _roster.has(id))
+	return pool.pick_random() if not pool.is_empty() else 0
+
+
 ## 主機、一般模式準備結束那一刻（恐龍還是電腦）：想當的人裡抽一個，整場給他當。
 ## 電腦恐龍那格拿掉；他原本是獵人，獵人不到 3 個就補一個電腦
 func _pick_fixed() -> void:
@@ -631,10 +643,13 @@ func in_roster(id: int) -> bool:
 ## 沒有活著的電腦就不生，觀戰到下一局（_refresh_roster 會排他進來）
 func take_bot(id: int) -> void:
 	var bots := _cowboys().filter(func(c: Node) -> bool: return c.name.to_int() < 0)
+	var at_round := "一般模式 第 %d／%d 局" % [mini(round_index + 1, rounds), rounds]
 	if bots.is_empty():
+		_whisper(id, at_round + "，觀戰到下一局")
 		return
 	var b: Node3D = bots[0]
 	var old := b.name.to_int()
+	_whisper(id, "%s，你接手%s" % [at_round, names.get(old, "電腦")])
 	var at := b.global_transform
 	var hp: int = b.hp
 	main.players.remove_child(b)
