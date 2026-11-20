@@ -35,15 +35,24 @@ var _last_hit_by: Node = null  # 只有主機需要，用來記誰殺了誰
 var last_from := Vector3.INF   # 最後一下從哪裡打來（每台都有）：屍體往反方向倒
 static var diag := {}       # 診斷（暫時，滑鼠視角卡住的 bug 修好就拿掉）：滑鼠事件走到哪一步，main.gd 每半秒印一次
 static var _frame_ms := 0   # 上一幀跑完的時刻（毫秒），main.gd 每幀寫
+## 量測（tools/team_load.gd 的 PROF=1 才開）：物理步裡幾個大塊各花多少微秒，累加。平常只多一個 if
+static var prof_on := OS.get_environment("PROF") != ""
+static var prof := {}
+
+
+static func prof_add(key: StringName, since: int) -> void:
+	prof[key] = prof.get(key, 0) + Time.get_ticks_usec() - since
+
 
 # --- 別人的角色：平滑顯示 ---
 # 同步器只同步 net_state = [送出時的時間（net_clock）, 位置, 朝向]。收到的先存起來，畫面刻意晚 NET_DELAY 毫秒，
 # 在前後兩筆之間補（跟 FPS 遊戲的「插值」同一招）：網路一時慢了、一次來兩包，看起來還是順的。
 # 只有客戶端這樣做。主機（含測試站）收到就直接套：恐龍咬人、boss 找人都在主機算，不能看慢了的位置。
 # 客戶端自己判定打中（Bullet），打的就是畫面上看到的位置，所以「看到哪、打哪」還是對得上。
-# 晚越多越順但越不準（躲到牆後還中彈）。同步器：boss.tscn 每幀送（replication_interval = 0，伺服器每秒 60 幀）；
-# cowboy.tscn、dino.tscn 是玩家自己送，設 0.016（約每秒 60 次）：設 0 會照他的畫面幀率送，120 幀的人流量加倍；
-# 設 0.025 在 60 幀的機器上會被湊成兩幀＝33ms。晚 60ms 等於手上隨時有三筆可以補；新的沒到就照速度往前推（NET_EXTRA）。
+# 晚越多越順但越不準（躲到牆後還中彈）。同步器（cowboy.tscn、dino.tscn 玩家自己送、只送給主機，主機合成一包轉給其他人＝main.gd 的 _net_pack_step；boss.tscn、main.tscn 的蛋和保險箱主機送）
+# 都設 0.03（約每秒 30 次，2026-11-20 從 60 次降下來省流量，見 docs/技術筆記/伺服器效能改善.md S1）：
+# 設 0 會照畫面幀率送，120 幀的人流量加倍；不寫 0.033：60 幀的機器上兩幀剛好 33.3ms，卡在邊界有時會湊成三幀＝50ms
+# （0.025 也被湊成兩幀過）。每秒 30 次時晚 60ms 手上只有不到兩筆可以補；新的沒到就照速度往前推（NET_EXTRA）。
 # 量過晚 80ms（2026-11-11）：普通網路（40±10ms、掉 1%）兩種都幾乎不用猜；很差的網路（150±40ms、掉 5%）要猜的幀 22% → 4%，
 # 但畫面真的停住的兩種都不到 0.3%。為了很差的網路讓每個人多晚 20ms 不值得，維持 60
 const NET_DELAY := 60.0
@@ -52,6 +61,7 @@ const NET_EXTRA := 100.0   # 新的包沒到時，最多照速度往前推這麼
 const NET_EXTRA_SPEED := 0.03   # 推的速度上限（每毫秒，= 30 公尺／秒）
 var net_smooth := false     # _ready 決定；測試會直接打開
 var _snaps: Array = []      # [送出時間, 收到時間, 位置, 朝向]，照時間排
+var _net_sent := 0.0        # 主機：最後接受的那包是本人什麼時候送的（net_clock），合包時原樣轉出去；0 = 還沒收過
 var net_state: Array:
 	get:
 		return [net_clock(), position, rotation]
@@ -92,6 +102,25 @@ func _ready() -> void:
 	net_smooth = not is_multiplayer_authority() and not multiplayer.is_server()
 	if net_smooth:
 		physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF   # 自己每幀補，不再經過物理插值
+	if is_multiplayer_authority() and not multiplayer.is_server():
+		# 自己的角色只寄給主機，主機合成一包發給其他人（main.gd 的 _net_pack_step）
+		var s := sync_of(self)
+		if s:
+			s.public_visibility = false
+			s.set_visibility_for(1, true)
+
+
+## 角色自己的同步器（牛仔叫 Sync、恐龍叫 MultiplayerSynchronizer）
+static func sync_of(n: Node) -> MultiplayerSynchronizer:
+	for c in n.get_children():
+		if c is MultiplayerSynchronizer:
+			return c
+	return null
+
+
+## 主機合包用：最後接受的位置，時間是本人送出時的
+func net_sent_state() -> Array:
+	return [_net_sent, position, rotation]
 
 
 func _net_push(v: Array) -> void:
@@ -100,6 +129,7 @@ func _net_push(v: Array) -> void:
 		if is_inside_tree() and multiplayer.is_server() and not is_multiplayer_authority() \
 				and not net_accept(v[1], float(Time.get_ticks_msec())):
 			return
+		_net_sent = float(v[0])
 		position = v[1]   # 主機、還沒進場景（生出來那一包）：直接套
 		rotation = v[2]
 		return

@@ -9,7 +9,9 @@ extends SceneTree
 ##   ROLE=bots    godot --headless --path . --script tools/team_load.gd
 ##       電腦版：不連線，BOTS 個電腦牛仔＋電腦尼諾拉（照 bot_sim 的開法，但不快轉），量主機每幀忙多久。
 ## 環境變數：CLIENTS（預設 9）、BOTS（預設 9）、DURATION（預設 180）、ID（客戶端編號，分開 player_key）。
-## SYNC=30：試「不過關時」第 1 招，自己負責送的同步器（客戶端：自己的牛仔；主機：尼諾拉、蛋）改成每秒 SYNC 次。只在這個工具裡改，遊戲不動。
+## SYNC=30：自己負責送的同步器（客戶端：自己的牛仔；主機：尼諾拉、蛋）和主機合包（main.gd 的 net_pack_hz）改成每秒 SYNC 次。只在這個工具裡改，遊戲不動。
+##   SYNC_ROLE=client：只降玩家自己的牛仔（主機的尼諾拉、蛋照舊）；SYNC_ROLE=server 反過來。分得出兩邊各省多少。
+## PROF=1：主機多印物理步裡幾個大塊各花多少（Fighter.prof：尼諾拉 think、電腦牛仔 _bot_step、小恐龍、party.step）。
 ## 「每幀忙多久」＝從這一幀第一個物理步（沒有物理步就從 _process）開始，到最後一個節點的 _process 結束：
 ## 含腳本的物理、物理引擎、收網路包、_process；不含畫面（沒畫面）和鎖 60 幀的空等。
 ## 每個角色最後印「TEAM_LOAD OK」（Godot 解析錯誤也回 0，要看這行）。
@@ -28,6 +30,9 @@ var _us: PackedInt32Array = []   # 每幀忙多久（微秒）
 var _multi := 0        # 一幀跑了不只一個物理步（追進度）的幀數
 var _ang := 0.0
 var _shot := 0.0
+var _tp := 0          # 這一幀腳本的 _process（物理步之後、收網路包之前）
+var _tf := 0          # 這一幀的 process_frame 訊號（收完網路包、節點的 _process 之前）
+var _sum := [0, 0, 0] # 三段加總（微秒）：物理、網路、_process
 var _reported := false   # 客戶端：量完了，繼續跑到主機關掉（先走的話主機那邊少一個人，回合會結束）
 
 
@@ -46,6 +51,7 @@ func _initialize() -> void:
 	e.process_priority = 1 << 30
 	e.on_end = _frame_end
 	root.add_child(e)
+	process_frame.connect(func() -> void: _tf = Time.get_ticks_usec())
 
 
 func _physics_process(_d: float) -> bool:
@@ -57,7 +63,11 @@ func _physics_process(_d: float) -> bool:
 
 func _frame_end() -> void:
 	if _t0 > 0 and _start >= 0:
-		_us.append(Time.get_ticks_usec() - _start)
+		var e := Time.get_ticks_usec()
+		_us.append(e - _start)
+		_sum[0] += _tp - _start
+		_sum[1] += _tf - _tp
+		_sum[2] += e - _tf
 		if _ticks > 1:
 			_multi += 1
 	_start = -1
@@ -67,8 +77,10 @@ func _frame_end() -> void:
 func _process(d: float) -> bool:
 	if _start < 0:
 		_start = Time.get_ticks_usec()
+	_tp = Time.get_ticks_usec()
 	_f += 1
-	if OS.get_environment("SYNC") != "" and _f % 30 == 0:
+	var sr := OS.get_environment("SYNC_ROLE")
+	if OS.get_environment("SYNC") != "" and _f % 30 == 0 and (sr == "" or sr == _role):
 		_slow_sync(float(OS.get_environment("SYNC")))
 	match _role:
 		"server":
@@ -91,6 +103,8 @@ func _slow_sync(hz: float) -> void:
 	for n: Node in root.find_children("*", "MultiplayerSynchronizer", true, false):
 		if n.is_multiplayer_authority():
 			n.replication_interval = 1.0 / hz
+	if _m.multiplayer.multiplayer_peer and _m.multiplayer.is_server():
+		_m.net_pack_hz = hz   # 主機合包（S2）的頻率
 
 
 ## 回合不要結束：命補滿、時間不倒數到底（量的是 3 分鐘一直在打的負擔）
@@ -109,6 +123,7 @@ func _begin() -> void:
 		for s in [ENetConnection.HOST_TOTAL_SENT_DATA, ENetConnection.HOST_TOTAL_SENT_PACKETS,
 				ENetConnection.HOST_TOTAL_RECEIVED_DATA, ENetConnection.HOST_TOTAL_RECEIVED_PACKETS]:
 			h.pop_statistic(s)
+	Fighter.prof.clear()
 	_t0 = Time.get_ticks_usec()
 
 
@@ -133,6 +148,16 @@ func _report(extra: String) -> void:
 	print("TEAM_LOAD %s（%.0f 秒，%d 幀，追進度的幀 %d）" % [extra, t, s.size(), _multi])
 	print("  主機每幀忙 平均 %.2f 毫秒、中間值 %.2f、最慢 1%% %.2f、最慢 0.1%% %.2f、最慢 %.2f" % [
 		tot / 1000.0 / maxi(s.size(), 1), pct.call(0.5), pct.call(0.99), pct.call(0.999), pct.call(1.0)])
+	var n := maxi(s.size(), 1) * 1000.0
+	print("  主機三段 物理 %.2f、網路 %.2f、_process %.2f 毫秒（平均）" % [_sum[0] / n, _sum[1] / n, _sum[2] / n])
+	if Fighter.prof_on:
+		var parts := []
+		var rest: float = _sum[0]
+		for k: StringName in Fighter.prof:
+			parts.append("%s %.3f" % [k, Fighter.prof[k] / n])
+			rest -= Fighter.prof[k]
+		parts.append("其他（物理引擎、子彈、其餘腳本） %.3f" % (rest / n))
+		print("  主機物理步拆帳（平均每幀毫秒）：" + "、".join(parts))
 	var h := _host()
 	if h:
 		var sd := h.pop_statistic(ENetConnection.HOST_TOTAL_SENT_DATA)
@@ -227,8 +252,12 @@ func _client(d: float) -> bool:
 		_reported = true
 		var h := _host()
 		var t := _elapsed()
-		print("TEAM_LOAD 客戶端 %s：%s" % [OS.get_environment("ID"), _traffic("收到",
-			h.pop_statistic(ENetConnection.HOST_TOTAL_RECEIVED_DATA), h.pop_statistic(ENetConnection.HOST_TOTAL_RECEIVED_PACKETS), t)])
+		var others: Array = _m.players.get_children().filter(func(c: Node) -> bool: return c != me and c is Fighter and c.get_multiplayer_authority() != 1)
+		var fresh := others.filter(func(c: Fighter) -> bool: return not c._snaps.is_empty() and Time.get_ticks_msec() - c._snaps[-1][1] < 500.0)
+		print("TEAM_LOAD 客戶端 %s：別的玩家 %d 個、半秒內有收到位置的 %d 個" % [OS.get_environment("ID"), others.size(), fresh.size()])
+		print("TEAM_LOAD 客戶端 %s：%s；%s" % [OS.get_environment("ID"), _traffic("收到",
+			h.pop_statistic(ENetConnection.HOST_TOTAL_RECEIVED_DATA), h.pop_statistic(ENetConnection.HOST_TOTAL_RECEIVED_PACKETS), t),
+			_traffic("送出", h.pop_statistic(ENetConnection.HOST_TOTAL_SENT_DATA), h.pop_statistic(ENetConnection.HOST_TOTAL_SENT_PACKETS), t)])
 		print("TEAM_LOAD OK")
 	return false
 

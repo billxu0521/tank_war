@@ -270,6 +270,13 @@ func _ray_clear(a: Vector3, b: Vector3, i: int) -> bool:
 
 ## 每台每個物理幀：往目標點走（照地形貼地）、身體慢慢轉到 yaws、走路時上下晃
 func _physics_process(delta: float) -> void:
+	var t := Time.get_ticks_usec() if Fighter.prof_on else 0
+	_walk(delta)
+	if Fighter.prof_on:
+		Fighter.prof_add(&"小恐龍走", t)
+
+
+func _walk(delta: float) -> void:
 	for i in mini(spots.size(), get_child_count()):
 		if alive[i] == 0:
 			continue

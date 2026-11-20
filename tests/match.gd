@@ -77,6 +77,35 @@ func _case_net_smooth() -> void:
 	_ck(c.position.x == 10.0, "新的還沒到就停在最後一筆，不要亂猜")
 	_end(m)
 
+## 主機合成一包（main.gd 的 net_pack_row／net_pack_for／net_pack_apply）：玩家角色各一筆、時間是本人送出的，
+## 給某人的那包沒有他自己；客戶端解回去走 _net_push，其他欄位照同步設定套上
+func _case_net_pack() -> void:
+	var m := _offline_match()
+	var a: Node3D = m._add_player(m.COWBOY, 5)
+	var b: Node3D = m._add_player(m.COWBOY, 6)
+	_ck(m.net_pack_row(b).is_empty(), "還沒收過位置的不組進包裡")
+	a.net_state = [1234.0, Vector3(3, 0, 0), Vector3(0, 1, 0)]
+	a.sync_crouching = true
+	b.net_state = [99.0, Vector3(0, 0, 4), Vector3.ZERO]
+	var rows := {5: m.net_pack_row(a), 6: m.net_pack_row(b)}
+	_ck(not rows[5].is_empty() and not rows[6].is_empty(), "收過位置的要有一筆")
+	var bot: Node3D = m._add_player(m.COWBOY, -3)
+	_ck(m.net_pack_row(bot).is_empty(), "主機自己的（電腦）不經過合包，Godot 的同步器會送")
+	a.net_smooth = true
+	b.net_smooth = true
+	m.net_pack_apply(m.net_pack_for(rows, 7))
+	_ck(a._snaps.size() == 1 and b._snaps.size() == 1 and b._snaps[0][2] == Vector3(0, 0, 4), "給別人的那包兩筆都要解得出來（%s／%s）" % [a._snaps, b._snaps])
+	a._snaps.clear()
+	b._snaps.clear()
+	a.sync_crouching = false
+	var pack: PackedByteArray = m.net_pack_for(rows, 6)
+	m.net_pack_apply(pack)
+	_ck(a._snaps.size() == 1 and a._snaps[0][0] == 1234.0 and a._snaps[0][2] == Vector3(3, 0, 0), "收到的位置要進 _snaps、時間是本人送出時的（%s）" % [a._snaps])
+	_ck(a.sync_crouching, "蹲要照包裡的套上")
+	_ck(b._snaps.is_empty(), "給 6 號的那包不能有他自己")
+	_ck(Fighter.sync_of(a) != null and Fighter.sync_of(a).replication_config.has_property(^".:net_state"), "找得到牛仔的同步器")
+	_end(m)
+
 ## 主機檢查移動（Fighter.net_accept）和每秒傷害額度（Main._dmg_allowed）：正常的全放行，瞬移、狂送扣血要擋。
 ## 直接給時間（毫秒）算，不靠真的等
 func _case_net_check() -> void:
