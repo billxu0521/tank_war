@@ -217,7 +217,8 @@ func _ready() -> void:
 ##   OvD.exe -- --dino-sandbox    恐龍沙盒：自己當尼諾拉，按 H 叫獵人、J 清掉
 ##   OvD.exe -- --host --mode deathmatch    指定模式（egg、deathmatch、dino_duel）
 ##   OvD.exe -- --host --period midnight    指定時段（sunset、noon、midnight），不填用大廳上次選的
-##   godot --headless -- --server    專用伺服器（測試站）：自己不下場，一局結束自動開下一局
+##   godot --headless -- --server    專用伺服器（測試站）：自己不下場，一開是房間，最早連進來的人當房主（--mode 是房間的預設）
+##   godot --headless -- --server --autoplay    專用伺服器照舊開了就打、一局結束自動開下一局（連線測試工具用）
 func _autostart() -> void:
 	var args := OS.get_cmdline_user_args()
 	var mi := args.find("--mode")   # --mode deathmatch / dino_duel / egg（開房和專用伺服器用）
@@ -592,6 +593,7 @@ func start_match() -> void:
 	if not multiplayer.is_server():
 		return
 	room.playing = true
+	_empty_for = 0.0
 	_enter_game("專用伺服器" if _dedicated else "%s模式開始" % RULES[rules].name)
 	_apply_rules()
 	if party:
@@ -612,8 +614,9 @@ func _on_peer_connected(id: int) -> void:
 	if room.playing:
 		_spawn(id)
 
-## 專用伺服器：開房但自己不下場（沒有編號 1 的牛仔），恐龍 boss 照生。
-## 一局結束 NEXT_ROUND_DELAY 秒後自動開下一局，不用有人去按
+## 專用伺服器：開房但自己不下場（沒有編號 1 的牛仔）。一開是房間（選單流程 M6）：最早連進來、還在線上的人當房主，
+## 他選模式、按開始；打完回房間。啟動參數的 --mode 是房間的預設（沒人的時候回到這個）。
+## 加 --autoplay 照舊：開了就打、一局結束 NEXT_ROUND_DELAY 秒後自動開下一局（tools 底下的連線測試用）
 func _start_dedicated() -> void:
 	var peer := ENetMultiplayerPeer.new()
 	if peer.create_server(PORT) != OK:
@@ -627,9 +630,30 @@ func _start_dedicated() -> void:
 	# 測試站（1 顆處理器）跑 120 次算不完，遊戲時間會變慢（2026-10-18 測試站回報）
 	Engine.physics_ticks_per_second = 60
 	Engine.max_fps = 60   # 沒畫面也會一直空轉：不鎖的話吃滿一顆處理器，跟物理一樣次數就夠
-	room.open(true)
-	start_match()   # ponytail: 專用伺服器還是開了就打、一局結束自動開下一局（房主選模式是選單流程 M6）
+	_open_dedicated_room()
+	_autoplay = OS.get_cmdline_user_args().has("--autoplay")
+	if _autoplay:
+		start_match()
 	print("測試站開好了，連接埠 %d（UDP）" % PORT)
+
+var _autoplay := false   # 專用伺服器 --autoplay：開了就打、一局結束自動開下一局（舊做法）
+var _room_defaults := []   # 專用伺服器：房間的預設 [模式, 局數]（啟動參數給的），沒人的時候回到這個
+var _empty_for := 0.0      # 專用伺服器：打到一半所有人都走了多久
+const EMPTY_END := 30.0    # 打到一半所有人都走了，等這麼久沒人回來就結束這場、回房間（不然電腦一直打下去白吃主機）
+
+## 專用伺服器的房間（測試不開連線直接叫這個）
+func _open_dedicated_room() -> void:
+	_dedicated = true
+	_room_defaults = [rules, normal_rounds]
+	room.open(true)
+
+## 專用伺服器沒人了：房間的設定回到預設
+func room_defaults_back() -> void:
+	if _room_defaults.is_empty():
+		return
+	rules = _room_defaults[0]
+	normal_rounds = _room_defaults[1]
+	room.dino_pick = 0
 
 ## 主選單分兩層：首頁四顆按鈕，「連線對戰」「單人」各一頁（單人頁的「其他」再一層），按「返回」或 Esc 回首頁。
 ## 第二層的按鈕還是 Lobby 底下原本那些（場景裡接好的訊號不動），換頁只是藏起來。
@@ -1922,10 +1946,18 @@ func _show_room() -> void:
 func _physics_process(delta: float) -> void:
 	if multiplayer.multiplayer_peer and multiplayer.is_server():
 		_net_pack_step()
-	if _over and (_dedicated or room.active):   # 結算畫面：房間的回房間，專用伺服器開下一局
+	if _dedicated and room.playing:   # 打到一半所有人都走了：等 EMPTY_END 秒沒人回來就回房間
+		_empty_for = _empty_for + delta if multiplayer.get_peers().is_empty() else 0.0
+		if _empty_for >= EMPTY_END and not _autoplay:
+			_empty_for = 0.0
+			back_to_room()
+			room_defaults_back()
+			room.push()
+			return
+	if _over and (_autoplay or room.active):   # 結算畫面：回房間（--autoplay 的專用伺服器開下一局）
 		_next_round -= delta
 		if _next_round <= 0.0:
-			if _dedicated:
+			if _autoplay:
 				_new_round()
 			else:
 				back_to_room()

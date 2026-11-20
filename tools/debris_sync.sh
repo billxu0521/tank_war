@@ -7,7 +7,7 @@ cd "$(dirname "$0")/.."
 HOST=${HOST:-dedicated}
 DIR=$(mktemp -d)
 export DIR HOST
-if [ "$HOST" = listen ]; then ARGS="--host --mode deathmatch"; else ARGS="--server --mode deathmatch"; fi
+if [ "$HOST" = listen ]; then ARGS="--host --mode deathmatch"; else ARGS="--server --autoplay --mode deathmatch"; fi
 CLIENTS=2 NAMES="a b c" NAME=host ROLE=server godot --headless --path . --script tools/debris_sync.gd -- $ARGS > "$DIR/host.txt" 2>&1 &
 S=$!
 sleep 4

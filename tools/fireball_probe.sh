@@ -4,7 +4,7 @@
 # 印兩邊每顆的「火球 …」，和客戶端比伺服器晚幾毫秒看到火球、那一刻落後幾公尺（同一台電腦的時鐘相減；火球每秒 35 公尺）。兩邊都要有 FIREBALL OK 才算跑完。
 cd "$(dirname "$0")/.."
 LOG=$(mktemp -d)
-ROLE=server godot --headless --path . --script tools/fireball_probe.gd -- --server > "$LOG/server.txt" 2>&1 &
+ROLE=server godot --headless --path . --script tools/fireball_probe.gd -- --server --autoplay > "$LOG/server.txt" 2>&1 &
 SERVER=$!
 sleep 4
 if [ -n "$LAG" ]; then

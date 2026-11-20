@@ -3,7 +3,7 @@
 # A 想當恐龍、要被抽到並操作得動；B 要看到。改了對抗模式、boss 的駕駛或同步之後跑：tools/versus_check.sh
 cd "$(dirname "$0")/.."
 LOG=$(mktemp -d)
-godot --headless --path . -- --server --mode versus > "$LOG/server.txt" 2>&1 &
+godot --headless --path . -- --server --autoplay --mode versus > "$LOG/server.txt" 2>&1 &
 SERVER=$!
 sleep 4
 ROLE=a godot --headless --path . --script tools/versus_check.gd > "$LOG/a.txt" 2>&1 &

@@ -5,7 +5,7 @@
 # 每一幀的原始數字：CSV=/某個資料夾 tools/jitter_probe.sh。印客戶端每段的「抖動 …」；兩邊都有 JITTER OK 才算跑完。
 cd "$(dirname "$0")/.."
 LOG=$(mktemp -d)
-ROLE=server godot --headless --path . --script ${PROBE:-tools/jitter_probe.gd} -- --server > "$LOG/server.txt" 2>&1 &
+ROLE=server godot --headless --path . --script ${PROBE:-tools/jitter_probe.gd} -- --server --autoplay > "$LOG/server.txt" 2>&1 &
 SERVER=$!
 sleep 4
 if [ -n "$LAG" ]; then

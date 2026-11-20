@@ -162,9 +162,21 @@ func leave(id: int) -> void:
 	prepared.erase(id)
 	if dino_pick == id:   # 指定的人走了：改回抽
 		dino_pick = 0
-	if host_id == id:
+	if order.is_empty() and main._dedicated and not playing:   # 專用伺服器沒人了：設定回到預設（打到一半的話 main 等 30 秒再回）
+		main.room_defaults_back()
+	if host_id == id:   # 房主走了（只有專用伺服器會這樣，開房的人走了房間就關了）：交給下一個最早進來的
 		host_id = order[0] if not order.is_empty() else 0
+		push()
+		if host_id != 0:
+			_note.rpc("房主走了，%s 現在是房主" % name_of(host_id))
+		return
 	push()
+
+
+## 每台：房間的一行通知（寫在畫面下方）
+@rpc("authority", "call_local", "reliable")
+func _note(msg: String) -> void:
+	main.status.text = msg
 
 
 ## 主機：整包送給大家，自己的畫面也照著更新

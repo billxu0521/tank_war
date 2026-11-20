@@ -5,7 +5,7 @@
 # 印伺服器每一段、客戶端整段的「順暢 …」，和伺服器自己記的「主機停頓」「重烘導航」「拆積木」行數。兩邊都要有 SMOOTH OK 才算跑完。
 cd "$(dirname "$0")/.."
 LOG=$(mktemp -d)
-CLIENTS=${CLIENTS:-1} ROLE=server SCEN=${SCEN:-plow} godot --headless --path . --script tools/smooth_probe.gd -- --server > "$LOG/server.txt" 2>&1 &
+CLIENTS=${CLIENTS:-1} ROLE=server SCEN=${SCEN:-plow} godot --headless --path . --script tools/smooth_probe.gd -- --server --autoplay > "$LOG/server.txt" 2>&1 &
 SERVER=$!
 sleep 4
 if [ -n "$LAG" ]; then
