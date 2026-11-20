@@ -89,7 +89,7 @@ func _case_settings() -> void:
 	_ck(not m.get_node(^"UI/Root/Lobby/TestServerBtn").visible or m.TEST_SERVER != "", "沒有測試站就看不到「連到測試站」")
 	m.lobby_go(&"practice")
 	var shown: Array = m.lobby.get_children().filter(func(c: Node) -> bool: return c is Button and c.visible).map(func(c: Node) -> String: return String(c.name))
-	_ck(shown == ["SoloPartyBtn", "SandboxBtn", "DevBtn", "BackBtn"], "單人頁只有單人派對、練習場、其他、返回（現在 %s）" % [shown])
+	_ck(shown == ["VsBotsBtn", "SandboxBtn", "DevBtn", "BackBtn"], "單人頁只有跟電腦打、練習場、其他、返回（現在 %s）" % [shown])
 	m.get_node(^"UI/Root/Lobby/DevBtn").pressed.emit()
 	_ck(m.get_node(^"UI/Root/Lobby/RangeBtn").visible and m.get_node(^"UI/Root/Lobby/ViewerBtn").visible, "「其他」裡有靶場、檢視模型")
 	m._unhandled_input(esc)

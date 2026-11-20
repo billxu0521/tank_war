@@ -258,7 +258,7 @@ func refresh() -> void:
 		return
 	var me := multiplayer.get_unique_id() if main.multiplayer.multiplayer_peer != null else 0
 	var host := is_host()
-	_title.text = "連線中…" if connecting else "房間"
+	_title.text = "連線中…" if connecting else ("跟電腦打" if main._offline else "房間")
 	for k: StringName in _mode_btns:   # 選中的前面加 ●：不是房主時按鈕是灰的，看不出哪個按下去
 		_mode_btns[k].set_pressed_no_signal(k == mode)
 		_mode_btns[k].text = ("● " if k == mode else "") + main.RULES[k].name

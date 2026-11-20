@@ -32,6 +32,8 @@ func _process(_d: float) -> bool:
 		elif pg == &"room_guest":   # 同一個房間，從加入的人看（房主換成別人：設定都是灰的、沒有開始）
 			_m.room.host_id = 2
 			_m.room.refresh()
+		elif pg == &"vsbots":   # 單人頁的跟電腦打（離線的房間）
+			_m._on_vs_bots_pressed()
 		elif pg == &"result":   # 舊模式打完的結算（房主看到的）
 			if not _m.room.active:
 				_m._on_host_pressed()
