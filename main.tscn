@@ -105,12 +105,14 @@ script = ExtResource("2")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Egg" unique_id=65042875]
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="Egg" unique_id=1290539770]
+replication_interval = 0.03
 replication_config = SubResource("egg_repl")
 
 [node name="Safe" type="RigidBody3D" parent="."]
 script = ExtResource("safe_gd")
 
 [node name="MultiplayerSynchronizer" type="MultiplayerSynchronizer" parent="Safe"]
+replication_interval = 0.03
 replication_config = SubResource("safe_repl")
 
 [node name="Players" type="Node3D" parent="." unique_id=999819429]
