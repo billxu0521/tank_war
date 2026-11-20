@@ -3194,6 +3194,56 @@ func _case_room() -> void:
 	_ck(not r.active and m.lobby_page == &"online", "離開房間：斷線、回連線頁")
 	_end(m)
 
+## 打完回房間（選單流程 M3）：結算 15 秒回房間、連線留著；房主「同設定再來一場」「回房間」；Esc「結束這場，回房間」；別人按不了
+func _case_room_return() -> void:
+	var m: Node = load("res://main.tscn").instantiate()
+	root.add_child(m)
+	m._on_host_pressed()
+	var r: Room = m.room
+	r.ask(&"mode", &"egg")
+	r.ask(&"start")
+	m._on_peer_connected(7)
+	_ck(m.players.has_node(^"1") and m.players.has_node(^"7"), "開打：兩個人都在")
+	m._end_round()
+	m._finish("時間到")
+	_ck(m.result.visible and m.get_node(^"UI/Root/Result/Box/RestartBtn").text == "同設定再來一場" and m._back_btn.visible
+		and m.get_node(^"UI/Root/Result/Box/Sub").text.contains("回房間"), "結算：房主看得到同設定再來一場、回房間，倒數回房間")
+	r.handle(7, &"back")
+	_ck(r.playing, "不是房主按不了回房間")
+	r.ask(&"again")
+	_ck(not m._over and not m.result.visible and m.players.has_node(^"1"), "同設定再來一場：直接開下一局")
+	m._set_menu(true)
+	_ck(m._end_btn.visible and m.get_node(^"UI/Root/Menu/Box/LeaveBtn").text == "關掉房間", "Esc：房主有「結束這場，回房間」，離開的字是「關掉房間」")
+	m._set_menu(false)
+	m._end_round()
+	m._finish("x")
+	m._physics_process(m.NEXT_ROUND_DELAY + 1.0)
+	_ck(not r.playing and m.lobby.visible and m.lobby_page == &"room" and m.players.get_child_count() == 0 and not m.result.visible and r.order == [1, 7],
+		"結算 15 秒到：回房間，場上清空，名單還在")
+	_ck(m.multiplayer.multiplayer_peer != null, "回房間不斷線")
+	# 一般模式 1 局：最後結算也有按鈕，房主按回房間
+	r.ask(&"mode", &"normal")
+	r.ask(&"rounds", 1)
+	r.ask(&"start")
+	m._physics_process(DT)   # 派對開第一局
+	var p: Party = m.party
+	p.time_left = 0.0
+	m._physics_process(DT)
+	p.extracted(1)
+	_ck(p.phase == &"final" and m.result.visible and not m.get_node(^"UI/Root/Result/Box/Text").visible, "一般模式最後結算：只出按鈕（排名框是派對畫面畫的）")
+	r.ask(&"back")
+	_ck(not r.playing and m.party == null and m.lobby_page == &"room", "房主按回房間：派對收掉，回房間")
+	# 最後結算時間到：回房間（延後到這一幀結束才收，Party 還在 step 裡面）
+	r.ask(&"start")
+	m._physics_process(DT)
+	m.party.phase = &"final"
+	m.party.time_left = 0.0
+	m._physics_process(DT)
+	_ck(m.party.phase == &"done", "最後結算時間到：排好回房間")
+	m.back_to_room()   # 測試不等下一幀，直接做延後的那一步（之後延後的那次看到不在打就不動）
+	_ck(not r.playing and m.party == null and m.lobby_page == &"room", "最後結算時間到：回房間")
+	_end(m)
+
 func _case_normal_mode() -> void:
 	var m := _offline_match()
 	m._on_mode_picked(m.RULES.keys().find(&"normal"))

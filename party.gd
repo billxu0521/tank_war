@@ -15,7 +15,7 @@ const PLAYERS := 4            # 不到這麼多人用電腦補
 static var PREP_SECONDS: float = Balance.num("party_prep_seconds")
 static var PLAY_SECONDS: float = Balance.num("party_play_seconds")   # 3 分 30 秒
 const RESULT_SECONDS := 8.0   # 回合結算停多久再開下一回合
-const FINAL_SECONDS := 30.0   # 四回合結束後停多久自動開新的一場
+const FINAL_SECONDS := 15.0   # 最後結算停多久：房間裡回房間（選單流程 M3），不在房間（單人派對）自動開新的一場
 # 以下從 balance.csv 讀（見 balance.gd），改數字去改表
 static var LIVES: int = Balance.whole("party_lives")   # 牛仔每回合幾條命
 static var RESPAWN_SECONDS: float = Balance.num("party_respawn_seconds")
@@ -221,11 +221,16 @@ func step(delta: float) -> void:
 					time_left = FINAL_SECONDS
 					last_result = "%d 回合結束" % rounds
 					_sync()
+					_end_buttons()
 				else:
 					_start_round()
 		&"final":
 			if time_left <= 0.0:
-				start()
+				if main.room.active and not main._dedicated:
+					main.back_to_room.call_deferred()   # 延後：back_to_room 會收掉 Party（現在還在 step 裡面）
+					phase = &"done"   # 等收掉之前不再進來
+				else:
+					start()
 
 
 ## 開新的一場：分數歸零、排參賽者、開第一回合
@@ -403,6 +408,14 @@ func _end_round(dino_win: bool, msg: String) -> void:
 	main.egg.extract = 0.0
 	main._announce.rpc(msg)
 	_sync()
+	if phase == &"final":
+		_end_buttons()
+
+
+## 最後結算：在房間裡的話每台跳出結算按鈕（同設定再來一場、回房間、離開房間）。排名框 party_hud 畫
+func _end_buttons() -> void:
+	if main.room.active and not main._dedicated:
+		main._finish.rpc("")
 
 
 func _respawn_step(delta: float) -> void:

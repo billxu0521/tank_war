@@ -6,7 +6,7 @@ const PORT := 24680
 ## 測試站：雲端主機上一直開著的專用伺服器（`-- --server`，見 README 的「測試站」）。
 ## 還沒架好就空著，大廳的「連到測試站」按鈕會關掉
 const TEST_SERVER := ""
-const NEXT_ROUND_DELAY := 10.0   # 專用伺服器一局結束後隔幾秒開下一局
+const NEXT_ROUND_DELAY := 15.0   # 一局結束後結算停幾秒：房間回房間（選單流程 M3），專用伺服器開下一局
 # 沙盒的靶場：從 (0, 84) 往 -Z 打到 100 公尺，這一條不蓋東西。撤離區在東西兩端，不會壓到
 const SANDBOX_RANGE := Rect2(-20, -30, 40, 112)   # 靶在路兩側 4 公尺、恐龍靶 12 公尺；再窄旁邊的坡會超過 40 度
 const SANDBOX_START := Vector3(0, 0.1, 76)   # y 是離地高度，用 _on_ground() 換成實際位置
@@ -345,6 +345,8 @@ func _set_menu(open: bool) -> void:
 	menu.visible = open
 	# 遊戲局控制只有主機（和沙盒）能用：bot 都在主機上跑
 	$UI/Root/Menu/Box/Controller.visible = multiplayer.is_server()
+	_end_btn.visible = room.active and room.playing and room.is_host()
+	$UI/Root/Menu/Box/LeaveBtn.text = "關掉房間" if _closes_room() else ("離開房間" if room.active else "回到大廳")
 	if open:
 		_fill_weapon_info()
 		_show_cursor()
@@ -400,7 +402,50 @@ func _on_resume_pressed() -> void:
 	_set_menu(false)
 
 func _on_leave_pressed() -> void:
-	_to_lobby("")
+	if menu.visible and _closes_room():
+		_confirm("關掉房間？大家都會斷線。", _to_lobby.bind(""))
+	else:
+		_to_lobby("")
+
+## 自己開房的人離開＝房間關掉、大家斷線（要再問一次）
+func _closes_room() -> bool:
+	return room.active and multiplayer.multiplayer_peer != null and multiplayer.is_server() and not _offline and not _dedicated
+
+var _end_btn: Button    # Esc 選單「結束這場，回房間」（房主）
+var _back_btn: Button   # 結算畫面「回房間」（房主）
+var _confirm_dlg: ConfirmationDialog
+
+## 再問一次：按確定才做 fn
+func _confirm(text: String, fn: Callable) -> void:
+	if _confirm_dlg == null:
+		_confirm_dlg = ConfirmationDialog.new()
+		_confirm_dlg.ok_button_text = "確定"
+		_confirm_dlg.cancel_button_text = "取消"
+		$UI/Root.add_child(_confirm_dlg)
+	for c: Dictionary in _confirm_dlg.confirmed.get_connections():
+		_confirm_dlg.confirmed.disconnect(c.callable)
+	_confirm_dlg.dialog_text = text
+	_confirm_dlg.confirmed.connect(fn, CONNECT_ONE_SHOT)
+	_confirm_dlg.popup_centered()
+
+## 房間要的按鈕：Esc 選單的「結束這場，回房間」、結算畫面的「回房間」
+func _add_room_buttons() -> void:
+	_end_btn = Button.new()
+	_end_btn.name = &"EndMatchBtn"
+	_end_btn.text = "結束這場，回房間"
+	_end_btn.pressed.connect(func() -> void: _confirm("結束這場，大家回房間？", room.ask.bind(&"back")))
+	var box := $UI/Root/Menu/Box
+	box.add_child(_end_btn)
+	box.move_child(_end_btn, $UI/Root/Menu/Box/ResumeBtn.get_index() + 1)
+	_back_btn = Button.new()
+	_back_btn.name = &"BackRoomBtn"
+	_back_btn.text = "回房間"
+	_back_btn.custom_minimum_size.x = 280
+	_back_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_back_btn.pressed.connect(room.ask.bind(&"back"))
+	var rb := $UI/Root/Result/Box
+	rb.add_child(_back_btn)
+	rb.move_child(_back_btn, $UI/Root/Result/Box/LobbyBtn.get_index())
 
 func _on_quit_pressed() -> void:
 	get_tree().quit()
@@ -619,6 +664,7 @@ func _build_home() -> void:
 	room.name = &"Room"   # 名字固定：RPC 每台找得到
 	room.main = self
 	lobby.add_child(room)
+	_add_room_buttons()
 	lobby_go(&"home")
 
 func lobby_go(page: StringName) -> void:
@@ -1792,14 +1838,27 @@ func _finish_egg(winner: int) -> void:
 	_finish("你帶著蛋撤離，獲勝！" if winner == multiplayer.get_unique_id()
 		else "牛仔 %d 帶著蛋撤離，你輸了" % winner)
 
-## 勝負畫面：畫面中間大字＋按鈕。重開一局只有開房的人能按；測試站（專用伺服器）自己會開下一局
+## 勝負畫面：畫面中間大字＋按鈕。在房間裡：15 秒後回房間，房主可以「同設定再來一場」「回房間」，大家都能「離開房間」。
+## 不在房間（測試組的對局）：照舊只有主機能重開一局。
+## msg 空的：派對、一般模式的最後結算（排名框是 party_hud 畫的），這裡只放按鈕，往下挪不擋排名
 @rpc("authority", "call_local", "reliable")
 func _finish(msg: String) -> void:
 	status.text = msg
+	var box: Control = $UI/Root/Result/Box
 	$UI/Root/Result/Box/Text.text = msg
-	var host := multiplayer.is_server()
+	$UI/Root/Result/Box/Text.visible = msg != ""
+	$UI/Root/Result/Dim.visible = msg != ""
+	box.offset_top = 160.0 if msg == "" else -110.0
+	box.offset_bottom = box.offset_top + 220.0
+	var host: bool = room.is_host() if room.active else multiplayer.is_server()
 	$UI/Root/Result/Box/RestartBtn.visible = host
-	$UI/Root/Result/Box/Sub.text = "" if host else ("%d 秒後自動開下一局" % NEXT_ROUND_DELAY if _joined_dedicated() else "等開房的人重開一局")
+	$UI/Root/Result/Box/RestartBtn.text = "同設定再來一場" if room.active else "重開一局"
+	_back_btn.visible = host and room.active
+	$UI/Root/Result/Box/LobbyBtn.text = "離開房間" if room.active else "回到大廳"
+	if room.active:
+		$UI/Root/Result/Box/Sub.text = "%d 秒後回房間" % NEXT_ROUND_DELAY
+	else:
+		$UI/Root/Result/Box/Sub.text = "" if host else ("%d 秒後自動開下一局" % NEXT_ROUND_DELAY if _joined_dedicated() else "等開房的人重開一局")
 	menu.hide()
 	result.show()
 	_show_cursor()
@@ -1809,16 +1868,64 @@ func _joined_dedicated() -> bool:
 	return TEST_SERVER != "" and ip_edit.text == TEST_SERVER
 
 func _on_restart_pressed() -> void:
-	if multiplayer.is_server():
+	if room.active:
+		room.ask(&"again")   # 房主：同設定再來一場（主機檢查是不是房主）
+	elif multiplayer.is_server():
 		_new_round()
+
+## 主機：同設定再來一場（房主在結算畫面按）
+func play_again() -> void:
+	if party:
+		party.start()
+	else:
+		_new_round()
+
+## 主機：一場打完回房間（結算 15 秒到、房主按「回房間」、Esc 的「結束這場，回房間」）。
+## 場上的人和這場的狀態清掉、拆掉的積木立回來，連線留著；房間的設定不動
+func back_to_room() -> void:
+	if not multiplayer.is_server() or not room.playing:
+		return
+	restore_terrain()
+	for p in players.get_children():
+		p.free()   # 同 _to_lobby：用 free，馬上再開才不會撞到同名節點（同步器跟著送刪除給大家）
+	_cowboys = 0
+	_over = false
+	_lives.clear()
+	_out.clear()
+	_held.clear()
+	_respawn_queue.clear()
+	_pilot_picked = false
+	_handover = 0
+	egg.carrier = 0
+	raptors.clear()
+	safe.reset(false)
+	room.playing = false
+	_show_room()
+	room.push()
+
+## 每台：回到房間頁（主機在 back_to_room、客戶端收到房間「沒在打」時）
+func _show_room() -> void:
+	if party:   # 這場的回合、分數收掉（下一場開打時 _apply_rules 再建）
+		party.free()
+		party = null
+	menu.hide()
+	result.hide()
+	_match_hud.reset()
+	lobby.show()
+	lobby_go(&"room")
+	status.text = ""
+	_show_cursor()
 
 func _physics_process(delta: float) -> void:
 	if multiplayer.multiplayer_peer and multiplayer.is_server():
 		_net_pack_step()
-	if _over and _dedicated:
+	if _over and (_dedicated or room.active):   # 結算畫面：房間的回房間，專用伺服器開下一局
 		_next_round -= delta
 		if _next_round <= 0.0:
-			_new_round()
+			if _dedicated:
+				_new_round()
+			else:
+				back_to_room()
 		return
 	if lobby.visible or _over or not multiplayer.is_server():
 		return

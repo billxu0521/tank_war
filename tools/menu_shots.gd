@@ -1,7 +1,8 @@
 extends SceneTree
 ## 選單各頁的截圖（docs/企劃/2026-11-20-選單流程.md 前後對照用）。PAGES 用逗號分開，每頁一張 <PREFIX><頁名>.png
 ##   OUT=docs/image/選單流程 PREFIX=前_ PAGES=home,online,practice godot --path . --resolution 1280x720 --script tools/menu_shots.gd
-## 頁名就是 main.LOBBY_PAGES 的鍵；沒登記的頁跳過。room：自己開房（假的兩個人）；room_guest：接著 room，從加入的人看
+## 頁名就是 main.LOBBY_PAGES 的鍵；沒登記的頁跳過。room：自己開房（假的兩個人）；room_guest：接著 room，從加入的人看。
+## result、menu、final 要照這個順序：結算畫面、再來一場後的 Esc 選單、一般模式最後結算
 
 var _f := 0
 var _m: Node
@@ -31,6 +32,26 @@ func _process(_d: float) -> bool:
 		elif pg == &"room_guest":   # 同一個房間，從加入的人看（房主換成別人：設定都是灰的、沒有開始）
 			_m.room.host_id = 2
 			_m.room.refresh()
+		elif pg == &"result":   # 舊模式打完的結算（房主看到的）
+			if not _m.room.active:
+				_m._on_host_pressed()
+			_m.room.ask(&"mode", &"egg")
+			_m.room.ask(&"start")
+			_m._end_round()
+			_m._finish("時間到，沒有人把蛋帶走")
+		elif pg == &"menu":   # 同設定再來一場，按 Esc
+			_m.room.ask(&"again")
+			_m._set_menu(true)
+		elif pg == &"final":   # 一般模式 1 局的最後結算（排名框＋按鈕）
+			_m._set_menu(false)
+			_m.back_to_room()
+			_m.room.ask(&"mode", &"normal")
+			_m.room.ask(&"rounds", 1)
+			_m.room.ask(&"start")
+			_m.party.start()
+			_m.party.time_left = 0.0
+			_m.party.step(0.01)
+			_m.party.extracted(1)
 		elif _m.LOBBY_PAGES.has(pg):
 			_m.lobby_go(pg)
 		return false
