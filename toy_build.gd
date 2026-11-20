@@ -19,10 +19,9 @@ const BASE_TOP := 0.05            # 頂面在這棟原點以下（含）的塊�
 const HIT_SOUND := "res://assets/audio/destruction/wood_crack.wav"
 const HOUSE_FALL_SOUND := "res://assets/audio/destruction/house_collapse.wav"
 const SHAKE_RANGE := 25.0         # 離鏡頭超過這個距離（公尺）就不震
-const KICK_COOLDOWN := 500        # 毫秒：同一塊碎塊被踢過之後，這段時間內不再踢
 const LAND_DROP := 50.0           # 專用伺服器：碎塊往下找落點最遠幾公尺（見 _land）
 const PLOW_CLEAR := 6.5          # 專用伺服器：衝撞拆下的塊落在離路中線這麼遠以外（尼諾拉身體半徑約 3.6，加塊的大小）
-const KICK_SHIFT := 4.0           # 專用伺服器：踢出去的碎塊先水平移開這麼遠再落下（公尺）；要比尼諾拉身體半徑（約 3.6）遠，才讓得出路
+const KICK_SHIFT := 4.0           # 專用伺服器：炸出去的碎塊（blast）先水平移開這麼遠再落下（公尺）；要比尼諾拉身體半徑（約 3.6）遠，才讓得出路
 const LAND_LIFT := 0.5            # 專用伺服器：往下掃之前先抬高這麼多（剛好貼著地面或陷進去一點，掃不到東西）
 
 static var _mat: ShaderMaterial
@@ -50,7 +49,6 @@ var _mm: MultiMesh
 var _pieces := {}                 # 碎塊的代表塊編號（碎塊裡最小的那塊）-> 碎塊節點（飛的時候是 RigidBody3D，停下來換成 StaticBody3D）
 var _info := {}                   # 代表塊編號 -> {m: 碎塊裡的塊（小到大）, rel: 每塊相對碎塊原點, box: 碰撞方塊, vol: 體積, lv: 最低等級}
 var _age := {}                    # 碎塊飛了多久（主機用）
-var _kick_t := {}                 # 踢過的碎塊：代表塊編號 -> 上次踢的毫秒（主機用）
 var _touched := false             # 挨過打（鬆脫、或只挨一下），新的一場要還原
 var _need_bake := false           # 有碎塊還在飛：停下來之後主機要烘一次導航
 var _land_q: Array = []           # 排隊等著生的碎塊：[代表塊編號, 位置, 從哪裡飛出去, 速度, 是不是專用伺服器的落地]。專用伺服器是等落地（LAND_PER_TICK），其他是這一步生太多（SPAWN_PER_TICK）
@@ -355,7 +353,7 @@ func _spawn_group(mem: PackedInt32Array, from: Vector3, power: float, dir: Vecto
 	_spawn(mem, local, _plow_xf(global_transform * local, from, dir, power), true, from, power)
 
 
-## 專用伺服器的全速撞（碎塊不飛、直接落地）：落地前先往尼諾拉兩旁移開 KICK_SHIFT（同 boss.gd _kick_piece），不然碎塊落在路上、又擋住下一下。
+## 專用伺服器的全速撞（碎塊不飛、直接落地）：落地前先移到尼諾拉兩旁（PLOW_CLEAR 外），不然碎塊落在路上、又擋住下一下。
 ## power 不超過 FALL_SPEED（一般的撞）或不是專用伺服器就原樣回傳
 func _plow_xf(xf: Transform3D, from: Vector3, dir: Vector3, power: float) -> Transform3D:
 	if power <= FALL_SPEED or not (ToyBuild.no_flight and multiplayer.is_server()):
@@ -524,7 +522,6 @@ func restore() -> void:
 	_pieces.clear()
 	_info.clear()
 	_age.clear()
-	_kick_t.clear()
 	_landed.clear()
 	_land_q.clear()
 	_burning.clear()
@@ -539,15 +536,11 @@ func restore() -> void:
 	set_physics_process(false)
 
 
-## 尼諾拉踢碎塊（主機才叫，尼諾拉跑進碎塊時 boss.gd 呼叫）：dir 是水平的前進方向，speed 是速度（公尺／秒，balance.csv 的 toy_kick）。
-## 衝量＝速度乘質量，各台算一樣。同一塊 KICK_COOLDOWN 毫秒內只踢一次
+## 炸飛碎塊（主機才叫，只有爆炸會叫：blast）：dir 是方向，speed 是速度（公尺／秒）。落地的碎塊走路、跑步、衝撞都推不動（2026-11-20）。
+## 衝量＝速度乘質量，各台算一樣
 func kick(key: int, dir: Vector3, speed: float) -> void:
 	if not multiplayer.is_server() or not _info.has(key):
 		return
-	var now := Time.get_ticks_msec()
-	if now - int(_kick_t.get(key, -KICK_COOLDOWN)) < KICK_COOLDOWN:
-		return
-	_kick_t[key] = now
 	var mass := 0.5 + float(_info[key].vol) * MASS_PER_M3
 	_kick.rpc(key, dir * speed * mass)
 
@@ -654,8 +647,8 @@ func _physics_process(delta: float) -> void:
 		if not n is RigidBody3D:
 			continue
 		_age[key] = _age.get(key, 0.0) + delta
-		# 已經停了（睡著或飛滿 SETTLE_TIME）才看卡不卡：凍在尼諾拉身體裡會把牠頂起來：等牠出來再凍；但最多等 SETTLE_TIME 的 3 倍，之後不管重疊直接凍
-		if (_settle_left > 0 if ticked else ids.size() < SETTLE_PER_TICK) and ((n as RigidBody3D).sleeping or _age[key] >= SETTLE_TIME) and not (_age[key] < SETTLE_TIME * 3.0 and _in_boss(n)):
+		# 睡著或飛滿 SETTLE_TIME 就凍；凍在尼諾拉身體裡也沒關係（碎塊不跟牠相撞，見 _make）
+		if (_settle_left > 0 if ticked else ids.size() < SETTLE_PER_TICK) and ((n as RigidBody3D).sleeping or _age[key] >= SETTLE_TIME):
 			_settle_left -= 1
 			ids.append(key)
 			xfs.append(n.global_transform)
@@ -672,25 +665,6 @@ func _physics_process(delta: float) -> void:
 		_bake()
 	if _idle() and not _has_flying() and _landed.is_empty():
 		set_physics_process(false)
-
-
-## 碎塊的形狀有沒有跟尼諾拉（boss 群組）重疊（主機凍住前看）
-func _in_boss(n: Node3D) -> bool:
-	var cs: CollisionShape3D = null
-	for c in n.get_children():
-		if c is CollisionShape3D:
-			cs = c
-	if cs == null or cs.shape == null:
-		return false
-	var q := PhysicsShapeQueryParameters3D.new()
-	q.shape = cs.shape
-	q.transform = n.global_transform * cs.transform
-	q.exclude = [n.get_rid()]
-	for r: Dictionary in get_world_3d().direct_space_state.intersect_shape(q, 32):
-		var c: Object = r.collider
-		if c is Node3D and (c as Node3D).is_in_group(&"boss"):
-			return true
-	return false
 
 
 ## 沒有排隊要生的碎塊
@@ -825,11 +799,11 @@ func _make(key: int, flying: bool, xf: Transform3D) -> Node3D:
 	n.add_child(mmi)
 	if flying:
 		(n as RigidBody3D).mass = 0.5 + float(info.vol) * MASS_PER_M3
-		# 飛的時候不跟尼諾拉（boss 群組）相撞：碎塊常是生在身體裡（貼著墻撞的、身體下面的）。撞進去會被身體推開，速度大到炸飛。
-		# 落地（_settle 凍住）以後才照常擋；尼諾拉要踢碎塊是從前面踢（boss.gd 的 _kick_ahead）
-		for b in get_tree().get_nodes_in_group(&"boss"):
-			if b is PhysicsBody3D:
-				(n as RigidBody3D).add_collision_exception_with(b)
+	# 碎塊（飛的、落地的）都不跟尼諾拉（boss 群組）相撞：飛的常是生在身體裡，撞進去會被身體推開、速度大到炸飛；
+	# 落地的推不動（2026-11-20），尼諾拉不穿過去會被碎塊堆困住。牛仔、子彈照常被擋。之後才生的尼諾拉見 boss.gd _ready
+	for b in get_tree().get_nodes_in_group(&"boss"):
+		if b is PhysicsBody3D:
+			(n as PhysicsBody3D).add_collision_exception_with(b)
 	if ToyBuild.no_flight and not flying:   # 專用伺服器的靜態碎塊：先擺好位置再進場景樹（進了才改的位置，物理要到下一步才看得到）
 		n.transform = get_parent().global_transform.affine_inverse() * xf
 	get_parent().add_child(n)

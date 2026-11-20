@@ -23,7 +23,6 @@ var stuck_t := 0.0
 var slow_run := 0.0
 var max_dy := 0.0
 var bumps := 0
-var kicks := 0
 var smashed := 0
 var last_y := 0.0
 var last_vy := 0.0
@@ -89,7 +88,7 @@ func _setup_run() -> void:
 
 func _begin_leg() -> void:
 	t = 0.0
-	stuck_t = 0.0; slow_run = 0.0; max_dy = 0.0; bumps = 0; kicks = 0; max_ms = 0.0
+	stuck_t = 0.0; slow_run = 0.0; max_dy = 0.0; bumps = 0; max_ms = 0.0
 	last_y = b.global_position.y
 	last_vy = 0.0
 	standing0 = _standing()
@@ -106,16 +105,10 @@ func _physics_process(delta: float) -> bool:
 	var dir := d.normalized()
 	b.rotation.y = atan2(-dir.x, -dir.z)
 	b.stamina = b.STAMINA_MAX
-	var now := Time.get_ticks_msec()
 	var t0 := Time.get_ticks_usec()
 	b._move(dir, L[1], delta)
 	max_ms = maxf(max_ms, (Time.get_ticks_usec() - t0) / 1000.0)
 	t += delta
-	# 踢了幾次：這一幀被記上踢的時間的碎塊
-	for tb: ToyBuild in m.map._toys:
-		for k in tb._kick_t:
-			if int(tb._kick_t[k]) >= now:
-				kicks += 1
 	var hv := Vector2(b.velocity.x, b.velocity.z).length()
 	if hv < 1.0:
 		stuck_t += delta
@@ -146,7 +139,7 @@ func _physics_process(delta: float) -> bool:
 		var left := d.length()
 		var total: float = (L[3] - L[2]).length()
 		smashed = standing0 - _standing()
-		rows.append([hi, di, L[0], left < 2.0, t, left, stuck_t, slow_run, bumps, max_dy, kicks, smashed, max_ms, total])
+		rows.append([hi, di, L[0], left < 2.0, t, left, stuck_t, slow_run, bumps, max_dy, smashed, max_ms, total])
 		li += 1
 		if li >= legs.size():
 			di += 1
@@ -159,9 +152,9 @@ func _physics_process(delta: float) -> bool:
 	return false
 
 func _report() -> void:
-	print("房 方向 趟　　　 到了 秒數 剩(m) 卡(秒) 跑太慢(秒) 顛 最大一幀上下(m) 踢 拆 最慢一步(ms)")
+	print("房 方向 趟　　　 到了 秒數 剩(m) 卡(秒) 跑太慢(秒) 顛 最大一幀上下(m) 拆 最慢一步(ms)")
 	for r in rows:
-		print("%d  %d  %s  %s  %4.1f  %4.1f  %4.1f  %4.1f  %2d  %.2f  %3d  %3d  %5.1f" % [r[0], r[1], r[2], "是" if r[3] else "否", r[4], r[5], r[6], r[7], r[8], r[9], r[10], r[11], r[12]])
+		print("%d  %d  %s  %s  %4.1f  %4.1f  %4.1f  %4.1f  %2d  %.2f  %3d  %5.1f" % [r[0], r[1], r[2], "是" if r[3] else "否", r[4], r[5], r[6], r[7], r[8], r[9], r[10], r[11]])
 	legs = []
 	_free_map(m)
 	quit(0)
