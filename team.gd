@@ -10,14 +10,26 @@ const COLORS := [Color(0.9, 0.3, 0.25), Color(0.3, 0.6, 0.95), Color(0.35, 0.8, 
 static var SIZE: int = Balance.whole("team_size")   # 每隊幾個獵人
 static var ZONE_APART: float = Balance.num("team_zone_apart")   # 出生區之間至少隔多遠
 static var ZONE_GAP: float = Balance.num("team_zone_gap")   # 同一區的點隔多遠
+# 倒地、救人（第 3、4 節）：倒地的狀態在牛仔身上（cowboy.down、bleed_left），倒數和救人的規則在 party.gd（_down_step、can_revive）
+static var BLEED_SECONDS: float = Balance.num("team_bleed_seconds")   # 倒地多久沒人救就出局
+static var CRAWL_SPEED: float = Balance.num("team_crawl_speed")
+static var REVIVE_SECONDS: float = Balance.num("team_revive_seconds")
+static var REVIVE_HP: int = Balance.whole("team_revive_hp")
+static var REVIVE_RANGE: float = Balance.num("team_revive_range")
+static var REVIVE_PAUSE: float = Balance.num("team_revive_pause")   # 有人在救時倒數暫停，每次倒地最多停這麼久
+static var REVIVE_GUARD: float = Balance.num("team_revive_guard")   # 救起來之後這麼久打不動
 
 var of := {}      # 連線編號（電腦是負的）-> 第幾隊（0 紅、1 藍、2 綠）。尼諾拉不在表上
 var zones: Array = []   # 主機：這場各隊的出生區中心（第 i 個給第 i 隊）
+var downs := 0     # 主機：這場倒地幾次（tools/bot_sim.gd 的總表）
+var revives := 0   # 主機：這場救起來幾次
 
 
 ## 主機：獵人照名單順序輪流分（1 紅、2 藍、3 綠、4 紅…）。名單是真人在前、電腦補在後，所以電腦自然補在人少的隊
 func assign(hunters: Array) -> void:
 	of.clear()
+	downs = 0
+	revives = 0
 	for i in hunters.size():
 		of[hunters[i]] = i % COUNT
 

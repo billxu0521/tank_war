@@ -399,6 +399,7 @@ func _process(delta: float) -> void:
 	if not is_local:
 		# 遠端角色拿同步過來的蹲下狀態重跑一次姿勢
 		_apply_crouch(sync_crouching, delta)
+		_lie(delta)
 		_remote_footsteps(delta)
 		return
 	# 翻越：鏡頭往下點頭、往側邊歪一下，看得出自己撐過去了
@@ -476,6 +477,9 @@ func _physics_process(delta: float) -> void:
 		return
 	if frozen():
 		_hold_still(delta)
+		return
+	if down:   # 團隊模式倒地：只能爬
+		_crawl(Input.get_vector("move_left", "move_right", "move_forward", "move_back"), delta)
 		return
 
 	# 爬梯子：W 上、S 下，Space 或 F 放手。這一幀不處理其他移動和互動
@@ -620,7 +624,8 @@ var _path := PackedVector3Array()   # 導航網格上的路（尼諾拉那張）
 var _path_goal := Vector3.INF
 var _path_age := 0.0
 var _bot_heal := 0.0         # 躲好了在用急救包（或吃肉）：用了幾秒
-var _bot_looting := false    # 正在搜刮（主機的 hold 在數）
+var _bot_looting := false    # 正在搜刮、救人（主機的 hold 在數）
+var _bot_rev: Cowboy         # 要去救的倒地隊友（_bot_ctx 選）
 var _bot_spot := -1.0        # 看到恐龍、還沒反應過來：還剩幾秒（-1＝沒看到）
 var _bot_dino_down := false  # 看到恐龍倒地
 var _bot_target: Node3D      # 看得到、要打的（每次想的時候選）
@@ -645,6 +650,9 @@ func _bot_step(delta: float) -> void:
 		velocity += get_gravity() * delta
 	if walker:
 		_walk_patrol(delta)
+		return
+	if down:
+		_bot_crawl(g, delta)
 		return
 
 	_bot_alert -= delta
@@ -686,8 +694,8 @@ func _bot_step(delta: float) -> void:
 	_bot_hide(g, hold, delta)
 	# 開槍是反射：腳照動作走，看得到就打。站在牌前、箱子旁邊（看牌、試密碼）時跟真人一樣不開槍（真人開著密碼盤拿不到槍），挨打才還手
 	var threat := _bot_threat(g)
-	if threat and not (hold and bot_action in ["看牌0", "看牌1", "試密碼", "搜刮"] and _bot_alert <= 0.0):
-		if g and g.hold.doing(name.to_int()) != &"":   # 搜刮中挨打還手：先放開（搜的時候不能開槍）
+	if threat and not (hold and bot_action in ["看牌0", "看牌1", "試密碼", "搜刮", "救人"] and _bot_alert <= 0.0):
+		if g and g.hold.doing(name.to_int()) != &"":   # 搜刮、救人中挨打還手：先放開（按住的時候不能開槍）
 			g.hold.stop(name.to_int())
 		_bot_shoot(threat, delta)
 	else:
@@ -796,7 +804,7 @@ func _bot_ctx(g: Node) -> Dictionary:
 	for c: Node in g.players.get_children():
 		if c.is_in_group(&"dino"):
 			dino = null if _bot_dino_down else brain.dino_mem
-		elif c != self and c is Cowboy and (tm == null or tm.same_side(self, c)):
+		elif c != self and c is Cowboy and c.hp > 0 and (tm == null or tm.same_side(self, c)):   # 倒地的隊友不算（動作停在倒地前）
 			mates.append({"pos": c.global_position, "vel": c.velocity, "act": (c as Cowboy).bot_action if c.bot else "",
 				"carry": g.egg.carrier == c.name.to_int()})
 	var star: Variant = null   # 追分星星：金色小恐龍、地上的星星、別人身上的星星
@@ -814,7 +822,13 @@ func _bot_ctx(g: Node) -> Dictionary:
 	if p and p.phase == &"play" and b and b.down_left > 0.0 and not b.looted.has(id) and (meat < MEAT_MAX or not p._hinted.has(id)) \
 			and _flat_to(b.global_position) < BotBrain.LOOT_REACH:
 		loot = b.global_position
-	return {"star": star, "loot": loot, "me": global_position, "hp": float(hp) / max_hp, "last_life": p != null and int(p.lives.get(id, 2)) <= 1,
+	_bot_rev = null   # 救人：BotBrain.REVIVE_REACH 內最近的倒地隊友，還沒有別人在救、人還在線上
+	if tm and p.phase == &"play":
+		for c: Node in g.players.get_children():
+			if c is Cowboy and c.down and tm.same_side(self, c) and p._present(c.name.to_int()) and g.hold.on(c) in [0, id] \
+					and _flat_to(c.global_position) < BotBrain.REVIVE_REACH and (_bot_rev == null or _flat_to(c.global_position) < _flat_to(_bot_rev.global_position)):
+				_bot_rev = c
+	return {"star": star, "loot": loot, "revive": _bot_rev.global_position if _bot_rev else null, "me": global_position, "hp": float(hp) / max_hp, "last_life": p != null and int(p.lives.get(id, 2)) <= 1,
 		"time_left": p.time_left if p else 999.0, "locked": safe_on, "safe": g.safe.global_position,
 		"cards": p.env_pos if p else [], "known": p._known.get(id, [-1, -1]) if p else [-1, -1],
 		"carrier": carrier, "holder": holder.global_position if holder else g.egg.global_position, "egg": g.egg.global_position,
@@ -854,6 +868,8 @@ func _bot_should_hold(g: Node) -> bool:
 			return _flat_to(brain.goal(brain.last_ctx)) < 2.0
 		"搜刮":
 			return brain.last_ctx.get("loot") != null and _flat_to(brain.last_ctx.loot) < Party.loot_dist() - Party.LOOT_RANGE * 0.2
+		"救人":
+			return is_instance_valid(_bot_rev) and _flat_to(_bot_rev.global_position) < Team.REVIVE_RANGE * 0.8
 	return false
 
 
@@ -941,20 +957,21 @@ func _bot_safe_act(g: Node, delta: float) -> void:
 		_bot_wait = Safe.TRY_SECONDS + randf_range(BotBrain.GAP_MIN, BotBrain.GAP_MAX)
 
 
-## 主機：搜刮的手。走到了就開始按住（hold_action.gd），搜完、被打斷就馬上重想；換了動作就放開
+## 主機：搜刮、救人的手。走到了就開始按住（hold_action.gd），做完、被打斷就馬上重想；換了動作就放開
 func _bot_loot(g: Node) -> void:
 	var id := name.to_int()
-	var doing: bool = g.hold.doing(id) == &"loot"
-	if bot_action != "搜刮":
-		if doing:
+	var kind: StringName = {"搜刮": &"loot", "救人": &"revive"}.get(bot_action, &"")
+	var doing: StringName = g.hold.doing(id)
+	if kind == &"":
+		if doing in [&"loot", &"revive"]:
 			g.hold.stop(id)
 		_bot_looting = false
 		return
-	if _bot_looting and not doing:   # 搜完了（或牠起來了）
+	if _bot_looting and doing != kind:   # 做完了（或牠起來了、隊友出局了）
 		_bot_looting = false
 		_bot_now = true
-	elif not doing and _bot_should_hold(g):
-		_bot_looting = g.hold.start(id, &"loot", g._boss())
+	elif doing == &"" and _bot_should_hold(g):
+		_bot_looting = g.hold.start(id, kind, g._boss() if kind == &"loot" else _bot_rev)
 		if not _bot_looting:
 			_bot_now = true
 
@@ -1152,6 +1169,120 @@ func _drop_corpse(_killer: Node) -> void:
 	if g and g.get(&"_dedicated"):
 		return
 	Corpse.spawn(self, last_from, is_local)
+
+
+# --- 倒地、救人（團隊模式，docs/企劃/2026-11-19-團隊模式.md 第 3、4 節）---
+# 血歸零不死、趴下（hp 留在 0：打不動、不能補血吃肉，電腦、尼諾拉、小恐龍都不選他當目標）。只能爬；
+# 主機倒數 bleed_left（party._down_step），倒數完才走原本的死亡流程（_die → main._on_died）。隊友按住 F 救（party.can_revive）
+
+var down := false          # 倒地中（每台都知道：_sync_hp 每台都跑）
+var bleed_left := 0.0      # 還剩幾秒出局（主機算，每半秒告訴大家，畫面用）
+var down_paused := 0.0     # 主機：這次倒地被救的時候暫停了幾秒（最多 Team.REVIVE_PAUSE）
+var _guard_ms := 0         # 主機：救起來之後這個時刻（毫秒）之前打不動
+const CRAWL_EYE := 0.45    # 倒地時鏡頭多高（貼地）
+const LIE_PITCH := -1.4    # 別人看倒地的人：身體往前倒這麼多（弧度，約 80 度）。ponytail: 沒有爬的動作，先倒下的站姿頂著（欠美術）
+
+
+func _goes_down() -> bool:
+	var g := _match()
+	if down or g == null or g.party == null or g.party.team == null:
+		return false
+	down = true
+	hp = 0   # 打超過的不留負數（救起來直接給 REVIVE_HP）
+	bleed_left = Team.BLEED_SECONDS
+	down_paused = 0.0
+	_ladder = null
+	vaulting = false
+	if multiplayer.is_server():
+		g.party.team.downs += 1
+	return true
+
+
+func take_damage(amount: int, source: Node = null) -> void:
+	if Time.get_ticks_msec() < _guard_ms:   # 剛被救起來
+		return
+	super(amount, source)
+
+
+## 主機：倒數完了，出局（每台各自留屍體）
+@rpc("any_peer", "call_local", "reliable")
+func bleed_out() -> void:
+	if multiplayer.get_remote_sender_id() != 1 or not down:
+		return
+	down = false
+	_die()
+
+
+## 主機：被救起來，血 v
+@rpc("any_peer", "call_local", "reliable")
+func revive(v: int) -> void:
+	if multiplayer.get_remote_sender_id() != 1 or not down:
+		return
+	down = false
+	hp = v
+	if multiplayer.is_server():
+		_guard_ms = Time.get_ticks_msec() + int(Team.REVIVE_GUARD * 1000.0)
+		_bot_now = true
+
+
+@rpc("any_peer", "call_remote", "unreliable")
+func bleed_sync(left: float) -> void:
+	if multiplayer.get_remote_sender_id() == 1:
+		bleed_left = left
+
+
+## 倒地：只能爬（照視角方向），鏡頭貼地
+func _crawl(input: Vector2, delta: float) -> void:
+	sync_crouching = true
+	_apply_crouch(true, delta)
+	head.position.y = minf(head.position.y, CRAWL_EYE)
+	if not is_on_floor():
+		velocity += get_gravity() * delta
+	_move_flat((transform.basis * Vector3(input.x, 0.0, input.y)).normalized() * Team.CRAWL_SPEED, delta)
+
+
+## 電腦倒地：往最近的站著的隊友爬；記得的恐龍在 NEAR_R 內就往反方向爬。
+## ponytail: 直線爬、不問導航網格，爬得很慢，撞牆就停著等救
+func _bot_crawl(g: Node, delta: float) -> void:
+	sync_crouching = true
+	var to := Vector3.ZERO
+	if brain and brain.conf > 0.0 and _flat_to(brain.dino_mem) < BotBrain.NEAR_R:
+		to = global_position - brain.dino_mem
+	else:
+		var best: Node3D = null
+		for c: Node in g.players.get_children():
+			if c is Cowboy and c.hp > 0 and g.party.team.same_side(self, c) \
+					and (best == null or _flat_to((c as Node3D).global_position) < _flat_to(best.global_position)):
+				best = c
+		if best and _flat_to(best.global_position) > Team.REVIVE_RANGE * 0.5:
+			to = best.global_position - global_position
+	to.y = 0.0
+	_move_flat(to.normalized() * Team.CRAWL_SPEED if to.length() > 0.1 else Vector3.ZERO, delta)
+
+
+## 別人的（含電腦）：倒地就整個往前倒、頭貼地
+func _lie(delta: float) -> void:
+	_body.rotation.x = lerpf(_body.rotation.x, LIE_PITCH if down else 0.0, minf(delta * 6.0, 1.0))
+	head.position.z = lerpf(head.position.z, -1.0 if down else 0.0, minf(delta * 6.0, 1.0))
+	if down:
+		head.position.y = minf(head.position.y, 0.3)
+
+
+## 看著倒地的隊友：按住 F 救（只看畫面；主機照 party.can_revive 再全部檢查）
+var prompt: String:
+	get: return "按住救隊友" if _can_revive_here() else ""
+
+
+func _can_revive_here() -> bool:
+	var g := _match()
+	return down and g != null and g.party != null and g.party.team != null and g.party.phase == &"play" \
+		and g.party.team.same(g.multiplayer.get_unique_id(), name.to_int())
+
+
+func interact(who: Node) -> void:
+	var g := _match()
+	if g and who == g._me() and _can_revive_here() and not who.viewmodel.using_item():
+		g.hold.press(&"revive", self)
 
 
 # --- 互動：門、梯子 ---

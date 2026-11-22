@@ -111,11 +111,14 @@ func _ready() -> void:
 		add_child(e)
 		envelopes.append(e)
 	main.hold.register(&"loot", LOOT_SECONDS, can_loot, _loot_done, "搜刮中")
+	if team:
+		main.hold.register(&"revive", Team.REVIVE_SECONDS, can_revive, _revive_done, "救人中")
 
 
 func _exit_tree() -> void:
 	if is_instance_valid(main.hold):
 		main.hold.unregister(&"loot")   # 換模式（party 收掉）：不留指到這裡的規則
+		main.hold.unregister(&"revive")
 
 
 ## 照總分排的連線編號（高的在前）
@@ -211,6 +214,8 @@ func step(delta: float) -> void:
 				_sync()
 		&"play":
 			_respawn_step(delta)
+			if team:
+				_down_step(delta)
 			main.raptors.step(delta)   # 小恐龍看、叫（準備階段牛仔站著不動，不看）
 			_star_step()
 			stats.tick(main, self, delta)
@@ -223,7 +228,7 @@ func step(delta: float) -> void:
 				return
 			if time_left <= 0.0:
 				_end_round(true, "時間到，恐龍守住了蛋")
-			elif _waiting.is_empty() and _cowboys().is_empty():
+			elif _waiting.is_empty() and _cowboys().is_empty() and _downed().is_empty():   # 團隊模式：倒地的各自倒數完才算全出局
 				_end_round(true, "牛仔的命用完了，恐龍守住了蛋")
 		&"result":
 			if time_left <= 0.0:
@@ -546,10 +551,11 @@ func _spawn_spot(index: int) -> Vector3:
 	return pts[index] if index >= 0 and index < pts.size() else pts.pick_random()
 
 
-## 帶蛋的人不見了（死了或離線）：蛋掉在他最後的位置，落到地上
+## 帶蛋的人不見了（死了或離線）、倒地了：蛋掉在他最後的位置，落到地上
 func _drop_orphan_egg() -> void:
 	var egg: Egg = main.egg
-	if egg.carrier != 0 and not main.players.has_node(NodePath(str(egg.carrier))):
+	var holder: Node = main.players.get_node_or_null(NodePath(str(egg.carrier))) if egg.carrier != 0 else null
+	if egg.carrier != 0 and (holder == null or holder.hp <= 0):   # 團隊模式倒地也掉
 		egg.carrier = 0
 		egg.extract = 0.0
 		_drop_egg_at(egg.global_position)
@@ -985,3 +991,53 @@ func _got_hint(c: Array) -> void:
 	if phase == &"play":
 		my_hint = c.duplicate(true)
 	changed.emit()
+
+
+# --- 倒地、救人（團隊模式，docs/企劃/2026-11-19-團隊模式.md 第 3、4 節）。倒地的狀態在牛仔身上（cowboy.down） ---
+
+## 倒地中的牛仔
+func _downed() -> Array:
+	return main.players.get_children().filter(func(c: Node) -> bool: return c is Cowboy and c.down and not c.is_queued_for_deletion())
+
+
+## 主機每個物理幀：倒地的倒數。有隊友在救就暫停（每次倒地最多 Team.REVIVE_PAUSE 秒），倒數完出局。每半秒告訴大家剩幾秒
+func _down_step(delta: float) -> void:
+	var tell := Engine.get_physics_frames() % maxi(Engine.physics_ticks_per_second / 2, 1) == 0
+	for c: Cowboy in _downed():
+		if main.hold.on(c) != 0 and c.down_paused < Team.REVIVE_PAUSE:
+			c.down_paused += delta
+		else:
+			c.bleed_left -= delta
+		if c.bleed_left <= 0.0:
+			c.bleed_out.rpc()
+		elif tell:
+			c.bleed_sync.rpc(c.bleed_left)
+
+
+## 主機：id 現在能不能救 t（hold_action 每個物理幀問）。遊戲中、t 倒地、同隊、t 還在線上、沒有別人正在對他做事、自己站著、夠近
+func can_revive(id: int, t: Node) -> bool:
+	if phase != &"play" or not (t is Cowboy) or not t.down or not team.same(id, t.name.to_int()) or not _present(t.name.to_int()) \
+			or main.hold.on(t) not in [0, id]:
+		return false
+	var c := main.players.get_node_or_null(NodePath(str(id))) as Cowboy
+	return c != null and c.hp > 0 and not c.is_queued_for_deletion() \
+		and _flat(c.global_position, 0).distance_to(_flat((t as Node3D).global_position, 0)) <= Team.REVIVE_RANGE
+
+
+func _revive_done(id: int, t: Node) -> void:
+	t.revive.rpc(Team.REVIVE_HP)
+	team.revives += 1
+	var who := t.name.to_int()
+	_whisper(id, "你救起了%s" % names.get(who, "隊友"))
+	_whisper(who, "%s 把你救起來了" % names.get(id, "隊友"))
+
+
+## 主機、團隊模式遊戲中有人斷線（main._despawn）：他的牛仔原地倒地、不收（不能拔線躲死），照樣倒數，倒數完出局。
+## 人不在了救不起來（can_revive 看 _present）。回 true＝留著
+## ponytail: 倒數中連回來的人不接回這個牛仔（編號換了），觀戰到結束
+func down_on_leave(c: Node) -> bool:
+	if team == null or phase != &"play" or not (c is Cowboy) or c.is_queued_for_deletion():
+		return false
+	if not c.down:
+		c._sync_hp.rpc(0)
+	return true

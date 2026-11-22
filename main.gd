@@ -1644,7 +1644,9 @@ func _despawn(id: int) -> void:
 	if b and b.pilot == id:   # 操作尼諾拉的人走了：電腦接手
 		b.pilot = 0
 	var p := players.get_node_or_null(NodePath(str(id)))
-	if p and not p.is_queued_for_deletion():   # 重連時主機會先呼叫一次、ENet 之後又送一次 peer_disconnected：第二次不再減人數
+	if p and party and party.down_on_leave(p):
+		pass   # 團隊模式：原地倒地，倒數完才收（party.down_on_leave）
+	elif p and not p.is_queued_for_deletion():   # 重連時主機會先呼叫一次、ENet 之後又送一次 peer_disconnected：第二次不再減人數
 		p.queue_free()
 		if id != 1:
 			_cowboys -= 1
@@ -2194,7 +2196,7 @@ func _claim_step(delta: float) -> void:
 		return
 	var near: Node3D = null
 	for p in players.get_children():
-		if p.is_in_group(&"dino"):
+		if p.is_in_group(&"dino") or p.hp <= 0:   # 倒地的（團隊模式）撿不到
 			continue
 		var d := Vector2(egg.global_position.x - p.global_position.x, egg.global_position.z - p.global_position.z).length()
 		if d < pickup_range() and absf(egg.global_position.y - p.global_position.y) < PICKUP_HEIGHT and (near == null

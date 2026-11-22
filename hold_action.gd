@@ -84,6 +84,14 @@ func doing(id: int) -> StringName:
 	return _doing[id][0] if _doing.has(id) else &""
 
 
+## 主機：誰正在對 target 做事（沒有是 0）。救人時「一個人同時只能被一個人做事」、倒數暫停用
+func on(target: Node) -> int:
+	for id: int in _doing:
+		if _doing[id][1] == target:
+			return id
+	return 0
+
+
 ## 主機：id 做了幾秒（沒在做是 -1）
 func progress(id: int) -> float:
 	return _doing[id][2] if _doing.has(id) else -1.0

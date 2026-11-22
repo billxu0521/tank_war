@@ -147,7 +147,9 @@ func update_live() -> void:
 	if me != p.dino_id and p.lives.has(me) and p.phase in [&"prep", &"play"]:
 		lines.append("你剩 %d 條命" % int(p.lives[me]) if int(p.lives[me]) > 0 else "你出局了，觀戰中")
 	top.text = "\n".join(lines)
-	if main.egg.carrier != _carrier or p.star_holder != _star:
+	var downs: Array = p._downed().map(func(c: Node) -> String: return String(c.name)) if p.team else []   # 團隊模式：有人倒地、起來也重畫
+	if main.egg.carrier != _carrier or p.star_holder != _star or downs != _downs:
+		_downs = downs
 		_fill_scorebar()
 	hint.text = ""
 	if p.phase == &"prep":
@@ -319,14 +321,16 @@ func _fill_scorebar() -> void:
 		scorebar.add_child(row)
 
 
-## 團隊模式的左上：每隊一列，隊色的隊名加每個人一個圓點（● 還在場上、○ 出局）。自己那隊後面寫（你）。
-## ponytail: 用字畫圓點；T2 加倒地（半滿）時再換成畫的
+## 團隊模式的左上：每隊一列，隊色的隊名加每個人一個圓點（● 還在場上、◐ 倒地、○ 出局）。自己那隊後面寫（你）。
+## ponytail: 用字畫圓點；要好看再換成畫的
+var _downs: Array = []   # 上次畫的時候倒地的人（節點名）
+
 func _fill_teams() -> void:
 	var t: Team = _party.team
 	for i in Team.COUNT:
 		var ids: Array = t.of.keys().filter(func(id: int) -> bool: return t.of[id] == i)
 		var l := _label(20)
-		l.text = "%s　%s%s" % [Team.NAMES[i], " ".join(ids.map(func(id: int) -> String: return "●" if int(_party.lives.get(id, 1)) > 0 else "○")),
+		l.text = "%s　%s%s" % [Team.NAMES[i], " ".join(ids.map(func(id: int) -> String: return "○" if int(_party.lives.get(id, 1)) <= 0 else ("◐" if _downs.has(str(id)) else "●"))),
 			"　（你）" if t.team_of(my_id()) == i else ""]
 		l.add_theme_color_override(&"font_color", Team.COLORS[i])
 		scorebar.add_child(l)

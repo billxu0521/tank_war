@@ -302,7 +302,7 @@ func _process(delta: float) -> void:
 	if not _player.is_local:
 		return
 	# 滑鼠放開（Esc）時不接受開火，不然在選單狀態亂點也會射。爬梯子兩手都在梯子上，也不能開槍
-	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not _player.is_climbing() and not _player.frozen():
+	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not _player.is_climbing() and not _player.frozen() and not _player.down:   # 倒地（團隊模式）：什麼都不能用
 		if _melee_held >= 0.0 or _cook >= 0.0:
 			pass   # 蓄力近戰中、拿著點燃的炸藥：不能開槍、換彈、換槍
 		elif Input.is_action_just_pressed("fire"):
@@ -335,7 +335,7 @@ func _process(delta: float) -> void:
 			_light_dynamite()
 	_update_cook(delta)
 	# 翻越、爬梯子、拿著炸藥時槍放低（手去撐東西了）
-	weapon.lower = move_toward(weapon.lower, 1.0 if (_player.vaulting or _player.is_climbing() or _cook >= 0.0 or using_item()) else 0.0, delta * 6.0)
+	weapon.lower = move_toward(weapon.lower, 1.0 if (_player.vaulting or _player.is_climbing() or _cook >= 0.0 or using_item() or _player.down) else 0.0, delta * 6.0)
 	weapon.aim = ads
 	_fire_hold = _fire_hold + delta if Input.is_action_pressed("fire") else 0.0
 	var wants_aim := Input.is_action_pressed("aim")
