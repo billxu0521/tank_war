@@ -11,7 +11,7 @@
 #   HouseDoor    門（三種共用），原點在門軸、門底；遊戲裡擺在地板高 F
 # 煙囪頂的位置 CHIMNEY 跟 main.gd 的 HOUSE_CHIMNEY 一樣（冒煙的地方）。
 #
-# 背景跑：tools/model_iter.sh house <版號>（輸出 models/houses.glb 和對照圖）
+# 2026-11-22：houses.glb 清掉了（遊戲裡的房子改用積木 toy_build.gd）。這支留著給 kit.py、clutter.py import 材質和工具，不用再單獨跑
 import bpy, bmesh, math, os, random, sys
 from mathutils import Vector, Matrix
 

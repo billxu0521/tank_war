@@ -6,8 +6,7 @@
 - `weapons.py` — 牛仔的四把武器（左輪、單管散彈、槓桿步槍、炸彈長矛），各自匯出一個 `.glb`
 - `tree.py` — 闊葉樹大中小三棵（`TreeOak` / `TreeOakM` / `TreeOakS`），進 `trees.glb`。**不用開 Blender**，背景直接跑，
   一輪迭代用 `tools/model_iter.sh tree <版號>`（做法和教訓見 [docs/素材流水線/程式建模迭代.md](../docs/素材流水線/程式建模迭代.md)）
-- `house.py` — 農舍三種（`House1` 前廊農舍、`House2` 圓木小屋、`House3` 直板高屋），各帶碰撞 `House<N>Col`，門 `HouseDoor` 共用，進 `houses.glb`。
-  跟 tree.py 一樣背景跑：`tools/model_iter.sh house <版號>`
+- `house.py` — 舊農舍三種。`houses.glb` 2026-11-22 清掉了（房子改用積木 toy_build.gd）；這支留著是因為 kit.py、clutter.py 借它的材質和工具
 - `grove.py` — 五種新樹（`docs/image/tree_list.png`）：楓樹 `TreeMaple`、松樹 `TreePine2`、約書亞樹 `TreeJoshua`、枯樹 `TreeDead`、柳樹 `TreeWillow`，
   進 `groves.glb`。借用 tree.py 的工具。`REF=docs/image/tree_list.png tools/model_iter.sh grove <版號>`
 - `flora.py` — 荒野矮植物（`docs/image/plante.png` 左邊兩區）：柱狀仙人掌大小 `Saguaro` / `SaguaroS`（有碰撞，當樹擺）、
@@ -24,7 +23,6 @@
   手指自動彎到碰到握把為止，再烘成固定網格。`tools/model_iter.sh hands <版號>` 出六格預覽，跟 `docs/image/hand.png`
   （`tools/hand_ref.py` 渲染的參考）對照；兩邊共用 `hand_views.py` 的鏡頭
   玩家視角用 `tools/hands_game_iter.sh <版號>`（遊戲相機實拍三把槍）；關節有沒有壓扁用 `tools/hand_joint_check.py` 量
-- `trex.py` — 18 個部件，**名字和位置直接抄 trex.gd 的 `_rig()`**，所以程式動畫不用改
 - `trex_hd.py` — 精修暴龍（`docs/image/dinosaur.png`）：一整張連續的皮＋47 根骨頭蒙皮，匯出 `models/trex_hd.glb`。
   骨頭名字沿用 trex.gd（`root`、`spine1`、`neck`、`head`、`jaw`、`tail1`~`tail8`、`thigh_l`…），遊戲裡 trex.gd 直接用它（約 1800 三角面）。
   改完模型：`tools/trex_hd_iter.sh <版號>` → `godot --headless --import` → `tools/trex_shots.gd` 看遊戲內 → `test_battle.gd`。
@@ -44,7 +42,7 @@
 
 檢查本身的測試：`Blender --background --factory-startup --python tools/test_pipeline_check.py`
 
-**共用工具用 import**：grove.py `from tree import *`、flora.py `from grove import *`、kit.py / town.py `from house import *`。
+**共用工具用 import**：grove.py `from tree import *`、flora.py `from grove import *`、kit.py / clutter.py `from house import *`。
 被 import 的腳本主程式寫在 `if __name__ == '__main__':` 底下，import 時不會跑。注意兩件事：
 - 下游改到共用的全域變數要改在來源模組上，例如 kit.py 的 `house.rnd = …`、grove.py 的 `tree.MATS = …`（只在自己這邊重新指定，來源的函式看不到）
 - 底線開頭的名字 `import *` 不會帶進來，要另外寫（kit.py 的 `from house import _parts, _push`）
@@ -64,8 +62,8 @@
 
 ```python
 BASE = '<這個資料夾的絕對路徑>'
-exec(open(BASE + '/trex.py').read())    # 或 cowboy.py / weapons.py
-export('<專案>/models/trex.glb')           # 每支腳本最後都有自己的 export()
+exec(open(BASE + '/cowboy.py').read())    # 或 weapons.py
+export('<專案>/models/cowboy.glb')           # 每支腳本最後都有自己的 export()
 ```
 
 匯出前務必做這三件事，不然位置會跑掉：
@@ -77,8 +75,8 @@ export('<專案>/models/trex.glb')           # 每支腳本最後都有自己的
 
 ## 改了模型要注意
 
-`trex.py` 的 `RIG` 是從 `trex.gd` 抄來的。**那邊改了骨頭位置，這邊也要跟著改**，
-不然部件會對不上骨頭。
+`trex_hd.py` 的骨頭名字沿用 `trex.gd`。**那邊改了骨頭，這邊也要跟著改**，
+不然蒙皮會對不上骨頭。
 
 ## 槍（weapons.py）
 

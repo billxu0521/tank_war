@@ -9,7 +9,6 @@ const FILES := [
 	["res://models/rocks.glb", "小型道具"], ["res://models/floras.glb", "小型道具"],
 	["res://models/props.glb", "中型道具"], ["res://models/kits.glb", "中型道具"],
 	["res://models/trees.glb", "樹"], ["res://models/groves.glb", "樹"],
-	["res://models/houses.glb", "大型建築"], ["res://models/towns.glb", "大型建築"],
 	["res://models/cowboy.glb", "一般敵人"], ["res://models/trex_hd.glb", "Boss"],
 	["res://models/revolver.glb", "第一人稱武器"], ["res://models/rifle.glb", "第一人稱武器"], ["res://models/shotgun.glb", "第一人稱武器"],
 ]

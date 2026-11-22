@@ -47,10 +47,6 @@ static func build(it: LevelItem, root: Node3D) -> void:
 			var s := it.size / ArenaMap.BARN_BASE
 			_add(root, &"Barn", Vector3.ZERO, s)
 			_add(root, &"BarnRoof", Vector3(0, it.size.y, 0), Vector3(s.x, s.x, s.z))
-		"house", "shop":
-			_add(root, it.variant)
-		"water_tower":
-			_add(root, &"WaterTower")
 		"road":
 			var b := BoxMesh.new()
 			b.size = Vector3(it.size.x, 0.1, it.size.z)

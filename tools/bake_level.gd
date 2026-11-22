@@ -8,16 +8,14 @@ extends SceneTree
 var OUT := "res://levels/ranch.tscn"
 # 分組（編輯器的場景樹比較好找）。建築那組要照原本的順序：門的名字 Door0、Door1… 照蓋的順序
 # 街道也會擋出生點，放在建築後面：測試拿「第一個擋住的範圍」當穀倉用
-const GROUPS := [["地形", ["flat", "wheat"]], ["建築", ["barn", "house", "silo", "hay_shed", "windmill", "shop", "water_tower"]],
+const GROUPS := [["地形", ["flat", "wheat"]], ["建築", ["barn", "silo", "hay_shed", "windmill"]],
 	["街道", ["road"]],
 	["柵欄", ["fence", "gate"]], ["雜物", ["kit", "wheel", "hitch", "hay_bale", "prop"]],
 	["樹", ["tree"]], ["灌木", ["bush"]], ["石頭", ["rock"]]]
-const LABEL := {"flat": "整平區", "wheat": "麥田", "barn": "穀倉", "house": "農舍", "silo": "筒倉", "hay_shed": "倉庫",
+const LABEL := {"flat": "整平區", "wheat": "麥田", "barn": "穀倉", "silo": "筒倉", "hay_shed": "倉庫",
 	"windmill": "風車", "fence": "柵欄", "gate": "圍欄門", "kit": "", "wheel": "車輪", "hitch": "繫柱架",
-	"hay_bale": "圓草捆", "prop": "", "tree": "樹", "bush": "灌木", "rock": "石頭", "shop": "", "road": "街道",
-	"water_tower": "水塔"}
-const KIT_LABEL := {&"Barrel": "木桶", &"Crate": "木箱", &"HayBlock": "方草捆", &"Wagon": "篷車",
-	&"Saloon": "酒館", &"Store": "雜貨店", &"Sheriff": "警長辦公室"}
+	"hay_bale": "圓草捆", "prop": "", "tree": "樹", "bush": "灌木", "rock": "石頭", "road": "街道"}
+const KIT_LABEL := {&"Barrel": "木桶", &"Crate": "木箱", &"HayBlock": "方草捆", &"Wagon": "篷車"}
 
 var _f := 0
 var _m: Node

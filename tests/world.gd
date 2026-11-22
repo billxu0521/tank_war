@@ -48,14 +48,13 @@ func _case_rural() -> void:
 			fences += 1
 	_ck(fences > 20, "鄉村要有柵欄（現在 %d 段）" % fences)
 	# 場景物件的模型都要載得到，名字對不上的話會變成看不見的空氣牆
-	for n in [&"Barn", &"BarnRoof", &"House1", &"House2", &"House3", &"House1Col", &"HouseDoor", &"SiloBody", &"SiloDome", &"FenceRail",
+	for n in [&"Barn", &"BarnRoof", &"SiloBody", &"SiloDome", &"FenceRail",
 			&"FencePost", &"HayBale", &"TreeOak", &"TreeOakM", &"TreeOakS", &"TreePine", &"Bush", &"WheatTuft", &"GrassClump",
 			&"Egg", &"Wagon", &"Rock01", &"Rock16", &"Lantern", &"Barrel", &"Crate", &"HayBlock", &"Wheel",
 			&"FenceGate", &"GatePost", &"HitchRail", &"Windmill", &"WindmillRotor", &"HayShed", &"HayShedCol",
-			&"Saloon", &"SaloonCol", &"Store", &"StoreCol", &"Sheriff", &"SheriffCol", &"WaterTower", &"WaterTowerCol",
 			&"TreeMaple", &"TreePine2", &"TreeJoshua", &"TreeDead", &"TreeWillow", &"Saguaro", &"SaguaroS", &"BarrelCactus",
 			&"PricklyPear", &"GrassTall", &"GrassDense", &"GrassSmall", &"DesertBush", &"ScrubBush"]:
-		_ck(m._props.get(n) is Mesh, "模型檔（props、trees、rocks、houses、kits、towns、groves、floras）裡要有 %s" % n)
+		_ck(m._props.get(n) is Mesh, "模型檔（props、trees、rocks、kits、groves、floras、clutters）裡要有 %s" % n)
 	# 場景小物件要貼著地面：不能浮在半空、也不能埋進地裡（車輪是輪軸中心，另外算）
 	var floating := []
 	for mi: MeshInstance3D in m.find_children("*", "MeshInstance3D", true, false):
@@ -78,23 +77,9 @@ func _case_rural() -> void:
 		{kind = &"kit", name = &"HayBlock", pos = Vector3(63, 0, 30), yaw = 0.0},
 		{kind = &"kit", name = &"HayBlock", pos = Vector3(63, ArenaMap.HAY_BLOCK.y, 30), yaw = 0.0}]).is_empty(), "柵欄在轉角接起來、草捆疊高不算重疊")
 	_ck(m.level_path != "" and ResourceLoader.exists(m.level_path), "場地要照場景檔 levels/ranch.tscn 蓋")
-	# 柵欄不能穿過農舍（牧場的房子以前跨到隔壁格，隔壁農莊的圍欄從房子中間穿過去）
-	var houses: Array[Vector3] = []
-	var rails: Array[Vector3] = []
-	for mi: MeshInstance3D in m.find_children("*", "MeshInstance3D", true, false):
-		if mi.mesh in [m._props.get(&"House1"), m._props.get(&"House2"), m._props.get(&"House3")]:
-			houses.append(mi.global_position)
-		elif mi.mesh == m._props.get(&"FenceRail"):
-			rails.append(mi.global_position)
-	var through := 0
-	for h in houses:
-		for r in rails:
-			if absf(r.x - h.x) < 5.2 and absf(r.z - h.z) < 4.2:
-				through += 1
-	_ck(houses.size() >= 3 and through == 0, "柵欄不能穿過農舍（%d 段穿過）" % through)
 	_end(m)
 
-## 著彈照材質噴不同碎屑；煙囪冒煙
+## 著彈照材質噴不同碎屑
 func _case_fx_and_ambience() -> void:
 	var m := _new_game()
 	var arena: Node = m.get_node(^"Arena")
@@ -109,11 +94,6 @@ func _case_fx_and_ambience() -> void:
 	for surface: StringName in Fx.SURFACES:
 		Fx.hit(arena, Vector3(0, 1, 0), Vector3.UP, surface)
 	_ck(arena.get_child_count() > before + Fx.SURFACES.size() - 1, "每種著彈都要生出粒子")
-	var smoke := 0
-	for n in arena.get_children():
-		if n is CPUParticles3D and not n.one_shot:
-			smoke += 1
-	_ck(smoke > 0, "房子的煙囪要冒煙")
 	_end(m)
 
 ## 地形：有起伏、該平的地方平、碰撞跟畫面對得上
@@ -251,18 +231,6 @@ func _case_vault() -> void:
 		me.stamina = 0.0
 		_ck(me.try_vault(true), "體力見底也要翻得過去（體力只影響移動速度）")
 		me.vaulting = false
-
-	# 農舍的窗：窗台離地 1 公尺，從窗外翻進屋裡（用左側牆的窗：正面有前廊擋著）
-	var house := Vector3.ZERO
-	for n in m.get_node(^"Arena").get_children():
-		if n is MeshInstance3D and n.mesh == m._props[&"House1"]:
-			house = n.global_position
-			break
-	me.global_position = m._on_ground(Vector3(house.x - 5.0 - 0.7, 0, house.z))
-	me.rotation = Vector3(0, -PI * 0.5, 0)   # 面向 +X，對著左牆的窗
-	me.stamina = me.max_stamina
-	_ck(me.try_vault(true), "站在窗外要能從窗戶翻進去")
-	me.vaulting = false
 
 	# 穀倉的牆 8 公尺：翻不過去
 	var b: Rect2 = m.map._blocked[0]
