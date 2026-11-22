@@ -27,10 +27,11 @@ var _rest := 0.0
 
 var on := false         # 這回合有沒有保險箱
 var open := false
-var tried := PackedByteArray()   # 100 格：組合 n（十位 n/10、個位 n%10）試過了就是 1
+var digits := 2         # 密碼幾位數：派對、一般 2，團隊模式 3（party 開回合時 reset 給）
+var tried := PackedByteArray()   # 10^digits 格：組合 n（十位 n/10、個位 n%10）試過了就是 1
 var busy := 0           # 正在試的牛仔編號，0 = 沒人
 
-var _code := -1         # 只在主機：這回合的密碼 00～99
+var _code := -1         # 只在主機：這回合的密碼 00～99（團隊模式 000～999）
 var _try := -1          # 主機：正在試的組合
 var _try_left := 0.0
 var _door: MeshInstance3D
@@ -81,14 +82,15 @@ func locked() -> bool:
 
 
 ## 主機：新回合重抽密碼、清表。active = false 就整個收掉（每台都可以叫，客戶端 _code 不會用到）
-func reset(active: bool) -> void:
+func reset(active: bool, n := 2) -> void:
 	on = active
 	open = false
+	digits = n
 	tried = PackedByteArray()
-	tried.resize(100)
+	tried.resize(10 ** n)
 	busy = 0
 	_try = -1
-	_code = randi() % 100 if active and multiplayer.is_server() else -1
+	_code = randi() % tried.size() if active and multiplayer.is_server() else -1
 	freeze = true
 	_placed = false
 	global_position = PARK
@@ -133,14 +135,19 @@ func blast(at: Vector3, radius: float) -> void:
 
 
 ## 公開的狀態（party._sync 送給大家）。密碼不在裡面
+## 三位數的表 1000 格、每秒送 10 個人：壓縮送（幾乎都是 0，壓完幾十個位元組）。
+## ponytail: 每秒照送沒做「有變才送」；壓完已經比兩位數的 100 格小
 func state() -> Dictionary:
-	return {on = on, open = open, tried = tried, busy = busy}
+	if digits == 2:
+		return {on = on, open = open, tried = tried, busy = busy}
+	return {on = on, open = open, tried = tried.compress(FileAccess.COMPRESSION_DEFLATE), busy = busy, digits = digits}
 
 
 func set_state(s: Dictionary) -> void:
 	on = s.on
 	open = s.open
-	tried = s.tried
+	digits = int(s.get("digits", 2))
+	tried = s.tried if digits == 2 else (s.tried as PackedByteArray).decompress(10 ** digits, FileAccess.COMPRESSION_DEFLATE)
 	busy = s.busy
 	_apply()
 
@@ -171,7 +178,7 @@ func request_try(n: int) -> void:
 ## 電腦牛仔（第 3 步）直接叫這個
 func try_code(id: int, n: int) -> bool:
 	var p: Node = main.party
-	if not locked() or busy != 0 or n < 0 or n > 99 or p == null or p.phase != &"play" or id == p.dino_id or not _near(id):
+	if not locked() or busy != 0 or n < 0 or n >= tried.size() or p == null or p.phase != &"play" or id == p.dino_id or not _near(id):
 		return false
 	busy = id
 	_try = n

@@ -13,6 +13,7 @@ const NEAR_R := 35.0          # 險：離恐龍幾公尺內開始怕
 const CLOSE := 15.0           # 恐龍第一次進這個距離：馬上重想
 const URGENT := 90.0          # 最後幾秒開始急
 const FORCE_TRY := 60.0       # 剩不到這麼多秒，一張牌都沒看也硬試
+const TEAM_FORCE_TRY := 120.0 # 團隊模式：三格沒全確定，剩不到這麼多秒就從候選裡硬試（團隊模式第 10 節）
 const HUMAN_LEAD := 10.0      # 真人隊友比我近這麼多、又朝那邊走，就當他要去
 const HIDE_DIST := 45.0       # 躲：跑到離恐龍這麼遠
 
@@ -124,6 +125,7 @@ func remember(pos: Vector3, c: float) -> void:
 ##   sees 現在看得到恐龍、hit_ago 上次被打幾秒前、bushes 草叢位置
 ##   star 追分星星要去哪（金色小恐龍、地上的星星、別人拿著就是他；null＝沒有或我拿著）
 ##   loot 倒地的尼諾拉在哪（LOOT_REACH 內、這次倒地我沒搜過、肉沒帶滿；null＝不能搜）
+##   團隊模式多 useful（本隊沒看過、補得到缺的那位的信封索引）、cands（隊伍的三格）；known 是隊伍確定的三位
 ## 回傳有沒有換動作
 func think(ctx: Dictionary) -> bool:
 	last_ctx = ctx
@@ -159,7 +161,18 @@ func score_all(ctx: Dictionary) -> Dictionary:
 	var hurt := 1.0 - float(ctx.hp)
 	var last := 1.0 if ctx.get("last_life", false) else 0.0
 	var urgent := clampf(1.0 - float(ctx.get("time_left", 999.0)) / URGENT, 0.0, 1.0)
-	if ctx.get("locked", false):
+	if ctx.get("locked", false) and ctx.has("useful"):   # 團隊模式：去補得到本隊缺的那位的信（隊友去了那封就換下一封：_taken）；三格都確定才去箱子
+		var all_sure: bool = not (ctx.known as Array).has(-1)
+		for i: int in ctx.useful:
+			var p: Vector3 = ctx.cards[i]
+			out["看牌%d" % i] = 60.0 - minf(0.3 * _flat(me, p), 35.0) - 30.0 * _taken(ctx, "看牌%d" % i, p) - 40.0 * risk(ctx, p)
+		if all_sure or float(ctx.get("time_left", 999.0)) < TEAM_FORCE_TRY:
+			var sp: Vector3 = ctx.safe
+			out["試密碼"] = 55.0 + (15.0 if all_sure else 0.0) + 25.0 * urgent - minf(0.2 * _flat(me, sp), 30.0) \
+				- 45.0 * risk(ctx, sp) - 35.0 * _taken(ctx, "試密碼", sp)
+		if _mate_doing(ctx, "試密碼", ctx.safe):
+			out["守箱"] = 35.0 - minf(0.1 * _flat(me, ctx.safe), 15.0) - 30.0 * risk(ctx, me)
+	elif ctx.get("locked", false):
 		var known: Array = ctx.known
 		var seen := int(known[0] >= 0) + int(known[1] >= 0)
 		for i in 2:
@@ -245,9 +258,9 @@ func _taken(ctx: Dictionary, key: String, p: Vector3) -> float:
 ## 照現在的動作要去哪
 func goal(ctx: Dictionary) -> Vector3:
 	var me: Vector3 = ctx.me
+	if action.begins_with("看牌"):
+		return ctx.cards[card_of(action)]
 	match action:
-		"看牌0", "看牌1":
-			return ctx.cards[int(action[-1])]
 		"試密碼":
 			return ctx.safe
 		"撿蛋":
@@ -295,6 +308,11 @@ func _pick_exit(ctx: Dictionary) -> Vector3:
 			cost = c
 			best = i
 	return ex[best]
+
+
+## 「看牌3」→ 3（第幾封信）
+static func card_of(act: String) -> int:
+	return act.trim_prefix("看牌").to_int()
 
 
 ## 一行字：動作、前三名分數

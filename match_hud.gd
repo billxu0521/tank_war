@@ -57,6 +57,11 @@ func update_text(me: Node) -> void:
 		main.hud.text = "我的血量：%s    蛋：%s" % [mine, egg_state]
 		var k: Array = main.party.my_digits
 		var h: Array = main.party.my_hint
+		if main.party.team:   # 團隊模式：三格，確定的寫數字、有候選的寫［2 5 8］、不知道「?」（隊伍的情報）
+			if not h.is_empty():
+				main.hud.text += "    密碼 %s" % " ".join(range(3).map(func(i: int) -> String:
+					return str(k[i]) if k[i] >= 0 else ("［%s］" % Party._digits_text(h[i]) if h[i].size() < 10 else "?")))
+			return
 		if k != [-1, -1] or not h.is_empty():   # 看過牌的小抄；搜過吞掉的信封，沒看過的那位後面括號列候選
 			main.hud.text += "    密碼 %s %s" % [str(k[0]) if k[0] >= 0 else "?", str(k[1]) if k[1] >= 0 else "?"]
 			var left: Array = []
@@ -321,6 +326,12 @@ func compass_marks(at: Vector3) -> Array:
 		var p: Party = main.party
 		var dino: bool = p.dino_id == main.multiplayer.get_unique_id()
 		for i in p.envelopes.size():
+			if p.team:   # 團隊模式：每封都標（圖示看得出蓋到哪幾位），本隊看過的拿掉；尼諾拉看到全部
+				if i < p.env_cover.size() and (dino or not p.my_seen.has(i)):
+					var cv: Array = p.env_cover[i]
+					marks.append({"deg": Compass.bearing(at, p.env_pos[i]), "dist": at.distance_to(p.env_pos[i]), "color": Color(0.95, 0.9, 0.75),
+						"label": "信封 " + Team.cover_text(cv), "icon": &"envelope3", "text": "".join(cv.map(func(v: int) -> String: return str(v)))})
+				continue
 			if int(p.my_digits[i]) >= 0:
 				continue   # 我看過就不標
 			var gray: bool = p.env_open[i] and not dino   # 尼諾拉不知道信封有沒有被開（4.1）

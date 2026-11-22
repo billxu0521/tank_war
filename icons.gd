@@ -2,7 +2,7 @@ class_name Icons
 extends RefCounted
 ## 方位條、畫面上的標記、重生地圖共用的小圖示（0.8.16 第 7 節）。全部用程式畫的簡單形狀，
 ## ponytail: 美術給圖之後只換這個檔（draw 照樣吃 kind，畫貼圖就好）。
-## kind：&"envelope_tens"、&"envelope_ones"、&"safe"、&"gold"、&"raptor"、&"dino"（爪印）、&"exit"、&"star"、&"egg"、&"spawn"、&"meat"、&"mate"（隊友）。
+## kind：&"envelope_tens"、&"envelope_ones"、&"envelope3"（團隊模式，text 是種類）、&"safe"、&"gold"、&"raptor"、&"dino"（爪印）、&"exit"、&"star"、&"egg"、&"spawn"、&"meat"、&"mate"（隊友）。
 ## size 是圖示的寬（像素），c 是主色；每個圖示都有深色描邊，亮的天空上也看得到
 
 const OUTLINE := Color(0.12, 0.07, 0.05, 0.9)
@@ -18,6 +18,20 @@ static func draw(ci: CanvasItem, kind: StringName, at: Vector2, size: float, c: 
 			ci.draw_rect(r, c)
 			ci.draw_polyline(PackedVector2Array([r.position, at + Vector2(0, h * 0.05), r.position + Vector2(size, 0)]), o, 1.5)
 			_label(ci, at + Vector2(h * 0.55, h * 0.9), "十" if kind == &"envelope_tens" else "個", maxi(int(size * 0.55), 9), c)
+		&"envelope3":   # 團隊模式的信封：長方形加一個 V，下面三個小方格（百、十、個）。text 每位一個字：2 實心（確定）、1 半滿（候選）、0 空心
+			var r := Rect2(at - Vector2(h, h * 0.68), Vector2(size, size * 0.68))
+			ci.draw_rect(r.grow(1.5), o)
+			ci.draw_rect(r, c)
+			ci.draw_polyline(PackedVector2Array([r.position, at + Vector2(0, h * 0.05), r.position + Vector2(size, 0)]), o, 1.5)
+			var q := size * 0.3
+			for k in mini(text.length(), 3):
+				var box := Rect2(at + Vector2((k * 1.1 - 1.6) * q, h * 0.55), Vector2(q, q))
+				ci.draw_rect(box.grow(1.0), o)
+				ci.draw_rect(box, Color(0.2, 0.17, 0.15, c.a))
+				if text[k] == "2":
+					ci.draw_rect(box, c)
+				elif text[k] == "1":
+					ci.draw_rect(Rect2(box.position, Vector2(q * 0.5, q)), c)
 		&"safe":   # 方塊加圓鈕
 			var r := Rect2(at - Vector2(h, h), Vector2(size, size))
 			ci.draw_rect(r.grow(1.5), o)

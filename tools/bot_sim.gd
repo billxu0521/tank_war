@@ -2,7 +2,7 @@ extends SceneTree
 ## 量電腦牛仔「像不像真人」（docs/企劃/2026-11-13-電腦牛仔像真人.md「怎麼量」）：派對模式、4 個電腦輪流當恐龍（3 個牛仔＋電腦尼諾拉），跑 N 回合。
 ##   godot --headless --fixed-fps 60 --path . --script tools/bot_sim.gd
 ##   ROUNDS=20（預設）、SEED=1、BOT_LOG=1（電腦換動作時印一行，打分數版才有）
-##   TEAM=1：團隊模式（電腦尼諾拉＋三隊各 3 個電腦獵人，一場 1 局 12 分鐘）；ROUNDS 就是幾場。總表多一行各隊贏幾場
+##   TEAM=1：團隊模式（電腦尼諾拉＋三隊各 3 個電腦獵人，一場 1 局 12 分鐘）；ROUNDS 就是幾場。總表多兩行：各隊贏幾場、開箱時間（分鐘）
 ##   SHORT=秒：遊戲階段最多這麼久（只是確認跑得完、不當掉用；量數字不要設）
 ## 照專用伺服器的開法：物理一秒 60 次、沒有真人（_dedicated）。--fixed-fps 60 讓一幀固定走 1/60 秒、不等真的時間，跑得比實際快；
 ## 拿掉就照實際速度（一回合 3 分 45 秒）。快轉時用真的時鐘算的東西（尼諾拉撞房子的拖拉、急救包冷卻）會變短，對牛仔的行為影響小。
@@ -153,4 +153,8 @@ func _summary() -> void:
 	print("  卡在哪：%s" % "、".join(by.keys().map(func(k: String) -> String: return "%s %.0f 秒" % [k, by[k]])))
 	if _team:
 		print("  團隊模式誰贏：%s" % "、".join(_wins.keys().map(func(k: String) -> String: return "%s %d 場" % [k, _wins[k]])))
+		var ot: Array = opened.map(func(r: Dictionary) -> float: return r.open / 60.0)
+		ot.sort()
+		print("  團隊模式開箱時間：%s（%d/%d 場開了；目標 4～7 分鐘）" % ["平均 %.1f 分、中間值 %.1f 分、%.1f～%.1f 分" % [ot.reduce(func(a: float, x: float) -> float: return a + x, 0.0) / ot.size(),
+			ot[ot.size() / 2], ot[0], ot[-1]] if ot.size() > 0 else "沒開過", ot.size(), n])
 	print("BOT_SIM OK")

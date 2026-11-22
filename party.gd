@@ -84,6 +84,9 @@ var winner_team := -1         # 團隊模式：帶蛋撤離的那一隊（-1 = �
 var lives_each := LIVES       # 每人每回合幾條命（團隊模式 team_lives）
 var play_seconds := PLAY_SECONDS   # 遊戲階段多久（團隊模式 team_play_seconds）
 var players_n := PLAYERS      # 不到這麼多人用電腦補（團隊模式 1 恐龍＋三隊）
+var digits := 2               # 密碼幾位數（團隊模式 3）
+var env_cover: Array = []     # 團隊模式：每封信的種類（公開，Team.cover_of）。派對是 []（兩封都是單位：0 十位、1 個位）
+var my_seen: Array = []       # 團隊模式：這台的人那隊看過哪幾封（主機只送隊員）
 var stats := RoundStats.new()   # 主機：每回合的指標，結束時印「回合指標」（tools/bot_sim.gd 也讀）
 
 @onready var main: Node = get_parent()
@@ -101,7 +104,9 @@ func _ready() -> void:
 		lives_each = Balance.whole("team_lives")
 		play_seconds = Balance.num("team_play_seconds")
 		players_n = 1 + Team.COUNT * Team.SIZE
-	for i in 2:   # 每台都建、名字固定，看牌走 party 的 RPC，信封自己沒有 RPC
+		digits = 3
+		my_digits = _blank()
+	for i in (Balance.whole("team_envelopes_max") if team else 2):   # 每台都建、名字固定（團隊模式建最多的封數，用不到的藏著），看牌走 party 的 RPC，信封自己沒有 RPC
 		var e := Envelope.new()
 		e.name = "Envelope%d" % i
 		e.index = i
@@ -166,11 +171,19 @@ func _process(delta: float) -> void:
 	main.safe.visible = main.safe.on and egg_placed and (phase != &"prep" or me == dino_id)
 	for i in envelopes.size():
 		var e := envelopes[i]
-		e.visible = main.safe.on
-		e.collision_layer = 1 if main.safe.on else 0
+		var used: bool = main.safe.on and i < env_pos.size()
+		e.visible = used
+		e.collision_layer = 1 if used else 0
+		if not used:
+			continue
 		if e.global_position != env_pos[i]:
 			e.global_position = env_pos[i]
-		var shown: bool = env_open[i] and me != dino_id   # 尼諾拉不知道信封有沒有被開（0.8.16 第 4.1 節）：牠看到的永遠是沒開的樣子
+		var cover: Array = env_cover[i] if i < env_cover.size() else []
+		if e.cover != cover:
+			e.cover = cover
+			e.set_opened(e.opened)
+		# 尼諾拉不知道信封有沒有被開（0.8.16 第 4.1 節）：牠看到的永遠是沒開的樣子。團隊模式看的是本隊看過沒
+		var shown: bool = (my_seen.has(i) if team else env_open[i]) and me != dino_id
 		if e.opened != shown:
 			e.set_opened(shown)
 	# 尼諾拉直接穿過信封（牛仔照樣撞得到、按得到）。每隻恐龍只加一次：引擎的例外清單不會去掉重複的
@@ -313,15 +326,18 @@ func _start_round() -> void:
 	_pick.clear()
 	last_result = ""
 	egg_placed = false
-	main.safe.reset(use_safe)   # 每回合重抽密碼、清試過的表
+	main.safe.reset(use_safe, digits)   # 每回合重抽密碼、清試過的表
 	main.roll_exits()   # 每回合重抽撤離區（信封要避開抽到的，所以先抽）
 	_known.clear()   # 看過的牌、信封開過沒：每回合重來
 	_env_bonus.clear()
-	my_digits = [-1, -1]
+	my_digits = _blank()
 	_hinted.clear()
 	my_hint = []
-	_cands = roll_candidates(main.safe._code) if main.safe.on else []
+	my_seen = []
+	_cands = roll_candidates(main.safe._code) if main.safe.on and not team else []   # 團隊模式搜刮先只給肉（吞掉的信封等 T9）
 	env_open = [false, false]
+	if team:
+		team.reset_intel()
 	dino_id = fixed_id if fixed else _roster[round_index % _roster.size()]
 	winner_team = -1
 	if team:   # 團隊模式：分隊、抽三個出生區，各自告訴他是哪一隊
@@ -366,7 +382,10 @@ func _start_round() -> void:
 	if main.safe.on:   # 保險箱：地圖上的幾個點隨機抽一個（可以重複），恐龍不用放；地圖沒放點就放在恐龍前面
 		var pts: Array[Vector3] = main.safe_spots
 		_hide_egg_at(pts.pick_random() if not pts.is_empty() else b.global_position, pts.is_empty())
-		_place_envelopes()   # 信封離箱子夠遠，所以箱子先放
+		if team:
+			_place_team_envelopes()
+		else:
+			_place_envelopes()   # 信封離箱子夠遠，所以箱子先放
 	elif not (dino_id > 0 and _present(dino_id)):   # 電腦不會藏蛋：開場就放在中央（不然蛋跟著牠追到站著不動的牛仔旁邊）
 		_hide_egg_at(b.global_position)
 	main.raptors.clear()   # 小恐龍：上回合的清掉，這回合尼諾拉重放
@@ -717,6 +736,9 @@ func _sync() -> void:
 		_tell(id)
 	for id: int in _hinted:   # 吞掉的信封也一樣
 		_tell_hint(id)
+	if team:   # 隊伍情報：每個隊員（含出局觀戰的）
+		for id: int in team.of:
+			_tell_intel(id)
 	changed.emit()
 
 
@@ -724,7 +746,7 @@ func _sync() -> void:
 func state() -> Dictionary:
 	return {rounds = rounds, round_index = round_index, phase = phase, time_left = time_left, scores = scores,
 		round_scores = round_scores, lives = lives, dino_id = dino_id, names = names, last_result = last_result,
-		egg_placed = egg_placed, safe = main.safe.state(), env_pos = env_pos, env_open = env_open,
+		egg_placed = egg_placed, safe = main.safe.state(), env_pos = env_pos, env_open = env_open, env_cover = env_cover,
 		star_holder = star_holder, star_on = star_on, star_pos = star_pos, spawn_red = spawn_red,
 		team_of = team.of if team else {}, winner_team = winner_team}
 
@@ -740,8 +762,9 @@ func _recv(s: Dictionary) -> void:
 		else:
 			set(k, s[k])
 	if phase != &"play":   # 回合外看過的牌作廢（主機在 _start_round 清 _known）
-		my_digits = [-1, -1]
+		my_digits = _blank()
 		my_hint = []
+		my_seen = []
 	changed.emit()
 
 
@@ -782,11 +805,13 @@ func read_envelope(i: int) -> void:
 ## 主機：id 這個牛仔看第 i 張牌。全部重新檢查（遊戲中、有保險箱、活著的牛仔、不是恐龍、夠近）。
 ## 數字只記進 _known、只送給他本人（_tell）；公開的只有「這個信封開過」。電腦牛仔（第 3 步）直接叫這個
 func read(id: int, i: int) -> bool:
-	if phase != &"play" or not main.safe.on or i < 0 or i > 1 or id == dino_id:
+	if phase != &"play" or not main.safe.on or i < 0 or i >= env_pos.size() or id == dino_id:
 		return false
 	var c := main.players.get_node_or_null(NodePath(str(id))) as Cowboy
 	if c == null or c.hp <= 0 or c.is_queued_for_deletion() or _flat(c.global_position, 0).distance_to(_flat(env_pos[i], 0)) >= Envelope.RANGE:
 		return false
+	if team:
+		return _read_team(id, i)
 	var k: Array = _known.get(id, [-1, -1])
 	k[i] = digit(i)
 	_known[id] = k
@@ -801,13 +826,12 @@ func read(id: int, i: int) -> bool:
 ## 這台的人知不知道撤離點在哪（0.8.16 第 7 節）：尼諾拉一直知道；獵人這回合看過任何一封信（含吞掉的信封）、或拿過蛋才知道，
 ## 死了還記得。沒有保險箱（舊的藏蛋）照舊大家都知道。撤離點是哪幾個還是每台都收得到，原型先不防
 func knows_exits() -> bool:
-	return not main.safe.on or multiplayer.get_unique_id() == dino_id or my_digits != [-1, -1] or not my_hint.is_empty() or touched_egg
+	return not main.safe.on or multiplayer.get_unique_id() == dino_id or my_digits.max() >= 0 or not my_hint.is_empty() or touched_egg
 
 
-## 主機：第 i 位的數字（0 十位、1 個位）。只在主機有意義（客戶端的 _code 是 -1）
+## 主機：第 i 位的數字（兩位數 0 十位、1 個位；三位數 0 百位）。只在主機有意義（客戶端的 _code 是 -1）
 func digit(i: int) -> int:
-	var code: int = main.safe._code
-	return code / 10 if i == 0 else code % 10
+	return main.safe._code / 10 ** (digits - 1 - i) % 10
 
 
 ## 主機：把 id 看過的數字送給他一個人。主機自己是玩家就直接寫；電腦（負的編號）不用送
@@ -984,4 +1008,95 @@ func _tell_hint(id: int) -> void:
 func _got_hint(c: Array) -> void:
 	if phase == &"play":
 		my_hint = c.duplicate(true)
+	changed.emit()
+
+
+# ── 團隊模式 T3：三位數密碼、兩種信封、隊內共享（docs/企劃/2026-11-19-團隊模式.md 第 5、6 節）──
+
+## 沒看過的小抄：每位 -1
+func _blank() -> Array:
+	var a: Array = []
+	a.resize(digits)
+	a.fill(-1)
+	return a
+
+
+## 主機：團隊模式的 8～10 封信。照封抽空地：離保險箱、撤離圈、彼此夠遠；每個出生區附近要有一封、三隊最近的那封不同。
+## 抽不到合格的就放寬距離再抽（同 _place_envelopes）
+func _place_team_envelopes() -> void:
+	var n := randi_range(Balance.whole("team_envelopes_min"), Balance.whole("team_envelopes_max"))
+	team.env_info = Team.roll_envelopes(main.safe._code, n)
+	env_cover = team.env_info.map(Team.cover_of)
+	env_open = []
+	env_open.resize(n)
+	env_open.fill(false)
+	var apart := Balance.num("team_env_apart")
+	var from_safe := Balance.num("team_env_from_safe")
+	var near := Balance.num("team_env_near_zone")
+	var safe_at := _flat(main.safe.global_position, 0)
+	for tries in 200:
+		if tries % 40 == 39:
+			apart *= 0.7
+			from_safe *= 0.7
+			near /= 0.7
+		var pts: Array = []
+		for j in n:
+			var q := _env_spot()
+			for k in 30:   # 每封試 30 個點，挑第一個離前面的都夠遠的
+				var f := _flat(q, 0)
+				if f.distance_to(safe_at) >= from_safe and pts.all(func(o: Vector3) -> bool: return _flat(o, 0).distance_to(f) >= apart) \
+						and main._exits.all(func(x: Vector3) -> bool: return f.distance_to(_flat(x, 0)) > main.EXIT_RADIUS + 3.0):
+					break
+				q = _env_spot()
+			pts.append(q)
+		var nearest: Array = team.zones.map(func(z: Vector3) -> int:
+			var best := 0
+			for j in n:
+				if _flat(pts[j], 0).distance_to(_flat(z, 0)) < _flat(pts[best], 0).distance_to(_flat(z, 0)):
+					best = j
+			return best)
+		var ok := range(nearest.size()).all(func(t: int) -> bool:
+			return _flat(pts[nearest[t]], 0).distance_to(_flat(team.zones[t], 0)) <= near and nearest.count(nearest[t]) == 1)
+		if ok or tries == 199:
+			env_pos = pts
+			return
+
+
+## 主機：id 看了第 i 封（read 檢查過了）。併進他那隊的三格，提示他和隊友，整隊補送
+func _read_team(id: int, i: int) -> bool:
+	var t := team.team_of(id)
+	if t < 0:
+		return false
+	var got := team.merge(t, i)
+	env_open[i] = true   # 不叫恐龍過去：尼諾拉不知道信封被開（0.8.16 第 4.1 節）
+	if got.is_empty():
+		_whisper(id, "這封信沒有新的情報（你們隊知道了）")
+	else:
+		var c: Array = team.intel[t]
+		var msg := "、".join(got.map(func(k: int) -> String:
+			return "%s是 %s" % [Team.PLACES[k], str(c[k][0]) if c[k].size() == 1 else _digits_text(c[k]) + " 之一"]))
+		for m: int in team.of:
+			if team.of[m] == t:
+				_whisper(m, ("信封：" if m == id else "隊友開了信：") + msg)
+	_sync()
+	return true
+
+
+## 主機：t 隊的情報只送給這個隊員（電腦不用送，直接讀 team.intel）
+func _tell_intel(id: int) -> void:
+	var t := team.team_of(id)
+	if t < 0 or team.intel.is_empty():
+		return
+	if id == multiplayer.get_unique_id():
+		_got_intel(team.intel[t], team.seen[t])
+	elif id > 0 and multiplayer.get_peers().has(id):
+		_got_intel.rpc_id(id, team.intel[t], team.seen[t])
+
+
+@rpc("authority", "call_remote", "reliable")
+func _got_intel(c: Array, seen: Array) -> void:
+	if phase == &"play":
+		my_seen = seen.duplicate()
+		my_hint = c.duplicate(true) if not seen.is_empty() else []
+		my_digits = Team.sure(c)
 	changed.emit()

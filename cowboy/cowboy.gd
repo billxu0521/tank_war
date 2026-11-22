@@ -811,15 +811,18 @@ func _bot_ctx(g: Node) -> Dictionary:
 			star = holder_n.global_position
 	var loot: Variant = null   # 搜刮：尼諾拉倒地、BotBrain.LOOT_REACH 內、這次倒地我還沒搜過、肉還沒帶滿或還沒拿過吞掉的信封
 	var b: Node3D = g._boss()
-	if p and p.phase == &"play" and b and b.down_left > 0.0 and not b.looted.has(id) and (meat < MEAT_MAX or not p._hinted.has(id)) \
+	if p and p.phase == &"play" and b and b.down_left > 0.0 and not b.looted.has(id) and (meat < MEAT_MAX or (not p._hinted.has(id) and not p._cands.is_empty())) \
 			and _flat_to(b.global_position) < BotBrain.LOOT_REACH:
 		loot = b.global_position
-	return {"star": star, "loot": loot, "me": global_position, "hp": float(hp) / max_hp, "last_life": p != null and int(p.lives.get(id, 2)) <= 1,
+	var ctx := {"star": star, "loot": loot, "me": global_position, "hp": float(hp) / max_hp, "last_life": p != null and int(p.lives.get(id, 2)) <= 1,
 		"time_left": p.time_left if p else 999.0, "locked": safe_on, "safe": g.safe.global_position,
 		"cards": p.env_pos if p else [], "known": p._known.get(id, [-1, -1]) if p else [-1, -1],
 		"carrier": carrier, "holder": holder.global_position if holder else g.egg.global_position, "egg": g.egg.global_position,
 		"exits": g._exits, "ffa": p != null and not (tm and tm.same(id, g.egg.carrier)), "dino": dino, "conf": brain.conf, "mates": mates,
 		"sees": brain.seen_ago < BotBrain.THINK + 0.1 and not _bot_dino_down, "hit_ago": _bot_hit_ago, "bushes": g.map._bushes}
+	if tm and safe_on:   # 團隊模式：用隊伍的三格（known、cands）、去本隊沒看過又補得到缺的那位的信（useful）
+		ctx.merge(tm.bot_view(id, p.env_cover), true)
+	return ctx
 
 
 ## 移動標靶：來回走，走到端點就回頭，身體朝著走的方向（打側面比打正面難）
@@ -841,9 +844,9 @@ func _walk_patrol(delta: float) -> void:
 func _bot_should_hold(g: Node) -> bool:
 	if g == null or g._sandbox or brain == null:
 		return false
+	if brain.action.begins_with("看牌"):
+		return _flat_to(brain.last_ctx.cards[BotBrain.card_of(brain.action)]) < Envelope.RANGE * 0.8
 	match brain.action:
-		"看牌0", "看牌1":
-			return _flat_to(brain.last_ctx.cards[int(brain.action[-1])]) < Envelope.RANGE * 0.8
 		"試密碼":
 			return _flat_to(g.safe.global_position) < Safe.RANGE * 0.6
 		"撿蛋":
@@ -916,7 +919,7 @@ func _bot_safe_act(g: Node, delta: float) -> void:
 		_bot_wait_for = act
 		_bot_wait = INF
 		return
-	if not g.safe.locked() or g.party == null or not act in ["看牌0", "看牌1", "試密碼"]:
+	if not g.safe.locked() or g.party == null or not (act == "試密碼" or act.begins_with("看牌")):
 		return
 	if _bot_wait == INF:
 		_bot_wait = randf_range(BotBrain.ARRIVE_MIN, BotBrain.ARRIVE_MAX) if act == "試密碼" else randf_range(BotBrain.READ_MIN, BotBrain.READ_MAX)
@@ -926,16 +929,19 @@ func _bot_safe_act(g: Node, delta: float) -> void:
 	var id := name.to_int()
 	var p: Node = g.party
 	if act != "試密碼":
-		if p.read(id, int(act[-1])):
+		if p.read(id, BotBrain.card_of(act)):
 			_bot_now = true
 		return
 	if g.safe.busy != 0:
 		return
-	var k: Array = p._known.get(id, [-1, -1])
-	var hc: Array = p._cands if p._hinted.has(id) else [range(10), range(10)]   # 搜過吞掉的信封：只從候選裡試
+	var cands: Array = brain.last_ctx.get("cands", [])   # 團隊模式：隊伍的三格
+	if cands.is_empty():
+		var k: Array = p._known.get(id, [-1, -1])
+		var hc: Array = p._cands if p._hinted.has(id) else [range(10), range(10)]   # 搜過吞掉的信封：只從候選裡試
+		cands = [[k[0]] if k[0] >= 0 else hc[0], [k[1]] if k[1] >= 0 else hc[1]]
 	var left: Array = []
-	for n in 100:
-		if g.safe.tried[n] == 0 and (k[0] < 0 or n / 10 == k[0]) and (k[1] < 0 or n % 10 == k[1]) and n / 10 in hc[0] and n % 10 in hc[1]:
+	for n in g.safe.tried.size():
+		if g.safe.tried[n] == 0 and range(cands.size()).all(func(i: int) -> bool: return n / 10 ** (cands.size() - 1 - i) % 10 in cands[i]):
 			left.append(n)
 	if not left.is_empty() and g.safe.try_code(id, left.pick_random()):
 		_bot_wait = Safe.TRY_SECONDS + randf_range(BotBrain.GAP_MIN, BotBrain.GAP_MAX)
