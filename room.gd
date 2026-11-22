@@ -48,11 +48,6 @@ func _ready() -> void:
 		if main.RULES[k].legacy:
 			continue
 		_mode_btns[k] = _toggle(row, main.RULES[k].name, group, ask.bind(&"mode", k))
-	if not main.RULES.has(&"team"):   # 團隊模式還沒做：先佔一格（T1 在規則表加一筆就換成真的）
-		var t := Button.new()
-		t.text = "團隊（製作中）"
-		t.disabled = true
-		row.add_child(t)
 	_other = OptionButton.new()
 	_other.add_item("其他模式 ▾")
 	for k: StringName in main.RULES:
@@ -322,7 +317,7 @@ func refresh() -> void:
 		l.text = "%s %s%s%s%s　　%s" % ["★" if id == host_id else "　", name_of(id), "（房主）" if id == host_id else "",
 			"（你）" if id == me else "", "　　想當恐龍" if want.has(id) else "", "準備好了" if prepared.has(id) else "還沒"]
 		_list.add_child(l)
-	_dino_row.visible = mode == &"normal"
+	_dino_row.visible = bool(main.RULES[mode].get("fixed_dino", false)) if main.RULES.has(mode) else false   # 一般、團隊：整場固定一個人當恐龍
 	_dino_opt.clear()
 	for pair: Array in [[0, "抽想當的人"], [-1, "電腦"]] + order.map(func(id: int) -> Array: return [id, "指定：" + name_of(id)]):
 		_dino_opt.add_item(pair[1])
@@ -336,7 +331,8 @@ func refresh() -> void:
 		var l := Label.new()
 		l.text = "等主機回覆…" if connecting else "還沒有人"
 		_list.add_child(l)
-	_bots.text = {&"normal": "不到 3 個獵人用電腦補，沒人當恐龍就電腦當", &"party": "不到 4 個人用電腦補"}.get(mode, "")
+	_bots.text = {&"normal": "不到 3 個獵人用電腦補，沒人當恐龍就電腦當", &"party": "不到 4 個人用電腦補",
+		&"team": "三隊各 3 個獵人，不到 9 個用電腦補滿（照進來的順序輪流分紅、藍、綠），沒人當恐龍就電腦當"}.get(mode, "")
 	_want.set_pressed_no_signal(main.want_dino)
 	_want.disabled = connecting
 	var self_host: bool = host and multiplayer.is_server() and not main._offline

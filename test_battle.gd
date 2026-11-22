@@ -1,4 +1,4 @@
-extends "res://tests/ui.gd"
+extends "res://tests/team.gd"
 
 ## 自我檢查：跑 `godot --headless --script test_battle.gd`
 ## 有失敗會印 FAIL 並回傳非 0，不會假裝過關。
@@ -114,6 +114,7 @@ func _process(_delta: float) -> bool:
 		_case_barrels()
 		_case_raptors()
 		_case_golden_star()
+		_case_team()
 		_start_gun_case()
 		return false
 	# 剩下的要跨好幾個 frame 才驗得到。總幀數設上限：腳本編譯壞掉時各階段等不到條件，

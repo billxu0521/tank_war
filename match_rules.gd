@@ -14,6 +14,7 @@ extends RefCounted
 ## timeout_msg：時間到還沒人帶蛋撤離時，每台顯示的字。
 ## fixed_dino：整場固定一個人當恐龍（party.gd 的 fixed_id）：勾「我想當恐龍」的人裡抽一個，沒人勾就電腦當、真人全當獵人。一般模式、之後的團隊模式用。
 ## legacy：舊模式，選單排在後面、標「舊」（選單流程 M1）。一般、派對是 false。
+## team：團隊模式（1 恐龍對三隊各 3 個獵人，隊伍在 team.gd）。整場 1 局、每人 1 條命、帶蛋撤離的那隊贏（party.gd 看這個）。
 ## safe：蛋鎖在保險箱裡，要猜密碼開（party.gd、safe.gd）。只有派對模式用；派對的恐龍按 F 改成放保險箱。
 ##
 ## 牛仔之間本來就打得到（PvP），恐龍決鬥的「隊友火力」不用另外開
@@ -23,23 +24,27 @@ const EGG_TIMEOUT := "時間到，沒有人把蛋帶走"
 const RULES := {
 	# 跟派對一樣的規則，但整場固定一個人當恐龍；1 局或 4 局（大廳選，main.normal_rounds）
 	&"normal": {name = "一般", lives = -1, dino = true, egg = true, timer = true,
-		pilot = false, party = true, end = &"", boss_hp = 0, boss_kill_wins = false, timeout_msg = EGG_TIMEOUT, safe = true, legacy = false, fixed_dino = true,
+		pilot = false, party = true, end = &"", boss_hp = 0, boss_kill_wins = false, timeout_msg = EGG_TIMEOUT, safe = true, legacy = false, fixed_dino = true, team = false,
 		desc = "跟派對一樣（保險箱、信封、每局 3 條命），但整場固定一個人當恐龍：勾「我想當恐龍」的人裡抽一個，沒人勾就電腦當。1 局只看誰帶蛋撤離；4 局照派對計分。"},
 	# 規則本體在 party.gd（命數、計時、計分自己管，不走上面的 lives／timer；lives 填 -1 讓舊的命數系統不插手）
 	&"party": {name = "派對", lives = -1, dino = true, egg = true, timer = true,
-		pilot = false, party = true, end = &"", boss_hp = 0, boss_kill_wins = false, timeout_msg = EGG_TIMEOUT, safe = true, legacy = false, fixed_dino = false,
+		pilot = false, party = true, end = &"", boss_hp = 0, boss_kill_wins = false, timeout_msg = EGG_TIMEOUT, safe = true, legacy = false, fixed_dino = false, team = false,
 		desc = "四個人輪流當恐龍，四回合加總比分數（不到四人用電腦補）。恐龍先花 15 秒放保險箱（蛋鎖在裡面，猜對兩位數密碼才打得開），牛仔每回合 3 條命，帶蛋撤離就贏這回合。"},
+	# 團隊（docs/企劃/2026-11-19-團隊模式.md）：派對那套＋固定恐龍，1 局 12 分鐘、1 條命，不到 10 人用電腦補滿
+	&"team": {name = "團隊", lives = -1, dino = true, egg = true, timer = true,
+		pilot = false, party = true, end = &"", boss_hp = 0, boss_kill_wins = false, timeout_msg = EGG_TIMEOUT, safe = true, legacy = false, fixed_dino = true, team = true,
+		desc = "一隻尼諾拉對三隊（紅、藍、綠）各 3 個獵人，不到 10 人用電腦補滿。隊友打不到彼此，每人一條命，死了就出局觀戰。一局 12 分鐘：哪一隊把蛋帶去撤離就贏，時間到沒人撤離是尼諾拉贏。"},
 	# 以下是舊的模式：選單收在後面（標「舊」）
 	&"egg": {name = "搶蛋", lives = -1, dino = true, egg = true, timer = true,
-		pilot = false, party = false, end = &"", boss_hp = 0, boss_kill_wins = false, timeout_msg = EGG_TIMEOUT, safe = false, legacy = true, fixed_dino = false,
+		pilot = false, party = false, end = &"", boss_hp = 0, boss_kill_wins = false, timeout_msg = EGG_TIMEOUT, safe = false, legacy = true, fixed_dino = false, team = false,
 		desc = "先把蛋帶進撤離區的人贏，一局四分鐘。場上有一隻恐龍，死了五秒後重生（不限次數）。"},
 	&"deathmatch": {name = "死鬥", lives = 3, dino = false, egg = false, timer = false,
-		pilot = false, party = false, end = &"last_standing", boss_hp = 0, boss_kill_wins = false, timeout_msg = EGG_TIMEOUT, safe = false, legacy = true, fixed_dino = false,
+		pilot = false, party = false, end = &"last_standing", boss_hp = 0, boss_kill_wins = false, timeout_msg = EGG_TIMEOUT, safe = false, legacy = true, fixed_dino = false, team = false,
 		desc = "沒有恐龍、沒有蛋。每個人可以重生 3 次，用完就出局，最後剩下的一個人獲勝。"},
 	&"versus": {name = "對抗", lives = -1, dino = true, egg = true, timer = true,
-		pilot = true, party = false, end = &"", boss_hp = 0, boss_kill_wins = false, timeout_msg = "時間到，尼諾拉守住了蛋，尼諾拉獲勝！", safe = false, legacy = true, fixed_dino = false,
+		pilot = true, party = false, end = &"", boss_hp = 0, boss_kill_wins = false, timeout_msg = "時間到，尼諾拉守住了蛋，尼諾拉獲勝！", safe = false, legacy = true, fixed_dino = false, team = false,
 		desc = "搶蛋，但尼諾拉由玩家操作（勾「我想當恐龍」的人每局抽一個，沒人勾就是電腦）。帶蛋撤離的牛仔贏，時間到沒人撤離就是尼諾拉贏。"},
 	&"dino_duel": {name = "恐龍決鬥", lives = 5, dino = true, egg = false, timer = false,
-		pilot = false, party = false, end = &"all_out_dino_wins", boss_hp = 3000, boss_kill_wins = true, timeout_msg = EGG_TIMEOUT, safe = false, legacy = true, fixed_dino = false,
+		pilot = false, party = false, end = &"all_out_dino_wins", boss_hp = 3000, boss_kill_wins = true, timeout_msg = EGG_TIMEOUT, safe = false, legacy = true, fixed_dino = false, team = false,
 		desc = "所有牛仔合力打一隻恐龍，打死牠大家一起贏。每人可以重生 5 次，全部出局就是恐龍贏。小心，打到隊友一樣會扣血。"},
 }

@@ -307,11 +307,17 @@ func _burn_notice(id: int) -> void:
 		g.status.text = "著火了！"
 
 ## 只有主機會呼叫這個。source 是誰打的，用來記錄擊殺者。
+## 爆炸桶炸開那一下（barrels.explode）開著：團隊模式的隊友不互傷不擋（桶不分敵我）
+static var any_side := false
+
 func take_damage(amount: int, source: Node = null) -> void:
 	if hp <= 0:
 		return
 	var g := get_tree().get_first_node_in_group(&"match")
 	if g and g.party_frozen():   # 派對模式準備、結算時誰都不扣血
+		return
+	# 團隊模式：隊友打不到（槍、槍托、炸藥、油火都走這裡，source 是出手的人）。自己的炸藥照樣炸得到自己；爆炸桶不分敵我（any_side）
+	if g and g.party and g.party.team and not any_side and g.party.team.same_side(self, source):
 		return
 	# 選單關掉恐龍攻擊時，恐龍（含 boss、火球）打人不扣血。傷害都在主機算，只看主機的開關就好
 	if is_instance_valid(source) and source.is_in_group(&"dino"):

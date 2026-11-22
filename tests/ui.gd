@@ -84,7 +84,7 @@ func _case_settings() -> void:
 	_ck(m.lobby_page == &"home", "大廳第二層按 Esc 回首頁")
 	# 選單流程 M1：預設一般、舊模式排後面；單人頁 3 顆（＋返回）、開發用的收進「其他」；沒有測試站就藏起來
 	_ck(m.rules == &"normal" and m.RULES.keys().slice(0, 2) == [&"normal", &"party"], "預設模式是一般，派對第二")
-	_ck(m.RULES.keys().slice(2).all(func(k: StringName) -> bool: return m.RULES[k].legacy), "一般、派對以外的都是舊模式")
+	_ck(m.RULES.keys().slice(3).all(func(k: StringName) -> bool: return m.RULES[k].legacy) and m.RULES.keys()[2] == &"team" and not m.RULES[&"team"].legacy, "一般、派對、團隊以外的都是舊模式")
 	m.lobby_go(&"online")
 	_ck(not m.get_node(^"UI/Root/Lobby/TestServerBtn").visible or m.TEST_SERVER != "", "沒有測試站就看不到「連到測試站」")
 	m.lobby_go(&"practice")

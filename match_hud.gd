@@ -371,6 +371,11 @@ func world_marks() -> Array:
 		marks.append({"pos": _seen_at(&"star", star + Vector3.UP * 1.5), "icon": &"star", "color": Raptors.GOLD_COLOR, "label": "★星星"})
 	else:
 		_seen.erase(&"star")
+	if p and p.team and p.phase in [&"prep", &"play"]:   # 團隊模式：隊友頭上隊色的小三角和名字，隔著牆也看得到（敵人什麼都沒有）
+		for c: Node in main.players.get_children():
+			if c is Cowboy and c.hp > 0 and p.team.same(me, c.name.to_int()):
+				marks.append({"pos": (c as Node3D).global_position + Vector3.UP * 2.4, "icon": &"mate", "color": Team.COLORS[p.team.team_of(me)],
+					"label": "隊友", "sub": String(p.names.get(c.name.to_int(), "隊友"))})
 	return marks
 
 ## 每 MARK_REFRESH 秒跟上一次的位置（每台自己記）：key -> [位置, 記的時刻（毫秒）]
