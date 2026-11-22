@@ -175,27 +175,6 @@ static func dust_ring(world: Node, at: Vector3, radius: float, amount := 24, spe
 	_once(world, p, at)
 
 
-## 煙囪一直冒的煙。回傳節點，要停掉就 queue_free
-static func chimney(parent: Node3D, pos: Vector3) -> CPUParticles3D:
-	var c := Color(0.55, 0.55, 0.55, 0.5)
-	var p := _emitter(_card(0.35, c), 24, 6.0)
-	_spin(p)
-	p.one_shot = false
-	p.explosiveness = 0.0   # 一顆一顆接著冒，不是一陣一陣
-	p.preprocess = p.lifetime   # 一出現就是冒了一陣子的樣子：還沒冒出來的煙片會畫成黑色
-	p.direction = Vector3.UP
-	p.spread = 8.0
-	p.initial_velocity_min = 0.8
-	p.initial_velocity_max = 1.2
-	p.gravity = WIND   # 一點點風，煙往同一邊斜
-	p.scale_amount_curve = _grow(0.5, 3.0)
-	p.color_ramp = _fade(c)
-	parent.add_child(p)
-	p.position = pos
-	p.emitting = true
-	return p
-
-
 ## 跟著玩家飄的氣氛：落葉 + 飛蟲。只在身邊一圈生，整張地圖一起生太貴。
 ## 粒子是世界座標，節點每幀搬到鏡頭位置，已經飄出來的不會跟著跑
 static func drift(parent: Node) -> Node3D:

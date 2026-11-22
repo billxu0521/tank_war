@@ -44,10 +44,6 @@ static func place(parent: Node3D, mesh: Mesh, at: Vector3, hang := true) -> OilL
 const BAKED := {
 	&"HitchRail": [Vector3(0, 1.8, 0)],
 	&"Barn": [Vector3(0, 3.0, 0.3), Vector3(-6.3, 1.05, 3.45)],          # 閣樓下吊的、工作台上的
-	&"House1": [Vector3(-0.9, 3.0, 4.2), Vector3(-1.65, 1.5, 1.8)],      # 門廊吊的、屋裡桌上的
-	&"House2": [Vector3(-0.9, 3.0, 4.2), Vector3(-1.65, 1.5, 1.8)],
-	&"House3": [Vector3(0.9, 2.7, 4.2), Vector3(-1.65, 1.5, 1.8)],
-	&"Saloon": [Vector3(0, 4.2, 0)], &"Store": [Vector3(0, 3.3, 0)], &"Sheriff": [Vector3(0, 3.3, 0)],
 }
 const LIT_MATS := ["h_lit", "p_lamp"]
 const GLASS_TO_HOOK := 0.29   # 這支的油燈：燈罩中心在掛鉤下面多少

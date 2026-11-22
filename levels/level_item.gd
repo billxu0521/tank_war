@@ -9,7 +9,6 @@ extends Node3D
 ##   flat     整平區，amount = 半徑（公尺）
 ##   wheat    麥田，amount = 邊長
 ##   barn     穀倉，size = 寬 × 牆高 × 長（公尺），amount = 出生點要離多遠
-##   house    農舍，variant = House1 / House2 / House3
 ##   silo     筒倉，amount = 高度
 ##   fence    柵欄，amount = 長度（沿著自己的 X 方向）
 ##   gate     圍欄門，amount = 往外是 -Z（-1）還是 +Z（+1），flag = 缺口左邊那扇
@@ -20,16 +19,15 @@ extends Node3D
 ##            或柱狀仙人掌 Saguaro / SaguaroS（有碰撞），大小用節點的縮放
 ##   rock     石頭，variant = Rock01..16，大小用節點的縮放，flag = 有碰撞（掩體）
 ##   bush     灌木，大小用節點的縮放
-##   shop     城鎮店面，variant = Saloon / Store / Sheriff（正面朝自己的 +Z，轉向用節點的朝向）
 ##   road     另外鋪的土路（城鎮主街），size 的 X、Z = 長、寬（不轉向）
 ##   gb_house 灰盒房子（greybox.gd），size = 寬 × 每層高 × 深，amount = 層數，flag = 前門換成恐龍進得去的大門。正面朝自己的 +Z
 ##   gb_block 灰盒方塊（半身牆、木箱、平台），size = 寬 × 高 × 深
 ##   gb_safe  安全屋（派對模式）：一層的灰盒房，size 同 gb_house。門窗恐龍擠不進、甩尾拆不掉
 ##   spawn    牛仔出生／重生點、dino_spawn 恐龍出生點、safe_spot 保險箱候選點（派對每回合抽一個）：只看位置，遊戲裡看不到
-##   windmill 風車、hay_shed 倉庫、hitch 繫柱架、wheel 靠牆的車輪、water_tower 水塔：只看位置和朝向
+##   windmill 風車、hay_shed 倉庫、hitch 繫柱架、wheel 靠牆的車輪：只看位置和朝向
 
-@export_enum("flat", "wheat", "barn", "house", "silo", "fence", "gate", "hay_bale", "kit", "prop",
-	"tree", "rock", "bush", "windmill", "hay_shed", "hitch", "wheel", "shop", "road", "water_tower", "gb_house", "gb_block", "gb_safe", "spawn", "dino_spawn", "safe_spot") var kind := "kit":
+@export_enum("flat", "wheat", "barn", "silo", "fence", "gate", "hay_bale", "kit", "prop",
+	"tree", "rock", "bush", "windmill", "hay_shed", "hitch", "wheel", "road", "gb_house", "gb_block", "gb_safe", "spawn", "dino_spawn", "safe_spot") var kind := "kit":
 	set(v):
 		kind = v
 		_refresh()

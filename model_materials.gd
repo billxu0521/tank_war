@@ -9,7 +9,7 @@ extends RefCounted
 ## Blender 設了 Specular 0，但 glTF 匯進來 Godot 還是預設 0.5，要在這裡補。
 ## 網格被資源快取住，改一次之後各處 instantiate 出來的都是改好的那份（glb 要留著，快取才不會被丟掉）
 const LEAVES_SHADER := preload("res://leaves.gdshader")
-const FLAT_MODELS := ["res://models/props.glb", "res://models/trees.glb", "res://models/rocks.glb", "res://models/houses.glb", "res://models/kits.glb", "res://models/towns.glb",
+const FLAT_MODELS := ["res://models/props.glb", "res://models/trees.glb", "res://models/rocks.glb", "res://models/kits.glb",
 	"res://models/groves.glb", "res://models/floras.glb", "res://models/clutters.glb",
 	"res://models/cowboy.glb", "res://models/trex_hd.glb", "res://models/ninola.glb", "res://models/revolver.glb",
 	"res://models/shotgun.glb", "res://models/rifle.glb", "res://models/lance.glb",

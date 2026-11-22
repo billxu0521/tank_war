@@ -8,9 +8,6 @@ const DIR := "res://levels/物件庫/"
 const PRESETS := [
 	["穀倉", "barn", &"", Vector3(14, 8, 20), 7.0, false, 1.0],
 	["小棚子", "barn", &"", Vector3(8, 4, 6), 3.0, false, 1.0],
-	["前廊農舍", "house", &"House1", Vector3.ONE, 0.0, false, 1.0],
-	["圓木小屋", "house", &"House2", Vector3.ONE, 0.0, false, 1.0],
-	["直板高屋", "house", &"House3", Vector3.ONE, 0.0, false, 1.0],
 	["筒倉", "silo", &"", Vector3.ONE, 15.0, false, 1.0],
 	["倉庫", "hay_shed", &"", Vector3.ONE, 0.0, false, 1.0],
 	["風車", "windmill", &"", Vector3.ONE, 0.0, false, 1.0],
@@ -47,10 +44,6 @@ const PRESETS := [
 	["灰盒_平台", "gb_block", &"", Vector3(6, 3, 6), 0.0, false, 1.0],
 	["灰盒_安全屋", "gb_safe", &"", Vector3(4.6, 3, 4.6), 0.0, false, 1.0],
 	["麥田", "wheat", &"", Vector3.ONE, 40.0, false, 1.0],
-	["酒館", "shop", &"Saloon", Vector3.ONE, 0.0, false, 1.0],
-	["雜貨店", "shop", &"Store", Vector3.ONE, 0.0, false, 1.0],
-	["警長辦公室", "shop", &"Sheriff", Vector3.ONE, 0.0, false, 1.0],
-	["水塔", "water_tower", &"", Vector3.ONE, 0.0, false, 1.0],
 	["街道", "road", &"", Vector3(40, 0, 8), 0.0, false, 1.0],
 ]
 

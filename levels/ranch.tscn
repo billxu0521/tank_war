@@ -83,12 +83,6 @@ kind = "barn"
 size = Vector3(13.388707, 7.0013256, 22.044834)
 amount = 7.0
 
-[node name="農舍1" type="Node3D" parent="建築" unique_id=737291298]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -44, 0, -48)
-script = ExtResource("2_r0647")
-kind = "house"
-variant = &"House1"
-
 [node name="筒倉1" type="Node3D" parent="建築" unique_id=98801902]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -52, 0, -72)
 script = ExtResource("2_r0647")
@@ -100,83 +94,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -41, 0, -68)
 script = ExtResource("2_r0647")
 kind = "windmill"
 
-[node name="農舍2" type="Node3D" parent="建築" unique_id=1474544516]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0, -70)
-script = ExtResource("2_r0647")
-kind = "house"
-variant = &"House2"
-
-[node name="農舍3" type="Node3D" parent="建築" unique_id=776894473]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0, -48)
-script = ExtResource("2_r0647")
-kind = "house"
-variant = &"House3"
-
 [node name="穀倉2" type="Node3D" parent="建築" unique_id=2005053285]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, -40)
 script = ExtResource("2_r0647")
 kind = "barn"
 size = Vector3(8, 4, 6)
 amount = 3.0
-
-[node name="酒館1" type="Node3D" parent="建築" unique_id=1406375100]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0, -60)
-script = ExtResource("2_r0647")
-kind = "shop"
-variant = &"Saloon"
-
-[node name="雜貨店1" type="Node3D" parent="建築" unique_id=24782567]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32, 0, -60)
-script = ExtResource("2_r0647")
-kind = "shop"
-variant = &"Store"
-
-[node name="警長辦公室1" type="Node3D" parent="建築" unique_id=500544105]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 45, 0, -60)
-script = ExtResource("2_r0647")
-kind = "shop"
-variant = &"Sheriff"
-
-[node name="農舍4" type="Node3D" parent="建築" unique_id=828801558]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58, 0, -60)
-script = ExtResource("2_r0647")
-kind = "house"
-variant = &"House1"
-
-[node name="雜貨店2" type="Node3D" parent="建築" unique_id=996526798]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 72, 0, -60)
-script = ExtResource("2_r0647")
-kind = "shop"
-variant = &"Store"
-
-[node name="雜貨店3" type="Node3D" parent="建築" unique_id=481248415]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 26, 0, -32)
-script = ExtResource("2_r0647")
-kind = "shop"
-variant = &"Store"
-
-[node name="警長辦公室2" type="Node3D" parent="建築" unique_id=47500466]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 38, 0, -32)
-script = ExtResource("2_r0647")
-kind = "shop"
-variant = &"Sheriff"
-
-[node name="酒館2" type="Node3D" parent="建築" unique_id=780274338]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 51, 0, -32)
-script = ExtResource("2_r0647")
-kind = "shop"
-variant = &"Saloon"
-
-[node name="雜貨店4" type="Node3D" parent="建築" unique_id=384336709]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 65, 0, -32)
-script = ExtResource("2_r0647")
-kind = "shop"
-variant = &"Store"
-
-[node name="水塔1" type="Node3D" parent="建築" unique_id=620600437]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 78, 0, -78)
-script = ExtResource("2_r0647")
-kind = "water_tower"
 
 [node name="倉庫1" type="Node3D" parent="建築" unique_id=1681782646]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 0, 28)
@@ -187,12 +110,6 @@ kind = "hay_shed"
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -78, 0, 12)
 script = ExtResource("2_r0647")
 kind = "windmill"
-
-[node name="農舍5" type="Node3D" parent="建築" unique_id=1118941392]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52, 0, 48)
-script = ExtResource("2_r0647")
-kind = "house"
-variant = &"House2"
 
 [node name="街道" type="Node3D" parent="." unique_id=1257076187]
 

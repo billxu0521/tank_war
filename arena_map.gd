@@ -49,19 +49,10 @@ const BARN_BACK_W := 1.6   # 後門開口，跟 blender/props.py 一樣
 const BARN_BACK_H := 2.8
 const BARN_LOFT := 4.0
 const BARN_LADDER_X := -2.5
-const HOUSE_T := 0.2
-# 農舍三種（blender/house.py → houses.glb）：主屋牆都是 10 × 8，門在正面中央，整棟架高 HOUSE_FLOOR。
-# 牆、屋頂、煙囪、前廊、台階斜坡的碰撞都在 House<N>Col 裡。每種 [煙囪頂（冒煙的地方）]，跟 house.py 的 CHIMNEY 一樣
-const HOUSES := preload("res://models/houses.glb")
 # 場景小物件（blender/kit.py → kits.glb）：木桶、木箱、方草捆、車輪、柵欄、圍欄門、繫柱架、風車、倉庫、吊燈
 const KIT := preload("res://models/kits.glb")
-# 城鎮店面（blender/town.py → towns.glb）：酒館、雜貨店、警長辦公室、水塔，各帶碰撞 <名字>Col。正面朝 +Z
-const TOWNS := preload("res://models/towns.glb")
 const WINDMILL_HUB := Vector3(0.0, 8.9, 0.9)   # 風車葉輪掛在哪（kit.py 的 WINDMILL_HUB 換成 Godot 座標）
 const HAY_BLOCK := Vector3(1.1, 0.48, 0.55)    # 方草捆大小（kit.py 的 HAY_SIZE）
-const HOUSE_FLOOR := 0.45
-const HOUSE_KINDS := {&"House1": Vector3(5.6, 10.11, -2.0), &"House2": Vector3(-5.6, 7.09, -1.8),
-	&"House3": Vector3(3.4, 10.66, -1.6)}
 # 圍牆不給爬（見 dino.gd 的 _on_climbable_wall），所以恐龍能到的最高點就是
 # 「站上最高的屋頂再跳一下」。圍牆要比那個高，才翻不出去。
 const WALL_H := 40.0
@@ -75,7 +66,6 @@ var _level: Array[Dictionary] = []   # 擺設清單：場地上每樣東西一�
 var spawn_points: Array[Vector3] = []   # 牛仔出生／重生候選點（擺設種類 spawn，派對模式用）；空的就用 _spawn_point()
 var dino_spawn := Vector3.ZERO           # 恐龍出生點（擺設種類 dino_spawn）；沒放就是場地中央貼地
 var safe_spots: Array[Vector3] = []     # 保險箱候選點（擺設種類 safe_spot，派對每回合抽一個）；空的就放恐龍前面
-var _houses_built := 0   # 第幾棟農舍：三種輪流蓋（不用亂數，後面擺的東西位置才不會跟著變）
 var _doors: Array[Door] = []   # 晚加入的人連進來時，把開著的門補送給他
 var _party_at := Vector3.INF   # 派對方塊房子的位置（灰盒才找；INF = 沒有）
 var _toys: Array[ToyBuild] = []   # 積木（toy_build.gd）：灰盒的房子、掩體、安全屋，和派對的方塊房子。每台蓋的順序一樣，名字 Toy0、Toy1…
@@ -184,14 +174,12 @@ static func make_terrain(flats: Array) -> Terrain:
 	return t
 
 ## 每種東西在地面上佔的長方形半寬（沿自己的 X、Z）。出生點避開（_reserve，再加各自的間隔）和擺設檢查（LevelCheck）共用
-const FOOTPRINT := {&"house": Vector2(6.0, 6.5), &"silo": Vector2(3.0, 3.0), &"hay_shed": Vector2(4.0, 3.5),
+const FOOTPRINT := {&"silo": Vector2(3.0, 3.0), &"hay_shed": Vector2(4.0, 3.5),
 	&"windmill": Vector2(1.5, 1.5), &"tree": Vector2(0.5, 0.5), &"hay_bale": Vector2(0.75, 0.75),
-	&"hitch": Vector2(1.7, 0.15), &"gate": Vector2(0.15, 0.15), &"water_tower": Vector2(2.3, 2.3)}
-## 店面佔地（半寬）：房子本身＋門口人行道和台階。前後一樣長（背後多留一點空地，比較好算）
-const SHOP_HALF := {&"Saloon": Vector2(5.3, 9.5), &"Store": Vector2(4.8, 9.0), &"Sheriff": Vector2(4.3, 8.4)}
+	&"hitch": Vector2(1.7, 0.15), &"gate": Vector2(0.15, 0.15)}
 ## 出生點要再離多遠（穀倉的在清單那一筆自己帶，大穀倉和小棚子不一樣）
-const CLEARANCE := {&"house": SPAWN_CLEARANCE, &"silo": 3.0, &"hay_shed": 2.0, &"windmill": 2.0, &"tree": 1.5,
-	&"hay_bale": 1.0, &"rock": 1.5, &"fence": 0.6, &"shop": SPAWN_CLEARANCE, &"water_tower": 2.0,
+const CLEARANCE := {&"silo": 3.0, &"hay_shed": 2.0, &"windmill": 2.0, &"tree": 1.5,
+	&"hay_bale": 1.0, &"rock": 1.5, &"fence": 0.6,
 	&"gb_house": 3.0, &"gb_block": 1.0, &"gb_safe": 3.0}
 
 ## 這一筆在地面上佔的半寬；沒有碰撞的（灌木、碎石、只有外觀的東西）回傳 ZERO
@@ -199,8 +187,6 @@ static func footprint_half(rec: Dictionary) -> Vector2:
 	match rec.kind:
 		&"barn":
 			return Vector2(rec.size.x, rec.size.z) * 0.5
-		&"shop":
-			return SHOP_HALF.get(rec.variant, Vector2(5, 9))
 		&"fence":
 			return Vector2(maxf(rec.length * 0.5 - 0.25, 0.0), 0.15)   # 兩端各縮一根柱子：轉角接頭、門柱貼著端點不算佔到
 		&"kit":
@@ -257,7 +243,6 @@ func _build_level() -> void:
 		match rec.kind:
 			&"wheat": _wheat(rec)
 			&"barn": _barn(p, rec.size)
-			&"house": _house(p, rec.variant)
 			&"silo": _silo(p, rec.h)
 			&"fence": _fence(p, rec.length, rec.yaw)
 			&"gate": _gate(p, rec.out, rec.left)
@@ -267,8 +252,6 @@ func _build_level() -> void:
 			&"kit": _kit(rec.name, p, rec.yaw)
 			&"wheel": _lean_wheel(p, rec.yaw)
 			&"hitch": _hitch(p)
-			&"shop": _shop(p, rec.variant, rec.yaw)
-			&"water_tower": _water_tower(p, rec.yaw)
 			&"gb_house": _place_greybox(_toy(ToyBuild.make(Greybox.bricks(Greybox.house_pieces(rec.size, rec.floors, rec.big), p))), p, rec.yaw)
 			&"gb_block": _place_greybox(_toy(ToyBuild.make(Greybox.bricks(Greybox.block_pieces(rec.size), p))), p, rec.yaw)   # 掩體方塊：等級 2、拆得掉
 			&"gb_safe":   # 安全屋：一層的小灰盒房，門窗恐龍擠不進。全部等級 3、拆不掉（不進 destructible）
@@ -433,15 +416,6 @@ func _gen_barn(p: Vector3, size: Vector3, clearance := SPAWN_CLEARANCE) -> void:
 	_gen_clutter(p + Vector3(-(BARN_DOOR_W * s.x + 1.9), 0, size.z * 0.5 + 1.3), 0.0)
 	_put({kind = &"wheel", pos = p + Vector3(BARN_DOOR_W * s.x + 0.9, 0, size.z * 0.5), yaw = 0.0})
 	_gen_hay_stack(p + Vector3(-(size.x * 0.5 + 0.8), 0, size.z * 0.15), PI * 0.5)
-
-## 農舍（三種輪流：不用亂數，後面擺的東西位置才不會跟著變）＋門前的繫柱架、左側牆邊一排木桶木箱
-func _gen_house(p: Vector3, variant: StringName = &"") -> void:
-	if variant == &"":
-		variant = HOUSE_KINDS.keys()[_houses_built % HOUSE_KINDS.size()]
-		_houses_built += 1
-	_put({kind = &"house", pos = p, variant = variant})
-	_put({kind = &"hitch", pos = p + Vector3(-4.5, 0, 10.5)})   # 台階旁邊，不擋路
-	_gen_clutter(p + Vector3(-6.9, 0, 1.4), PI * 0.5)
 
 ## 一小堆雜物（木桶、木箱、方草捆）排成一列：蹲得進去的矮掩體，擋子彈。
 ## 用自己的亂數（照位置算）：多擺少擺不影響其他東西的位置
@@ -616,7 +590,7 @@ const CLUTTER := [
 	[&"DinoSkull", 3, Vector3(3.0, 1.2, 1.6), 18.0, -0.2, &"desert"],   # 荒野只有區域之間那幾條帶子，間距大了放不滿
 	[&"MineCart", 1, Vector3(1.2, 0.9, 0.75), 30.0, -1.0, &"rock"],   # 區域外夠大的石頭只有一兩顆
 ]
-const BUILDING_KINDS := [&"barn", &"house", &"shop", &"silo", &"hay_shed", &"water_tower", &"windmill"]
+const BUILDING_KINDS := [&"barn", &"silo", &"hay_shed", &"windmill"]
 
 ## 一個候選點 [位置, 朝向]；沒找到回傳空陣列
 func _clutter_candidate(where: StringName, cr: RandomNumberGenerator, half: float) -> Array:
@@ -1099,14 +1073,11 @@ static func exit_spots(grey := false) -> Array[Vector2]:
 		out.append_array([Vector2(0, -51), Vector2(2, 64)])
 	return out
 
-## 農莊：穀倉＋農舍＋筒倉，外面一圈柵欄。穀倉是恐龍爬上去看全場的制高點
+## 農莊：穀倉＋筒倉，外面一圈柵欄。穀倉是恐龍爬上去看全場的制高點
 func _farmstead(c: Vector3, rng: RandomNumberGenerator) -> void:
 	var barn := c + Vector3(-8, 0, -4)
 	if _free(barn, 14):
 		_gen_barn(barn, Vector3(rng.randf_range(12, 16), rng.randf_range(7, 9), rng.randf_range(18, 24)))
-	var house := c + Vector3(12, 0, 8)
-	if _free(house, 8):
-		_gen_house(house)
 	var silo := c + Vector3(4, 0, -16)
 	if _free(silo, 4):
 		_put({kind = &"silo", pos = silo, h = rng.randf_range(13, 18)})
@@ -1164,15 +1135,11 @@ const ZONE_TOWN := Rect2(8, -84, 76, 76)
 const ZONE_WHEAT := Rect2(-84, 8, 62, 76)
 const ZONE_FOREST := Rect2(22, 8, 62, 76)
 
-## 農社區（西北）：一座大農莊（穀倉、農舍、筒倉、風車、一圈柵欄），往路口那邊兩戶人家，路口旁一小塊牧場
+## 農社區（西北）：一座大農莊（穀倉、筒倉、風車、一圈柵欄），路口旁一小塊牧場
 func _zone_farm(rng: RandomNumberGenerator) -> void:
 	var a := Vector3(-56, 0, -56)
 	_put({kind = &"flat", pos = a, r = 30.0})
 	_farmstead(a, rng)
-	for z: float in [-70.0, -48.0]:
-		var h := Vector3(-22, 0, z)
-		_put({kind = &"flat", pos = h, r = 10.0})
-		_gen_house(h)
 	# 牧場：柵欄隔成欄位（翻越練習），旁邊一間小棚子
 	var shed := Vector3(-12, 0, -40)   # 再往南會壓到沙盒靶場（z > -30）
 	_put({kind = &"flat", pos = shed, r = 10.0})
@@ -1183,31 +1150,13 @@ func _zone_farm(rng: RandomNumberGenerator) -> void:
 			if _free(p, 2) and rng.randf() > 0.2 and _is_clear(Vector2(p.x, p.z)):
 				_put({kind = &"fence", pos = p, length = 10.0, yaw = 0.0})
 
-## 城鎮（東北）：一條東西向的主街，兩排店面面對面（北排朝南、南排朝北），店門口有繫柱架，
-## 街上停一台篷車，後面一座水塔當制高點
+## 城鎮（東北）：一條東西向的主街，街上停一台篷車（舊的店面、水塔模型 2026-11-22 清掉了，房子改用積木再蓋）
 func _zone_town(rng: RandomNumberGenerator) -> void:
 	var sz := -46.0   # 主街中線
 	_put({kind = &"road", pos = Vector3(46, 0, sz), size = Vector3(76, 0, 8)})
 	for x: float in [16.0, 36.0, 56.0, 76.0]:
 		_put({kind = &"flat", pos = Vector3(x, 0, sz), r = 22.0})
-	var north := [[&"Saloon", 18.0], [&"Store", 32.0], [&"Sheriff", 45.0], [&"house", 58.0], [&"Store", 72.0]]
-	var south := [[&"Store", 26.0], [&"Sheriff", 38.0], [&"Saloon", 51.0], [&"Store", 65.0]]   # 西邊讓給沙盒靶場
-	for row: Array in [[north, sz - 14.0, 0.0, -1.0], [south, sz + 14.0, PI, 1.0]]:
-		for b: Array in row[0]:
-			var p := Vector3(b[1], 0, row[1])
-			if b[0] == &"house":
-				_gen_house(p)
-				continue
-			_put({kind = &"shop", pos = p, variant = b[0], yaw = row[2]})
-			# 門口的繫柱架：台階旁邊，在街上
-			_put({kind = &"hitch", pos = Vector3(b[1] + 3.6, 0, sz + row[3] * 3.0)})
-		for i in row[0].size() - 1:   # 兩棟之間的巷子口堆一點雜物（農舍自己會堆，旁邊不再堆）
-			if &"house" in [row[0][i][0], row[0][i + 1][0]]:
-				continue
-			var x: float = (row[0][i][1] + row[0][i + 1][1]) * 0.5
-			_gen_clutter(Vector3(x, 0, row[1] - row[3] * 4.0), PI * 0.5)
 	_put({kind = &"prop", name = &"Wagon", pos = Vector3(54, 0, sz + 1.5), yaw = 0.1 + rng.randf() * 0.2})
-	_put({kind = &"water_tower", pos = Vector3(78, 0, -78), yaw = 0.0})
 
 ## 麥田（西南）：一大片麥子，裡面散著圓捆當掩體，東北角一間倉庫，西邊一座風車
 func _zone_wheat(rng: RandomNumberGenerator) -> void:
@@ -1228,11 +1177,10 @@ func _zone_wheat(rng: RandomNumberGenerator) -> void:
 			_put({kind = &"hay_bale", pos = p, yaw = yaw})
 	_put({kind = &"windmill", pos = Vector3(-78, 0, 12)})   # 麥田外面，西北角
 
-## 森林（東南）：一整片林子（闊葉樹為主、三成松樹），中間一塊空地有間圓木小屋和柴堆
+## 森林（東南）：一整片林子（闊葉樹為主、三成松樹），中間一塊空地有柴堆
 func _zone_forest(rng: RandomNumberGenerator) -> void:
 	var cabin := Vector3(52, 0, 48)
 	_put({kind = &"flat", pos = cabin, r = 11.0})
-	_gen_house(cabin, &"House2")
 	_gen_clutter(cabin + Vector3(7.5, 0, -3.0), PI * 0.5)
 	var z := ZONE_FOREST.position.y + 4.0
 	while z < ZONE_FOREST.end.y - 2.0:
@@ -1332,17 +1280,6 @@ func _barn(p: Vector3, size: Vector3) -> void:
 	_ladder(p + Vector3(lx, 0, 0.15 * s.z), loft + 1.0, p + Vector3(lx, 0, 0.15 * s.z + 0.5), loft,
 		p + Vector3(lx, loft + 0.1, -1.0 * s.z), 0.0)
 
-## 農舍：空心的，進得去。kind 是三種外觀之一（前廊農舍、圓木小屋、直板高屋），碰撞跟著外觀走
-func _house(p: Vector3, kind: StringName) -> void:
-	p = _on_ground(p)
-	_solid_mesh(p, _props.get(StringName(kind + "Col")), Vector3.ONE)
-	Fx.chimney(self, p + HOUSE_KINDS[kind])
-	_prop(kind, p)
-	# 前門：門軸在門洞左緣，往屋裡推開
-	var d := _door(&"HouseDoor", p + Vector3(-0.55, HOUSE_FLOOR, 4.0 - HOUSE_T * 0.5),
-		Vector3(1.1, 2.2, 0.08), Vector3(0.55, 0, 0), Vector3.ONE)
-	d.swing = PI * 0.5
-
 ## --- 場景小物件（kits.glb） ---
 ## 下面這些函式都自己貼地：p 給不含高度的位置（p.y 是離地高度，通常 0）。
 ## 已經 _on_ground 過的座標要先把 y 歸零，不然地面多高就浮多高
@@ -1407,19 +1344,6 @@ func _windmill(p: Vector3) -> void:
 const SHED_LANTERN := Vector3(2.0, 2.95, 3.25)   # 倉庫門口的吊燈（編輯器預覽也用）
 
 ## 倉庫／圍棚：門朝 +Z 敞開，裡面疊著方草捆。牆、屋頂、草捆的碰撞是 HayShedCol
-## 城鎮店面（酒館、雜貨店、警長辦公室）：空心的，門窗是開口（沒有門板）。碰撞是 Blender 的 <名字>Col，
-## 跟著朝向轉（yaw 0 正面朝 +Z，PI 朝 -Z）。裡面吊的提燈是打得破的油燈（lantern.gd 的 replace_baked），屋裡的光就是它
-func _shop(p: Vector3, variant: StringName, yaw: float) -> void:
-	p = _on_ground(p)
-	_solid_mesh(p, _props.get(StringName(variant + "Col")), Vector3.ONE).rotation.y = yaw
-	_prop(variant, p).rotation.y = yaw
-
-## 水塔：四根腳和水桶有碰撞（恐龍爬得上去，當城鎮的制高點）
-func _water_tower(p: Vector3, yaw: float) -> void:
-	p = _on_ground(p)
-	_solid_mesh(p, _props.get(&"WaterTowerCol"), Vector3.ONE).rotation.y = yaw
-	_prop(&"WaterTower", p).rotation.y = yaw
-
 func _hay_shed(p: Vector3) -> void:
 	p = _on_ground(p)
 	_solid_mesh(p, _props.get(&"HayShedCol"), Vector3.ONE)
@@ -1679,7 +1603,7 @@ func _load_props() -> void:
 static var _mesh_table := {}
 static func meshes() -> Dictionary:
 	if _mesh_table.is_empty():
-		for glb: PackedScene in [PROPS, TREES, ROCKS, HOUSES, KIT, TOWNS, GROVES, FLORAS, CLUTTERS]:
+		for glb: PackedScene in [PROPS, TREES, ROCKS, KIT, GROVES, FLORAS, CLUTTERS]:
 			var src := glb.instantiate()
 			for c in src.get_children():
 				if c is MeshInstance3D:

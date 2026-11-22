@@ -44,14 +44,7 @@ func install(m: Node) -> void:
 		var p := Vector2(rec.pos.x, rec.pos.z)
 		if not town_road.grow(19.0).has_point(p):
 			continue
-		if rec.kind == &"shop" or rec.kind == &"house":
-			var yaw: float = rec.get("yaw", 0.0)
-			var front := Vector2(sin(yaw), cos(yaw))
-			var depth: float = ArenaMap.SHOP_HALF.get(rec.get("variant", &""), Vector2(6, 6.5)).y
-			var a := p + front * (depth - 0.5)
-			var b := Vector2(a.x, town_road.get_center().y)
-			entries.append([a, b, 1.15 + fmod(absf(p.x), 3.0) * 0.15])
-		elif rec.kind == &"hitch" or (rec.kind == &"prop" and rec.get("name") == &"Wagon"):
+		if rec.kind == &"hitch" or (rec.kind == &"prop" and rec.get("name") == &"Wagon"):
 			wear_spots.append(p)
 			if rec.kind == &"prop":
 				var yaw: float = rec.get("yaw", 0.0)
@@ -93,15 +86,15 @@ func install(m: Node) -> void:
 		elif rec.kind == &"rock":
 			rock_count += 1
 			stamp(p, 2.0, 3, 0.65)
-		elif rec.kind in [&"house", &"barn", &"silo", &"windmill"] and farm_zone.has_point(p):
+		elif rec.kind in [&"barn", &"silo", &"windmill"] and farm_zone.has_point(p):
 			var half := Vector2(5.5, 6.5)
 			if rec.kind == &"barn":
 				half = Vector2(rec.size.x, rec.size.z) * 0.5
 			elif rec.kind == &"silo" or rec.kind == &"windmill":
 				half = Vector2(3.0, 3.0)
 			farm_pads.append(Rect2(p - half - Vector2.ONE * 3.0, (half + Vector2.ONE * 3.0) * 2.0))
-			# 現存農舍／穀倉正面朝+Z；短通行帶只延伸至門前。
-			if rec.kind in [&"house", &"barn"]:
+			# 穀倉正面朝+Z；短通行帶只延伸至門前。
+			if rec.kind == &"barn":
 				farm_entries.append([p + Vector2(0, half.y - 0.5), p + Vector2(0, half.y + 7.0), 1.5])
 	for iz in RESOLUTION:
 		for ix in RESOLUTION:
