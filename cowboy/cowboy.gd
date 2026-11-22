@@ -792,10 +792,11 @@ func _bot_ctx(g: Node) -> Dictionary:
 	var carrier := 0 if g.egg.carrier == 0 else (1 if g.egg.carrier == id else 2)
 	var holder: Node3D = g.players.get_node_or_null(NodePath(str(g.egg.carrier))) if carrier == 2 else null
 	var mates: Array = []
+	var tm: Team = p.team if p else null   # 團隊模式：mates 只算隊友（分頭、讓給比較近的）；隊友拿著蛋就護送不追
 	for c: Node in g.players.get_children():
 		if c.is_in_group(&"dino"):
 			dino = null if _bot_dino_down else brain.dino_mem
-		elif c != self and c is Cowboy:
+		elif c != self and c is Cowboy and (tm == null or tm.same_side(self, c)):
 			mates.append({"pos": c.global_position, "vel": c.velocity, "act": (c as Cowboy).bot_action if c.bot else "",
 				"carry": g.egg.carrier == c.name.to_int()})
 	var star: Variant = null   # 追分星星：金色小恐龍、地上的星星、別人身上的星星
@@ -817,7 +818,7 @@ func _bot_ctx(g: Node) -> Dictionary:
 		"time_left": p.time_left if p else 999.0, "locked": safe_on, "safe": g.safe.global_position,
 		"cards": p.env_pos if p else [], "known": p._known.get(id, [-1, -1]) if p else [-1, -1],
 		"carrier": carrier, "holder": holder.global_position if holder else g.egg.global_position, "egg": g.egg.global_position,
-		"exits": g._exits, "ffa": p != null, "dino": dino, "conf": brain.conf, "mates": mates,
+		"exits": g._exits, "ffa": p != null and not (tm and tm.same(id, g.egg.carrier)), "dino": dino, "conf": brain.conf, "mates": mates,
 		"sees": brain.seen_ago < BotBrain.THINK + 0.1 and not _bot_dino_down, "hit_ago": _bot_hit_ago, "bushes": g.map._bushes}
 
 
@@ -1000,6 +1001,8 @@ func _bot_sense(g: Node, dt: float) -> void:
 					var r := randf() * minf(d * BotBrain.HEAR_FUZZ, BotBrain.HEAR_FUZZ_MAX)
 					brain.remember(n.global_position + Vector3.FORWARD.rotated(Vector3.UP, randf() * TAU) * r, BotBrain.HEARD_CONF)
 		elif c is Cowboy:
+			if g.party and g.party.team and g.party.team.same_side(self, c):
+				continue   # 團隊模式：不打隊友
 			see = _bot_sees(g, n, BotBrain.SIGHT_COWBOY)
 		if not see:
 			continue

@@ -153,7 +153,9 @@ func explode(i: int, shooter: Node, delay := 0.0) -> void:
 			return
 	_boom.rpc(i)
 	var who: Node = shooter if is_instance_valid(shooter) else null
+	Fighter.any_side = true   # 桶不分敵我：團隊模式隊友開槍打爆的桶也炸得到隊友（fighter.take_damage）
 	Explosive.damage(main.map, spots[i], RADIUS, DAMAGE, who)
+	Fighter.any_side = false
 	ToyBuild.blast(main.map, spots[i], RADIUS)
 	get_tree().call_group(&"boss", &"hear", spots[i])
 

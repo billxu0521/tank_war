@@ -130,7 +130,7 @@ func _process(delta: float) -> void:
 	_result_left -= delta
 	board.visible = Input.is_physical_key_pressed(KEY_TAB) and p.phase != &"final" and p.rounds > 1   # 1 局（一般模式）不看分數
 	popup.visible = p.phase == &"final" or (p.phase == &"result" and _result_left > 0.0)
-	scorebar.visible = p.phase in [&"prep", &"play"] and p.rounds > 1   # 結算、最終排名中間有大框
+	scorebar.visible = p.phase in [&"prep", &"play"] and (p.rounds > 1 or p.team != null)   # 結算、最終排名中間有大框；團隊模式是三隊的人頭
 	update_live()
 
 
@@ -142,8 +142,10 @@ func update_live() -> void:
 	# final 時 round_index 已經加到 rounds：停在最後一回合
 	var lines := ["第 %d／%d 回合　　%s %d:%02d" % [mini(p.round_index + 1, p.rounds), p.rounds, PHASES.get(p.phase, ""), t / 60, t % 60],
 		"恐龍：%s" % name_of(p.dino_id)]
+	if p.team and p.team.team_of(me) >= 0:
+		lines.append("你是%s" % Team.NAMES[p.team.team_of(me)])
 	if me != p.dino_id and p.lives.has(me) and p.phase in [&"prep", &"play"]:
-		lines.append("你剩 %d 條命" % int(p.lives[me]))
+		lines.append("你剩 %d 條命" % int(p.lives[me]) if int(p.lives[me]) > 0 else "你出局了，觀戰中")
 	top.text = "\n".join(lines)
 	if main.egg.carrier != _carrier or p.star_holder != _star:
 		_fill_scorebar()
@@ -216,7 +218,8 @@ func _choose(i: int) -> void:
 ## changed 來了：分數板、結算框重排。內容跟上次一樣就不動（約 70 個節點，每秒重建一次在 2 核主機頓 40 毫秒）
 func refresh() -> void:
 	var p := _party
-	var key := hash([p.phase, p.scores, p.round_scores, p.names, p.dino_id, p.last_result, main.egg.carrier, p.star_holder, my_id()])
+	var key := hash([p.phase, p.scores, p.round_scores, p.names, p.dino_id, p.last_result, main.egg.carrier, p.star_holder, my_id(),
+		p.lives, p.team.of if p.team else null])
 	if key == _shown:
 		return
 	_shown = key
@@ -271,6 +274,9 @@ func _fill_scorebar() -> void:
 	for c in scorebar.get_children():
 		scorebar.remove_child(c)
 		c.queue_free()
+	if _party.team:
+		_fill_teams()
+		return
 	var order: Array = _party.scores.keys()
 	var ranked: Array = _party.ranking()
 	for i in ranked.size():
@@ -311,3 +317,16 @@ func _fill_scorebar() -> void:
 				l.add_theme_color_override(&"font_color", CARRY)
 			h.add_child(l)
 		scorebar.add_child(row)
+
+
+## 團隊模式的左上：每隊一列，隊色的隊名加每個人一個圓點（● 還在場上、○ 出局）。自己那隊後面寫（你）。
+## ponytail: 用字畫圓點；T2 加倒地（半滿）時再換成畫的
+func _fill_teams() -> void:
+	var t: Team = _party.team
+	for i in Team.COUNT:
+		var ids: Array = t.of.keys().filter(func(id: int) -> bool: return t.of[id] == i)
+		var l := _label(20)
+		l.text = "%s　%s%s" % [Team.NAMES[i], " ".join(ids.map(func(id: int) -> String: return "●" if int(_party.lives.get(id, 1)) > 0 else "○")),
+			"　（你）" if t.team_of(my_id()) == i else ""]
+		l.add_theme_color_override(&"font_color", Team.COLORS[i])
+		scorebar.add_child(l)

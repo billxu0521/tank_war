@@ -2,6 +2,8 @@ extends SceneTree
 ## 量電腦牛仔「像不像真人」（docs/企劃/2026-11-13-電腦牛仔像真人.md「怎麼量」）：派對模式、4 個電腦輪流當恐龍（3 個牛仔＋電腦尼諾拉），跑 N 回合。
 ##   godot --headless --fixed-fps 60 --path . --script tools/bot_sim.gd
 ##   ROUNDS=20（預設）、SEED=1、BOT_LOG=1（電腦換動作時印一行，打分數版才有）
+##   TEAM=1：團隊模式（電腦尼諾拉＋三隊各 3 個電腦獵人，一場 1 局 12 分鐘）；ROUNDS 就是幾場。總表多一行各隊贏幾場
+##   SHORT=秒：遊戲階段最多這麼久（只是確認跑得完、不當掉用；量數字不要設）
 ## 照專用伺服器的開法：物理一秒 60 次、沒有真人（_dedicated）。--fixed-fps 60 讓一幀固定走 1/60 秒、不等真的時間，跑得比實際快；
 ## 拿掉就照實際速度（一回合 3 分 45 秒）。快轉時用真的時鐘算的東西（尼諾拉撞房子的拖拉、急救包冷卻）會變短，對牛仔的行為影響小。
 ## 每回合結束 party.gd 印「回合指標」（遊戲本身也印，真人的場次一樣有），最後印總表和「BOT_SIM OK」（Godot 解析錯誤也回 0，要看這行）。
@@ -14,6 +16,9 @@ var _t0 := 0
 var _gold := ""   # 最後一回合：金色小恐龍死了沒
 var _star := ""   # 最後一回合：星星在誰身上
 var _ms: PackedFloat32Array = []   # 遊戲中每幀的腳本時間（毫秒）：_process＋_physics_process
+var _team := OS.get_environment("TEAM") == "1"
+var _short := float(OS.get_environment("SHORT")) if OS.get_environment("SHORT") != "" else 0.0
+var _wins := {}   # 團隊模式：贏的（隊名、尼諾拉）-> 幾場
 var _pts: Array = []   # 每回合結算後的 [恐龍得分, 獵人裡最高的得分, 獵人平均]（0.8.16 第 1 節：恐龍固定之後公不公平）
 
 
@@ -34,16 +39,20 @@ func _process(_d: float) -> bool:
 		_m._offline = true
 		_m._dedicated = true   # 主機不是玩家：派對用電腦補滿四個
 		ToyBuild.no_flight = true
-		_m._on_mode_picked(_m.RULES.keys().find(&"party"))
+		_m._on_mode_picked(_m.RULES.keys().find(&"team" if _team else &"party"))
 		_m._enter_game("bot_sim")
 		_m._apply_rules()
 		_m.spawn_boss()
+		if _team:
+			_m.party.start()   # 固定恐龍的模式要等真人才開（party.step），這裡沒有真人：直接開
 		return false
 	var p: Party = _m.party
 	if p == null:
 		return false
 	if p.phase == &"play":
 		_ms.append(1000.0 * (Performance.get_monitor(Performance.TIME_PROCESS) + Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS)))
+	if _short > 0.0 and p.phase == &"play" and p.time_left > _short:
+		p.time_left = _short
 	if p.phase in [&"prep", &"result", &"final"] and p.time_left > 0.1:
 		p.time_left = 0.1   # 準備、結算不用等（牛仔本來就不能動）
 	if p.phase == &"play" and p.round_index == p.rounds - 1:   # 追分星星：最後一回合記金色小恐龍死了沒、星星在誰身上
@@ -55,6 +64,9 @@ func _process(_d: float) -> bool:
 		_gold = ""
 	if p.stats.last.size() > 0 and not (_rounds.size() > 0 and is_same(p.stats.last, _rounds.back())):   # report 每回合換一個新的字典
 		_rounds.append(p.stats.last)
+		if _team:
+			var w: String = Team.NAMES[p.winner_team] if p.winner_team >= 0 else "尼諾拉"
+			_wins[w] = int(_wins.get(w, 0)) + 1
 		var hs: Array = p._roster.filter(func(id: int) -> bool: return id != p.dino_id).map(func(id: int) -> int: return int(p.round_scores.get(id, 0)))
 		_pts.append([int(p.round_scores.get(p.dino_id, 0)), hs.max() if hs.size() > 0 else 0, hs.reduce(func(a: int, b: int) -> int: return a + b, 0) / maxf(hs.size(), 1.0)])
 		if _rounds.size() >= ROUNDS:
@@ -139,4 +151,6 @@ func _summary() -> void:
 	print("  恐龍 %.1f 分／回合、獵人最高 %.1f、獵人平均 %.1f；恐龍是獵人最高的 %.2f 倍（星星 ×2 只在每 4 回合的最後一回合）" % [dsum / maxi(n, 1),
 		tsum / maxi(n, 1), hsum / maxi(n, 1), dsum / maxf(tsum, 0.001)])
 	print("  卡在哪：%s" % "、".join(by.keys().map(func(k: String) -> String: return "%s %.0f 秒" % [k, by[k]])))
+	if _team:
+		print("  團隊模式誰贏：%s" % "、".join(_wins.keys().map(func(k: String) -> String: return "%s %d 場" % [k, _wins[k]])))
 	print("BOT_SIM OK")

@@ -10,7 +10,7 @@ const NEAR_AIM := 70.0    # 離畫面中央這麼近就變淡
 const NEAR_ALPHA := 0.3
 const GAP := 44.0         # 兩個標記疊在一起時往上推多少
 
-## [{"pos": Vector3, "icon": StringName, "color": Color, "label": String}]
+## [{"pos": Vector3, "icon": StringName, "color": Color, "label": String, "sub": 圖示下面的字（沒有就寫距離）}]
 var marks: Array = []
 var _cam: Camera3D
 
@@ -71,7 +71,7 @@ func _draw() -> void:
 			var side := Vector2(-d.y, d.x) * 6.0
 			draw_colored_polygon(PackedVector2Array([tip, tip - d * 9.0 + side, tip - d * 9.0 - side]), col)
 		Icons.draw(self, m["icon"], at, SIZE, col)
-		var t := "%dm" % int(_cam.global_position.distance_to(m["pos"]))
+		var t: String = m.get("sub", "%dm" % int(_cam.global_position.distance_to(m["pos"])))   # sub：隊友的名字
 		var w := font.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
 		var tp := at + Vector2(-w * 0.5, SIZE * 0.5 + 15.0)
 		draw_string_outline(font, tp, t, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, 4, Color(Icons.OUTLINE, 0.85 * alpha))

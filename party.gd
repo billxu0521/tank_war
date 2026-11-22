@@ -79,6 +79,11 @@ var my_hint: Array = []       # 這台的人搜到的候選 [[十位], [個位]]
 var _cands: Array = []        # 主機：這回合吞掉的信封（每位 HINT_COUNT 個），_start_round 抽
 var _hinted := {}             # 主機：這回合拿過候選的人（編號 -> true）。跟著人不跟著命
 var _env_bonus := {}          # 主機：第一個開信封的分，連線編號 -> 分。不進 state()，回合結算才併進 _add（不然恐龍從計分欄就知道信被開了）
+var team: Team = null         # 團隊模式的隊伍（team.gd；match_rules 的 team，_ready 建）。不是團隊模式是 null
+var winner_team := -1         # 團隊模式：帶蛋撤離的那一隊（-1 = 還沒有／尼諾拉贏）
+var lives_each := LIVES       # 每人每回合幾條命（團隊模式 team_lives）
+var play_seconds := PLAY_SECONDS   # 遊戲階段多久（團隊模式 team_play_seconds）
+var players_n := PLAYERS      # 不到這麼多人用電腦補（團隊模式 1 恐龍＋三隊）
 var stats := RoundStats.new()   # 主機：每回合的指標，結束時印「回合指標」（tools/bot_sim.gd 也讀）
 
 @onready var main: Node = get_parent()
@@ -90,6 +95,12 @@ func _ready() -> void:
 	fixed = bool(main.RULES[main.rules].get("fixed_dino", false))
 	if fixed:
 		rounds = main.normal_rounds
+	if bool(main.RULES[main.rules].get("team", false)):   # 團隊模式：1 局、12 分鐘、1 條命、10 個人
+		team = Team.new()
+		rounds = 1
+		lives_each = Balance.whole("team_lives")
+		play_seconds = Balance.num("team_play_seconds")
+		players_n = 1 + Team.COUNT * Team.SIZE
 	for i in 2:   # 每台都建、名字固定，看牌走 party 的 RPC，信封自己沒有 RPC
 		var e := Envelope.new()
 		e.name = "Envelope%d" % i
@@ -194,7 +205,7 @@ func step(delta: float) -> void:
 				if not egg_placed:   # 時間到沒放：放在恐龍腳下
 					_hide_egg_at(_dino_pos())
 				phase = &"play"
-				time_left = PLAY_SECONDS
+				time_left = play_seconds
 				stats.reset()
 				main._announce.rpc("開始！")
 				_sync()
@@ -252,7 +263,7 @@ func start() -> void:
 		names[bot] = "電腦尼諾拉"
 		_roster.append(bot)
 		bot -= 1
-	while _roster.size() < PLAYERS:   # 固定恐龍時恐龍也在名單上，所以一樣是「獵人不到 3 個用電腦補」
+	while _roster.size() < players_n:   # 固定恐龍時恐龍也在名單上，所以一樣是「獵人不到 3 個用電腦補」
 		names[bot] = "電腦 %d" % -bot
 		_roster.append(bot)
 		bot -= 1
@@ -270,12 +281,14 @@ func on_died(killer: Node, who: Node) -> void:
 		var k := killer.name.to_int()
 		_add(k, SCORE_KILL_CARRIER)
 		main._announce.rpc("%s +%d 打死拿蛋的人" % [names.get(k, "牛仔 %d" % k), SCORE_KILL_CARRIER])
-	lives[id] = int(lives.get(id, LIVES)) - 1
+	lives[id] = int(lives.get(id, lives_each)) - 1
 	if id == star_holder:
 		drop_star(who.global_position)
 	stats.died(who)
 	if int(lives[id]) > 0:
 		_waiting[id] = [RESPAWN_SECONDS, bool(who.get(&"bot"))]
+	elif team:
+		main._announce.rpc("%s（%s）出局了" % [names.get(id, "牛仔"), Team.NAMES[team.team_of(id)] if team.team_of(id) >= 0 else ""])
 	_pick.erase(id)   # 每次死都重選（上次的點這次可能是紅的）
 	_sync()
 
@@ -283,6 +296,10 @@ func on_died(killer: Node, who: Node) -> void:
 ## 有人帶蛋撤離（main._egg_step 轉過來）：回合馬上結束
 func extracted(id: int) -> void:
 	_add(id, SCORE_EXTRACT)
+	if team:   # 團隊模式：他那一隊贏
+		winner_team = team.team_of(id)
+		_end_round(false, "%s 帶蛋撤離（%s）" % [Team.NAMES[winner_team] if winner_team >= 0 else "", names.get(id, "牛仔 %d" % id)])
+		return
 	_end_round(false, "%s 帶蛋撤離" % names.get(id, "牛仔 %d" % id))
 
 
@@ -306,6 +323,12 @@ func _start_round() -> void:
 	_cands = roll_candidates(main.safe._code) if main.safe.on else []
 	env_open = [false, false]
 	dino_id = fixed_id if fixed else _roster[round_index % _roster.size()]
+	winner_team = -1
+	if team:   # 團隊模式：分隊、抽三個出生區，各自告訴他是哪一隊
+		team.assign(_roster.filter(func(id: int) -> bool: return id != dino_id))
+		team.zones = Team.pick_zones(main.spawn_points, main.ARENA)
+		for id: int in team.of:
+			_whisper(id, "你是%s" % Team.NAMES[team.of[id]])
 	# 清場：boss 以外全部收掉再照這回合的角色生（刪掉重生，客戶端的位置才會跟著換；做法同 main._new_round）
 	# 恐龍的牛仔留著：make_pilot 要跟他交接（先叫他停送同步再收），不能現在就收
 	var players: Node = main.players
@@ -325,7 +348,7 @@ func _start_round() -> void:
 	spots.shuffle()   # 準備階段牛仔隨機出生，各站一個點不擠在一起
 	for id: int in _roster:
 		if id != dino_id and _present(id):
-			_spawn_cowboy(id, id < 0, spots.pop_back() if not spots.is_empty() else -1)
+			_spawn_cowboy(id, id < 0, spots.pop_back() if not spots.is_empty() else -1, team.spot(id) if team else Vector3.INF)
 	var b: Node3D = main._boss()
 	if b == null:
 		b = main.spawn_boss()
@@ -402,6 +425,8 @@ func _end_round(dino_win: bool, msg: String) -> void:
 		_add(p.name.to_int(), SCORE_SURVIVE)
 	if rounds == 1:   # 1 局：不看分數，直接到最終畫面
 		msg = "尼諾拉守住了蛋" if dino_win else msg + "，獲勝"
+		if team and dino_win:
+			msg = "沒有人把蛋帶走，尼諾拉獲勝"
 	if star_holder != 0:   # 拿著星星：這回合的分數（含剛加的守住、活著、撤離）× STAR_MULT
 		_add(star_holder, int(round_scores.get(star_holder, 0)) * (STAR_MULT - 1))
 	phase = &"final" if rounds == 1 else &"result"
@@ -502,14 +527,15 @@ func _recv_red(m: int) -> void:
 	spawn_red = m
 
 
-func _spawn_cowboy(id: int, bot: bool, index: int) -> void:
+## at：直接給位置（團隊模式的出生區，team.spot）；INF 就照 index
+func _spawn_cowboy(id: int, bot: bool, index: int, at := Vector3.INF) -> void:
 	var c: Node3D = main._add_player(main.COWBOY, id)
 	c.set(&"bot", bot)
 	if bot:   # 電腦：散彈或步槍隨機拿一把（主機決定，別人的畫面靠 gun 看見）
 		(c as Cowboy).viewmodel.switch_weapon([1, 2].pick_random())
-	c.global_position = main._on_ground(_flat(_spawn_spot(index), 0.5))
+	c.global_position = main._on_ground(_flat(at if at.is_finite() else _spawn_spot(index), 0.5))
 	if not lives.has(id):
-		lives[id] = LIVES
+		lives[id] = lives_each
 
 
 ## 牛仔出生／重生點：選了就用選的，沒選就隨機；地圖沒放（spawn_points 空的）就退回 main._spawn_point
@@ -586,6 +612,8 @@ func rekey(old: int, new: int) -> void:
 		if d.has(old):
 			d[new] = d[old]
 			d.erase(old)
+	if team:
+		team.rekey(old, new)
 	var i := _roster.find(old)
 	if i >= 0:
 		_roster[i] = new
@@ -618,18 +646,24 @@ func _pick_fixed() -> void:
 	if pool.is_empty():
 		return
 	var h: int = pool.pick_random()
+	var was: Node3D = main.players.get_node_or_null(NodePath(str(h)))
+	var at: Vector3 = was.global_position if was else Vector3.INF   # 團隊模式：補的電腦站他原本的位置、接他的隊
 	_roster.erase(fixed_id)
 	scores.erase(fixed_id)
 	names.erase(fixed_id)
 	fixed_id = h
 	dino_id = h
 	lives.erase(h)
-	if _roster.size() < PLAYERS:
+	if _roster.size() < players_n:
 		var bot: int = mini(_roster.min(), 0) - 1
 		names[bot] = "電腦 %d" % -bot
 		scores[bot] = 0
 		_roster.append(bot)
-		_spawn_cowboy(bot, true, -1)
+		if team:
+			team.rekey(h, bot)
+		_spawn_cowboy(bot, true, -1, at)
+	if team:
+		team.of.erase(h)   # 當恐龍了：不在任何一隊
 	_order_scores()
 	main.make_pilot(h)
 	main._announce.rpc("%s 當恐龍" % names.get(h, ""))
@@ -643,7 +677,7 @@ func in_roster(id: int) -> bool:
 ## 沒有活著的電腦就不生，觀戰到下一局（_refresh_roster 會排他進來）
 func take_bot(id: int) -> void:
 	var bots := _cowboys().filter(func(c: Node) -> bool: return c.name.to_int() < 0)
-	var at_round := "一般模式 第 %d／%d 局" % [mini(round_index + 1, rounds), rounds]
+	var at_round := "%s模式 第 %d／%d 局" % [main.RULES[main.rules].name, mini(round_index + 1, rounds), rounds]
 	if bots.is_empty():
 		_whisper(id, at_round + "，觀戰到下一局")
 		return
@@ -658,6 +692,8 @@ func take_bot(id: int) -> void:
 	if main.egg.carrier == old:
 		main.egg.carrier = id
 	rekey(old, id)   # 分數、命數、名單位置、看過的牌（_sync 補送）
+	if team and team.team_of(id) >= 0:
+		_whisper(id, "你是%s" % Team.NAMES[team.team_of(id)])
 	names[id] = "玩家 %d" % _roster.filter(func(r: int) -> bool: return r > 0).size()
 	var c: Node3D = main._add_player(main.COWBOY, id)
 	c.global_transform = at
@@ -689,7 +725,8 @@ func state() -> Dictionary:
 	return {rounds = rounds, round_index = round_index, phase = phase, time_left = time_left, scores = scores,
 		round_scores = round_scores, lives = lives, dino_id = dino_id, names = names, last_result = last_result,
 		egg_placed = egg_placed, safe = main.safe.state(), env_pos = env_pos, env_open = env_open,
-		star_holder = star_holder, star_on = star_on, star_pos = star_pos, spawn_red = spawn_red}
+		star_holder = star_holder, star_on = star_on, star_pos = star_pos, spawn_red = spawn_red,
+		team_of = team.of if team else {}, winner_team = winner_team}
 
 
 @rpc("authority", "call_remote", "reliable")
@@ -697,6 +734,9 @@ func _recv(s: Dictionary) -> void:
 	for k: String in s:
 		if k == "safe":
 			main.safe.set_state(s[k])
+		elif k == "team_of":
+			if team:
+				team.of = s[k]
 		else:
 			set(k, s[k])
 	if phase != &"play":   # 回合外看過的牌作廢（主機在 _start_round 清 _known）

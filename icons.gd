@@ -2,7 +2,7 @@ class_name Icons
 extends RefCounted
 ## 方位條、畫面上的標記、重生地圖共用的小圖示（0.8.16 第 7 節）。全部用程式畫的簡單形狀，
 ## ponytail: 美術給圖之後只換這個檔（draw 照樣吃 kind，畫貼圖就好）。
-## kind：&"envelope_tens"、&"envelope_ones"、&"safe"、&"gold"、&"raptor"、&"dino"（爪印）、&"exit"、&"star"、&"egg"、&"spawn"、&"meat"。
+## kind：&"envelope_tens"、&"envelope_ones"、&"safe"、&"gold"、&"raptor"、&"dino"（爪印）、&"exit"、&"star"、&"egg"、&"spawn"、&"meat"、&"mate"（隊友）。
 ## size 是圖示的寬（像素），c 是主色；每個圖示都有深色描邊，亮的天空上也看得到
 
 const OUTLINE := Color(0.12, 0.07, 0.05, 0.9)
@@ -66,6 +66,10 @@ static func draw(ci: CanvasItem, kind: StringName, at: Vector2, size: float, c: 
 			var green := Color(0.3, 0.9, 0.35, c.a)
 			ci.draw_rect(Rect2(o0 + Vector2(0.74, 0.02) * size, Vector2(0.1, 0.34) * size), green)
 			ci.draw_rect(Rect2(o0 + Vector2(0.62, 0.14) * size, Vector2(0.34, 0.1) * size), green)
+		&"mate":   # 隊友頭上：尖朝下的小三角（團隊模式，隊色）
+			var pts := PackedVector2Array([at + Vector2(-h, -h * 0.6), at + Vector2(h, -h * 0.6), at + Vector2(0, h * 0.7)])
+			ci.draw_colored_polygon(pts, c)
+			ci.draw_polyline(pts + PackedVector2Array([pts[0]]), o, 1.5)
 		_:   # 不認得的：一個圓點
 			ci.draw_circle(at, h * 0.5, o)
 			ci.draw_circle(at, h * 0.5 - 1.5, c)
