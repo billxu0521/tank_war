@@ -61,6 +61,7 @@ const STRAFE := 4.0           # 還擊時往旁邊挪多遠
 const BUSH_REACH := 40.0      # 躲：找多遠內的草叢
 const HEAL_BELOW := 0.6       # 躲好了、血比這個少就用急救包（用完了吃恐龍肉）
 const LOOT_REACH := 25.0      # 搜刮：尼諾拉倒在這麼近才去（0.8.16 第 3.3 節）
+const REVIVE_REACH := 30.0    # 救人：倒地的隊友在這麼近才去（團隊模式第 10 節）
 
 ## 個性：同一張分數表乘不同倍數（risk 乘在「險」上，越大越怕）。照編號固定：-1 勇敢、-2 膽小、-3 投機，-4 又是勇敢（決定 3）
 const PERSONAS := [
@@ -124,6 +125,7 @@ func remember(pos: Vector3, c: float) -> void:
 ##   sees 現在看得到恐龍、hit_ago 上次被打幾秒前、bushes 草叢位置
 ##   star 追分星星要去哪（金色小恐龍、地上的星星、別人拿著就是他；null＝沒有或我拿著）
 ##   loot 倒地的尼諾拉在哪（LOOT_REACH 內、這次倒地我沒搜過、肉沒帶滿；null＝不能搜）
+##   revive 倒地的隊友在哪（團隊模式，REVIVE_REACH 內、沒別人在救；null＝沒有）
 ## 回傳有沒有換動作
 func think(ctx: Dictionary) -> bool:
 	last_ctx = ctx
@@ -192,6 +194,9 @@ func score_all(ctx: Dictionary) -> Dictionary:
 	var kn: Array = ctx.get("known", [-1, -1])
 	if ctx.get("loot") != null and int(ctx.get("carrier", 0)) != 1 and (float(ctx.hp) < HEAL_BELOW or (kn[0] < 0 and kn[1] < 0)):
 		out["搜刮"] = 70.0 - minf(0.5 * _flat(me, ctx.loot), 12.0)   # 牠倒地才有，倒地只有 15 秒：分數高、離越遠越少
+	if ctx.get("revive") != null and int(ctx.get("carrier", 0)) != 1:   # 救人（團隊模式）：分數很高；恐龍在旁邊、比我近的隊友已經要去就算了
+		var rv: Vector3 = ctx.revive
+		out["救人"] = 85.0 - minf(0.3 * _flat(me, rv), 9.0) - 50.0 * risk(ctx, rv) - 40.0 * _taken(ctx, "救人", rv)
 	if int(ctx.get("carrier", 0)) != 1:   # 拿蛋的人只管跑
 		out["躲"] = 10.0 + 80.0 * risk(ctx, me) * (0.4 + 0.6 * hurt) + 15.0 * last
 	if ctx.get("sees", false) and ctx.dino != null and _flat(me, ctx.dino) < FIGHT_RANGE:
@@ -258,6 +263,8 @@ func goal(ctx: Dictionary) -> Vector3:
 			return ctx.star if ctx.get("star") != null else me
 		"搜刮":
 			return ctx.loot if ctx.get("loot") != null else me
+		"救人":
+			return ctx.revive if ctx.get("revive") != null else me
 		"撤離":
 			return _pick_exit(ctx)
 		"守箱":   # 箱子外 GUARD_DIST，朝恐龍最後出現的方向（不知道就朝我這邊）

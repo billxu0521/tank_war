@@ -23,7 +23,7 @@ static func mark(n: Node) -> void:
 
 ## 看著／移開視線（cowboy.gd 的 update_focus）
 static func focus(n: Node, on: bool) -> void:
-	if is_instance_valid(n) and not n.is_in_group(&"boss"):   # 倒地的尼諾拉（搜刮）不加亮：整隻疊強調色會一直留著
+	if is_instance_valid(n) and not n.is_in_group(&"boss") and not n is Cowboy:   # 倒地的尼諾拉（搜刮）、隊友（救人）不加亮：整隻疊強調色會一直留著
 		_apply(n, FOCUS if on else IDLE)
 
 

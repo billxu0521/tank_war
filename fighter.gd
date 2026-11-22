@@ -342,10 +342,20 @@ func _sync_hp(v: int, from := Vector3.INF) -> void:
 		_on_hurt(hp - v, from)
 	hp = v
 	if hp <= 0:
-		burn_left = 0.0   # 死了就不燒了
-		died.emit(_last_hit_by)
-		if multiplayer.is_server():
-			queue_free()  # MultiplayerSpawner 會同步移除其他人畫面上的它
+		burn_left = 0.0   # 死了（倒地）就不燒了
+		if not _goes_down():
+			_die()
+
+
+## 血歸零時改成倒地就回 true（每台都跑，見 cowboy.gd：團隊模式的牛仔）。倒地的之後由主機叫 _die
+func _goes_down() -> bool:
+	return false
+
+
+func _die() -> void:
+	died.emit(_last_hit_by)
+	if multiplayer.is_server():
+		queue_free()  # MultiplayerSpawner 會同步移除其他人畫面上的它
 
 ## 鎖住滑鼠（進遊戲、關選單、點畫面、系統放掉後鎖回來）都要走這裡。
 static func lock_mouse() -> void:
