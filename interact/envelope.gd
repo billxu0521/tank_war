@@ -9,6 +9,7 @@ const RANGE := 3.0   # 牛仔離信封多遠（水平）還能看
 const NAMES := ["十位數", "個位數"]
 
 var index := 0
+var cover: Array = []   # 團隊模式：這封蓋到哪幾位（Team.cover_of，每位 2 確定、1 候選、0 沒有）。派對是 []
 var opened := false   # 有人看過（公開）
 var party: Node
 var _card: StandardMaterial3D
@@ -17,6 +18,8 @@ var _label: Label3D
 ## 看著信封時畫面上的提示（cowboy.gd 讀這個）
 var prompt: String:
 	get:
+		if not cover.is_empty():
+			return "信封 %s%s" % [Team.cover_text(cover), "（你們隊看過了）" if opened else "：看信"]
 		var mine: bool = party != null and int(party.my_digits[index]) >= 0
 		return "%s的牌：%d" % [NAMES[index], party.my_digits[index]] if mine else "看%s的牌" % NAMES[index]
 
@@ -50,6 +53,11 @@ func _ready() -> void:
 ## 開過的樣子：牌變灰、寫「已開」（每台照公開狀態換）
 func set_opened(v: bool) -> void:
 	opened = v
+	if not cover.is_empty() or index >= NAMES.size():   # 團隊模式：米色的牌，寫三個方格（看得出蓋到哪幾位）
+		_card.albedo_color = Color(0.95, 0.9, 0.75).lerp(Color(0.5, 0.45, 0.4), 0.5) if v else Color(0.95, 0.9, 0.75)
+		_label.modulate = Color.BLACK
+		_label.text = "百十個\n" + Team.cover_text(cover) + ("\n（看過了）" if v else "")
+		return
 	var bg := Color.WHITE if index == 0 else Color.BLACK
 	var fg := Color.BLACK if index == 0 else Color.WHITE
 	_card.albedo_color = bg.lerp(Color(0.5, 0.45, 0.4), 0.5) if v else bg

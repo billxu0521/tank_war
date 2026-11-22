@@ -59,7 +59,7 @@ func _row(c: Node) -> Dictionary:
 
 func tick(m: Node, p: Node, delta: float) -> void:
 	t += delta
-	if first_card < 0.0 and (p.env_open[0] or p.env_open[1]):
+	if first_card < 0.0 and p.env_open.has(true):
 		first_card = t
 	var s: Node = m.safe
 	if s.on:

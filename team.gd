@@ -92,3 +92,98 @@ func spot(id: int) -> Vector3:
 	var c: Vector3 = zones[t]
 	var side := Vector3(-c.z, 0.0, c.x).normalized() if Vector2(c.x, c.z).length() > 0.1 else Vector3.RIGHT
 	return c + side * ZONE_GAP * (k - (SIZE - 1) * 0.5)
+
+
+# ── T3：三位數密碼、兩種信封、隊內共享（團隊模式第 5、6 節）──
+const PLACES := ["百位", "十位", "個位"]
+static var DUAL_CANDS: int = Balance.whole("team_dual_candidates")   # 雙位提示每位幾個候選（含正確的）
+
+var env_info: Array = []   # 主機：每封信的內容，每位 [] 沒有、[d] 確定、[a, b, c] 候選。公開的只有 cover_of 算出來的種類
+var intel: Array = []      # 主機：每隊三格，每格「還有哪些數字可能」
+var seen: Array = []       # 主機：每隊看過哪幾封（信封索引）
+
+
+## 主機：新回合清掉每隊的情報
+func reset_intel() -> void:
+	intel = []
+	seen = []
+	for t in COUNT:
+		intel.append([range(10), range(10), range(10)])
+		seen.append([])
+
+
+## 主機：t 隊看了第 i 封，三格跟它取交集。回傳變了的位數（[] = 沒有新東西）
+func merge(t: int, i: int) -> Array:
+	if not seen[t].has(i):
+		seen[t].append(i)
+	var got: Array = []
+	for k in 3:
+		var info: Array = env_info[i][k]
+		if info.is_empty():
+			continue
+		var left: Array = intel[t][k].filter(func(d: int) -> bool: return info.has(d))
+		if left.size() < intel[t][k].size():
+			intel[t][k] = left
+			got.append(k)
+	return got
+
+
+## 每位確定的數字（-1 = 還不確定）
+static func sure(cands: Array) -> Array:
+	return cands.map(func(c: Array) -> int: return c[0] if c.size() == 1 else -1)
+
+
+## 信封的種類（公開，方位條、牌面畫圖示用）：每位 2 確定、1 候選、0 沒有
+static func cover_of(info: Array) -> Array:
+	return info.map(func(c: Array) -> int: return 0 if c.is_empty() else (2 if c.size() == 1 else 1))
+
+
+## 圖示的字（牌面、提示）：■ 確定、▣ 候選、□ 沒有
+static func cover_text(cover: Array) -> String:
+	return "".join(cover.map(func(v: int) -> String: return ["□", "▣", "■"][v]))
+
+
+## 主機：電腦看的隊伍情報：known 每位確定的數字、cands 每位的候選、useful 本隊沒看過又蓋得到還不確定那位的信封
+func bot_view(id: int, covers: Array) -> Dictionary:
+	var t := team_of(id)
+	if t < 0 or intel.is_empty():
+		return {}
+	var c: Array = intel[t]
+	var useful: Array = []
+	for i in covers.size():
+		if not seen[t].has(i) and range(3).any(func(k: int) -> bool: return covers[i][k] > 0 and c[k].size() > 1):
+			useful.append(i)
+	return {"known": sure(c), "cands": c, "useful": useful}
+
+
+## 這一場的 n 封信（第 5 節）：雙位提示 5 封（8 封時）或 6 封，「百十、百個、十個」輪流放；其餘單位提示，百、十、個各一，
+## 10 封多一封隨機一位。同一位的雙位提示假數字都不重複：同一位看兩封雙位就確定。順序打亂
+static func roll_envelopes(code: int, n: int) -> Array:
+	var digit := [code / 100, code / 10 % 10, code % 10]
+	var wrong: Array = []   # 每位還沒用過的假數字
+	for k in 3:
+		var w: Array = range(10)
+		w.erase(digit[k])
+		w.shuffle()
+		wrong.append(w)
+	var out: Array = []
+	var pairs := [[0, 1], [0, 2], [1, 2]]
+	var first := randi() % 3
+	for j in (5 if n <= 8 else 6):
+		var info: Array = [[], [], []]
+		for k: int in pairs[(first + j) % 3]:
+			var c: Array = [digit[k]]
+			for q in DUAL_CANDS - 1:
+				c.append(wrong[k].pop_back())
+			c.sort()
+			info[k] = c
+		out.append(info)
+	var singles: Array = [0, 1, 2]
+	while out.size() + singles.size() < n:
+		singles.append(randi() % 3)
+	for k: int in singles:
+		var info: Array = [[], [], []]
+		info[k] = [digit[k]]
+		out.append(info)
+	out.shuffle()
+	return out

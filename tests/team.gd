@@ -1,5 +1,5 @@
 extends "res://tests/ui.gd"
-## 團隊模式（docs/企劃/2026-11-19-團隊模式.md 第 13 節）。T1：隊伍骨架；T2：倒地、爬、失血、隊友救
+## 團隊模式（docs/企劃/2026-11-19-團隊模式.md 第 13 節）。T1：隊伍骨架；T2：倒地、爬、失血、隊友救；T3：三位數密碼、兩種信封、隊內共享
 
 
 ## 跟電腦打、選團隊、按開始：1 個真人＋9 個電腦（電腦尼諾拉、三隊各 3 個），準備結束進 12 分鐘的遊戲
@@ -99,6 +99,112 @@ func _case_team() -> void:
 		p._down_step(Team.BLEED_SECONDS + 1.0))
 	m._physics_process(DT)
 	_ck(p.phase == &"final" and p.winner_team == -1, "全部出局：尼諾拉贏（%s）" % p.last_result)
+	_end(m)
+
+
+## T3：三位數密碼、兩種信封、隊內共享（第 5、6 節）
+func _case_team_code() -> void:
+	# 信封內容：抽很多次，規則每次都對
+	var rules_ok := true
+	for r in 200:
+		var code := randi() % 1000
+		var n := 8 + r % 3
+		var env := Team.roll_envelopes(code, n)
+		var dig := [code / 100, code / 10 % 10, code % 10]
+		var duals := env.filter(func(e: Array) -> bool: return e.any(func(c: Array) -> bool: return c.size() == Team.DUAL_CANDS))
+		rules_ok = rules_ok and env.size() == n and duals.size() == (5 if n == 8 else 6)
+		for k in 3:
+			var decoys: Array = []
+			var hit := 0
+			for e: Array in env:
+				var c: Array = e[k]
+				rules_ok = rules_ok and (c.is_empty() or c.has(dig[k])) and c.size() in [0, 1, Team.DUAL_CANDS]
+				if c.size() == 1:
+					hit += 1
+				for d: int in c:
+					if d != dig[k]:
+						decoys.append(d)
+			var uniq := {}
+			for d: int in decoys:
+				uniq[d] = true
+			rules_ok = rules_ok and uniq.size() == decoys.size() and hit >= 1   # 同一位的假數字不重複（看兩封雙位就確定）、每位都有單位提示
+		# 看完全部：三位都確定
+		var t := Team.new()
+		t.env_info = env
+		t.reset_intel()
+		for i in n:
+			t.merge(0, i)
+		rules_ok = rules_ok and Team.sure(t.intel[0]) == dig
+	_ck(rules_ok, "信封內容：8～10 封、雙位 5～6 封、候選含正確的、同一位假數字不重複、看完全部三位都確定")
+	var tt := Team.new()
+	tt.env_info = [[[1, 2, 5], [], [3, 4, 7]], [[2, 5, 8], [5, 6, 9], []]]
+	tt.reset_intel()
+	tt.merge(0, 0)
+	_ck(tt.merge(0, 1) == [0, 1] and tt.intel[0][0] == [2, 5] and tt.intel[0][1] == [5, 6, 9] and tt.merge(0, 1).is_empty(), "取交集；同一隊看第二次沒有新東西")
+	_ck(Team.cover_of(tt.env_info[0]) == [1, 0, 1] and Team.cover_text([2, 0, 1]) == "■□▣", "信封種類和圖示的字")
+
+	var m := _team_match()
+	var p: Party = m.party
+	var t: Team = p.team
+	var s: Safe = m.safe
+	p.time_left = 0.0
+	m._physics_process(DT)
+	var n := p.env_pos.size()
+	p._process(0.0)   # 每台每幀把信封擺好、套種類
+	_ck(p.phase == &"play" and s.digits == 3 and s.tried.size() == 1000 and s._code >= 0 and s._code < 1000, "團隊模式：三位數密碼（%d）" % s._code)
+	_ck(n >= 8 and n <= 10 and p.env_cover.size() == n and p.envelopes.filter(func(e: Envelope) -> bool: return e.visible).size() == n, "團隊模式：%d 封信，種類公開" % n)
+	_ck(p.state().has("env_cover") and not str(p.state()).contains(str(t.intel)) and p._cands.is_empty(), "整包裡有信封種類、沒有隊伍情報；搜刮不給吞掉的信封")
+	var dist_ok := true
+	for i in n:
+		for j in range(i + 1, n):
+			dist_ok = dist_ok and Vector2(p.env_pos[i].x - p.env_pos[j].x, p.env_pos[i].z - p.env_pos[j].z).length() > 10.0
+	_ck(dist_ok, "信封不擠在一起")
+	var st := s.state()
+	_ck(st.digits == 3 and (st.tried as PackedByteArray).decompress(1000, FileAccess.COMPRESSION_DEFLATE) == s.tried and (st.tried as PackedByteArray).size() < 200,
+		"三位數試過的表壓縮送（%d 位元組）" % (st.tried as PackedByteArray).size())
+	s.set_state(st)
+	_ck(s.digits == 3 and s.tried.size() == 1000, "客戶端收到：解壓回 1000 格")
+	# 紅隊（我）開一封：我和隊友的三格跟著變，別隊不變
+	var me: Cowboy = m.players.get_node(^"1")
+	var mate_id: int = t.mates(1)[0]
+	var foe_id: int = t.of.keys().filter(func(id: int) -> bool: return t.team_of(id) == 1)[0]
+	var i0 := 0
+	me.global_position = p.env_pos[i0] + Vector3(0.5, 0.5, 0)
+	_ck(p.read(1, i0) and p.env_open[i0] and t.seen[0] == [i0] and t.seen[1].is_empty(), "開信：紅隊記下看過，藍隊沒有")
+	var red: Array = t.intel[0]
+	p._process(0.0)
+	_ck(p.my_hint == red and p.my_digits == Team.sure(red) and t.intel[1] == [range(10), range(10), range(10)], "我的小抄＝隊伍的三格；別隊的不變")
+	var mate: Cowboy = m.players.get_node(str(mate_id))
+	mate.brain = BotBrain.new(mate_id)
+	var ctx := mate._bot_ctx(m)
+	_ck(ctx.has("useful") and not (ctx.useful as Array).has(i0) and ctx.known == Team.sure(red) and ctx.cands == red, "電腦隊友拿到隊伍的情報，不再去看那封（%s）" % [ctx.get("useful")])
+	var foe: Cowboy = m.players.get_node(str(foe_id))
+	foe.brain = BotBrain.new(foe_id)
+	_ck((foe._bot_ctx(m).useful as Array).has(i0), "別隊電腦還會去看那封")
+	var acts: Array = mate.brain.score_all(ctx).keys().filter(func(k: String) -> bool: return k.begins_with("看牌"))
+	_ck(not acts.is_empty() and acts.all(func(k: String) -> bool: return (ctx.useful as Array).has(BotBrain.card_of(k))) and not mate.brain.score_all(ctx).has("試密碼"),
+		"電腦只挑補得到缺的那位的信；三格沒確定不去試（%s）" % [acts])
+	m._match_hud.update_text(me)
+	var cell := func(k: int) -> String: return str(red[k][0]) if red[k].size() == 1 else ("［%s］" % Party._digits_text(red[k]) if red[k].size() < 10 else "?")
+	_ck(m.hud.text.contains("密碼 %s %s %s" % [cell.call(0), cell.call(1), cell.call(2)]), "小抄三格（%s）" % m.hud.text)
+	# 方位條：本隊看過的那封拿掉
+	var env_marks := func() -> int: return m._match_hud.compass_marks(Vector3.ZERO).filter(func(k: Dictionary) -> bool: return k.get("icon") == &"envelope3").size()
+	_ck(env_marks.call() == n - 1 and p.envelopes[i0].opened and not p.envelopes[1].opened, "方位條標其他 %d 封（圖示看得出蓋哪幾位），看過的拿掉、牌面變灰" % (n - 1))
+	# 面板三排：不可能的數字暗的，確定的先選好
+	var panel: SafePanel = m._safe_panel
+	panel.open_panel()
+	var k0: int = range(3).filter(func(k: int) -> bool: return red[k].size() < 10)[0]   # 這封蓋到的一位
+	var out: int = range(10).filter(func(d: int) -> bool: return not red[k0].has(d))[0]
+	_ck(panel.pick.size() == 3 and panel._row_box[0][1].visible and panel.is_gray(k0, out) and not panel.is_gray(k0, red[k0][0])
+		and panel.pick == Team.sure(red), "面板三排：不在候選裡的變暗，確定的先選好（%s）" % [panel.pick])
+	panel.hide()
+	# 看完全部：三格都確定，電腦去試；試對開箱
+	for i in n:
+		t.merge(0, i)
+	ctx = mate._bot_ctx(m)
+	_ck(ctx.known == [s._code / 100, s._code / 10 % 10, s._code % 10] and (ctx.useful as Array).is_empty() and mate.brain.score_all(ctx).has("試密碼"), "三格都確定：電腦去試密碼")
+	me.global_position = s.global_position + Vector3(1.0, 0.5, 0)
+	_ck(s.try_code(1, (s._code + 1) % 1000) and not s.try_code(1, 1000), "三位數也是一次試一個、1000 以上不收")
 	_end(m)
 
 

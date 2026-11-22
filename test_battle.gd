@@ -115,6 +115,7 @@ func _process(_delta: float) -> bool:
 		_case_raptors()
 		_case_golden_star()
 		_case_team()
+		_case_team_code()
 		_case_team_down()
 		_start_gun_case()
 		return false
