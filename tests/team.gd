@@ -1,5 +1,5 @@
 extends "res://tests/ui.gd"
-## 團隊模式（docs/企劃/2026-11-19-團隊模式.md 第 13 節）。T1：隊伍骨架
+## 團隊模式（docs/企劃/2026-11-19-團隊模式.md 第 13 節）。T1：隊伍骨架；T2：倒地、爬、失血、隊友救；T3：三位數密碼、兩種信封、隊內共享
 
 
 ## 跟電腦打、選團隊、按開始：1 個真人＋9 個電腦（電腦尼諾拉、三隊各 3 個），準備結束進 12 分鐘的遊戲
@@ -64,8 +64,9 @@ func _case_team() -> void:
 		m.egg.carrier = enemy
 		_ck(mate._bot_ctx(m).ffa, "敵隊拿著蛋：追")
 		m.egg.carrier = 0
-		# 出局：1 條命，死了不重生，觀戰
-		foe.take_damage(9999, me))
+		# 出局：1 條命，倒地倒數完不重生，觀戰
+		foe.take_damage(9999, me)
+		p._down_step(Team.BLEED_SECONDS + 1.0))
 	_ck(int(p.lives[enemy]) == 0 and not p._waiting.has(enemy) and m._is_out(enemy) and p.phase == &"play", "死了就出局：不排重生，比賽繼續")
 	# 中途加入：接手電腦，隊伍跟著
 	var bot: int = p._cowboys().filter(func(c: Node) -> bool: return c.name.to_int() < 0)[0].name.to_int()   # take_bot 接手的那個
@@ -92,7 +93,10 @@ func _case_team() -> void:
 	m._physics_process(DT)
 	_with_first(m, func() -> void:
 		for c: Node in p._cowboys():
-			c.take_damage(9999))
+			c.take_damage(9999)
+		m._physics_process(DT)
+		_ck(p.phase == &"play", "9 個人全倒地：還沒結束，各自倒數完才算")
+		p._down_step(Team.BLEED_SECONDS + 1.0))
 	m._physics_process(DT)
 	_ck(p.phase == &"final" and p.winner_team == -1, "全部出局：尼諾拉贏（%s）" % p.last_result)
 	_end(m)
@@ -201,4 +205,86 @@ func _case_team_code() -> void:
 	_ck(ctx.known == [s._code / 100, s._code / 10 % 10, s._code % 10] and (ctx.useful as Array).is_empty() and mate.brain.score_all(ctx).has("試密碼"), "三格都確定：電腦去試密碼")
 	me.global_position = s.global_position + Vector3(1.0, 0.5, 0)
 	_ck(s.try_code(1, (s._code + 1) % 1000) and not s.try_code(1, 1000), "三位數也是一次試一個、1000 以上不收")
+	_end(m)
+
+
+## T2：倒地、爬、失血、隊友救（第 3、4 節）
+func _case_team_down() -> void:
+	var m := _team_match()
+	var p: Party = m.party
+	var t: Team = p.team
+	p.time_left = 0.0
+	m._physics_process(DT)   # 進遊戲
+	var me: Cowboy = m.players.get_node(^"1")
+	var ids: Array = t.mates(1)
+	var mate: Cowboy = m.players.get_node(str(ids[0]))
+	var mate2: Cowboy = m.players.get_node(str(ids[1]))
+	var enemy: int = t.of.keys().filter(func(id: int) -> bool: return t.team_of(id) == 1)[0]
+	var foe: Cowboy = m.players.get_node(str(enemy))
+	mate.brain = BotBrain.new(mate.name.to_int())
+	_with_first(m, func() -> void:
+		m.egg.carrier = 1
+		me.take_damage(9999, foe)
+		_ck(me.down and me.hp == 0 and not me.is_queued_for_deletion() and int(p.lives[1]) == 1 and t.downs == 1
+			and is_equal_approx(me.bleed_left, Team.BLEED_SECONDS), "血歸零：倒地不是死，25 秒倒數")
+		p._drop_orphan_egg()
+		_ck(m.egg.carrier == 0, "倒地：手上的蛋掉下來")
+		me.take_damage(50, foe)
+		p._down_step(5.0)
+		_ck(me.hp == 0 and is_equal_approx(me.bleed_left, Team.BLEED_SECONDS - 5.0), "倒地被打：血和倒數都不變（%.1f）" % me.bleed_left)
+		_ck(not m._boss()._cowboys().has(me) and not mate._bot_ctx(m).mates.any(func(x: Dictionary) -> bool: return x.pos == me.global_position),
+			"尼諾拉不選倒地的人（咬了沒用），電腦不把他當成在做事的隊友")
+		me._crawl(Vector2(0, -1), 0.5)
+		var v := Vector2(me.velocity.x, me.velocity.z).length()
+		_ck(v > 0.0 and v <= Team.CRAWL_SPEED + 0.01, "倒地只能慢慢爬（%.2f 公尺／秒）" % v)
+		# 救：敵人不行、太遠不行、隊友 2 公尺內按住 5 秒
+		foe.global_position = me.global_position + Vector3(1, 0, 0)
+		_ck(not m.hold.start(enemy, &"revive", me), "敵人不能救")
+		mate.global_position = me.global_position + Vector3(5, 0, 0)
+		_ck(not m.hold.start(mate.name.to_int(), &"revive", me), "太遠救不到")
+		mate.global_position = me.global_position + Vector3(1.5, 0, 0)
+		_ck(m.hold.start(mate.name.to_int(), &"revive", me), "隊友 2 公尺內開始救")
+		mate2.global_position = me.global_position + Vector3(0, 0, 1)
+		_ck(not m.hold.start(mate2.name.to_int(), &"revive", me), "同時只能一個人救")
+		p._down_step(3.0)
+		_ck(is_equal_approx(me.bleed_left, Team.BLEED_SECONDS - 5.0) and is_equal_approx(me.down_paused, 3.0), "有人在救：倒數暫停")
+		m.hold._physics_process(Team.REVIVE_SECONDS - 0.1)
+		m.hold.stop(mate.name.to_int())
+		_ck(me.down, "救到 4.9 秒放開：還倒著")
+		m.hold.start(mate.name.to_int(), &"revive", me)
+		m.hold._physics_process(Team.REVIVE_SECONDS + 0.1)
+		_ck(not me.down and me.hp == Team.REVIVE_HP and t.revives == 1, "按滿 5 秒：站起來，半血（%d）" % me.hp)
+		me.take_damage(10, foe)
+		_ck(me.hp == Team.REVIVE_HP, "剛救起來 1 秒打不動")
+		# 救的時候倒數最多停 10 秒
+		me._guard_ms = 0
+		me.take_damage(9999, foe)
+		_ck(me.down and is_equal_approx(me.bleed_left, Team.BLEED_SECONDS), "再倒地：還是 25 秒")
+		m.hold.start(mate.name.to_int(), &"revive", me)
+		for i in 12:
+			p._down_step(1.0)
+		_ck(is_equal_approx(me.bleed_left, Team.BLEED_SECONDS - 2.0), "救的時候倒數最多停 10 秒（%.1f）" % me.bleed_left)
+		m.hold.stop(mate.name.to_int())
+		# 電腦：隊友倒地會去救；自己倒地往隊友爬
+		var ctx := mate._bot_ctx(m)
+		_ck(ctx.revive != null and mate.brain.score_all(ctx).has("救人"), "電腦看到倒地的隊友：有「救人」可選")
+		mate.brain.think(ctx)
+		mate.brain.action = "救人"
+		mate.brain.last_ctx = ctx
+		mate._bot_loot(m)
+		_ck(m.hold.doing(mate.name.to_int()) == &"revive", "電腦走到旁邊：按住救人")
+		m.hold.stop(mate.name.to_int())
+		mate2.global_position = me.global_position + Vector3(20, 0, 0)
+		mate.global_position = mate2.global_position + Vector3(0, 0, 30)
+		mate2._guard_ms = 0
+		mate2.take_damage(9999, foe)
+		mate2.brain = BotBrain.new(mate2.name.to_int())
+		mate2._bot_crawl(m, 0.5)
+		_ck(mate2.velocity.z > 0.0 and absf(mate2.velocity.x) < 0.01, "電腦倒地：往最近的站著的隊友爬（倒地的不算）（%s）" % mate2.velocity)
+		# 斷線：原地倒地，不收
+		_ck(p.down_on_leave(mate) and mate.down and not mate.is_queued_for_deletion(), "團隊模式斷線：原地倒地，不收掉")
+		# 倒數完：出局，留屍體，不重生
+		p._down_step(Team.BLEED_SECONDS + 1.0))
+	_ck(me.is_queued_for_deletion() and int(p.lives[1]) == 0 and not p._waiting.has(1) and m._is_out(1) and p.phase == &"play",
+		"倒數完沒人救：出局、不重生，比賽繼續")
 	_end(m)

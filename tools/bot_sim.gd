@@ -2,7 +2,7 @@ extends SceneTree
 ## 量電腦牛仔「像不像真人」（docs/企劃/2026-11-13-電腦牛仔像真人.md「怎麼量」）：派對模式、4 個電腦輪流當恐龍（3 個牛仔＋電腦尼諾拉），跑 N 回合。
 ##   godot --headless --fixed-fps 60 --path . --script tools/bot_sim.gd
 ##   ROUNDS=20（預設）、SEED=1、BOT_LOG=1（電腦換動作時印一行，打分數版才有）
-##   TEAM=1：團隊模式（電腦尼諾拉＋三隊各 3 個電腦獵人，一場 1 局 12 分鐘）；ROUNDS 就是幾場。總表多兩行：各隊贏幾場、開箱時間（分鐘）
+##   TEAM=1：團隊模式（電腦尼諾拉＋三隊各 3 個電腦獵人，一場 1 局 12 分鐘）；ROUNDS 就是幾場。總表多各隊贏幾場、開箱時間（分鐘）、倒地和救起來幾次
 ##   SHORT=秒：遊戲階段最多這麼久（只是確認跑得完、不當掉用；量數字不要設）
 ## 照專用伺服器的開法：物理一秒 60 次、沒有真人（_dedicated）。--fixed-fps 60 讓一幀固定走 1/60 秒、不等真的時間，跑得比實際快；
 ## 拿掉就照實際速度（一回合 3 分 45 秒）。快轉時用真的時鐘算的東西（尼諾拉撞房子的拖拉、急救包冷卻）會變短，對牛仔的行為影響小。
@@ -19,6 +19,8 @@ var _ms: PackedFloat32Array = []   # 遊戲中每幀的腳本時間（毫秒）�
 var _team := OS.get_environment("TEAM") == "1"
 var _short := float(OS.get_environment("SHORT")) if OS.get_environment("SHORT") != "" else 0.0
 var _wins := {}   # 團隊模式：贏的（隊名、尼諾拉）-> 幾場
+var _downs := 0      # 團隊模式：全部場次一共倒地幾次
+var _revives := 0    # 救起來幾次
 var _pts: Array = []   # 每回合結算後的 [恐龍得分, 獵人裡最高的得分, 獵人平均]（0.8.16 第 1 節：恐龍固定之後公不公平）
 
 
@@ -67,6 +69,8 @@ func _process(_d: float) -> bool:
 		if _team:
 			var w: String = Team.NAMES[p.winner_team] if p.winner_team >= 0 else "尼諾拉"
 			_wins[w] = int(_wins.get(w, 0)) + 1
+			_downs += p.team.downs
+			_revives += p.team.revives
 		var hs: Array = p._roster.filter(func(id: int) -> bool: return id != p.dino_id).map(func(id: int) -> int: return int(p.round_scores.get(id, 0)))
 		_pts.append([int(p.round_scores.get(p.dino_id, 0)), hs.max() if hs.size() > 0 else 0, hs.reduce(func(a: int, b: int) -> int: return a + b, 0) / maxf(hs.size(), 1.0)])
 		if _rounds.size() >= ROUNDS:
@@ -157,4 +161,5 @@ func _summary() -> void:
 		ot.sort()
 		print("  團隊模式開箱時間：%s（%d/%d 場開了；目標 4～7 分鐘）" % ["平均 %.1f 分、中間值 %.1f 分、%.1f～%.1f 分" % [ot.reduce(func(a: float, x: float) -> float: return a + x, 0.0) / ot.size(),
 			ot[ot.size() / 2], ot[0], ot[-1]] if ot.size() > 0 else "沒開過", ot.size(), n])
+		print("  倒地 %d 次、救起來 %d 次（%.0f%%）" % [_downs, _revives, 100.0 * _revives / maxf(_downs, 1.0)])
 	print("BOT_SIM OK")

@@ -130,6 +130,10 @@ func _update_spectator(me: Node) -> void:
 			_spectator.current = false
 		return
 	var alive: Array = main.players.get_children().filter(func(p: Node) -> bool: return not p.is_in_group(&"dino"))
+	var t: Team = main.party.team if main.party else null
+	var mine := alive.filter(func(p: Node) -> bool: return t.same(main.multiplayer.get_unique_id(), p.name.to_int())) if t else []
+	if not mine.is_empty():   # 團隊模式：只能看隊友（看敵人等於幫隊友報位置）；全隊出局了才能看任何人
+		alive = mine
 	if alive.is_empty():
 		return
 	if _spectator == null:
@@ -178,8 +182,10 @@ func _update_center_info(me: Node) -> void:
 	elif me == null and _dead_ms >= 0:
 		var delay: float = Party.RESPAWN_SECONDS if main.party else main.RESPAWN_DELAY
 		t = "%d 秒後重生" % maxi(1, ceili(delay - (now - _dead_ms) / 1000.0))
+	elif me is Cowboy and me.down:
+		t = "倒地了！%d 秒內沒有隊友救就出局（WASD 慢慢爬）" % ceili(me.bleed_left)
 	elif main.hold.mine != &"":
-		t = main.hold.mine_text()   # 按住幾秒的互動（搜刮）的進度
+		t = main.hold.mine_text()   # 按住幾秒的互動（搜刮、救人）的進度
 	elif main.egg.extract > 0.0:
 		var who := "你" if main.egg.carrier == main.multiplayer.get_unique_id() else _who(main.egg.carrier)
 		t = "%s撤離中：還剩 %.1f 秒" % [who, maxf(main.extract_seconds() - main.egg.extract, 0.0)]
@@ -384,9 +390,11 @@ func world_marks() -> Array:
 		_seen.erase(&"star")
 	if p and p.team and p.phase in [&"prep", &"play"]:   # 團隊模式：隊友頭上隊色的小三角和名字，隔著牆也看得到（敵人什麼都沒有）
 		for c: Node in main.players.get_children():
-			if c is Cowboy and c.hp > 0 and p.team.same(me, c.name.to_int()):
-				marks.append({"pos": (c as Node3D).global_position + Vector3.UP * 2.4, "icon": &"mate", "color": Team.COLORS[p.team.team_of(me)],
-					"label": "隊友", "sub": String(p.names.get(c.name.to_int(), "隊友"))})
+			if c is Cowboy and (c.hp > 0 or c.down) and p.team.same(me, c.name.to_int()):   # 倒地的：紅色、寫剩幾秒
+				var nm := String(p.names.get(c.name.to_int(), "隊友"))
+				marks.append({"pos": (c as Node3D).global_position + Vector3.UP * (1.0 if c.down else 2.4), "icon": &"mate",
+					"color": Color(1.0, 0.2, 0.15) if c.down else Team.COLORS[p.team.team_of(me)],
+					"label": "隊友", "sub": "%s 倒地 %d 秒" % [nm, ceili(c.bleed_left)] if c.down else nm})
 	return marks
 
 ## 每 MARK_REFRESH 秒跟上一次的位置（每台自己記）：key -> [位置, 記的時刻（毫秒）]
