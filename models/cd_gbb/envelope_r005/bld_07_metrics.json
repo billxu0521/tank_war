@@ -1,0 +1,218 @@
+{
+  "id": "CD-GBB-BLD-07",
+  "revision": "envelope-r005",
+  "triangles": 7650,
+  "units": {
+    "shell": {
+      "category": "大型建築",
+      "limit": 8000,
+      "recommended": 5000,
+      "budget_reason": "本輪補足可見屋面／覆板／石基，按完整結構整組計，不拆單位掩蓋總量",
+      "triangles": 4902
+    },
+    "bench_floor": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 168
+    },
+    "long_stock": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 120
+    },
+    "sawhorse_w": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 84
+    },
+    "sawhorse_e": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 84
+    },
+    "tool_rack": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 156
+    },
+    "hand_drill": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 36
+    },
+    "wheel_w": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 324
+    },
+    "wheel_e": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 348
+    },
+    "hardware": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 12
+    },
+    "fence_stock": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 60
+    },
+    "wood_shavings": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 288
+    },
+    "planing_bench": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 192
+    },
+    "wheel_bench": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 192
+    },
+    "wheel_stand": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 84
+    },
+    "new_short_stock_rack": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 336
+    },
+    "new_holding_frame": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 264
+    }
+  },
+  "runtime_groups": {
+    "shell": {
+      "triangles": 4902,
+      "author_units": [
+        "shell"
+      ]
+    },
+    "bench_floor": {
+      "triangles": 168,
+      "author_units": [
+        "bench_floor"
+      ]
+    },
+    "long_stock": {
+      "triangles": 120,
+      "author_units": [
+        "long_stock"
+      ]
+    },
+    "sawhorse_w": {
+      "triangles": 84,
+      "author_units": [
+        "sawhorse_w"
+      ]
+    },
+    "sawhorse_e": {
+      "triangles": 84,
+      "author_units": [
+        "sawhorse_e"
+      ]
+    },
+    "tool_rack": {
+      "triangles": 156,
+      "author_units": [
+        "tool_rack"
+      ]
+    },
+    "hand_drill": {
+      "triangles": 36,
+      "author_units": [
+        "hand_drill"
+      ]
+    },
+    "wheel_w": {
+      "triangles": 324,
+      "author_units": [
+        "wheel_w"
+      ]
+    },
+    "wheel_e": {
+      "triangles": 348,
+      "author_units": [
+        "wheel_e"
+      ]
+    },
+    "hardware": {
+      "triangles": 12,
+      "author_units": [
+        "hardware"
+      ]
+    },
+    "fence_stock": {
+      "triangles": 60,
+      "author_units": [
+        "fence_stock"
+      ]
+    },
+    "wood_shavings": {
+      "triangles": 288,
+      "author_units": [
+        "wood_shavings"
+      ]
+    },
+    "planing_bench": {
+      "triangles": 192,
+      "author_units": [
+        "planing_bench"
+      ]
+    },
+    "wheel_bench": {
+      "triangles": 192,
+      "author_units": [
+        "wheel_bench"
+      ]
+    },
+    "wheel_stand": {
+      "triangles": 84,
+      "author_units": [
+        "wheel_stand"
+      ]
+    },
+    "new_short_stock_rack": {
+      "triangles": 336,
+      "author_units": [
+        "new_short_stock_rack"
+      ]
+    },
+    "new_holding_frame": {
+      "triangles": 264,
+      "author_units": [
+        "new_holding_frame"
+      ]
+    }
+  },
+  "mesh_count": 30,
+  "source_parts": 1058,
+  "bag_count": null,
+  "glb_bytes": 713672
+}
