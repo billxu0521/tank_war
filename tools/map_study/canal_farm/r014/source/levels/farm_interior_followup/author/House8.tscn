@@ -1,0 +1,240 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://levels/farm_stock_assemblies/stock/adobe_brick.tscn" id="adobe_brick"]
+[ext_resource type="ArrayMesh" path="res://levels/farm_stock_assemblies/stock/adobe_wall.res" id="adobe_wall"]
+[ext_resource type="ArrayMesh" path="res://levels/farm_stock_assemblies/stock/beam.res" id="beam"]
+[ext_resource type="ArrayMesh" path="res://levels/farm_stock_assemblies/stock/narrow_strip.res" id="narrow_strip"]
+[ext_resource type="ArrayMesh" path="res://levels/farm_stock_assemblies/stock/plank.res" id="plank"]
+[ext_resource type="ArrayMesh" path="res://levels/farm_stock_assemblies/stock/post.res" id="post"]
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/adobe.tres" id="paint_adobe"]
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/clay.tres" id="paint_clay"]
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/dark.tres" id="paint_dark"]
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/end.tres" id="paint_end"]
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/green.tres" id="paint_green"]
+
+[node name="House8" type="Node3D"]
+
+[node name="W1B0Pier" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "W1B0Pier"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="W1B0Pier"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0, 0, 0.330004, 0, 3.42, 0, -1.408333, 0, 0, -5.500002, 1.71, 3.295834)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_001" type="MeshInstance3D" parent="W1B0Pier"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0, 0, 0.330004, 0, 3.42, 0, -1.408333, 0, 0, -5.500002, 1.71, 1.8875)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_002" type="MeshInstance3D" parent="W1B0Pier"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0, 0, 0.330004, 0, 3.42, 0, -1.408333, 0, 0, -5.500002, 1.71, 0.4791667)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_003" parent="W1B0Pier" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 0.338004, 0, 0.14, 0, -0.44, 0, 0, -5.500002, 0.13, 3.78)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_004" parent="W1B0Pier" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 0.338004, 0, 0.14, 0, -0.44, 0, 0, -5.500002, 0.13, 3.3)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_005" parent="W1B0Pier" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 0.338004, 0, 0.14, 0, -0.44, 0, 0, -5.500002, 0.13, 2.82)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="W1B0Sill" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "W1B0Sill"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="W1B0Sill"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0, 0, 0.330004, 0, 0.94, 0, -1.25, 0, 0, -5.500002, 0.47, -0.85)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="W1B0Sill" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 0.338004, 0, 0.14, 0, -0.44, 0, 0, -5.500002, 0.13, -0.445)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_002" parent="W1B0Sill" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 0.338004, 0, 0.14, 0, -0.44, 0, 0, -5.500002, 0.13, -0.925)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="W1B0Head" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "W1B0Head"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="W1B0Head"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0, 0, 0.330004, 0, 1.19, 0, -1.25, 0, 0, -5.500002, 2.825, -0.85)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="W1B0Head" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 0.338004, 0, 0.14, 0, -0.44, 0, 0, -5.500002, 2.36, -0.445)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_002" parent="W1B0Head" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 0.338004, 0, 0.14, 0, -0.44, 0, 0, -5.500002, 2.36, -0.925)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="W1B1End" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "W1B1End"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="W1B1End"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0, 0, 0.330004, 0, 3.42, 0, -1.2625, 0, 0, -5.500002, 1.71, -2.10625)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_001" type="MeshInstance3D" parent="W1B1End"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0, 0, 0.330004, 0, 3.42, 0, -1.2625, 0, 0, -5.500002, 1.71, -3.36875)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_002" parent="W1B1End" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 0.338004, 0, 0.14, 0, -0.44, 0, 0, -5.500002, 0.13, -1.695)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_003" parent="W1B1End" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 0.338004, 0, 0.14, 0, -0.44, 0, 0, -5.500002, 0.13, -2.175)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_004" parent="W1B1End" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 0.338004, 0, 0.14, 0, -0.44, 0, 0, -5.500002, 0.13, -2.655)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="W1Opening0Jamb" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "W1Opening0Jamb"
+[node name="Post_000" type="MeshInstance3D" parent="W1Opening0Jamb"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0.25, 0, 0, 0, 1.29, 0, 0, 0, 0.075, -5.500002, 1.585, -1.475)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+[node name="Post_001" type="MeshInstance3D" parent="W1Opening0Jamb"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0.25, 0, 0, 0, 1.29, 0, 0, 0, 0.075, -5.500002, 1.585, -0.225)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+[node name="Beam_002" type="MeshInstance3D" parent="W1Opening0Jamb"]
+mesh = ExtResource("beam")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0.3, 0, 0, 0, -0.07, -1.4, 0, 0, -5.500002, 0.94, -0.85)
+metadata/stock = "beam"
+metadata/asset = "MOD-0004"
+
+[node name="Beam_003" type="MeshInstance3D" parent="W1Opening0Jamb"]
+mesh = ExtResource("beam")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0.25, 0, 0, 0, -0.09, -1.4, 0, 0, -5.500002, 2.23, -0.85)
+metadata/stock = "beam"
+metadata/asset = "MOD-0004"
+
+
+[node name="W1Opening0Fixed" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "W1Opening0Fixed"
+[node name="Panel_000" type="MeshInstance3D" parent="W1Opening0Fixed"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0.085, 0, 1.29, 0, 0, 0, 0, -0.2043333, -5.500002, 1.585, -0.3291667)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_001" type="MeshInstance3D" parent="W1Opening0Fixed"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0.085, 0, 1.29, 0, 0, 0, 0, -0.2043333, -5.500002, 1.585, -0.5375)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_002" type="MeshInstance3D" parent="W1Opening0Fixed"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0.085, 0, 1.29, 0, 0, 0, 0, -0.2043333, -5.500002, 1.585, -0.7458333)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_003" type="MeshInstance3D" parent="W1Opening0Fixed"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0.085, 0, 1.29, 0, 0, 0, 0, -0.2043333, -5.500002, 1.585, -0.9541667)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_004" type="MeshInstance3D" parent="W1Opening0Fixed"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0.085, 0, 1.29, 0, 0, 0, 0, -0.2043333, -5.500002, 1.585, -1.1625)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_005" type="MeshInstance3D" parent="W1Opening0Fixed"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0.085, 0, 1.29, 0, 0, 0, 0, -0.2043333, -5.500002, 1.585, -1.370833)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+
+[node name="W1Opening0FixedCleats" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "W1Opening0FixedCleats"
+[node name="NarrowStrip_000" type="MeshInstance3D" parent="W1Opening0FixedCleats"]
+mesh = ExtResource("narrow_strip")
+material_override = ExtResource("paint_end")
+transform = Transform3D(0, 0.042, 0, -0.9546, 0, 0.05608044, 1.075, 0, 0.04979943, -5.566502, 1.585, -0.85)
+metadata/stock = "narrow_strip"
+metadata/asset = "MOD-0006"
+
+[node name="NarrowStrip_001" type="MeshInstance3D" parent="W1Opening0FixedCleats"]
+mesh = ExtResource("narrow_strip")
+material_override = ExtResource("paint_end")
+transform = Transform3D(0, 0.042, 0, 0.9546, 0, 0.05608044, 1.075, 0, -0.04979943, -5.600502, 1.585, -0.85)
+metadata/stock = "narrow_strip"
+metadata/asset = "MOD-0006"
+
+[node name="NarrowStrip_002" type="MeshInstance3D" parent="W1Opening0FixedCleats"]
+mesh = ExtResource("narrow_strip")
+material_override = ExtResource("paint_end")
+transform = Transform3D(0, 0.042, 0, -0.9546, 0, 0.05608044, 1.075, 0, 0.04979943, -5.433502, 1.585, -0.85)
+metadata/stock = "narrow_strip"
+metadata/asset = "MOD-0006"
+
+[node name="NarrowStrip_003" type="MeshInstance3D" parent="W1Opening0FixedCleats"]
+mesh = ExtResource("narrow_strip")
+material_override = ExtResource("paint_end")
+transform = Transform3D(0, 0.042, 0, 0.9546, 0, 0.05608044, 1.075, 0, -0.04979943, -5.399502, 1.585, -0.85)
+metadata/stock = "narrow_strip"
+metadata/asset = "MOD-0006"
+

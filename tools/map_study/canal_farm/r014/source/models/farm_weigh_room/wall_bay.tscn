@@ -1,0 +1,5 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://models/farm_weigh_room/wall_bay.glb" id="Bay"]
+
+[node name="TimberBay" instance=ExtResource("Bay")]

@@ -1,0 +1,42 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://levels/canal_orchard/yard_wear.png" id="Wear"]
+[ext_resource type="MultiMesh" path="res://levels/canal_orchard/field_grass.res" id="Clumps"]
+[ext_resource type="Shader" path="res://grass.gdshader" id="GrassShader"]
+
+[sub_resource type="Shader" id="PaintShader"]
+code = "shader_type spatial;
+render_mode depth_draw_never, specular_disabled;
+uniform sampler2D wear : source_color, filter_linear_mipmap_anisotropic, repeat_disable;
+varying vec2 patch_uv;
+void vertex() { patch_uv = VERTEX.xz / vec2(40.0, 36.0) + 0.5; }
+void fragment() {
+	vec4 ground = texture(wear, patch_uv);
+	ALBEDO = ground.rgb;
+	ALPHA = ground.a;
+	ROUGHNESS = 0.94;
+}"
+
+[sub_resource type="ShaderMaterial" id="Paint"]
+shader = SubResource("PaintShader")
+shader_parameter/wear = ExtResource("Wear")
+
+[sub_resource type="PlaneMesh" id="Ground"]
+size = Vector2(40, 36)
+material = SubResource("Paint")
+
+[sub_resource type="ShaderMaterial" id="Grass"]
+shader = ExtResource("GrassShader")
+
+[node name="OrchardYardSurface" type="Node3D"]
+
+[node name="Wear" type="MeshInstance3D" parent="."]
+position = Vector3(-39, 0.018, 44)
+cast_shadow = 0
+mesh = SubResource("Ground")
+
+[node name="FieldGrass" type="MultiMeshInstance3D" parent="."]
+multimesh = ExtResource("Clumps")
+material_override = SubResource("Grass")
+cast_shadow = 0
+visibility_range_end = 46.0

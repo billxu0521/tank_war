@@ -1,0 +1,15 @@
+[gd_scene format=3]
+
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/end.tres" id="mat"]
+
+[sub_resource type="PrismMesh" id="M0"]
+material = ExtResource("mat")
+left_to_right = 1.0
+size = Vector3(1, 1, 1)
+
+[node name="wheel_chock" type="Node3D"]
+metadata/asset = "MOD-0004"
+
+[node name="Part0" type="MeshInstance3D" parent="."]
+mesh = SubResource("M0")
+position = Vector3(0, 0, 0)

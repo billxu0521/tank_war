@@ -1,0 +1,1411 @@
+extends "res://dino.gd"
+## 恐龍 boss（電腦操控，主機上跑）：在地圖上自己找人、追人、咬人，跟蛋無關（設計見 docs/規劃/2026-10-01-恐龍行為.md）。
+## 打不死——血打光會倒地暈 KNOCK_TIME 秒，起來血是滿的，而且先退開一段（導演的高峰）。
+##
+## 行為樹（bt.gd），每幀從上往下找第一條走得通的：
+##   1. 倒地中        → 等
+##   2. 出招中        → 把這招做完（預備動作 → 出手 → 收招）
+##   3. 導演叫牠退開  → 往離大家遠的地方跑
+##   4. 剛確定看到人  → 停下來吼一聲（發現），之後才出招、追（太近的不吼，直接動手）
+##   5. 可以出招      → 咬／蓄力甩尾
+##   6. 看得到人      → 追最近的
+##   7. 瞄到人還不確定 → 停下來盯著、慢慢轉過去（不確定感，ARC Raiders 的做法）
+##   8. 剛看丟了人    → 往最後看到的地方追
+##   9. 聽到聲音      → 走到那一帶，再在附近繞著找（放鬆的時候只理近的）
+##  10. 導演給了方向  → 走過去、在附近繞著找
+##  11. 都沒有        → 隨便逛
+##
+## 感官：視力差——近（SIGHT）、只看前方、要沒被擋住；蹲著要更近才看得到，蹲在灌木裡看不到。
+## 看到不等於確定：要盯著一下（越遠越久）才確定是人，這段時間躲回去，牠只會去你剛才在的地方找。
+## 聽力好——整張地圖的槍聲都聽得到，附近有人跑步也聽得到（走路和蹲著走聽不到）。
+## 但聲音只聽得出大概在哪：越遠偏越多（NOISE_FUZZ）。
+##
+## 心情 mood（逛／找／追）同步給大家，各台照它擺頭的高低、出聲（trex.gd、_process）：玩家看得出牠現在在幹嘛。
+## 導演（director.gd）知道大家在哪，但只給恐龍大概方向，不給準確位置。
+##
+## 兩招都有預備動作和聲音，看得懂、聽得到才公平；收招有破綻（DOOM 的做法，知識庫敵人設計筆記）。
+## 一次只出一招。動作狀態 act 同步給大家，各台自己播骨架動作和叫聲（trex.gd、_process）。
+##
+## 移動：照導航網格的路徑走（main.gd 的 bake_nav，開場在主機上烘），繞得過建築；烘好之前退回直線追。
+## 走跟牛仔一樣、跑比牛仔快。跑步吃體力，見底只能走、回到 RECOVER_AT 才能再跑——牛仔拉開距離的機會就在這。
+
+# 尼諾拉放大（草案 1，balance.csv 的 dino_height）：膠囊、模型、嘴巴、尾根、鏡頭、判定高度都乘 GROW。
+# boss.tscn 的膠囊和模型已依 GROW 放好（放大前膠囊高 8.1），tests/dino.gd 釘住兩者一致
+static var HALF_H: float = Balance.num("dino_height") * 0.5   # 身體中心到腳底（膠囊半高）
+static var GROW: float = HALF_H * 2.0 / 8.1                    # 放大倍率
+static var LIFT: float = HALF_H + 0.15                         # 生在地上時身體中心的高度（腳底貼地再多 0.15）
+# 以下從 balance.csv 讀（見 balance.gd），改數字去改表
+static var WALK: float = Balance.num("dino_walk")   # 牛仔走 4.0
+static var RUN: float = Balance.num("dino_run")   # 牛仔衝刺 6.8
+static var RUN_DRAIN: float = Balance.num("dino_run_drain")   # 每秒；滿體力約跑 10 秒
+static var REGEN: float = Balance.num("dino_regen")   # 沒在跑的時候每秒回
+static var RECOVER_AT: float = Balance.num("dino_recover_at")   # 跑到見底之後，回到這麼多才能再跑
+const SIGHT := 18.0          # 看得到多遠
+const SIGHT_CROUCH := 9.0    # 蹲著的人要更近才看得到
+const SIGHT_CONE := 0.5      # cos 60°：正前方左右各 60 度
+const FEEL := 5.0            # 這麼近不管方向都會發現
+const HEAR_GUN := 150.0      # 槍聲：場地 168 公尺，幾乎整張圖都聽得到
+const HEAR_RUN := 20.0       # 有人在附近跑步
+# 以下從 balance.csv 讀（見 balance.gd），改數字去改表
+static var RUN_SPEED_HEARD: float = Balance.num("dino_run_heard")   # 水平速度超過這個算在跑（牛仔走 4、衝刺 6.8）
+const MEMORY := 10.0         # 看丟之後，往最後看到的位置追這麼久
+const NOISE_FORGET := 12.0   # 聽到的聲音記多久
+const NOISE_FUZZ := 0.12     # 聲音的位置偏差：距離的這麼多倍……
+const NOISE_FUZZ_MAX := 15.0 # ……最多偏這麼遠
+const NOISE_SEARCH := 5.0    # 走到聲音那一帶之後，在附近繞著找這麼久
+const SPOT_NEAR := 0.25      # 瞄到人到確定要多久：FEEL 那麼近要這麼久……
+const SPOT_FAR := 1.0        # ……SIGHT 那麼遠要這麼久
+const SPOT_FORGET := 0.5     # 沒瞄到時，確定的進度每秒退這麼多
+const SPOT_LEAD := 0.3       # 進度超過這麼多才看丟，才去你剛才在的地方找
+const LOOK_PAUSE := 1.2      # 繞著找的時候，每走到一點停下來張望這麼久
+const SNIFF_EVERY := Vector2(2.5, 4.5)   # 找人時多久嗅一次（秒）
+const SEARCH_TIME := 8.0     # 走到導演給的點之後，在附近繞著找這麼久
+const SEARCH_RADIUS := 10.0
+const KNOCK_TIME := 6.0
+const PARTY_KNOCK_TIME := 15.0   # 派對模式倒地比較久：牛仔打倒恐龍就有這段時間偷蛋、撤離
+const GET_UP_GUARD := 3.0        # 派對模式：起身後這麼久打不動（身體閃爍）
+# 以下從 balance.csv 讀（見 balance.gd），改數字去改表
+static var TURN: float = Balance.num("dino_turn")   # 轉身速度（弧度／秒）：大隻轉得慢，繞著牠跑有用
+const ARRIVE := 2.5
+const RETREAT_DIST := 50.0   # 退開時往離最近的人這麼遠的地方跑
+
+# --- 兩招（時間都是秒、距離是公尺）---
+enum { ACT_NONE, ACT_BITE_WIND, ACT_BITE, ACT_CHARGE_WIND, ACT_SWEEP, ACT_POUNCE_WIND, ACT_POUNCE, ACT_RECOVER, ACT_STUN, ACT_SPOT, ACT_SPIT_WIND, ACT_SPIT }  # ACT_POUNCE_WIND／ACT_POUNCE 已不用（撲擊拿掉，規則草案 10-28），留著是因為 trex.gd 用編號對動作
+enum { MOOD_ROAM, MOOD_SEARCH, MOOD_HUNT, MOOD_RETREAT }
+const SPOT_TIME := 0.7       # 發現人：停下來吼一聲這麼久，玩家還有這段時間跑
+# 以下從 balance.csv 讀（見 balance.gd），改數字去改表
+static var ATTACK_GAP: float = Balance.num("attack_gap")   # 收招之後至少隔這麼久才出下一招
+static var PILOT_ATTACK_GAP: float = Balance.num("pilot_attack_gap")   # 玩家操作：收招後很快能出下一招（電腦版留空檔給牛仔喘氣）
+# 咬：近距離正前方。站定、頭往後仰、低吼，再咬下去。BITE_TRIGGER 在輕攻擊的數字之後
+# 以下從 balance.csv 讀（見 balance.gd），改數字去改表
+static var BITE_WIND: float = Balance.num("bite_wind")
+static var PILOT_BITE_WIND: float = Balance.num("pilot_bite_wind")   # 玩家操作：出招要跟手，預備比電腦短一半
+static var BITE_RECOVER: float = Balance.num("bite_recover")
+static var PILOT_BITE_RECOVER: float = Balance.num("pilot_bite_recover")   # 玩家操作：咬完很快收回來
+static var BITE_AT: float = 6.0 * GROW       # 判定點在身體中心前方這麼遠（嘴巴的位置）
+static var BODY_RADIUS: float = 2.4 * GROW   # 身體碰撞膠囊的半徑（boss.tscn）
+# 輕攻擊（左鍵咬）：胸前扇形，從身體中心算。以下從 balance.csv 讀
+static var LIGHT_DAMAGE: int = Balance.whole("light_damage")
+static var LIGHT_REACH: float = Balance.num("light_reach")
+static var LIGHT_COS: float = cos(deg_to_rad(Balance.num("light_angle") * 0.5))   # 扇形半角的餘弦，判定用
+## 駕駛按咬時畫面上圈到的人（bite_targets）：主機在這個寬容內就鎖定，前搖期間跑出去照樣咬到（連線延遲、前搖都偏袒咬的人）
+static var BITE_CLAIM_SLACK: float = Balance.num("bite_claim_slack")
+static var BITE_CLAIM_COS: float = cos(deg_to_rad(Balance.num("light_angle") * 0.5 + Balance.num("bite_claim_slack_angle")))
+static var BITE_TRIGGER: float = BODY_RADIUS + LIGHT_REACH + 0.5   # 電腦：牛仔在咬的扇形（_hit_cone 同一個）再外面 0.5 公尺內就起咬，不乘倍率
+# 踩踏：移動中貼著牛仔走過去就踩，站著不動不踩。以下從 balance.csv 讀
+static var STOMP_DAMAGE: int = Balance.whole("stomp_damage")
+static var STOMP_REACH: float = Balance.num("stomp_reach")
+static var STOMP_INTERVAL: float = Balance.num("stomp_interval")
+static var STOMP_MIN_SPEED: float = Balance.num("stomp_min_speed")
+const STOMP_HEIGHT := 1.5    # 牛仔腳底在恐龍腳底上下這麼多以內才踩得到
+# 蓄力甩尾：身邊有人在側面或背後、或身邊不只一個人。站著仰頭長吼，這段時間打中頭就打斷
+# 以下從 balance.csv 讀（見 balance.gd），改數字去改表
+static var CHARGE_WIND: float = Balance.num("charge_wind")
+static var PILOT_CHARGE_WIND: float = Balance.num("pilot_charge_wind")   # 玩家操作：搖動太久不好玩。打中頭打斷的機會也跟著變短
+static var SWEEP_RADIUS: float = Balance.num("sweep_radius")
+static var SWEEP_DAMAGE: int = Balance.whole("sweep_damage")
+static var SWEEP_RECOVER: float = Balance.num("sweep_recover")
+static var SWEEP_CD: float = Balance.num("sweep_cd")
+static var SWEEP_CD_PARTY: float = Balance.num("sweep_cd_party")   # 派對模式：甩尾拆得掉地形（積木，toy_build.gd），冷卻拉長，不然掩體一下就拆光
+static var TOY_CHARGE_SPEED: float = RUN * Balance.num("toy_charge_ratio")   # 尼諾拉撞積木要跑到這個水平速度才拆（跑步速度的 0.7 倍，走路不拆）
+static var TOY_CHARGE_REACH: float = Balance.num("toy_charge_reach")   # 跑步撞的範圍：身體表面外多遠（公尺）
+static var TOY_CHARGE_LEVEL: int = Balance.whole("toy_charge_level")   # 跑步撞能扣到的最高等級（等級 1、2 都扣一下）
+const CHARGE_MS := 300   # 同一棟積木撞過之後，這段時間內不再撞（毫秒）
+static var TOY_PLOW_MS: int = Balance.whole("toy_plow_ms")   # 全速撞的冷卻（毫秒）：比 CHARGE_MS 短，連續撞才不會一撞一停
+static var TOY_PLOW_SPEED: float = RUN * Balance.num("toy_plow_speed")   # 剛撞穿積木之後的水平速度上限（阻力）
+static var TOY_PLOW_BREAK: float = RUN * Balance.num("toy_plow_break")   # 全速撞的門檻：到這個速度，等級 2 一下打穿
+static var TOY_PLOW_FLING: float = Balance.num("toy_plow_fling")   # 全速撞飛碎塊：碎塊速度＝水平速度乘這個數
+static var TOY_PLOW_STALL: float = RUN * Balance.num("toy_plow_stall")   # 撞進去那一下的水平速度上限（卡一下）
+static var TOY_PLOW_STALL_MS: int = Balance.whole("toy_plow_stall_ms")   # 卡一下多久（毫秒）
+static var TOY_PLOW_DMG: int = Balance.whole("toy_plow_dmg")   # 全速撞每下扣幾點
+const PLOW_DRAG := 300        # 撞穿之後這段時間內（毫秒）水平速度有上限（見 TOY_PLOW_SPEED）
+const PLOW_GAP := 500         # 撞過之後這段時間內還算同一次撞；超過才算第一下（停頓只給第一下，見 _plow_fed）
+const PLOW_HITSTOP := 0.1     # 第一下的停頓（秒）
+const PLOW_SHAKE_FIRST := 0.08   # 第一下的鏡頭抖（和挨重打一樣）
+const PLOW_POWER_MAX := 7.5   # 碎塊飛出的速度上限（公尺／秒；2026-11-09 減半，原本 15 太強）
+static var SWEEP_COS: float = cos(deg_to_rad(Balance.num("sweep_angle") * 0.5))   # 甩尾扇形（後方）半角的餘弦
+static var SWEEP_ROOT_BACK: float = Balance.num("sweep_root_back") * GROW   # 尾根在身體中心後方幾公尺（表裡是放大前的 0.45），甩尾的圓心
+static var SWEEP_TRIGGER: float = SWEEP_ROOT_BACK + SWEEP_RADIUS   # 電腦：牛仔離身體中心在這裡面才算在甩尾範圍（尾根加半徑）
+static var SWEEP_ACTIVE: float = Balance.num("sweep_active")   # 甩尾判定持續秒數，trex.gd 的甩尾動作也用這個
+static var STUN_TIME: float = Balance.num("stun_time")   # 蓄力被打斷暈多久
+const STRIKE_SHOW := 0.15    # 出手那一下的動作狀態留這麼久（同步每秒 40 次，太短會漏）
+# 火球（Q，玩家操作）：站定、仰頭張嘴，吐出去。以下從 balance.csv 讀
+static var FIREBALL_WIND: float = Balance.num("fireball_wind")
+static var FIREBALL_RECOVER: float = Balance.num("fireball_recover")
+static var FIREBALL_CD: float = Balance.num("fireball_cd")
+static var FB_SPEED: float = Balance.num("fireball_speed")
+static var FB_SIZE: float = Balance.num("fireball_size")
+static var FB_RANGE: float = Balance.num("fireball_range")
+static var FB_DAMAGE: int = Balance.whole("fireball_damage")
+
+const SOUNDS := {
+	ACT_BITE_WIND: preload("res://assets/audio/dino/growl.wav"),
+	ACT_CHARGE_WIND: preload("res://assets/audio/dino/roar.wav"),
+	ACT_STUN: preload("res://assets/audio/dino/yelp.wav"),
+	ACT_SPOT: preload("res://assets/audio/dino/bellow.wav"),
+	ACT_SPIT_WIND: preload("res://assets/audio/dino/snarl.wav"),   # 火球預備：短咆哮（原本撲擊用的，撲擊拿掉後沒人用）
+}
+const YELP := preload("res://assets/audio/dino/yelp.wav")
+const SNIFF := preload("res://assets/audio/dino/sniff.wav")
+
+## 這幾個同步出去（boss.tscn 的同步器），大家的 HUD、畫面和聲音都看得到
+@export var down_left := 0.0
+@export var running := false
+@export var act := ACT_NONE
+@export var mood := MOOD_ROAM
+@export var guard_left := 0.0   # 派對模式起身後的無敵還剩幾秒
+@export var sweep_left := 0.0   # 甩尾冷卻還剩幾秒：同步出去，玩家操作恐龍時畫面上看得到
+## 派對模式用（docs/企劃/派對玩法.md）：倒地中、起身後無敵中。各台都看得到（照同步的值算）
+var downed: bool:
+	get: return down_left > 0.0
+var invulnerable: bool:
+	get: return guard_left > 0.0
+## 這次倒地誰搜刮過了（連線編號 -> true）。主機搜完送大家（mark_looted），倒地那一刻（_knock）清掉
+var looted := {}
+## 看著倒地的尼諾拉時畫面上的提示（cowboy.gd 的 update_focus 讀這個；"" 就不算看著能互動的東西）
+var prompt: String:
+	get: return "按住搜刮（恐龍肉）" if _can_loot_here() else ""
+signal knocked_down   # 各台：倒地那一刻
+signal got_up         # 各台：起身那一刻
+## 對抗模式：玩家操作尼諾拉（docs/規劃/2026-10-18-對抗模式.md）。0 = 電腦。有駕駛時行為樹不跑，照駕駛送來的輸入動，
+## 出招、預備動作、叫聲、體力、倒地、同步都跟電腦版一樣。駕駛斷線 main.gd 會清回 0，電腦接手
+@export var pilot := 0
+enum { PIN_BITE = 1, PIN_SWEEP = 4, PIN_RUN = 8, PIN_FIREBALL = 16 }
+const BOSS_PITCH_MIN := -1.2   # 尼諾拉往下看的極限（約 69 度）：dino.gd 的 PITCH_MIN（43 度）打不到貼身的牛仔，火球平射會從頭上過
+const CAM_PITCH_MIN := -1.45   # 鏡頭往下看的極限（約 83 度）：只限鏡頭，火球的 look_pitch 還是 BOSS_PITCH_MIN
+const PILOT_STALE := 0.5     # 主機這麼久沒收到駕駛的輸入就當放開（網路斷斷續續時不要一直往前衝）
+var _pin_move := Vector2.ZERO   # 主機：駕駛最新的輸入（相對鏡頭，x 右、y 後）
+var _pin_yaw := 0.0
+var _pin_buttons := 0
+var _pin_age := 0.0
+var _cam_yaw := 0.0             # 駕駛那台：鏡頭的水平角（身體慢慢轉過來）
+var _cam_pitch := 0.0
+var _piloting := false          # 駕駛那台：現在是不是由我操作（變成駕駛、不再是駕駛的那一刻才換鏡頭）
+var _pin_pitch := 0.0           # 主機：駕駛鏡頭的俯仰（算準心指到哪，_aim）
+## 駕駛鏡頭：第三人稱。支點在身體中心上方 CAM_UP，鏡頭在支點右邊 CAM_SIDE（現在 0 = 正後方）、後面 CAM_DIST，平視時略往下看（CAM_TILT）。
+## 主機照同一組數字重建鏡頭那條線（_aim），所以這幾個數字兩邊要一樣（都讀 balance.csv）
+static var CAM_UP: float = Balance.num("dino_cam_height") * GROW
+static var CAM_SIDE: float = Balance.num("dino_cam_side") * GROW
+static var CAM_DIST: float = Balance.num("dino_cam_dist") * GROW
+const CAM_TILT := -0.22         # 約 13 度（正後方：拉高往下看，看得到頭前面；越肩時是 -0.14。dino.gd 的 CAM_BASE 是 23 度俯視，準心會指到腳前的地上）
+const CAM_MARGIN := 0.6         # 鏡頭被牆擋住時，離牆留這麼遠（公尺）
+const CAM_PULL_MIN := 0.5       # 最多拉近到原本的這個比例：再近鏡頭會進到身體裡
+const AIM_CONE := 0.6           # 火球最多偏離身體正面這麼多（弧度，約 34 度）：身體還沒轉過來時不能往旁邊、往後吐
+var _cam_t := Vector2.ONE       # 駕駛那台：鏡頭被擋住時拉近的比例（x 往右那段、y 往後那段；1 = 沒被擋）
+var _quake := 0.0               # 駕駛那台：打到可拆的東西，鏡頭現在抖的幅度（0～0.2，乘 QUAKE_METERS 是平移公尺），每幀追 _quake_to
+var _quake_to := 0.0            # 駕駛那台：add_shake 給的幅度，每幀衰減
+const QUAKE_METERS := 2.0       # 抖動幅度換成鏡頭平移：0.08（第一下）約 0.16 公尺、上限 0.2 是 0.4 公尺
+
+var director := Director.new()
+var _tree: BT.Task
+var _target: Node3D = null
+var _last_seen := Vector3.INF
+var _seen_left := 0.0
+var _noise := Vector3.INF
+var _noise_left := 0.0
+var _hint := Vector3.INF
+var _search_left := 0.0
+var _hint_reached := false
+var _wander_to := Vector3.INF
+var _retreat_to := Vector3.INF
+var _last_pos := {}           # 牛仔 → 上一幀的位置（算誰在跑）
+var _act_left := 0.0          # 這個動作狀態還剩多久
+var _attack_gap := 0.0
+var _hit_once := []           # 這一招已經打過的人（一招內不重複扣）
+var _pin_bite := PackedStringArray()   # 主機：駕駛最近一次送來、他畫面上咬得到的牛仔（節點名）
+var _bite_lock := []          # 主機：這一口鎖定的人（按下時圈紅圈到的），出手時不看範圍照樣咬
+var _sees_now: Node3D = null
+var _path := PackedVector3Array()
+var _path_goal := Vector3.INF
+var _path_age := 0.0
+var _rng := RandomNumberGenerator.new()
+var _stuck_at := Vector3.INF  # 卡住偵測：一秒前的位置
+var _stuck_t := 0.0
+var _unstick_left := 0.0      # 脫困中：往後退、往旁邊繞
+var _unstick_dir := Vector3.ZERO
+var _shown_act := ACT_NONE    # 各台：上一次播過動作和叫聲的狀態
+var _was_down := false        # 各台：上一幀是不是倒地（倒地那一下揚土）
+var _sniff_in := 0.0          # 各台：再過多久嗅一次
+var _glimpse: Node3D = null   # 瞄到、但還沒確定的人
+var _glimpse_at := Vector3.INF
+var _suspect := 0.0           # 確定的進度 0~1
+var _spot_pending := false    # 剛確定看到人，這一幀要吼
+var _look_left := 0.0         # 繞著找時停下來張望還剩多久
+@export var fireball_left := 0.0   # 火球冷卻還剩幾秒（主機算，同步出去：駕駛的準心看得到好了沒）
+var _charge: Node3D           # 嘴裡蓄的火（FireballFx.charge）
+const LAG_CATCH_MAX := 0.25   # 秒：客戶端的火球最多往前補這麼久（_spit_fire）
+static var FB_LOOK: float = FB_SIZE * 0.85    # 火球看起來的直徑：比判定的直徑小一點（外圈是火舌，不是打得到的範圍）
+const MOUTH_IN_HEAD := Vector3(0.0, 1.05, -0.5)   # 蓄火的位置：頭骨往鼻尖 1.05、往下顎 0.5（骨架自己的單位），在張開的嘴裡
+var _stomp_clock := 0.0        # 踩踏的計時（只在主機用）
+var _stomp_at := {}           # 牛仔 → 上一次被踩的時刻；ponytail: 牛仔離線留下的項目不清，一局幾個人不會長大
+
+
+func _ready() -> void:
+	super()
+	blast_reach = 2.5 * GROW   # 炸藥算距離從身體中心往外扣這麼多（dino.gd 是放大前的 2.5）
+	for p in get_tree().get_nodes_in_group(&"toy_piece"):   # 比牠早生的碎塊也不跟牠相撞（toy_build.gd _make）
+		(p as PhysicsBody3D).add_collision_exception_with(self)
+	$CamPivot/Camera3D.fov = Balance.num("dino_cam_fov")   # 鏡頭垂直視角（度）
+	$CamPivot.position = Vector3(0.0, CAM_UP, 0.0)
+	$CamPivot.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF   # 鏡頭每幀在 _process 自己擺（駕駛時，見那邊），不要再被物理插值補一次
+	$CamPivot/Camera3D.position = Vector3(CAM_SIDE, 0.0, CAM_DIST)
+	var voice := AudioStreamPlayer3D.new()
+	voice.name = "Voice"
+	voice.unit_size = 12.0       # 大隻，遠遠就聽得到
+	voice.max_distance = 120.0
+	voice.volume_db = 4.0
+	voice.position = Vector3(0, 2.0, -4.0) * GROW   # 頭的位置
+	add_child(voice)
+	if FireballFx.on:   # 火球的材質先畫一遍，第一顆才不會卡（等擺好位置再做）
+		(func() -> void: FireballFx.warm(get_tree().get_first_node_in_group(&"arena"), global_position)).call_deferred()
+	_tree = BT.Sel.new([
+		BT.Seq.new([BT.Cond.new(func() -> bool: return down_left > 0.0), BT.Act.new(_act_down)]),
+		BT.Seq.new([BT.Cond.new(func() -> bool: return act != ACT_NONE), BT.Act.new(_act_attack)]),
+		BT.Seq.new([BT.Cond.new(func() -> bool: return director.phase == Director.Phase.RETREAT), BT.Act.new(_act_retreat)]),
+		BT.Seq.new([BT.Cond.new(_start_spot), BT.Act.new(_act_attack)]),
+		BT.Seq.new([BT.Cond.new(_start_attack), BT.Act.new(_act_attack)]),
+		BT.Seq.new([BT.Cond.new(func() -> bool: return _sees_now != null and _guard_lets(_sees_now.global_position)), BT.Act.new(_act_chase)]),
+		BT.Seq.new([BT.Cond.new(func() -> bool: return _glimpse != null and _guard_lets(_glimpse_at)), BT.Act.new(_act_glimpse)]),
+		BT.Seq.new([BT.Cond.new(func() -> bool: return _seen_left > 0.0 and _guard_lets(_last_seen)), BT.Act.new(_act_last_seen)]),
+		BT.Seq.new([BT.Cond.new(func() -> bool: return _noise_left > 0.0 and _guard_lets(_noise) and not (_guarding() and _game().safe.open)), BT.Act.new(_act_investigate)]),   # 守箱、箱子開了：不找聲音，直接去蛋
+		BT.Seq.new([BT.Cond.new(func() -> bool: return _hint != Vector3.INF), BT.Act.new(_act_hint)]),
+		BT.Seq.new([BT.Cond.new(_guarding), BT.Act.new(_act_guard)]),
+		BT.Act.new(_act_wander),
+	])
+
+
+## 每台都跑：倒地往側邊躺；動作狀態一變，骨架換動作、出叫聲
+func _process(delta: float) -> void:
+	super(delta)
+	# 駕駛那台：第三人稱鏡頭照自己的視角，不等身體轉過來。只在變成／不再是駕駛那一刻換鏡頭：
+	# 新一局客戶端的牛仔常比 pilot=0 先同步到，每幀搶的話鏡頭會卡在恐龍身上
+	var mine := _is_my_pilot()
+	var cam: Camera3D = $CamPivot/Camera3D
+	if mine != _piloting:
+		_piloting = mine
+		cam.current = mine
+		_cam_yaw = rotation.y
+		# 駕駛時支點不跟著身體的節點走（top_level），每幀自己擺在世界裡；不駕駛就放回身體上原本的位置
+		$CamPivot.top_level = mine
+		$CamPivot.transform = Transform3D(Basis(), Vector3(0.0, CAM_UP, 0.0))
+	if mine:
+		# 支點每幀擺到「畫面上的」身體（物理插值補過的）上方，角度直接用玩家要的。以前支點掛在身體底下、角度用 _cam_yaw - rotation.y 扣：
+		# rotation、global_position 是物理步的值（一秒跳 120 次），跟畫面上補過的身體差一點點、每幀差的不一樣，
+		# 而且引擎會把在 _process 改的鏡頭再照物理步補一次（會警告 Interpolated Camera3D triggered from outside physics process）。
+		# 身體轉身、背後有牆（拉近的射線起點跟著跳）時整個畫面就抖
+		var px := Transform3D(
+			Basis.from_euler(Vector3(CAM_TILT + _cam_pitch + randf_range(-1.0, 1.0) * _stagger * 0.08 * Settings.v.get(&"shake", 1.0), _cam_yaw, 0.0)),
+			get_global_transform_interpolated().origin + Vector3.UP * CAM_UP)
+		$CamPivot.global_transform = px
+		# 鏡頭被牆、地形、房子擋住就拉近（馬上拉近、慢慢放回去）。先看支點到肩膀外側那一段，再從那裡往後看：
+		# 只往前拉的話鏡頭還在同一條視線上，準心指的地方不變；肩膀那段被擋（右邊貼牆）才往中間收
+		var side := _cam_clear(px.origin, px.basis.x * CAM_SIDE)
+		var want := Vector2(side, maxf(_cam_clear(px.origin + px.basis.x * CAM_SIDE * side, px.basis.z * CAM_DIST), CAM_PULL_MIN))
+		_cam_t = want.min(_cam_t.lerp(want, 1.0 - exp(-6.0 * delta)))
+		cam.position = Vector3(CAM_SIDE * _cam_t.x, 0.0, CAM_DIST * _cam_t.y)
+		# 抖一下＝很快升到 _quake_to、再慢慢退掉：幅度不會一幀跳上去（跳上去鏡頭會瞬間移位，看起來是頓一下不是晃一下）
+		_quake_to = lerpf(_quake_to, 0.0, 1.0 - exp(-8.0 * delta))
+		_quake = lerpf(_quake, _quake_to, 1.0 - exp(-30.0 * delta))
+		# 抖動：鏡頭平移（h_offset、v_offset），不轉鏡頭（轉的話整個畫面甩，暈）；用幾個正弦疊出平滑的晃動，不是每幀亂跳
+		var tq := Time.get_ticks_msec() * 0.001
+		var nz := Vector2(sin(tq * 23.0) + sin(tq * 37.0 + 1.3), sin(tq * 29.0 + 0.7) + sin(tq * 41.0 + 2.1)) * 0.5
+		var amp: float = _quake * QUAKE_METERS * Settings.v.get(&"shake", 1.0)
+		cam.h_offset = nz.x * amp
+		cam.v_offset = nz.y * amp * 0.6   # 上下比左右少一點
+	$Trex.down_roll = lerpf($Trex.down_roll, 1.35 if down_left > 0.0 else 0.0, minf(delta * 4.0, 1.0))
+	if down_left > 0.0 and not _was_down:   # 倒地：整隻摔下去揚起一大圈土
+		var w: Node = get_tree().get_first_node_in_group(&"arena")
+		if w:
+			Fx.dust_ring(w, global_position + Vector3.DOWN * 3.5 * GROW, 4.0 * GROW, 40, 9.0, 1.2)
+	if downed != _was_down:
+		(knocked_down if downed else got_up).emit()
+	_was_down = downed
+	$Trex.visible = guard_left <= 0.0 or fmod(guard_left, 0.2) < 0.12   # 無敵中閃爍
+	$Trex.act = act
+	if act != _shown_act:
+		_shown_act = act
+		if SOUNDS.has(act):
+			var voice: AudioStreamPlayer3D = $Voice
+			voice.stream = SOUNDS[act]
+			voice.play()
+		if act == ACT_BITE:
+			$Trex.bite()
+		# 火球預備：嘴裡蓄一團火（各台自己播，看同步來的 act）；吐出去（_spit_fire）或被打斷就收掉
+		if is_instance_valid(_charge):
+			_charge.queue_free()
+		if act == ACT_SPIT_WIND and FireballFx.on:
+			_charge = FireballFx.charge($Trex.skel, "head", MOUTH_IN_HEAD, FB_LOOK, FIREBALL_WIND)
+	$Trex.mood = mood
+	# 找人的時候不時嗅一下（嘴巴沒在叫的時候才嗅，不蓋掉出招的預告）
+	_sniff_in -= delta
+	if mood == MOOD_SEARCH and act == ACT_NONE and _sniff_in <= 0.0:
+		_sniff_in = randf_range(SNIFF_EVERY.x, SNIFF_EVERY.y)
+		_say(SNIFF)
+
+## 出聲，但不蓋掉正在叫的（出招的預告比較重要）
+func _say(s: AudioStream) -> void:
+	var voice: AudioStreamPlayer3D = $Voice
+	if voice.playing:
+		return
+	voice.stream = s
+	voice.play()
+
+
+func _physics_process(delta: float) -> void:
+	_sync_mask()
+	if _is_my_pilot():
+		_pilot_local()
+	if not is_multiplayer_authority():
+		return
+	var t := Time.get_ticks_usec() if prof_on else 0
+	think(delta)
+	if prof_on:
+		prof_add(&"尼諾拉 think", t)
+
+## 碰撞物件開關（main.gd 的 dino_collide，預設開）：關掉時遮罩只留第 5 層（地形、圍牆、建築、角色），只有樹穿過去。
+## 每台每幀照開關設（移動在主機算，trex.gd 的腳掌射線也用這個遮罩）。沒有遊戲局（沒有 match）就照常撞
+func _sync_mask() -> void:
+	var g := _game()
+	collision_mask = 1 if g == null or g.dino_collide else Fighter.SOLID_LAYER
+
+
+## 一幀的決策＋移動。測試直接呼叫這個
+func think(delta: float) -> void:
+	_seen_left = maxf(_seen_left - delta, 0.0)
+	_noise_left = maxf(_noise_left - delta, 0.0)
+	_attack_gap = maxf(_attack_gap - delta, 0.0)
+	sweep_left = maxf(sweep_left - delta, 0.0)
+	fireball_left = maxf(fireball_left - delta, 0.0)
+	guard_left = maxf(guard_left - delta, 0.0)
+	_stomp(delta)
+	if pilot != 0:
+		_pilot_step(delta)
+		return
+	_listen_steps(delta)
+	_look(delta)
+	var hint := director.step(delta, _sees_now, _seen_left > 0.0 or _noise_left > 0.0 or _glimpse != null, _cowboys(), _rng)
+	if _guarding() and _game().safe.open and director.phase != Director.Phase.BUILD:   # 守箱、蛋出來了：不退開、不放鬆，拼到底
+		director.phase = Director.Phase.BUILD
+	if director.phase != Director.Phase.RETREAT:   # 退開結束就忘了退去哪（不然下次退開還往上次的點跑）
+		_retreat_to = Vector3.INF
+	if hint != Vector3.INF and not _guarding():   # 守箱時不理導演的提示
+		_hint = hint
+		_search_left = SEARCH_TIME
+		_hint_reached = false
+	_tree.tick(delta)
+	mood = _mood()
+
+## 踩踏（主機每幀，電腦和駕駛都一樣）：水平速度夠快時，貼著走過去的牛仔扣血。倒地、出招中照樣算（只看速度）
+func _stomp(delta: float) -> void:
+	_stomp_clock += delta
+	if Vector2(velocity.x, velocity.z).length() <= STOMP_MIN_SPEED:
+		return
+	for p: Node3D in _victims():
+		var to := p.global_position - global_position
+		to.y = 0.0
+		if to.length() >= BODY_RADIUS + STOMP_REACH or absf(p.global_position.y - (global_position.y - HALF_H)) >= STOMP_HEIGHT:
+			continue
+		if _stomp_clock - _stomp_at.get(p, -INF) < STOMP_INTERVAL:
+			continue
+		_stomp_at[p] = _stomp_clock
+		_hurt(p, STOMP_DAMAGE)
+
+# --- 對抗模式：玩家駕駛 ---
+
+## 主機收駕駛的輸入（只收駕駛本人送的；主機自己當駕駛時直接呼叫）
+@rpc("any_peer", "call_remote", "unreliable_ordered")
+func pilot_input(move: Vector2, yaw: float, pitch: float, buttons: int, bite := PackedStringArray()) -> void:
+	var from := multiplayer.get_remote_sender_id()
+	if from == 0:
+		from = multiplayer.get_unique_id()
+	if not multiplayer.is_server() or from != pilot or not (is_finite(yaw) and is_finite(pitch) and move.is_finite()):
+		return
+	_pin_move = move.limit_length(1.0)
+	_pin_yaw = yaw
+	_pin_buttons = buttons
+	_pin_bite = bite.slice(0, 16)
+	_pin_age = 0.0
+	_pin_pitch = _clamp_cam_pitch(pitch)
+	look_pitch = clampf(pitch, BOSS_PITCH_MIN, PITCH_MAX)
+
+## 駕駛這一幀：倒地、出招中照電腦版跑完；平常照輸入走、慢慢轉向鏡頭的方向、按鍵出招
+func _pilot_step(delta: float) -> void:
+	_pin_age += delta
+	if _pin_age > PILOT_STALE:
+		_pin_move = Vector2.ZERO
+		_pin_buttons = 0
+	mood = MOOD_HUNT if act != ACT_NONE or running else MOOD_ROAM
+	if down_left > 0.0:
+		_act_down(delta)
+		return
+	if act != ACT_NONE:
+		if act in [ACT_BITE_WIND, ACT_SPOT, ACT_SPIT_WIND]:   # 預備時還能對準（跟電腦版一樣：咬、發現人都半速；火球預備也是）
+			rotation.y = rotate_toward(rotation.y, _pin_yaw, TURN * 0.5 * delta)
+		_act_attack(delta)
+		return
+	if _attack_gap <= 0.0:
+		_target = null   # 沒有目標：咬照面對的方向
+		if _pin_buttons & PIN_BITE:
+			_begin(ACT_BITE_WIND, PILOT_BITE_WIND)
+			_bite_lock = _cowboys().filter(_claim_ok)
+			return
+		if _pin_buttons & PIN_SWEEP and sweep_left <= 0.0:
+			sweep_left = _sweep_cd_time()
+			_begin(ACT_CHARGE_WIND, PILOT_CHARGE_WIND)
+			return
+		if _pin_buttons & PIN_FIREBALL and fireball_left <= 0.0:
+			fireball_left = FIREBALL_CD
+			_begin(ACT_SPIT_WIND, FIREBALL_WIND)
+			return
+	rotation.y = rotate_toward(rotation.y, _pin_yaw, TURN * delta)   # 轉身限速：繞著牠跑有用
+	var dir := Basis(Vector3.UP, _pin_yaw) * Vector3(_pin_move.x, 0.0, _pin_move.y)
+	_move(dir, _pin_buttons & PIN_RUN != 0, delta)
+
+## 駕駛那台：滑鼠轉鏡頭（身體由主機慢慢轉過來）
+func _unhandled_input(e: InputEvent) -> void:
+	if not _is_my_pilot() or not (e is InputEventMouseMotion) or Input.mouse_mode != Input.MOUSE_MODE_CAPTURED or after_hitch():
+		return
+	var rel := Settings.look((e as InputEventMouseMotion).screen_relative)
+	_cam_yaw -= rel.x * MOUSE_SENS * 0.5   # 玩家恐龍原本的靈敏度是給會瞬間轉身的身體用的；這隻轉得慢，鏡頭也放慢一點
+	_cam_pitch = _clamp_cam_pitch(_cam_pitch - rel.y * MOUSE_SENS * 0.5)
+
+## 從 from 沿 arm 走得到幾成（0～1）：被牆擋住就停在牆前 CAM_MARGIN
+func _cam_clear(from: Vector3, arm: Vector3) -> float:
+	var hit := get_world_3d().direct_space_state.intersect_ray(
+		PhysicsRayQueryParameters3D.create(from, from + arm, Fighter.SOLID_LAYER, [get_rid()]))
+	return 1.0 if hit.is_empty() else maxf((from.distance_to(hit.position) - CAM_MARGIN) / arm.length(), 0.0)
+
+## 鏡頭的俯仰限制（只給鏡頭；火球的俯角在 _aim 另外限制在 BOSS_PITCH_MIN）
+func _clamp_cam_pitch(v: float) -> float:
+	return clampf(v, CAM_PITCH_MIN, PITCH_MAX)
+
+## 積木挨打的鏡頭抖（ToyBuild.hit_fx 找這個方法）：鏡頭抖一下。只有操控的那台抖得到（鏡頭只在那台）
+func add_shake(amount: float) -> void:
+	if is_plowing():   # 正在全速撞：只有撞進去的第一下抖（_plow_fed），之後每拆一批不再抖。每 0.1 秒補一下的話鏡頭一直嗡嗡抖（量過：撞的時候六成的畫面都在抖）
+		return
+	_quake_to = minf(maxf(_quake_to, amount), 0.2)   # 取大的，不疊加：同時拆好幾棟不會越抖越大
+
+## 打擊停頓：只有操控牠的那台停，骨架凍住（trex.gd 的 hitstop）；別人看到的照常動
+func add_hitstop(sec: float) -> void:
+	if _is_my_pilot():
+		$Trex.hitstop = maxf($Trex.hitstop, sec)
+
+func _is_my_pilot() -> bool:
+	return pilot != 0 and multiplayer.multiplayer_peer != null and pilot == multiplayer.get_unique_id()
+
+## 打到牛仔（主機）：扣血，並讓駕駛那台閃命中提示（火球另外在 fireball.gd 自己叫 on_hit）
+func _hurt(p: Node3D, dmg: int) -> void:
+	p.take_damage(dmg, self)
+	if pilot != 0:
+		_hit_fed.rpc_id(pilot)
+
+@rpc("authority", "call_local", "reliable")
+func _hit_fed() -> void:
+	on_hit()
+	add_hitstop(0.06)
+
+## 駕駛那台每個物理幀：把按鍵送給主機（鏡頭在 _process）
+func _pilot_local() -> void:
+	var free := Input.mouse_mode == Input.MOUSE_MODE_CAPTURED   # 開選單、結算畫面時不送按鍵
+	var mv := Input.get_vector(&"move_left", &"move_right", &"move_forward", &"move_back") if free else Vector2.ZERO
+	var b := 0
+	var bite := PackedStringArray()
+	if free:
+		b |= PIN_BITE if Input.is_action_pressed(&"fire") else 0
+		b |= PIN_SWEEP if Input.is_action_pressed(&"aim") else 0
+		b |= PIN_FIREBALL if Input.is_action_pressed(&"dino_fireball") else 0
+		b |= PIN_RUN if Input.is_action_pressed(&"sprint") else 0
+	if b & PIN_BITE:   # 圈紅圈到誰就送誰（圈的顏色也是 bite_targets，紅＝會中）
+		for p: Node3D in bite_targets():
+			bite.append(p.name)
+	if multiplayer.is_server():
+		pilot_input(mv, _cam_yaw, _cam_pitch, b, bite)
+	else:
+		pilot_input.rpc_id(1, mv, _cam_yaw, _cam_pitch, b, bite)
+
+## 看：瞄到人要盯一下才確定（越遠越久）。已經在追的人（剛看丟沒多久）一瞄到就確定。
+## 確定之前人躲回去了，就去他剛才在的地方找（當成聽到聲音）
+func _look(delta: float) -> void:
+	var seen := _nearest_seen()
+	_sees_now = null
+	if seen:
+		var d := _flat_dist(seen.global_position)
+		if _seen_left > 0.0 or d < FEEL:
+			_suspect = 1.0
+		else:
+			var need := lerpf(SPOT_NEAR, SPOT_FAR, clampf((d - FEEL) / (SIGHT - FEEL), 0.0, 1.0))
+			_suspect = minf(_suspect + delta / need, 1.0)
+		_glimpse_at = seen.global_position
+	elif _glimpse != null and _suspect >= SPOT_LEAD and _suspect < 1.0 and director.phase != Director.Phase.RETREAT:
+		_noise = _glimpse_at
+		_noise_left = NOISE_FORGET
+		_suspect = 0.0
+	else:
+		_suspect = maxf(_suspect - SPOT_FORGET * delta, 0.0)
+	_glimpse = seen if seen and _suspect < 1.0 else null
+	if seen and _suspect >= 1.0:
+		# 剛確定（不是本來就在追）：這一幀吼一聲。太近（直接動手）、在出招、倒地、退開就不吼
+		if _seen_left <= 0.0 and _flat_dist(seen.global_position) >= FEEL and act == ACT_NONE and down_left <= 0.0 \
+				and director.phase != Director.Phase.RETREAT:
+			_spot_pending = true
+		_sees_now = seen
+		_target = seen
+		_last_seen = seen.global_position
+		_seen_left = MEMORY
+		_hint = Vector3.INF
+
+func _mood() -> int:
+	if director.phase == Director.Phase.RETREAT and act == ACT_NONE and down_left <= 0.0:
+		return MOOD_RETREAT   # 跑起來要看得出是走掉不是衝過來（trex.gd 頭抬高、尾巴垂）
+	if act != ACT_NONE or _sees_now or _seen_left > 0.0:
+		return MOOD_HUNT
+	if _glimpse or _noise_left > 0.0 or (_hint != Vector3.INF and _hint_reached):
+		return MOOD_SEARCH
+	return MOOD_ROAM
+
+
+# --- 感官 ---
+
+## 聽到槍聲（viewmodel 開槍時在主機上呼叫，見 Viewmodel._alert_boss）
+func hear(at: Vector3) -> void:
+	var reach := Director.RELAX_HEAR if director.phase == Director.Phase.RELAX else HEAR_GUN
+	if director.phase != Director.Phase.RETREAT and global_position.distance_to(at) <= reach and _guard_hears(at):
+		_heard(at)
+
+## 小恐龍尖叫（raptors.gd）：不管多遠都去看（槍聲放鬆時只理近的，這個不管）。退開時不理
+## guard：守箱的兩件事（猜錯、開箱）叫的，守箱時不管多遠都去；其他的守箱時離守點遠就不理
+func alarm(at: Vector3, guard := false) -> void:
+	if director.phase != Director.Phase.RETREAT and (guard or _guard_hears(at)):
+		_heard(at)
+
+## 聽到 at 那裡有聲音：只記得大概位置，越遠偏越多。偏到房子裡就拉回導航網格上（不然走不到）
+func _heard(at: Vector3) -> void:
+	var a := _rng.randf() * TAU
+	var r := _rng.randf() * minf(_flat_dist(at) * NOISE_FUZZ, NOISE_FUZZ_MAX)
+	_noise = at + Vector3(cos(a), 0, sin(a)) * r
+	var map := get_world_3d().navigation_map
+	if _guarding():
+		_noise = _reachable(_noise)
+	elif NavigationServer3D.map_get_iteration_id(map) > 0:
+		_noise = NavigationServer3D.map_get_closest_point(map, _noise)
+	_noise_left = NOISE_FORGET
+
+## 守箱時離守點遠的槍聲、腳步聲、小恐龍尖叫不理（不然整場被拉著跑）
+func _guard_hears(at: Vector3) -> bool:
+	return not _guarding() or _near_guard(at, GUARD_HEAR)
+
+## 守箱時追人、找聲音不離守點超過 GUARD_LEASH（追出去就放掉，回來守）
+func _guard_lets(at: Vector3) -> bool:
+	return not _guarding() or _near_guard(at, GUARD_LEASH)
+
+## 附近有人跑步：主機只拿得到同步來的位置，用位置差算速度
+func _listen_steps(delta: float) -> void:
+	for p in _cowboys():
+		var now: Vector3 = p.global_position
+		var before: Vector3 = _last_pos.get(p, now)
+		_last_pos[p] = now
+		var speed := Vector2(now.x - before.x, now.z - before.z).length() / maxf(delta, 1e-4)
+		if speed > RUN_SPEED_HEARD and global_position.distance_to(now) < HEAR_RUN \
+				and director.phase != Director.Phase.RETREAT and _guard_hears(now):
+			_heard(now)
+
+func can_see(p: Node3D) -> bool:
+	var to := p.global_position - global_position
+	var flat := Vector2(to.x, to.z).length()
+	if flat < FEEL:
+		return true
+	var g := _game()
+	if g and g.hidden_in_bush(p):
+		return false
+	if flat > (SIGHT_CROUCH if p.get(&"sync_crouching") == true else SIGHT):
+		return false
+	var fwd := -global_basis.z
+	if Vector2(fwd.x, fwd.z).normalized().dot(Vector2(to.x, to.z) / flat) < SIGHT_CONE:
+		return false
+	return not _blocked_by_wall(p)
+
+func _nearest_seen() -> Node3D:
+	var best: Node3D = null
+	var g := _game()
+	var holder := str(g.egg.carrier) if _guarding() and g.egg.carrier != 0 else ""   # 守箱：看得到拿蛋的人就先追他
+	for p: Node3D in _cowboys():
+		if holder != "" and p.name == holder and can_see(p):
+			return p
+		if can_see(p) and (best == null or _flat_dist(p.global_position) < _flat_dist(best.global_position)):
+			best = p
+	return best
+
+## 咬、甩尾、踩打得到的：牛仔，加上金色小恐龍（追分星星，raptors.gd；一般小恐龍尼諾拉傷不到）
+func _victims() -> Array:
+	var out := _cowboys()
+	var g := _game()
+	var r: Node3D = g.raptors.gold_body() if g and g.get(&"raptors") else null
+	if r:
+		out.append(r)
+	return out
+
+func _cowboys() -> Array:
+	var out := get_parent().get_children().filter(
+		func(p: Node) -> bool: return p != self and not p.is_in_group(&"dino") and p.get(&"hp") > 0)
+	# 恐龍走路不被牛仔擋住（只對恐龍這邊：牛仔還是走不進恐龍身體裡）。
+	# 不然站著不動的人可以把恐龍卡死在原地（長時間模擬真的發生過）
+	# 每個牛仔只加一次：這個函式一步物理叫好幾次，引擎的例外清單不會去掉重複的，以前每秒多約 500 筆（玩 10 分鐘 30 萬筆）。
+	# 身體每碰到一個東西（碎塊、積木）都要把整份清單掃一遍，碎塊一多、玩越久就越卡（量到物理一步 63 毫秒）
+	for p: PhysicsBody3D in out:
+		if not _excepted.has(p.get_instance_id()):
+			_excepted[p.get_instance_id()] = true
+			add_collision_exception_with(p)
+	return out
+var _excepted := {}   # 已經加過碰撞例外的牛仔（節點編號）
+
+func _game() -> Node:
+	return get_tree().get_first_node_in_group(&"match")
+
+func _party() -> bool:
+	var g := _game()
+	return g != null and g.party_mode()   # 大廳選了派對再按沙盒：照沙盒
+
+func _flat_dist(at: Vector3) -> float:
+	return Vector2(at.x - global_position.x, at.z - global_position.z).length()
+
+## 那個點在不在正前方（cos 夾角大於 min_dot）
+func _in_front(at: Vector3, min_dot: float) -> bool:
+	var to := at - global_position
+	to.y = 0.0
+	var fwd := -global_basis.z
+	fwd.y = 0.0
+	return to.length() < 0.01 or fwd.normalized().dot(to.normalized()) > min_dot
+
+## 嘴巴的位置：身體中心前方 BITE_AT 公尺
+func mouth() -> Vector3:
+	var fwd := -global_basis.z
+	fwd.y = 0.0
+	return global_position + fwd.normalized() * BITE_AT
+
+## 火球口：頭的高度、往前幾公尺（dino.gd 的 _spit_muzzle 是原本的尺寸，這裡跟著放大）
+func _spit_muzzle() -> Vector3:
+	return _head() + _spit_dir() * MUZZLE_FWD * GROW
+
+func _head() -> Vector3:
+	return global_position + Vector3.UP * HEAD_HEIGHT * GROW
+
+## 駕駛的火球會打到哪（準心畫在這裡）。鏡頭轉到 yaw、pitch 時，從鏡頭沿畫面正中央拉一條線，打到的第一個東西就是瞄的點
+## （沒打到就取射程那麼遠）；火球從嘴巴朝那個點飛。線從嘴前那一截之後才開始算：鏡頭和嘴巴之間的東西（尾巴後面的牆、
+## 身邊的樹）不算，瞄的點也就一定在嘴巴前面，不會瞄到身後或嘴裡。
+## 主機只拿駕駛本來就在送的 yaw、pitch，鏡頭位置自己照 CAM_* 重算，不信客戶端報的點。
+## 身體還沒轉過來（偏離正面超過 AIM_CONE）或太陡（超過 BOSS_PITCH_MIN、PITCH_MAX）就夾住，回傳的是夾過之後真的會去的點
+func _aim(yaw: float, pitch: float) -> Vector3:
+	var cb := Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, CAM_TILT + pitch)
+	var eye := global_position + Vector3.UP * CAM_UP + cb * Vector3(CAM_SIDE, 0.0, CAM_DIST)
+	var fwd := -cb.z
+	var head := _head()
+	var from := eye + fwd * (maxf((head - eye).dot(fwd), 0.0) + MUZZLE_FWD * GROW)
+	var to := from + fwd * FB_RANGE
+	var q := PhysicsRayQueryParameters3D.create(from, to)
+	q.exclude = [get_rid()]
+	var hit := get_world_3d().direct_space_state.intersect_ray(q)
+	var d: Vector3 = (hit.position if not hit.is_empty() else to) - head
+	var y := rotation.y + clampf(angle_difference(rotation.y, atan2(-d.x, -d.z)), -AIM_CONE, AIM_CONE)
+	var p := clampf(asin(d.y / d.length()), BOSS_PITCH_MIN, PITCH_MAX)
+	return head + Basis(Vector3.UP, y) * Vector3(0.0, sin(p), -cos(p)) * d.length()
+
+## 準心的位置（match_hud.gd）：駕駛那台照自己的鏡頭算，跟主機用同一個算法
+func aim_point() -> Vector3:
+	return _aim(_cam_yaw, _cam_pitch)
+
+## 火球的方向：有駕駛就朝準心指的點（主機照駕駛送來的鏡頭角度算）；沒有駕駛照原本的（身體正面＋俯仰）
+func _spit_dir() -> Vector3:
+	return (_aim(_pin_yaw, _pin_pitch) - _head()).normalized() if pilot != 0 else super()
+
+## 從頭拉線看有沒有牆擋（dino.gd 的版本是原本的頭高）
+func _blocked_by_wall(target: Node3D) -> bool:
+	var q := PhysicsRayQueryParameters3D.create(
+		global_position + Vector3.UP * HEAD_HEIGHT * GROW, target.global_position + Vector3.UP)
+	q.exclude = [get_rid(), target.get_rid()]
+	return not get_world_3d().direct_space_state.intersect_ray(q).is_empty()
+
+
+# --- 出招 ---
+
+## 看能不能出招，可以就開始預備（回傳 true，下一個節點 _act_attack 接著做）
+func _start_attack() -> bool:
+	if _attack_gap > 0.0 or director.phase == Director.Phase.RETREAT:
+		return false
+	var near := _cowboys().filter(func(p: Node3D) -> bool:
+		return _flat_dist(p.global_position) < SWEEP_TRIGGER and not _blocked_by_wall(p))
+	# 咬：嘴巴前面有人
+	for p: Node3D in near:
+		var fwd := -global_basis.z
+		fwd.y = 0.0
+		if _in_fan(global_position, fwd.normalized(), p.global_position, BITE_TRIGGER, LIGHT_COS):
+			_target = p
+			_begin(ACT_BITE_WIND, BITE_WIND)
+			return true
+	# 蓄力甩尾：後半圈的扇形（同 _sweep_hit）裡有人才起招，不空甩；正前方的人不算
+	var sr := _sweep_root()
+	var back := _back_dir()
+	if sweep_left <= 0.0 and near.any(func(p: Node3D) -> bool: return _in_fan(sr, back, p.global_position, SWEEP_RADIUS, SWEEP_COS)):
+		sweep_left = _sweep_cd_time()
+		_begin(ACT_CHARGE_WIND, CHARGE_WIND)
+		return true
+	return false
+
+func _begin(a: int, t: float) -> void:
+	act = a
+	_act_left = t
+	_hit_once.clear()
+	_bite_lock = []
+	_spot_pending = false
+	if a in [ACT_BITE_WIND, ACT_CHARGE_WIND, ACT_SPIT_WIND]:
+		director.attacked()
+
+## 剛確定看到人：停下來吼一聲（_act_attack 的 ACT_SPOT）
+func _start_spot() -> bool:
+	if not _spot_pending:
+		return false
+	_begin(ACT_SPOT, SPOT_TIME)
+	return true
+
+## 一招的進行：預備 → 出手 → 收招。每個階段時間到就換下一個
+func _act_attack(delta: float) -> int:
+	_act_left -= delta
+	match act:
+		ACT_BITE_WIND:
+			_turn_to(_target, TURN * 0.5, delta)   # 預備時慢慢對準，側移還是躲得掉
+			_move(Vector3.ZERO, false, delta)
+			if _act_left <= 0.0:
+				var farm := get_tree().get_first_node_in_group(&"farm_destruction")
+				if farm:
+					farm.strike(self,true)
+				_next(ACT_BITE, STRIKE_SHOW)
+		ACT_BITE:
+			_hit_cone()   # 整段出手時間每幀判，_hit_once 保證每人每招只中一次
+			_move(Vector3.ZERO, false, delta)
+			if _act_left <= 0.0:
+				_next(ACT_RECOVER, PILOT_BITE_RECOVER if pilot != 0 else BITE_RECOVER)
+		ACT_CHARGE_WIND:
+			_move(Vector3.ZERO, false, delta)
+			if _act_left <= 0.0:
+				_strike_sweep()
+				_next(ACT_SWEEP, SWEEP_ACTIVE)
+		ACT_SWEEP:
+			_sweep_hit()   # 整段出手時間每幀判，_hit_once 保證每人每招只中一次
+			_move(Vector3.ZERO, false, delta)
+			if _act_left <= 0.0:
+				_next(ACT_RECOVER, SWEEP_RECOVER)
+		ACT_SPIT_WIND:
+			_move(Vector3.ZERO, false, delta)
+			if _act_left <= 0.0:
+				_spit_fire.rpc(_spit_dir(), _spit_muzzle())
+				_next(ACT_SPIT, STRIKE_SHOW)
+		ACT_SPIT:
+			_move(Vector3.ZERO, false, delta)
+			if _act_left <= 0.0:
+				_next(ACT_RECOVER, FIREBALL_RECOVER)
+		ACT_SPOT:
+			_turn_to(_target, TURN, delta)
+			_move(Vector3.ZERO, false, delta)
+			if _act_left <= 0.0:
+				act = ACT_NONE
+				return BT.SUCCESS
+		ACT_RECOVER, ACT_STUN:
+			_move(Vector3.ZERO, false, delta)
+			if _act_left <= 0.0:
+				act = ACT_NONE
+				_attack_gap = PILOT_ATTACK_GAP if pilot != 0 else ATTACK_GAP
+				return BT.SUCCESS
+	return BT.RUNNING
+
+func _next(a: int, t: float) -> void:
+	act = a
+	_act_left = t
+
+## 輕攻擊的判定：胸前扇形，中心算到身體半徑＋light_reach 為止，夾角在 light_angle 以內。
+## 高度、擋牆跟 _sweep_hit 一樣
+func _hit_cone() -> void:
+	for p: Node3D in _victims():
+		if p not in _hit_once and (p in _bite_lock or can_bite(p)):   # 鎖定的人死了就不在 _victims；無敵、凍結由 take_damage 擋
+			_hit_once.append(p)
+			_hurt(p, LIGHT_DAMAGE)
+
+## 這個人在不在咬得到的範圍（_hit_cone 判定；駕駛準心的圓圈變紅也用這個）
+func can_bite(p: Node3D) -> bool:
+	var fwd := -global_basis.z
+	fwd.y = 0.0
+	return _in_fan(global_position, fwd.normalized(), p.global_position, BODY_RADIUS + LIGHT_REACH, LIGHT_COS) \
+		and absf(p.global_position.y - (global_position.y - HALF_H)) < 4.0 * GROW and not _blocked_by_wall(p)
+
+## 駕駛畫面上咬得到的人：圓圈變紅（bite_ready）和按咬時送給主機的是同一份
+func bite_targets() -> Array:
+	return _cowboys().filter(can_bite)
+
+## 駕駛準心的圓圈：有牛仔在咬得到的範圍就變紅（match_hud.gd）
+func bite_ready() -> bool:
+	return not bite_targets().is_empty()
+
+## 主機：駕駛說咬得到的人，在主機上也差不多在範圍內（距離、角度各放寬 bite_claim_slack），才鎖定。防亂報
+func _claim_ok(p: Node3D) -> bool:
+	var fwd := -global_basis.z
+	fwd.y = 0.0
+	return String(p.name) in _pin_bite and _in_fan(global_position, fwd.normalized(), p.global_position,
+		BODY_RADIUS + LIGHT_REACH + BITE_CLAIM_SLACK, BITE_CLAIM_COS)
+
+## 扇形判定（輕攻擊、甩尾共用）：at 在 from 往 dir 那邊（水平）、距離在 reach 以內、夾角 cos 在 cos_half 以上
+func _in_fan(from: Vector3, dir: Vector3, at: Vector3, reach: float, cos_half: float) -> bool:
+	var to := at - from
+	to.y = 0.0
+	return to.length() < reach and dir.dot(to.normalized()) >= cos_half
+
+## 甩尾的圓心：尾根（身體中心往後 SWEEP_ROOT_BACK 公尺）；後方方向是水平的
+func _sweep_root() -> Vector3:
+	return global_position + _back_dir() * SWEEP_ROOT_BACK
+
+func _back_dir() -> Vector3:
+	var b := global_basis.z
+	b.y = 0.0
+	return b.normalized()
+
+## 甩尾出手的那一下：只拆地形（每幀拆會一棟房子挨好幾下）。掃起的一圈土是各台自己播（trex.gd 的 _act_fx）
+func _strike_sweep() -> void:
+	var foot := _sweep_root()
+	foot.y = global_position.y - HALF_H   # 查詢球心放腳底：貼地 12 公尺內的東西都掃得到（放身體中心會漏掉遠處的）
+	var farm := get_tree().get_first_node_in_group(&"farm_destruction")
+	if farm:
+		farm.strike(self,false)
+	_wreck_around(foot, _back_dir(), SWEEP_RADIUS, SWEEP_COS)
+	var g := _game()   # 保險箱在後方半圈裡（高度同 _sweep_hit）就掃飛：從尾根往外偏上
+	var s: Safe = g.safe if g else null
+	if s and _in_fan(_sweep_root(), _back_dir(), s.global_position, SWEEP_RADIUS, SWEEP_COS) and absf(s.global_position.y - foot.y) < 4.0 * GROW:
+		var out := s.global_position - _sweep_root()
+		out.y = 0.0
+		s.push((out.normalized() + Vector3.UP * 0.4).normalized() * Safe.SWEEP_SPEED)
+
+## 甩尾的人：只打尾根後方半圈，高度、擋牆跟輕攻擊一樣。整段出手時間每幀判
+func _sweep_hit() -> void:
+	var root := _sweep_root()
+	var back := _back_dir()
+	for p: Node3D in _victims():
+		if p in _hit_once or not _in_fan(root, back, p.global_position, SWEEP_RADIUS, SWEEP_COS):
+			continue
+		if absf(p.global_position.y - (global_position.y - HALF_H)) < 4.0 * GROW and not _blocked_by_wall(p):
+			_hit_once.append(p)
+			_hurt(p, SWEEP_DAMAGE)
+
+## 尼諾拉吐火球：朝準心指的點（_spit_dir），各台都生一顆（dino.gd 的 _spit 沒有參數、設定不夠用，另寫一個）。
+## 扣血和燃燒只在主機（Fireball 裡 is_server 才算）
+@rpc("authority", "call_local", "reliable")
+func _spit_fire(dir: Vector3, muzzle: Vector3) -> void:
+	var f: Fireball = FIREBALL.instantiate()
+	f.speed = FB_SPEED
+	f.gravity = 0.0          # 直線飛
+	f.radius = FB_SIZE * 0.5
+	f.look_size = FB_LOOK
+	f.max_range = FB_RANGE
+	f.damage = FB_DAMAGE
+	f.burn = true
+	f.wreck = true   # 打中可拆的積木扣一下（toy_build.gd）
+	f.shooter = self
+	f.vel = dir * FB_SPEED
+	get_tree().get_first_node_in_group(&"arena").add_child(f)
+	f.global_position = muzzle
+	# 客戶端晚收到這一下（網路延遲），照樣從嘴前開始飛的話，畫面上的火球會一路落後主機算的那顆（量到延遲 150 毫秒落後 5 公尺多）。
+	# 先往前走「來回時間的一半」那麼久：只動這台自己的那顆（判定在主機，不受影響），外觀照樣從嘴裡滑出去追上
+	var enet := multiplayer.multiplayer_peer as ENetMultiplayerPeer
+	if enet and not multiplayer.is_server() and enet.get_peer(1):
+		f._physics_process(minf(enet.get_peer(1).get_statistic(ENetPacketPeer.PEER_ROUND_TRIP_TIME) / 2000.0, LAG_CATCH_MAX))
+	$Trex.bite()   # 順便張嘴
+	if FireballFx.on:
+		var skel: Skeleton3D = $Trex.skel   # 外觀從嘴裡那團火的位置出發（判定還是從 muzzle）
+		f.look_from = skel.global_transform * (skel.get_bone_global_pose(skel.find_bone("head")) * MOUTH_IN_HEAD)
+		if is_instance_valid(_charge):
+			_charge.queue_free()
+		FireballFx.launch(get_tree().get_first_node_in_group(&"arena"), muzzle, dir, FB_LOOK)
+		add_shake(0.12)   # 駕駛那台：吐出去鏡頭頓一下（只有鏡頭在牠身上才看得到）
+
+func _sweep_cd_time() -> float:
+	return SWEEP_CD_PARTY if _party() else SWEEP_CD
+
+## 甩尾掃到的積木（群組 destructible：樹、房子、掩體；安全屋和石頭不在裡面）各挨一下。只算後方半圈（同 _sweep_hit）。積木是一棟一個物體，照每塊的位置拆
+func _wreck_around(at: Vector3, dir: Vector3, radius: float, cos_half: float) -> void:
+	var sphere := SphereShape3D.new()
+	sphere.radius = radius
+	var q := PhysicsShapeQueryParameters3D.new()
+	q.shape = sphere
+	q.transform = Transform3D(Basis(), at)
+	# 地面（地形）不要算：一個半徑 12 公尺的球會切到好幾百個地形面，把查詢的上限 256 佔滿，後面的樹和房子就漏掉了
+	var exclude: Array[RID] = [get_rid()]
+	for g in get_tree().get_nodes_in_group(&"ground"):
+		if g is CollisionObject3D:
+			exclude.append((g as CollisionObject3D).get_rid())
+	var done := {}
+	var space := get_world_3d().direct_space_state
+	# 一棟大樓的每塊都是一個形狀，一次查詢會被它吃光上限（量到 667 筆）。滿了就把看過的物體排除再查，直到不滿
+	# ponytail: 最多查 32 輪（一輪 256 筆）；超過還滿就停，剩下的物體這次甩不到
+	for _round in 32:
+		q.exclude = exclude
+		var res := space.intersect_shape(q, 256)
+		for r: Dictionary in res:
+			var c: Object = r.collider
+			exclude.append(r.rid)
+			if c is ToyBuild and (c as ToyBuild).is_in_group(&"destructible") and not done.has(c):
+				done[c] = true
+				(c as ToyBuild).smash(func(p: Vector3) -> bool: return _in_fan(at, dir, p, radius, cos_half), Balance.whole("hit_sweep_force"), at, AABB(at - Vector3.ONE * radius, Vector3.ONE * radius * 2.0))   # 積木：每塊照位置算（_in_fan 看塊的中心），整棟一次
+		if res.size() < 256:
+			break
+
+## 打中頭（Main.request_damage 帶 head 旗標進來）：蓄力中被打中頭就打斷、暈 STUN_TIME 秒
+func head_hit() -> void:
+	if act == ACT_CHARGE_WIND:
+		_next(ACT_STUN, STUN_TIME)
+	_head_flinch.rpc()
+
+## 頭被打中：各台甩一下頭、短短哀一聲（主機在 take_damage 之前送，同一條可靠通道，順序不會亂）
+@rpc("authority", "call_local", "reliable")
+func _head_flinch() -> void:
+	$Trex.flinch(Vector3.ZERO, 0.0, true)
+	_say(YELP)
+
+## 中彈（fighter._sync_hp，每台都跑）：身體往子彈推的方向晃一下再穩住。只是表演
+func _on_hurt(amount: int, from: Vector3) -> void:
+	var push := Vector3.ZERO
+	if from != Vector3.INF:
+		push = global_basis.inverse() * (global_position - from)
+		push.y = 0.0
+		push = push.normalized()
+	$Trex.flinch(push, clampf(amount / 40.0, 0.3, 1.0), false)
+
+## 打中頭的判定半徑（子彈用，見 Bullet._impact）：頭約 1.2 × 2 公尺，跟著放大
+func head_radius() -> float:
+	return 1.6 * GROW
+
+## 頭的位置（牛仔的子彈判斷有沒有打中頭用，見 Bullet._impact）
+func head_position() -> Vector3:
+	var t: Trex = $Trex
+	if t.skel == null:
+		return mouth()
+	return t.on_body(t.skel.to_global(t.skel.get_bone_global_pose(t.skel.find_bone("head")).origin))
+
+
+# --- 行為樹的其他動作 ---
+
+func _act_down(delta: float) -> int:
+	down_left = maxf(down_left - delta, 0.0)
+	if down_left <= 0.0 and _party():
+		guard_left = GET_UP_GUARD
+	_move(Vector3.ZERO, false, delta)
+	return BT.RUNNING
+
+## 瞄到人但還不確定：停下來盯著、慢慢轉過去
+func _act_glimpse(delta: float) -> int:
+	if not is_instance_valid(_glimpse):
+		return BT.FAILURE
+	_turn_to(_glimpse, TURN * 0.6, delta)
+	_move(Vector3.ZERO, false, delta)
+	return BT.RUNNING
+
+func _act_chase(delta: float) -> int:
+	if not is_instance_valid(_target) or not _target.is_inside_tree():   # 同 _turn_to：收走的目標不能讀位置
+		return BT.FAILURE
+	_nav_go(_target.global_position, true, delta)
+	return BT.RUNNING
+
+func _act_last_seen(delta: float) -> int:
+	if _nav_go(_last_seen, true, delta):
+		_seen_left = 0.0
+	return BT.RUNNING
+
+## 走到聲音那一帶，再在附近繞著找一陣子（跟導演的方向同一套：_act_hint）
+func _act_investigate(delta: float) -> int:
+	if _nav_go(_noise, true, delta):
+		_noise_left = 0.0
+		_hint = _noise
+		_hint_reached = true
+		_search_left = NOISE_SEARCH
+		_wander_to = Vector3.INF
+	return BT.RUNNING
+
+## 走到導演給的點，再在附近繞著找一陣子（隨便挑點、會折返）
+func _act_hint(delta: float) -> int:
+	if not _hint_reached:
+		_hint_reached = _nav_go(_hint, false, delta)
+		return BT.RUNNING
+	_search_left -= delta
+	if _search_left <= 0.0:
+		_hint = Vector3.INF
+		_look_left = 0.0
+		return BT.SUCCESS
+	if _look_left > 0.0:   # 停下來張望（頭左右掃是 trex.gd 照 mood 做的）
+		_look_left -= delta
+		_move(Vector3.ZERO, false, delta)
+		return BT.RUNNING
+	if _wander_to != Vector3.INF and _flat_dist(_wander_to) < ARRIVE:
+		_look_left = LOOK_PAUSE
+		_wander_to = Vector3.INF
+		return BT.RUNNING
+	if _wander_to == Vector3.INF or _hint.distance_to(_wander_to) > SEARCH_RADIUS:
+		var a := _rng.randf() * TAU
+		_wander_to = _hint + Vector3(cos(a), 0, sin(a)) * _rng.randf_range(3.0, SEARCH_RADIUS)
+	_nav_go(_wander_to, false, delta)
+	return BT.RUNNING
+
+## 隨便逛：在自己附近挑一點走過去
+func _act_wander(delta: float) -> int:
+	if _wander_to == Vector3.INF or _nav_go(_wander_to, false, delta):
+		var a := _rng.randf() * TAU
+		_wander_to = _clamp_arena(global_position + Vector3(cos(a), 0, sin(a)) * _rng.randf_range(10.0, 25.0))
+	return BT.RUNNING
+
+## 守箱（docs/企劃/2026-11-16-未完成事項.md 第 1 項）：派對有保險箱、電腦操作時取代亂逛和導演的提示。
+## 知道的跟真人駕駛方位條上一樣：箱子、兩個信封（不知道開過沒，0.8.16 第 4.1 節）、有沒有人試過密碼（猜錯有聲音）、開箱後蛋在哪
+static var GUARD_RING: float = Balance.num("dino_guard_ring")
+static var GUARD_LOOK: float = Balance.num("dino_guard_look")
+static var GUARD_HEAR: float = Balance.num("dino_guard_hear")
+static var GUARD_LEASH: float = Balance.num("dino_guard_leash")
+const GUARD_LEG_MAX := 30.0   # 一段走這麼久還沒到（路不通）就換下一點
+var _guard_i := 0
+var _guard_leg := 0.0
+var _guard_goal := Vector3.INF   # 現在要去守的點（箱子、信封、箱子旁邊）
+var _guard_to := Vector3.INF     # 它換成走得到的點（_reachable），放進 _wander_to
+
+func _guarding() -> bool:
+	var g := _game()
+	return pilot == 0 and _party() and g.safe.on and g.party.egg_placed
+
+func _act_guard(delta: float) -> int:
+	var g := _game()
+	if g.safe.open:   # 開了：去蛋那裡；有人拿著就去他和最近的撤離點中間堵（跟在後面追不上：跑 10 秒就沒體力）
+		var to := _guard_center()
+		if g.egg.carrier != 0 and not g._exits.is_empty():
+			var ex: Vector3 = g._exits[0]
+			for e: Vector3 in g._exits:
+				if Vector2(e.x - to.x, e.z - to.z).length() < Vector2(ex.x - to.x, ex.z - to.z).length():
+					ex = e
+			to = (to + ex) * 0.5
+		_nav_go(to, true, delta)
+		return BT.RUNNING
+	if _look_left > 0.0:
+		_look_left -= delta
+		_move(Vector3.ZERO, false, delta)
+		return BT.RUNNING
+	_guard_leg += delta
+	# 換點：沒有點、點是別的動作留下來的、走太久、或那個點已經不用守（有人試過密碼，信封不守了）
+	if _wander_to == Vector3.INF or _wander_to != _guard_to or _guard_leg > GUARD_LEG_MAX or not _near_guard(_guard_goal, GUARD_RING + 1.0):
+		_guard_goal = _guard_next(g)
+		_wander_to = _reachable(_guard_goal)
+		_guard_to = _wander_to
+		_guard_leg = 0.0
+	if _nav_go(_wander_to, false, delta):
+		_look_left = GUARD_LOOK
+		_wander_to = Vector3.INF
+	return BT.RUNNING
+
+## 守點：箱子和兩個信封；有人試過密碼就只剩箱子；開了是蛋
+func _guard_points() -> Array:
+	var g := _game()
+	if g.safe.open or g.safe.tried.has(1):
+		return [_guard_center()]
+	return [g.safe.global_position] + g.party.env_pos
+
+## at 離守點在 r 內
+func _near_guard(at: Vector3, r: float) -> bool:
+	var pts := _guard_points()
+	return pts.any(func(q: Vector3) -> bool: return Vector2(q.x - at.x, q.z - at.z).length() < r)
+
+## 守的中心：箱子；開了是蛋
+func _guard_center() -> Vector3:
+	var g := _game()
+	return g.egg.global_position if g.safe.open else g.safe.global_position
+
+## 下一個守點：沒人試過密碼就照「信封 0 → 箱子 → 信封 1 → 箱子」輪流；試過了就在箱子周圍 GUARD_RING 內繞
+func _guard_next(g: Node) -> Vector3:
+	var pts := _guard_points()
+	var to: Vector3
+	if pts.size() > 1:   # 每巡完一個信封先回箱子（箱子佔一半的路程）：0.8.16 起不分信封開過沒，三點平均輪會離箱子太久
+		_guard_i = (_guard_i + 1) % (2 * (pts.size() - 1))
+		to = pts[0] if _guard_i % 2 == 0 else pts[1 + _guard_i / 2]
+	else:
+		var a := _rng.randf() * TAU
+		to = g.safe.global_position + Vector3(cos(a), 0, sin(a)) * _rng.randf_range(2.0, GUARD_RING)
+	return to
+
+## 守箱的目的地換成走得到的點：網格上離它最近、而且從這裡有路到的地方（路徑的終點）。
+## 箱子、信封可能在房子裡或窪地裡，網格上最近的點常在另一塊走不到的網格上，直接走會一直繞圈
+func _reachable(to: Vector3) -> Vector3:
+	var map := get_world_3d().navigation_map
+	if NavigationServer3D.map_get_iteration_id(map) == 0:
+		return to
+	var path := NavigationServer3D.map_get_path(map, global_position, to, true)
+	return path[-1] if not path.is_empty() else NavigationServer3D.map_get_closest_point(map, to)
+
+## 退開：往離最近的人遠的那一邊跑
+func _act_retreat(delta: float) -> int:
+	if _retreat_to == Vector3.INF or _flat_dist(_retreat_to) < ARRIVE * 2.0:
+		var away := Vector3.ZERO
+		for p: Node3D in _cowboys():
+			var d := global_position - p.global_position
+			d.y = 0.0
+			away += d.normalized() / maxf(d.length(), 1.0)
+		if away == Vector3.ZERO:
+			away = -global_basis.z
+		_retreat_to = _clamp_arena(global_position + away.normalized() * RETREAT_DIST)
+		if _guarding():   # 守箱：退到箱子（開了是蛋）的另一邊，不跑遠
+			_retreat_to = _guard_center() + away.normalized() * GUARD_RING
+	_nav_go(_retreat_to, true, delta)
+	return BT.RUNNING
+
+func _clamp_arena(at: Vector3) -> Vector3:
+	var g := _game()
+	var half: float = g.ARENA * 0.5 - 10.0 * GROW if g else 70.0
+	return Vector3(clampf(at.x, -half, half), at.y, clampf(at.z, -half, half))
+
+
+# --- 移動 ---
+
+## 照導航網格的路徑走到 to（每隔一下、或目標動了就重算路徑）。網格還沒烘好就直線走。到了回傳 true
+# ponytail: 碰撞物件關掉時，電腦恐龍還是照導航網格繞路（穿過樹也繞），要直線走再改這裡
+func _nav_go(to: Vector3, want_run: bool, delta: float) -> bool:
+	if _flat_dist(to) < ARRIVE:
+		_move(Vector3.ZERO, false, delta)
+		return true
+	_path_age += delta
+	var map := get_world_3d().navigation_map
+	if NavigationServer3D.map_get_iteration_id(map) > 0 and (_path_age > 1.0 or _path_goal.distance_to(to) > 3.0 or _path.is_empty()):
+		_path = NavigationServer3D.map_get_path(map, global_position, to, true)
+		_path_goal = to
+		_path_age = 0.0
+	while _path.size() > 1 and _flat_dist(_path[0]) < 2.0:
+		_path.remove_at(0)
+	_go(_path[0] if _path.size() > 1 else to, want_run, delta)
+	return false
+
+## 轉向 to 走過去（轉得慢，偏太多就先放慢腳步轉身）。
+## 卡住一秒沒前進（撞到網格沒算到的東西、或站在網格外面）就脫困：往後斜退 UNSTICK_TIME 秒再重算路徑
+const UNSTICK_TIME := 0.8
+func _go(to: Vector3, want_run: bool, delta: float) -> void:
+	if _unstick_left > 0.0:
+		_unstick_left -= delta
+		_move(_unstick_dir, false, delta)
+		return
+	_stuck_t += delta
+	if _stuck_t >= 1.0:
+		if _stuck_at != Vector3.INF and _flat_dist(_stuck_at) < 0.5:
+			_unstick_left = UNSTICK_TIME
+			_unstick_dir = (global_basis.z + global_basis.x * (1.0 if _rng.randf() < 0.5 else -1.0)).normalized()
+			_path.clear()
+		_stuck_at = global_position
+		_stuck_t = 0.0
+	var d := to - global_position
+	d.y = 0.0
+	var want := atan2(-d.x, -d.z)
+	if is_on_wall():
+		want += 0.9   # 還是卡住（沒網格、或被別的東西擋）就偏一點滑開
+	rotation.y = rotate_toward(rotation.y, want, TURN * delta)
+	var off := absf(wrapf(want - rotation.y, -PI, PI))
+	_move(-global_basis.z * clampf(cos(off), 0.15, 1.0), want_run, delta)
+
+## p 可能已經被刪掉（預備出招時目標剛好死掉）：參數不寫型別，先檢查再用
+func _turn_to(p: Variant, speed: float, delta: float) -> void:
+	# 被 remove_child 收走的牛仔還是有效實例、但不在樹上，讀 global_position 會報錯
+	if not is_instance_valid(p) or not (p as Node).is_inside_tree():
+		return
+	var d: Vector3 = (p as Node3D).global_position - global_position
+	rotation.y = rotate_toward(rotation.y, atan2(-d.x, -d.z), speed * delta)
+
+## 走或跑。跑吃體力，見底就只能走，回到 RECOVER_AT 才能再跑
+func _move(dir: Vector3, want_run: bool, delta: float) -> void:
+	_stagger = maxf(_stagger - delta, 0.0)
+	running = want_run and not exhausted and dir != Vector3.ZERO
+	if running:
+		stamina = maxf(stamina - RUN_DRAIN * delta, 0.0)
+		if stamina <= 0.0:
+			exhausted = true
+	else:
+		stamina = minf(stamina + REGEN * delta, STAMINA_MAX)
+		if exhausted and stamina >= RECOVER_AT:
+			exhausted = false
+	var speed := (RUN if running else WALK) * (STAGGER_MULT if _stagger > 0.0 else 1.0)
+	_accelerate(dir * speed, ACCEL, BRAKE, delta)
+	_apply_gravity(delta)
+	if multiplayer.is_server():
+		# 剛撞穿積木：水平速度有上限（阻力，撞穿要有重量感，但不停）
+		# 撞進去的第一下：先卡一下（TOY_PLOW_STALL），之後才回到 TOY_PLOW_SPEED
+		var cap := TOY_PLOW_STALL if Time.get_ticks_msec() - _plow_first < TOY_PLOW_STALL_MS else TOY_PLOW_SPEED
+		if Time.get_ticks_msec() - _plow_t < PLOW_DRAG:
+			var h := Vector2(velocity.x, velocity.z)
+			if h.length() > cap:
+				h = h.normalized() * cap
+				velocity.x = h.x
+				velocity.z = h.y
+		# 先拆再走：跑到門檻速度，身體前方的積木先鬆脫，身體才不會被擋停
+		var spd := Vector2(velocity.x, velocity.z).length()
+		if running and (spd >= TOY_CHARGE_SPEED or is_plowing()):   # 正在撞（被擋了一下、速度掉下來）也繼續先拆
+			_smash_ahead(Time.get_ticks_msec(), spd)
+	var before := Vector3(velocity.x, 0.0, velocity.z)   # 撞之前的水平速度（撞了 move_and_slide 會被削掉）
+	move_and_slide()
+	if multiplayer.is_server():
+		_charge_hits(before, delta)
+		var farm := get_tree().get_first_node_in_group(&"farm_destruction")
+		if farm:
+			farm.charge(self,before)
+
+
+## 尼諾拉撞東西（只在主機算，_move 的 move_and_slide 之後看這一幀的碰撞）：
+## 撞到積木、撞之前的水平速度 ≥ toy_charge_speed（跑步，走路不算）就拆碰撞點 BODY_RADIUS 內、等級 1 的塊；同一棟 CHARGE_MS 毫秒內只算一次。
+## 落地的碎塊推不動（2026-11-20）：尼諾拉身體不跟它相撞，直接走過去（見 toy_build.gd _make）
+var _charge_t := {}   # 撞過的積木（ToyBuild）-> 上次撞的毫秒（主機用）
+var _plow_first := -1000000   # 這次撞的第一下的毫秒（主機）：卡一下從這裡算
+var _plow_t := -1000000   # 上一次撞穿積木的毫秒（主機算；駕駛那台由 _plow_fed 同步）：算阻力、第一下、is_plowing
+var _charge_fresh := 0.0   # 還算在跑的剩餘秒數（見 _charge_hits）
+const CHARGE_FRESH := 0.5
+
+func _charge_hits(before: Vector3, delta: float) -> void:
+	var now := Time.get_ticks_msec()
+	# 跑到門檻的速度之後 0.5 秒內，撞到東西停下來還是算在跑（等級 2 要第二次撞，撞的時候已經被擋住、速度是 0）
+	if before.length() >= TOY_CHARGE_SPEED:
+		_charge_fresh = CHARGE_FRESH
+	_charge_fresh = maxf(_charge_fresh - delta, 0.0)
+	# 貼著積木按住跑（速度起不來）也算撞：駕駛才算，電腦照舊要有助跑（脫困時別把房子啃掉）
+	# 只有貼著「房子」才算：碎塊（toy_piece）不是牆，靠在碎塊上按住跑不會被當成撞牆（見 _wall_is_toy）
+	if running and (_charge_fresh > 0.0 or (pilot != 0 and _wall_is_toy())):
+		if _smash_ahead(now, before.length()):   # 前面還有積木（撞著、擋著）就繼續算在撞，不會因為停下來而斷
+			_charge_fresh = CHARGE_FRESH
+## 跑步撞：身體前方一個長方體（寬 2×BODY_RADIUS、腳底到頭頂、從身體中心到前方 BODY_RADIUS+TOY_CHARGE_REACH 公尺）裡的積木全部算打到，
+## 等級 TOY_CHARGE_LEVEL 以下都扣一下（等級 2 要撞兩次）。同一棟 CHARGE_MS 毫秒內只算一次，所以一直往前跑會一路撞穿、不會爬上屋頂
+## ponytail: 一次查詢最多 256 個形狀，一棟大樓吃光上限時，後面的棟這一幀撞不到（下一幀再查）
+static var _charge_box: BoxShape3D
+
+## 這一幀撞到的是不是房子（ToyBuild 的牆面，不是碎塊）：法線大致水平才算牆；碎塊和地板不算
+func _wall_is_toy() -> bool:
+	for k in get_slide_collision_count():
+		var col := get_slide_collision(k)
+		if col.get_collider() is ToyBuild and absf(col.get_normal().y) < 0.5:
+			return true
+	return false
+
+## 跑步撞的積木：spd 是撞之前的水平速度。全速（TOY_PLOW_BREAK 以上）冷卻短、等級 2 一下打穿，碎塊飛的速度照 spd 算（toy_build.gd smash）
+func _smash_ahead(now: int, spd: float) -> bool:
+	var any := false
+	var full := spd >= TOY_PLOW_BREAK or now - _plow_t < PLOW_GAP   # 已經在撞（剛撞穿過）也算全速：阻力把速度壓在門檻下，不算的話等級 2 又要撞兩下、一撞一停
+	var cd := TOY_PLOW_MS if full else CHARGE_MS
+	var dmg := TOY_PLOW_DMG if full else 1
+	# 正在撞（全速）就照全速撞飛：被擋了一下、速度掉下來時也一樣（不然碎塊軟軟掉在原地，專用伺服器上又落在路上擋住）
+	var power := clampf((maxf(spd, TOY_PLOW_SPEED) if full else spd) * TOY_PLOW_FLING, ToyBuild.FALL_SPEED, PLOW_POWER_MAX)
+	var hit_any := false
+	var depth := BODY_RADIUS + TOY_CHARGE_REACH
+	# 盒子從腳底往下多 1.5 公尺（半高 HALF_H+0.75）：圓的身體底部會騎在最下排的積木上（腳底懸空約 1 公尺），那排也要撞掉
+	var half_h := HALF_H + 0.75
+	var half_w := BODY_RADIUS + 0.75   # 側面也多半塊：角上的積木中心在身體外、半塊還伸進身體
+	var xf := Transform3D(global_basis, global_position + (-global_basis.z) * (depth * 0.5) + Vector3.DOWN * 0.75)
+	if _charge_box == null:   # 共用一個形狀（尺寸是常數）
+		_charge_box = BoxShape3D.new()
+		_charge_box.size = Vector3(half_w * 2.0, half_h * 2.0, depth)
+	var q := PhysicsShapeQueryParameters3D.new()
+	q.shape = _charge_box
+	q.transform = xf
+	q.collision_mask = collision_mask   # 關碰撞物件時只看 1 層（穿過樹、不撞爛樹，PR #75）
+	var exclude: Array[RID] = [get_rid()]
+	for g in get_tree().get_nodes_in_group(&"ground"):   # 地面不算（盒子的底在腳底，會切到地形）
+		if g is CollisionObject3D:
+			exclude.append((g as CollisionObject3D).get_rid())
+	q.exclude = exclude
+	var homes := {}
+	for r: Dictionary in get_world_3d().direct_space_state.intersect_shape(q, 256):
+		var c: Object = r.collider
+		if c is ToyBuild and (c as ToyBuild).can_break:
+			homes[c] = true
+	var inv := xf.affine_inverse()
+	# 盒子的世界邊界框：積木只看這範圍裡的塊（bricks_near），一棟大樓幾千塊不用每步全看
+	var box_w := xf * AABB(Vector3(-half_w, -half_h, -depth * 0.5), Vector3(half_w * 2.0, half_h * 2.0, depth))
+	for c: ToyBuild in homes:
+		var nin := 0   # 盒子裡有幾塊（一塊都沒有就不算這棟，冷卻也不起算）；已經鬆脫、等級 3 的不算
+		for k: int in c.bricks_near(box_w):
+			if not c.is_standing(k) or c.level_of(k) >= 3:
+				continue
+			var l := inv * c.center_of(k)
+			if absf(l.x) <= half_w and absf(l.y) <= half_h and absf(l.z) <= depth * 0.5:
+				nin += 1
+				break
+		if nin == 0:
+			continue
+		any = true
+		var last: int = _charge_t.get(c, -1000000)
+		if now - last < cd:
+			continue
+		_charge_t[c] = now
+		var inside := func(p: Vector3) -> bool:
+			var l := inv * p
+			return absf(l.x) <= half_w and absf(l.y) <= half_h and absf(l.z) <= depth * 0.5
+		if c.smash(inside, TOY_CHARGE_LEVEL, global_position, box_w, power, dmg, -global_basis.z):
+			hit_any = true
+	if hit_any:
+		_plow_hit(now)
+	return any
+
+## 撞穿了（主機）：第一下（距上一下超過 PLOW_GAP）停頓＋抖一下，之後不停也不抖。同步給駕駛那台（_plow_fed）；hit_fx 看 is_plowing 不再停
+func _plow_hit(now: int) -> void:
+	var first := now - _plow_t >= PLOW_GAP
+	if first:
+		_plow_first = now
+	_plow_t = now
+	if pilot != 0:
+		_plow_fed.rpc_id(pilot, first)
+
+## 正在撞（駕駛那台的鏡頭是這隻恐龍的，ToyBuild.hit_fx 看到就不再給停頓；第一下的停頓由 _plow_fed 給）
+func is_plowing() -> bool:
+	return Time.get_ticks_msec() - _plow_t < PLOW_GAP
+
+## 全速撞的回饋（主機送駕駛那台，各台也記 _plow_t）：第一下抖一下、停一下，之後只記時間
+@rpc("authority", "call_local", "reliable")
+func _plow_fed(first: bool) -> void:
+	_plow_t = Time.get_ticks_msec()
+	if first:
+		_quake_to = maxf(_quake_to, PLOW_SHAKE_FIRST)   # 不走 add_shake：_plow_t 剛設，那邊會當成「正在撞」不抖
+		add_hitstop(PLOW_HITSTOP)
+
+
+# --- 受傷 ---
+
+## 打不死：血打光就倒地 KNOCK_TIME 秒、血補滿，起來先退開（導演的高峰）。倒地時打不動。
+## 恐龍決鬥模式例外：打得死（死了大家贏，見 Main._on_died）。派對模式起身後還有 GET_UP_GUARD 秒打不動
+func take_damage(amount: int, source: Node = null) -> void:
+	if down_left > 0.0 or guard_left > 0.0 or hp <= 0:
+		return
+	var g := _game()
+	if hp - amount > 0 or (g and g.rules == &"dino_duel" and not g._sandbox):
+		super(amount, source)
+		return
+	_knock.rpc()
+
+@rpc("any_peer", "call_local", "reliable")
+func _knock() -> void:
+	if multiplayer.get_remote_sender_id() != 1:
+		return
+	down_left = PARTY_KNOCK_TIME if _party() else KNOCK_TIME
+	looted.clear()   # 每次倒地，每個獵人能搜一次
+	hp = max_hp
+	act = ACT_NONE
+	_target = null
+	_seen_left = 0.0
+	_suspect = 0.0
+	_spot_pending = false
+	director.peak()
+
+
+# --- 搜刮（docs/企劃/2026-11-19-0.8.16-一般模式與規則改動.md 第 3.1 節）：規則在 party.gd 的 can_loot，這裡只有提示和按 F ---
+
+## 這台的人能不能對牠按住 F（只看畫面：倒地、派對遊戲中、這次倒地還沒搜過）。主機照 party.can_loot 再全部檢查
+func _can_loot_here() -> bool:
+	var g := _game()
+	return down_left > 0.0 and g != null and g.party != null and g.party.phase == &"play" \
+		and not looted.has(g.multiplayer.get_unique_id())
+
+
+func interact(who: Node) -> void:
+	var g := _game()
+	if g and who == g._me() and _can_loot_here() and not who.viewmodel.using_item():
+		g.hold.press(&"loot", self)
+
+
+@rpc("authority", "call_local", "reliable")
+func mark_looted(id: int) -> void:
+	looted[id] = true

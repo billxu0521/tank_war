@@ -1,0 +1,13 @@
+{
+  "axes": "world X,Z metres, north = -Z, angles in plan degrees",
+  "fields": [
+    {"center":[-67,-69],"size":[18,17],"angle":-12,"use":"stubble","keep":"西北初生與農車棚出場"},
+    {"center":[-31,-63],"size":[24,18],"angle":9,"use":"wheat","keep":"北集乳站的車路與田口"},
+    {"center":[38,-65],"size":[27,19],"angle":12,"use":"stubble","keep":"東北初生與北車路"},
+    {"center":[-72,-16],"size":[11,23],"angle":3,"use":"low_margin","keep":"西灘兩個坡口"},
+    {"center":[-49,59],"size":[23,16],"angle":-9,"use":"orchard","keep":"西南返場至西坡，果場同岸離場"},
+    {"center":[-20,63],"size":[20,18],"angle":11,"use":"stubble","keep":"南草料場與南圈外緣"},
+    {"center":[68,16],"size":[15,13],"angle":-8,"use":"low_margin","keep":"東堤路肩與東圈入口"},
+    {"center":[58,72],"size":[24,14],"angle":9,"use":"wheat","keep":"東南卸車棚與三處返場落點"}
+  ]
+}

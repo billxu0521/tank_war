@@ -1,0 +1,39 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://models/farm_receiving/WestToolHouse.glb" id="Skin"]
+
+[sub_resource type="ConvexPolygonShape3D" id="Volume"]
+points = PackedVector3Array(-1.43, 0, -1.275, 1.43, 0, -1.275, -1.43, 0, 1.425, 1.43, 0, 1.425, -1.43, 2.53, -1.275, 1.43, 2.53, -1.275, -1.43, 2.25, 1.425, 1.43, 2.25, 1.425)
+
+[sub_resource type="BoxShape3D" id="Post"]
+size = Vector3(0.15, 2.41, 0.15)
+
+[sub_resource type="BoxShape3D" id="Roof"]
+size = Vector3(3.01, 0.095, 3.03)
+
+[sub_resource type="BoxShape3D" id="Face"]
+size = Vector3(2.07, 2.12, 0.15)
+
+[node name="WestToolHouse" type="StaticBody3D"]
+
+[node name="Skin" parent="." instance=ExtResource("Skin")]
+
+[node name="Storage" type="CollisionShape3D" parent="."]
+shape = SubResource("Volume")
+
+[node name="WorkFace" type="CollisionShape3D" parent="."]
+position = Vector3(-0.07, 1.095, -1.324)
+shape = SubResource("Face")
+
+[node name="WestCorner" type="CollisionShape3D" parent="."]
+position = Vector3(-1.36, 1.205, -1.36)
+shape = SubResource("Post")
+
+[node name="EastCorner" type="CollisionShape3D" parent="."]
+position = Vector3(1.36, 1.205, -1.36)
+shape = SubResource("Post")
+
+[node name="Roof" type="CollisionShape3D" parent="."]
+position = Vector3(0, 2.402, 0)
+rotation = Vector3(0.1046, 0, 0)
+shape = SubResource("Roof")

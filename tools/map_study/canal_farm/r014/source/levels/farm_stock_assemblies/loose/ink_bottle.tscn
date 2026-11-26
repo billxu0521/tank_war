@@ -1,0 +1,10 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://levels/farm_stock_assemblies/stock/ink_bottle.tscn" id="stock"]
+
+[node name="ink_bottle" type="Node3D"]
+metadata/asset = "PRP-0050"
+
+[node name="Stock" parent="." instance=ExtResource("stock")]
+scale = Vector3(0.055, 0.046, 0.05)
+position = Vector3(0, 0.023, 0)

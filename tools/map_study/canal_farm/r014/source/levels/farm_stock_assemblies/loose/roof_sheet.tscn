@@ -1,0 +1,13 @@
+[gd_scene format=3]
+
+[ext_resource type="ArrayMesh" path="res://levels/farm_stock_assemblies/stock/roof_sheet.res" id="model"]
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/roof_metal.tres" id="paint"]
+
+[node name="roof_sheet" type="Node3D"]
+metadata/asset = "MOD-0007"
+
+[node name="Stock" type="MeshInstance3D" parent="."]
+mesh = ExtResource("model")
+material_override = ExtResource("paint")
+scale = Vector3(0.6, 0.025, 1.8)
+position = Vector3(0, 0.0125000001862645, 0)

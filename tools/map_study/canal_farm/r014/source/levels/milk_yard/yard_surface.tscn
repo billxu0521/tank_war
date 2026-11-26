@@ -1,0 +1,18 @@
+[gd_scene format=3]
+
+[ext_resource type="Texture2D" path="res://levels/milk_yard/yard_wear.png" id="Wear"]
+
+[sub_resource type="StandardMaterial3D" id="Earth"]
+transparency = 2
+alpha_scissor_threshold = 0.5
+albedo_texture = ExtResource("Wear")
+roughness = 0.9
+
+[sub_resource type="PlaneMesh" id="Soil"]
+material = SubResource("Earth")
+size = Vector2(10, 4)
+
+[node name="MilkYardWear" type="MeshInstance3D"]
+position = Vector3(-5.25, 0.006, 0.4)
+cast_shadow = 0
+mesh = SubResource("Soil")

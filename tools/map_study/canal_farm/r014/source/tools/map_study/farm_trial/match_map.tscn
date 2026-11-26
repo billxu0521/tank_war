@@ -1,0 +1,15 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://tools/map_study/canal_farm/farm_layout.tscn" id="Base"]
+[ext_resource type="Script" path="res://levels/farm_style/full_map.gd" id="Map"]
+[ext_resource type="PackedScene" path="res://models/orchard_loading/loading_station.tscn" id="Station"]
+[ext_resource type="PackedScene" path="res://levels/canal_orchard/yard_surface.tscn" id="Surface"]
+
+[node name="CanalFarm" instance=ExtResource("Base")]
+script = ExtResource("Map")
+
+[node name="LoadingStation" parent="." instance=ExtResource("Station")]
+position = Vector3(-18, 0, 43)
+
+[node name="OrchardYardSurface" parent="." instance=ExtResource("Surface")]
+

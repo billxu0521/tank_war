@@ -1,0 +1,252 @@
+[
+ {
+  "model": "CenterBridge",
+  "targets": [
+   "FarmCanalWorks/CenterBridge"
+  ],
+  "x": 4,
+  "z": 13,
+  "yaw": 0
+ },
+ {
+  "model": "WheelSeat",
+  "targets": [
+   "FarmCanalWorks/WheelSeat"
+  ],
+  "x": -12,
+  "z": 20,
+  "yaw": -9
+ },
+ {
+  "model": "GateStore",
+  "targets": [
+   "FarmShell/橋東閘板棚"
+  ],
+  "x": 19,
+  "z": 16,
+  "yaw": 12
+ },
+ {
+  "model": "MilkFrame",
+  "targets": [
+   "MilkStation"
+  ],
+  "x": -6,
+  "z": -47,
+  "yaw": 12,
+  "original_meshes": [
+   "props_BarnRoof",
+   "kits_FencePost"
+  ]
+ },
+ {
+  "model": "WeighRoof",
+  "targets": [
+   "FarmShell/種子秤棚屋頂"
+  ],
+  "x": 25.6618,
+  "z": 26.6635,
+  "yaw": 8
+ },
+ {
+  "model": "House1",
+  "targets": [
+   "FarmShell/農舍 1"
+  ],
+  "x": -58.000000953674316,
+  "z": -35.99999952316284,
+  "yaw": 11.99999433302489
+ },
+ {
+  "model": "House2",
+  "targets": [
+   "FarmShell/農舍 2"
+  ],
+  "x": -15.0,
+  "z": -31.000000476837158,
+  "yaw": -8.000005018622847
+ },
+ {
+  "model": "House5",
+  "targets": [
+   "FarmShell/農舍 5"
+  ],
+  "x": -66.00000095367432,
+  "z": 36.00000047683716,
+  "yaw": -9.99999006351383
+ },
+ {
+  "model": "House6",
+  "targets": [
+   "FarmShell/農舍 6"
+  ],
+  "x": -6.000000048428774,
+  "z": 33.00000047683716,
+  "yaw": -8.99999763123228
+ },
+ {
+  "model": "House7",
+  "targets": [
+   "FarmShell/農舍 7"
+  ],
+  "x": 39.0,
+  "z": 54.0,
+  "yaw": 10.000003251388017
+ },
+ {
+  "model": "House8",
+  "targets": [
+   "FarmShell/農舍 8"
+  ],
+  "x": 20.00000023841858,
+  "z": 63.999999046325684,
+  "yaw": -84.9999979655668
+ },
+ {
+  "model": "YardHouse",
+  "targets": [
+   "北院東屋"
+  ],
+  "x": 16.44455051422119,
+  "z": -42.14117622375488,
+  "yaw": 75.99999774647269
+ },
+ {
+  "model": "YardStore",
+  "targets": [
+   "北院側庫"
+  ],
+  "x": 10.785065650939941,
+  "z": -47.757147789001465,
+  "yaw": 76.00000766961149
+ },
+ {
+  "model": "YardStack",
+  "targets": [
+   "北院貨垛"
+  ],
+  "x": 10.761512279510498,
+  "z": -38.98219299316406,
+  "yaw": -13.999989010797883
+ },
+ {
+  "model": "ToolStore",
+  "targets": [
+   "FarmShell/南農具棚"
+  ],
+  "x": -46,
+  "z": 72,
+  "yaw": 10
+ },
+ {
+  "model": "ApproachStock",
+  "targets": [
+   "FarmShell/南橋頭車材垛"
+  ],
+  "x": 2,
+  "z": 34,
+  "yaw": 12
+ },
+ {
+  "model": "TeamStock",
+  "targets": [
+   "FarmShell/東工班料垛"
+  ],
+  "x": 75,
+  "z": 44.5,
+  "yaw": -15
+ },
+ {
+  "model": "NorthStock",
+  "targets": [
+   "FarmShell/西北木料垛"
+  ],
+  "x": -70,
+  "z": -56,
+  "yaw": 20
+ },
+ {
+  "model": "FarmCrates",
+  "targets": [
+   "FarmShell/果場空箱垛"
+  ],
+  "x": -43,
+  "z": 49,
+  "yaw": -9
+ },
+ {
+  "model": "StoredFeed",
+  "targets": [
+   "FarmShell/秤棚外飼料垛"
+  ],
+  "x": 32,
+  "z": 39,
+  "yaw": 8
+ },
+ {
+  "model": "WindWall",
+  "targets": [
+   "FarmShell/東北防風土垣"
+  ],
+  "x": 65,
+  "z": -64,
+  "yaw": -15
+ },
+ {
+  "model": "StoneHeap",
+  "targets": [
+   "FarmShell/西南田埂石垛"
+  ],
+  "x": -67,
+  "z": 61,
+  "yaw": 19
+ },
+ {
+  "model": "Guard1",
+  "targets": [
+   "FarmShell/護牆 1"
+  ],
+  "x": -61,
+  "z": 11,
+  "yaw": 0
+ },
+ {
+  "model": "Guard2",
+  "targets": [
+   "FarmShell/護牆 2"
+  ],
+  "x": -8.5,
+  "z": -55,
+  "yaw": 21.80140948635181
+ },
+ {
+  "model": "YardWall1",
+  "targets": [
+   "LocalGeometry/Wall2_1/Mesh"
+  ],
+  "x": 0,
+  "z": 0,
+  "yaw": 0,
+  "local_wall": true
+ },
+ {
+  "model": "YardWall2",
+  "targets": [
+   "LocalGeometry/Wall2_2/Mesh"
+  ],
+  "x": 0,
+  "z": 0,
+  "yaw": 0,
+  "local_wall": true
+ },
+ {
+  "model": "YardWall3",
+  "targets": [
+   "LocalGeometry/Wall2_3/Mesh"
+  ],
+  "x": 0,
+  "z": 0,
+  "yaw": 0,
+  "local_wall": true
+ }
+]

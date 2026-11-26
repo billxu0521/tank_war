@@ -1,0 +1,416 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://levels/farm_stock_assemblies/stock/adobe_brick.tscn" id="adobe_brick"]
+[ext_resource type="ArrayMesh" path="res://levels/farm_stock_assemblies/stock/adobe_wall.res" id="adobe_wall"]
+[ext_resource type="PackedScene" path="res://levels/farm_stock_assemblies/stock/iron_plate.tscn" id="iron_plate"]
+[ext_resource type="ArrayMesh" path="res://levels/farm_stock_assemblies/stock/stone_foot.res" id="stone_foot"]
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/adobe.tres" id="paint_adobe"]
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/clay.tres" id="paint_clay"]
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/iron.tres" id="paint_iron"]
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/stone.tres" id="paint_stone"]
+
+[ext_resource type="ArrayMesh" path="res://levels/farm_interior_followup/hood.res" id="hood"]
+
+[ext_resource type="ArrayMesh" path="res://levels/farm_interior_followup/cookpot.res" id="pot"]
+
+[node name="NortheastFarmhouse" type="Node3D"]
+
+[node name="Hearth" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "Hearth"
+[node name="AdobeWall_000" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.3, 0, 0, 0, 0.84, 0, 0, 0, 0.9, -5.58, 0.48, -3.885)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeWall_001" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.3, 0, 0, 0, 0.84, 0, 0, 0, 0.9, -4.38, 0.48, -3.885)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeWall_002" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.9, 0, 0, 0, 0.64, 0, 0, 0, 0.3, -4.98, 0.38, -4.185)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeWall_003" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.22, 0, 0, 0, 0.2, 0, 0, 0, 0.9, -5.32, 0.8, -3.885)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeWall_004" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.22, 0, 0, 0, 0.2, 0, 0, 0, 0.9, -4.64, 0.8, -3.885)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeWall_005" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.46, 0, 0, 0, 0.2, 0, 0, 0, 0.06, -4.98, 0.8, -4.305)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeWall_006" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.46, 0, 0, 0, 0.2, 0, 0, 0, 0.47, -4.98, 0.8, -3.67)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="IronPlate_007" parent="Hearth" instance=ExtResource("iron_plate")]
+transform = Transform3D(0.9, 0, 0, 0, 0.56, 0, 0, 0, 0.012, -4.98, 0.4, -4.029)
+metadata/stock = "iron_plate"
+metadata/asset = "MOD-0013"
+
+[node name="StoneFoot_008" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(1.65, 0, 0, 0, 0.06, 0, 0, 0, 1.2, -5.055, 0.03, -3.735)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+[node name="AdobeWall_009" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.13, 0, 0, 0, 0.14, 0, 0, 0, 0.65, -5.565, 0.97, -4.01)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeWall_010" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.13, 0, 0, 0, 0.14, 0, 0, 0, 0.65, -4.395, 0.97, -4.01)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeWall_011" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_adobe")
+transform = Transform3D(1.04, 0, 0, 0, 0.14, 0, 0, 0, 0.11, -4.98, 0.97, -3.74)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeWall_012" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.13, 0, 0, 0, 0.14, 0, 0, 0, 0.572, -5.498, 1.11, -4.049)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeWall_013" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.13, 0, 0, 0, 0.14, 0, 0, 0, 0.572, -4.462, 1.11, -4.049)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeWall_014" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_adobe")
+transform = Transform3D(0.906, 0, 0, 0, 0.14, 0, 0, 0, 0.11, -4.98, 1.11, -3.818)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeWall_015" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.13, 0, 0, 0, 0.14, 0, 0, 0, 0.494, -5.431, 1.25, -4.088)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeWall_016" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.13, 0, 0, 0, 0.14, 0, 0, 0, 0.494, -4.529, 1.25, -4.088)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeWall_017" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_adobe")
+transform = Transform3D(0.772, 0, 0, 0, 0.14, 0, 0, 0, 0.11, -4.98, 1.25, -3.896)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeWall_018" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.13, 0, 0, 0, 0.14, 0, 0, 0, 0.416, -5.364, 1.39, -4.127)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeWall_019" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.13, 0, 0, 0, 0.14, 0, 0, 0, 0.416, -4.596, 1.39, -4.127)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeWall_020" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_adobe")
+transform = Transform3D(0.638, 0, 0, 0, 0.14, 0, 0, 0, 0.11, -4.98, 1.39, -3.974)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeWall_021" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.13, 0, 0, 0, 0.14, 0, 0, 0, 0.338, -5.297, 1.53, -4.166)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeWall_022" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.13, 0, 0, 0, 0.14, 0, 0, 0, 0.338, -4.663, 1.53, -4.166)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeWall_023" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_adobe")
+transform = Transform3D(0.504, 0, 0, 0, 0.14, 0, 0, 0, 0.11, -4.98, 1.53, -4.052)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeWall_024" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.83, 0, 0, 0, 0.09, 0, 0, 0, 0.4, -4.98, 1.645, -4.135)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeBrick_025" parent="Hearth" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.43, 0, 0, 0, 0.07, 0, 0, 0, 0.585, -4.98, 1.245, -4.6275)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeBrick_026" parent="Hearth" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.43, 0, 0, 0, 0.07, 0, 0, 0, 0.585, -4.98, 1.555, -4.6275)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeBrick_027" parent="Hearth" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.08, 0, 0, 0, 0.24, 0, 0, 0, 0.585, -5.155, 1.4, -4.6275)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeBrick_028" parent="Hearth" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.08, 0, 0, 0, 0.24, 0, 0, 0, 0.585, -4.805, 1.4, -4.6275)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="StoneFoot_029" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(0.72, 0, 0, 0, 0.19, 0, 0, 0, 0.63, -4.98, 0.095, -5.145)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+[node name="AdobeWall_030" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.14, 0, 0, 0, 6.85, 0, 0, 0, 0.45, -5.185, 3.615, -5.145)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeWall_031" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.14, 0, 0, 0, 6.85, 0, 0, 0, 0.45, -4.775, 3.615, -5.145)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeWall_032" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.27, 0, 0, 0, 6.85, 0, 0, 0, 0.1, -4.98, 3.615, -5.32)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeWall_033" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.27, 0, 0, 0, 1.09, 0, 0, 0, 0.1, -4.98, 0.735, -4.97)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeWall_034" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.27, 0, 0, 0, 5.52, 0, 0, 0, 0.1, -4.98, 4.28, -4.97)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeBrick_035" parent="Hearth" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.178, 0, 0, 0, 0.13, 0, 0, 0, 0.53, -5.204, 7.105, -5.145)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeBrick_036" parent="Hearth" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.27, 0, 0, 0, 0.13, 0, 0, 0, 0.17, -4.98, 7.105, -5.325)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeBrick_037" parent="Hearth" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.178, 0, 0, 0, 0.13, 0, 0, 0, 0.53, -4.756, 7.105, -5.145)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="AdobeBrick_038" parent="Hearth" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.27, 0, 0, 0, 0.13, 0, 0, 0, 0.17, -4.98, 7.105, -4.965)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="IronPlate_039" parent="Hearth" instance=ExtResource("iron_plate")]
+transform = Transform3D(0.012, 0, 0, 0, 0.055, 0, 0, 0, 0.47, -5.261, 2.48, -5.145)
+metadata/stock = "iron_plate"
+metadata/asset = "MOD-0013"
+
+[node name="IronPlate_040" parent="Hearth" instance=ExtResource("iron_plate")]
+transform = Transform3D(0.04, 0, 0, 0, 0.055, 0, 0, 0, 0.435, -5.23, 2.48, -4.7025)
+metadata/stock = "iron_plate"
+metadata/asset = "MOD-0013"
+
+[node name="IronPlate_041" parent="Hearth" instance=ExtResource("iron_plate")]
+transform = Transform3D(0.012, 0, 0, 0, 0.055, 0, 0, 0, 0.47, -4.699, 2.48, -5.145)
+metadata/stock = "iron_plate"
+metadata/asset = "MOD-0013"
+
+[node name="IronPlate_042" parent="Hearth" instance=ExtResource("iron_plate")]
+transform = Transform3D(0.04, 0, 0, 0, 0.055, 0, 0, 0, 0.435, -4.73, 2.48, -4.7025)
+metadata/stock = "iron_plate"
+metadata/asset = "MOD-0013"
+
+[node name="IronPlate_043" parent="Hearth" instance=ExtResource("iron_plate")]
+transform = Transform3D(0.57, 0, 0, 0, 0.055, 0, 0, 0, 0.016, -4.98, 2.48, -5.378)
+metadata/stock = "iron_plate"
+metadata/asset = "MOD-0013"
+
+[node name="IronPlate_044" parent="Hearth" instance=ExtResource("iron_plate")]
+transform = Transform3D(0.012, 0, 0, 0, 0.055, 0, 0, 0, 0.47, -5.261, 5.43, -5.145)
+metadata/stock = "iron_plate"
+metadata/asset = "MOD-0013"
+
+[node name="IronPlate_045" parent="Hearth" instance=ExtResource("iron_plate")]
+transform = Transform3D(0.04, 0, 0, 0, 0.055, 0, 0, 0, 0.435, -5.23, 5.43, -4.7025)
+metadata/stock = "iron_plate"
+metadata/asset = "MOD-0013"
+
+[node name="IronPlate_046" parent="Hearth" instance=ExtResource("iron_plate")]
+transform = Transform3D(0.012, 0, 0, 0, 0.055, 0, 0, 0, 0.47, -4.699, 5.43, -5.145)
+metadata/stock = "iron_plate"
+metadata/asset = "MOD-0013"
+
+[node name="IronPlate_047" parent="Hearth" instance=ExtResource("iron_plate")]
+transform = Transform3D(0.04, 0, 0, 0, 0.055, 0, 0, 0, 0.435, -4.73, 5.43, -4.7025)
+metadata/stock = "iron_plate"
+metadata/asset = "MOD-0013"
+
+[node name="IronPlate_048" parent="Hearth" instance=ExtResource("iron_plate")]
+transform = Transform3D(0.57, 0, 0, 0, 0.055, 0, 0, 0, 0.016, -4.98, 5.43, -5.378)
+metadata/stock = "iron_plate"
+metadata/asset = "MOD-0013"
+
+[node name="IronPlate_049" parent="Hearth" instance=ExtResource("iron_plate")]
+transform = Transform3D(0.036, 0, 0, 0, 0.14, 0, 0, 0, 0.036, -5.12, 0.13, -3.645)
+metadata/stock = "iron_plate"
+metadata/asset = "MOD-0013"
+
+[node name="IronPlate_050" parent="Hearth" instance=ExtResource("iron_plate")]
+transform = Transform3D(0.036, 0, 0, 0, 0.14, 0, 0, 0, 0.036, -4.84, 0.13, -3.645)
+metadata/stock = "iron_plate"
+metadata/asset = "MOD-0013"
+
+[node name="IronPlate_051" parent="Hearth" instance=ExtResource("iron_plate")]
+transform = Transform3D(0.036, 0, 0, 0, 0.14, 0, 0, 0, 0.036, -4.98, 0.13, -3.395)
+metadata/stock = "iron_plate"
+metadata/asset = "MOD-0013"
+
+[node name="IronPlate_052" parent="Hearth" instance=ExtResource("iron_plate")]
+transform = Transform3D(0.16, 0, -0.02470588, 0, 0.018, 0, 0.3, 0, 0.01317647, -5.06, 0.208, -3.525)
+metadata/stock = "iron_plate"
+metadata/asset = "MOD-0013"
+
+[node name="IronPlate_053" parent="Hearth" instance=ExtResource("iron_plate")]
+transform = Transform3D(-0.16, 0, -0.02470588, 0, 0.018, 0, 0.3, 0, -0.01317647, -4.9, 0.208, -3.525)
+metadata/stock = "iron_plate"
+metadata/asset = "MOD-0013"
+
+
+[node name="N1B0Pier" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "N1B0Pier"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="N1B0Pier"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.8050016, 0, 0, 0, 2.88, 0, 0, 0, 0.33, -5.597501, 1.44, -4.5)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="N1B0Pier" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.338, -5.780002, 0.13, -4.5)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_002" type="MeshInstance3D" parent="N1B0Pier"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.5349983, 0, 0, 0, 2.88, 0, 0, 0, 0.33, -4.497501, 1.44, -4.5)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_003" parent="N1B0Pier" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.4279986, 0, 0, 0, 0.14, 0, 0, 0, 0.338, -4.551001, 0.13, -4.5)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_004" type="MeshInstance3D" parent="N1B0Pier"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.43, 0, 0, 0, 1.21, 0, 0, 0, 0.33, -4.98, 0.605, -4.5)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_005" parent="N1B0Pier" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.344, 0, 0, 0, 0.14, 0, 0, 0, 0.338, -5.023, 0.13, -4.5)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_006" type="MeshInstance3D" parent="N1B0Pier"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0.43, 0, 0, 0, 1.29, 0, 0, 0, 0.33, -4.98, 2.235, -4.5)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_007" parent="N1B0Pier" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.344, 0, 0, 0, 0.14, 0, 0, 0, 0.338, -5.023, 1.72, -4.5)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="SmokeHoodFinish" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("hood")
+material_override = ExtResource("paint_clay")
+position = Vector3(-4.98, 0.9, -4.335000003278256)
+metadata/stock = "hearth_plaster"
+metadata/asset = "PRP-0028"
+
+[node name="CoveredCookpot" type="MeshInstance3D" parent="Hearth"]
+mesh = ExtResource("pot")
+material_override = ExtResource("paint_iron")
+position = Vector3(-4.98, 0.217, -3.545000003278256)
+metadata/stock = "a1_cookpot"
+metadata/asset = "BLD-01/a1_cookpot"

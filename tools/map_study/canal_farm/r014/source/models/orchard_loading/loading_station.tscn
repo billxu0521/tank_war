@@ -1,0 +1,321 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://models/orchard_loading/deck.glb" id="deck"]
+
+[ext_resource type="PackedScene" path="res://models/orchard_loading/open_crate.glb" id="open"]
+
+[ext_resource type="PackedScene" path="res://models/orchard_loading/closed_crate.glb" id="closed"]
+
+[ext_resource type="Script" path="res://models/orchard_loading/stack.gd" id="stack"]
+
+[ext_resource type="Script" path="res://models/orchard_loading/station.gd" id="station"]
+
+[sub_resource type="SceneReplicationConfig" id="CrateState"]
+properties/0/path = NodePath(".:crate_masks")
+properties/0/spawn = true
+properties/0/replication_mode = 2
+
+[sub_resource type="BoxShape3D" id="Deck"]
+size = Vector3(9,2.4,6)
+
+[sub_resource type="ConvexPolygonShape3D" id="West"]
+margin = 0.001
+points = PackedVector3Array(-13.5, 0, -1.75, -4.5, 0, -1.75, -4.5, 2.4, -1.75, -13.5, 0, 1.75, -4.5, 0, 1.75, -4.5, 2.4, 1.75)
+
+[sub_resource type="ConvexPolygonShape3D" id="East"]
+margin = 0.001
+points = PackedVector3Array(13.5, 0, -1.75, 4.5, 0, -1.75, 4.5, 2.4, -1.75, 13.5, 0, 1.75, 4.5, 0, 1.75, 4.5, 2.4, 1.75)
+
+[sub_resource type="BoxShape3D" id="Stack00"]
+resource_local_to_scene = true
+size = Vector3(0.788,1.9,0.686)
+
+[sub_resource type="BoxShape3D" id="Stack01"]
+resource_local_to_scene = true
+size = Vector3(0.788,1.9,0.686)
+
+[sub_resource type="BoxShape3D" id="Stack02"]
+resource_local_to_scene = true
+size = Vector3(0.788,1.4249999999999998,0.686)
+
+[sub_resource type="BoxShape3D" id="Stack03"]
+resource_local_to_scene = true
+size = Vector3(0.788,1.9,0.686)
+
+[sub_resource type="BoxShape3D" id="Stack04"]
+resource_local_to_scene = true
+size = Vector3(0.788,1.9,0.686)
+
+[sub_resource type="BoxShape3D" id="Stack05"]
+resource_local_to_scene = true
+size = Vector3(0.788,1.4249999999999998,0.686)
+
+[sub_resource type="BoxShape3D" id="Stack10"]
+resource_local_to_scene = true
+size = Vector3(0.788,1.9,0.686)
+
+[sub_resource type="BoxShape3D" id="Stack11"]
+resource_local_to_scene = true
+size = Vector3(0.788,1.4249999999999998,0.686)
+
+[sub_resource type="BoxShape3D" id="Stack12"]
+resource_local_to_scene = true
+size = Vector3(0.788,1.9,0.686)
+
+[sub_resource type="BoxShape3D" id="Stack13"]
+resource_local_to_scene = true
+size = Vector3(0.788,1.9,0.686)
+
+[sub_resource type="BoxShape3D" id="Stack14"]
+resource_local_to_scene = true
+size = Vector3(0.788,1.4249999999999998,0.686)
+
+[sub_resource type="BoxShape3D" id="Stack15"]
+resource_local_to_scene = true
+size = Vector3(0.788,0.95,0.686)
+
+[node name="OrchardLoading" type="Node3D"]
+script = ExtResource("station")
+
+[node name="Timbers" parent="." instance=ExtResource("deck")]
+
+[node name="Platform" type="StaticBody3D" parent="."]
+
+[node name="Deck" type="CollisionShape3D" parent="Platform"]
+position = Vector3(0,1.2,0)
+shape = SubResource("Deck")
+
+[node name="West" type="CollisionShape3D" parent="Platform"]
+shape = SubResource("West")
+
+[node name="East" type="CollisionShape3D" parent="Platform"]
+shape = SubResource("East")
+
+[node name="WorkingCrates" type="Node3D" parent="."]
+position = Vector3(-14.3,0,-4.5)
+rotation = Vector3(0,0.15707963267949,0)
+
+[node name="Stack00" type="StaticBody3D" parent="WorkingCrates"]
+position = Vector3(-0.406,0,-1.757)
+script = ExtResource("stack")
+
+[node name="Solid" type="CollisionShape3D" parent="WorkingCrates/Stack00"]
+position = Vector3(0,0.95,0)
+shape = SubResource("Stack00")
+
+[node name="Bin0" parent="WorkingCrates/Stack00" instance=ExtResource("open")]
+position = Vector3(0,0.0,0)
+
+[node name="Bin1" parent="WorkingCrates/Stack00" instance=ExtResource("open")]
+position = Vector3(0,0.475,0)
+
+[node name="Bin2" parent="WorkingCrates/Stack00" instance=ExtResource("open")]
+position = Vector3(0,0.95,0)
+
+[node name="Bin3" parent="WorkingCrates/Stack00" instance=ExtResource("open")]
+position = Vector3(0,1.4249999999999998,0)
+
+[node name="Stack01" type="StaticBody3D" parent="WorkingCrates"]
+position = Vector3(-0.406,0,-1.0542)
+script = ExtResource("stack")
+
+[node name="Solid" type="CollisionShape3D" parent="WorkingCrates/Stack01"]
+position = Vector3(0,0.95,0)
+shape = SubResource("Stack01")
+
+[node name="Bin0" parent="WorkingCrates/Stack01" instance=ExtResource("closed")]
+position = Vector3(0,0.0,0)
+
+[node name="Bin1" parent="WorkingCrates/Stack01" instance=ExtResource("closed")]
+position = Vector3(0,0.475,0)
+
+[node name="Bin2" parent="WorkingCrates/Stack01" instance=ExtResource("closed")]
+position = Vector3(0,0.95,0)
+
+[node name="Bin3" parent="WorkingCrates/Stack01" instance=ExtResource("open")]
+position = Vector3(0,1.4249999999999998,0)
+
+[node name="Stack02" type="StaticBody3D" parent="WorkingCrates"]
+position = Vector3(-0.406,0,-0.3514)
+script = ExtResource("stack")
+
+[node name="Solid" type="CollisionShape3D" parent="WorkingCrates/Stack02"]
+position = Vector3(0,0.7124999999999999,0)
+shape = SubResource("Stack02")
+
+[node name="Bin0" parent="WorkingCrates/Stack02" instance=ExtResource("open")]
+position = Vector3(0,0.0,0)
+
+[node name="Bin1" parent="WorkingCrates/Stack02" instance=ExtResource("open")]
+position = Vector3(0,0.475,0)
+
+[node name="Bin2" parent="WorkingCrates/Stack02" instance=ExtResource("open")]
+position = Vector3(0,0.95,0)
+
+[node name="Stack03" type="StaticBody3D" parent="WorkingCrates"]
+position = Vector3(-0.406,0,0.3514)
+script = ExtResource("stack")
+
+[node name="Solid" type="CollisionShape3D" parent="WorkingCrates/Stack03"]
+position = Vector3(0,0.95,0)
+shape = SubResource("Stack03")
+
+[node name="Bin0" parent="WorkingCrates/Stack03" instance=ExtResource("open")]
+position = Vector3(0,0.0,0)
+
+[node name="Bin1" parent="WorkingCrates/Stack03" instance=ExtResource("open")]
+position = Vector3(0,0.475,0)
+
+[node name="Bin2" parent="WorkingCrates/Stack03" instance=ExtResource("open")]
+position = Vector3(0,0.95,0)
+
+[node name="Bin3" parent="WorkingCrates/Stack03" instance=ExtResource("open")]
+position = Vector3(0,1.4249999999999998,0)
+
+[node name="Stack04" type="StaticBody3D" parent="WorkingCrates"]
+position = Vector3(-0.406,0,1.0542)
+script = ExtResource("stack")
+
+[node name="Solid" type="CollisionShape3D" parent="WorkingCrates/Stack04"]
+position = Vector3(0,0.95,0)
+shape = SubResource("Stack04")
+
+[node name="Bin0" parent="WorkingCrates/Stack04" instance=ExtResource("closed")]
+position = Vector3(0,0.0,0)
+
+[node name="Bin1" parent="WorkingCrates/Stack04" instance=ExtResource("closed")]
+position = Vector3(0,0.475,0)
+
+[node name="Bin2" parent="WorkingCrates/Stack04" instance=ExtResource("closed")]
+position = Vector3(0,0.95,0)
+
+[node name="Bin3" parent="WorkingCrates/Stack04" instance=ExtResource("open")]
+position = Vector3(0,1.4249999999999998,0)
+
+[node name="Stack05" type="StaticBody3D" parent="WorkingCrates"]
+position = Vector3(-0.406,0,1.757)
+script = ExtResource("stack")
+
+[node name="Solid" type="CollisionShape3D" parent="WorkingCrates/Stack05"]
+position = Vector3(0,0.7124999999999999,0)
+shape = SubResource("Stack05")
+
+[node name="Bin0" parent="WorkingCrates/Stack05" instance=ExtResource("open")]
+position = Vector3(0,0.0,0)
+
+[node name="Bin1" parent="WorkingCrates/Stack05" instance=ExtResource("open")]
+position = Vector3(0,0.475,0)
+
+[node name="Bin2" parent="WorkingCrates/Stack05" instance=ExtResource("open")]
+position = Vector3(0,0.95,0)
+
+[node name="Stack10" type="StaticBody3D" parent="WorkingCrates"]
+position = Vector3(0.406,0,-1.757)
+script = ExtResource("stack")
+
+[node name="Solid" type="CollisionShape3D" parent="WorkingCrates/Stack10"]
+position = Vector3(0,0.95,0)
+shape = SubResource("Stack10")
+
+[node name="Bin0" parent="WorkingCrates/Stack10" instance=ExtResource("open")]
+position = Vector3(0,0.0,0)
+
+[node name="Bin1" parent="WorkingCrates/Stack10" instance=ExtResource("open")]
+position = Vector3(0,0.475,0)
+
+[node name="Bin2" parent="WorkingCrates/Stack10" instance=ExtResource("open")]
+position = Vector3(0,0.95,0)
+
+[node name="Bin3" parent="WorkingCrates/Stack10" instance=ExtResource("open")]
+position = Vector3(0,1.4249999999999998,0)
+
+[node name="Stack11" type="StaticBody3D" parent="WorkingCrates"]
+position = Vector3(0.406,0,-1.0542)
+script = ExtResource("stack")
+
+[node name="Solid" type="CollisionShape3D" parent="WorkingCrates/Stack11"]
+position = Vector3(0,0.7124999999999999,0)
+shape = SubResource("Stack11")
+
+[node name="Bin0" parent="WorkingCrates/Stack11" instance=ExtResource("closed")]
+position = Vector3(0,0.0,0)
+
+[node name="Bin1" parent="WorkingCrates/Stack11" instance=ExtResource("closed")]
+position = Vector3(0,0.475,0)
+
+[node name="Bin2" parent="WorkingCrates/Stack11" instance=ExtResource("open")]
+position = Vector3(0,0.95,0)
+
+[node name="Stack12" type="StaticBody3D" parent="WorkingCrates"]
+position = Vector3(0.406,0,-0.3514)
+script = ExtResource("stack")
+
+[node name="Solid" type="CollisionShape3D" parent="WorkingCrates/Stack12"]
+position = Vector3(0,0.95,0)
+shape = SubResource("Stack12")
+
+[node name="Bin0" parent="WorkingCrates/Stack12" instance=ExtResource("open")]
+position = Vector3(0,0.0,0)
+
+[node name="Bin1" parent="WorkingCrates/Stack12" instance=ExtResource("open")]
+position = Vector3(0,0.475,0)
+
+[node name="Bin2" parent="WorkingCrates/Stack12" instance=ExtResource("open")]
+position = Vector3(0,0.95,0)
+
+[node name="Bin3" parent="WorkingCrates/Stack12" instance=ExtResource("open")]
+position = Vector3(0,1.4249999999999998,0)
+
+[node name="Stack13" type="StaticBody3D" parent="WorkingCrates"]
+position = Vector3(0.406,0,0.3514)
+script = ExtResource("stack")
+
+[node name="Solid" type="CollisionShape3D" parent="WorkingCrates/Stack13"]
+position = Vector3(0,0.95,0)
+shape = SubResource("Stack13")
+
+[node name="Bin0" parent="WorkingCrates/Stack13" instance=ExtResource("open")]
+position = Vector3(0,0.0,0)
+
+[node name="Bin1" parent="WorkingCrates/Stack13" instance=ExtResource("open")]
+position = Vector3(0,0.475,0)
+
+[node name="Bin2" parent="WorkingCrates/Stack13" instance=ExtResource("open")]
+position = Vector3(0,0.95,0)
+
+[node name="Bin3" parent="WorkingCrates/Stack13" instance=ExtResource("open")]
+position = Vector3(0,1.4249999999999998,0)
+
+[node name="Stack14" type="StaticBody3D" parent="WorkingCrates"]
+position = Vector3(0.406,0,1.0542)
+script = ExtResource("stack")
+
+[node name="Solid" type="CollisionShape3D" parent="WorkingCrates/Stack14"]
+position = Vector3(0,0.7124999999999999,0)
+shape = SubResource("Stack14")
+
+[node name="Bin0" parent="WorkingCrates/Stack14" instance=ExtResource("closed")]
+position = Vector3(0,0.0,0)
+
+[node name="Bin1" parent="WorkingCrates/Stack14" instance=ExtResource("closed")]
+position = Vector3(0,0.475,0)
+
+[node name="Bin2" parent="WorkingCrates/Stack14" instance=ExtResource("open")]
+position = Vector3(0,0.95,0)
+
+[node name="Stack15" type="StaticBody3D" parent="WorkingCrates"]
+position = Vector3(0.406,0,1.757)
+script = ExtResource("stack")
+
+[node name="Solid" type="CollisionShape3D" parent="WorkingCrates/Stack15"]
+position = Vector3(0,0.475,0)
+shape = SubResource("Stack15")
+
+[node name="Bin0" parent="WorkingCrates/Stack15" instance=ExtResource("open")]
+position = Vector3(0,0.0,0)
+
+[node name="Bin1" parent="WorkingCrates/Stack15" instance=ExtResource("open")]
+position = Vector3(0,0.475,0)
+
+[node name="CrateSync" type="MultiplayerSynchronizer" parent="."]
+replication_config = SubResource("CrateState")

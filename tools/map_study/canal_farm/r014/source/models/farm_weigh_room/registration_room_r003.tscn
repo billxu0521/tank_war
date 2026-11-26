@@ -1,0 +1,810 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://models/farm_weigh_room/wall_bay.tscn" id="Bay"]
+
+[ext_resource type="PackedScene" path="res://models/farm_weigh_room/prp_0020_v00_table_1300x600x850_none.glb" id="ReceiptDesk"]
+
+[ext_resource type="PackedScene" path="res://models/farm_weigh_room/prp_0049_v00_scale_800x800x1350_none.glb" id="GoodsScale"]
+
+[ext_resource type="PackedScene" path="res://models/farm_weigh_room/r003/WorkingLedger.glb" id="WorkingLedger"]
+
+[ext_resource type="PackedScene" path="res://models/farm_weigh_room/r003/ClerkStool.glb" id="ClerkStool"]
+
+[ext_resource type="PackedScene" path="res://models/farm_weigh_room/r003/RecordPress.glb" id="RecordPress"]
+
+[ext_resource type="PackedScene" path="res://models/farm_weigh_room/r003/ReceivingBench.glb" id="ReceivingBench"]
+
+[ext_resource type="PackedScene" path="res://models/farm_weigh_room/r003/OrchardLot.glb" id="OrchardLot"]
+
+[ext_resource type="PackedScene" path="res://models/orchard_loading/open_crate.glb" id="FruitCrate"]
+
+[ext_resource type="Script" path="res://models/farm_weigh_room/board_infill.gd" id="BreakInfill"]
+
+[sub_resource type="StandardMaterial3D" id="CornerWood"]
+albedo_color = Color(0.209999993, 0.135000005, 0.0719999969, 1)
+roughness = 0.9
+
+[sub_resource type="BoxMesh" id="CornerPost"]
+material = SubResource("CornerWood")
+size = Vector3(0.24,3.58,0.13)
+
+[sub_resource type="BoxShape3D" id="NorthSill"]
+size = Vector3(12, 0.22, 0.5)
+
+[sub_resource type="BoxShape3D" id="NorthPanel"]
+size = Vector3(12, 3.58, 0.24)
+
+[sub_resource type="BoxShape3D" id="EastSill"]
+size = Vector3(6.5, 0.22, 0.5)
+
+[sub_resource type="BoxShape3D" id="EastPanel"]
+size = Vector3(6.5, 3.58, 0.24)
+
+[sub_resource type="BoxShape3D" id="WestNorthSill"]
+size = Vector3(3.11, 0.22, 0.5)
+
+[sub_resource type="BoxShape3D" id="WestNorthPanel"]
+size = Vector3(3.11, 3.58, 0.24)
+
+[sub_resource type="BoxShape3D" id="WestSouthSill"]
+size = Vector3(0.52, 0.22, 0.5)
+
+[sub_resource type="BoxShape3D" id="WestSouthPanel"]
+size = Vector3(0.52, 3.58, 0.24)
+
+[sub_resource type="BoxShape3D" id="SouthWestSill"]
+size = Vector3(3.48, 0.22, 0.5)
+
+[sub_resource type="BoxShape3D" id="SouthWestPanel"]
+size = Vector3(3.48, 3.58, 0.24)
+
+[sub_resource type="BoxShape3D" id="SouthEastSill"]
+size = Vector3(1.8, 0.22, 0.5)
+
+[sub_resource type="BoxShape3D" id="SouthEastPanel"]
+size = Vector3(1.8, 3.58, 0.24)
+
+[sub_resource type="BoxShape3D" id="ReceiptDeskPart0"]
+size = Vector3(0.07, 0.81, 0.07)
+
+[sub_resource type="BoxShape3D" id="ReceiptDeskPart1"]
+size = Vector3(0.07, 0.81, 0.07)
+
+[sub_resource type="BoxShape3D" id="ReceiptDeskPart2"]
+size = Vector3(0.07, 0.81, 0.07)
+
+[sub_resource type="BoxShape3D" id="ReceiptDeskPart3"]
+size = Vector3(0.07, 0.81, 0.07)
+
+[sub_resource type="BoxShape3D" id="ReceiptDeskPart4"]
+size = Vector3(1.17, 0.12, 0.05)
+
+[sub_resource type="BoxShape3D" id="ReceiptDeskPart5"]
+size = Vector3(1.17, 0.12, 0.05)
+
+[sub_resource type="BoxShape3D" id="ReceiptDeskPart6"]
+size = Vector3(0.05, 0.12, 0.47)
+
+[sub_resource type="BoxShape3D" id="ReceiptDeskPart7"]
+size = Vector3(0.05, 0.12, 0.47)
+
+[sub_resource type="BoxShape3D" id="ReceiptDeskPart8"]
+size = Vector3(1.32, 0.04, 0.147)
+
+[sub_resource type="BoxShape3D" id="ReceiptDeskPart9"]
+size = Vector3(1.32, 0.04, 0.147)
+
+[sub_resource type="BoxShape3D" id="ReceiptDeskPart10"]
+size = Vector3(1.32, 0.04, 0.147)
+
+[sub_resource type="BoxShape3D" id="ReceiptDeskPart11"]
+size = Vector3(1.32, 0.04, 0.147)
+
+[sub_resource type="BoxShape3D" id="ReceiptDeskPart12"]
+size = Vector3(0.05, 0.06, 0.52)
+
+[sub_resource type="BoxShape3D" id="ReceiptDeskPart13"]
+size = Vector3(0.05, 0.06, 0.52)
+
+[sub_resource type="BoxShape3D" id="ReceiptDeskPart14"]
+size = Vector3(1.18, 0.035, 0.156)
+
+[sub_resource type="BoxShape3D" id="ReceiptDeskPart15"]
+size = Vector3(1.18, 0.035, 0.156)
+
+[sub_resource type="BoxShape3D" id="ReceiptDeskPart16"]
+size = Vector3(1.18, 0.035, 0.156)
+
+[sub_resource type="BoxShape3D" id="GoodsScalePart0"]
+size = Vector3(0.1, 0.08, 0.8)
+
+[sub_resource type="BoxShape3D" id="GoodsScalePart1"]
+size = Vector3(0.1, 0.08, 0.8)
+
+[sub_resource type="BoxShape3D" id="GoodsScalePart2"]
+size = Vector3(0.8, 0.04, 0.196)
+
+[sub_resource type="BoxShape3D" id="GoodsScalePart3"]
+size = Vector3(0.8, 0.04, 0.196)
+
+[sub_resource type="BoxShape3D" id="GoodsScalePart4"]
+size = Vector3(0.8, 0.04, 0.196)
+
+[sub_resource type="BoxShape3D" id="GoodsScalePart5"]
+size = Vector3(0.8, 0.04, 0.196)
+
+[sub_resource type="BoxShape3D" id="GoodsScalePart6"]
+size = Vector3(0.09, 1.35, 0.1)
+
+[sub_resource type="BoxShape3D" id="GoodsScalePart7"]
+size = Vector3(0.68, 0.05, 0.045)
+
+[sub_resource type="BoxShape3D" id="GoodsScalePart8"]
+size = Vector3(0.022, 1.2, 0.022)
+
+[sub_resource type="BoxShape3D" id="GoodsScalePart9"]
+size = Vector3(0.022, 1.2, 0.022)
+
+[sub_resource type="BoxShape3D" id="GoodsScalePart10"]
+size = Vector3(0.1, 0.1, 0.09)
+
+[sub_resource type="BoxShape3D" id="WestNorthJoint"]
+size = Vector3(0.24, 3.58, 0.13)
+
+[sub_resource type="BoxShape3D" id="WestSouthJoint"]
+size = Vector3(0.24, 3.58, 0.13)
+
+[sub_resource type="BoxShape3D" id="EastNorthJoint"]
+size = Vector3(0.24, 3.58, 0.13)
+
+[sub_resource type="BoxShape3D" id="EastSouthJoint"]
+size = Vector3(0.24, 3.58, 0.13)
+
+[sub_resource type="BoxShape3D" id="ColSouthWestFixed"]
+size = Vector3(2.32, 3.58, 0.24)
+
+[sub_resource type="StandardMaterial3D" id="Math_stone0"]
+albedo_color = Color(0.360746915, 0.345802098, 0.326404205, 1)
+roughness = 0.9
+
+[sub_resource type="BoxMesh" id="MeshStoneSill"]
+size = Vector3(1.16, 0.22, 0.5)
+material = SubResource("Math_stone0")
+
+[sub_resource type="StandardMaterial3D" id="Math_trim"]
+albedo_color = Color(0.47312062, 0.381091854, 0.28277929, 1)
+roughness = 0.9
+
+[sub_resource type="BoxMesh" id="MeshFootRail"]
+size = Vector3(1.16, 0.08, 0.22)
+material = SubResource("Math_trim")
+
+[sub_resource type="BoxShape3D" id="ColJambFootRail"]
+size = Vector3(1.16, 0.08, 0.22)
+
+[sub_resource type="StandardMaterial3D" id="Math_post"]
+albedo_color = Color(0.49560966, 0.403027482, 0.297485285, 1)
+roughness = 0.9
+
+[sub_resource type="BoxMesh" id="MeshHeadPlate"]
+size = Vector3(1.16, 0.2, 0.24)
+material = SubResource("Math_post")
+
+[sub_resource type="BoxShape3D" id="ColJambHeadPlate"]
+size = Vector3(1.16, 0.2, 0.24)
+
+[sub_resource type="BoxMesh" id="MeshHalfPostNeg1"]
+size = Vector3(0.06496, 3.22, 0.2)
+material = SubResource("Math_post")
+
+[sub_resource type="BoxShape3D" id="ColJambHalfPostNeg1"]
+size = Vector3(0.06496, 3.22, 0.2)
+
+[sub_resource type="BoxMesh" id="MeshHalfPost1"]
+size = Vector3(0.06496, 3.22, 0.2)
+material = SubResource("Math_post")
+
+[sub_resource type="BoxShape3D" id="ColJambHalfPost1"]
+size = Vector3(0.06496, 3.22, 0.2)
+
+[sub_resource type="StandardMaterial3D" id="Math_wood0"]
+albedo_color = Color(0.416870096, 0.331830028, 0.2426937, 1)
+roughness = 0.9
+
+[sub_resource type="BoxMesh" id="MeshPlank0"]
+size = Vector3(0.202016, 3.28, 0.052)
+material = SubResource("Math_wood0")
+
+[sub_resource type="BoxShape3D" id="ColPlank0"]
+size = Vector3(0.202016, 3.28, 0.052)
+
+[sub_resource type="StandardMaterial3D" id="Math_wood1"]
+albedo_color = Color(0.392394087, 0.311765056, 0.22725226, 1)
+roughness = 0.9
+
+[sub_resource type="BoxMesh" id="MeshPlank1"]
+size = Vector3(0.202016, 3.28, 0.052)
+material = SubResource("Math_wood1")
+
+[sub_resource type="BoxShape3D" id="ColPlank1"]
+size = Vector3(0.202016, 3.28, 0.052)
+
+[sub_resource type="BoxMesh" id="MeshPlank2"]
+size = Vector3(0.202016, 3.28, 0.052)
+material = SubResource("Math_wood0")
+
+[sub_resource type="BoxShape3D" id="ColPlank2"]
+size = Vector3(0.202016, 3.28, 0.052)
+
+[sub_resource type="StandardMaterial3D" id="Math_wood2"]
+albedo_color = Color(0.439686408, 0.350534383, 0.257088057, 1)
+roughness = 0.9
+
+[sub_resource type="BoxMesh" id="MeshPlank3"]
+size = Vector3(0.202016, 3.28, 0.052)
+material = SubResource("Math_wood2")
+
+[sub_resource type="BoxShape3D" id="ColPlank3"]
+size = Vector3(0.202016, 3.28, 0.052)
+
+[sub_resource type="BoxMesh" id="MeshPlank4"]
+size = Vector3(0.202016, 3.28, 0.052)
+material = SubResource("Math_wood0")
+
+[sub_resource type="BoxShape3D" id="ColPlank4"]
+size = Vector3(0.202016, 3.28, 0.052)
+
+[sub_resource type="BoxShape3D" id="ColWritingLip"]
+size = Vector3(0.86, 0.036, 0.16)
+
+[sub_resource type="BoxShape3D" id="ColTareCrate"]
+size = Vector3(0.79, 0.475, 0.686)
+
+[sub_resource type="BoxShape3D" id="ColFilledLot"]
+size = Vector3(0.79, 0.475, 0.686)
+
+[sub_resource type="BoxShape3D" id="ColRecordCase"]
+size = Vector3(1.385, 1.38, 0.4)
+
+[sub_resource type="BoxShape3D" id="ColStoolTop"]
+size = Vector3(0.41, 0.05, 0.38)
+
+[sub_resource type="BoxShape3D" id="ColStoolLeg0"]
+size = Vector3(0.07, 0.41, 0.07)
+
+[sub_resource type="BoxShape3D" id="ColStoolLeg1"]
+size = Vector3(0.07, 0.41, 0.07)
+
+[sub_resource type="BoxShape3D" id="ColStoolLeg2"]
+size = Vector3(0.07, 0.41, 0.07)
+
+[sub_resource type="BoxShape3D" id="ColStoolLeg3"]
+size = Vector3(0.07, 0.41, 0.07)
+
+[sub_resource type="BoxShape3D" id="ColIntakeTop"]
+size = Vector3(1.89, 0.05, 0.84)
+
+[sub_resource type="BoxShape3D" id="ColIntakeLeg0"]
+size = Vector3(0.07, 0.51, 0.07)
+
+[sub_resource type="BoxShape3D" id="ColIntakeLeg1"]
+size = Vector3(0.07, 0.51, 0.07)
+
+[sub_resource type="BoxShape3D" id="ColIntakeLeg2"]
+size = Vector3(0.07, 0.51, 0.07)
+
+[sub_resource type="BoxShape3D" id="ColIntakeLeg3"]
+size = Vector3(0.07, 0.51, 0.07)
+
+[node name="RegistrationRoom" type="Node3D"]
+
+[node name="WallBays" type="Node3D" parent="."]
+
+[node name="North1" parent="WallBays" instance=ExtResource("Bay")]
+position = Vector3(-5.4, 0, -3.5)
+rotation = Vector3(0,0,0)
+scale = Vector3(1.2, 1, 1)
+
+[node name="North2" parent="WallBays" instance=ExtResource("Bay")]
+position = Vector3(-4.2, 0, -3.5)
+rotation = Vector3(0,0,0)
+scale = Vector3(1.2, 1, 1)
+
+[node name="North3" parent="WallBays" instance=ExtResource("Bay")]
+position = Vector3(-3, 0, -3.5)
+rotation = Vector3(0,0,0)
+scale = Vector3(1.2, 1, 1)
+
+[node name="North4" parent="WallBays" instance=ExtResource("Bay")]
+position = Vector3(-1.8, 0, -3.5)
+rotation = Vector3(0,0,0)
+scale = Vector3(1.2, 1, 1)
+
+[node name="North5" parent="WallBays" instance=ExtResource("Bay")]
+position = Vector3(-0.6, 0, -3.5)
+rotation = Vector3(0,0,0)
+scale = Vector3(1.2, 1, 1)
+
+[node name="North6" parent="WallBays" instance=ExtResource("Bay")]
+position = Vector3(0.6, 0, -3.5)
+rotation = Vector3(0,0,0)
+scale = Vector3(1.2, 1, 1)
+
+[node name="North7" parent="WallBays" instance=ExtResource("Bay")]
+position = Vector3(1.8, 0, -3.5)
+rotation = Vector3(0,0,0)
+scale = Vector3(1.2, 1, 1)
+
+[node name="North8" parent="WallBays" instance=ExtResource("Bay")]
+position = Vector3(3, 0, -3.5)
+rotation = Vector3(0,0,0)
+scale = Vector3(1.2, 1, 1)
+
+[node name="North9" parent="WallBays" instance=ExtResource("Bay")]
+position = Vector3(4.2, 0, -3.5)
+rotation = Vector3(0,0,0)
+scale = Vector3(1.2, 1, 1)
+
+[node name="North10" parent="WallBays" instance=ExtResource("Bay")]
+position = Vector3(5.4, 0, -3.5)
+rotation = Vector3(0,0,0)
+scale = Vector3(1.2, 1, 1)
+
+[node name="East1" parent="WallBays" instance=ExtResource("Bay")]
+position = Vector3(6, 0, -2.6)
+rotation = Vector3(0,1.57079633,0)
+scale = Vector3(1.3, 1, 1)
+
+[node name="East2" parent="WallBays" instance=ExtResource("Bay")]
+position = Vector3(6, 0, -1.3)
+rotation = Vector3(0,1.57079633,0)
+scale = Vector3(1.3, 1, 1)
+
+[node name="East3" parent="WallBays" instance=ExtResource("Bay")]
+position = Vector3(6, 0, 0)
+rotation = Vector3(0,1.57079633,0)
+scale = Vector3(1.3, 1, 1)
+
+[node name="East4" parent="WallBays" instance=ExtResource("Bay")]
+position = Vector3(6, 0, 1.3)
+rotation = Vector3(0,1.57079633,0)
+scale = Vector3(1.3, 1, 1)
+
+[node name="East5" parent="WallBays" instance=ExtResource("Bay")]
+position = Vector3(6, 0, 2.6)
+rotation = Vector3(0,1.57079633,0)
+scale = Vector3(1.3, 1, 1)
+
+[node name="WestNorth1" parent="WallBays" instance=ExtResource("Bay")]
+position = Vector3(-6, 0, -2.4725)
+rotation = Vector3(0,1.57079633,0)
+scale = Vector3(1.555, 1, 1)
+
+[node name="WestNorth2" parent="WallBays" instance=ExtResource("Bay")]
+position = Vector3(-6, 0, -0.9175)
+rotation = Vector3(0,1.57079633,0)
+scale = Vector3(1.555, 1, 1)
+
+[node name="WestSouth1" parent="WallBays" instance=ExtResource("Bay")]
+position = Vector3(-6, 0, 2.99)
+rotation = Vector3(0,1.57079633,0)
+scale = Vector3(0.52, 1, 1)
+
+[node name="SouthWest1" parent="WallBays" instance=ExtResource("Bay")]
+position = Vector3(-5.42, 0, 3.5)
+rotation = Vector3(0,0,0)
+scale = Vector3(1.16, 1, 1)
+
+[node name="SouthWest2" parent="WallBays" instance=ExtResource("Bay")]
+position = Vector3(-4.26, 0, 3.5)
+rotation = Vector3(0,0,0)
+scale = Vector3(1.16, 1, 1)
+
+[node name="SouthEast1" parent="WallBays" instance=ExtResource("Bay")]
+position = Vector3(5.1, 0, 3.5)
+rotation = Vector3(0,0,0)
+scale = Vector3(1.8, 1, 1)
+
+[node name="WestNorthJoint" type="MeshInstance3D" parent="WallBays"]
+position = Vector3(-5.998, 2.01, -3.315)
+mesh = SubResource("CornerPost")
+
+[node name="WestSouthJoint" type="MeshInstance3D" parent="WallBays"]
+position = Vector3(-5.998, 2.01, 3.315)
+mesh = SubResource("CornerPost")
+
+[node name="EastNorthJoint" type="MeshInstance3D" parent="WallBays"]
+position = Vector3(5.998, 2.01, -3.315)
+mesh = SubResource("CornerPost")
+
+[node name="EastSouthJoint" type="MeshInstance3D" parent="WallBays"]
+position = Vector3(5.998, 2.01, 3.315)
+mesh = SubResource("CornerPost")
+
+[node name="ReceiptDesk" parent="." instance=ExtResource("ReceiptDesk")]
+position = Vector3(-5.05, 0, -0.77)
+
+[node name="GoodsScale" parent="." instance=ExtResource("GoodsScale")]
+position = Vector3(4.85, 0, -0.35)
+
+[node name="Collision" type="StaticBody3D" parent="."]
+
+[node name="NorthSill" type="CollisionShape3D" parent="Collision"]
+position = Vector3(0, 0.11, -3.5)
+rotation = Vector3(0,0,0)
+shape = SubResource("NorthSill")
+
+[node name="NorthPanel" type="CollisionShape3D" parent="Collision"]
+position = Vector3(0, 2.01, -3.5)
+rotation = Vector3(0,0,0)
+shape = SubResource("NorthPanel")
+
+[node name="EastSill" type="CollisionShape3D" parent="Collision"]
+position = Vector3(6, 0.11, 0)
+rotation = Vector3(0,1.57079633,0)
+shape = SubResource("EastSill")
+
+[node name="EastPanel" type="CollisionShape3D" parent="Collision"]
+position = Vector3(6, 2.01, 0)
+rotation = Vector3(0,1.57079633,0)
+shape = SubResource("EastPanel")
+
+[node name="WestNorthSill" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-6, 0.11, -1.695)
+rotation = Vector3(0,1.57079633,0)
+shape = SubResource("WestNorthSill")
+
+[node name="WestNorthPanel" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-6, 2.01, -1.695)
+rotation = Vector3(0,1.57079633,0)
+shape = SubResource("WestNorthPanel")
+
+[node name="WestSouthSill" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-6, 0.11, 2.99)
+rotation = Vector3(0,1.57079633,0)
+shape = SubResource("WestSouthSill")
+
+[node name="WestSouthPanel" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-6, 2.01, 2.99)
+rotation = Vector3(0,1.57079633,0)
+shape = SubResource("WestSouthPanel")
+
+[node name="SouthWestSill" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-4.26, 0.11, 3.5)
+rotation = Vector3(0,0,0)
+shape = SubResource("SouthWestSill")
+
+[node name="SouthEastSill" type="CollisionShape3D" parent="Collision"]
+position = Vector3(5.1, 0.11, 3.5)
+rotation = Vector3(0,0,0)
+shape = SubResource("SouthEastSill")
+
+[node name="SouthEastPanel" type="CollisionShape3D" parent="Collision"]
+position = Vector3(5.1, 2.01, 3.5)
+rotation = Vector3(0,0,0)
+shape = SubResource("SouthEastPanel")
+
+[node name="ReceiptDeskPart0" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-5.63, 0.405, -0.54)
+rotation = Vector3(0,0,0)
+shape = SubResource("ReceiptDeskPart0")
+
+[node name="ReceiptDeskPart1" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-5.63, 0.405, -1)
+rotation = Vector3(0,0,0)
+shape = SubResource("ReceiptDeskPart1")
+
+[node name="ReceiptDeskPart2" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-4.47, 0.405, -0.54)
+rotation = Vector3(0,0,0)
+shape = SubResource("ReceiptDeskPart2")
+
+[node name="ReceiptDeskPart3" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-4.47, 0.405, -1)
+rotation = Vector3(0,0,0)
+shape = SubResource("ReceiptDeskPart3")
+
+[node name="ReceiptDeskPart4" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-5.05, 0.75, -0.54)
+rotation = Vector3(0,0,0)
+shape = SubResource("ReceiptDeskPart4")
+
+[node name="ReceiptDeskPart5" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-5.05, 0.75, -1)
+rotation = Vector3(0,0,0)
+shape = SubResource("ReceiptDeskPart5")
+
+[node name="ReceiptDeskPart6" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-5.63, 0.75, -0.77)
+rotation = Vector3(0,0,0)
+shape = SubResource("ReceiptDeskPart6")
+
+[node name="ReceiptDeskPart7" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-4.47, 0.75, -0.77)
+rotation = Vector3(0,0,0)
+shape = SubResource("ReceiptDeskPart7")
+
+[node name="ReceiptDeskPart8" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-5.05, 0.83, -0.545)
+rotation = Vector3(0,0,0)
+shape = SubResource("ReceiptDeskPart8")
+
+[node name="ReceiptDeskPart9" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-5.05, 0.83, -0.695)
+rotation = Vector3(0,0,0)
+shape = SubResource("ReceiptDeskPart9")
+
+[node name="ReceiptDeskPart10" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-5.05, 0.83, -0.845)
+rotation = Vector3(0,0,0)
+shape = SubResource("ReceiptDeskPart10")
+
+[node name="ReceiptDeskPart11" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-5.05, 0.83, -0.995)
+rotation = Vector3(0,0,0)
+shape = SubResource("ReceiptDeskPart11")
+
+[node name="ReceiptDeskPart12" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-5.63, 0.18, -0.77)
+rotation = Vector3(0,0,0)
+shape = SubResource("ReceiptDeskPart12")
+
+[node name="ReceiptDeskPart13" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-4.47, 0.18, -0.77)
+rotation = Vector3(0,0,0)
+shape = SubResource("ReceiptDeskPart13")
+
+[node name="ReceiptDeskPart14" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-5.05, 0.2275, -0.61)
+rotation = Vector3(0,0,0)
+shape = SubResource("ReceiptDeskPart14")
+
+[node name="ReceiptDeskPart15" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-5.05, 0.2275, -0.77)
+rotation = Vector3(0,0,0)
+shape = SubResource("ReceiptDeskPart15")
+
+[node name="ReceiptDeskPart16" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-5.05, 0.2275, -0.93)
+rotation = Vector3(0,0,0)
+shape = SubResource("ReceiptDeskPart16")
+
+[node name="GoodsScalePart0" type="CollisionShape3D" parent="Collision"]
+position = Vector3(4.57, 0.04, -0.35)
+rotation = Vector3(0,0,0)
+shape = SubResource("GoodsScalePart0")
+
+[node name="GoodsScalePart1" type="CollisionShape3D" parent="Collision"]
+position = Vector3(5.13, 0.04, -0.35)
+rotation = Vector3(0,0,0)
+shape = SubResource("GoodsScalePart1")
+
+[node name="GoodsScalePart2" type="CollisionShape3D" parent="Collision"]
+position = Vector3(4.85, 0.1, -0.05)
+rotation = Vector3(0,0,0)
+shape = SubResource("GoodsScalePart2")
+
+[node name="GoodsScalePart3" type="CollisionShape3D" parent="Collision"]
+position = Vector3(4.85, 0.1, -0.25)
+rotation = Vector3(0,0,0)
+shape = SubResource("GoodsScalePart3")
+
+[node name="GoodsScalePart4" type="CollisionShape3D" parent="Collision"]
+position = Vector3(4.85, 0.1, -0.45)
+rotation = Vector3(0,0,0)
+shape = SubResource("GoodsScalePart4")
+
+[node name="GoodsScalePart5" type="CollisionShape3D" parent="Collision"]
+position = Vector3(4.85, 0.1, -0.65)
+rotation = Vector3(0,0,0)
+shape = SubResource("GoodsScalePart5")
+
+[node name="GoodsScalePart6" type="CollisionShape3D" parent="Collision"]
+position = Vector3(4.85, 0.675, -0.654)
+rotation = Vector3(0,0,0)
+shape = SubResource("GoodsScalePart6")
+
+[node name="GoodsScalePart7" type="CollisionShape3D" parent="Collision"]
+position = Vector3(4.93, 1.31, -0.654)
+rotation = Vector3(0,0,0)
+shape = SubResource("GoodsScalePart7")
+
+[node name="GoodsScalePart8" type="CollisionShape3D" parent="Collision"]
+position = Vector3(4.69, 0.7, -0.63)
+rotation = Vector3(0,0,0)
+shape = SubResource("GoodsScalePart8")
+
+[node name="GoodsScalePart9" type="CollisionShape3D" parent="Collision"]
+position = Vector3(5.01, 0.7, -0.63)
+rotation = Vector3(0,0,0)
+shape = SubResource("GoodsScalePart9")
+
+[node name="GoodsScalePart10" type="CollisionShape3D" parent="Collision"]
+position = Vector3(5.074, 1.31, -0.654)
+rotation = Vector3(0,0,0)
+shape = SubResource("GoodsScalePart10")
+
+[node name="WestNorthJoint" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-5.998, 2.01, -3.315)
+rotation = Vector3(0,0,0)
+shape = SubResource("WestNorthJoint")
+
+[node name="WestSouthJoint" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-5.998, 2.01, 3.315)
+rotation = Vector3(0,0,0)
+shape = SubResource("WestSouthJoint")
+
+[node name="EastNorthJoint" type="CollisionShape3D" parent="Collision"]
+position = Vector3(5.998, 2.01, -3.315)
+rotation = Vector3(0,0,0)
+shape = SubResource("EastNorthJoint")
+
+[node name="EastSouthJoint" type="CollisionShape3D" parent="Collision"]
+position = Vector3(5.998, 2.01, 3.315)
+rotation = Vector3(0,0,0)
+shape = SubResource("EastSouthJoint")
+
+[node name="SouthWestFixed" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-4.84, 2.01, 3.5)
+shape = SubResource("ColSouthWestFixed")
+
+[node name="DeliveryJamb" type="Node3D" parent="."]
+position = Vector3(-3.1, 0, 3.5)
+script = ExtResource("BreakInfill")
+
+[node name="Intact" type="Node3D" parent="DeliveryJamb"]
+
+[node name="StaticPreviewCollision" type="StaticBody3D" parent="DeliveryJamb"]
+
+[node name="StoneSill" type="MeshInstance3D" parent="DeliveryJamb"]
+position = Vector3(0, 0.11, 0)
+mesh = SubResource("MeshStoneSill")
+
+[node name="FootRail" type="MeshInstance3D" parent="DeliveryJamb"]
+position = Vector3(0, 0.26, 0)
+mesh = SubResource("MeshFootRail")
+
+[node name="JambFootRail" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-3.1, 0.26, 3.5)
+shape = SubResource("ColJambFootRail")
+
+[node name="HeadPlate" type="MeshInstance3D" parent="DeliveryJamb"]
+position = Vector3(0, 3.7, 0)
+mesh = SubResource("MeshHeadPlate")
+
+[node name="JambHeadPlate" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-3.1, 3.7, 3.5)
+shape = SubResource("ColJambHeadPlate")
+
+[node name="HalfPostNeg1" type="MeshInstance3D" parent="DeliveryJamb"]
+position = Vector3(-0.54752, 1.99, 0)
+mesh = SubResource("MeshHalfPostNeg1")
+
+[node name="JambHalfPostNeg1" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-3.64752, 1.99, 3.5)
+shape = SubResource("ColJambHalfPostNeg1")
+
+[node name="HalfPost1" type="MeshInstance3D" parent="DeliveryJamb"]
+position = Vector3(0.54752, 1.99, 0)
+mesh = SubResource("MeshHalfPost1")
+
+[node name="JambHalfPost1" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-2.55248, 1.99, 3.5)
+shape = SubResource("ColJambHalfPost1")
+
+[node name="Plank0" type="MeshInstance3D" parent="DeliveryJamb/Intact"]
+position = Vector3(-0.412032, 1.94, -0.128)
+mesh = SubResource("MeshPlank0")
+
+[node name="Plank0" type="CollisionShape3D" parent="DeliveryJamb/StaticPreviewCollision"]
+position = Vector3(-0.412032, 1.94, -0.128)
+shape = SubResource("ColPlank0")
+
+[node name="Plank1" type="MeshInstance3D" parent="DeliveryJamb/Intact"]
+position = Vector3(-0.206016, 1.94, -0.128)
+mesh = SubResource("MeshPlank1")
+
+[node name="Plank1" type="CollisionShape3D" parent="DeliveryJamb/StaticPreviewCollision"]
+position = Vector3(-0.206016, 1.94, -0.128)
+shape = SubResource("ColPlank1")
+
+[node name="Plank2" type="MeshInstance3D" parent="DeliveryJamb/Intact"]
+position = Vector3(0, 1.94, -0.128)
+mesh = SubResource("MeshPlank2")
+
+[node name="Plank2" type="CollisionShape3D" parent="DeliveryJamb/StaticPreviewCollision"]
+position = Vector3(0, 1.94, -0.128)
+shape = SubResource("ColPlank2")
+
+[node name="Plank3" type="MeshInstance3D" parent="DeliveryJamb/Intact"]
+position = Vector3(0.206016, 1.94, -0.128)
+mesh = SubResource("MeshPlank3")
+
+[node name="Plank3" type="CollisionShape3D" parent="DeliveryJamb/StaticPreviewCollision"]
+position = Vector3(0.206016, 1.94, -0.128)
+shape = SubResource("ColPlank3")
+
+[node name="Plank4" type="MeshInstance3D" parent="DeliveryJamb/Intact"]
+position = Vector3(0.412032, 1.94, -0.128)
+mesh = SubResource("MeshPlank4")
+
+[node name="Plank4" type="CollisionShape3D" parent="DeliveryJamb/StaticPreviewCollision"]
+position = Vector3(0.412032, 1.94, -0.128)
+shape = SubResource("ColPlank4")
+
+[node name="DeskWork" parent="." instance=ExtResource("WorkingLedger")]
+position = Vector3(-5.05, 0.85, -0.77)
+
+[node name="WritingLip" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-5.05, 0.832, -1.15)
+shape = SubResource("ColWritingLip")
+
+[node name="Seat" parent="." instance=ExtResource("ClerkStool")]
+position = Vector3(-5, 0, -1.5)
+
+[node name="Archive" parent="." instance=ExtResource("RecordPress")]
+position = Vector3(-3.14, 0, -3)
+
+[node name="Intake" parent="." instance=ExtResource("ReceivingBench")]
+position = Vector3(4.42, 0, -2.55)
+
+[node name="TareCrate" parent="." instance=ExtResource("FruitCrate")]
+position = Vector3(3.99, 0.56, -2.55)
+
+[node name="TareCrate" type="CollisionShape3D" parent="Collision"]
+position = Vector3(3.99, 0.7975, -2.55)
+shape = SubResource("ColTareCrate")
+
+[node name="FilledLot" parent="." instance=ExtResource("FruitCrate")]
+position = Vector3(4.86, 0.56, -2.55)
+
+[node name="FilledLot" type="CollisionShape3D" parent="Collision"]
+position = Vector3(4.86, 0.7975, -2.55)
+shape = SubResource("ColFilledLot")
+
+[node name="Fruit" parent="." instance=ExtResource("OrchardLot")]
+position = Vector3(4.86, 0.56, -2.55)
+
+[node name="RecordCase" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-3.14, 0.69, -3)
+shape = SubResource("ColRecordCase")
+
+[node name="StoolTop" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-5, 0.435, -1.5)
+shape = SubResource("ColStoolTop")
+
+[node name="StoolLeg0" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-5.14, 0.205, -1.63)
+shape = SubResource("ColStoolLeg0")
+
+[node name="StoolLeg1" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-5.14, 0.205, -1.37)
+shape = SubResource("ColStoolLeg1")
+
+[node name="StoolLeg2" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-4.86, 0.205, -1.63)
+shape = SubResource("ColStoolLeg2")
+
+[node name="StoolLeg3" type="CollisionShape3D" parent="Collision"]
+position = Vector3(-4.86, 0.205, -1.37)
+shape = SubResource("ColStoolLeg3")
+
+[node name="IntakeTop" type="CollisionShape3D" parent="Collision"]
+position = Vector3(4.42, 0.535, -2.55)
+shape = SubResource("ColIntakeTop")
+
+[node name="IntakeLeg0" type="CollisionShape3D" parent="Collision"]
+position = Vector3(3.54, 0.255, -2.91)
+shape = SubResource("ColIntakeLeg0")
+
+[node name="IntakeLeg1" type="CollisionShape3D" parent="Collision"]
+position = Vector3(3.54, 0.255, -2.19)
+shape = SubResource("ColIntakeLeg1")
+
+[node name="IntakeLeg2" type="CollisionShape3D" parent="Collision"]
+position = Vector3(5.3, 0.255, -2.91)
+shape = SubResource("ColIntakeLeg2")
+
+[node name="IntakeLeg3" type="CollisionShape3D" parent="Collision"]
+position = Vector3(5.3, 0.255, -2.19)
+shape = SubResource("ColIntakeLeg3")

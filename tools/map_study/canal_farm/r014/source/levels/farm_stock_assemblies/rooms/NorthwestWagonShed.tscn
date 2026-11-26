@@ -1,0 +1,30 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://levels/farm_stock_assemblies/stock/wheel_chock.tscn" id="wheel_chock"]
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/end.tres" id="paint_end"]
+
+[node name="NorthwestWagonShed" type="Node3D"]
+
+[node name="WheelChocks" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/NorthwestWagonShed/WheelChocks"
+[node name="WheelChock_000" parent="WheelChocks" instance=ExtResource("wheel_chock")]
+transform = Transform3D(-0.34, 0, 0, 0, 0.18, 0, 0, 0, -0.24, -2.652, 0.096, -0.89)
+metadata/stock = "wheel_chock"
+metadata/asset = "MOD-0004"
+
+[node name="WheelChock_001" parent="WheelChocks" instance=ExtResource("wheel_chock")]
+transform = Transform3D(0.34, 0, 0, 0, 0.18, 0, 0, 0, 0.24, -2.072, 0.096, -0.89)
+metadata/stock = "wheel_chock"
+metadata/asset = "MOD-0004"
+
+[node name="WheelChock_002" parent="WheelChocks" instance=ExtResource("wheel_chock")]
+transform = Transform3D(-0.34, 0, 0, 0, 0.18, 0, 0, 0, -0.24, -2.652, 0.096, 0.95)
+metadata/stock = "wheel_chock"
+metadata/asset = "MOD-0004"
+
+[node name="WheelChock_003" parent="WheelChocks" instance=ExtResource("wheel_chock")]
+transform = Transform3D(0.34, 0, 0, 0, 0.18, 0, 0, 0, 0.24, -2.072, 0.096, 0.95)
+metadata/stock = "wheel_chock"
+metadata/asset = "MOD-0004"
+

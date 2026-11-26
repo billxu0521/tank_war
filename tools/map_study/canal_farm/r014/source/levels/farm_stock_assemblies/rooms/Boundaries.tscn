@@ -1,0 +1,1274 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://levels/farm_stock_assemblies/stock/adobe_brick.tscn" id="adobe_brick"]
+[ext_resource type="ArrayMesh" path="res://levels/farm_stock_assemblies/stock/adobe_wall.res" id="adobe_wall"]
+[ext_resource type="ArrayMesh" path="res://levels/farm_stock_assemblies/stock/stone_foot.res" id="stone_foot"]
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/adobe.tres" id="paint_adobe"]
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/clay.tres" id="paint_clay"]
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/stone.tres" id="paint_stone"]
+
+[node name="Boundaries" type="Node3D"]
+
+[node name="WindWallBlock0" type="Node3D" parent="."]
+transform = Transform3D(0.9659259, 0, -0.2588191, 0, 1, 0, 0.2588191, 0, 0.9659258, 61.14231, -0.14, -65.03367)
+metadata/target = "FarmBuildings31/Boundaries/WindWallBlock0"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="WindWallBlock0"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0, 0, 0.9984444, 0, 2.532578, 0, -1, 0, 0, 0, 1.266289, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="WindWallBlock0" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 1.006444, 0, 0.14, 0, -0.44, 0, 0, 0, 0.13, 0.28)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_002" type="MeshInstance3D" parent="WindWallBlock0"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0, 0, 0.9984444, 0, 0.12, 0, -1.025, 0, 0, 0, 2.472578, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_003" parent="WindWallBlock0" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 1.006444, 0, 0.072, 0, -0.44, 0, 0, 0, 2.466578, 0.2925)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="WindWallBlock1" type="Node3D" parent="."]
+transform = Transform3D(0.9659259, 0, -0.2588191, 0, 1, 0, 0.2588191, 0, 0.9659258, 62.10673, -0.14, -64.77525)
+metadata/target = "FarmBuildings31/Boundaries/WindWallBlock1"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="WindWallBlock1"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0, 0, 0.9984444, 0, 2.558133, 0, -1, 0, 0, 0, 1.279067, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="WindWallBlock1" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 1.006444, 0, 0.14, 0, -0.44, 0, 0, 0, 0.13, 0.28)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_002" type="MeshInstance3D" parent="WindWallBlock1"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0, 0, 0.9984444, 0, 0.12, 0, -1.025, 0, 0, 0, 2.498133, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_003" parent="WindWallBlock1" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 1.006444, 0, 0.072, 0, -0.44, 0, 0, 0, 2.492133, 0.2925)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="WindWallBlock2" type="Node3D" parent="."]
+transform = Transform3D(0.9659259, 0, -0.2588191, 0, 1, 0, 0.2588191, 0, 0.9659258, 63.07115, -0.14, -64.51683)
+metadata/target = "FarmBuildings31/Boundaries/WindWallBlock2"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="WindWallBlock2"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0, 0, 0.9984444, 0, 2.583689, 0, -1, 0, 0, 0, 1.291844, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="WindWallBlock2" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 1.006444, 0, 0.14, 0, -0.44, 0, 0, 0, 0.13, 0.28)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_002" type="MeshInstance3D" parent="WindWallBlock2"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0, 0, 0.9984444, 0, 0.12, 0, -1.025, 0, 0, 0, 2.523689, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_003" parent="WindWallBlock2" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 1.006444, 0, 0.072, 0, -0.44, 0, 0, 0, 2.517689, 0.2925)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="WindWallBlock3" type="Node3D" parent="."]
+transform = Transform3D(0.9659259, 0, -0.2588191, 0, 1, 0, 0.2588191, 0, 0.9659258, 64.03558, -0.14, -64.25842)
+metadata/target = "FarmBuildings31/Boundaries/WindWallBlock3"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="WindWallBlock3"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0, 0, 0.9984444, 0, 2.609244, 0, -1, 0, 0, 0, 1.304622, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="WindWallBlock3" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 1.006444, 0, 0.14, 0, -0.44, 0, 0, 0, 0.13, 0.28)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_002" type="MeshInstance3D" parent="WindWallBlock3"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0, 0, 0.9984444, 0, 0.12, 0, -1.025, 0, 0, 0, 2.549244, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_003" parent="WindWallBlock3" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 1.006444, 0, 0.072, 0, -0.44, 0, 0, 0, 2.543244, 0.2925)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="WindWallBlock4" type="Node3D" parent="."]
+transform = Transform3D(0.9659259, 0, -0.2588191, 0, 1, 0, 0.2588191, 0, 0.9659258, 65, -0.14, -64)
+metadata/target = "FarmBuildings31/Boundaries/WindWallBlock4"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="WindWallBlock4"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0, 0, 0.9984444, 0, 2.6348, 0, -1, 0, 0, 0, 1.3174, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="WindWallBlock4" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 1.006444, 0, 0.14, 0, -0.44, 0, 0, 0, 0.13, 0.28)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_002" type="MeshInstance3D" parent="WindWallBlock4"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0, 0, 0.9984444, 0, 0.12, 0, -1.025, 0, 0, 0, 2.5748, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_003" parent="WindWallBlock4" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 1.006444, 0, 0.072, 0, -0.44, 0, 0, 0, 2.5688, 0.2925)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="WindWallBlock5" type="Node3D" parent="."]
+transform = Transform3D(0.9659259, 0, -0.2588191, 0, 1, 0, 0.2588191, 0, 0.9659258, 65.96442, -0.14, -63.74158)
+metadata/target = "FarmBuildings31/Boundaries/WindWallBlock5"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="WindWallBlock5"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0, 0, 0.9984444, 0, 2.627644, 0, -1, 0, 0, 0, 1.313822, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="WindWallBlock5" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 1.006444, 0, 0.14, 0, -0.44, 0, 0, 0, 0.13, 0.28)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_002" type="MeshInstance3D" parent="WindWallBlock5"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0, 0, 0.9984444, 0, 0.12, 0, -1.025, 0, 0, 0, 2.567644, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_003" parent="WindWallBlock5" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 1.006444, 0, 0.072, 0, -0.44, 0, 0, 0, 2.561644, 0.2925)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="WindWallBlock6" type="Node3D" parent="."]
+transform = Transform3D(0.9659259, 0, -0.2588191, 0, 1, 0, 0.2588191, 0, 0.9659258, 66.92885, -0.14, -63.48317)
+metadata/target = "FarmBuildings31/Boundaries/WindWallBlock6"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="WindWallBlock6"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0, 0, 0.9984444, 0, 2.602089, 0, -1, 0, 0, 0, 1.301044, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="WindWallBlock6" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 1.006444, 0, 0.14, 0, -0.44, 0, 0, 0, 0.13, 0.28)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_002" type="MeshInstance3D" parent="WindWallBlock6"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0, 0, 0.9984444, 0, 0.12, 0, -1.025, 0, 0, 0, 2.542089, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_003" parent="WindWallBlock6" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 1.006444, 0, 0.072, 0, -0.44, 0, 0, 0, 2.536089, 0.2925)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="WindWallBlock7" type="Node3D" parent="."]
+transform = Transform3D(0.9659259, 0, -0.2588191, 0, 1, 0, 0.2588191, 0, 0.9659258, 67.89327, -0.14, -63.22475)
+metadata/target = "FarmBuildings31/Boundaries/WindWallBlock7"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="WindWallBlock7"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0, 0, 0.9984444, 0, 2.576533, 0, -1, 0, 0, 0, 1.288267, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="WindWallBlock7" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 1.006444, 0, 0.14, 0, -0.44, 0, 0, 0, 0.13, 0.28)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_002" type="MeshInstance3D" parent="WindWallBlock7"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0, 0, 0.9984444, 0, 0.12, 0, -1.025, 0, 0, 0, 2.516533, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_003" parent="WindWallBlock7" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 1.006444, 0, 0.072, 0, -0.44, 0, 0, 0, 2.510533, 0.2925)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="WindWallBlock8" type="Node3D" parent="."]
+transform = Transform3D(0.9659259, 0, -0.2588191, 0, 1, 0, 0.2588191, 0, 0.9659258, 68.8577, -0.14, -62.96634)
+metadata/target = "FarmBuildings31/Boundaries/WindWallBlock8"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="WindWallBlock8"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0, 0, 0.9984444, 0, 2.550978, 0, -1, 0, 0, 0, 1.275489, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="WindWallBlock8" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 1.006444, 0, 0.14, 0, -0.44, 0, 0, 0, 0.13, 0.28)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_002" type="MeshInstance3D" parent="WindWallBlock8"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(0, 0, 0.9984444, 0, 0.12, 0, -1.025, 0, 0, 0, 2.490978, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_003" parent="WindWallBlock8" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0, 0, 1.006444, 0, 0.072, 0, -0.44, 0, 0, 0, 2.484978, 0.2925)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="Guard1Block0" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -63.49417, -0.864, 11)
+metadata/target = "FarmBuildings31/Boundaries/Guard1Block0"
+[node name="Footstone_000" type="MeshInstance3D" parent="Guard1Block0"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(0.4988333, 0, 0, 0, 2.876333, 0, 0, 0, 0.5, -0.2494167, 1.438167, 0)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+[node name="Footstone_001" type="MeshInstance3D" parent="Guard1Block0"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(0.4988333, 0, 0, 0, 2.876333, 0, 0, 0, 0.5, 0.2494167, 1.438167, 0)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+[node name="Footstone_002" type="MeshInstance3D" parent="Guard1Block0"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(0.4988333, 0, 0, 0, 0.12, 0, 0, 0, 0.525, -0.2494167, 2.816333, 0)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+[node name="Footstone_003" type="MeshInstance3D" parent="Guard1Block0"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(0.4988333, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0.2494167, 2.816333, 0)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+
+[node name="Guard1Block1" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -62.4965, -0.923, 11)
+metadata/target = "FarmBuildings31/Boundaries/Guard1Block1"
+[node name="Footstone_000" type="MeshInstance3D" parent="Guard1Block1"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(0.4988333, 0, 0, 0, 2.912, 0, 0, 0, 0.5, -0.2494167, 1.456, 0)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+[node name="Footstone_001" type="MeshInstance3D" parent="Guard1Block1"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(0.4988333, 0, 0, 0, 2.912, 0, 0, 0, 0.5, 0.2494167, 1.456, 0)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+[node name="Footstone_002" type="MeshInstance3D" parent="Guard1Block1"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(0.4988333, 0, 0, 0, 0.12, 0, 0, 0, 0.525, -0.2494167, 2.852, 0)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+[node name="Footstone_003" type="MeshInstance3D" parent="Guard1Block1"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(0.4988333, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0.2494167, 2.852, 0)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+
+[node name="Guard1Block2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -61.49883, -0.953, 11)
+metadata/target = "FarmBuildings31/Boundaries/Guard1Block2"
+[node name="Footstone_000" type="MeshInstance3D" parent="Guard1Block2"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(0.4988333, 0, 0, 0, 2.918667, 0, 0, 0, 0.5, -0.2494167, 1.459333, 0)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+[node name="Footstone_001" type="MeshInstance3D" parent="Guard1Block2"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(0.4988333, 0, 0, 0, 2.918667, 0, 0, 0, 0.5, 0.2494167, 1.459333, 0)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+[node name="Footstone_002" type="MeshInstance3D" parent="Guard1Block2"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(0.4988333, 0, 0, 0, 0.12, 0, 0, 0, 0.525, -0.2494167, 2.858666, 0)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+[node name="Footstone_003" type="MeshInstance3D" parent="Guard1Block2"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(0.4988333, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0.2494167, 2.858666, 0)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+
+[node name="Guard1Block3" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60.50117, -0.953, 11)
+metadata/target = "FarmBuildings31/Boundaries/Guard1Block3"
+[node name="Footstone_000" type="MeshInstance3D" parent="Guard1Block3"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(0.4988333, 0, 0, 0, 2.895333, 0, 0, 0, 0.5, -0.2494167, 1.447667, 0)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+[node name="Footstone_001" type="MeshInstance3D" parent="Guard1Block3"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(0.4988333, 0, 0, 0, 2.895333, 0, 0, 0, 0.5, 0.2494167, 1.447667, 0)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+[node name="Footstone_002" type="MeshInstance3D" parent="Guard1Block3"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(0.4988333, 0, 0, 0, 0.12, 0, 0, 0, 0.525, -0.2494167, 2.835333, 0)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+[node name="Footstone_003" type="MeshInstance3D" parent="Guard1Block3"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(0.4988333, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0.2494167, 2.835333, 0)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+
+[node name="Guard1Block4" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -59.5035, -0.919, 11)
+metadata/target = "FarmBuildings31/Boundaries/Guard1Block4"
+[node name="Footstone_000" type="MeshInstance3D" parent="Guard1Block4"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(0.4988333, 0, 0, 0, 2.838, 0, 0, 0, 0.5, -0.2494167, 1.419, 0)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+[node name="Footstone_001" type="MeshInstance3D" parent="Guard1Block4"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(0.4988333, 0, 0, 0, 2.838, 0, 0, 0, 0.5, 0.2494167, 1.419, 0)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+[node name="Footstone_002" type="MeshInstance3D" parent="Guard1Block4"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(0.4988333, 0, 0, 0, 0.12, 0, 0, 0, 0.525, -0.2494167, 2.778, 0)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+[node name="Footstone_003" type="MeshInstance3D" parent="Guard1Block4"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(0.4988333, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0.2494167, 2.778, 0)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+
+[node name="Guard1Block5" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58.50583, -0.836, 11)
+metadata/target = "FarmBuildings31/Boundaries/Guard1Block5"
+[node name="Footstone_000" type="MeshInstance3D" parent="Guard1Block5"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(0.4988333, 0, 0, 0, 2.731667, 0, 0, 0, 0.5, -0.2494167, 1.365833, 0)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+[node name="Footstone_001" type="MeshInstance3D" parent="Guard1Block5"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(0.4988333, 0, 0, 0, 2.731667, 0, 0, 0, 0.5, 0.2494167, 1.365833, 0)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+[node name="Footstone_002" type="MeshInstance3D" parent="Guard1Block5"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(0.4988333, 0, 0, 0, 0.12, 0, 0, 0, 0.525, -0.2494167, 2.671667, 0)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+[node name="Footstone_003" type="MeshInstance3D" parent="Guard1Block5"]
+mesh = ExtResource("stone_foot")
+material_override = ExtResource("paint_stone")
+transform = Transform3D(0.4988333, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0.2494167, 2.671667, 0)
+metadata/stock = "stone_foot"
+metadata/asset = "MOD-0002"
+
+
+[node name="Guard2Block0" type="Node3D" parent="."]
+transform = Transform3D(0.9284767, 0, 0.3713907, 0, 1, 0, -0.3713907, 0, 0.9284767, -10.4948, -0.14, -54.20208)
+metadata/target = "FarmBuildings31/Boundaries/Guard2Block0"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="Guard2Block0"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.074233, 0, 0, 0, 2.013, 0, 0, 0, 0.5, 0, 1.0065, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="Guard2Block0" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, -0.3171165, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_002" parent="Guard2Block0" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, 0.1628835, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_003" type="MeshInstance3D" parent="Guard2Block0"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.074233, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0, 1.953, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_004" parent="Guard2Block0" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, -0.3171165, 1.947, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_005" parent="Guard2Block0" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, 0.1628835, 1.947, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="Guard2Block1" type="Node3D" parent="."]
+transform = Transform3D(0.9284767, 0, 0.3713907, 0, 1, 0, -0.3713907, 0, 0.9284767, -9.4974, -0.14, -54.60104)
+metadata/target = "FarmBuildings31/Boundaries/Guard2Block1"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="Guard2Block1"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.074233, 0, 0, 0, 2.09, 0, 0, 0, 0.5, 0, 1.045, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="Guard2Block1" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, -0.3171165, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_002" parent="Guard2Block1" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, 0.1628835, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_003" type="MeshInstance3D" parent="Guard2Block1"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.074233, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0, 2.03, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_004" parent="Guard2Block1" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, -0.3171165, 2.024, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_005" parent="Guard2Block1" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, 0.1628835, 2.024, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="Guard2Block2" type="Node3D" parent="."]
+transform = Transform3D(0.9284767, 0, 0.3713907, 0, 1, 0, -0.3713907, 0, 0.9284767, -8.5, -0.14, -55)
+metadata/target = "FarmBuildings31/Boundaries/Guard2Block2"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="Guard2Block2"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.074233, 0, 0, 0, 2.18, 0, 0, 0, 0.5, 0, 1.09, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="Guard2Block2" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, -0.3171165, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_002" parent="Guard2Block2" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, 0.1628835, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_003" type="MeshInstance3D" parent="Guard2Block2"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.074233, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0, 2.12, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_004" parent="Guard2Block2" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, -0.3171165, 2.114, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_005" parent="Guard2Block2" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, 0.1628835, 2.114, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="Guard2Block3" type="Node3D" parent="."]
+transform = Transform3D(0.9284767, 0, 0.3713907, 0, 1, 0, -0.3713907, 0, 0.9284767, -7.5026, -0.14, -55.39896)
+metadata/target = "FarmBuildings31/Boundaries/Guard2Block3"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="Guard2Block3"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.074233, 0, 0, 0, 2.072, 0, 0, 0, 0.5, 0, 1.036, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="Guard2Block3" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, -0.3171165, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_002" parent="Guard2Block3" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, 0.1628835, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_003" type="MeshInstance3D" parent="Guard2Block3"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.074233, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0, 2.012, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_004" parent="Guard2Block3" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, -0.3171165, 2.006, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_005" parent="Guard2Block3" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, 0.1628835, 2.006, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="Guard2Block4" type="Node3D" parent="."]
+transform = Transform3D(0.9284767, 0, 0.3713907, 0, 1, 0, -0.3713907, 0, 0.9284767, -6.505199, -0.14, -55.79792)
+metadata/target = "FarmBuildings31/Boundaries/Guard2Block4"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="Guard2Block4"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.074233, 0, 0, 0, 2.162, 0, 0, 0, 0.5, 0, 1.081, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="Guard2Block4" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, -0.3171165, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_002" parent="Guard2Block4" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, 0.1628835, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_003" type="MeshInstance3D" parent="Guard2Block4"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.074233, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0, 2.102, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_004" parent="Guard2Block4" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, -0.3171165, 2.096, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_005" parent="Guard2Block4" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, 0.1628835, 2.096, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="YardWall1Block0" type="Node3D" parent="."]
+transform = Transform3D(-0.1564344, 0, -0.9876884, 0, 1, 0, 0.9876884, 0, -0.1564344, -36.78743, -0.14, 23.55711)
+metadata/target = "FarmBuildings31/Boundaries/YardWall1Block0"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="YardWall1Block0"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.071429, 0, 0, 0, 2.091, 0, 0, 0, 0.5, 0, 1.0455, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="YardWall1Block0" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, -0.3157143, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_002" parent="YardWall1Block0" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, 0.1642857, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_003" type="MeshInstance3D" parent="YardWall1Block0"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.071429, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0, 2.031, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_004" parent="YardWall1Block0" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, -0.3157143, 2.025, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_005" parent="YardWall1Block0" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, 0.1642857, 2.025, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="YardWall1Block1" type="Node3D" parent="."]
+transform = Transform3D(-0.1564344, 0, -0.9876884, 0, 1, 0, 0.9876884, 0, -0.1564344, -36.95504, -0.14, 24.61535)
+metadata/target = "FarmBuildings31/Boundaries/YardWall1Block1"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="YardWall1Block1"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.071429, 0, 0, 0, 2.078, 0, 0, 0, 0.5, 0, 1.039, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="YardWall1Block1" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, -0.3157143, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_002" parent="YardWall1Block1" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, 0.1642857, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_003" type="MeshInstance3D" parent="YardWall1Block1"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.071429, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0, 2.018, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_004" parent="YardWall1Block1" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, -0.3157143, 2.012, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_005" parent="YardWall1Block1" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, 0.1642857, 2.012, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="YardWall1Block2" type="Node3D" parent="."]
+transform = Transform3D(-0.1564344, 0, -0.9876884, 0, 1, 0, 0.9876884, 0, -0.1564344, -37.12264, -0.14, 25.67359)
+metadata/target = "FarmBuildings31/Boundaries/YardWall1Block2"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="YardWall1Block2"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.071429, 0, 0, 0, 2.168, 0, 0, 0, 0.5, 0, 1.084, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="YardWall1Block2" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, -0.3157143, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_002" parent="YardWall1Block2" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, 0.1642857, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_003" type="MeshInstance3D" parent="YardWall1Block2"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.071429, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0, 2.108, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_004" parent="YardWall1Block2" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, -0.3157143, 2.102, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_005" parent="YardWall1Block2" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, 0.1642857, 2.102, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="YardWall1Block3" type="Node3D" parent="."]
+transform = Transform3D(-0.1564344, 0, -0.9876884, 0, 1, 0, 0.9876884, 0, -0.1564344, -37.29025, -0.14, 26.73182)
+metadata/target = "FarmBuildings31/Boundaries/YardWall1Block3"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="YardWall1Block3"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.071429, 0, 0, 0, 2.06, 0, 0, 0, 0.5, 0, 1.03, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="YardWall1Block3" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, -0.3157143, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_002" parent="YardWall1Block3" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, 0.1642857, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_003" type="MeshInstance3D" parent="YardWall1Block3"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.071429, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0, 2, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_004" parent="YardWall1Block3" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, -0.3157143, 1.994, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_005" parent="YardWall1Block3" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, 0.1642857, 1.994, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="YardWall1Block4" type="Node3D" parent="."]
+transform = Transform3D(-0.1564344, 0, -0.9876884, 0, 1, 0, 0.9876884, 0, -0.1564344, -37.45786, -0.14, 27.79006)
+metadata/target = "FarmBuildings31/Boundaries/YardWall1Block4"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="YardWall1Block4"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.071429, 0, 0, 0, 1.889543, 0, 0, 0, 0.5, 0, 0.9447714, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="YardWall1Block4" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, -0.3157143, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_002" parent="YardWall1Block4" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, 0.1642857, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_003" type="MeshInstance3D" parent="YardWall1Block4"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.071429, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0, 1.829543, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_004" parent="YardWall1Block4" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, -0.3157143, 1.823543, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_005" parent="YardWall1Block4" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, 0.1642857, 1.823543, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="YardWall1Block5" type="Node3D" parent="."]
+transform = Transform3D(-0.1564344, 0, -0.9876884, 0, 1, 0, 0.9876884, 0, -0.1564344, -37.62547, -0.14, 28.8483)
+metadata/target = "FarmBuildings31/Boundaries/YardWall1Block5"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="YardWall1Block5"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.071429, 0, 0, 0, 1.743314, 0, 0, 0, 0.5, 0, 0.8716571, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="YardWall1Block5" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, -0.3157143, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_002" parent="YardWall1Block5" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, 0.1642857, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_003" type="MeshInstance3D" parent="YardWall1Block5"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.071429, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0, 1.683314, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_004" parent="YardWall1Block5" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, -0.3157143, 1.677314, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_005" parent="YardWall1Block5" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, 0.1642857, 1.677314, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="YardWall1Block6" type="Node3D" parent="."]
+transform = Transform3D(-0.1564344, 0, -0.9876884, 0, 1, 0, 0.9876884, 0, -0.1564344, -37.79308, -0.14, 29.90654)
+metadata/target = "FarmBuildings31/Boundaries/YardWall1Block6"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="YardWall1Block6"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.071429, 0, 0, 0, 1.748171, 0, 0, 0, 0.5, 0, 0.8740857, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="YardWall1Block6" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, -0.3157143, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_002" parent="YardWall1Block6" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, 0.1642857, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_003" type="MeshInstance3D" parent="YardWall1Block6"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.071429, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0, 1.688171, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_004" parent="YardWall1Block6" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, -0.3157143, 1.682171, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_005" parent="YardWall1Block6" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, 0.1642857, 1.682171, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="YardWall2Block0" type="Node3D" parent="."]
+transform = Transform3D(0.9876884, 0, -0.1564344, 0, 1, 0, 0.1564344, 0, 0.9876884, -31.85901, -0.14, 23.7953)
+metadata/target = "FarmBuildings31/Boundaries/YardWall2Block0"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="YardWall2Block0"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.01, 0, 0, 0, 1.6561, 0, 0, 0, 0.5, 0, 0.82805, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="YardWall2Block0" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, -0.285, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_002" type="MeshInstance3D" parent="YardWall2Block0"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.01, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0, 1.5961, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_003" parent="YardWall2Block0" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, -0.285, 1.5901, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="YardWall2Block1" type="Node3D" parent="."]
+transform = Transform3D(0.9876884, 0, -0.1564344, 0, 1, 0, 0.1564344, 0, 0.9876884, -30.86145, -0.14, 23.9533)
+metadata/target = "FarmBuildings31/Boundaries/YardWall2Block1"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="YardWall2Block1"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.01, 0, 0, 0, 1.8343, 0, 0, 0, 0.5, 0, 0.91715, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="YardWall2Block1" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, -0.285, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_002" type="MeshInstance3D" parent="YardWall2Block1"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.01, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0, 1.7743, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_003" parent="YardWall2Block1" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, -0.285, 1.7683, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="YardWall2Block2" type="Node3D" parent="."]
+transform = Transform3D(0.9876884, 0, -0.1564344, 0, 1, 0, 0.1564344, 0, 0.9876884, -29.86388, -0.14, 24.1113)
+metadata/target = "FarmBuildings31/Boundaries/YardWall2Block2"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="YardWall2Block2"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.01, 0, 0, 0, 2.0205, 0, 0, 0, 0.5, 0, 1.01025, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="YardWall2Block2" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, -0.285, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_002" type="MeshInstance3D" parent="YardWall2Block2"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.01, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0, 1.9605, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_003" parent="YardWall2Block2" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, -0.285, 1.9545, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="YardWall2Block3" type="Node3D" parent="."]
+transform = Transform3D(0.9876884, 0, -0.1564344, 0, 1, 0, 0.1564344, 0, 0.9876884, -28.86632, -0.14, 24.2693)
+metadata/target = "FarmBuildings31/Boundaries/YardWall2Block3"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="YardWall2Block3"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.01, 0, 0, 0, 2.2067, 0, 0, 0, 0.5, 0, 1.10335, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="YardWall2Block3" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, -0.285, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_002" type="MeshInstance3D" parent="YardWall2Block3"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.01, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0, 2.1467, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_003" parent="YardWall2Block3" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, -0.285, 2.1407, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="YardWall2Block4" type="Node3D" parent="."]
+transform = Transform3D(0.9876884, 0, -0.1564344, 0, 1, 0, 0.1564344, 0, 0.9876884, -27.86875, -0.14, 24.4273)
+metadata/target = "FarmBuildings31/Boundaries/YardWall2Block4"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="YardWall2Block4"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.01, 0, 0, 0, 2.132, 0, 0, 0, 0.5, 0, 1.066, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="YardWall2Block4" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, -0.285, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_002" type="MeshInstance3D" parent="YardWall2Block4"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.01, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0, 2.072, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_003" parent="YardWall2Block4" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, -0.285, 2.066, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="YardWall2Block5" type="Node3D" parent="."]
+transform = Transform3D(0.9876884, 0, -0.1564344, 0, 1, 0, 0.1564344, 0, 0.9876884, -26.87119, -0.14, 24.5853)
+metadata/target = "FarmBuildings31/Boundaries/YardWall2Block5"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="YardWall2Block5"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.01, 0, 0, 0, 2.222, 0, 0, 0, 0.5, 0, 1.111, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="YardWall2Block5" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, -0.285, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_002" type="MeshInstance3D" parent="YardWall2Block5"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.01, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0, 2.162, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_003" parent="YardWall2Block5" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, -0.285, 2.156, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="YardWall2Block6" type="Node3D" parent="."]
+transform = Transform3D(0.9876884, 0, -0.1564344, 0, 1, 0, 0.1564344, 0, 0.9876884, -25.87362, -0.14, 24.7433)
+metadata/target = "FarmBuildings31/Boundaries/YardWall2Block6"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="YardWall2Block6"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.01, 0, 0, 0, 2.114, 0, 0, 0, 0.5, 0, 1.057, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="YardWall2Block6" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, -0.285, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_002" type="MeshInstance3D" parent="YardWall2Block6"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.01, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0, 2.054, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_003" parent="YardWall2Block6" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, -0.285, 2.048, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="YardWall2Block7" type="Node3D" parent="."]
+transform = Transform3D(0.9876884, 0, -0.1564344, 0, 1, 0, 0.1564344, 0, 0.9876884, -24.87606, -0.14, 24.90129)
+metadata/target = "FarmBuildings31/Boundaries/YardWall2Block7"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="YardWall2Block7"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.01, 0, 0, 0, 2.204, 0, 0, 0, 0.5, 0, 1.102, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="YardWall2Block7" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, -0.285, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_002" type="MeshInstance3D" parent="YardWall2Block7"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.01, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0, 2.144, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_003" parent="YardWall2Block7" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, -0.285, 2.138, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="YardWall2Block8" type="Node3D" parent="."]
+transform = Transform3D(0.9876884, 0, -0.1564344, 0, 1, 0, 0.1564344, 0, 0.9876884, -23.87849, -0.14, 25.05929)
+metadata/target = "FarmBuildings31/Boundaries/YardWall2Block8"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="YardWall2Block8"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.01, 0, 0, 0, 2.096, 0, 0, 0, 0.5, 0, 1.048, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="YardWall2Block8" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, -0.285, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_002" type="MeshInstance3D" parent="YardWall2Block8"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.01, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0, 2.036, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_003" parent="YardWall2Block8" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, -0.285, 2.03, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="YardWall2Block9" type="Node3D" parent="."]
+transform = Transform3D(0.9876884, 0, -0.1564344, 0, 1, 0, 0.1564344, 0, 0.9876884, -22.88093, -0.14, 25.21729)
+metadata/target = "FarmBuildings31/Boundaries/YardWall2Block9"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="YardWall2Block9"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.01, 0, 0, 0, 2.091, 0, 0, 0, 0.5, 0, 1.0455, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="YardWall2Block9" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, -0.285, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_002" type="MeshInstance3D" parent="YardWall2Block9"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1.01, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0, 2.031, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_003" parent="YardWall2Block9" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, -0.285, 2.025, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="YardWall3Block0" type="Node3D" parent="."]
+transform = Transform3D(-0.1564344, 0, -0.9876884, 0, 1, 0, 0.9876884, 0, -0.1564344, -22.46036, -0.14, 25.79014)
+metadata/target = "FarmBuildings31/Boundaries/YardWall3Block0"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="YardWall3Block0"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1, 0, 0, 0, 1.8, 0, 0, 0, 0.5, 0, 0.9, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="YardWall3Block0" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, -0.28, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_002" type="MeshInstance3D" parent="YardWall3Block0"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0, 1.74, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_003" parent="YardWall3Block0" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, -0.28, 1.734, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="YardWall3Block1" type="Node3D" parent="."]
+transform = Transform3D(-0.1564344, 0, -0.9876884, 0, 1, 0, 0.9876884, 0, -0.1564344, -22.61679, -0.14, 26.77782)
+metadata/target = "FarmBuildings31/Boundaries/YardWall3Block1"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="YardWall3Block1"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1, 0, 0, 0, 2.045, 0, 0, 0, 0.5, 0, 1.0225, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="YardWall3Block1" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, -0.28, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_002" type="MeshInstance3D" parent="YardWall3Block1"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0, 1.985, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_003" parent="YardWall3Block1" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, -0.28, 1.979, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+
+[node name="YardWall3Block2" type="Node3D" parent="."]
+transform = Transform3D(-0.1564344, 0, -0.9876884, 0, 1, 0, 0.9876884, 0, -0.1564344, -22.77323, -0.14, 27.76551)
+metadata/target = "FarmBuildings31/Boundaries/YardWall3Block2"
+[node name="PlasteredBay_000" type="MeshInstance3D" parent="YardWall3Block2"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1, 0, 0, 0, 1.807, 0, 0, 0, 0.5, 0, 0.9035, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_001" parent="YardWall3Block2" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.14, 0, 0, 0, 0.508, -0.28, 0.13, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+
+[node name="PlasteredBay_002" type="MeshInstance3D" parent="YardWall3Block2"]
+mesh = ExtResource("adobe_wall")
+material_override = ExtResource("paint_clay")
+transform = Transform3D(1, 0, 0, 0, 0.12, 0, 0, 0, 0.525, 0, 1.747, 0)
+metadata/stock = "adobe_wall"
+metadata/asset = "MOD-0001"
+
+[node name="ExposedCourse_003" parent="YardWall3Block2" instance=ExtResource("adobe_brick")]
+transform = Transform3D(0.44, 0, 0, 0, 0.072, 0, 0, 0, 0.533, -0.28, 1.741, 0)
+metadata/stock = "adobe_brick"
+metadata/asset = "MOD-0001"
+

@@ -1,0 +1,14 @@
+[gd_scene format=3]
+
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/iron.tres" id="mat"]
+
+[sub_resource type="BoxMesh" id="M0"]
+material = ExtResource("mat")
+size = Vector3(1, 1, 1)
+
+[node name="iron_plate" type="Node3D"]
+metadata/asset = "MOD-0013"
+
+[node name="Part0" type="MeshInstance3D" parent="."]
+mesh = SubResource("M0")
+position = Vector3(0, 0, 0)
