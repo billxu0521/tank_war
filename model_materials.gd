@@ -19,6 +19,8 @@ static func _flatten_models() -> void:
 	if not _flat_keep.is_empty():
 		return
 	for path: String in FLAT_MODELS:
+		if path.get_file().get_basename() in ["cowboy", "cowboy_tripo", "ninola_tripo", "revolver_tripo", "shotgun_tripo", "lance_tripo", "rifle"]:
+			continue
 		var scene: PackedScene = load(path)
 		_flat_keep.append(scene)
 		var inst := scene.instantiate()

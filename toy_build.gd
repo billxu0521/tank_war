@@ -199,15 +199,21 @@ func _smash(hit: Callable, max_level: int, from: Vector3, area: AABB, power: flo
 		for i in _unsupported(loose):
 			fresh.append(i)
 	if not fresh.is_empty():
-		fresh.sort()
-		# 不超過上限：每塊一個碎塊（ids）；超過：全部照位置併成大塊（gone，見 _merge）
-		if fresh.size() <= MAX_PIECES:
-			_break.rpc(fresh, PackedInt32Array(), from, power, dir)
-		else:
-			_break.rpc(PackedInt32Array(), fresh, from, power, dir)
+		release_parts(fresh, from, power, dir)
 	elif hurt:
 		_hurt.rpc()
 	return hurt
+
+
+## 外部組裝也可依自己的承座判定交回同一套碎塊、動效及同步。
+func release_parts(fresh: PackedInt32Array, from: Vector3, power := FALL_SPEED, dir := Vector3.ZERO, release_offset := Vector3.ZERO) -> void:
+	if not multiplayer.is_server() or fresh.is_empty():
+		return
+	fresh.sort()
+	if fresh.size() <= MAX_PIECES:
+		_break.rpc(fresh, PackedInt32Array(), from, power, dir, release_offset)
+	else:
+		_break.rpc(PackedInt32Array(), fresh, from, power, dir, release_offset)
 
 
 ## 連不到地面的塊（loose 為 1 的不算）：從著地的塊（頂面在 BASE_TOP 以下，或等級 3）順著邊界框相接（放大 0.05）一路找，找不到的回傳。
@@ -259,11 +265,13 @@ func _ensure_adj() -> void:
 ## 鬆脫（每台一樣）：ids 每塊馬上生一個碎塊（塊藏起來、碎塊往外飛）；gone 是超過上限的，照位置併成大塊，每組生一個。
 ## 塊的碰撞一次全部關掉（_set_off 一批）才生碎塊；一步生不完的排隊（SPAWN_PER_TICK）。主機重烘導航（碎塊還沒停下，先不算進去）
 @rpc("authority", "call_local", "reliable")
-func _break(ids: PackedInt32Array, gone: PackedInt32Array, from: Vector3, power: float, dir: Vector3) -> void:
+func _break(ids: PackedInt32Array, gone: PackedInt32Array, from: Vector3, power: float, dir: Vector3, release_offset := Vector3.ZERO) -> void:
 	_touched = true
 	var at := Vector3.ZERO
 	var order: Array = Array(ids)
 	if ToyBuild.no_flight and multiplayer.is_server():   # 專用伺服器：由低到高落地，後面的疊在前面的上面
+		# 從窗槽脫出的碎片在會飛的模式繼續朝外移。直接落地也留相當於 0.3 秒的散落距離。
+		release_offset += release_offset.normalized()*FALL_SPEED*.30
 		order.sort_custom(func(a: int, b: int) -> bool: return _xf[a].origin.y < _xf[b].origin.y)
 	for i in ids:
 		_loose[i] = 1
@@ -274,9 +282,9 @@ func _break(ids: PackedInt32Array, gone: PackedInt32Array, from: Vector3, power:
 	_spawn_n = 0
 	_set_off(ids + gone, true)   # 碰撞這一步全關；畫面等碎塊生出來才換（_spawn、_land_next）
 	for i in order:
-		_spawn(PackedInt32Array([i]), _xf[i], _plow_xf(global_transform * _xf[i], from, dir, power), true, from, power)
+		_spawn(PackedInt32Array([i]), _xf[i], _plow_xf((global_transform * _xf[i]).translated(release_offset), from, dir, power), true, from, power)
 	for g: PackedInt32Array in _merge(gone):
-		_spawn_group(g, from, power, dir)
+		_spawn_group(g, from, power, dir, release_offset)
 	at /= float(maxi(ids.size() + gone.size(), 1))
 	sfx(self, HOUSE_FALL_SOUND, 80.0, at)
 	Fx.dust_ring(get_parent(), Vector3(at.x, global_position.y, at.z), 4.0, 30, 5.0, 1.4)
@@ -344,14 +352,14 @@ func _spawn(mem: PackedInt32Array, local: Transform3D, xf: Transform3D, flying: 
 
 
 ## 大碎塊：原點取塊中心的平均；只有一塊的照那塊的位置
-func _spawn_group(mem: PackedInt32Array, from: Vector3, power: float, dir: Vector3) -> void:
+func _spawn_group(mem: PackedInt32Array, from: Vector3, power: float, dir: Vector3, release_offset := Vector3.ZERO) -> void:
 	var local := _xf[mem[0]]
 	if mem.size() > 1:
 		var c := Vector3.ZERO
 		for m in mem:
 			c += _xf[m].origin
 		local = Transform3D(Basis(), c / float(mem.size()))
-	_spawn(mem, local, _plow_xf(global_transform * local, from, dir, power), true, from, power)
+	_spawn(mem, local, _plow_xf((global_transform * local).translated(release_offset), from, dir, power), true, from, power)
 
 
 ## 專用伺服器的全速撞（碎塊不飛、直接落地）：落地前先移到尼諾拉兩旁（PLOW_CLEAR 外），不然碎塊落在路上、又擋住下一下。
@@ -982,3 +990,6 @@ static func blast(world: Node3D, at: Vector3, radius: float) -> void:
 	for w: Node in world.get_tree().get_nodes_in_group(&"destructible"):
 		if w is ToyBuild:
 			(w as ToyBuild).smash(func(p: Vector3) -> bool: return p.distance_to(at) < radius, Balance.whole("hit_blast_force"), at, AABB(at - Vector3.ONE * radius, Vector3.ONE * radius * 2.0))
+	for registry: Node3D in world.get_tree().get_nodes_in_group(&"farm_destruction"):
+		if registry.get_world_3d() == world.get_world_3d():
+			registry.blast(at, radius, Balance.whole("hit_blast_force"))

@@ -16,16 +16,16 @@ const NAMES := {&"sunset": "夕陽", &"noon": "正午", &"midnight": "午夜（�
 const PRESETS := {
 	&"sunset": {},
 	&"noon": {
-		"to_sun": Vector3(0.35, 0.93, -0.12),   # 仰角約 68 度：不要正頂，房子才有一面亮一面暗
-		"sun": {"light_color": Color(1.0, 0.97, 0.9), "light_energy": 1.6, "shadow_opacity": 0.95,
-			"directional_shadow_max_distance": 50.0},
-		"env": {"ambient_light_color": Color(0.55, 0.65, 0.85), "ambient_light_energy": 0.9,
-			"ambient_light_sky_contribution": 0.6, "fog_light_color": Color(0.78, 0.82, 0.85), "fog_density": 0.0015,
-			"fog_sun_scatter": 0.05, "glow_intensity": 0.3, "glow_hdr_threshold": 1.4, "tonemap_exposure": 0.95,
+		"to_sun": Vector3(-0.52, 0.88, 0.27),   # 仰角約 68 度：不要正頂，房子才有一面亮一面暗
+		"sun": {"light_color": Color(1.0, 0.97, 0.9), "light_energy": 1.35, "shadow_opacity": 0.82,
+			"directional_shadow_max_distance": 85.0},
+		"env": {"ambient_light_color": Color("cbdcea"), "ambient_light_energy": 0.52,
+			"ambient_light_sky_contribution": 0.25, "fog_light_color": Color(0.78, 0.82, 0.85), "fog_density": 0.0009,
+			"fog_sun_scatter": 0.05, "glow_intensity": 0.08, "glow_hdr_threshold": 1.4, "tonemap_exposure": 0.95,
 			"background_energy_multiplier": 1.0},
-		"sky": {"top_color": Color(0.22, 0.42, 0.78), "mid_color": Color(0.45, 0.62, 0.86), "horizon_color": Color(0.86, 0.9, 0.92),
+		"sky": {"top_color": Color("3489b1"), "mid_color": Color("78b8cf"), "horizon_color": Color("d6e4df"),
 			"ground_color": Color(0.7, 0.62, 0.5), "cloud_lit": Color(1.0, 1.0, 0.98), "cloud_shade": Color(0.72, 0.76, 0.82),
-			"cloud_edge": Color(0.85, 0.87, 0.9), "cloud_cover": 0.3, "halo": 0.35, "rays": 0.0},
+			"cloud_edge": Color(0.85, 0.87, 0.9), "cloud_cover": 0.37, "halo": 0.08, "farm_noon": true, "rays": 0.0},
 		"outline": {"dist_haze": Color(0.75, 0.8, 0.88), "dist_sat": 0.6, "dist_contrast": 0.55,
 			"shadow_tint": Color(0.3, 0.36, 0.5), "shadow_tint_amount": 0.3, "near_dark": 0.85,
 			"sun_haze": 0.1, "sun_haze_color": Color(0.95, 0.95, 0.9), "shafts": 0.0,
