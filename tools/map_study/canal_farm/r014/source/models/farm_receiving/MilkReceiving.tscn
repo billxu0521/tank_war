@@ -1,0 +1,43 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://models/farm_receiving/MilkCan.tscn" id="Can"]
+[ext_resource type="PackedScene" path="res://models/farm_receiving/HandoffBench.glb" id="Bench"]
+[ext_resource type="PackedScene" path="res://models/farm_receiving/LandingSkid.glb" id="Skid"]
+
+[sub_resource type="BoxShape3D" id="Table"]
+size = Vector3(0.72, 0.655, 1.68)
+
+[sub_resource type="BoxShape3D" id="Pad"]
+size = Vector3(0.53, 0.1, 0.58)
+
+[node name="MilkReceiving" type="Node3D"]
+
+[node name="Bench" type="StaticBody3D" parent="."]
+position = Vector3(-1.42, 0, 1.30)
+
+[node name="Skin" parent="Bench" instance=ExtResource("Bench")]
+
+[node name="Surface" type="CollisionShape3D" parent="Bench"]
+position = Vector3(0, 0.3275, 0)
+shape = SubResource("Table")
+
+[node name="ReceivedCan" parent="Bench" instance=ExtResource("Can")]
+position = Vector3(-0.04, 0.655, 0.01)
+rotation = Vector3(0, 0.48, 0)
+
+[node name="WaitingCan" parent="Bench" instance=ExtResource("Can")]
+position = Vector3(0.06, 0.655, 0.50)
+rotation = Vector3(0, -0.58, 0)
+
+[node name="Landing" type="StaticBody3D" parent="."]
+position = Vector3(-8.83, 0, -0.75)
+
+[node name="Skin" parent="Landing" instance=ExtResource("Skid")]
+
+[node name="Surface" type="CollisionShape3D" parent="Landing"]
+position = Vector3(0, 0.05, 0)
+shape = SubResource("Pad")
+
+[node name="UnloadedCan" parent="Landing" instance=ExtResource("Can")]
+position = Vector3(0, 0.10, 0)
+rotation = Vector3(0, 0.22, 0)

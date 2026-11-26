@@ -1,0 +1,2341 @@
+extends Node3D
+## Outlaws vs Dinosaurs 法外狂徒大戰恐龍（簡稱 OvD）— 區網原型。兩個模式：連線模式（大家都是牛仔，第一人稱）和沙盒模式。
+## Esc 選單裡的「遊戲局控制」讓主機加移動標靶、牛仔 bot。恐龍的程式都還在，玩法定了再接回來。
+
+const PORT := 24680
+## 測試站：雲端主機上一直開著的專用伺服器（`-- --server`，見 README 的「測試站」）。
+## 還沒架好就空著，大廳的「連到測試站」按鈕會關掉
+const TEST_SERVER := ""
+const NEXT_ROUND_DELAY := 15.0   # 一局結束後結算停幾秒：房間回房間（選單流程 M3），專用伺服器開下一局
+# 沙盒的靶場：從 (0, 84) 往 -Z 打到 100 公尺，這一條不蓋東西。撤離區在東西兩端，不會壓到
+const SANDBOX_RANGE := Rect2(-20, -30, 40, 112)   # 靶在路兩側 4 公尺、恐龍靶 12 公尺；再窄旁邊的坡會超過 40 度
+const SANDBOX_START := Vector3(0, 0.1, 76)   # y 是離地高度，用 _on_ground() 換成實際位置
+const SANDBOX_TARGETS := [10, 25, 50, 100]   # 牛仔靶的距離（公尺）：左輪、散彈、步槍各自的有效距離
+## 牛仔靠這麼近（水平）就撿得到蛋：至少要比恐龍身體半徑大，恐龍站在蛋上時貼著身體的牛仔也撿得到。做成函式：static var 會在 boss.gd 還沒算好 BODY_RADIUS 時就先讀到 0
+static func pickup_range() -> float:
+	return maxf(3.0, BOSS_GD.BODY_RADIUS + 1.0)
+const PICKUP_HEIGHT := 3.0     # 高度差在這裡面才算（撿蛋看水平距離，高度只給寬限）
+# 以下從 balance.csv 讀（見 balance.gd），改數字去改表
+static var PICKUP_SECONDS: float = Balance.num("pickup_seconds")   # 撿蛋要連續待滿這麼久，不是碰到就拿
+static var EXTRACT_SECONDS: float = Balance.num("extract_seconds")   # 要在撤離區內連續待滿這麼久
+static var EXITS_OPEN: int = Balance.whole("exits_open")   # 每場從撤離區候選裡開幾個（灰盒四個候選）
+const EGG_HOLD_HEIGHT := 2.4  # 蛋舉在牛仔頭上多高（腳底算起），低了會擋住自己的鏡頭
+const MATCH_SECONDS := 240.0  # 一局四分鐘
+const RESPAWN_DELAY := 5.0    # 死亡的代價是節奏，不是失去參賽資格
+const COWBOY := preload("res://cowboy/cowboy.tscn")
+const DINO := preload("res://dino.tscn")
+const BOSS := preload("res://boss.tscn")
+const BOSS_GD := preload("res://boss.gd")   # 尼諾拉的尺寸（HALF_H、GROW、BODY_RADIUS、LIFT），導航網格和生怪用
+const BOSS_ID := -999   # 負數＝電腦（主機操控）；固定編號，場上最多一隻
+
+@onready var lobby: VBoxContainer = $UI/Root/Lobby
+@onready var ip_edit: LineEdit = $UI/Root/Lobby/IPRow/IP
+@onready var saved_ips: MenuButton = $UI/Root/Lobby/IPRow/SavedIpBtn
+@onready var center_info: Label = $UI/Root/CenterInfo   # 方位條下面：重生倒數、撤離倒數
+@onready var net_info: Label = $UI/Root/NetInfo         # 右上角：本機 IP、延遲、每秒畫面數
+@onready var result: Control = $UI/Root/Result          # 勝負畫面
+@onready var status: Label = $UI/Root/Status
+@onready var hud: Label = $UI/Root/Hud
+@onready var stamina_bar: ProgressBar = $UI/Root/Stamina
+@onready var crosshair: Label = $UI/Root/Crosshair
+@onready var menu: Control = $UI/Root/Menu
+@onready var players: Node3D = $Players
+@onready var egg: Egg = $Egg
+@onready var safe: Safe = $Safe   # 派對模式的保險箱（safe.gd）；其他模式收著
+var barrels: Barrels   # 隨機擺的爆炸桶（barrels.gd）；_ready 建，每局（派對每回合）主機重抽
+var raptors: Raptors   # 派對模式尼諾拉放的小恐龍哨兵（raptors.gd）；_ready 建，每回合清空
+var hold: HoldAction   # 按住幾秒的互動（hold_action.gd）：搜刮；_ready 建
+
+## 連線對戰的模式：房主在房間選（room.gd），加入的人照主機的（開打時主機會送 _set_rules）。
+## 模式表在 match_rules.gd（欄位說明也在那裡）
+const RULES := MatchRules.RULES
+var rules := &"normal"   # 預設是規則表的第一個（一般）
+var _lives := {}   # 牛仔的連線編號 -> 還能重生幾次。只有用得到次數的模式有；主機算，廣播給大家（_sync_lives）
+var _out := {}     # 出局的牛仔：連線編號 -> 是不是 bot（新的一局要生回來）
+var player_key := ""   # 這台電腦的玩家代號（斷線重連時主機靠它認人）。第一次連線時產生、存進 settings.cfg；net_check 會直接蓋掉
+const RECONNECT_MS := 60000   # 斷線後幾毫秒內連回來，還給他原本的命數和出局狀態
+var _key_of := {}   # 主機：在線上的人 連線編號 -> 玩家代號（版本檢查時送來的；沒送或重複就沒有）
+var _held := {}     # 主機：斷線的人 玩家代號 -> {id: 舊編號, at: 斷線時刻毫秒, lives: 剩幾次或 null, out: 是否出局}
+var _auth_failed := false   # 這次加入是版本檢查逾時（不是主機斷線），斷線時不要蓋掉逾時的字
+var party: Party   # 派對模式的回合、計分（party.gd）；不是派對模式是 null
+var _party_hud: PartyHud   # 派對模式的畫面（方位條要問它是不是在選重生點）
+var _buy_menu: BuyMenu   # 派對準備階段的選裝選單（buy_menu.gd）：開著時游標不鎖
+var _safe_panel: SafePanel   # 保險箱的密碼面板（safe_panel.gd）：開著時游標不鎖
+var _match_hud: MatchHud   # 局內的畫面資訊（match_hud.gd）：方位條、倒數、準心、boss 條、左上角那行字
+@onready var map: ArenaMap = $Arena   # 場地：地形、擺設、門、撤離區都在 arena_map.gd
+const ARENA := ArenaMap.ARENA
+const EXIT_RADIUS := ArenaMap.EXIT_RADIUS
+## 場地狀態的只讀轉接：外面只讀，要改去 map 那邊改
+var _terrain: Terrain:
+	get: return map._terrain
+var _props: Dictionary:
+	get: return map._props
+var _exit_pads: Array[Node3D]:
+	get: return map._exit_pads
+## 這一場開著的撤離區（候選裡 egg.exits 有勾的）：撤離判定、方位條、電腦牛仔都看這個
+var _exits: Array[Vector3]:
+	get:
+		var out: Array[Vector3] = []
+		for i in map._exits.size():
+			if (egg.exits >> i) & 1:
+				out.append(map._exits[i])
+		return out
+var spawn_points: Array[Vector3]:
+	get:
+		if rules == &"normal" and party and party.phase == &"play" and map.has_method(&"farm_return_zones"):
+			return map.call(&"farm_return_zones")
+		return map.spawn_points
+var dino_spawn: Vector3:
+	get: return map.dino_spawn
+var safe_spots: Array[Vector3]:
+	get: return map.safe_spots
+var _doors: Array[Door]:
+	get: return map._doors
+var _toys: Array[ToyBuild]:
+	get: return map._toys
+var _drift: Node3D:
+	get: return map._drift
+## 場地的一行轉接（給牛仔、派對、bot 用，名字不變）
+func _on_ground(v: Vector3) -> Vector3: return map._on_ground(v)
+func _spawn_point(span := ARENA * 0.45) -> Vector3: return map._spawn_point(span)
+func _is_clear(p: Vector2, radius := 0.0) -> bool: return map._is_clear(p, radius)
+func hidden_in_bush(who: Node3D) -> bool: return map.hidden_in_bush(who)
+
+## 手調過的場景檔（在 Godot 編輯器裡改，見 docs/素材流水線/場景編輯.md）。烘焙工具設成空的：不讀場景檔，自動擺一份初稿
+## 目前的地圖：&"" 是主地圖（連線、沙盒），&"range" 是靶場。靜態的：換地圖要重載整個場景，重載後還記得
+static var mode := &""
+const RANGE_LEVEL := "res://levels/range.tscn"
+## 主地圖是灰盒（素模，greybox.gd）：先專心調玩法。舊的牧場留著，測試和 level_file 指定時才用
+const GREYBOX_LEVEL := "res://levels/greybox.tscn"
+const RANCH_LEVEL := "res://levels/ranch.tscn"
+static var level_file := ""   # 指定主地圖（測試切回牧場用）；空的就是灰盒
+var level_path := RANGE_LEVEL if mode == &"range" else (level_file if level_file != "" else GREYBOX_LEVEL)
+## 灰盒地圖：地面換格線、不長草不撒碎物、固定正午、不開像素風（pixel_style.gd）
+var greybox: bool:
+	get: return level_path == GREYBOX_LEVEL and not (map and map.has_method(&"farm_return_zones"))
+
+## 沙盒靶道要空著的範圍（擺設檢查 LevelCheck 用）：靶場地圖沒有（null）；灰盒只留靶子那一條（中央要放東西）
+const GREYBOX_LANE := Rect2(-7, -30, 14, 112)
+static func lane_of(path: String) -> Variant:
+	if path == RANGE_LEVEL:
+		return null
+	return GREYBOX_LANE if path == GREYBOX_LEVEL else SANDBOX_RANGE
+var _cowboys := 0
+var _offline := false
+var _dedicated := false   # 專用伺服器（測試站）：主機自己不是玩家
+var _next_round := 0.0
+var _time_left := 0.0
+var _clock := 0                     # 主機廣播的剩餘秒數
+var _respawn_queue: Array[Dictionary] = []
+var _claimer := 0   # 正在撿蛋的牛仔編號
+var _farm_restore_frame := -1
+var _waiting_to_restart := false
+var _waiting_to_start := false
+var _over := false
+## 沙盒：沒有時間限制、沒有蛋，靶打死會在原地重生，子彈無限
+var _sandbox := false
+var _solo_dino := false   # 單人打恐龍（測恐龍行為用）：沙盒的場地，只有自己和恐龍 boss，接關無限
+var _dino_sandbox := false   # 恐龍沙盒：自己當尼諾拉，按 H 叫獵人（bot）來打，獵人死了不重生
+const DINO_SANDBOX_MAX := 6   # 恐龍沙盒同時最多幾個獵人
+var _continues := 0       # 單人打恐龍：接關了幾次
+
+func _ready() -> void:
+	BugReport.install()
+	# 視窗開最大（填滿螢幕）。只在還是預設大小時才放大：截圖工具用 --resolution 指定了別的大小，照它的，不然裁切位置會跑掉
+	# （--resolution 是引擎吃掉的參數，OS.get_cmdline_args 看不到，只能看視窗大小）
+	# 要延到 _ready 跑完：macOS 放大視窗會當場先跑一幀 _process，那時場地、問題回報都還沒建好，一路報錯、編輯器停住
+	var base := Vector2i(ProjectSettings.get_setting("display/window/size/viewport_width"),
+		ProjectSettings.get_setting("display/window/size/viewport_height"))
+	if DisplayServer.get_name() != "headless" and get_window().size == base:
+		get_window().set_deferred(&"mode", Window.MODE_MAXIMIZED)
+	_add_report_button()
+	_party_hud = PartyHud.new()   # 派對模式的畫面（party_hud.gd），party 是 null 時自己藏起來
+	_party_hud.main = self
+	$UI/Root.add_child(_party_hud)
+	_buy_menu = BuyMenu.new()   # 派對準備階段的選裝（buy_menu.gd）；要加在 party_hud 後面：數字鍵先給它
+	_buy_menu.main = self
+	$UI/Root.add_child(_buy_menu)
+	_safe_panel = SafePanel.new()
+	_safe_panel.main = self
+	$UI/Root.add_child(_safe_panel)
+	barrels = Barrels.new()
+	barrels.name = &"Barrels"   # 名字固定：RPC 每台找得到
+	add_child(barrels)
+	raptors = Raptors.new()
+	raptors.name = &"Raptors"   # 名字固定：RPC 每台找得到。不放 Players 底下（那裡的都算玩家）
+	add_child(raptors)
+	hold = HoldAction.new()
+	hold.name = &"Hold"   # 名字固定：RPC 每台找得到（按住幾秒的互動，hold_action.gd）
+	add_child(hold)
+	ModelMaterials._flatten_models()
+	_use_cjk_font()
+	_add_settings()
+	_ips = _local_ips()
+	_load_saved_ips()
+	_load_settings()
+	saved_ips.get_popup().index_pressed.connect(func(i: int) -> void:
+		ip_edit.text = saved_ips.get_popup().get_item_text(i))
+	map._use_sky()
+	map._use_outline()
+	Period.snapshot(self)   # 要在像素風疊上去之前：記下的是夕陽原本的天空、霧
+	add_child(preload("res://pixel_style.gd").new())   # 像素風＋夕陽調色，F9 開關（pixel_style.gd）
+	map._load_props()
+	map._skin_egg()
+	map._load_level()
+	map._build_arena()
+	OilLantern.replace_baked($Arena, _props.get(&"Lantern"), _props)   # 模型上的提燈換成打得破的油燈（lantern.gd）
+	map._dark_windows()
+	if mode != &"range":
+		map._build_exits()
+	egg.exits_changed.connect(_show_exits)   # 客戶端收到主機抽的撤離區就換顯示
+	_load_period()
+	_build_home()
+	Period.apply(self, period)
+	_match_hud = MatchHud.new(self)
+	multiplayer.auth_timeout = 15.0   # 預設 3 秒；網路差時版本檢查（掉包重送）來不及，會被當成主機斷線
+	multiplayer.auth_callback = _on_auth   # 版本檢查（連線認證）；SceneMultiplayer 本身不換，_to_lobby 重設 peer 也不會清掉
+	multiplayer.peer_authenticating.connect(_on_peer_authenticating)
+	multiplayer.peer_connected.connect(_on_peer_connected)
+	multiplayer.peer_disconnected.connect(_despawn)
+	multiplayer.connected_to_server.connect(func() -> void:
+		status.text = ""   # 房間頁自己會寫
+		_volunteer.rpc_id(1, want_dino))
+	multiplayer.connection_failed.connect(
+		func() -> void: _to_lobby.call_deferred("連線失敗，檢查 IP 和防火牆"))
+	multiplayer.server_disconnected.connect(
+		func() -> void:
+			if not _auth_failed:
+				_to_lobby.call_deferred("主機斷線了"))
+	multiplayer.peer_authentication_failed.connect(
+		func() -> void:
+			if not multiplayer.is_server():   # 客戶端等主機回覆逾時：不是主機斷線（server_disconnected 可能跟著來，見上面）
+				_auth_failed = true
+				_to_lobby.call_deferred("連線太慢，連不上主機"))
+	_autostart.call_deferred()
+
+## 啟動參數，方便在同一台機器開兩個視窗對打：
+##   OvD.exe -- --host
+##   OvD.exe -- --join 192.168.1.5
+##   OvD.exe -- --sandbox
+##   OvD.exe -- --range
+##   OvD.exe -- --viewer
+##   OvD.exe -- --solo-dino    單人打恐龍（測恐龍行為）
+##   OvD.exe -- --dino-sandbox    恐龍沙盒：自己當尼諾拉，按 H 叫獵人、J 清掉
+##   OvD.exe -- --host --mode deathmatch    指定模式（egg、deathmatch、dino_duel）
+##   OvD.exe -- --host --period midnight    指定時段（sunset、noon、midnight），不填用大廳上次選的
+##   godot --headless -- --server    專用伺服器（測試站）：自己不下場，一開是房間，最早連進來的人當房主（--mode 是房間的預設）
+##   godot --headless -- --server --autoplay    專用伺服器照舊開了就打、一局結束自動開下一局（連線測試工具用）
+func _autostart() -> void:
+	var args := OS.get_cmdline_user_args()
+	# 命令列可直接開局。等農莊當幀組好的地形和房舍進入物理世界。
+	if map.has_method(&"farm_nearest_spawn") and not args.is_empty():
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+	var mi := args.find("--mode")   # --mode deathmatch / dino_duel / egg（開房和專用伺服器用）
+	if mi >= 0 and mi + 1 < args.size() and RULES.has(StringName(args[mi + 1])):
+		_on_mode_picked(RULES.keys().find(StringName(args[mi + 1])))
+	if mode == &"range" or args.has("--range"):
+		_start_range()
+	elif args.has("--server"):
+		_start_dedicated()
+	elif args.has("--host"):
+		_on_host_pressed()   # 照舊直接開打（房間的等人在選單按開房才有）
+		if room.active:
+			start_match()
+	elif args.has("--farm-walk"):
+		_on_farm_walk_pressed()
+	elif args.has("--sandbox"):
+		_on_sandbox_pressed()
+	elif args.has("--solo-dino"):
+		_on_solo_dino_pressed()
+	elif args.has("--dino-sandbox"):
+		_on_dino_sandbox_pressed()
+	elif args.has("--viewer"):
+		_on_viewer_pressed()
+	else:
+		var i := args.find("--join")
+		if i >= 0 and i + 1 < args.size():
+			ip_edit.text = args[i + 1]
+			_on_join_pressed()
+
+## 診斷（暫時，滑鼠視角卡住的 bug 修好就拿掉）：_input 在介面之前收到，跟角色收到的次數比，看事件是不是被介面吃掉
+var _diag_t := 0.0
+func _input(e: InputEvent) -> void:
+	if e is InputEventMouseMotion:
+		Fighter._diag("遊戲收到")
+
+func _diag_print(delta: float) -> void:
+	_diag_t += delta
+	if _diag_t < 0.5 or Fighter.diag.is_empty():
+		return
+	_diag_t = 0.0
+	var hov := get_viewport().gui_get_hovered_control()
+	print("[滑鼠診斷] %s　鎖定=%s　視窗焦點=%s　選單=%s　滑鼠下的介面=%s" % [
+		Fighter.diag, Input.mouse_mode == Input.MOUSE_MODE_CAPTURED, get_window().has_focus(), menu.visible,
+		hov.get_path() if hov else "無"])
+	Fighter.diag.clear()
+
+func _unhandled_input(e: InputEvent) -> void:
+	if e is InputEventKey and e.pressed and not e.echo and e.keycode == KEY_F8:
+		report_bug()   # 大廳、遊戲中都能按
+		return
+	if e is InputEventKey and e.pressed and not e.echo and e.keycode == KEY_F3:
+		debug_hud = not debug_hud
+		return
+	if _dino_sandbox and not menu.visible and e is InputEventKey and e.pressed and not e.echo:
+		if e.keycode == KEY_H:
+			_summon_hunter()
+			return
+		if e.keycode == KEY_J:
+			clear_bots()
+			return
+	var esc: bool = e is InputEventKey and e.pressed and e.keycode == KEY_ESCAPE
+	if esc and settings.visible:   # 設定開著：Esc 只關它，停在原本的畫面
+		settings.hide()
+		return
+	if lobby.visible:
+		if esc and lobby_page not in [&"home", &"room"]:   # 房間按 Esc 不動：要按「離開房間」才斷線
+			lobby_go(LOBBY_UP.get(lobby_page, &"home"))
+		return
+	if esc:
+		_set_menu(not menu.visible)
+	elif e is InputEventMouseButton and e.pressed and not menu.visible and not result.visible and not _buy_menu.visible and not _safe_panel.visible and not _party_hud.minimap.visible:
+		Fighter.lock_mouse()  # 點畫面重新鎖回滑鼠
+
+# --- 問題回報（bug_report.gd）---
+
+## Esc 選單裡的「回報問題」，放在「離開遊戲」上面
+func _add_report_button() -> void:
+	var b := Button.new()
+	b.name = "ReportBtn"
+	b.text = "回報問題（F8）"
+	b.pressed.connect(report_bug)
+	var box := $UI/Root/Menu/Box
+	box.add_child(b)
+	box.move_child(b, $UI/Root/Menu/Box/QuitBtn.get_index())
+
+## 設定視窗（settings.gd）：主選單和 Esc 選單共用。Esc 選單放「設定」和「操作說明」（直接開按鍵頁）
+var settings: Settings
+
+func _add_settings() -> void:
+	settings = Settings.new(self)
+	$UI/Root.add_child(settings)
+	# 視窗不會跟著選單藏：一局結束、回大廳時會擋住畫面。在主選單開的不算（那時選單本來就沒開）
+	menu.visibility_changed.connect(func() -> void: if not menu.visible: settings.hide())
+	var box := $UI/Root/Menu/Box
+	for pair: Array in [["ControlsBtn", "操作說明", 3], ["SettingsBtn", "設定", 0]]:
+		var btn := Button.new()
+		btn.name = pair[0]
+		btn.text = pair[1]
+		btn.pressed.connect(open_settings.bind(pair[2]))
+		box.add_child(btn)
+		box.move_child(btn, $UI/Root/Menu/Box/ResumeBtn.get_index() + 1)
+
+func open_settings(tab: int) -> void:
+	settings.tabs.current_tab = tab
+	settings.popup_centered()
+
+## 存回報檔、複製到剪貼簿，告訴玩家貼到哪裡。回傳存檔路徑（測試用）
+func report_bug() -> String:
+	var path := BugReport.instance.save(_game_state())
+	status.text = ("回報存好了，也複製到剪貼簿：貼到 Discord 這一版的討論串就好\n" + path) if path != "" \
+		else "回報存檔失敗（已複製到剪貼簿，直接貼到 Discord）"
+	return path
+
+## 報告裡的「遊戲」那一行：在哪、玩什麼、當誰、連線狀況
+func _game_state() -> String:
+	if lobby.visible:
+		return "在房間" if lobby_page == &"room" else "在大廳"
+	var me := _me()
+	var role := "觀戰" if me == null else ("恐龍" if me.is_in_group(&"dino") else "牛仔")
+	var where := "單人打恐龍" if _solo_dino else ("恐龍沙盒" if _dino_sandbox else ("沙盒" if _sandbox else ("靶場" if mode == &"range" else String(RULES.get(rules, {}).get("name", rules)))))
+	var net := "離線" if _offline else ("專用伺服器" if _dedicated else ("主機" if multiplayer.is_server() else "連線中（編號 %d）" % multiplayer.get_unique_id()))
+	return "%s　當%s　%s　場上 %d 個角色" % [where, role, net, players.get_child_count()]
+
+# --- 暫停選單 ---
+
+func _set_menu(open: bool) -> void:
+	menu.visible = open
+	# 遊戲局控制只有主機（和沙盒）能用：bot 都在主機上跑
+	$UI/Root/Menu/Box/Controller.visible = multiplayer.is_server()
+	_end_btn.visible = room.active and room.playing and room.is_host()
+	$UI/Root/Menu/Box/LeaveBtn.text = "關掉房間" if _closes_room() else ("離開房間" if room.active else "回到大廳")
+	if open:
+		_fill_weapon_info()
+		_show_cursor()
+	else:
+		Fighter.lock_mouse()
+
+## Esc 選單右邊的武器介紹：手上幾把槍並排比。數字從參數算出來（weapon.gd 的 info_rows），不另外填。
+## 當恐龍、或還沒進遊戲就不顯示
+func _fill_weapon_info() -> void:
+	var grid: GridContainer = menu.get_node_or_null(^"WeaponInfo")
+	if grid == null:
+		grid = GridContainer.new()
+		grid.name = "WeaponInfo"
+		grid.set_anchors_and_offsets_preset(Control.PRESET_CENTER_RIGHT, Control.PRESET_MODE_MINSIZE, 40)
+		grid.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+		grid.add_theme_constant_override(&"h_separation", 24)
+		grid.add_theme_constant_override(&"v_separation", 6)
+		menu.add_child(grid)
+	for c in grid.get_children():
+		c.free()
+	var me := players.get_node_or_null(str(multiplayer.get_unique_id()))
+	var vm: Node = me.get(&"viewmodel") if me else null
+	grid.visible = vm != null
+	if vm == null:
+		return
+	var guns: Array = vm._weapons
+	grid.columns = guns.size() + 1
+	var cells: Array = [["武器"]]
+	for w: Weapon in guns:
+		cells[0].append(w.display_name)
+	var rows: Array = guns[0].info_rows()
+	for r in rows.size():
+		var line: Array = [rows[r][0]]
+		for w: Weapon in guns:
+			line.append(w.info_rows()[r][1])
+		cells.append(line)
+	for line: Array in cells:
+		for i in line.size():
+			var l := Label.new()
+			l.text = line[i]
+			l.add_theme_font_size_override(&"font_size", 15)
+			if i == 0 or line == cells[0]:
+				l.modulate = Color(1.0, 0.85, 0.55)
+			grid.add_child(l)
+
+## 放開滑鼠並把游標搬到畫面中間。macOS（尤其在編輯器內嵌的遊戲視窗）從鎖定切回來時，
+## 游標常常解鎖了卻沒畫出來；搬一下會強迫系統重畫，也剛好落在選單按鈕旁邊
+func _show_cursor() -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	Input.warp_mouse(get_viewport().get_visible_rect().size / 2.0)
+
+func _on_resume_pressed() -> void:
+	_set_menu(false)
+
+func _on_leave_pressed() -> void:
+	if menu.visible and _closes_room():
+		_confirm("關掉房間？大家都會斷線。", _to_lobby.bind(""))
+	else:
+		_to_lobby("")
+
+## 自己開房的人離開＝房間關掉、大家斷線（要再問一次）
+func _closes_room() -> bool:
+	return room.active and multiplayer.multiplayer_peer != null and multiplayer.is_server() and not _offline and not _dedicated
+
+var _end_btn: Button    # Esc 選單「結束這場，回房間」（房主）
+var _back_btn: Button   # 結算畫面「回房間」（房主）
+var _confirm_dlg: ConfirmationDialog
+
+## 再問一次：按確定才做 fn
+func _confirm(text: String, fn: Callable) -> void:
+	if _confirm_dlg == null:
+		_confirm_dlg = ConfirmationDialog.new()
+		_confirm_dlg.ok_button_text = "確定"
+		_confirm_dlg.cancel_button_text = "取消"
+		$UI/Root.add_child(_confirm_dlg)
+	for c: Dictionary in _confirm_dlg.confirmed.get_connections():
+		_confirm_dlg.confirmed.disconnect(c.callable)
+	_confirm_dlg.dialog_text = text
+	_confirm_dlg.confirmed.connect(fn, CONNECT_ONE_SHOT)
+	_confirm_dlg.popup_centered()
+
+## 房間要的按鈕：Esc 選單的「結束這場，回房間」、結算畫面的「回房間」
+func _add_room_buttons() -> void:
+	_end_btn = Button.new()
+	_end_btn.name = &"EndMatchBtn"
+	_end_btn.text = "結束這場，回房間"
+	_end_btn.pressed.connect(func() -> void: _confirm("結束這場，大家回房間？", room.ask.bind(&"back")))
+	var box := $UI/Root/Menu/Box
+	box.add_child(_end_btn)
+	box.move_child(_end_btn, $UI/Root/Menu/Box/ResumeBtn.get_index() + 1)
+	_back_btn = Button.new()
+	_back_btn.name = &"BackRoomBtn"
+	_back_btn.text = "回房間"
+	_back_btn.custom_minimum_size.x = 280
+	_back_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_back_btn.pressed.connect(room.ask.bind(&"back"))
+	var rb := $UI/Root/Result/Box
+	rb.add_child(_back_btn)
+	rb.move_child(_back_btn, $UI/Root/Result/Box/LobbyBtn.get_index())
+
+func _on_quit_pressed() -> void:
+	get_tree().quit()
+
+## 斷線 + 清乾淨，回到可以重新開房／加入的狀態
+func _to_lobby(msg: String) -> void:
+	var was_offline := _offline   # 跟電腦打的房間：回單人頁
+	if multiplayer.multiplayer_peer != null:
+		multiplayer.multiplayer_peer.close()
+		multiplayer.multiplayer_peer = null
+	for p in players.get_children():
+		p.free()  # 用 free 不用 queue_free，不然馬上重開會撞到同名節點
+	_cowboys = 0
+	_volunteers.clear()
+	_pilot_picked = false
+	_over = false
+	_offline = false
+	_sandbox = false
+	_solo_dino = false
+	_dino_sandbox = false
+	_lives.clear()
+	_out.clear()
+	_key_of.clear()
+	_held.clear()
+	room.close()
+	if lobby_page == &"room":
+		lobby_go(&"practice" if was_offline else &"online")
+	rules = _my_rules   # 加入別人的房間時被主機改過，回大廳換回自己選的
+	if Period.current != period:   # 時段也是
+		Period.apply(self, period)
+	_apply_rules()
+	if party:   # 大廳選的是派對：開局時才建（不然畫面會疊在大廳上）
+		party.free()
+		party = null
+	egg.visible = true
+	for n in get_tree().get_nodes_in_group(&"sandbox_prop"):
+		if n is ToyBuild:   # 沙盒的柵欄是積木，登記在 _toys 裡：free 前要拿掉，不然補送、還原會碰到已釋放的
+			map._toys.erase(n)
+		n.free()
+	_time_left = 0.0
+	_respawn_queue.clear()
+	egg.carrier = 0
+	menu.hide()
+	result.hide()
+	_match_hud.reset()
+	lobby.show()
+	status.text = msg
+	_show_cursor()
+	# 靶場是另一張地圖：回大廳就重載回牧場（測試自己組的場景不是 current_scene，不重載）。
+	# 甩尾拆過東西也重載：下一局（或加入別人的房間）場地要是完整的
+	var wrecked := _toys.any(func(t: ToyBuild) -> bool: return t.has_damage())
+	var farm_damage := get_tree().get_first_node_in_group(&"farm_destruction")
+	if mode == &"range" or wrecked or (farm_damage and farm_damage.has_changed()):
+		mode = &""
+		if get_tree().current_scene == self:
+			get_tree().reload_current_scene.call_deferred()
+
+# --- 連線 ---
+
+## 版本檢查（Godot 內建的連線認證）：認證完成前不 spawn、不送 RPC，所以舊版本不會打架。
+## 客戶端連上主機時先送自己的版本；主機比對，同版回 "ok" 放行，不同版回一句錯誤訊息，再斷線
+## 認證資料格式是「版本|玩家代號」（舊版只送版本，整串就是版本）
+func _on_peer_authenticating(id: int) -> void:
+	if not multiplayer.is_server():
+		multiplayer.send_auth(id, ("%s|%s" % [_version_tag(), _player_key()]).to_utf8_buffer())
+
+## 版本檢查送的字串：版本＋數值表雜湊（balance.gd 的 digest）
+func _version_tag() -> String:
+	return "%s+%s" % [ProjectSettings.get_setting("application/config/version"), Balance.digest()]
+
+## 版本檢查的結論（純函式，tests 直接測）：回傳 "" 就放行，否則是要送給對方、也印在主機的訊息。
+## 字串格式是「版本+數值表雜湊」；舊客戶端只送版本、沒有 +，當作版本不同
+static func auth_verdict(theirs: String, mine: String) -> String:
+	if theirs == mine:
+		return ""
+	var tv := theirs.get_slice("+", 0)
+	var mv := mine.get_slice("+", 0)
+	if tv != mv or not theirs.contains("+"):
+		return "版本不同：主機是 %s，你是 %s，請更新到一樣的版本" % [mv, tv]
+	return "數值表不同：請更新到一樣的版本（主機 %s，你 %s）" % [mine.get_slice("+", 1), theirs.get_slice("+", 1)]
+
+## 玩家代號：第一次要用時才產生、存進 settings.cfg
+func _player_key() -> String:
+	if player_key == "":
+		var cfg := ConfigFile.new()
+		cfg.load(settings_path)
+		player_key = cfg.get_value("net", "player_key", "")
+		if player_key == "":
+			# ponytail: 代號是亂數、沒加密，知道別人代號的人可以冒用他的命數和分數；要防再改成主機發的憑證
+			player_key = Crypto.new().generate_random_bytes(8).hex_encode()
+			_save_setting("net", "player_key", player_key)
+	return player_key
+
+## 代號 key 的新連線 id 接手：同代號若還在線上，舊的當斷線處理，再斷掉舊連線。
+## 不用強制斷（force）：強制斷了 SceneMultiplayer 收不到 peer_disconnected，主機會一直以為舊的還在、RPC 一直噴錯
+func _claim_key(id: int, key: String) -> void:
+	var old: Variant = _key_of.find_key(key)
+	if old != null:
+		_despawn(old)   # 資料進 _held；之後 ENet 可能又送一次 peer_disconnected，_despawn 第二次會跳過
+		if old in multiplayer.get_peers():   # 正常送離開，ENet 逾時後會再送一次 peer_disconnected（_despawn 會跳過）
+			multiplayer.multiplayer_peer.disconnect_peer(old)
+	_key_of[id] = key
+
+func _on_auth(id: int, data: PackedByteArray) -> void:
+	var text := data.get_string_from_utf8()
+	if not multiplayer.is_server():   # 客戶端：收到的是主機的回覆
+		if text == "ok":
+			multiplayer.complete_auth(id)
+		else:
+			_to_lobby.call_deferred(text)
+		return
+	var ver := text.get_slice("|", 0)              # 舊客戶端只送版本：整串就是版本
+	var key := text.get_slice("|", 1).left(64)     # 沒有代號就是 ""
+	var verdict := auth_verdict(ver, _version_tag())
+	if verdict == "":
+		# 同一個代號已經在線上：同一個人重連。主機還沒發現舊連線斷了（ENet 要等幾秒到幾十秒逾時），
+		# 玩家就已經連回來。先把舊的當斷線處理（資料進 _held，RECONNECT_MS 內接得回來），再斷掉舊連線，新的照常放行
+		# ponytail: 同一台電腦開兩個客戶端連專用伺服器會共用 settings.cfg 的代號而互踢，測試工具要自己設不同的 player_key（net_check.gd 已經這樣做）
+		if key != "":
+			_claim_key(id, key)
+		multiplayer.send_auth(id, "ok".to_utf8_buffer())
+		multiplayer.complete_auth(id)
+		return
+	multiplayer.send_auth(id, verdict.to_utf8_buffer())
+	if _dedicated:
+		print("擋下客戶端（編號 %d）：%s" % [id, verdict])
+	# 等 0.2 秒讓訊息送出再斷；這段內客戶端自己斷了也沒關係
+	get_tree().create_timer(0.2).timeout.connect(func() -> void:
+		if id in multiplayer.get_authenticating_peers():   # 客戶端已經自己斷了就不用踢（踢不存在的連線會報錯）
+			multiplayer.multiplayer_peer.disconnect_peer(id))
+
+## 開房：先進房間等人（room.gd），房主按開始才開打（start_match）
+func _on_host_pressed() -> void:
+	var peer := ENetMultiplayerPeer.new()
+	if peer.create_server(PORT) != OK:
+		status.text = "開房失敗，連接埠 %d 可能被占用" % PORT
+		return
+	multiplayer.multiplayer_peer = peer
+	status.text = ""
+	lobby_go(&"room")
+	room.open(false)
+
+## 主機：開打。房間裡的人照進來的順序生（派對、一般模式由 party.gd 自己排）；模式、時段送給每個人
+func start_match() -> void:
+	if not multiplayer.is_server() or _waiting_to_start:
+		return
+	if Engine.get_physics_frames() < _farm_restore_frame:
+		_waiting_to_start = true
+		var peer := multiplayer.multiplayer_peer
+		await wait_for_spawn_ground()
+		_waiting_to_start = false
+		if peer != multiplayer.multiplayer_peer or not room.active:
+			return
+	room.playing = true
+	_empty_for = 0.0
+	_enter_game("專用伺服器" if _dedicated else "%s模式開始" % RULES[rules].name)
+	_apply_rules()
+	if party:
+		party.dino_rule = room.dino_pick   # 一般模式誰當恐龍（房間選的）
+	_set_rules.rpc(rules)
+	_set_period.rpc(Period.current)
+	for id: int in room.order:
+		_spawn(id)
+	if RULES[rules].dino:
+		spawn_boss()
+	room.push()
+
+## 主機：有人連進來（版本檢查過了）。排進房間名單；已經在打就照舊生（晚加入）
+func _on_peer_connected(id: int) -> void:
+	if not multiplayer.is_server():
+		return
+	room.join(id)
+	if room.playing:
+		_spawn(id)
+
+## 專用伺服器：開房但自己不下場（沒有編號 1 的牛仔）。一開是房間（選單流程 M6）：最早連進來、還在線上的人當房主，
+## 他選模式、按開始；打完回房間。啟動參數的 --mode 是房間的預設（沒人的時候回到這個）。
+## 加 --autoplay 照舊：開了就打、一局結束 NEXT_ROUND_DELAY 秒後自動開下一局（tools 底下的連線測試用）
+func _start_dedicated() -> void:
+	var peer := ENetMultiplayerPeer.new()
+	if peer.create_server(PORT) != OK:
+		printerr("開不了伺服器，連接埠 %d 可能被占用" % PORT)
+		get_tree().quit(1)
+		return
+	multiplayer.multiplayer_peer = peer
+	_dedicated = true
+	ToyBuild.no_flight = true   # 伺服器沒畫面：積木碎塊不飛（直接落地，見 toy_build.gd _land）
+	# 物理 120Hz 只是為了畫面順（README「為什麼物理跑 120Hz」），伺服器沒畫面：60 次就夠，處理器省一半。
+	# 測試站（1 顆處理器）跑 120 次算不完，遊戲時間會變慢（2026-10-18 測試站回報）
+	Engine.physics_ticks_per_second = 60
+	Engine.max_fps = 60   # 沒畫面也會一直空轉：不鎖的話吃滿一顆處理器，跟物理一樣次數就夠
+	_open_dedicated_room()
+	_autoplay = OS.get_cmdline_user_args().has("--autoplay")
+	if _autoplay:
+		start_match()
+	print("測試站開好了，連接埠 %d（UDP）" % PORT)
+
+var _autoplay := false   # 專用伺服器 --autoplay：開了就打、一局結束自動開下一局（舊做法）
+var _room_defaults := []   # 專用伺服器：房間的預設 [模式, 局數]（啟動參數給的），沒人的時候回到這個
+var _empty_for := 0.0      # 專用伺服器：打到一半所有人都走了多久
+const EMPTY_END := 30.0    # 打到一半所有人都走了，等這麼久沒人回來就結束這場、回房間（不然電腦一直打下去白吃主機）
+
+## 專用伺服器的房間（測試不開連線直接叫這個）
+func _open_dedicated_room() -> void:
+	_dedicated = true
+	_room_defaults = [rules, normal_rounds]
+	room.open(true)
+
+## 專用伺服器沒人了：房間的設定回到預設
+func room_defaults_back() -> void:
+	if _room_defaults.is_empty():
+		return
+	rules = _room_defaults[0]
+	normal_rounds = _room_defaults[1]
+	room.dino_pick = 0
+
+## 主選單分兩層：首頁四顆按鈕，「連線對戰」「單人」各一頁（單人頁的「其他」再一層），按「返回」或 Esc 回首頁。
+## 第二層的按鈕還是 Lobby 底下原本那些（場景裡接好的訊號不動），換頁只是藏起來。
+## Lobby 底下加新東西要登記在這裡，沒登記的換頁時會被藏掉
+const LOBBY_PAGES := {
+	&"home": ["Title", "HomeOnline", "HomePractice", "HomeSettings", "HomeQuit"],
+	&"online": ["Title", "OnlineLabel", "HostBtn", "JoinBtn", "IPRow", "TestServerBtn", "BackBtn"],
+	&"room": ["Room"],   # 開房、加入之後（room.gd）
+	&"practice": ["Title", "PracticeLabel", "VsBotsBtn", "SandboxBtn", "DevBtn", "BackBtn"],
+	&"dev": ["Title", "DevLabel", "RangeBtn", "SoloDinoBtn", "DinoSandboxBtn", "ViewerBtn", "DevBackBtn"],   # 開發用的四個入口（單人頁的「其他」）
+}
+## 按 Esc／返回回哪一頁（沒寫的回首頁）
+const LOBBY_UP := {&"dev": &"practice"}
+var lobby_page := &"home"
+
+func _build_home() -> void:
+	for b: Array in [["HomeOnline", "連線對戰", lobby_go.bind(&"online")], ["HomePractice", "單人", lobby_go.bind(&"practice")],
+			["HomeSettings", "設定", open_settings.bind(0)], ["HomeQuit", "離開遊戲", _on_quit_pressed],
+			["BackBtn", "← 返回", lobby_go.bind(&"home")], ["DevBtn", "其他 ▸（開發用）", lobby_go.bind(&"dev")],
+			["DevBackBtn", "← 返回", lobby_go.bind(&"practice")]]:
+		var btn := Button.new()
+		btn.name = b[0]
+		btn.text = b[1]
+		btn.custom_minimum_size.y = 48
+		btn.pressed.connect(b[2])
+		lobby.add_child(btn)
+	var dev := Label.new()
+	dev.name = &"DevLabel"
+	dev.text = "── 其他（開發用）──"
+	lobby.add_child(dev)
+	lobby.move_child(dev, $UI/Root/Lobby/RangeBtn.get_index())
+	lobby.move_child($UI/Root/Lobby/SandboxBtn, $UI/Root/Lobby/VsBotsBtn.get_index() + 1)   # 練習場排在跟電腦打後面
+	lobby.move_child($UI/Root/Lobby/DevBtn, $UI/Root/Lobby/SandboxBtn.get_index() + 1)
+	room = Room.new()
+	room.name = &"Room"   # 名字固定：RPC 每台找得到
+	room.main = self
+	lobby.add_child(room)
+	_add_room_buttons()
+	lobby_go(&"home")
+
+func lobby_go(page: StringName) -> void:
+	lobby_page = page
+	for c: Node in lobby.get_children():
+		c.visible = String(c.name) in LOBBY_PAGES[page] and not (c.name == &"TestServerBtn" and TEST_SERVER == "")   # 沒有測試站就整顆藏起來
+
+## 房間（room.gd）：大廳的一頁
+var room: Room
+
+## 選模式（房主在房間按、啟動參數 --mode、測試）：記下來，開打時 _apply_rules 才套
+func _on_mode_picked(i: int) -> void:
+	rules = RULES.keys()[i]
+	_my_rules = rules
+var _my_rules := &"normal"   # 自己選的模式：加入別人的房間會被主機蓋掉，回大廳換回這個
+
+## 一般模式打幾局（房間的「4 局／1 局」，房主選；party._ready 讀進 rounds）
+var normal_rounds := 4
+
+## 時段（period.gd）：大廳選，存在設定檔。開房、沙盒、靶場都用這個；加入別人的房間時照主機的（_set_period）
+var period := &"sunset"
+
+## 時段：設定視窗「畫面」頁選，存在設定檔。專用伺服器用啟動參數 --period noon / midnight
+func _load_period() -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(settings_path)
+	period = StringName(cfg.get_value("display", "period", "noon"))
+	if greybox:
+		period = &"noon"   # 灰盒固定白天，不分心（要換還是能在設定裡換，重開回正午）
+	var args := OS.get_cmdline_user_args()
+	var pi := args.find("--period")
+	if pi >= 0 and pi + 1 < args.size():
+		period = StringName(args[pi + 1])
+	if not Period.PRESETS.has(period):
+		period = &"sunset"
+
+func _on_period_picked(i: int) -> void:
+	period = Period.NAMES.keys()[i]
+	_save_setting("display", "period", String(period))
+	if lobby.visible:   # 遊戲中只存下來，回大廳才換：時段是整間房間一起的，自己先換會跟別人不一樣（暗處看得比較清楚）
+		Period.apply(self, period)
+
+## 房間的「我想當恐龍」（隨時能改，改了馬上送給主機）：對抗模式每局從勾的人裡抽一個操作尼諾拉（docs/規劃/2026-10-18-對抗模式.md），一般模式整場抽一個
+var want_dino := false
+var _volunteers := {}   # 主機：想當恐龍的人（編號 -> true）
+var _pilot_picked := false   # 這局已經抽過了（make_pilot 設、_new_round 和回大廳清）
+
+## 連上之後、在房間改勾選時告訴主機自己想不想當恐龍
+@rpc("any_peer", "call_remote", "reliable")
+func _volunteer(on: bool) -> void:
+	if not multiplayer.is_server():
+		return
+	var id := multiplayer.get_remote_sender_id()
+	if on:
+		_volunteers[id] = true
+	else:
+		_volunteers.erase(id)
+	room.push()   # 名單上「想當恐龍」跟著換
+
+func _boss() -> Node:
+	return players.get_node_or_null(NodePath(str(BOSS_ID)))
+
+## 對抗模式：尼諾拉沒人操作、又有人想當，就從想當的人裡抽一個（主機每幀問一次，很便宜）
+func _pick_pilot() -> void:
+	var b := _boss()
+	# 一局只抽一次：駕駛中途斷線就讓電腦接手到這局結束，不然會把別人正在玩的牛仔（和身上的蛋）收掉。
+	# 沙盒、單人打恐龍、靶場的 rules 還是大廳選的那個，不能誤抽
+	if not RULES[rules].pilot or b == null or b.pilot != 0 or _pilot_picked or _practice():
+		return
+	var pool := dino_pool()
+	if not pool.is_empty():
+		make_pilot(pool.pick_random())
+
+## 想當恐龍、現在連著的人（對抗模式、一般模式抽恐龍用）
+func dino_pool() -> Array:
+	var pool: Array = _volunteers.keys().filter(func(id: int) -> bool: return multiplayer.get_peers().has(id))
+	if want_dino and not _dedicated:   # 開房的人自己勾的（他不用送 _volunteer）
+		pool.append(1)
+	return pool
+
+## 交接中的遠端玩家（_stop_sync 送出、還沒收到回覆）：0 = 沒有
+var _handover := 0
+
+## 讓 id 操作尼諾拉：他的牛仔收掉、不排重生。
+## 遠端玩家的牛仔要先叫他停送同步再收（不然他送的同步包會找不到節點），回覆後再等一下、或兩秒後才完成
+func make_pilot(id: int) -> void:
+	if _boss() == null:
+		return
+	_pilot_picked = true
+	var p := players.get_node_or_null(NodePath(str(id)))
+	if p and id != multiplayer.get_unique_id() and multiplayer.get_peers().has(id):
+		_handover = id
+		_stop_sync.rpc_id(id)
+		get_tree().create_timer(2.0).timeout.connect(_finish_handover.bind(id))   # 沒回覆（卡住、掉線）也不要一直等
+	else:
+		_take_over(id)
+
+## 交接完成：牛仔收掉、尼諾拉換人
+func _take_over(id: int) -> void:
+	var b := _boss()
+	if b == null:
+		return
+	b.pilot = id
+	var p := players.get_node_or_null(NodePath(str(id)))
+	if p:
+		players.remove_child(p)
+		p.queue_free()
+		_cowboys -= 1
+	_respawn_queue = _respawn_queue.filter(func(r: Dictionary) -> bool: return int(r["id"]) != id)
+	var msg := "你是尼諾拉！左鍵 咬　右鍵 蓄力甩尾　Q 火球　Shift 跑"
+	if id == multiplayer.get_unique_id():
+		_announce(msg)
+	else:
+		_announce.rpc_id(id, msg)
+
+## 遠端交接的收尾：回覆和計時器都會呼叫，先到的完成，後到的看 _handover 已清就不動
+func _finish_handover(id: int) -> void:
+	if _handover != id:
+		return
+	_handover = 0
+	var b := _boss()
+	if b == null or (party and party.dino_id != id) or not multiplayer.get_peers().has(id):
+		return   # 回合已換、或人已離線：這次不交接，牛仔留著
+	_take_over(id)
+
+# --- 主機合成一包（docs/技術筆記/伺服器效能改善.md S2） ---
+# 玩家自己的同步器只寄給主機（Fighter._ready）。主機每秒 net_pack_hz 次，把每個玩家角色照它同步器的欄位（replication_config，
+# 牛仔、恐龍都適用）各編一筆，對每個人送一包「除了他自己以外的全部」。客戶端照編號找到角色、照同一份欄位解回去：
+# net_state 走原本的 _net_push（畫面平滑那套不變），時間是本人送出時的 net_clock。
+# 電腦、尼諾拉、蛋、保險箱、主機自己的牛仔是主機的同步器，Godot 本來就合成一包，不經過這裡。
+var net_pack_hz := 30.0   # tools/team_load.gd 的 SYNC= 會改
+
+
+func _net_pack_step() -> void:
+	if Engine.get_physics_frames() % maxi(1, roundi(Engine.physics_ticks_per_second / net_pack_hz)) != 0:
+		return
+	var peers := multiplayer.get_peers()
+	if peers.is_empty():
+		return
+	var rows := {}   # 角色的主人 → 那一筆
+	for c: Node in players.get_children():
+		var row := net_pack_row(c)
+		if not row.is_empty():
+			rows[c.get_multiplayer_authority()] = row
+	if rows.is_empty():
+		return
+	# ponytail: 客戶端離線那一刻主機會印一行「Unable to send packet on channel 0, max channels: 0」（查過 ENet 的狀態還是「連著」），無害，bug_report.gd 當成已知的雜訊
+	for id: int in peers:
+		var b := net_pack_for(rows, id)
+		if not b.is_empty():
+			_net_pack.rpc_id(id, b)
+
+
+## 給 id 的那一包：除了他自己以外的每一筆接起來
+func net_pack_for(rows: Dictionary, id: int) -> PackedByteArray:
+	var b := PackedByteArray()
+	for k: int in rows:
+		if k != id:
+			b.append_array(rows[k])
+	return b
+
+
+## 主機：一個玩家角色的一筆（不是別人的玩家角色、還沒收過位置就回傳空的）。格式：主人編號 s32、長度 u16、同步欄位依序
+func net_pack_row(c: Node) -> PackedByteArray:
+	var f := c as Fighter
+	var s := Fighter.sync_of(c) if f else null
+	if s == null or f.get_multiplayer_authority() == multiplayer.get_unique_id() or f._net_sent == 0.0:
+		return PackedByteArray()
+	var body := StreamPeerBuffer.new()
+	for p: NodePath in s.replication_config.get_properties():
+		if p == ^".:net_state":
+			var v := f.net_sent_state()
+			body.put_double(v[0])
+			_put_v3(body, v[1])
+			body.put_float(v[2].y)   # 身體只會左右轉（上下看是另一欄）
+			continue
+		var v: Variant = c.get_node(NodePath(p.get_concatenated_names())).get_indexed(NodePath(p.get_concatenated_subnames()))
+		match typeof(v):
+			TYPE_BOOL: body.put_u8(1 if v else 0)
+			TYPE_INT: body.put_16(v)   # ponytail: 同步的整數都是小的編號（拿哪把槍、動作）；要放大數字再改 put_32
+			TYPE_FLOAT: body.put_float(v)
+			TYPE_VECTOR3: _put_v3(body, v)
+			_: push_error("合包不認得 %s 的型別" % p)
+	var row := StreamPeerBuffer.new()
+	row.put_32(f.get_multiplayer_authority())
+	row.put_u16(body.data_array.size())
+	row.put_data(body.data_array)
+	return row.data_array
+
+
+func _put_v3(b: StreamPeerBuffer, v: Vector3) -> void:
+	b.put_float(v.x)
+	b.put_float(v.y)
+	b.put_float(v.z)
+
+
+func _get_v3(b: StreamPeerBuffer) -> Vector3:
+	var x := b.get_float()
+	var y := b.get_float()
+	return Vector3(x, y, b.get_float())
+
+
+@rpc("authority", "call_remote", "unreliable")
+func _net_pack(b: PackedByteArray) -> void:
+	net_pack_apply(b)
+
+
+## 客戶端：解一包。找不到的角色（剛加入、剛離開）照長度跳過；自己的不套
+func net_pack_apply(b: PackedByteArray) -> void:
+	var r := StreamPeerBuffer.new()
+	r.data_array = b
+	while r.get_position() + 6 <= b.size():
+		var id := r.get_32()
+		var n := r.get_u16()
+		var end := r.get_position() + n
+		var c := players.get_node_or_null(NodePath(str(id)))
+		var s := Fighter.sync_of(c) if c and id != multiplayer.get_unique_id() else null
+		if s:
+			for p: NodePath in s.replication_config.get_properties():
+				if p == ^".:net_state":
+					var t := r.get_double()
+					var pos := _get_v3(r)
+					c.net_state = [t, pos, Vector3(0, r.get_float(), 0)]
+					continue
+				var node := c.get_node(NodePath(p.get_concatenated_names()))
+				var sub := NodePath(p.get_concatenated_subnames())
+				var old: Variant = node.get_indexed(sub)
+				var v: Variant = old
+				match typeof(old):
+					TYPE_BOOL: v = r.get_u8() != 0
+					TYPE_INT: v = r.get_16()
+					TYPE_FLOAT: v = r.get_float()
+					TYPE_VECTOR3: v = _get_v3(r)
+				if v != old:
+					node.set_indexed(sub, v)
+		r.seek(end)
+
+
+## 主機要收你的牛仔：先停止送同步，再回覆
+@rpc("authority", "call_remote", "reliable")
+func _stop_sync() -> void:
+	var p := players.get_node_or_null(NodePath(str(multiplayer.get_unique_id())))
+	var sync: MultiplayerSynchronizer = p.get_node_or_null(^"Sync") if p else null
+	if sync:
+		sync.public_visibility = false
+		sync.set_visibility_for(1, false)   # 平常只寄給主機（Fighter._ready），這個也要關
+	_sync_stopped.rpc_id(1)
+
+## 客戶端回覆：他的同步已停，可以收牛仔了
+@rpc("any_peer", "call_remote", "reliable")
+func _sync_stopped() -> void:
+	if not multiplayer.is_server():
+		return
+	var id := multiplayer.get_remote_sender_id()
+	if id == _handover:   # 同步包走不保證送達的通道，停之前送出的可能比回覆晚到：再等一下才收
+		get_tree().create_timer(0.25).timeout.connect(_finish_handover.bind(id))
+
+## 自己的角色：牛仔，或是自己正在操作的尼諾拉
+func _me() -> Node:
+	var me := players.get_node_or_null(NodePath(str(multiplayer.get_unique_id())))
+	if me == null:
+		var b := _boss()
+		if b and b.pilot != 0 and b.pilot == multiplayer.get_unique_id():
+			return b
+	return me
+
+## 主機告訴連進來的人這局是什麼時段
+@rpc("authority", "call_remote", "reliable")
+func _set_period(p: StringName) -> void:
+	Period.apply(self, p)
+
+## 主機告訴連進來的人這局是什麼模式
+@rpc("authority", "call_remote", "reliable")
+func _set_rules(r: StringName) -> void:
+	if RULES.has(r):
+		rules = r
+		_apply_rules()
+
+## 派對模式（不是沙盒）：甩尾、火球、炸藥拆得掉地形，方塊房子也只在這時候有。boss.gd、viewmodel.gd、fireball.gd 的判斷都看這個
+func party_mode() -> bool:
+	return RULES[rules].party and not _sandbox
+
+## 照模式藏起用不到的東西（每台都跑）
+func _apply_rules() -> void:
+	var has_egg: bool = RULES[rules].egg
+	egg.visible = has_egg
+	map.set_party_house(party_mode())
+	_show_exits()
+	if party:   # 換模式、回大廳都重來一份
+		party.free()
+		party = null
+	safe.reset(false)   # 派對開回合時才擺（party._start_round）
+	if RULES[rules].party:
+		party = preload("res://tools/map_study/farm_trial/farm_party.gd").new() if rules == &"normal" and map.has_method(&"farm_return_zones") else Party.new()
+		party.name = &"Party"
+		add_child(party)
+
+## 派對模式的準備、結算階段：牛仔不能動、不能開槍，誰都不扣血（cowboy.gd、viewmodel.gd、fighter.gd 問這個）
+func party_frozen() -> bool:
+	return party != null and party.phase in [&"prep", &"result", &"final"]
+
+## 練習場（沙盒、靶場）：沒有蛋、沒有計時、不算勝負，大廳選的模式也不作數
+func _practice() -> bool:
+	return _sandbox or mode == &"range"
+
+## 這局有沒有重生次數（沙盒、靶場不算）
+func _uses_lives() -> bool:
+	return not _practice() and int(RULES[rules].lives) >= 0
+
+@rpc("authority", "call_local", "reliable")
+func _sync_lives(lives: Dictionary, out: Array) -> void:
+	_lives = lives
+	_out.clear()
+	for id in out:
+		_out[id] = true
+
+func _broadcast_lives() -> void:
+	if multiplayer.is_server() and _uses_lives():
+		_sync_lives.rpc(_lives, _out.keys())
+
+## 還在場上（活著或等重生）的參賽者
+func _remaining() -> Array:
+	return _lives.keys().filter(func(id: int) -> bool: return not _out.has(id))
+
+## 死鬥：剩一個人就贏；恐龍決鬥：全部出局就恐龍贏。至少要有兩個參賽者才判（一個人開房等人時不會直接贏）
+func _check_lives_end() -> void:
+	if _over or not _uses_lives():
+		return
+	var left := _remaining()
+	if RULES[rules].end == &"last_standing" and _lives.size() >= 2 and left.size() <= 1:
+		_end_round()
+		if left.is_empty():
+			_finish.rpc("最後兩個人同歸於盡，沒有贏家")
+		else:
+			_finish_winner.rpc(left[0])
+	elif RULES[rules].end == &"all_out_dino_wins" and not _lives.is_empty() and left.is_empty():
+		_end_round()
+		_finish.rpc("牛仔全部出局，恐龍獲勝")
+
+func _end_round() -> void:
+	_over = true
+	_next_round = NEXT_ROUND_DELAY
+
+## 死鬥的贏家：每台顯示的字不一樣
+@rpc("authority", "call_local", "reliable")
+func _finish_winner(winner: int) -> void:
+	_finish("你是最後的倖存者，獲勝！" if winner == multiplayer.get_unique_id()
+		else "牛仔 %d 是最後的倖存者，你輸了" % winner)
+
+func _on_test_server_pressed() -> void:
+	ip_edit.text = TEST_SERVER
+	_on_join_pressed()
+
+func _on_join_pressed() -> void:
+	_auth_failed = false
+	var peer := ENetMultiplayerPeer.new()
+	# 可以寫 位址:埠，測試網路很差時連到轉送程式（tools/lag_proxy.py）
+	var addr := ip_edit.text
+	var port := PORT
+	if ":" in addr:
+		port = addr.get_slice(":", 1).to_int()
+		addr = addr.get_slice(":", 0)
+	if peer.create_client(addr, port) != OK:
+		status.text = "連線失敗，IP 格式不對？"
+		return
+	multiplayer.multiplayer_peer = peer
+	status.text = ""
+	lobby_go(&"room")   # 等主機送房間的狀態：在房間就停在這頁，已經在打就進場（room._recv）
+	room.wait_join()
+
+## 沙盒：一個人在牧場的靶道練槍。前方 10／25／50／100 公尺各站一個牛仔靶，
+## 旁邊一隻不會動的恐龍。靶不是 bot、也不是本機操控，所以站著不動、不會還擊。
+## 私人正午試走入口，從南橋口開始。四席對局繼續由大廳啟動。
+func _on_farm_walk_pressed() -> void:
+	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	_offline = true
+	_sandbox = true
+	egg.visible = false
+	_enter_game("灌渠農莊 A v3.0｜自由試走　WASD 移動　空白鍵跳躍　Esc 開啟選單")
+	var me := _add_player(COWBOY, 1)
+	me.global_position = cowboy_spawn_on_ground(Vector3(1.15, 0, 25.7), me, 0.08)
+	me.rotation.y = atan2(-6.25, 27.3)
+	me.viewmodel.set_infinite()
+	var creature := _add_player(BOSS, BOSS_ID)
+	creature.global_position = boss_on_ground(Vector3(7.4, 0, -1.6))
+	creature.look_at(Vector3(-5.8, creature.global_position.y, 27.5))
+	creature.set_physics_process(false)
+	me.reset_physics_interpolation()
+	creature.reset_physics_interpolation()
+
+func _on_sandbox_pressed() -> void:
+	var xs := SANDBOX_TARGETS.map(func(d: int) -> float: return -4.0 if SANDBOX_TARGETS.find(d) % 2 == 0 else 4.0)
+	_start_practice(SANDBOX_START, SANDBOX_TARGETS, xs, Vector3(12, 4.0, -45),
+		"沙盒模式：沒有時間限制、子彈無限。靶打死會在原地重生。Esc 回大廳")
+	# 翻越練習：一段柵欄、兩個乾草捲，就在出生點旁邊
+	for prop in [map._fence(SANDBOX_START + Vector3(-10, -0.1, -4), 6.0, -PI * 0.5),
+			map._hay_bale(SANDBOX_START + Vector3(9, -0.1, -6), 0.0),
+			map._hay_bale(SANDBOX_START + Vector3(9, -0.1, -9), 0.0)]:
+		prop.add_to_group(&"sandbox_prop")
+		prop.collision_layer |= Fighter.SOLID_LAYER   # 晚蓋的擺設：要自己加第 5 層（arena_map.gd 的掃描之後才擺）
+	# 油燈練習：乾草捲旁邊地上兩盞、柵欄邊一盞，射它會潑油燒起來（燒到旁邊的燈會連鎖）
+	for off: Vector3 in [Vector3(7, 0, -7.5), Vector3(7.4, 0, -8.2), Vector3(-9, 0, -2.5)]:
+		OilLantern.place($Arena, _props.get(&"Lantern"), _on_ground(SANDBOX_START + off), false).add_to_group(&"sandbox_prop")   # 油燈自己加第 5 層（lantern.gd）
+
+## 單人打恐龍：測恐龍行為用。場地跟沙盒一樣，只有自己和一隻恐龍 boss（導演、兩招、找路都照連線模式），
+## 子彈無限、接關無限：死了五秒後在地圖上隨機一個地方回來。恐龍生在離你最遠的地方，要靠導演給的方向找過來。
+## 畫面上方顯示恐龍的導演階段、威脅值、正在出的招
+func _on_solo_dino_pressed() -> void:
+	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	_offline = true
+	_sandbox = true
+	_solo_dino = true
+	_continues = 0
+	egg.visible = false
+	_enter_game("單人打恐龍：接關無限、子彈無限，測恐龍行為用。Esc 回大廳")
+	var me := _add_player(COWBOY, 1)
+	me.global_position = cowboy_spawn_on_ground(SANDBOX_START, me, SANDBOX_START.y)
+	me.viewmodel.set_infinite()
+	spawn_boss()
+
+## 恐龍沙盒：自己當尼諾拉，場地跟沙盒一樣（蛋藏起來）。按 H 在尼諾拉前方叫一個獵人（bot 牛仔）來打，J 全部清掉。
+## 尼諾拉打不死（沙盒裡倒地會起來，見 boss.take_damage），獵人打死就移除、不重生（_on_died）
+func _on_dino_sandbox_pressed() -> void:
+	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	_offline = true
+	_sandbox = true
+	_dino_sandbox = true
+	egg.visible = false
+	var me := _add_player(COWBOY, 1)   # 先生一個編號 1：spawn_boss 才會生在它前方 40 公尺，make_pilot 再把它收掉
+	me.global_position = cowboy_spawn_on_ground(SANDBOX_START, me, SANDBOX_START.y)
+	spawn_boss()
+	make_pilot(1)
+	_enter_game("恐龍沙盒：H 叫一個獵人、J 清掉所有獵人。Esc 回大廳")
+
+## 跟電腦打：同一個房間畫面，只是不連線（離線）、名單上只有自己、自己就是房主。選模式按開始，派對、一般模式電腦補滿
+func _on_vs_bots_pressed() -> void:
+	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	_offline = true
+	status.text = ""
+	lobby_go(&"room")
+	room.open(false)
+
+## 靶場：另一張平地地圖（levels/range.tscn），專門測手感。打中跳傷害數字，畫面上有準星距離。
+## 大廳按鈕只是切地圖、重載場景，重載完 _autostart 看到 mode 就會進來這裡
+func _on_range_pressed() -> void:
+	mode = &"range"
+	get_tree().reload_current_scene.call_deferred()
+
+const RANGE_START := Vector3(0, 0.1, 75)   # 射擊線。往 -Z 打，75 公尺剛好是橫的那條土路
+const RANGE_TARGETS := [10, 25, 50, 75, 100, 150]
+const RANGE_X := [-12.0, -7.5, -2.5, 2.5, 7.5, 12.0]   # 近的靶放外側，才不會擋到遠的
+
+func _start_range() -> void:
+	_start_practice(RANGE_START, RANGE_TARGETS, RANGE_X, Vector3(16, 4.0, -40),
+		"靶場：打中會跳傷害和距離，準星下面是準星指到的距離。Esc 回大廳")
+	for d in range(10, 160, 10):   # 左邊每 10 公尺一塊距離牌，跟地上的土線對齊
+		_sign(_on_ground(RANGE_START + Vector3(-18, 1.2, -d)), "%d m" % d)
+	_pierce_walls()
+
+## 穿牆測試：跑道右邊三個牛仔靶，每個前面 3 公尺一面牆（木板、磚牆、鐵板），站在射擊線上牆剛好擋在靶前面。
+## 群組名就是材質（HitRules）：左輪、散彈穿木板，步槍穿木板和磚牆，鐵板都擋
+const PIERCE_WALLS := [["木板", &"wood", 0.05, Color(0.66, 0.5, 0.32)],
+	["磚牆", &"brick", 0.12, Color(0.6, 0.35, 0.28)], ["鐵板", &"iron", 0.03, Color(0.55, 0.57, 0.6)]]
+
+func _pierce_walls() -> void:
+	for i in PIERCE_WALLS.size():
+		var w: Array = PIERCE_WALLS[i]
+		var off := Vector3(12 + i * 3, 0, -20)   # 靶的位置（相對射擊線）。右邊柵欄在 x 20，恐龍靶在 40 公尺外
+		var t := _add_player(COWBOY, 9 + i)
+		t.global_position = _on_ground(RANGE_START + off)
+		t.rotation.y = PI
+		var at := _on_ground(RANGE_START + off * (1.0 - 3.0 / off.length()))   # 射擊線往靶看，靶前 3 公尺
+		var body := StaticBody3D.new()
+		body.add_to_group(w[1])
+		body.add_to_group(&"sandbox_prop")
+		body.collision_layer |= Fighter.SOLID_LAYER   # 靶場的牆是晚蓋的，要自己加第 5 層
+		var size := Vector3(2.0, 2.4, w[2])
+		var shape := CollisionShape3D.new()
+		shape.shape = BoxShape3D.new()
+		(shape.shape as BoxShape3D).size = size
+		body.add_child(shape)
+		var mi := MeshInstance3D.new()
+		mi.mesh = BoxMesh.new()
+		(mi.mesh as BoxMesh).size = size
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = w[3]
+		mi.material_override = mat
+		body.add_child(mi)
+		$Arena.add_child(body)
+		body.global_position = at + Vector3(0, size.y / 2, 0)
+		body.look_at(Vector3(RANGE_START.x, body.global_position.y, RANGE_START.z))   # 牆面朝射擊線
+		_sign(at + Vector3(0, 3.0, 0), w[0])
+
+## 練槍的共用部分：自己（編號 1，子彈無限）、每個距離一個牛仔靶、一隻恐龍靶
+func _start_practice(start: Vector3, dists: Array, xs: Array, dino_at: Vector3, msg: String) -> void:
+	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	_offline = true
+	_sandbox = true
+	egg.visible = false
+	_enter_game(msg)
+	var me := _add_player(COWBOY, 1)   # 編號 1 才操控得動
+	me.global_position = cowboy_spawn_on_ground(start, me, start.y)
+	me.viewmodel.set_infinite()
+	for i in dists.size():
+		var t := _add_player(COWBOY, 3 + i)
+		t.global_position = cowboy_spawn_on_ground(start + Vector3(xs[i], 0, -dists[i]), t, start.y)
+		t.rotation.y = PI   # 面對玩家，打頭才對得到臉
+		_sign(t.global_position + Vector3(0, 2.6, 0), "%d m" % dists[i])
+	var dino := _add_player(DINO, 2)
+	dino.global_position = _on_ground(start + dino_at)
+	dino.rotation.y = 0.4
+	_sign(dino.global_position + Vector3(0, 6.5, 0), "恐龍 %d m" % roundi(-dino_at.z))
+
+## 靶場：打中的地方跳出傷害（爆頭紅字）和這發飛了幾公尺，往上飄、一秒多淡掉。Bullet 打中人時叫
+func hit_popup(pos: Vector3, dmg: int, dist: float, head: bool) -> void:
+	if mode != &"range":
+		return
+	_last_hit = "%s%d（%.1f m）" % ["爆頭 " if head else "", dmg, dist]
+	var l := Label3D.new()
+	l.text = "%s%d\n%.1f m" % ["爆頭 " if head else "", dmg, dist]
+	l.font = $UI/Root.theme.default_font
+	l.font_size = 48
+	l.outline_size = 12
+	l.fixed_size = true   # 在螢幕上一樣大：150 公尺外也看得清楚
+	l.pixel_size = 0.0009
+	l.modulate = Color(1, 0.25, 0.2) if head else Color(1, 0.95, 0.7)
+	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	l.no_depth_test = true
+	$Arena.add_child(l)
+	l.global_position = pos + Vector3(0, 0.3, 0)
+	var tw := l.create_tween().set_parallel()
+	tw.tween_property(l, ^"global_position:y", l.global_position.y + 0.8 + dist * 0.012, 1.4)   # 遠的飄高一點，看起來一樣快
+	tw.tween_property(l, ^"modulate:a", 0.0, 1.4).set_delay(0.4)
+	tw.chain().tween_callback(l.queue_free)
+
+var _last_hit := "—"
+
+# --- 遊戲局控制（Esc 選單，只有主機） ---
+
+func _on_add_walker_pressed() -> void:
+	add_walker()
+
+func _on_add_bot_pressed() -> void:
+	add_bot()
+
+func _on_clear_bots_pressed() -> void:
+	clear_bots()
+
+## 選單的「恐龍攻擊」開關：關掉時恐龍咬、踩、火球都打不痛（fighter.take_damage 擋），測恐龍行為用
+var dino_attacks := true
+var _ips := ""          # 本機 IP，開遊戲時查一次就好
+var saved_ips_path := "user://saved_ips.cfg"   # 測試會換成別的檔，不動到真的清單
+
+var settings_path := "user://settings.cfg"      # 玩家自己的設定（settings.gd 的設定視窗）
+
+func _load_settings() -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(settings_path)   # 第一次開沒有檔案，用預設值
+	Viewmodel.aim_toggle = cfg.get_value("controls", "aim_toggle", false)
+	settings.vsync = cfg.get_value("display", "vsync", true)
+	settings.fps_cap = cfg.get_value("display", "fps_cap", 0)
+	settings._apply_display()
+	Settings.load_from(cfg)
+
+func _save_setting(section: String, key: String, value: Variant) -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(settings_path)
+	cfg.set_value(section, key, value)
+	cfg.save(settings_path)
+
+func _on_dino_attack_toggled(on: bool) -> void:
+	dino_attacks = on
+
+## 選單的「恐龍碰撞物件」開關（預設開：樹也擋、跑步撞得倒，跟房子一樣）：關掉尼諾拉只穿過樹，房子、柵欄等建築照樣擋；打開樹也擋（boss.gd 的 _sync_mask）。只有主機能按，同步給大家
+var dino_collide := true
+
+func _on_dino_collide_toggled(on: bool) -> void:
+	dino_collide = on
+	_set_dino_collide.rpc(on)   # 主機自己先記下，其他人收 rpc（離線測試沒有連線，rpc 不會送到自己這台）
+
+@rpc("authority", "call_remote", "reliable")
+func _set_dino_collide(on: bool) -> void:
+	dino_collide = on
+
+func _on_add_boss_pressed() -> void:
+	spawn_boss()
+
+## 恐龍 boss（boss.gd）：跟蛋無關，生在離所有牛仔最遠的地方，自己在地圖上找人。場上已經有就不再生。
+## 沙盒改生在玩家前方 40 公尺，方便測試。生的時候順便在主機上烘導航網格（bake_nav），boss 照路徑繞過建築
+func spawn_boss() -> Node3D:
+	if not multiplayer.is_server() or players.has_node(NodePath(str(BOSS_ID))):
+		return null
+	var at := _far_from_cowboys()
+	var b := _add_player(BOSS, BOSS_ID)
+	var me := players.get_node_or_null(^"1") as Node3D
+	if _sandbox and me and not _solo_dino:   # 沙盒：生在前方 40 公尺方便看；單人打恐龍：離你最遠，要自己找過來
+		at = me.global_position - me.global_basis.z * 40.0
+	b.global_position = boss_on_ground(at)
+	var boss_hp: int = RULES[rules].boss_hp
+	if boss_hp > 0 and not _sandbox:
+		b.max_hp = boss_hp   # 決鬥要打得死，血多一點（大家一起打）
+		b.hp = boss_hp
+	bake_nav()
+	return b
+
+## 場內一圈候選點裡，離最近的牛仔最遠的那個
+func _far_from_cowboys() -> Vector3:
+	var best := Vector3.ZERO
+	var best_d := -1.0
+	for i in 12:
+		var a := float(i) / 12.0 * TAU
+		var p := Vector3(cos(a), 0, sin(a)) * ARENA * 0.35
+		var d := INF
+		for c in players.get_children():
+			if not c.is_in_group(&"dino"):
+				d = minf(d, Vector2(c.global_position.x - p.x, c.global_position.z - p.z).length())
+		if d <= best_d:
+			continue
+		var clear: bool
+		if map.has_method(&"farm_spawn_candidate"):
+			var ground: Vector3 = map.call(&"farm_spawn_candidate", p, true, _boss())
+			clear = ground.is_finite()
+		else:
+			clear = _is_clear(Vector2(p.x, p.z), 3.0)
+		if clear:
+			best = p
+			best_d = d
+	return best
+
+## 恐龍放在地上：身體中心＝身體底下（膠囊半徑內）最高的地面＋LIFT。中央這類地方地面有小坑、小丘，只看中心一點的話，第 1 幀會懸空或陷進去
+func boss_on_ground(at: Vector3) -> Vector3:
+	if map.has_method(&"farm_nearest_spawn"):
+		return map.call(&"farm_nearest_spawn", at, true, _boss())
+	var top: float = map._on_ground(Vector3(at.x, 0, at.z)).y
+	for i in 8:
+		var a := TAU * float(i) / 8.0
+		var r: float = BOSS_GD.BODY_RADIUS
+		top = maxf(top, map._on_ground(Vector3(at.x + sin(a) * r, 0, at.z + cos(a) * r)).y)
+	return Vector3(at.x, top + BOSS_GD.LIFT, at.z)
+
+## 恐龍的導航網格：從場地上所有靜態碰撞（地形、房子、柵欄、樹幹、石頭）烘出來，只在主機上需要。
+## 讀場景要在主執行緒，烘本身丟背景（幾百毫秒），烘好之前 boss 退回直線追。一個場地只烘一次。
+## 恐龍很大（半徑 BODY_RADIUS、身高 dino_height），進不了房子、擠不過柵欄的缺口——網格自己就會繞開這些地方
+var _nav_region: NavigationRegion3D
+## rebake：地形被拆掉（destructible.gd）時重烘，烘好之前照舊的網格走。
+## 同一幀拆好幾塊（甩尾一次掃到一圈方塊）只排一次，到 idle 才烘：每次烘要在主線程解析場景，一幀烘十幾次會卡住（量過 93 毫秒）；
+## 要等這一幀的碰撞都拿掉了才讀得到，所以不能當場烘。
+## ponytail: 整張圖重烘（背景幾百毫秒，甩尾冷卻 20 秒才一次）；連續拆好幾樣時，晚開始的烘可能先烘完被舊的蓋掉，真的發生再排隊
+var _rebake_queued := false
+## ponytail: 沒拆過的積木存在 _toy_nav，拆過的和停下來的碎塊存在 _piece_nav（只在形狀或位置變了才重解析）；重烘的解析分幀做（每幀最多 nav_budget_ms 毫秒，全場約 15 毫秒分成五、六幀），分幀期間場地有變動的要等下一次烘才看得到。只隔 5 秒烘一次。升級：分區，只解析變動的區域
+const NAV_GROUP := &"nav_parse"   # 解析時臨時加進群組的節點（見 _parse_arena）
+var _toy_nav := {}   # ToyBuild -> [碰撞層, 解析好的幾何]
+var _bake_serial := 0   # 第幾次烘（分幀解析到一半又開始新的一次時，舊的那次作廢）
+var nav_budget_ms := 3.0   # 重烘導航時，主線程一幀最多解析幾毫秒（0＝一次做完，量測和測試用）
+var _piece_nav := {}   # 拆過的積木和靜態碎塊 -> [碰撞層, 位置, 形狀版本, 解析好的幾何]（只留這次還在場上的，見 _parse_arena）
+const REBAKE_GAP_MS := 5000   # 兩次烘之間至少隔幾毫秒：專用伺服器（慢的 VPS）每次解析場景要幾十毫秒，拆積木一直烘會讓讀秒變慢、玩家卡住
+var _last_bake_ms := -REBAKE_GAP_MS   # 上一次開始解析場景的時刻（毫秒）
+var _slow_work := ""   # 這一幀有沒有慢的工作（停頓記錄用，見 _process）
+var _hitch_last_us := 0
+var _hitch_phys := 0
+static var HITCH_MS := int(OS.get_environment("HITCH_MS")) if OS.get_environment("HITCH_MS") != "" else 50   # 停頓記錄的門檻（毫秒）；本機查效能時設 0 每幀都印
+
+## 停頓記錄的細節：這幀跑了幾步物理、每步腳本花多少、會動的物體、碰撞對數、碎塊數（找卡頓是誰造成的）
+func _hitch_detail() -> String:
+	var flying := 0
+	var pieces := get_tree().get_nodes_in_group(&"toy_piece")
+	for p in pieces:
+		if p is RigidBody3D:
+			flying += 1
+	return "[物理 %d 步 每步腳本 %.1f 毫秒 會動 %d 碰撞對 %d 群 %d 碎塊 %d（飛 %d）節點 %d 玩家 %d]" % [
+		Engine.get_physics_frames() - _hitch_phys,
+		Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0,
+		Performance.get_monitor(Performance.PHYSICS_3D_ACTIVE_OBJECTS),
+		Performance.get_monitor(Performance.PHYSICS_3D_COLLISION_PAIRS),
+		Performance.get_monitor(Performance.PHYSICS_3D_ISLAND_COUNT),
+		pieces.size(), flying,
+		Performance.get_monitor(Performance.OBJECT_NODE_COUNT),
+		multiplayer.get_peers().size()]
+func bake_nav(rebake := false) -> void:
+	if not multiplayer.is_server() or is_instance_valid(_nav_region) != rebake:
+		return
+	if rebake:
+		if not _rebake_queued:
+			_rebake_queued = true
+			# 距上一次烘滿 REBAKE_GAP_MS 才烘（第一次立刻烘）；不夠就排到滿了再烘，之後的請求都併進這一次
+			var wait := REBAKE_GAP_MS - (Time.get_ticks_msec() - _last_bake_ms)
+			if wait <= 0:
+				_rebake_now.call_deferred()
+			else:
+				get_tree().create_timer(wait / 1000.0).timeout.connect(_rebake_now)
+		return
+	_bake_nav()
+
+func _rebake_now() -> void:
+	_rebake_queued = false
+	if is_instance_valid(_nav_region):   # 排隊的時候場地還在；已經回大廳（場地被刪）就不烘
+		_bake_nav()
+
+func _bake_nav() -> void:
+	_last_bake_ms = Time.get_ticks_msec()
+	_bake_serial += 1
+	var serial := _bake_serial
+	var t0 := Time.get_ticks_usec()
+	var rebake := is_instance_valid(_nav_region)
+	var nm := NavigationMesh.new()
+	nm.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS
+	nm.agent_radius = BOSS_GD.BODY_RADIUS
+	nm.agent_height = BOSS_GD.HALF_H * 2.0   # 身高：天花板比這低的地方恐龍站不進去
+	nm.agent_max_climb = 0.9
+	nm.agent_max_slope = 40.0
+	nm.cell_size = 0.5
+	nm.cell_height = 0.25
+	nm.geometry_source_geometry_mode = NavigationMesh.SOURCE_GEOMETRY_GROUPS_EXPLICIT
+	nm.geometry_source_group_name = NAV_GROUP
+	if not rebake:
+		_toy_nav.clear()   # 新的場地：舊場地的積木已經不在了
+	# 重烘分幀解析（每幀最多 nav_budget_ms 毫秒）；第一次烘（開場）一次做完
+	var src: NavigationMeshSourceGeometryData3D = await _parse_arena(nm, nav_budget_ms if rebake else 0.0)
+	if serial != _bake_serial or (rebake and not is_instance_valid(_nav_region)):   # 分幀的時候又開始了一次烘、或回大廳了：這次作廢
+		return
+	var ms := (Time.get_ticks_usec() - t0) / 1000   # 主線程的解析部分（背景烘焙不算）
+	if ms > 20 and not rebake:
+		_slow_work = "重烘導航 %d 毫秒" % ms
+		print("重烘導航 %d 毫秒" % ms)
+	if not rebake:
+		_nav_region = NavigationRegion3D.new()
+		_nav_region.name = "DinoNav"
+		$Arena.add_child(_nav_region)
+	var region: WeakRef = weakref(_nav_region)   # 烘完之前回大廳、場地被刪掉的話，不要抓著已經不在的節點
+	NavigationServer3D.bake_from_source_geometry_data_async(nm, src, func() -> void:
+		var r: Object = region.get_ref()
+		if r:
+			r.set_deferred(&"navigation_mesh", nm))   # 烘完的通知可能不在主執行緒
+
+## 只把這些節點加進 NAV_GROUP 解析，解析完就拿掉
+func _parse_group(nm: NavigationMesh, nodes: Array) -> NavigationMeshSourceGeometryData3D:
+	for n in nodes: n.add_to_group(NAV_GROUP)
+	var s := NavigationMeshSourceGeometryData3D.new()
+	NavigationServer3D.parse_source_geometry_data(nm, s, $Arena)
+	for n in nodes: n.remove_from_group(NAV_GROUP)
+	return s
+
+## 沒拆過的積木（ToyBuild）解析一次就存著重用（_toy_nav）。拆過的積木（形狀會被藏）和停下來的靜態碎塊也存（_piece_nav），
+## 只有位置、碰撞層、形狀版本（ToyBuild.geo_ver，_set_off 時加一）變了才重解析；飛的碎塊每次重解析。
+## 每次烘都重建 _piece_nav，所以已經不在場上的碎塊自然掉出快取
+func _parse_arena(nm: NavigationMesh, budget_ms := 0.0) -> NavigationMeshSourceGeometryData3D:
+	var src := NavigationMeshSourceGeometryData3D.new()
+	var rest := []
+	var keep := {}
+	var t0 := Time.get_ticks_usec()
+	for b in _static_bodies($Arena, []):   # 不寫型別：等下一幀時清單裡的碎塊可能被刪了，寫 Node 會在指定時就出錯
+		# 重烘（budget_ms > 0）：這一幀做超過 budget_ms 毫秒就留到下一幀接著做。全場存好的幾何併起來就要 5～12 毫秒，一幀做完會頓一下
+		if budget_ms > 0.0 and Time.get_ticks_usec() - t0 > budget_ms * 1000.0:
+			await get_tree().process_frame
+			t0 = Time.get_ticks_usec()
+		if not is_instance_valid(b) or not b.is_inside_tree():   # 等下一幀的時候被刪掉了（碎塊被踢、回大廳）
+			continue
+		if b is ToyBuild and not b.has_damage():
+			var c = _toy_nav.get(b)
+			if c == null or c[0] != b.collision_layer:
+				c = [b.collision_layer, _parse_group(nm, [b])]; _toy_nav[b] = c
+			src.merge(c[1])
+		elif b is ToyBuild or b.is_in_group(&"toy_piece"):
+			var v: int = b.geo_ver if b is ToyBuild else 0
+			var p = _piece_nav.get(b)
+			if p == null or p[0] != b.collision_layer or p[1] != b.global_transform or p[2] != v:
+				# 拆過的房子要整棟重解析（1659 塊約 3 毫秒）：這一幀已經做了一些就先讓出去，不然額度快用完時再疊上這 3 毫秒（量到一幀 6.4）
+				if b is ToyBuild and budget_ms > 0.0 and Time.get_ticks_usec() - t0 > 300:
+					await get_tree().process_frame
+					t0 = Time.get_ticks_usec()
+					if not is_instance_valid(b) or not b.is_inside_tree():
+						continue
+				p = [b.collision_layer, b.global_transform, v, _parse_group(nm, [b])]
+			keep[b] = p
+			src.merge(p[3])
+		else:
+			rest.append(b)
+	_piece_nav = keep
+	src.merge(_parse_group(nm, rest.filter(func(b: Node) -> bool: return is_instance_valid(b) and b.is_inside_tree())))
+	return src
+
+## 場地底下所有的 StaticBody3D（同 find_children("*", "StaticBody3D")，但不往積木和碎塊裡面找：
+## 它們底下是一萬多個碰撞形狀，find_children 每個都看，一次 3～9 毫秒）
+func _static_bodies(at: Node, out: Array) -> Array:
+	for c in at.get_children():
+		if c is StaticBody3D:
+			out.append(c)
+		if not (c is ToyBuild or c.is_in_group(&"toy_piece")):
+			_static_bodies(c, out)
+	return out
+
+## 移動標靶：在主機玩家前方 25 公尺，左右各 6 公尺來回走，不開槍
+func add_walker() -> Node3D:
+	if not multiplayer.is_server():
+		return null
+	var fwd := Vector3.FORWARD
+	var at := _spawn_point()
+	var me := players.get_node_or_null(^"1") as Node3D
+	if me:
+		fwd = -me.global_basis.z
+		fwd.y = 0.0
+		fwd = fwd.normalized()
+		at = me.global_position
+	# 只取水平位置：_on_ground 的 y 是「離地高度」，把已經貼地的高度帶進去會算兩次
+	var center := (at + fwd * 25.0) * Vector3(1, 0, 1)
+	var side := fwd.cross(Vector3.UP) * Vector3(1, 0, 1)
+	var w := _add_player(COWBOY, _next_bot_id())
+	_make_walker(w, _on_ground(center - side * 6.0), _on_ground(center + side * 6.0))
+	w.global_position = cowboy_spawn_on_ground(center, w, 0.0)
+	return w
+
+func _make_walker(w: Node3D, a: Vector3, b: Vector3) -> void:
+	_lives.erase(w.name.to_int())   # 移動標靶是練習用的，不算參賽者
+	w.set(&"bot", true)
+	w.set(&"walker", true)
+	w.set(&"patrol_a", a)
+	w.set(&"patrol_b", b)
+
+## 牛仔 bot：會搶蛋、會開槍。沙盒裡直接來找你打（出現在前方 40 公尺）
+func add_bot() -> Node3D:
+	if not multiplayer.is_server():
+		return null
+	var b := _add_player(COWBOY, _next_bot_id())
+	b.set(&"bot", true)
+	var me := players.get_node_or_null(^"1") as Node3D
+	if _sandbox and me:
+		var fwd := -me.global_basis.z
+		b.global_position = cowboy_spawn_on_ground(me.global_position + fwd * 40.0, b, 0.5)
+	return b
+
+## 恐龍沙盒：在尼諾拉前方 30 公尺、左右隨機偏 6 公尺叫一個獵人（bot 牛仔，會自己找恐龍打）。最多 DINO_SANDBOX_MAX 個
+func _summon_hunter() -> void:
+	var b: Node3D = _boss()
+	if b == null or not multiplayer.is_server():
+		return
+	if _hunters().size() >= DINO_SANDBOX_MAX:
+		_announce("獵人已經 %d 個了，按 J 清掉一些" % DINO_SANDBOX_MAX)
+		return
+	var fwd: Vector3 = -b.global_basis.z
+	fwd.y = 0.0
+	fwd = fwd.normalized()
+	var at: Vector3 = b.global_position + fwd * 30.0 + fwd.cross(Vector3.UP) * randf_range(-6.0, 6.0)
+	var h := add_bot()
+	h.global_position = cowboy_spawn_on_ground(at, h, 0.5)
+	h.rotation.y = atan2(fwd.x, fwd.z)   # 面向尼諾拉
+
+## 場上的電腦（bot 牛仔、移動標靶），不含尼諾拉
+func _hunters() -> Array:
+	return players.get_children().filter(func(p: Node) -> bool: return Fighter.is_bot_id(p.name.to_int()) and not p.is_in_group(&"boss"))
+
+## 清掉所有電腦（移動標靶和 bot），排隊等重生的也一起取消
+func clear_bots() -> void:
+	if not multiplayer.is_server():
+		return
+	for p in players.get_children():
+		if Fighter.is_bot_id(p.name.to_int()) and not p.is_in_group(&"boss"):   # boss 不算 bot，清不掉
+			if not p.is_in_group(&"dino"):
+				_cowboys -= 1
+			p.free()
+	_respawn_queue = _respawn_queue.filter(func(r: Dictionary) -> bool: return not Fighter.is_bot_id(int(r["id"])))
+
+## 電腦的編號：從 -1 往下找一個沒人用的（負數，見 Fighter.is_bot_id）
+func _next_bot_id() -> int:
+	var id := -1
+	while players.has_node(NodePath(str(id))) or _respawn_queue.any(func(r: Dictionary) -> bool: return int(r["id"]) == id):
+		id -= 1
+	return id
+
+## 靶上的距離牌。只在沙盒用，跟著場地一起清。
+func _sign(pos: Vector3, text: String) -> void:
+	var l := Label3D.new()
+	l.text = text
+	l.font_size = 64
+	l.pixel_size = 0.01
+	l.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	l.font = $UI/Root.theme.default_font   # 預設字型沒有中文
+	l.add_to_group(&"sandbox_prop")
+	$Arena.add_child(l)
+	l.global_position = pos
+
+## 模型檢視：把整個遊戲畫面收起來，換成一個只有模型的場景。
+## 不清多人連線狀態，因為根本沒建立。
+func _on_viewer_pressed() -> void:
+	var v := ModelViewer.new()
+	v.use_theme($UI/Root.theme)
+	# 自己一個 3D 世界：遊戲場景只是藏起來，地形、建築的碰撞還在同一個世界裡，
+	# 恐龍的腳往下找地面會踩到看不見的地形（使用者看到「透明物件，走過去像踩高」）
+	var box := SubViewportContainer.new()
+	box.stretch = true
+	box.set_anchors_preset(Control.PRESET_FULL_RECT)
+	var sv := SubViewport.new()
+	sv.own_world_3d = true
+	sv.handle_input_locally = true
+	box.add_child(sv)
+	sv.add_child(v)
+	v.closed.connect(func() -> void:
+		box.queue_free()
+		visible = true
+		$UI.visible = true
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE)
+	get_tree().root.add_child(box)
+	visible = false
+	$UI.visible = false
+
+func _enter_game(msg: String) -> void:
+	map.set_party_house(party_mode())   # 沙盒的 rules 還是大廳選的，這裡看的是 _sandbox
+	if multiplayer.is_server():
+		_time_left = MATCH_SECONDS
+		_clock = int(MATCH_SECONDS)
+		_respawn_queue.clear()
+		_claimer = 0
+		egg.pickup = 0.0
+		egg.carrier = 0
+		roll_exits()
+		var at := _spawn_point(ARENA * 0.22)  # 放中央附近，不要一開始就在出口旁邊
+		egg.global_position = _on_ground(Vector3(at.x, 0.5, at.z))
+		egg.reset_physics_interpolation()   # 瞬移：不要從上一局的位置滑過來
+		raptors.clear()   # 派對每回合也清（party._start_round）
+		if _practice():
+			barrels.clear()
+		else:
+			barrels.roll()   # 每局重抽爆炸桶（派對每回合再抽一次，party._start_round）
+	_show_exits()   # 沙盒才在進場前設好
+	lobby.hide()
+	menu.hide()
+	status.text = msg
+	Fighter.lock_mouse()
+
+# --- 生怪 / 勝負 ---
+
+func _spawn(id: int) -> void:
+	if not multiplayer.is_server():
+		return  # 只有主機生，MultiplayerSpawner 會同步給大家
+	_reclaim(id)   # 斷線重連：先把舊編號的資料搬過來（要在 _add_player 前面，不然次數會補滿）
+	if id != 1:   # 模式先送：他那台要先建好 Party，下面接手電腦時送的派對整包、那一行字才找得到地方收
+		_set_rules.rpc_id(id, rules)
+		_set_period.rpc_id(id, Period.current)
+	if party and party.dino_id == id and party.phase in [&"prep", &"play"]:
+		make_pilot(id)   # 這回合輪到他當恐龍：拿回尼諾拉
+	elif party and party.fixed and party.phase in [&"prep", &"play"] and not party.in_roster(id):
+		party.take_bot(id)   # 一般模式這一局中間進來：接手一個活著的電腦獵人，沒有就觀戰到下一局
+	elif not _is_out(id):   # 出局的人連回來還是觀戰
+		_add_player(COWBOY, id)
+	if id != 1:
+		_set_dino_collide.rpc_id(id, dino_collide)   # 晚來的人也要拿到碰撞開關的狀態
+		_broadcast_lives()
+		for pane in get_tree().get_nodes_in_group(&"farm_fixed_glazing"):
+			pane.set_broken.rpc_id(id,pane.broken)
+		var farm := get_tree().get_first_node_in_group(&"farm_destruction")
+		if farm:
+			farm.send_state_to(id)
+		barrels.send_to(id)   # 爆炸桶的位置、爆了沒
+		raptors.send_to(id)   # 小恐龍的位置、死了沒
+		for d in _doors:   # 門的開關不走同步器，晚來的人要補送一次
+			if d.is_open:
+				d._set_open.rpc_id(id, true)
+		for t in _toys:
+			if t.has_damage():
+				t.send_state_to(id)
+
+func cowboy_spawn_on_ground(at: Vector3, actor: Node3D, lift: float) -> Vector3:
+	if map.has_method(&"farm_nearest_spawn"):
+		return map.call(&"farm_nearest_spawn", at, false, actor)
+	return _on_ground(Vector3(at.x,lift,at.z))
+
+func _add_player(scene: PackedScene, id: int) -> Node3D:
+	var p: Node3D = scene.instantiate()
+	p.name = str(id)
+	players.add_child(p, true)
+	var at := _spawn_point()
+	if scene == COWBOY and map.has_method(&"farm_nearest_spawn"):
+		at = cowboy_spawn_on_ground(at, p, 0.08)
+	p.global_position = at
+	p.died.connect(_on_died.bind(p))
+	if not p.is_in_group(&"dino"):
+		_cowboys += 1
+		if multiplayer.is_server() and _uses_lives() and not _lives.has(id):
+			_lives[id] = int(RULES[rules].lives)
+			_broadcast_lives.call_deferred()
+	return p
+
+func _despawn(id: int) -> void:
+	if not multiplayer.is_server():
+		return
+	room.leave(id)
+	_hold(id)   # 斷線先記下命數和出局狀態，RECONNECT_MS 內連回來還給他
+	_volunteers.erase(id)
+	if _handover == id:   # 交接中離線：不用再收了
+		_handover = 0
+	var b := _boss()
+	if b and b.pilot == id:   # 操作尼諾拉的人走了：電腦接手
+		b.pilot = 0
+	var p := players.get_node_or_null(NodePath(str(id)))
+	if p and party and party.down_on_leave(p):
+		pass   # 團隊模式：原地倒地，倒數完才收（party.down_on_leave）
+	elif p and not p.is_queued_for_deletion():   # 重連時主機會先呼叫一次、ENet 之後又送一次 peer_disconnected：第二次不再減人數
+		p.queue_free()
+		if id != 1:
+			_cowboys -= 1
+	if _lives.has(id):   # 離線的人不算參賽者了：死鬥可能因此剩一個人
+		_lives.erase(id)
+		_out.erase(id)
+		_broadcast_lives()
+		_check_lives_end()
+
+## 斷線：記下他的命數和出局狀態，RECONNECT_MS 內同一個代號連回來就還他（_reclaim）。
+## 派對的分數不用存：party.gd 本來就不刪離開的人，連回來時搬編號就好
+func _hold(id: int) -> void:
+	var key: String = _key_of.get(id, "")
+	_key_of.erase(id)
+	if key == "":
+		return
+	# ponytail: 過期的只在這裡順手清；專用伺服器一直開派對（不走 _new_round）也不會一直長
+	var now := Time.get_ticks_msec()
+	for k: String in _held.keys():
+		if now - int(_held[k].at) > RECONNECT_MS:
+			_held.erase(k)
+	_held[key] = {id = id, at = now, lives = _lives.get(id), out = _out.has(id)}
+
+## 連上來的人是不是剛斷線的那個：是就把舊編號的資料搬給新編號
+func _reclaim(id: int) -> void:
+	var key: String = _key_of.get(id, "")
+	if key == "" or not _held.has(key):
+		return
+	var h: Dictionary = _held[key]
+	_held.erase(key)
+	if Time.get_ticks_msec() - int(h.at) > RECONNECT_MS:
+		return
+	if h.lives != null:
+		_lives[id] = h.lives
+	if h.out:
+		_out[id] = false
+	if party:
+		party.rekey(int(h.id), id)
+	print("[重連] 玩家 %d 連回來，拿回編號 %d 的資料" % [id, int(h.id)])
+
+## 客戶端打中東西，請主機扣血（Cowboy.deal_damage、摔落的 _hurt_self）。主機檢查合不合理才扣：
+## - 只收開槍者本人送的（別人不能假冒）
+## - 開槍者還活著，或剛死不到 DEATH_GRACE_MS：兩人同時開槍可以同歸於盡（跟 Hunt 一樣），
+##   不會因為誰的封包先到主機就只算一邊
+## - 一發的傷害不超過 MAX_HIT（打頭秒殺另外算，傷害剛好等於目標的滿血）；扣自己（摔落）不限
+## - 開槍位置離主機看到的開槍者不遠、離目標在射程內
+## ponytail: 不重算射線、不限射速。有人真的作弊再加主機重算命中（docs 知識庫「延遲補償」那篇）
+const DEATH_GRACE_MS := 300
+const MAX_HIT := 60          # 單發最大傷害：步槍 60、重擊槍托 60（cowboy/weapons/*.tscn、viewmodel.gd），改了這裡要跟著改
+const MAX_SHOT_RANGE := 270.0   # 步槍射程 250 再加一點
+var _died_at := {}            # 牛仔的連線編號 -> [死的時刻（毫秒）, 位置]
+
+## 每秒傷害額度（主機）：散彈一發是很多個 request，所以限的是「每秒總傷害」，不是每秒幾次。
+## 數字從 cowboy/weapons/weapons.csv 算（Weapon.table()），改了表格自動跟著變。
+## 槍托重擊不在表裡，數字照 viewmodel.gd 的 heavy_damage（測試釘住，改了要跟著改）
+const MELEE_HEAVY := 60
+const DMG_REFILL := 1.5          # 補速是所有武器最高每秒傷害的幾倍（寬鬆）
+const KILL_GAP := 0.8            # 爆頭秒殺：每把最快間隔的這個倍數才准一次
+static var _fire_limits := {}
+var _dmg_quota := {}             # 開槍者的連線編號 -> {"left": 剩下的傷害, "at": 上次補的時刻, "kill_at": 上次秒殺的時刻}
+
+## 從表格算出：dps＝每秒最高傷害、shot＝單發最大總傷害（傷害×顆數，含槍托）、gap＝最短擊發間隔（含搧擊錘）。
+## 表格讀不到回傳空的，呼叫的人就不擋（寧可寬鬆）
+static func fire_limits() -> Dictionary:
+	if _fire_limits.is_empty():
+		var dps := 0.0
+		var shot := float(MELEE_HEAVY)
+		var gap := INF
+		for id: String in Weapon.table():
+			var v: Dictionary = Weapon.table()[id]
+			var one: float = v.get("damage", "0").to_float() * maxf(v.get("pellets", "1").to_float(), 1.0)
+			var iv := maxf(v.get("fire_interval", "0").to_float(), v.get("cycle_time", "0").to_float())
+			var fan: float = v.get("fan_interval", "0").to_float()   # 搧擊錘（左輪腰射按住連發）比擊發間隔快
+			if fan > 0.0:
+				iv = minf(iv, fan)
+			iv = maxf(iv, 0.01)
+			dps = maxf(dps, one / iv)
+			shot = maxf(shot, one)
+			gap = minf(gap, iv)
+		if gap == INF:
+			return {}
+		_fire_limits = {"dps": dps, "shot": shot, "gap": gap}
+	return _fire_limits
+
+## 這發傷害在額度內就扣掉回傳 true。kill＝傷害等於目標滿血（爆頭秒殺）：不走總傷害，另外每隔一段時間才一次。
+## now 是毫秒，測試可以自己給時間
+func _dmg_allowed(shooter_id: int, amount: int, kill: bool, now: float) -> bool:
+	var lim := fire_limits()
+	if lim.is_empty():
+		return true
+	var cap: float = lim["shot"] * 2.0
+	var q: Dictionary = _dmg_quota.get(shooter_id, {"left": cap, "at": now, "kill_at": -INF})
+	q["left"] = minf(cap, q["left"] + lim["dps"] * DMG_REFILL * maxf(now - q["at"], 0.0) / 1000.0)
+	q["at"] = now
+	var ok := true
+	if kill:
+		ok = now - q["kill_at"] >= lim["gap"] * KILL_GAP * 1000.0
+		if ok:
+			q["kill_at"] = now
+	else:
+		ok = amount <= q["left"]
+		if ok:
+			q["left"] -= amount
+	_dmg_quota[shooter_id] = q
+	return ok
+
+@rpc("any_peer", "call_remote", "reliable")
+func request_damage(shooter_id: int, target_path: NodePath, amount: int, from: Vector3, head := false) -> void:
+	if not multiplayer.is_server() or multiplayer.get_remote_sender_id() != shooter_id:
+		return
+	apply_damage_request(shooter_id, get_node_or_null(target_path), amount, from, head)
+
+## request_damage 檢查完來源之後的部分（測試直接呼叫這個）。扣了回傳 true
+func apply_damage_request(shooter_id: int, target: Node, amount: int, from: Vector3, head := false) -> bool:
+	if target == null or not target.has_method(&"take_damage"):
+		return false
+	var shooter := players.get_node_or_null(NodePath(str(shooter_id)))
+	var at: Vector3
+	if shooter:
+		at = shooter.global_position
+	elif _died_at.has(shooter_id) and Time.get_ticks_msec() - int(_died_at[shooter_id][0]) <= DEATH_GRACE_MS:
+		at = _died_at[shooter_id][1]
+	else:
+		return false
+	var self_hit := target == shooter
+	if not self_hit and amount > MAX_HIT and amount != int(target.get(&"max_hp")):
+		return false
+	# 開槍位置用主機最近接受過的位置比（必達訊息晚到時，衝刺中的人會比現在記的位置遠）
+	var near := (shooter as Fighter).near_recent(from, 5.0) if shooter is Fighter else from.distance_to(at) <= 5.0
+	if not near or (not self_hit and from.distance_to((target as Node3D).global_position) > MAX_SHOT_RANGE):
+		return false
+	if not self_hit and not _dmg_allowed(shooter_id, amount, amount == int(target.get(&"max_hp")), float(Time.get_ticks_msec())):
+		return false   # 每秒傷害超過額度（外掛狂送扣血）
+	if head and target.has_method(&"head_hit"):
+		target.head_hit()
+	target.take_damage(amount, shooter)
+	return true
+
+## 無限重生，不設命數。死亡的代價是節奏——等重生，而且蛋會掉在原地被別人撿走。
+## 勝負只有兩種：有人帶蛋撤離（那個人贏），或時間到（恐龍贏）。
+## 「打死恐龍」不算贏，不然三個牛仔會理性地先聯手弄死恐龍，跟互相競爭矛盾。
+func _on_died(killer: Node, who: Node) -> void:
+	var as_dino := who.is_in_group(&"dino")
+	if _over:   # 結束畫面時才死：不算勝負、不扣次數，但要排進重生單，下一局才生得回來（不然卡在觀戰）
+		_queue_respawn(who, as_dino)
+		return
+	var id := who.name.to_int()
+	_died_at[id] = [Time.get_ticks_msec(), who.global_position]   # 同歸於盡用（request_damage）
+	if not as_dino:
+		_cowboys -= 1
+	if _dino_sandbox and not as_dino:   # 恐龍沙盒的獵人打死就移除，不排重生（下面的 _queue_respawn 會原地生回來）
+		return
+	if party and not _sandbox:
+		party.on_died(killer, who)
+		return
+	if who.is_in_group(&"boss") and RULES[rules].boss_kill_wins and not _sandbox:
+		_end_round()
+		_finish.rpc("恐龍倒下了，所有牛仔獲勝！")
+		return
+	if not as_dino and _uses_lives() and _lives.has(id):
+		if int(_lives[id]) <= 0:
+			_out[id] = bool(who.get(&"bot"))   # 用完了：出局，不排重生
+			_broadcast_lives()
+			_announce_out.rpc(id)
+			_check_lives_end()
+			return
+		_lives[id] = int(_lives[id]) - 1
+		_broadcast_lives()
+	_queue_respawn(who, as_dino)
+
+func _queue_respawn(who: Node, as_dino: bool) -> void:
+	_respawn_queue.append({
+		"id": who.name.to_int(),
+		"dino": as_dino,
+		"bot": bool(who.get(&"bot")),
+		"walker": who.get(&"walker") == true,   # 恐龍沒有這個屬性，拿到 null
+		"patrol": [who.get(&"patrol_a"), who.get(&"patrol_b")],
+		# 沙盒的靶要生回原地，不然打死一次靶就散到地圖各處
+		"pos": who.global_position if _sandbox else Vector3.INF,
+		"yaw": who.rotation.y,
+		# 用比賽剩餘秒數計時，不用真實時間：遊戲時間跟真實時間不同步時（加速、卡頓）
+		# 重生才不會跟著跑掉
+		"at": _time_left - RESPAWN_DELAY,
+	})
+
+@rpc("authority", "call_local", "reliable")
+func _announce_out(id: int) -> void:
+	status.text = "你出局了，觀戰中" if id == multiplayer.get_unique_id() else "牛仔 %d 出局了" % id
+
+## 用佇列不用 await：回大廳時整個 Main 會被 free，await 醒來會踩到已釋放的物件。
+func _respawn_step() -> void:
+	for i in range(_respawn_queue.size() - 1, -1, -1):
+		var r: Dictionary = _respawn_queue[i]
+		if _time_left > float(r["at"]):
+			continue
+		_respawn_queue.remove_at(i)
+		var id: int = r["id"]
+		if id != 1 and not Fighter.is_bot_id(id) and not _offline and not multiplayer.get_peers().has(id):
+			continue  # 人已經離線就別生了（電腦不是連線，不用問）
+		var p := _add_player(DINO if r["dino"] else COWBOY, id)
+		p.set(&"bot", r["bot"])
+		if r["walker"]:
+			_make_walker(p, r["patrol"][0], r["patrol"][1])
+		if _solo_dino and id == 1:
+			_continues += 1
+		elif r["pos"] != Vector3.INF:
+			if id == 1:
+				p.global_position = cowboy_spawn_on_ground(SANDBOX_START, p, SANDBOX_START.y)
+			elif map.has_method(&"farm_nearest_spawn") and not r["dino"]:
+				p.global_position = cowboy_spawn_on_ground(r["pos"], p, 0.08)
+			else:
+				p.global_position = r["pos"]
+			p.rotation.y = r["yaw"]
+		if _sandbox and id == 1:
+			p.viewmodel.set_infinite()
+
+
+## 撤離是個人獲勝，所以每台機器顯示的字不一樣
+@rpc("authority", "call_local", "reliable")
+func _finish_egg(winner: int) -> void:
+	_finish("你帶著蛋撤離，獲勝！" if winner == multiplayer.get_unique_id()
+		else "牛仔 %d 帶著蛋撤離，你輸了" % winner)
+
+## 勝負畫面：畫面中間大字＋按鈕。在房間裡：15 秒後回房間，房主可以「同設定再來一場」「回房間」，大家都能「離開房間」。
+## 不在房間（測試組的對局）：照舊只有主機能重開一局。
+## msg 空的：派對、一般模式的最後結算（排名框是 party_hud 畫的），這裡只放按鈕，往下挪不擋排名
+@rpc("authority", "call_local", "reliable")
+func _finish(msg: String) -> void:
+	status.text = msg
+	var box: Control = $UI/Root/Result/Box
+	$UI/Root/Result/Box/Text.text = msg
+	$UI/Root/Result/Box/Text.visible = msg != ""
+	$UI/Root/Result/Dim.visible = msg != ""
+	box.offset_top = 160.0 if msg == "" else -110.0
+	box.offset_bottom = box.offset_top + 220.0
+	var host: bool = room.is_host() if room.active else multiplayer.is_server()
+	$UI/Root/Result/Box/RestartBtn.visible = host
+	$UI/Root/Result/Box/RestartBtn.text = "同設定再來一場" if room.active else "重開一局"
+	_back_btn.visible = host and room.active
+	$UI/Root/Result/Box/LobbyBtn.text = "離開房間" if room.active else "回到大廳"
+	if room.active:
+		$UI/Root/Result/Box/Sub.text = "%d 秒後回房間" % NEXT_ROUND_DELAY
+	else:
+		$UI/Root/Result/Box/Sub.text = "" if host else ("%d 秒後自動開下一局" % NEXT_ROUND_DELAY if _joined_dedicated() else "等開房的人重開一局")
+	menu.hide()
+	result.show()
+	_show_cursor()
+
+## 客戶端分不出主機是不是測試站，看連的 IP 是不是測試站的
+func _joined_dedicated() -> bool:
+	return TEST_SERVER != "" and ip_edit.text == TEST_SERVER
+
+func _on_restart_pressed() -> void:
+	if room.active:
+		room.ask(&"again")   # 房主：同設定再來一場（主機檢查是不是房主）
+	elif multiplayer.is_server():
+		_new_round()
+
+## 主機：同設定再來一場（房主在結算畫面按）
+func play_again() -> void:
+	if party:
+		party.start()
+	else:
+		_new_round()
+
+## 主機：一場打完回房間（結算 15 秒到、房主按「回房間」、Esc 的「結束這場，回房間」）。
+## 場上的人和這場的狀態清掉、拆掉的積木立回來，連線留著；房間的設定不動
+func back_to_room() -> void:
+	if not multiplayer.is_server() or not room.playing:
+		return
+	restore_terrain()
+	for p in players.get_children():
+		p.free()   # 同 _to_lobby：用 free，馬上再開才不會撞到同名節點（同步器跟著送刪除給大家）
+	_cowboys = 0
+	_over = false
+	_lives.clear()
+	_out.clear()
+	_held.clear()
+	_respawn_queue.clear()
+	_pilot_picked = false
+	_handover = 0
+	egg.carrier = 0
+	raptors.clear()
+	safe.reset(false)
+	room.playing = false
+	room.prepared.clear()   # 「準備」清掉，「想當恐龍」留著
+	_show_room()
+	room.push()
+
+## 每台：回到房間頁（主機在 back_to_room、客戶端收到房間「沒在打」時）
+func _show_room() -> void:
+	if party:   # 這場的回合、分數收掉（下一場開打時 _apply_rules 再建）
+		party.free()
+		party = null
+	menu.hide()
+	result.hide()
+	_match_hud.reset()
+	lobby.show()
+	lobby_go(&"room")
+	status.text = ""
+	_show_cursor()
+
+func _physics_process(delta: float) -> void:
+	if multiplayer.multiplayer_peer and multiplayer.is_server():
+		_net_pack_step()
+	if _dedicated and room.playing:   # 打到一半所有人都走了：等 EMPTY_END 秒沒人回來就回房間
+		_empty_for = _empty_for + delta if multiplayer.get_peers().is_empty() else 0.0
+		if _empty_for >= EMPTY_END and not _autoplay:
+			_empty_for = 0.0
+			back_to_room()
+			room_defaults_back()
+			room.push()
+			return
+	if _over and (_autoplay or room.active):   # 結算畫面：回房間（--autoplay 的專用伺服器開下一局）
+		_next_round -= delta
+		if _next_round <= 0.0:
+			if _autoplay:
+				_new_round()
+			else:
+				back_to_room()
+		return
+	if lobby.visible or _over or not multiplayer.is_server():
+		return
+	_respawn_step()
+	_pick_pilot()
+	if _sandbox:
+		# 沒有時間限制，但重生是用剩餘秒數排的，時間還是要走（不會歸零結束）
+		_time_left -= delta
+		return
+	if party:   # 派對模式的計時、蛋、重生、勝負都在 party.gd
+		var t := Time.get_ticks_usec() if Fighter.prof_on else 0
+		party.step(delta)
+		if Fighter.prof_on:
+			Fighter.prof_add(&"party.step（含小恐龍看）", t)
+		return
+	_time_left -= delta   # 沒有時限的模式也要走：重生是用剩餘秒數排的
+	if not RULES[rules].timer:
+		return
+	_egg_step(delta)
+	if int(_time_left) != _clock:
+		_clock = int(_time_left)
+		_set_clock.rpc(_clock)
+	if _time_left <= 0.0:
+		_over = true
+		_next_round = NEXT_ROUND_DELAY
+		_finish.rpc(RULES[rules].timeout_msg)
+
+## 拆過的積木（房子、掩體、樹）立回來（新的一局、派對的新的一場；主機呼叫）。回傳有沒有立回來的，有就烘導航
+func restore_terrain() -> bool:
+	var fixed := false
+	var farm := get_tree().get_first_node_in_group(&"farm_destruction")
+	if farm:
+		fixed = farm.restore_all()
+	for pane in get_tree().get_nodes_in_group(&"farm_fixed_glazing"):
+		if pane.broken:
+			pane.set_broken.rpc(false)
+			fixed = true
+	for t: ToyBuild in _toys:
+		if t.has_damage():
+			t.restore.rpc()
+			fixed = true
+	if fixed:
+		if map.has_method(&"farm_nearest_spawn"):
+			_farm_restore_frame = Engine.get_physics_frames() + 2
+		bake_nav(true)
+	return fixed
+
+func wait_for_spawn_ground() -> void:
+	# 恢復的木構件延後開啟碰撞。等物理世界同步，再檢查出生位置。
+	while Engine.get_physics_frames() < _farm_restore_frame:
+		await get_tree().physics_frame
+
+## 開下一局（開房的人按「重開一局」、或專用伺服器自動）：時間和蛋歸位、重生次數補滿，
+## 每個牛仔重生（刪掉重生，客戶端的位置才會跟著換），出局的人也回來；boss 回到離大家最遠的地方
+func _new_round() -> void:
+	if _waiting_to_restart:
+		return
+	restore_terrain()
+	if Engine.get_physics_frames() < _farm_restore_frame:
+		_waiting_to_restart = true
+		var peer := multiplayer.multiplayer_peer
+		await wait_for_spawn_ground()
+		_waiting_to_restart = false
+		if peer != multiplayer.multiplayer_peer or (lobby.visible and not _dedicated):
+			return
+	_over = false
+	var pending := _respawn_queue.duplicate()   # 一局結束時剛死、還在等重生的人（_enter_game 會清掉這張單）
+	_enter_game("專用伺服器" if _dedicated else "新的一局")
+	egg.extract = 0.0
+	_cowboys = 0
+	var comeback := _out.duplicate()   # 出局的人：還連著（或是 bot）就生回來
+	_lives.clear()
+	_out.clear()
+	_held.clear()   # 新的一局命數補滿，斷線時存的舊資料不能帶進來
+	_respawn_queue.clear()
+	var boss: Node3D = null
+	for p in players.get_children():
+		if p.is_in_group(&"boss"):
+			boss = p
+			continue
+		var id := p.name.to_int()
+		var scene: PackedScene = DINO if p.is_in_group(&"dino") else COWBOY
+		var bot: bool = p.get(&"bot") == true
+		var patrol := [p.get(&"patrol_a"), p.get(&"patrol_b")] if p.get(&"walker") == true else []
+		players.remove_child(p)
+		p.queue_free()
+		var q := _add_player(scene, id)
+		q.set(&"bot", bot)   # 開房的人按重開一局時場上可能有 bot 和移動標靶，要照原樣生回來
+		if patrol:
+			_make_walker(q, patrol[0], patrol[1])
+	for id: int in comeback:
+		if Fighter.is_bot_id(id) or id == 1 and not _dedicated or multiplayer.get_peers().has(id):
+			_add_player(COWBOY, id).set(&"bot", comeback[id])
+	# 等重生的人（含結束畫面時才死的）也要生回來：以前漏掉，那些人卡在觀戰，要回大廳重進（0.8.10 測試站回報）
+	for r: Dictionary in pending:
+		var id: int = r["id"]
+		if not players.has_node(NodePath(str(id))) and (Fighter.is_bot_id(id) or id == 1 and not _dedicated or multiplayer.get_peers().has(id)):
+			var q := _add_player(DINO if r["dino"] else COWBOY, id)
+			q.set(&"bot", r["bot"])
+			if r["walker"]:
+				_make_walker(q, r["patrol"][0], r["patrol"][1])
+	# 對抗模式：上一局操作尼諾拉的人變回牛仔，下一幀重抽（_pick_pilot）
+	_pilot_picked = false
+	if boss and boss.pilot != 0:
+		var old: int = boss.pilot
+		boss.pilot = 0
+		if (old == 1 and not _dedicated) or multiplayer.get_peers().has(old):
+			_add_player(COWBOY, old)
+	if RULES[rules].dino:
+		if boss == null:
+			spawn_boss()
+		else:
+			boss.global_position = boss_on_ground(_far_from_cowboys())
+			boss.reset_physics_interpolation()
+			boss.hp = boss.max_hp
+	_broadcast_lives()
+	_announce.rpc("新的一局開始！")
+
+@rpc("authority", "call_local", "reliable")
+func _announce(msg: String) -> void:
+	status.text = msg
+	result.hide()
+	_match_hud.on_announce()
+	if not lobby.visible:
+		Fighter.lock_mouse()
+
+@rpc("authority", "call_local", "reliable")
+func _set_clock(secs: int) -> void:
+	_clock = secs
+
+## 蛋的規則：牛仔靠近就撿走，持有者死掉就留在原地，帶進撤離區就贏。
+func farm_dropped_egg_position(feet: Vector3) -> Vector3:
+	# 持蛋時模型舉過頭頂。從腳邊往下找，橋下、樓上都應留在失手的那一層。
+	var query := PhysicsRayQueryParameters3D.create(feet + Vector3.UP * 0.18, Vector3(feet.x,-8.0,feet.z), 1 | Fighter.SOLID_LAYER)
+	var excluded: Array[RID] = []
+	for player in players.get_children():
+		if player is CollisionObject3D:
+			excluded.append(player.get_rid())
+	if safe: excluded.append(safe.get_rid())
+	query.exclude = excluded
+	var support := map.get_world_3d().direct_space_state.intersect_ray(query)
+	if support:
+		return support.position + Vector3.UP * 0.5
+	return _on_ground(Vector3(feet.x,0.5,feet.z))
+
+func _egg_step(delta: float) -> void:
+	if egg.carrier == 0:
+		egg.extract = 0.0
+		_claim_step(delta)
+		return
+
+	var holder := players.get_node_or_null(NodePath(str(egg.carrier)))
+	if holder == null:
+		if map.has_method(&"farm_nearest_spawn"):
+			egg.global_position = farm_dropped_egg_position(egg.global_position - Vector3.UP * EGG_HOLD_HEIGHT)
+			egg.reset_physics_interpolation()
+		egg.carrier = 0   # 持有者陣亡，蛋就掉在他最後的位置
+		egg.extract = 0.0
+		return
+	egg.global_position = holder.global_position + Vector3.UP * EGG_HOLD_HEIGHT
+
+	# 要在圈內連續待滿才算數。離開就歸零；敵人站在圈裡不會中斷。
+	if _dist_to_exit(egg.global_position) < EXIT_RADIUS:
+		egg.extract += delta
+		if egg.extract >= extract_seconds():
+			if party:   # 派對模式：回合結束、計分，不跳勝負畫面
+				party.extracted(egg.carrier)
+				return
+			_over = true
+			_next_round = NEXT_ROUND_DELAY
+			_finish_egg.rpc(egg.carrier)
+			return
+	else:
+		egg.extract = 0.0
+
+func _process(delta: float) -> void:
+	Fighter._frame_ms = Time.get_ticks_msec()   # 給 Fighter.after_hitch 判斷卡頓
+	# 主機停頓記錄：兩幀之間隔超過 50 毫秒就印出來（只在遊戲中印，大廳不算）；順便附上這段時間裡慢的工作
+	if multiplayer.has_multiplayer_peer() and multiplayer.is_server():
+		var now := Time.get_ticks_usec()
+		var gap := (now - _hitch_last_us) / 1000
+		if _hitch_last_us > 0 and gap > HITCH_MS and not lobby.visible:
+			print("主機停頓 %d 毫秒%s %s" % [gap, "（%s）" % _slow_work if _slow_work != "" else "", _hitch_detail()])
+		_hitch_last_us = now
+		_hitch_phys = Engine.get_physics_frames()
+	_slow_work = ""
+	_match_hud.track_frame_time(delta)
+	_diag_print(delta)
+	if BugReport.instance.take_new_error():
+		status.text = "遊戲記到一個錯誤，按 F8 存成回報檔（會複製到剪貼簿）"
+	var cam := get_viewport().get_camera_3d()
+	if _drift and cam:
+		_drift.global_position = cam.global_position
+	_match_hud.update_always()
+	# 連線還沒建立好就問 id 會噴錯
+	if lobby.visible or multiplayer.multiplayer_peer == null \
+			or multiplayer.multiplayer_peer.get_connection_status() != MultiplayerPeer.CONNECTION_CONNECTED:
+		return
+	var me := _me()
+	# 保險：遊戲中、沒開選單和勝負畫面，游標卻沒鎖住（系統自己放掉的，0.8.1 回饋「舉槍後跑出游標」），就鎖回去。
+	# 視窗沒焦點時鎖不住，等切回來再鎖
+	if not menu.visible and not result.visible and not _buy_menu.visible and not _safe_panel.visible and not _party_hud.minimap.visible and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED \
+			and get_window().has_focus():
+		Fighter.lock_mouse()
+	_match_hud.update_match(me)
+	_match_hud.update_text(me)
+
+## 出局了（只能觀戰）：派對模式看 Party 的命數（每回合補滿），其他模式看 _out
+func _is_out(id: int) -> bool:
+	return int(party.lives.get(id, 1)) <= 0 if party else _out.has(id)
+
+var debug_hud := false   # F3 開關右上角的開發資訊（match_hud.gd 的 update_always）
+
+## 大廳存過的 IP：「＋」把目前的存起來，「⋯」選一個填回去
+func _load_saved_ips() -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(saved_ips_path)   # 第一次開沒有檔案，當作空的
+	var popup := saved_ips.get_popup()
+	popup.clear()
+	for a: String in cfg.get_value("ips", "list", []):
+		popup.add_item(a)
+	saved_ips.disabled = popup.item_count == 0
+
+func _on_save_ip_pressed() -> void:
+	var a := ip_edit.text.strip_edges()
+	var cfg := ConfigFile.new()
+	cfg.load(saved_ips_path)
+	var list: Array = cfg.get_value("ips", "list", [])
+	if a == "" or list.has(a):
+		return
+	list.append(a)
+	cfg.set_value("ips", "list", list)
+	cfg.save(saved_ips_path)
+	_load_saved_ips()
+	status.text = "存好了：" + a
+
+## 主機：每場（派對是每回合）從撤離區候選裡隨機開 EXITS_OPEN 個，存進 egg.exits 同步給大家
+func roll_exits() -> void:
+	var idx := range(map._exits.size())
+	idx.shuffle()
+	var mask := 0
+	for i: int in idx.slice(0, EXITS_OPEN):
+		mask |= 1 << i
+	egg.exits = mask
+
+## 顯示開著的撤離區（每台都跑）：沒有蛋的模式、沙盒全藏（灰盒南邊那個在沙盒靶道上）
+func _show_exits() -> void:
+	var on: int = egg.exits if RULES[rules].egg and not _sandbox else 0
+	var known: bool = party == null or (multiplayer.has_multiplayer_peer() and party.knows_exits())
+	map.show_exits(on, on if known else 0)   # 派對：不知道撤離點的獵人看不到光圈和水管（碰撞照舊）
+
+func _dist_to_exit(p: Vector3) -> float:
+	var best := 9999.0
+	for e: Vector3 in _exits:
+		best = minf(best, Vector2(p.x - e.x, p.z - e.z).length())
+	return best
+
+# --- 場地 ---
+
+
+## 撿蛋、撤離要待滿多久：派對模式用表裡的派對數字，其他模式用上面的常數
+func pickup_seconds() -> float:
+	return Balance.num("party_pickup_seconds") if party else PICKUP_SECONDS
+
+func extract_seconds() -> float:
+	return Balance.num("party_extract_seconds") if party else EXTRACT_SECONDS
+
+## 撿蛋不是碰到就拿，要在旁邊連續待滿 PICKUP_SECONDS。
+## 換人或走開就歸零——跟撤離同一個道理，讓拿蛋變成要承諾的動作。
+func _claim_step(delta: float) -> void:
+	if safe.locked():   # 保險箱還沒開，蛋撿不到
+		return
+	var near: Node3D = null
+	for p in players.get_children():
+		if p.is_in_group(&"dino") or p.hp <= 0:   # 倒地的（團隊模式）撿不到
+			continue
+		var d := Vector2(egg.global_position.x - p.global_position.x, egg.global_position.z - p.global_position.z).length()
+		if d < pickup_range() and absf(egg.global_position.y - p.global_position.y) < PICKUP_HEIGHT and (near == null
+				or d < Vector2(egg.global_position.x - near.global_position.x, egg.global_position.z - near.global_position.z).length()):
+			near = p
+	if near == null:
+		_claimer = 0
+		egg.pickup = 0.0
+		return
+	var id := near.name.to_int()
+	if id != _claimer:
+		_claimer = id
+		egg.pickup = 0.0
+	egg.pickup += delta
+	if egg.pickup >= pickup_seconds():
+		egg.carrier = id
+		egg.pickup = 0.0
+		_claimer = 0
+
+# Godot 內建字型沒有中文，用系統字型頂著
+func _use_cjk_font() -> void:
+	var f := SystemFont.new()
+	f.font_names = PackedStringArray(["PingFang TC", "Microsoft JhengHei",
+		"Noto Sans CJK TC", "Heiti TC", "Sans-Serif"])
+	var th := Theme.new()
+	th.default_font = f
+	th.default_font_size = 18
+	$UI/Root.theme = th
+
+func _local_ips() -> String:
+	var out: Array[String] = []
+	for a: String in IP.get_local_addresses():
+		# 結尾 .0 是網段不是能連的位址（虛擬網卡常有），列出來只會讓人填錯
+		if (a.begins_with("192.168.") or a.begins_with("10.") or a.begins_with("172.")) and not a.ends_with(".0"):
+			out.append(a)
+	return ", ".join(out) if not out.is_empty() else "自己查 ifconfig"

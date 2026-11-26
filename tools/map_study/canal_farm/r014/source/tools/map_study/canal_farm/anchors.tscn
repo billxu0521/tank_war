@@ -1,0 +1,114 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://levels/level_item.gd" id="1"]
+
+[node name="CanalFarmAnchors" type="Node3D"]
+
+[node name="SafeCandidates" type="Node3D" parent="."]
+
+[node name="Box0" type="Marker3D" parent="SafeCandidates"]
+position = Vector3(42, 0, -16)
+script = ExtResource("1")
+kind = "safe_spot"
+
+[node name="Box1" type="Marker3D" parent="SafeCandidates"]
+position = Vector3(29, 0, 29)
+script = ExtResource("1")
+kind = "safe_spot"
+
+[node name="Box2" type="Marker3D" parent="SafeCandidates"]
+position = Vector3(-36, 0, 35)
+script = ExtResource("1")
+kind = "safe_spot"
+
+[node name="Box3" type="Marker3D" parent="SafeCandidates"]
+position = Vector3(-39.45, 0, -37.16)
+script = ExtResource("1")
+kind = "safe_spot"
+
+[node name="InitialSpawns" type="Node3D" parent="."]
+
+[node name="NW" type="Marker3D" parent="InitialSpawns"]
+position = Vector3(-68, 0, -74)
+script = ExtResource("1")
+kind = "spawn"
+
+[node name="NE" type="Marker3D" parent="InitialSpawns"]
+position = Vector3(60, 0, -60)
+script = ExtResource("1")
+kind = "spawn"
+
+[node name="SE" type="Marker3D" parent="InitialSpawns"]
+position = Vector3(80, 0, 44)
+script = ExtResource("1")
+kind = "spawn"
+
+[node name="SW" type="Marker3D" parent="InitialSpawns"]
+position = Vector3(-42, 0, 79)
+script = ExtResource("1")
+kind = "spawn"
+
+[node name="Dinosaur" type="Marker3D" parent="InitialSpawns"]
+position = Vector3(0, 0, 0)
+script = ExtResource("1")
+kind = "dino_spawn"
+
+[node name="ExitCandidates" type="Node3D" parent="."]
+
+[node name="East" type="Marker3D" parent="ExitCandidates"]
+position = Vector3(62, 0, 0)
+
+[node name="West" type="Marker3D" parent="ExitCandidates"]
+position = Vector3(-62, 0, 0)
+
+[node name="North" type="Marker3D" parent="ExitCandidates"]
+position = Vector3(0, 0, -51)
+
+[node name="South" type="Marker3D" parent="ExitCandidates"]
+position = Vector3(2, 0, 64)
+
+[node name="ReturnZones" type="Node3D" parent="."]
+
+[node name="NW" type="Node3D" parent="ReturnZones"]
+
+[node name="Pad1" type="Marker3D" parent="ReturnZones/NW"]
+position = Vector3(-77, 0, -55)
+
+[node name="Pad2" type="Marker3D" parent="ReturnZones/NW"]
+position = Vector3(-68, 0, -51)
+
+[node name="Pad3" type="Marker3D" parent="ReturnZones/NW"]
+position = Vector3(-59, 0, -66)
+
+[node name="NE" type="Node3D" parent="ReturnZones"]
+
+[node name="Pad1" type="Marker3D" parent="ReturnZones/NE"]
+position = Vector3(55, 0, -75)
+
+[node name="Pad2" type="Marker3D" parent="ReturnZones/NE"]
+position = Vector3(66, 0, -57)
+
+[node name="Pad3" type="Marker3D" parent="ReturnZones/NE"]
+position = Vector3(70, 0, -66)
+
+[node name="SE" type="Node3D" parent="ReturnZones"]
+
+[node name="Pad1" type="Marker3D" parent="ReturnZones/SE"]
+position = Vector3(49, 0, 61)
+
+[node name="Pad2" type="Marker3D" parent="ReturnZones/SE"]
+position = Vector3(70, 0, 61)
+
+[node name="Pad3" type="Marker3D" parent="ReturnZones/SE"]
+position = Vector3(63, 0, 70)
+
+[node name="SW" type="Node3D" parent="ReturnZones"]
+
+[node name="Pad1" type="Marker3D" parent="ReturnZones/SW"]
+position = Vector3(-75, 0, 62)
+
+[node name="Pad2" type="Marker3D" parent="ReturnZones/SW"]
+position = Vector3(-66, 0, 64)
+
+[node name="Pad3" type="Marker3D" parent="ReturnZones/SW"]
+position = Vector3(-56, 0, 52)

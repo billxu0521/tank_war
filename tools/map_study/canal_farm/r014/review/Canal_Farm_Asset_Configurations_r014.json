@@ -1,0 +1,211 @@
+{
+  "revision": "Canal Farm A v3.1 r014",
+  "status": "playtest_candidate_supplement",
+  "catalog_base_sha256": "bfab6c6467077079572b18189894a3d32bcf3698595ef592bb205cfc3b3056b3",
+  "configurations": {
+    "VEG-0010_V00_L00_NONE_STD": {
+      "name": "格蘭德河棉白楊 / Rio Grande Cottonwood",
+      "shape": "高分叉、闊冠，配置名義高度 8.5 至 11.2 m",
+      "look": "樹皮 #7b624b，葉冠 #788f49",
+      "sources": [
+        "levels/farm_north_ditch_trees/tree_forms.gd",
+        "levels/farm_north_ditch_trees/install.gd",
+        "levels/farm_style_environment/install.gd",
+        "levels/farm_style_environment/tree.gdshader",
+        "toy_build.gd"
+      ],
+      "revision": "r014",
+      "organization": "NONE",
+      "regional_adjustment": "STD",
+      "verification": "場景或安裝實作與來源讀回；跨圖移植、目標平台實玩須另驗。",
+      "origin_axes": "根頸，Y 向上；株位記 X、Z，偏航繞 Y 軸。",
+      "source_use": "工程程序生成網格與頂點色，依專案素材條件使用。",
+      "map_install_dependency": "levels/farm_north_ditch_trees/ditch.gd"
+    },
+    "VEG-0011_V00_L00_NONE_STD": {
+      "name": "單籽圓柏成樹 / Mature One-seed Juniper",
+      "shape": "低分枝、不對稱樹冠，配置名義高度 5.3 至 6.9 m",
+      "look": "樹皮 #765749，葉冠 #51694e",
+      "sources": [
+        "levels/farm_north_ditch_trees/tree_forms.gd",
+        "levels/farm_north_ditch_trees/install.gd",
+        "levels/farm_style_environment/install.gd",
+        "levels/farm_style_environment/tree.gdshader",
+        "toy_build.gd"
+      ],
+      "revision": "r014",
+      "organization": "NONE",
+      "regional_adjustment": "STD",
+      "verification": "場景或安裝實作與來源讀回；跨圖移植、目標平台實玩須另驗。",
+      "origin_axes": "根頸，Y 向上；株位記 X、Z，偏航繞 Y 軸。",
+      "source_use": "工程程序生成網格與頂點色，依專案素材條件使用。",
+      "map_install_dependency": "levels/farm_north_ditch_trees/ditch.gd"
+    },
+    "PRP-0001_V02_L03_NONE_STD": {
+      "name": "果場封運木箱 / Closed Orchard Transit Crate",
+      "shape": "斜撐與封蓋，沿用 kits.glb 的 Crate 造型；0.788 × 0.686 × 0.475 m（長、寬、高），底面中央為原點。",
+      "look": "單一 Orchard_kit_wood 表面，頂點色決定板面色，雙面，粗糙度 0.9，金屬度 0。",
+      "sources": [
+        "models/orchard_loading/closed_crate.glb",
+        "models/orchard_loading/loading_station.tscn",
+        "models/orchard_loading/station.gd",
+        "models/orchard_loading/stack.gd",
+        "levels/farm_destruction/working_crates.gd",
+        "models/kits.glb"
+      ],
+      "revision": "r014",
+      "organization": "NONE",
+      "regional_adjustment": "STD",
+      "verification": "場景或安裝實作與來源讀回；跨圖移植、目標平台實玩須另驗。",
+      "source_use": "工程內製。blender/orchard_loading/build.py 利用 models/kits.glb 原件／色盤及 models/orchard_loading/layout.json 製作。依原工程素材條件使用。"
+    },
+    "PRP-0001_V03_L03_NONE_STD": {
+      "name": "果場開口週轉筐 / Open Orchard Lug",
+      "shape": "板條、提孔與四角堆疊柱，無蓋；0.788 × 0.686 × 0.475 m（長、寬、高），底面中央為原點。",
+      "look": "單一 Orchard_kit_wood 表面，頂點色決定板面色，雙面，粗糙度 0.9，金屬度 0。",
+      "sources": [
+        "models/orchard_loading/open_crate.glb",
+        "models/orchard_loading/loading_station.tscn",
+        "models/orchard_loading/station.gd",
+        "models/orchard_loading/stack.gd",
+        "levels/farm_destruction/working_crates.gd",
+        "models/kits.glb"
+      ],
+      "revision": "r014",
+      "organization": "NONE",
+      "regional_adjustment": "STD",
+      "verification": "場景或安裝實作與來源讀回；跨圖移植、目標平台實玩須另驗。",
+      "source_use": "工程內製。blender/orchard_loading/build.py 利用 models/kits.glb 原件／色盤及 models/orchard_loading/layout.json 製作。依原工程素材條件使用。"
+    }
+  },
+  "tree_instances": [
+    {
+      "key": "Cottonwood01",
+      "configuration": "VEG-0010_V00_L00_NONE_STD",
+      "x_m": -76.0,
+      "z_m": 15.0,
+      "nominal_height_m": 10.8,
+      "yaw_rad": 0.23
+    },
+    {
+      "key": "Cottonwood02",
+      "configuration": "VEG-0010_V00_L00_NONE_STD",
+      "x_m": -72.0,
+      "z_m": 15.4,
+      "nominal_height_m": 9.2,
+      "yaw_rad": 1.19
+    },
+    {
+      "key": "Cottonwood03",
+      "configuration": "VEG-0010_V00_L00_NONE_STD",
+      "x_m": -68.0,
+      "z_m": 16.0,
+      "nominal_height_m": 11.2,
+      "yaw_rad": -0.34
+    },
+    {
+      "key": "Cottonwood04",
+      "configuration": "VEG-0010_V00_L00_NONE_STD",
+      "x_m": -65.0,
+      "z_m": 17.8,
+      "nominal_height_m": 8.5,
+      "yaw_rad": 2.05
+    },
+    {
+      "key": "Cottonwood05",
+      "configuration": "VEG-0010_V00_L00_NONE_STD",
+      "x_m": -61.0,
+      "z_m": 18.5,
+      "nominal_height_m": 9.7,
+      "yaw_rad": 0.71
+    },
+    {
+      "key": "Juniper01",
+      "configuration": "VEG-0011_V00_L00_NONE_STD",
+      "x_m": -55.0,
+      "z_m": -81.0,
+      "nominal_height_m": 6.7,
+      "yaw_rad": 1.87
+    },
+    {
+      "key": "Juniper02",
+      "configuration": "VEG-0011_V00_L00_NONE_STD",
+      "x_m": -51.4,
+      "z_m": -78.9,
+      "nominal_height_m": 5.3,
+      "yaw_rad": -0.42
+    },
+    {
+      "key": "Juniper03",
+      "configuration": "VEG-0011_V00_L00_NONE_STD",
+      "x_m": -47.0,
+      "z_m": -81.1,
+      "nominal_height_m": 6.9,
+      "yaw_rad": 0.48
+    },
+    {
+      "key": "Juniper04",
+      "configuration": "VEG-0011_V00_L00_NONE_STD",
+      "x_m": -45.7,
+      "z_m": -76.9,
+      "nominal_height_m": 5.9,
+      "yaw_rad": 2.25
+    },
+    {
+      "key": "Juniper05",
+      "configuration": "VEG-0011_V00_L00_NONE_STD",
+      "x_m": -49.0,
+      "z_m": -73.3,
+      "nominal_height_m": 6.2,
+      "yaw_rad": -1.14
+    }
+  ],
+  "loading_station_scene_bin_instances": {
+    "open": 32,
+    "closed": 10
+  },
+  "yard_stack_recipe_mesh_instances": {
+    "Part048": 30,
+    "Part049": 50
+  },
+  "masonry_mesh_nodes": {
+    "Heap": 51,
+    "Seat": 58,
+    "Tool": 3
+  },
+  "runtime_source_sha256": {
+    "levels/farm_destruction/working_crates.gd": "c4a991d9785ebdae09024c8d3605ae8d6b8e6d63446fbb70a5d8df5942e2ee01",
+    "levels/farm_grain_drive/Edits.json": "9b60f09ade531f8c8eb0370103f711bb1807fdee9462f35bbb50fa3336c81cff",
+    "levels/farm_grain_drive/North.json": "9969392fd0bb6faabbed1fdeb411b2a1d0eb680a95def0ce4e559de6b2920469",
+    "levels/farm_grain_drive/South.json": "f914a9a519fa014945f32af8e926823c50257ab6ae8562a9d8cb869987212b55",
+    "levels/farm_grain_drive/baked/Edits.scn": "3fdd22cb684d17ac52fd209b6714f1dcc9bf0d10f4de874b623ccbead19adc6b",
+    "levels/farm_grain_drive/baked/North.scn": "91943e753a81c847ab2ce468bd3a4f3d084195a00f4c942bbc6a84848f58d7b9",
+    "levels/farm_grain_drive/baked/South.scn": "b481a5664f2f0daf645004fab864d2eec41d4efc33ca1694dda66ba9e1544900",
+    "levels/farm_grain_drive/install.gd": "54124e4d44c920f0ec459fff9e31c3f72b8356302137aecdceba86a6a45897f4",
+    "levels/farm_masonry/install.gd": "f748d3b96397865b24943b9fad0421af9b2a02348426a2eaa9948346c84d1d4f",
+    "levels/farm_masonry/parts.glb": "aac5a09765cad742f005a669e5d7acc5d82859e6aca2306be2a005137e4c787f",
+    "levels/farm_north_ditch_trees/ditch.gd": "ab78f47a271179795d198bd605d037d312c22c2fecb438e005f5363da39ac58e",
+    "levels/farm_north_ditch_trees/install.gd": "9d293e5c8a96ddfbd92cd4a12c19ae8452ce6bcbe9be34a177a222ad52a54fa8",
+    "levels/farm_north_ditch_trees/tree_forms.gd": "4f16fbf3e3a2376640204f773844fa30c7b07cb9f5be609ab4f15bf051ec582c",
+    "levels/farm_stock_assemblies/stock/catalog.json": "5edf285366ea66158ac7625a34befabfbdc9c01f13d36de8bd9c8e3db817383c",
+    "levels/farm_style/bridge_details.glb": "a18ad13718588bacb4f8c62bc13907b3207404a1b2da09e77906f6ee945f7842",
+    "levels/farm_style/full_map.gd": "5e5bded63fa4122546f76f298680002fe1c403d4125a87d4408d7bee3badce34",
+    "levels/farm_style_buildings/farm_parts.glb": "90462b0b424578028f300206207a12fd972a27f526900b755b1e8ba3f374f818",
+    "levels/farm_style_environment/install.gd": "a65a45137b20a3e5970687e6cc674ea13555a066f96a879089a1a29f12637875",
+    "levels/farm_style_environment/tree.gdshader": "a4e53dcc0ea8ead0a8b129c33f396006fe707d39939e7b0faba9b25f5fe831f1",
+    "levels/farm_wagon_parts/fallen.gd": "386d328e590c983273796f39d9d6ba3a96d501bb748eef27acc4190db39d99aa",
+    "levels/farm_wagon_parts/farm.scn": "f6c3e3226996c20a8ea48a56ca4a1a17a3f2f5beda927c74a780731c5fa399c2",
+    "levels/farm_wagon_parts/install.gd": "9b5f8f4e0151e9be8aa88878a6a47acdaeea5d0ef8073435d7acffc5774a0da5",
+    "levels/farm_wagon_parts/wharf.scn": "0eb667319ffe4d0a51689beec605bb682d0b95ff2468c9cb982a37d6bf65ede9",
+    "levels/farm_yard_loads/install.gd": "106ece47568d8dc037599cb397b90ccb3fcbbe6810d189b30e6bce5dc11464aa",
+    "levels/farm_yard_loads/parts.glb": "7201228a4cceb6c43b38c5585a97c817402cfe8a24c3d3642e6fb02766689889",
+    "levels/farm_yard_loads/recipes.json": "3a37ea98955986886e7064a2ae20e6af03bd6dc3f5e989feeb06642e06840ce7",
+    "models/kits.glb": "12aa3b6307a299a8de3fcd5354da9eca882c8ffe69dc06dabfc5f420178411ff",
+    "models/orchard_loading/closed_crate.glb": "8c04c0d3518c4a3c39e2350109f235bc419b73b7de4ccdd6ef6f580cb0e9ce6a",
+    "models/orchard_loading/loading_station.tscn": "34326b8e1323c80c155e5224fa01bb1af5d47a8cf0d4cf25300380f5c5685d6d",
+    "models/orchard_loading/open_crate.glb": "6a6099bfad7aba9b1d1344a13f0b8dc90e314e48929dbed8205a5e258262716f",
+    "models/orchard_loading/stack.gd": "85f9a092803e29b6d92d0916ac68c554f5092e1edfab7466f61d0a80f1f983f0",
+    "models/orchard_loading/station.gd": "c4d33588fcf785f0b83fee7eec5654cb63ca1cbb3b9d1b8b64d62fc1ed7f1f09",
+    "toy_build.gd": "05e6f6405882573928c345772dbae8fd0e0accbcfeb47b870151b254738e6af7"
+  }
+}

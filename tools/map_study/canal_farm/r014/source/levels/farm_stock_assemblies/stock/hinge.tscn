@@ -1,0 +1,27 @@
+[gd_scene format=3]
+
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/iron.tres" id="mat"]
+
+[sub_resource type="BoxMesh" id="M0"]
+material = ExtResource("mat")
+size = Vector3(0.94, 0.52, 0.28)
+
+[sub_resource type="CylinderMesh" id="M1"]
+material = ExtResource("mat")
+top_radius = 0.11
+bottom_radius = 0.11
+height = 1
+radial_segments = 10
+rings = 1
+
+[node name="hinge" type="Node3D"]
+metadata/asset = "MOD-0013"
+
+[node name="Part0" type="MeshInstance3D" parent="."]
+mesh = SubResource("M0")
+position = Vector3(0.03, 0, 0)
+
+[node name="Part1" type="MeshInstance3D" parent="."]
+mesh = SubResource("M1")
+position = Vector3(-0.39, 0, 0)
+scale = Vector3(1, 1, 4.545454545454546)

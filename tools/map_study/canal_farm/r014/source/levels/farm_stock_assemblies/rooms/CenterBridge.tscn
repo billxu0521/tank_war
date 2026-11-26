@@ -1,0 +1,2876 @@
+[gd_scene format=3]
+
+[ext_resource type="ArrayMesh" path="res://levels/farm_stock_assemblies/stock/beam.res" id="beam"]
+[ext_resource type="ArrayMesh" path="res://levels/farm_stock_assemblies/stock/brace.res" id="brace"]
+[ext_resource type="ArrayMesh" path="res://levels/farm_stock_assemblies/stock/plank.res" id="plank"]
+[ext_resource type="ArrayMesh" path="res://levels/farm_stock_assemblies/stock/post.res" id="post"]
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/dark.tres" id="paint_dark"]
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/pine.tres" id="paint_pine"]
+
+[node name="CenterBridge" type="Node3D"]
+
+[node name="Stringer0North" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Stringer0North"
+[node name="Member_000" type="MeshInstance3D" parent="Stringer0North"]
+mesh = ExtResource("brace")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0.25, 0, 0, 0, 0.214, 9, 0, 0, -5.77, -0.243, -4.5)
+metadata/stock = "brace"
+metadata/asset = "MOD-0005"
+
+
+[node name="Stringer0South" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Stringer0South"
+[node name="Member_000" type="MeshInstance3D" parent="Stringer0South"]
+mesh = ExtResource("brace")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0.25, 0, 0, 0, 0.214, 9, 0, 0, -5.77, -0.243, 4.5)
+metadata/stock = "brace"
+metadata/asset = "MOD-0005"
+
+
+[node name="Stringer1North" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Stringer1North"
+[node name="Member_000" type="MeshInstance3D" parent="Stringer1North"]
+mesh = ExtResource("brace")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0.25, 0, 0, 0, 0.214, 9, 0, 0, -4, -0.243, -4.5)
+metadata/stock = "brace"
+metadata/asset = "MOD-0005"
+
+
+[node name="Stringer1South" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Stringer1South"
+[node name="Member_000" type="MeshInstance3D" parent="Stringer1South"]
+mesh = ExtResource("brace")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0.25, 0, 0, 0, 0.214, 9, 0, 0, -4, -0.243, 4.5)
+metadata/stock = "brace"
+metadata/asset = "MOD-0005"
+
+
+[node name="Stringer2North" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Stringer2North"
+[node name="Member_000" type="MeshInstance3D" parent="Stringer2North"]
+mesh = ExtResource("brace")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0.25, 0, 0, 0, 0.214, 9, 0, 0, -2, -0.243, -4.5)
+metadata/stock = "brace"
+metadata/asset = "MOD-0005"
+
+
+[node name="Stringer2South" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Stringer2South"
+[node name="Member_000" type="MeshInstance3D" parent="Stringer2South"]
+mesh = ExtResource("brace")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0.25, 0, 0, 0, 0.214, 9, 0, 0, -2, -0.243, 4.5)
+metadata/stock = "brace"
+metadata/asset = "MOD-0005"
+
+
+[node name="Stringer3North" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Stringer3North"
+[node name="Member_000" type="MeshInstance3D" parent="Stringer3North"]
+mesh = ExtResource("brace")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0.25, 0, 0, 0, 0.214, 9, 0, 0, 0, -0.243, -4.5)
+metadata/stock = "brace"
+metadata/asset = "MOD-0005"
+
+
+[node name="Stringer3South" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Stringer3South"
+[node name="Member_000" type="MeshInstance3D" parent="Stringer3South"]
+mesh = ExtResource("brace")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0.25, 0, 0, 0, 0.214, 9, 0, 0, 0, -0.243, 4.5)
+metadata/stock = "brace"
+metadata/asset = "MOD-0005"
+
+
+[node name="Stringer4North" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Stringer4North"
+[node name="Member_000" type="MeshInstance3D" parent="Stringer4North"]
+mesh = ExtResource("brace")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0.25, 0, 0, 0, 0.214, 9, 0, 0, 2, -0.243, -4.5)
+metadata/stock = "brace"
+metadata/asset = "MOD-0005"
+
+
+[node name="Stringer4South" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Stringer4South"
+[node name="Member_000" type="MeshInstance3D" parent="Stringer4South"]
+mesh = ExtResource("brace")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0.25, 0, 0, 0, 0.214, 9, 0, 0, 2, -0.243, 4.5)
+metadata/stock = "brace"
+metadata/asset = "MOD-0005"
+
+
+[node name="Stringer5North" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Stringer5North"
+[node name="Member_000" type="MeshInstance3D" parent="Stringer5North"]
+mesh = ExtResource("brace")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0.25, 0, 0, 0, 0.214, 9, 0, 0, 4, -0.243, -4.5)
+metadata/stock = "brace"
+metadata/asset = "MOD-0005"
+
+
+[node name="Stringer5South" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Stringer5South"
+[node name="Member_000" type="MeshInstance3D" parent="Stringer5South"]
+mesh = ExtResource("brace")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0.25, 0, 0, 0, 0.214, 9, 0, 0, 4, -0.243, 4.5)
+metadata/stock = "brace"
+metadata/asset = "MOD-0005"
+
+
+[node name="Stringer6North" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Stringer6North"
+[node name="Member_000" type="MeshInstance3D" parent="Stringer6North"]
+mesh = ExtResource("brace")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0.25, 0, 0, 0, 0.214, 9, 0, 0, 5.77, -0.243, -4.5)
+metadata/stock = "brace"
+metadata/asset = "MOD-0005"
+
+
+[node name="Stringer6South" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Stringer6South"
+[node name="Member_000" type="MeshInstance3D" parent="Stringer6South"]
+mesh = ExtResource("brace")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0.25, 0, 0, 0, 0.214, 9, 0, 0, 5.77, -0.243, 4.5)
+metadata/stock = "brace"
+metadata/asset = "MOD-0005"
+
+
+[node name="Lane0Span0" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Lane0Span0"
+[node name="BridgePlank_000" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, -8.85)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_001" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, -8.85)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_002" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, -8.55)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_003" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, -8.55)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_004" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, -8.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_005" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, -8.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_006" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, -7.95)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_007" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, -7.95)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_008" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, -7.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_009" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, -7.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_010" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, -7.35)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_011" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, -7.35)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_012" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, -7.05)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_013" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, -7.05)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_014" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, -6.75)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_015" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, -6.75)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_016" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, -6.45)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_017" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, -6.45)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_018" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, -6.15)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_019" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, -6.15)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_020" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, -5.85)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_021" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, -5.85)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_022" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, -5.55)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_023" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, -5.55)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_024" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, -5.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_025" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, -5.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_026" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, -4.95)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_027" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, -4.95)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_028" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, -4.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_029" type="MeshInstance3D" parent="Lane0Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, -4.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+
+[node name="Lane0Span1" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Lane0Span1"
+[node name="BridgePlank_000" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -5, -0.068, -4.350714)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_001" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -3, -0.068, -4.350714)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_002" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -5, -0.068, -4.052143)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_003" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -3, -0.068, -4.052143)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_004" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -5, -0.068, -3.753571)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_005" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -3, -0.068, -3.753571)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_006" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -5, -0.068, -3.455)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_007" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -3, -0.068, -3.455)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_008" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -5, -0.068, -3.156429)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_009" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -3, -0.068, -3.156429)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_010" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -5, -0.068, -2.857857)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_011" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -3, -0.068, -2.857857)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_012" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -5, -0.068, -2.559286)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_013" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -3, -0.068, -2.559286)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_014" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -5, -0.068, -2.260714)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_015" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -3, -0.068, -2.260714)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_016" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -5, -0.068, -1.962143)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_017" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -3, -0.068, -1.962143)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_018" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -5, -0.068, -1.663572)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_019" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -3, -0.068, -1.663572)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_020" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -5, -0.068, -1.365)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_021" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -3, -0.068, -1.365)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_022" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -5, -0.068, -1.066429)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_023" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -3, -0.068, -1.066429)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_024" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -5, -0.068, -0.7678573)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_025" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -3, -0.068, -0.7678573)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_026" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -5, -0.068, -0.4692859)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_027" type="MeshInstance3D" parent="Lane0Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -3, -0.068, -0.4692859)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+
+[node name="Lane0Span2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Lane0Span2"
+[node name="BridgePlank_000" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -5, -0.068, -0.1693752)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_001" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -3, -0.068, -0.1693752)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_002" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -5, -0.068, 0.1318748)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_003" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -3, -0.068, 0.1318748)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_004" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -5, -0.068, 0.4331249)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_005" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -3, -0.068, 0.4331249)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_006" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -5, -0.068, 0.7343749)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_007" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -3, -0.068, 0.7343749)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_008" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -5, -0.068, 1.035625)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_009" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -3, -0.068, 1.035625)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_010" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -5, -0.068, 1.336875)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_011" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -3, -0.068, 1.336875)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_012" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -5, -0.068, 1.638125)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_013" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -3, -0.068, 1.638125)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_014" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -5, -0.068, 1.939375)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_015" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -3, -0.068, 1.939375)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_016" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -5, -0.068, 2.240625)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_017" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -3, -0.068, 2.240625)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_018" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -5, -0.068, 2.541875)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_019" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -3, -0.068, 2.541875)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_020" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -5, -0.068, 2.843125)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_021" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -3, -0.068, 2.843125)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_022" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -5, -0.068, 3.144375)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_023" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -3, -0.068, 3.144375)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_024" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -5, -0.068, 3.445625)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_025" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -3, -0.068, 3.445625)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_026" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -5, -0.068, 3.746875)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_027" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -3, -0.068, 3.746875)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_028" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -5, -0.068, 4.048125)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_029" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -3, -0.068, 4.048125)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_030" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -5, -0.068, 4.349375)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_031" type="MeshInstance3D" parent="Lane0Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -3, -0.068, 4.349375)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+
+[node name="Lane0Span3" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Lane0Span3"
+[node name="BridgePlank_000" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, 4.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_001" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, 4.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_002" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, 4.95)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_003" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, 4.95)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_004" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, 5.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_005" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, 5.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_006" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, 5.55)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_007" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, 5.55)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_008" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, 5.85)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_009" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, 5.85)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_010" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, 6.15)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_011" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, 6.15)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_012" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, 6.45)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_013" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, 6.45)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_014" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, 6.75)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_015" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, 6.75)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_016" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, 7.05)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_017" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, 7.05)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_018" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, 7.35)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_019" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, 7.35)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_020" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, 7.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_021" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, 7.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_022" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, 7.95)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_023" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, 7.95)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_024" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, 8.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_025" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, 8.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_026" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, 8.55)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_027" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, 8.55)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_028" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -5, -0.068, 8.85)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_029" type="MeshInstance3D" parent="Lane0Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -3, -0.068, 8.85)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+
+[node name="Lane1Span0" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Lane1Span0"
+[node name="BridgePlank_000" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, -8.85)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_001" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, -8.85)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_002" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, -8.55)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_003" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, -8.55)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_004" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, -8.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_005" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, -8.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_006" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, -7.95)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_007" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, -7.95)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_008" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, -7.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_009" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, -7.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_010" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, -7.35)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_011" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, -7.35)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_012" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, -7.05)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_013" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, -7.05)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_014" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, -6.75)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_015" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, -6.75)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_016" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, -6.45)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_017" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, -6.45)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_018" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, -6.15)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_019" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, -6.15)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_020" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, -5.85)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_021" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, -5.85)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_022" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, -5.55)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_023" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, -5.55)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_024" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, -5.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_025" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, -5.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_026" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, -4.95)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_027" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, -4.95)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_028" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, -4.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_029" type="MeshInstance3D" parent="Lane1Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, -4.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+
+[node name="Lane1Span1" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Lane1Span1"
+[node name="BridgePlank_000" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -1, -0.068, -4.350714)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_001" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 1, -0.068, -4.350714)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_002" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -1, -0.068, -4.052143)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_003" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 1, -0.068, -4.052143)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_004" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -1, -0.068, -3.753571)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_005" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 1, -0.068, -3.753571)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_006" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -1, -0.068, -3.455)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_007" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 1, -0.068, -3.455)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_008" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -1, -0.068, -3.156429)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_009" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 1, -0.068, -3.156429)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_010" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -1, -0.068, -2.857857)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_011" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 1, -0.068, -2.857857)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_012" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -1, -0.068, -2.559286)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_013" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 1, -0.068, -2.559286)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_014" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -1, -0.068, -2.260714)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_015" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 1, -0.068, -2.260714)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_016" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -1, -0.068, -1.962143)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_017" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 1, -0.068, -1.962143)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_018" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -1, -0.068, -1.663572)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_019" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 1, -0.068, -1.663572)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_020" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -1, -0.068, -1.365)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_021" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 1, -0.068, -1.365)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_022" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -1, -0.068, -1.066429)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_023" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 1, -0.068, -1.066429)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_024" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -1, -0.068, -0.7678573)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_025" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 1, -0.068, -0.7678573)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_026" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, -1, -0.068, -0.4692859)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_027" type="MeshInstance3D" parent="Lane1Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 1, -0.068, -0.4692859)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+
+[node name="Lane1Span2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Lane1Span2"
+[node name="BridgePlank_000" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -1, -0.068, -0.1693752)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_001" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 1, -0.068, -0.1693752)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_002" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -1, -0.068, 0.1318748)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_003" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 1, -0.068, 0.1318748)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_004" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -1, -0.068, 0.4331249)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_005" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 1, -0.068, 0.4331249)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_006" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -1, -0.068, 0.7343749)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_007" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 1, -0.068, 0.7343749)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_008" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -1, -0.068, 1.035625)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_009" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 1, -0.068, 1.035625)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_010" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -1, -0.068, 1.336875)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_011" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 1, -0.068, 1.336875)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_012" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -1, -0.068, 1.638125)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_013" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 1, -0.068, 1.638125)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_014" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -1, -0.068, 1.939375)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_015" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 1, -0.068, 1.939375)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_016" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -1, -0.068, 2.240625)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_017" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 1, -0.068, 2.240625)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_018" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -1, -0.068, 2.541875)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_019" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 1, -0.068, 2.541875)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_020" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -1, -0.068, 2.843125)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_021" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 1, -0.068, 2.843125)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_022" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -1, -0.068, 3.144375)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_023" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 1, -0.068, 3.144375)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_024" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -1, -0.068, 3.445625)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_025" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 1, -0.068, 3.445625)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_026" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -1, -0.068, 3.746875)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_027" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 1, -0.068, 3.746875)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_028" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -1, -0.068, 4.048125)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_029" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 1, -0.068, 4.048125)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_030" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, -1, -0.068, 4.349375)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_031" type="MeshInstance3D" parent="Lane1Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 1, -0.068, 4.349375)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+
+[node name="Lane1Span3" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Lane1Span3"
+[node name="BridgePlank_000" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, 4.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_001" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, 4.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_002" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, 4.95)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_003" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, 4.95)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_004" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, 5.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_005" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, 5.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_006" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, 5.55)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_007" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, 5.55)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_008" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, 5.85)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_009" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, 5.85)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_010" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, 6.15)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_011" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, 6.15)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_012" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, 6.45)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_013" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, 6.45)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_014" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, 6.75)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_015" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, 6.75)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_016" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, 7.05)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_017" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, 7.05)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_018" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, 7.35)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_019" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, 7.35)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_020" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, 7.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_021" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, 7.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_022" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, 7.95)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_023" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, 7.95)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_024" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, 8.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_025" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, 8.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_026" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, 8.55)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_027" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, 8.55)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_028" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, -1, -0.068, 8.85)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_029" type="MeshInstance3D" parent="Lane1Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 1, -0.068, 8.85)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+
+[node name="Lane2Span0" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Lane2Span0"
+[node name="BridgePlank_000" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, -8.85)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_001" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, -8.85)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_002" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, -8.55)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_003" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, -8.55)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_004" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, -8.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_005" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, -8.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_006" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, -7.95)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_007" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, -7.95)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_008" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, -7.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_009" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, -7.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_010" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, -7.35)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_011" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, -7.35)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_012" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, -7.05)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_013" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, -7.05)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_014" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, -6.75)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_015" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, -6.75)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_016" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, -6.45)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_017" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, -6.45)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_018" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, -6.15)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_019" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, -6.15)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_020" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, -5.85)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_021" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, -5.85)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_022" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, -5.55)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_023" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, -5.55)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_024" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, -5.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_025" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, -5.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_026" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, -4.95)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_027" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, -4.95)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_028" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, -4.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_029" type="MeshInstance3D" parent="Lane2Span0"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, -4.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+
+[node name="Lane2Span1" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Lane2Span1"
+[node name="BridgePlank_000" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 3, -0.068, -4.350714)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_001" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 5, -0.068, -4.350714)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_002" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 3, -0.068, -4.052143)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_003" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 5, -0.068, -4.052143)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_004" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 3, -0.068, -3.753571)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_005" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 5, -0.068, -3.753571)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_006" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 3, -0.068, -3.455)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_007" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 5, -0.068, -3.455)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_008" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 3, -0.068, -3.156429)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_009" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 5, -0.068, -3.156429)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_010" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 3, -0.068, -2.857857)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_011" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 5, -0.068, -2.857857)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_012" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 3, -0.068, -2.559286)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_013" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 5, -0.068, -2.559286)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_014" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 3, -0.068, -2.260714)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_015" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 5, -0.068, -2.260714)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_016" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 3, -0.068, -1.962143)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_017" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 5, -0.068, -1.962143)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_018" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 3, -0.068, -1.663572)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_019" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 5, -0.068, -1.663572)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_020" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 3, -0.068, -1.365)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_021" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 5, -0.068, -1.365)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_022" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 3, -0.068, -1.066429)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_023" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 5, -0.068, -1.066429)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_024" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 3, -0.068, -0.7678573)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_025" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 5, -0.068, -0.7678573)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_026" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 3, -0.068, -0.4692859)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_027" type="MeshInstance3D" parent="Lane2Span1"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.2945714, 5, -0.068, -0.4692859)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+
+[node name="Lane2Span2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Lane2Span2"
+[node name="BridgePlank_000" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 3, -0.068, -0.1693752)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_001" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 5, -0.068, -0.1693752)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_002" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 3, -0.068, 0.1318748)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_003" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 5, -0.068, 0.1318748)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_004" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 3, -0.068, 0.4331249)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_005" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 5, -0.068, 0.4331249)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_006" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 3, -0.068, 0.7343749)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_007" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 5, -0.068, 0.7343749)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_008" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 3, -0.068, 1.035625)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_009" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 5, -0.068, 1.035625)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_010" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 3, -0.068, 1.336875)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_011" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 5, -0.068, 1.336875)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_012" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 3, -0.068, 1.638125)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_013" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 5, -0.068, 1.638125)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_014" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 3, -0.068, 1.939375)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_015" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 5, -0.068, 1.939375)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_016" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 3, -0.068, 2.240625)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_017" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 5, -0.068, 2.240625)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_018" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 3, -0.068, 2.541875)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_019" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 5, -0.068, 2.541875)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_020" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 3, -0.068, 2.843125)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_021" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 5, -0.068, 2.843125)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_022" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 3, -0.068, 3.144375)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_023" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 5, -0.068, 3.144375)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_024" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 3, -0.068, 3.445625)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_025" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 5, -0.068, 3.445625)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_026" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 3, -0.068, 3.746875)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_027" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 5, -0.068, 3.746875)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_028" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 3, -0.068, 4.048125)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_029" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 5, -0.068, 4.048125)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_030" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 3, -0.068, 4.349375)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_031" type="MeshInstance3D" parent="Lane2Span2"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.29725, 5, -0.068, 4.349375)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+
+[node name="Lane2Span3" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/Lane2Span3"
+[node name="BridgePlank_000" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, 4.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_001" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, 4.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_002" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, 4.95)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_003" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, 4.95)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_004" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, 5.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_005" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, 5.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_006" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, 5.55)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_007" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, 5.55)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_008" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, 5.85)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_009" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, 5.85)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_010" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, 6.15)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_011" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, 6.15)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_012" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, 6.45)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_013" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, 6.45)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_014" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, 6.75)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_015" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, 6.75)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_016" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, 7.05)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_017" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, 7.05)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_018" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, 7.35)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_019" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, 7.35)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_020" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, 7.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_021" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, 7.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_022" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, 7.95)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_023" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, 7.95)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_024" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, 8.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_025" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, 8.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_026" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, 8.55)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_027" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, 8.55)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_028" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 3, -0.068, 8.85)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="BridgePlank_029" type="MeshInstance3D" parent="Lane2Span3"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(1.997, 0, 0, 0, 0.136, 0, 0, 0, 0.296, 5, -0.068, 8.85)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+
+[node name="WestRail0" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/WestRail0"
+[node name="Member_000" type="MeshInstance3D" parent="WestRail0"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0, -0.17, 0, 0.96, 0, 0.18, 0, 0, -5.86, 0.38, -7.9)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+[node name="Member_001" type="MeshInstance3D" parent="WestRail0"]
+mesh = ExtResource("beam")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0, -0.12, 0, 0.14, 0, 4, 0, 0, -5.86, 0.72, -6)
+metadata/stock = "beam"
+metadata/asset = "MOD-0004"
+
+
+[node name="WestRail1" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/WestRail1"
+[node name="Member_000" type="MeshInstance3D" parent="WestRail1"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0, -0.17, 0, 0.96, 0, 0.18, 0, 0, -5.86, 0.38, -3.9)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+[node name="Member_001" type="MeshInstance3D" parent="WestRail1"]
+mesh = ExtResource("beam")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0, -0.12, 0, 0.14, 0, 4, 0, 0, -5.86, 0.72, -2)
+metadata/stock = "beam"
+metadata/asset = "MOD-0004"
+
+
+[node name="WestRail2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/WestRail2"
+[node name="Member_000" type="MeshInstance3D" parent="WestRail2"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0, -0.17, 0, 0.96, 0, 0.18, 0, 0, -5.86, 0.38, 0.1)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+[node name="Member_001" type="MeshInstance3D" parent="WestRail2"]
+mesh = ExtResource("beam")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0, -0.12, 0, 0.14, 0, 4, 0, 0, -5.86, 0.72, 2)
+metadata/stock = "beam"
+metadata/asset = "MOD-0004"
+
+
+[node name="WestRail3" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/WestRail3"
+[node name="Member_000" type="MeshInstance3D" parent="WestRail3"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0, -0.17, 0, 0.96, 0, 0.18, 0, 0, -5.86, 0.38, 4.1)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+[node name="Member_001" type="MeshInstance3D" parent="WestRail3"]
+mesh = ExtResource("beam")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0, -0.12, 0, 0.14, 0, 4, 0, 0, -5.86, 0.72, 6)
+metadata/stock = "beam"
+metadata/asset = "MOD-0004"
+
+
+[node name="EastRail0" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/EastRail0"
+[node name="Member_000" type="MeshInstance3D" parent="EastRail0"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0, -0.17, 0, 0.96, 0, 0.18, 0, 0, 5.86, 0.38, -7.9)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+[node name="Member_001" type="MeshInstance3D" parent="EastRail0"]
+mesh = ExtResource("beam")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0, -0.12, 0, 0.14, 0, 4, 0, 0, 5.86, 0.72, -6)
+metadata/stock = "beam"
+metadata/asset = "MOD-0004"
+
+
+[node name="EastRail1" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/EastRail1"
+[node name="Member_000" type="MeshInstance3D" parent="EastRail1"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0, -0.17, 0, 0.96, 0, 0.18, 0, 0, 5.86, 0.38, -3.9)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+[node name="Member_001" type="MeshInstance3D" parent="EastRail1"]
+mesh = ExtResource("beam")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0, -0.12, 0, 0.14, 0, 4, 0, 0, 5.86, 0.72, -2)
+metadata/stock = "beam"
+metadata/asset = "MOD-0004"
+
+
+[node name="EastRail2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/EastRail2"
+[node name="Member_000" type="MeshInstance3D" parent="EastRail2"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0, -0.17, 0, 0.96, 0, 0.18, 0, 0, 5.86, 0.38, 0.1)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+[node name="Member_001" type="MeshInstance3D" parent="EastRail2"]
+mesh = ExtResource("beam")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0, -0.12, 0, 0.14, 0, 4, 0, 0, 5.86, 0.72, 2)
+metadata/stock = "beam"
+metadata/asset = "MOD-0004"
+
+
+[node name="EastRail3" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "FarmBuildings31/CenterBridge/EastRail3"
+[node name="Member_000" type="MeshInstance3D" parent="EastRail3"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0, -0.17, 0, 0.96, 0, 0.18, 0, 0, 5.86, 0.38, 4.1)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+[node name="Member_001" type="MeshInstance3D" parent="EastRail3"]
+mesh = ExtResource("beam")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0, -0.12, 0, 0.14, 0, 4, 0, 0, 5.86, 0.72, 6)
+metadata/stock = "beam"
+metadata/asset = "MOD-0004"
+

@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://models/farm_canal_works/BridgeSpan.tscn" id="Span"]
+
+[ext_resource type="PackedScene" path="res://models/farm_canal_works/BridgeSupports.glb" id="Supports"]
+
+[node name="CenterBridge" type="Node3D"]
+
+[node name="Span" parent="." instance=ExtResource("Span")]
+
+[node name="Supports" parent="." instance=ExtResource("Supports")]

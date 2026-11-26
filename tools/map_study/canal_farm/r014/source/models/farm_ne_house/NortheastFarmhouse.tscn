@@ -1,0 +1,44 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://models/farm_ne_house/HouseExterior_r001.glb" id="Skin"]
+
+[sub_resource type="ConvexPolygonShape3D" id="Core"]
+points = PackedVector3Array(-6.000889, 0.006000, -4.499813, -6.000889, 2.998000, -4.499813, 5.998478, 0.006000, -4.500751, 5.998478, 2.998000, -4.500751, -6.000452, 0.006000, 0.000065, -6.000452, 3.845000, 0.000065, 5.999029, 0.006000, -0.000332, 5.999029, 3.845000, -0.000332, -6.000065, 0.006000, 3.989957, -6.000065, 3.093993, 3.989957, 5.999518, 0.006000, 3.990040, 5.999518, 3.093993, 3.990040)
+
+[sub_resource type="ConvexPolygonShape3D" id="YardWest"]
+points = PackedVector3Array(-6.000065, 0.006000, 3.989957, -6.000065, 3.093993, 3.989957, 1.424677, 0.006000, 3.990009, 1.424677, 3.093993, 3.990009, -6.000015, 0.006000, 4.499943, -6.000015, 2.998000, 4.499943, 1.424734, 0.006000, 4.500033, 1.424734, 2.998000, 4.500033)
+
+[sub_resource type="ConvexPolygonShape3D" id="YardEast"]
+points = PackedVector3Array(3.674599, 0.006000, 3.990024, 3.674599, 3.093993, 3.990024, 5.999518, 0.006000, 3.990040, 5.999518, 3.093993, 3.990040, 3.674658, 0.006000, 4.500060, 3.674658, 2.998000, 4.500060, 5.999580, 0.006000, 4.500088, 5.999580, 2.998000, 4.500088)
+
+[sub_resource type="ConvexPolygonShape3D" id="WashLedge"]
+points = PackedVector3Array(1.424677, 0.006000, 3.990009, 1.424677, 0.903000, 3.990009, 3.674599, 0.006000, 3.990024, 3.674599, 0.903000, 3.990024, 1.424734, 0.006000, 4.500033, 1.424734, 0.903000, 4.500033, 3.674658, 0.006000, 4.500060, 3.674658, 0.903000, 4.500060)
+
+[sub_resource type="ConvexPolygonShape3D" id="Lintel"]
+points = PackedVector3Array(1.424677, 2.230000, 3.990009, 1.424677, 3.093993, 3.990009, 3.674599, 2.230000, 3.990024, 3.674599, 3.093993, 3.990024, 1.424734, 2.230000, 4.500033, 1.424734, 2.998000, 4.500033, 3.674658, 2.230000, 4.500060, 3.674658, 2.998000, 4.500060)
+
+[sub_resource type="BoxShape3D" id="Flue"]
+size = Vector3(0.69,0.77,0.69)
+
+[node name="NortheastFarmhouse" type="StaticBody3D"]
+
+[node name="Exterior" parent="." instance=ExtResource("Skin")]
+
+[node name="Core" type="CollisionShape3D" parent="."]
+shape = SubResource("Core")
+
+[node name="YardWest" type="CollisionShape3D" parent="."]
+shape = SubResource("YardWest")
+
+[node name="YardEast" type="CollisionShape3D" parent="."]
+shape = SubResource("YardEast")
+
+[node name="WashLedge" type="CollisionShape3D" parent="."]
+shape = SubResource("WashLedge")
+
+[node name="Lintel" type="CollisionShape3D" parent="."]
+shape = SubResource("Lintel")
+
+[node name="Flue" type="CollisionShape3D" parent="."]
+position = Vector3(-3.75,3.615,-2.92)
+shape = SubResource("Flue")

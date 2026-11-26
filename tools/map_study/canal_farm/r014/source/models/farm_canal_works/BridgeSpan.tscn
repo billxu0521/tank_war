@@ -1,0 +1,14 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://models/farm_canal_works/CenterBridge.glb" id="Mesh"]
+
+[sub_resource type="BoxShape3D" id="Box"]
+size = Vector3(12, 0.136, 18)
+
+[node name="BridgeSpan" instance=ExtResource("Mesh")]
+
+[node name="Surface" type="StaticBody3D" parent="."]
+
+[node name="Collision" type="CollisionShape3D" parent="Surface"]
+position = Vector3(0, -0.068, 0)
+shape = SubResource("Box")

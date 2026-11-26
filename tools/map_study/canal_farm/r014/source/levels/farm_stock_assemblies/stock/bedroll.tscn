@@ -1,0 +1,22 @@
+[gd_scene format=3]
+
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/linen.tres" id="mat"]
+
+[sub_resource type="BoxMesh" id="M0"]
+material = ExtResource("mat")
+size = Vector3(0.97, 0.76, 0.96)
+
+[sub_resource type="BoxMesh" id="M1"]
+material = ExtResource("mat")
+size = Vector3(0.8, 0.42, 0.28)
+
+[node name="bedroll" type="Node3D"]
+metadata/asset = "PRP-0025"
+
+[node name="Part0" type="MeshInstance3D" parent="."]
+mesh = SubResource("M0")
+position = Vector3(0, -0.08, 0.02)
+
+[node name="Part1" type="MeshInstance3D" parent="."]
+mesh = SubResource("M1")
+position = Vector3(0, 0.29, -0.34)

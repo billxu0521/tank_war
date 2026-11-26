@@ -1,0 +1,976 @@
+[gd_scene format=3]
+
+[ext_resource type="ArrayMesh" path="res://levels/farm_stock_assemblies/stock/beam.res" id="beam"]
+[ext_resource type="ArrayMesh" path="res://levels/farm_stock_assemblies/stock/narrow_strip.res" id="narrow_strip"]
+[ext_resource type="ArrayMesh" path="res://levels/farm_stock_assemblies/stock/plank.res" id="plank"]
+[ext_resource type="ArrayMesh" path="res://levels/farm_stock_assemblies/stock/post.res" id="post"]
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/dark.tres" id="paint_dark"]
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/end.tres" id="paint_end"]
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/green.tres" id="paint_green"]
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/iron.tres" id="paint_iron"]
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/pine.tres" id="paint_pine"]
+
+[node name="ExtraPayOffice" type="Node3D"]
+
+[node name="Seat001_Payroll" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "Seat001_Payroll"
+[node name="Post_000" type="MeshInstance3D" parent="Seat001_Payroll"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0.145, 0, 0, 0, 4.79, 0, 0, 0, 0.145, -4.62, 2.395, -4.845)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+
+[node name="Seat002_Payroll" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "Seat002_Payroll"
+[node name="Post_000" type="MeshInstance3D" parent="Seat002_Payroll"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0.145, 0, 0, 0, 4.79, 0, 0, 0, 0.145, -7.93, 2.395, 2.225)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+
+[node name="Seat003_Payroll" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "Seat003_Payroll"
+[node name="Post_000" type="MeshInstance3D" parent="Seat003_Payroll"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0.145, 0, 0, 0, 4.79, 0, 0, 0, 0.145, -4.62, 2.395, 2.225)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+
+[node name="Seat004_Payroll" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "Seat004_Payroll"
+[node name="Post_000" type="MeshInstance3D" parent="Seat004_Payroll"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0.145, 0, 0, 0, 4.79, 0, 0, 0, 0.145, -4.48, 2.395, -4.845)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+
+[node name="Seat005_Payroll" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "Seat005_Payroll"
+[node name="Post_000" type="MeshInstance3D" parent="Seat005_Payroll"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0.145, 0, 0, 0, 4.79, 0, 0, 0, 0.145, 4.48, 2.395, -4.845)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+
+[node name="Seat006_Payroll" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "Seat006_Payroll"
+[node name="Post_000" type="MeshInstance3D" parent="Seat006_Payroll"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0.145, 0, 0, 0, 4.79, 0, 0, 0, 0.145, -4.48, 2.395, 2.225)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+
+[node name="Seat007_Payroll" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "Seat007_Payroll"
+[node name="Post_000" type="MeshInstance3D" parent="Seat007_Payroll"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0.145, 0, 0, 0, 4.79, 0, 0, 0, 0.145, 4.48, 2.395, 2.225)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+
+[node name="Seat008_Payroll" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "Seat008_Payroll"
+[node name="Post_000" type="MeshInstance3D" parent="Seat008_Payroll"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0.145, 0, 0, 0, 4.79, 0, 0, 0, 0.145, 4.62, 2.395, -4.845)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+
+[node name="Seat009_Payroll" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "Seat009_Payroll"
+[node name="Post_000" type="MeshInstance3D" parent="Seat009_Payroll"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0.145, 0, 0, 0, 4.79, 0, 0, 0, 0.145, 4.62, 2.395, 2.225)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+
+[node name="Seat010_Payroll" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "Seat010_Payroll"
+[node name="Post_000" type="MeshInstance3D" parent="Seat010_Payroll"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0.145, 0, 0, 0, 4.79, 0, 0, 0, 0.145, 7.93, 2.395, 2.225)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+
+[node name="CashWindow0Jamb" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "CashWindow0Jamb"
+[node name="Post_000" type="MeshInstance3D" parent="CashWindow0Jamb"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0, -0.09, 0, 0.87, 0, 0.19, 0, 0, -5.9, 1.49, -1.26)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+[node name="Post_001" type="MeshInstance3D" parent="CashWindow0Jamb"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0, -0.09, 0, 0.87, 0, 0.19, 0, 0, -4.49, 1.49, -1.26)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+[node name="Beam_002" type="MeshInstance3D" parent="CashWindow0Jamb"]
+mesh = ExtResource("beam")
+material_override = ExtResource("paint_end")
+transform = Transform3D(1.5, 0, 0, 0, 0, -0.11, 0, 0.2, 0, -5.195, 1.98, -1.26)
+metadata/stock = "beam"
+metadata/asset = "MOD-0004"
+
+[node name="Beam_003" type="MeshInstance3D" parent="CashWindow0Jamb"]
+mesh = ExtResource("beam")
+material_override = ExtResource("paint_end")
+transform = Transform3D(1.48, 0, 0, 0, 0, -0.08, 0, 0.21, 0, -5.195, 1.015, -1.26)
+metadata/stock = "beam"
+metadata/asset = "MOD-0004"
+
+
+[node name="CashWindow0Leaf" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "CashWindow0Leaf"
+[node name="Panel_000" type="MeshInstance3D" parent="CashWindow0Leaf"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0, 0.2076667, 0.82, 0, 0, 0, 0.058, 0, 0.1058333, 0.41, 0)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_001" type="MeshInstance3D" parent="CashWindow0Leaf"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0, 0.2076667, 0.82, 0, 0, 0, 0.058, 0, 0.3175, 0.41, 0)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_002" type="MeshInstance3D" parent="CashWindow0Leaf"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0, 0.2076667, 0.82, 0, 0, 0, 0.058, 0, 0.5291667, 0.41, 0)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_003" type="MeshInstance3D" parent="CashWindow0Leaf"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0, 0.2076667, 0.82, 0, 0, 0, 0.058, 0, 0.7408333, 0.41, 0)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_004" type="MeshInstance3D" parent="CashWindow0Leaf"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0, 0.2076667, 0.82, 0, 0, 0, 0.058, 0, 0.9525, 0.41, 0)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_005" type="MeshInstance3D" parent="CashWindow0Leaf"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0, 0.2076667, 0.82, 0, 0, 0, 0.058, 0, 1.164167, 0.41, 0)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="NarrowStrip_006" type="MeshInstance3D" parent="CashWindow0Leaf"]
+mesh = ExtResource("narrow_strip")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(1.188, 0, 0, 0, 0, 0.075, 0, -0.033, 0, 0.6072, 0.1566, 0.045)
+metadata/stock = "narrow_strip"
+metadata/asset = "MOD-0006"
+
+[node name="NarrowStrip_007" type="MeshInstance3D" parent="CashWindow0Leaf"]
+mesh = ExtResource("narrow_strip")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(1.188, 0, 0, 0, 0, 0.075, 0, -0.033, 0, 0.6072, 0.7134, 0.045)
+metadata/stock = "narrow_strip"
+metadata/asset = "MOD-0006"
+
+[node name="Beam_008" type="MeshInstance3D" parent="CashWindow0Leaf"]
+mesh = ExtResource("beam")
+material_override = ExtResource("paint_iron")
+transform = Transform3D(0, 0.075, 0, 0.125, 0, 0, 0, 0, -0.055, 1.0824, 0.4611, 0.06)
+metadata/stock = "beam"
+metadata/asset = "MOD-0004"
+
+
+[node name="CashWindow1Jamb" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "CashWindow1Jamb"
+[node name="Post_000" type="MeshInstance3D" parent="CashWindow1Jamb"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0, -0.09, 0, 0.87, 0, 0.19, 0, 0, -4.44, 1.49, -1.26)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+[node name="Post_001" type="MeshInstance3D" parent="CashWindow1Jamb"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0, -0.09, 0, 0.87, 0, 0.19, 0, 0, -3.03, 1.49, -1.26)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+[node name="Beam_002" type="MeshInstance3D" parent="CashWindow1Jamb"]
+mesh = ExtResource("beam")
+material_override = ExtResource("paint_end")
+transform = Transform3D(1.5, 0, 0, 0, 0, -0.11, 0, 0.2, 0, -3.735, 1.98, -1.26)
+metadata/stock = "beam"
+metadata/asset = "MOD-0004"
+
+[node name="Beam_003" type="MeshInstance3D" parent="CashWindow1Jamb"]
+mesh = ExtResource("beam")
+material_override = ExtResource("paint_end")
+transform = Transform3D(1.48, 0, 0, 0, 0, -0.08, 0, 0.21, 0, -3.735, 1.015, -1.26)
+metadata/stock = "beam"
+metadata/asset = "MOD-0004"
+
+
+[node name="CashWindow1Leaf" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "CashWindow1Leaf"
+[node name="Panel_000" type="MeshInstance3D" parent="CashWindow1Leaf"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0, 0.2076667, 0.82, 0, 0, 0, 0.058, 0, 0.1058333, 0.41, 0)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_001" type="MeshInstance3D" parent="CashWindow1Leaf"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0, 0.2076667, 0.82, 0, 0, 0, 0.058, 0, 0.3175, 0.41, 0)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_002" type="MeshInstance3D" parent="CashWindow1Leaf"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0, 0.2076667, 0.82, 0, 0, 0, 0.058, 0, 0.5291667, 0.41, 0)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_003" type="MeshInstance3D" parent="CashWindow1Leaf"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0, 0.2076667, 0.82, 0, 0, 0, 0.058, 0, 0.7408333, 0.41, 0)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_004" type="MeshInstance3D" parent="CashWindow1Leaf"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0, 0.2076667, 0.82, 0, 0, 0, 0.058, 0, 0.9525, 0.41, 0)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_005" type="MeshInstance3D" parent="CashWindow1Leaf"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0, 0.2076667, 0.82, 0, 0, 0, 0.058, 0, 1.164167, 0.41, 0)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="NarrowStrip_006" type="MeshInstance3D" parent="CashWindow1Leaf"]
+mesh = ExtResource("narrow_strip")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(1.188, 0, 0, 0, 0, 0.075, 0, -0.033, 0, 0.6072, 0.1566, 0.045)
+metadata/stock = "narrow_strip"
+metadata/asset = "MOD-0006"
+
+[node name="NarrowStrip_007" type="MeshInstance3D" parent="CashWindow1Leaf"]
+mesh = ExtResource("narrow_strip")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(1.188, 0, 0, 0, 0, 0.075, 0, -0.033, 0, 0.6072, 0.7134, 0.045)
+metadata/stock = "narrow_strip"
+metadata/asset = "MOD-0006"
+
+[node name="Beam_008" type="MeshInstance3D" parent="CashWindow1Leaf"]
+mesh = ExtResource("beam")
+material_override = ExtResource("paint_iron")
+transform = Transform3D(0, 0.075, 0, 0.125, 0, 0, 0, 0, -0.055, 1.0824, 0.4611, 0.06)
+metadata/stock = "beam"
+metadata/asset = "MOD-0004"
+
+
+[node name="StaffWestReturn" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "StaffWestReturn"
+[node name="Panel_000" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -6.625)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_001" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -6.415)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_002" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -6.205)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_003" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -5.995)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_004" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -5.785)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_005" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -5.575)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_006" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -5.365)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_007" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -5.155)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_008" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -4.945)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_009" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -4.735)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_010" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -4.525)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_011" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -4.315)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_012" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -4.105)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_013" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -3.895)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_014" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -3.685)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_015" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -3.475)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_016" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -3.265)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_017" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -3.055)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_018" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -2.845)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_019" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -2.635)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_020" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -2.425)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_021" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -2.215)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_022" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -2.005)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_023" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -1.795)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_024" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -1.585)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_025" type="MeshInstance3D" parent="StaffWestReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.11, 0, 2.46, 0, 0, 0, 0, 0.206, -6.36, 1.23, -1.375)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+
+[node name="StaffEastReturn" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "StaffEastReturn"
+[node name="Panel_000" type="MeshInstance3D" parent="StaffEastReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0, 0.13, 2.46, 0, 0, 0, 0.111, 0, -2.6, 1.23, -6.7625)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_001" type="MeshInstance3D" parent="StaffEastReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0, 0.13, 2.46, 0, 0, 0, 0.111, 0, -2.6, 1.23, -6.6475)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_002" type="MeshInstance3D" parent="StaffEastReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0, 0.13, 2.46, 0, 0, 0, 0.126, 0, -2.6, 1.23, -4.035)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_003" type="MeshInstance3D" parent="StaffEastReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0, 0.13, 2.46, 0, 0, 0, 0.126, 0, -2.6, 1.23, -3.905)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_004" type="MeshInstance3D" parent="StaffEastReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.13, 0, 2.46, 0, 0, 0, 0, 0.1831429, -2.6, 1.23, -2.466429)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_005" type="MeshInstance3D" parent="StaffEastReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.13, 0, 2.46, 0, 0, 0, 0, 0.1831429, -2.6, 1.23, -2.279286)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_006" type="MeshInstance3D" parent="StaffEastReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.13, 0, 2.46, 0, 0, 0, 0, 0.1831429, -2.6, 1.23, -2.092143)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_007" type="MeshInstance3D" parent="StaffEastReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.13, 0, 2.46, 0, 0, 0, 0, 0.1831429, -2.6, 1.23, -1.905)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_008" type="MeshInstance3D" parent="StaffEastReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.13, 0, 2.46, 0, 0, 0, 0, 0.1831429, -2.6, 1.23, -1.717857)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_009" type="MeshInstance3D" parent="StaffEastReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.13, 0, 2.46, 0, 0, 0, 0, 0.1831429, -2.6, 1.23, -1.530714)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_010" type="MeshInstance3D" parent="StaffEastReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.13, 0, 2.46, 0, 0, 0, 0, 0.1831429, -2.6, 1.23, -1.343571)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_011" type="MeshInstance3D" parent="StaffEastReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.13, 0, 0.34, 0, 0, 0, 0, 0.2093333, -2.6, 2.29, -3.733333)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_012" type="MeshInstance3D" parent="StaffEastReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.13, 0, 0.34, 0, 0, 0, 0, 0.2093333, -2.6, 2.29, -3.52)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_013" type="MeshInstance3D" parent="StaffEastReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.13, 0, 0.34, 0, 0, 0, 0, 0.2093333, -2.6, 2.29, -3.306667)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_014" type="MeshInstance3D" parent="StaffEastReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.13, 0, 0.34, 0, 0, 0, 0, 0.2093333, -2.6, 2.29, -3.093333)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_015" type="MeshInstance3D" parent="StaffEastReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.13, 0, 0.34, 0, 0, 0, 0, 0.2093333, -2.6, 2.29, -2.88)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_016" type="MeshInstance3D" parent="StaffEastReturn"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, -0.13, 0, 0.34, 0, 0, 0, 0, 0.2093333, -2.6, 2.29, -2.666667)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+
+[node name="StaffPassJamb" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "StaffPassJamb"
+[node name="Post_000" type="MeshInstance3D" parent="StaffPassJamb"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(-0.19, 0, 0, 0, 2.12, 0, 0, 0, -0.09, -2.6, 1.06, -3.885)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+[node name="Post_001" type="MeshInstance3D" parent="StaffPassJamb"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(-0.19, 0, 0, 0, 2.12, 0, 0, 0, -0.09, -2.6, 1.06, -2.515)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+[node name="Beam_002" type="MeshInstance3D" parent="StaffPassJamb"]
+mesh = ExtResource("beam")
+material_override = ExtResource("paint_end")
+transform = Transform3D(0, -0.2, 0, 0, 0, -0.11, 1.46, 0, 0, -2.6, 2.175, -3.2)
+metadata/stock = "beam"
+metadata/asset = "MOD-0004"
+
+
+[node name="StaffPassLeaf" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "StaffPassLeaf"
+[node name="Panel_000" type="MeshInstance3D" parent="StaffPassLeaf"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0, 0.201, 2.07, 0, 0, 0, 0.058, 0, 0.1025, 1.035, 0)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_001" type="MeshInstance3D" parent="StaffPassLeaf"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0, 0.201, 2.07, 0, 0, 0, 0.058, 0, 0.3075, 1.035, 0)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_002" type="MeshInstance3D" parent="StaffPassLeaf"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0, 0.201, 2.07, 0, 0, 0, 0.058, 0, 0.5125, 1.035, 0)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_003" type="MeshInstance3D" parent="StaffPassLeaf"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0, 0.201, 2.07, 0, 0, 0, 0.058, 0, 0.7175, 1.035, 0)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_004" type="MeshInstance3D" parent="StaffPassLeaf"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0, 0.201, 2.07, 0, 0, 0, 0.058, 0, 0.9225, 1.035, 0)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_005" type="MeshInstance3D" parent="StaffPassLeaf"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0, 0.201, 2.07, 0, 0, 0, 0.058, 0, 1.1275, 1.035, 0)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="NarrowStrip_006" type="MeshInstance3D" parent="StaffPassLeaf"]
+mesh = ExtResource("narrow_strip")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(1.152, 0, 0, 0, 0, 0.075, 0, -0.033, 0, 0.5888, 0.3816, 0.045)
+metadata/stock = "narrow_strip"
+metadata/asset = "MOD-0006"
+
+[node name="NarrowStrip_007" type="MeshInstance3D" parent="StaffPassLeaf"]
+mesh = ExtResource("narrow_strip")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(1.152, 0, 0, 0, 0, 0.075, 0, -0.033, 0, 0.5888, 1.7384, 0.045)
+metadata/stock = "narrow_strip"
+metadata/asset = "MOD-0006"
+
+[node name="Beam_008" type="MeshInstance3D" parent="StaffPassLeaf"]
+mesh = ExtResource("beam")
+material_override = ExtResource("paint_iron")
+transform = Transform3D(0, 0.075, 0, 0.125, 0, 0, 0, 0, -0.055, 1.0496, 1.1236, 0.06)
+metadata/stock = "beam"
+metadata/asset = "MOD-0004"
+
+
+[node name="CounterEndL" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "CounterEndL"
+[node name="Panel_000" type="MeshInstance3D" parent="CounterEndL"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0, 0.171, 1.4, 0, 0, 0, 0.08, 0, -6.1675, 1.7, -1.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_001" type="MeshInstance3D" parent="CounterEndL"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0, 0.171, 1.4, 0, 0, 0, 0.08, 0, -5.9925, 1.7, -1.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+
+[node name="CounterEndR" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "CounterEndR"
+[node name="Panel_000" type="MeshInstance3D" parent="CounterEndR"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0, 0.171, 1.4, 0, 0, 0, 0.08, 0, -2.9575, 1.7, -1.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_001" type="MeshInstance3D" parent="CounterEndR"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_green")
+transform = Transform3D(0, 0, 0.171, 1.4, 0, 0, 0, 0.08, 0, -2.7825, 1.7, -1.25)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+
+[node name="CashTransom" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "CashTransom"
+[node name="Panel_000" type="MeshInstance3D" parent="CashTransom"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0, 0.2037778, 0.43, 0, 0, 0, 0.09, 0, -6.246111, 2.23, -1.26)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_001" type="MeshInstance3D" parent="CashTransom"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0, 0.2037778, 0.43, 0, 0, 0, 0.09, 0, -6.038333, 2.23, -1.26)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_002" type="MeshInstance3D" parent="CashTransom"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0, 0.2037778, 0.43, 0, 0, 0, 0.09, 0, -5.830556, 2.23, -1.26)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_003" type="MeshInstance3D" parent="CashTransom"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0, 0.2037778, 0.43, 0, 0, 0, 0.09, 0, -5.622778, 2.23, -1.26)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_004" type="MeshInstance3D" parent="CashTransom"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0, 0.2037778, 0.43, 0, 0, 0, 0.09, 0, -5.415, 2.23, -1.26)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_005" type="MeshInstance3D" parent="CashTransom"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0, 0.2037778, 0.43, 0, 0, 0, 0.09, 0, -5.207222, 2.23, -1.26)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_006" type="MeshInstance3D" parent="CashTransom"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0, 0.2037778, 0.43, 0, 0, 0, 0.09, 0, -4.999444, 2.23, -1.26)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_007" type="MeshInstance3D" parent="CashTransom"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0, 0.2037778, 0.43, 0, 0, 0, 0.09, 0, -4.791667, 2.23, -1.26)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_008" type="MeshInstance3D" parent="CashTransom"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0, 0.2037778, 0.43, 0, 0, 0, 0.09, 0, -4.583889, 2.23, -1.26)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_009" type="MeshInstance3D" parent="CashTransom"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0, 0.2037778, 0.43, 0, 0, 0, 0.09, 0, -4.376111, 2.23, -1.26)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_010" type="MeshInstance3D" parent="CashTransom"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0, 0.2037778, 0.43, 0, 0, 0, 0.09, 0, -4.168333, 2.23, -1.26)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_011" type="MeshInstance3D" parent="CashTransom"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0, 0.2037778, 0.43, 0, 0, 0, 0.09, 0, -3.960556, 2.23, -1.26)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_012" type="MeshInstance3D" parent="CashTransom"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0, 0.2037778, 0.43, 0, 0, 0, 0.09, 0, -3.752778, 2.23, -1.26)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_013" type="MeshInstance3D" parent="CashTransom"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0, 0.2037778, 0.43, 0, 0, 0, 0.09, 0, -3.545, 2.23, -1.26)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_014" type="MeshInstance3D" parent="CashTransom"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0, 0.2037778, 0.43, 0, 0, 0, 0.09, 0, -3.337222, 2.23, -1.26)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_015" type="MeshInstance3D" parent="CashTransom"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0, 0.2037778, 0.43, 0, 0, 0, 0.09, 0, -3.129444, 2.23, -1.26)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_016" type="MeshInstance3D" parent="CashTransom"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0, 0.2037778, 0.43, 0, 0, 0, 0.09, 0, -2.921667, 2.23, -1.26)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_017" type="MeshInstance3D" parent="CashTransom"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0, 0.2037778, 0.43, 0, 0, 0, 0.09, 0, -2.713889, 2.23, -1.26)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+
+[node name="CashChest" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "CashChest"
+[node name="Post_000" type="MeshInstance3D" parent="CashChest"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0, -0.14, 0, 0.46, 0, 0.4, 0, 0, -5.89, 0.23, -5.65)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+[node name="Post_001" type="MeshInstance3D" parent="CashChest"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0, 0, -0.14, 0, 0.46, 0, 0.4, 0, 0, -5.18, 0.23, -5.65)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+[node name="Panel_002" type="MeshInstance3D" parent="CashChest"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0.206, 0, 0, 0, 0.35, 0.49, 0, 0, -5.855, 0.56, -5.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_003" type="MeshInstance3D" parent="CashChest"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0.206, 0, 0, 0, 0.35, 0.49, 0, 0, -5.645, 0.56, -5.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_004" type="MeshInstance3D" parent="CashChest"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0.206, 0, 0, 0, 0.35, 0.49, 0, 0, -5.435, 0.56, -5.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_005" type="MeshInstance3D" parent="CashChest"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_pine")
+transform = Transform3D(0, 0.206, 0, 0, 0, 0.35, 0.49, 0, 0, -5.225, 0.56, -5.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_006" type="MeshInstance3D" parent="CashChest"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_end")
+transform = Transform3D(0, 0, 0.17, 0, -0.06, 0, 0.52, 0, 0, -5.888, 0.76, -5.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_007" type="MeshInstance3D" parent="CashChest"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_end")
+transform = Transform3D(0, 0, 0.17, 0, -0.06, 0, 0.52, 0, 0, -5.714, 0.76, -5.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_008" type="MeshInstance3D" parent="CashChest"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_end")
+transform = Transform3D(0, 0, 0.17, 0, -0.06, 0, 0.52, 0, 0, -5.54, 0.76, -5.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_009" type="MeshInstance3D" parent="CashChest"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_end")
+transform = Transform3D(0, 0, 0.17, 0, -0.06, 0, 0.52, 0, 0, -5.366, 0.76, -5.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Panel_010" type="MeshInstance3D" parent="CashChest"]
+mesh = ExtResource("plank")
+material_override = ExtResource("paint_end")
+transform = Transform3D(0, 0, 0.17, 0, -0.06, 0, 0.52, 0, 0, -5.192, 0.76, -5.65)
+metadata/stock = "plank"
+metadata/asset = "MOD-0006"
+
+[node name="Beam_011" type="MeshInstance3D" parent="CashChest"]
+mesh = ExtResource("beam")
+material_override = ExtResource("paint_iron")
+transform = Transform3D(0, 0.09, 0, 0.15, 0, 0, 0, 0, -0.028, -5.54, 0.68, -5.38)
+metadata/stock = "beam"
+metadata/asset = "MOD-0004"
+

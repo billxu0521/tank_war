@@ -1,0 +1,31 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://models/farm_weigh_room/registration_room_r003.tscn" id="Room"]
+[ext_resource type="Texture2D" path="res://models/farm_weigh_room/r004/receiving_direction.svg" id="Paint"]
+
+[sub_resource type="StandardMaterial3D" id="Wood"]
+albedo_color = Color(0.19, 0.12, 0.07, 1)
+roughness = 0.96
+
+[sub_resource type="BoxMesh" id="Board"]
+material = SubResource("Wood")
+size = Vector3(2.42, 0.62, 0.05)
+
+[sub_resource type="StandardMaterial3D" id="Lettering"]
+albedo_texture = ExtResource("Paint")
+roughness = 0.92
+
+[sub_resource type="QuadMesh" id="Face"]
+material = SubResource("Lettering")
+size = Vector2(2.39, 0.5975)
+
+[node name="RegistrationRoom" instance=ExtResource("Room")]
+
+[node name="EastReceivingSign" type="MeshInstance3D" parent="."]
+position = Vector3(6.165, 2.18, 1.05)
+rotation = Vector3(0, 1.5707963, 0)
+mesh = SubResource("Board")
+
+[node name="Paint" type="MeshInstance3D" parent="EastReceivingSign"]
+position = Vector3(0, 0, 0.0255)
+mesh = SubResource("Face")

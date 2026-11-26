@@ -1,0 +1,15 @@
+[gd_scene format=3]
+
+[sub_resource type="StandardMaterial3D" id="surface"]
+albedo_color = Color(0.18, 0.09, 0.045, 1)
+roughness = 0.84
+
+[sub_resource type="BoxMesh" id="shape"]
+material = SubResource("surface")
+size = Vector3(1, 1, 1)
+
+[node name="drive_belt" type="Node3D"]
+metadata/asset = "MAT-0010"
+
+[node name="Stock" type="MeshInstance3D" parent="."]
+mesh = SubResource("shape")

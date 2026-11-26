@@ -1,0 +1,15 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://models/farm_receiving/MilkCan.glb" id="Can"]
+
+[sub_resource type="CylinderShape3D" id="CanBody"]
+radius = 0.134
+height = 0.45
+
+[node name="MilkCan" type="StaticBody3D"]
+
+[node name="Skin" parent="." instance=ExtResource("Can")]
+
+[node name="Container" type="CollisionShape3D" parent="."]
+position = Vector3(0, 0.225, 0)
+shape = SubResource("CanBody")

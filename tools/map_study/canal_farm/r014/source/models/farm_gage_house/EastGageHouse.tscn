@@ -1,0 +1,20 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://models/farm_gage_house/EastGageExterior_r002.glb" id="Exterior"]
+
+[sub_resource type="ConvexPolygonShape3D" id="Shell"]
+points = PackedVector3Array(-2.250512, 0.0060, -2.999891, 2.249909, 0.0060, -3.000442, -2.250047, 0.0060, 2.999792, 2.249835, 0.0060, 2.999355, -2.250512, 2.9860, -2.999891, 2.249909, 2.9860, -3.000442, -2.250047, 3.1360, 2.999792, 2.249835, 3.1360, 2.999355)
+
+[sub_resource type="BoxShape3D" id="Fascia"]
+size = Vector3(4.5,0.12,0.186)
+
+[node name="EastGageHouse" type="StaticBody3D"]
+
+[node name="Exterior" parent="." instance=ExtResource("Exterior")]
+
+[node name="ClosedShell" type="CollisionShape3D" parent="."]
+shape = SubResource("Shell")
+
+[node name="SouthCap" type="CollisionShape3D" parent="."]
+position = Vector3(0,3.14,2.907)
+shape = SubResource("Fascia")

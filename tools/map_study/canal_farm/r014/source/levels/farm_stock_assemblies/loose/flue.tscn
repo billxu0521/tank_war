@@ -1,0 +1,10 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://levels/farm_stock_assemblies/stock/flue.tscn" id="stock"]
+
+[node name="flue" type="Node3D"]
+metadata/asset = "MOD-0013"
+
+[node name="Stock" parent="." instance=ExtResource("stock")]
+scale = Vector3(0.23, 1, 0.23)
+position = Vector3(0, 0.5, 0)

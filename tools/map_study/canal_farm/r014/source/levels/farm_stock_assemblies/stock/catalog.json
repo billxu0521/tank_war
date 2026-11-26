@@ -1,0 +1,102 @@
+{
+  "adobe_wall": {
+    "asset": "MOD-0001",
+    "original_m": [
+      2.0,
+      2.59999990463257,
+      0.449999988079071
+    ],
+    "sha256": "589383556e3d6c06fd6d039e9ecb7436c0754ce2f769db8649daca34ee99b7cc",
+    "source": "models/cd_gbb/v1/kit_adobe_wall.glb"
+  },
+  "beam": {
+    "asset": "MOD-0004",
+    "original_m": [
+      3.0,
+      0.25,
+      0.180000007152557
+    ],
+    "sha256": "ea6d78124c3b1f5e2aa451838b266f930d7d6b4a615f8d6dfa215dfac74849f4",
+    "source": "models/cd_gbb/v1/kit_beam.glb"
+  },
+  "brace": {
+    "asset": "MOD-0005",
+    "original_m": [
+      1.20000004768372,
+      0.150000005960464,
+      0.100000001490116
+    ],
+    "sha256": "2d622045ac733fa5a8bad39afc5b6b4bf976bf351bc2842792ab58c1cc645ede",
+    "source": "models/cd_gbb/v1/kit_brace.glb"
+  },
+  "folded_sheet": {
+    "asset": "MOD-0007",
+    "original_m": [
+      1.0,
+      0.0180000364780426,
+      1.61970591545105
+    ],
+    "sha256": "d3cee8749b2d41f5a66273c81ebb1561c976e38d1b85a9a86f4b431e1fe8d925",
+    "source": "models/cd_gbb/envelope_r005/kit_r002/mod_0007_folded_sheet.glb"
+  },
+  "glass_pane": {
+    "asset": "MOD-0011",
+    "original_m": [
+      0.449999988079071,
+      0.449999988079071,
+      0.00800000037997961
+    ],
+    "sha256": "8d59fa92468b025dd301a25fb404a41e288872bbb0fae2cdfdb24ddd6b3e3bad",
+    "source": "models/cd_gbb/v1/kit_glass_pane.glb"
+  },
+  "narrow_strip": {
+    "asset": "MOD-0006",
+    "original_m": [
+      1.0,
+      0.0350000001490116,
+      0.0549999997019768
+    ],
+    "sha256": "abd860443a192174eac1b5e800f9b0895ba2519b5e546acc0ff96ef836eaf248",
+    "source": "models/cd_gbb/v1/kit_narrow_strip.glb"
+  },
+  "plank": {
+    "asset": "MOD-0006",
+    "original_m": [
+      2.0,
+      0.0350000001490116,
+      0.219999998807907
+    ],
+    "sha256": "465f3cac6959b876a66ebf384e8ed63f8deb02f4640a5ef8e98aadca584a9941",
+    "source": "models/cd_gbb/v1/kit_plank.glb"
+  },
+  "post": {
+    "asset": "MOD-0003",
+    "original_m": [
+      0.200000002980232,
+      2.40000009536743,
+      0.200000002980232
+    ],
+    "sha256": "7be091fabf384277a61dfd1597baacf245831a565e2395ea02e0793dd4e98046",
+    "source": "models/cd_gbb/v1/kit_post.glb"
+  },
+  "roof_sheet": {
+    "asset": "MOD-0007",
+    "original_m": [
+      0.600000023841858,
+      0.025000000372529,
+      1.79999995231628
+    ],
+    "sha256": "92d3cb5a56e16485bbbfa603e334057eacf25e9285fab7560a4ad58c25c9c1dc",
+    "source": "models/cd_gbb/v1/kit_roof_sheet.glb"
+  },
+  "stone_foot": {
+    "asset": "MOD-0002",
+    "original_m": [
+      1.0,
+      0.400000005960464,
+      0.5
+    ],
+    "sha256": "76f98334704e9dce3c8642ca2b12c3e0f5f188d4502b8c4e5015ad466de15e14",
+    "source": "models/cd_gbb/v1/kit_stone_foot.glb"
+  }
+}

@@ -1,0 +1,1139 @@
+{
+  "baseline": "Canal Farm A v3.1 r014",
+  "state": "local_review_candidate",
+  "paths": "relative to r014 project root unless beginning with docs/ or tools/ in the companion document",
+  "assembly_manifest_basis": "recipe and dependency readback from r014, not independent runtime inventory",
+  "places": {
+    "Boundaries": {
+      "label": "院牆與護岸",
+      "r001_stock_counts": {
+        "adobe_brick": 92,
+        "adobe_wall": 68,
+        "stone_foot": 24
+      },
+      "components": {
+        "farm_stock_assemblies": {
+          "path": "levels/farm_stock_assemblies/rooms/Boundaries.tscn",
+          "sha256": "19865af124e1514dfcdc6b4bf88ac838e78cb51eca63a25b24eadfad48da8de0"
+        },
+        "r001_baked": {
+          "path": "levels/farm_stock_assemblies/baked/Boundaries.scn",
+          "sha256": "0f9c3557854e806410d06b68792191199addbefebaf8afdda451456ff9c7ad45"
+        },
+        "farm_stock_groups": {
+          "path": "levels/farm_stock_groups/sites/Boundaries.scn",
+          "sha256": "e809f35634c54066aaad38ea4997bd6f7376e2d1bd3406832e161870cb9ea694"
+        }
+      }
+    },
+    "CenterBridge": {
+      "label": "中橋",
+      "r001_stock_counts": {
+        "beam": 8,
+        "brace": 14,
+        "plank": 360,
+        "post": 8
+      },
+      "components": {
+        "farm_stock_assemblies": {
+          "path": "levels/farm_stock_assemblies/rooms/CenterBridge.tscn",
+          "sha256": "4bfaa1e140698c50241422554fb980ff23eb341a38287239cc9baf0fdd4b8fcf"
+        },
+        "r001_baked": {
+          "path": "levels/farm_stock_assemblies/baked/CenterBridge.scn",
+          "sha256": "99299e660f0f4118c4be6f4766cd3ee45571abadfe2faa0ca49076e8590b8793"
+        },
+        "farm_stock_groups": {
+          "path": "levels/farm_stock_groups/sites/CenterBridge.scn",
+          "sha256": "298a8c06dbb74192dcc3094f0579286dbfe79622ef1c14e4a66474d99682b921"
+        }
+      },
+      "runtime_batch": "FarmBuildings31/CenterBridge/PendingStock"
+    },
+    "EastGageHouse": {
+      "label": "東堤量水房",
+      "r001_stock_counts": {
+        "beam": 38,
+        "folded_sheet": 24,
+        "handle": 4,
+        "hinge": 4,
+        "narrow_strip": 28,
+        "plank": 624,
+        "post": 42
+      },
+      "components": {
+        "farm_stock_assemblies": {
+          "path": "levels/farm_stock_assemblies/rooms/EastGageHouse.tscn",
+          "sha256": "f6f080c8c71f9b178def4fe7513066a0eac1fab3c24c0b4347ade26395bb4800"
+        },
+        "farm_buildings_r004": {
+          "path": "levels/farm_buildings_r004/ExtraEastGageHouse.json",
+          "sha256": "84688f16c9429716dc839987b4adf7423d95b7c8717dc1a20bab7be6ece39462"
+        },
+        "r001_baked": {
+          "path": "levels/farm_stock_assemblies/baked/EastGageHouse.scn",
+          "sha256": "d302f068544883d8e95d06b536c52b4b9e3a846e50669be892feb03e0de95239"
+        },
+        "r004_author": {
+          "path": "levels/farm_buildings_r004/author/ExtraEastGageHouse.tscn",
+          "sha256": "03f869589457bfff998bf672579f4bc94e2ed1528fd89eb9c26550cb3c4b67eb"
+        },
+        "farm_stock_groups": {
+          "path": "levels/farm_stock_groups/sites/EastGageHouse.scn",
+          "sha256": "3eafc0b960293af12c6f49f9f201479354c774dee2c7e69d53f21b78f9bd3064"
+        }
+      },
+      "r004_author_asset_tags": [
+        "MOD-0003",
+        "MOD-0004"
+      ]
+    },
+    "GateStore": {
+      "label": "橋東閘板棚",
+      "r001_stock_counts": {
+        "beam": 41,
+        "folded_sheet": 36,
+        "handle": 4,
+        "hinge": 4,
+        "narrow_strip": 22,
+        "plank": 784,
+        "post": 45
+      },
+      "components": {
+        "farm_stock_assemblies": {
+          "path": "levels/farm_stock_assemblies/rooms/GateStore.tscn",
+          "sha256": "e5667ed317e1ee2a4f8a068bf5871d06a4b1caa70857f7a5a431d269bd46bb68"
+        },
+        "farm_buildings_r004": {
+          "path": "levels/farm_buildings_r004/ExtraGateStore.json",
+          "sha256": "12a58a86e17d8a96c888c6e2fa0c78a64e48d6bdedcd6f430235c8c103cefb4c"
+        },
+        "r001_baked": {
+          "path": "levels/farm_stock_assemblies/baked/GateStore.scn",
+          "sha256": "53143757329c721d06619ce808cd58ae434f796caff3c421b8b03bffdf8526ef"
+        },
+        "r004_author": {
+          "path": "levels/farm_buildings_r004/author/ExtraGateStore.tscn",
+          "sha256": "e38e5c00e2590485990bd3bcb86ab48c170aa2076bf7ee6313d84e9a1bbb071c"
+        },
+        "farm_stock_groups": {
+          "path": "levels/farm_stock_groups/sites/GateStore.scn",
+          "sha256": "37b889e334c6e266fd6329df7bc0ac6fd45c1d42504cfd0aeac0a52daa219bb8"
+        }
+      },
+      "r004_author_asset_tags": [
+        "MOD-0003",
+        "MOD-0004",
+        "MOD-0006"
+      ]
+    },
+    "House1": {
+      "label": "西北農宅",
+      "r001_stock_counts": {
+        "adobe_brick": 29,
+        "adobe_wall": 32,
+        "beam": 39,
+        "bedroll": 1,
+        "earth_course": 1,
+        "flue": 1,
+        "folded_sheet": 85,
+        "glass_pane": 1,
+        "handle": 2,
+        "hinge": 2,
+        "iron_plate": 2,
+        "narrow_strip": 18,
+        "plank": 305,
+        "post": 14,
+        "stone_foot": 2
+      },
+      "components": {
+        "farm_stock_assemblies": {
+          "path": "levels/farm_stock_assemblies/rooms/House1.tscn",
+          "sha256": "ece762f6006a399ec82b97a314bf594305694f188036b3ef5faef456a95118cf"
+        },
+        "farm_buildings_r004": {
+          "path": "levels/farm_buildings_r004/ExtraHouse1.json",
+          "sha256": "ed8b4b607761cd698869d63eba5d0ebfce03703e95ba683f9956715992435211"
+        },
+        "r001_baked": {
+          "path": "levels/farm_stock_assemblies/baked/House1.scn",
+          "sha256": "142aadb1df90199550b29d0d5e548e8a5f2914be76d5c11259fa7001738ad2fe"
+        },
+        "r004_author": {
+          "path": "levels/farm_buildings_r004/author/ExtraHouse1.tscn",
+          "sha256": "0e235ce03cdd38236e451e44d95039f254642117d88d3890ca24e2309d2a000f"
+        },
+        "farm_stock_groups": {
+          "path": "levels/farm_stock_groups/sites/House1.scn",
+          "sha256": "df1939acfa732f415f055eba6f48cc21adc47b7bce300e4d33a3cdc325a11bfd"
+        }
+      },
+      "r004_author_asset_tags": [
+        "MOD-0001",
+        "MOD-0004",
+        "MOD-0006",
+        "MOD-0013"
+      ]
+    },
+    "House2": {
+      "label": "集乳路住家",
+      "r001_stock_counts": {
+        "adobe_brick": 45,
+        "adobe_wall": 31,
+        "beam": 45,
+        "bedroll": 1,
+        "earth_course": 3,
+        "folded_sheet": 90,
+        "glass_pane": 1,
+        "handle": 7,
+        "hinge": 6,
+        "narrow_strip": 18,
+        "plank": 440,
+        "post": 30
+      },
+      "components": {
+        "farm_stock_assemblies": {
+          "path": "levels/farm_stock_assemblies/rooms/House2.tscn",
+          "sha256": "768173ace377fe0874e9c098c5f5cd5b997cdf11a4ce14e1fc15811b81a6f8ba"
+        },
+        "farm_buildings_r004": {
+          "path": "levels/farm_buildings_r004/ExtraHouse2.json",
+          "sha256": "5d3dc833cff900c9e2328d8e0bffcf3dbb9a139e6f77d2fdf2cfefc8fb1b8f08"
+        },
+        "r001_baked": {
+          "path": "levels/farm_stock_assemblies/baked/House2.scn",
+          "sha256": "147715f87a11164fd91469ccf5e674446e65fa1f52c1f8d0a07a361438fa4636"
+        },
+        "r004_author": {
+          "path": "levels/farm_buildings_r004/author/ExtraHouse2.tscn",
+          "sha256": "a37a0574030c48810a27c43db75edc7f7eca4fb298bb714af378e1a96b37d14b"
+        },
+        "farm_stock_groups": {
+          "path": "levels/farm_stock_groups/sites/House2.scn",
+          "sha256": "06a02cc0b3c536e8fadfbccc21b26d64e10a2c0024ea5d745b75ce3c981470c2"
+        }
+      },
+      "r004_author_asset_tags": [
+        "MOD-0003",
+        "MOD-0004",
+        "MOD-0006"
+      ]
+    },
+    "House5": {
+      "label": "西南果農屋",
+      "r001_stock_counts": {
+        "beam": 170,
+        "bedroll": 2,
+        "brace": 2,
+        "folded_sheet": 90,
+        "glass_pane": 3,
+        "handle": 8,
+        "hinge": 6,
+        "narrow_strip": 78,
+        "plank": 1609,
+        "post": 157
+      },
+      "components": {
+        "farm_stock_assemblies": {
+          "path": "levels/farm_stock_assemblies/rooms/House5.tscn",
+          "sha256": "6d8d5997bc0edaffc0cdc7b88fd03a1d04a159a79626d9e9d101e6a1e94cc4bd"
+        },
+        "farm_buildings_r004": {
+          "path": "levels/farm_buildings_r004/ExtraHouse5.json",
+          "sha256": "09d8decbaa6a5baf97e53e847c0deb8ec2598a8c71db26cce6b7b33b0570cd07"
+        },
+        "r001_baked": {
+          "path": "levels/farm_stock_assemblies/baked/House5.scn",
+          "sha256": "dd6be1345ed0ddff8ab12070736f09b5e7156cf445fc0fca7d466e61a861932f"
+        },
+        "r004_author": {
+          "path": "levels/farm_buildings_r004/author/ExtraHouse5.tscn",
+          "sha256": "58c251231b3f620bc8bb1525274b0f01a4be7a12ea463167c4863b785ae071d5"
+        },
+        "farm_stock_groups": {
+          "path": "levels/farm_stock_groups/sites/House5.scn",
+          "sha256": "d8081dff1e90486a91d6d7d48a67940376ca5c35713aa11f06a21b083f0e6a09"
+        }
+      },
+      "r004_author_asset_tags": [
+        "MOD-0003",
+        "MOD-0004",
+        "MOD-0006"
+      ]
+    },
+    "House6": {
+      "label": "橋頭伙房",
+      "r001_stock_counts": {
+        "adobe_brick": 47,
+        "adobe_wall": 36,
+        "beam": 56,
+        "bedroll": 1,
+        "earth_course": 4,
+        "folded_sheet": 96,
+        "glass_pane": 1,
+        "handle": 6,
+        "hinge": 6,
+        "narrow_strip": 20,
+        "plank": 454,
+        "post": 32
+      },
+      "components": {
+        "farm_stock_assemblies": {
+          "path": "levels/farm_stock_assemblies/rooms/House6.tscn",
+          "sha256": "0b09c9d299b88edd9cd8132b806133c4759729dac4f50166ee14234b7940bd5e"
+        },
+        "farm_buildings_r004": {
+          "path": "levels/farm_buildings_r004/ExtraHouse6.json",
+          "sha256": "b3ca7e8e8e4ea32a4b2bdd019744174228224c5919095c4466ea2d20038fc89c"
+        },
+        "r001_baked": {
+          "path": "levels/farm_stock_assemblies/baked/House6.scn",
+          "sha256": "b1c7a2b369441488429fa9681b8042b341df3a876259312d46a17713d917fb0f"
+        },
+        "r004_author": {
+          "path": "levels/farm_buildings_r004/author/ExtraHouse6.tscn",
+          "sha256": "d61caeb1696838345a52a89eced2d61e94c43692c927907052cddae640238d8e"
+        },
+        "farm_stock_groups": {
+          "path": "levels/farm_stock_groups/sites/House6.scn",
+          "sha256": "01ae879ccd20ae85fc1d51bc390657c41c3f99da4714b1fc6ac416b25ccf4a45"
+        }
+      },
+      "r004_author_asset_tags": [
+        "MOD-0003",
+        "MOD-0004",
+        "MOD-0006"
+      ]
+    },
+    "House7": {
+      "label": "東南農工屋",
+      "r001_stock_counts": {
+        "adobe_brick": 43,
+        "adobe_wall": 34,
+        "beam": 157,
+        "bedroll": 2,
+        "brace": 4,
+        "earth_course": 4,
+        "folded_sheet": 96,
+        "glass_pane": 3,
+        "handle": 7,
+        "hinge": 6,
+        "narrow_strip": 44,
+        "plank": 1113,
+        "post": 115
+      },
+      "components": {
+        "farm_stock_assemblies": {
+          "path": "levels/farm_stock_assemblies/rooms/House7.tscn",
+          "sha256": "882cd94c484670dc4a584e5b1af837b93ab55b63eb09593e8d1c84005beb4fa1"
+        },
+        "farm_buildings_r004": {
+          "path": "levels/farm_buildings_r004/ExtraHouse7.json",
+          "sha256": "c41066c4f9ec508af8270e86cdfd9b70b21f8178d5ec453eca00e408936ea3c0"
+        },
+        "r001_baked": {
+          "path": "levels/farm_stock_assemblies/baked/House7.scn",
+          "sha256": "a3d603f6de57a69823c66ce64ec2a70ad831936c143538a2353363af329841af"
+        },
+        "r004_author": {
+          "path": "levels/farm_buildings_r004/author/ExtraHouse7.tscn",
+          "sha256": "a5834d755cc1cf777bce646dee2f68bcb814dbb2461542577815aa270125dcae"
+        },
+        "farm_stock_groups": {
+          "path": "levels/farm_stock_groups/sites/House7.scn",
+          "sha256": "95e6505673ea1a6dcde41314d2f66040b5df5304edab31fe5467326a86962bac"
+        }
+      },
+      "r004_author_asset_tags": [
+        "MOD-0003",
+        "MOD-0004",
+        "MOD-0006"
+      ]
+    },
+    "House8": {
+      "label": "南田農戶屋",
+      "r001_stock_counts": {
+        "adobe_brick": 45,
+        "adobe_wall": 31,
+        "beam": 45,
+        "bedroll": 1,
+        "earth_course": 3,
+        "folded_sheet": 90,
+        "glass_pane": 1,
+        "handle": 7,
+        "hinge": 6,
+        "narrow_strip": 16,
+        "plank": 417,
+        "post": 26
+      },
+      "components": {
+        "farm_stock_assemblies": {
+          "path": "levels/farm_stock_assemblies/rooms/House8.tscn",
+          "sha256": "c41f664738d675c857d432a6ac74862f41e7bba54d044876a278e80fc291033d"
+        },
+        "farm_buildings_r004": {
+          "path": "levels/farm_buildings_r004/ExtraHouse8.json",
+          "sha256": "e69f6c9d3d0bd520be2f0d2bfc6e8da734af535a02592fd7c004645948124030"
+        },
+        "r001_baked": {
+          "path": "levels/farm_stock_assemblies/baked/House8.scn",
+          "sha256": "6a07865378b6cc1b8e937a1c81b509136ad1f6a1841636c94449227c71f8c8e6"
+        },
+        "r004_author": {
+          "path": "levels/farm_buildings_r004/author/ExtraHouse8.tscn",
+          "sha256": "7cb976e39bef8fcece8fb3381386a4c1c4c1198832cb53fe3b8e7cf81ad53a5b"
+        },
+        "farm_stock_groups": {
+          "path": "levels/farm_stock_groups/sites/House8.scn",
+          "sha256": "08203d36c166f921c32b95a2921fd35ab2169eb4e9cc7e6ed7a2193673a5b427"
+        }
+      },
+      "r004_author_asset_tags": [
+        "MOD-0003",
+        "MOD-0004",
+        "MOD-0006"
+      ]
+    },
+    "MilkStation": {
+      "label": "北集乳棚",
+      "r001_stock_counts": {
+        "beam": 20,
+        "folded_sheet": 32,
+        "plank": 200,
+        "post": 4
+      },
+      "components": {
+        "farm_stock_assemblies": {
+          "path": "levels/farm_stock_assemblies/rooms/MilkStation.tscn",
+          "sha256": "69d25fe891c30975d656291a5738f21b7635d20d7725fa9dbc70c3cc79144962"
+        },
+        "farm_buildings_r004": {
+          "path": "levels/farm_buildings_r004/ExtraMilkStation.json",
+          "sha256": "c2361214d262a8c2496fca31d56c6213116a4ade4ed580df859cd71e13b89a3b"
+        },
+        "r001_baked": {
+          "path": "levels/farm_stock_assemblies/baked/MilkStation.scn",
+          "sha256": "1f4d1e18578213495a9f6b137682a47eda29b6899ef18433690e74bd0fd6a306"
+        },
+        "r004_author": {
+          "path": "levels/farm_buildings_r004/author/ExtraMilkStation.tscn",
+          "sha256": "29077a31cdbee2158ebee51ef4c094148c95121296c517cd03ec92dfb983291a"
+        },
+        "farm_stock_groups": {
+          "path": "levels/farm_stock_groups/sites/MilkStation.scn",
+          "sha256": "645268b97656252184ec96666773854fea2c0968c63d27713e50076f70482817"
+        }
+      },
+      "r004_author_asset_tags": [
+        "MOD-0003",
+        "MOD-0004"
+      ]
+    },
+    "NortheastFarmhouse": {
+      "label": "東北洗臺農宅",
+      "r001_stock_counts": {
+        "adobe_brick": 48,
+        "adobe_wall": 36,
+        "beam": 148,
+        "bedroll": 1,
+        "brace": 4,
+        "earth_course": 3,
+        "folded_sheet": 90,
+        "glass_pane": 2,
+        "handle": 11,
+        "hinge": 10,
+        "narrow_strip": 48,
+        "plank": 1083,
+        "post": 113
+      },
+      "components": {
+        "farm_stock_assemblies": {
+          "path": "levels/farm_stock_assemblies/rooms/NortheastFarmhouse.tscn",
+          "sha256": "35b37caa3926c5aa8526a85a8b9f7ca926cb62fc84f92b5f29864c8a0e4b039d"
+        },
+        "farm_buildings_r004": {
+          "path": "levels/farm_buildings_r004/ExtraNortheastFarmhouse.json",
+          "sha256": "d13789d1f6540a23ac787dc81c833a42d52c11c0c48ce8d892cf7ea23e0e35d2"
+        },
+        "r001_baked": {
+          "path": "levels/farm_stock_assemblies/baked/NortheastFarmhouse.scn",
+          "sha256": "c1dc1da19376d8b50af6ba8eaa01fb90a3c02adb505358923aacd57f1f8a382e"
+        },
+        "r004_author": {
+          "path": "levels/farm_buildings_r004/author/ExtraNortheastFarmhouse.tscn",
+          "sha256": "358e4982c63794ffae7ac452c04f5dc360fa5a15b446a739e4fc44d6eeafc30a"
+        },
+        "farm_stock_groups": {
+          "path": "levels/farm_stock_groups/sites/NortheastFarmhouse.scn",
+          "sha256": "114d1a5a89d9587f12cf5e7c256c6f60930d4818c472ae069396e0dbef7799e9"
+        }
+      },
+      "r004_author_asset_tags": [
+        "MOD-0003",
+        "MOD-0004",
+        "MOD-0006"
+      ]
+    },
+    "NorthwestWagonShed": {
+      "label": "西北農車棚",
+      "r001_stock_counts": {
+        "wheel_chock": 4
+      },
+      "components": {
+        "farm_stock_assemblies": {
+          "path": "levels/farm_stock_assemblies/rooms/NorthwestWagonShed.tscn",
+          "sha256": "268ed8c3dc2b7ce06c6d1a9054615663241788f3a97bdcd861cdb36463e316e4"
+        },
+        "farm_buildings_r004": {
+          "path": "levels/farm_buildings_r004/ExtraNorthwestWagonShed.json",
+          "sha256": "f1338e6d2c7c5f7d3671df6b7518cdbf24e9cfe7c9f7d543d2b14ddf2775ac76"
+        },
+        "r001_baked": {
+          "path": "levels/farm_stock_assemblies/baked/NorthwestWagonShed.scn",
+          "sha256": "221f55f066f9ea34433f9cc903c451755c11bb075b426250bc93abad186443d7"
+        },
+        "r004_author": {
+          "path": "levels/farm_buildings_r004/author/ExtraNorthwestWagonShed.tscn",
+          "sha256": "18514fb21c4512f0b2b1c0164f8124bcf86cb68a19a600879cc6ba9e6c68a2dd"
+        },
+        "farm_stock_groups": {
+          "path": "levels/farm_stock_groups/sites/NorthwestWagonShed.scn",
+          "sha256": "061bdb69d1737f4ba2e065d8c1704a868d98c7487aebb4cacc294f736ee25d74"
+        }
+      },
+      "r004_author_asset_tags": [
+        "MOD-0002",
+        "MOD-0003",
+        "MOD-0004"
+      ]
+    },
+    "PayOffice": {
+      "label": "發薪房",
+      "r001_stock_counts": {
+        "beam": 90,
+        "folded_sheet": 189,
+        "handle": 4,
+        "hinge": 4,
+        "ink_bottle": 2,
+        "iron_plate": 3,
+        "narrow_strip": 35,
+        "paper_leaf": 109,
+        "plank": 1361,
+        "post": 85,
+        "stone_foot": 58
+      },
+      "components": {
+        "farm_stock_assemblies": {
+          "path": "levels/farm_stock_assemblies/rooms/PayOffice.tscn",
+          "sha256": "45969803993bcb4760ea00b3e8f4392eac0e2fbe30a452b4d767147cc7bca337"
+        },
+        "farm_buildings_r004": {
+          "path": "levels/farm_buildings_r004/ExtraPayOffice.json",
+          "sha256": "4525d3049224a1a4048abaf8bc8620d95b9237d8846d502276179e481f60a89a"
+        },
+        "r001_baked": {
+          "path": "levels/farm_stock_assemblies/baked/PayOffice.scn",
+          "sha256": "b504a18f4b9c59540cc33f40f5c2fa96fd63e3108e079120ee35e7bc48df5da0"
+        },
+        "r004_author": {
+          "path": "levels/farm_buildings_r004/author/ExtraPayOffice.tscn",
+          "sha256": "9fa501a7ea5ea2977161e1a0df1001313e5ed398fe69639044e58ef13b4f48f3"
+        },
+        "farm_stock_groups": {
+          "path": "levels/farm_stock_groups/sites/PayOffice.scn",
+          "sha256": "35397caf028d5e7da97d81e8f230b75c0f8b7f66031f1b3f6d39f53189f1da9e"
+        }
+      },
+      "r004_author_asset_tags": [
+        "MOD-0003",
+        "MOD-0004",
+        "MOD-0006"
+      ]
+    },
+    "RegistrationRoom": {
+      "label": "秤房與清選樓",
+      "r001_stock_counts": {
+        "beam": 237,
+        "folded_sheet": 120,
+        "glass_pane": 1,
+        "handle": 12,
+        "hinge": 12,
+        "ink_bottle": 2,
+        "iron_plate": 1,
+        "narrow_strip": 115,
+        "paper_leaf": 105,
+        "plank": 2157,
+        "post": 188,
+        "stone_foot": 38
+      },
+      "components": {
+        "farm_stock_assemblies": {
+          "path": "levels/farm_stock_assemblies/rooms/RegistrationRoom.tscn",
+          "sha256": "4a79ab6a65be5fc6169dc785e86e30ff27bb46af5c100a7b40b20ecc365670d8"
+        },
+        "farm_buildings_r004": {
+          "path": "levels/farm_buildings_r004/ExtraRegistrationRoom.json",
+          "sha256": "2acd26fc955b908ebe1dae502e7e577eaff0fe9d5c3e517f0c9ebdf77ece9822"
+        },
+        "r001_baked": {
+          "path": "levels/farm_stock_assemblies/baked/RegistrationRoom.scn",
+          "sha256": "04e3a48eba1dc837c40e9350fad6c2439b89f2979223605839a5b53bc1d60903"
+        },
+        "r004_author": {
+          "path": "levels/farm_buildings_r004/author/ExtraRegistrationRoom.tscn",
+          "sha256": "c21cb6a22bb30e8bbe2126bed1d5fcf16722b075a34e6188443a46679223e811"
+        },
+        "farm_stock_groups": {
+          "path": "levels/farm_stock_groups/sites/RegistrationRoom.scn",
+          "sha256": "649a4e152495b1f962ed97e5b73b9ff22afc5bc4c5bc150c53b9437047380321"
+        }
+      },
+      "r004_author_asset_tags": [
+        "MOD-0003",
+        "MOD-0004",
+        "MOD-0006"
+      ]
+    },
+    "SoutheastUnloadingShed": {
+      "label": "東南卸車棚",
+      "r001_stock_counts": {},
+      "components": {
+        "farm_buildings_r004": {
+          "path": "levels/farm_buildings_r004/ExtraSoutheastUnloadingShed.json",
+          "sha256": "51edd8b3b00f53a6bbfddc600ab688f3ed4e7449c3d8bf87c3d72549d8ab889f"
+        },
+        "r004_author": {
+          "path": "levels/farm_buildings_r004/author/ExtraSoutheastUnloadingShed.tscn",
+          "sha256": "c4a51d2024f5a6be4633f34931927d37ec79c414dfcc2a5c7e1de3365e507ed9"
+        }
+      },
+      "r004_author_asset_tags": [
+        "MOD-0002",
+        "MOD-0003",
+        "MOD-0004",
+        "MOD-0006"
+      ]
+    },
+    "ToolStore": {
+      "label": "南農具棚",
+      "r001_stock_counts": {
+        "beam": 33,
+        "folded_sheet": 24,
+        "handle": 2,
+        "hinge": 2,
+        "narrow_strip": 18,
+        "plank": 544,
+        "post": 35
+      },
+      "components": {
+        "farm_stock_assemblies": {
+          "path": "levels/farm_stock_assemblies/rooms/ToolStore.tscn",
+          "sha256": "14c9b225391a65ca282791a2ca69cbffeb359835bbb807fc9be42cd7aeaeccf6"
+        },
+        "farm_buildings_r004": {
+          "path": "levels/farm_buildings_r004/ExtraToolStore.json",
+          "sha256": "3b7938c0c5089cebea1dd68146d7b0eac08c372d3e47aab18cf4c33850adc64a"
+        },
+        "r001_baked": {
+          "path": "levels/farm_stock_assemblies/baked/ToolStore.scn",
+          "sha256": "c11dfa44cd6288ab519b7303806d3f92d7a7c2685a3ce4b48479ad5c5f30767e"
+        },
+        "r004_author": {
+          "path": "levels/farm_buildings_r004/author/ExtraToolStore.tscn",
+          "sha256": "7887e85a4f912124d63521d451a91ae8a88d952e4c7cfa608b80616205bb03c1"
+        },
+        "farm_stock_groups": {
+          "path": "levels/farm_stock_groups/sites/ToolStore.scn",
+          "sha256": "a596dade7a327e87c0b8d9127993b24e77985227d3bfc83d879ad3a22830994a"
+        }
+      },
+      "r004_author_asset_tags": [
+        "MOD-0003",
+        "MOD-0004"
+      ]
+    },
+    "WestToolHouse": {
+      "label": "西灘閘具房",
+      "r001_stock_counts": {
+        "beam": 21,
+        "folded_sheet": 8,
+        "handle": 2,
+        "hinge": 2,
+        "narrow_strip": 18,
+        "plank": 217,
+        "post": 26
+      },
+      "components": {
+        "farm_stock_assemblies": {
+          "path": "levels/farm_stock_assemblies/rooms/WestToolHouse.tscn",
+          "sha256": "db85bfc9e6344d8524df0acefa29e069c776b0348512f65bd50b28bf72bbc18a"
+        },
+        "farm_buildings_r004": {
+          "path": "levels/farm_buildings_r004/ExtraWestToolHouse.json",
+          "sha256": "464217c00f18c17c042d8bad50b9499bd611905276ef4fa87cc5ee59d724712f"
+        },
+        "r001_baked": {
+          "path": "levels/farm_stock_assemblies/baked/WestToolHouse.scn",
+          "sha256": "6e2df2e41d9693968c678e3e070686611bcbdec1bc32abc5e389b2633dccffeb"
+        },
+        "r004_author": {
+          "path": "levels/farm_buildings_r004/author/ExtraWestToolHouse.tscn",
+          "sha256": "fd49ee592b447bbcd34805dd060139c7f4746211ab42f524bfa7398a816a3b5d"
+        },
+        "farm_stock_groups": {
+          "path": "levels/farm_stock_groups/sites/WestToolHouse.scn",
+          "sha256": "872e196a9a378167e4090e3126e749c39c30918bceb5c2e98d701c53d3384e0e"
+        }
+      },
+      "r004_author_asset_tags": [
+        "MOD-0003",
+        "MOD-0004"
+      ]
+    },
+    "YardHouse": {
+      "label": "北院點收間",
+      "r001_stock_counts": {
+        "beam": 54,
+        "folded_sheet": 30,
+        "handle": 4,
+        "hinge": 4,
+        "narrow_strip": 26,
+        "plank": 770,
+        "post": 50
+      },
+      "components": {
+        "farm_stock_assemblies": {
+          "path": "levels/farm_stock_assemblies/rooms/YardHouse.tscn",
+          "sha256": "8fe414917aef4b83b56a4f92a9b8b3617678ff0df66fea98997f2328d7cefad3"
+        },
+        "farm_buildings_r004": {
+          "path": "levels/farm_buildings_r004/ExtraYardHouse.json",
+          "sha256": "236c4c773c1d826eccd70d5cf950743284c2fa280f990f4995186074ece772d7"
+        },
+        "r001_baked": {
+          "path": "levels/farm_stock_assemblies/baked/YardHouse.scn",
+          "sha256": "1bbf0df17c76dd64e2a06ebb0dc7e95ee93a726ea357d0cc6273b16ccc83bfe6"
+        },
+        "r004_author": {
+          "path": "levels/farm_buildings_r004/author/ExtraYardHouse.tscn",
+          "sha256": "515eae0b66fed95585ce0ce7e0eca2eaec26bc62b1e814120284437c207524ad"
+        },
+        "farm_stock_groups": {
+          "path": "levels/farm_stock_groups/sites/YardHouse.scn",
+          "sha256": "85864376e62541acf856d84b48ca1b62f8f2d897e36fee0f0e837d4c0d92f31f"
+        }
+      },
+      "r004_author_asset_tags": [
+        "MOD-0003",
+        "MOD-0004"
+      ]
+    },
+    "YardStore": {
+      "label": "北院小庫",
+      "r001_stock_counts": {
+        "beam": 22,
+        "folded_sheet": 12,
+        "handle": 2,
+        "hinge": 2,
+        "narrow_strip": 16,
+        "plank": 268,
+        "post": 28
+      },
+      "components": {
+        "farm_stock_assemblies": {
+          "path": "levels/farm_stock_assemblies/rooms/YardStore.tscn",
+          "sha256": "676a7d00ac81611bde3e6d94a8b9261d6c8a2e7000fd9f96c913f9b2160e1c36"
+        },
+        "farm_buildings_r004": {
+          "path": "levels/farm_buildings_r004/ExtraYardStore.json",
+          "sha256": "4091f755f43368bbf1e8b71b8fea900b33567af3454bfd163f4edc688d97acc8"
+        },
+        "r001_baked": {
+          "path": "levels/farm_stock_assemblies/baked/YardStore.scn",
+          "sha256": "9ba75b6620471166679563db4adb199eb1bd33ef258ebfa6ee0ca26aea5f29c3"
+        },
+        "r004_author": {
+          "path": "levels/farm_buildings_r004/author/ExtraYardStore.tscn",
+          "sha256": "065df183a07ecaa7058d9dd604fe84cd526f98391ed4c3cf846f5e323ea0bbf9"
+        },
+        "farm_stock_groups": {
+          "path": "levels/farm_stock_groups/sites/YardStore.scn",
+          "sha256": "82c8cdc322022cfbce5dae4645f4d7a55df4cce349c27001a6ca575b4887f45f"
+        }
+      },
+      "r004_author_asset_tags": [
+        "MOD-0003",
+        "MOD-0004"
+      ]
+    },
+    "GrainTransfer": {
+      "label": "北田散穀轉運樓",
+      "r001_stock_counts": {},
+      "components": {
+        "farm_buildings_r004": {
+          "path": "levels/farm_buildings_r004/GrainTransfer.json",
+          "sha256": "05e0dcc1c68c10115094978cc3015bfe1b8cdd1f6f664cf0ebd4ca9b4f3fc44d"
+        },
+        "r004_author": {
+          "path": "levels/farm_buildings_r004/author/GrainTransfer.tscn",
+          "sha256": "71071e82620b81dc10cf0ee2a336e699fccf69f5b5cb88574b5c56ecced9a3da"
+        }
+      },
+      "r004_author_asset_tags": [
+        "MOD-0002",
+        "MOD-0003",
+        "MOD-0004",
+        "MOD-0005",
+        "MOD-0006",
+        "MOD-0007"
+      ]
+    },
+    "WheelShop": {
+      "label": "西岸車具修理棚",
+      "r001_stock_counts": {},
+      "components": {
+        "farm_buildings_r004": {
+          "path": "levels/farm_buildings_r004/WheelShop.json",
+          "sha256": "fc2d9e30e496a091103dde78d74a5eb2c42b6e34b4f203388f11d24a6b96513e"
+        },
+        "r004_author": {
+          "path": "levels/farm_buildings_r004/author/WheelShop.tscn",
+          "sha256": "a126ab2c2e517fa005b1f1bc644d914b5d6b07532293b9994ee9b97f1a95f8ea"
+        }
+      },
+      "r004_author_asset_tags": [
+        "MOD-0002",
+        "MOD-0003",
+        "MOD-0004",
+        "MOD-0005",
+        "MOD-0006",
+        "MOD-0007"
+      ]
+    }
+  },
+  "stock": {
+    "adobe_wall": {
+      "asset": "MOD-0001",
+      "original_m": [
+        2.0,
+        2.59999990463257,
+        0.449999988079071
+      ],
+      "sha256": "589383556e3d6c06fd6d039e9ecb7436c0754ce2f769db8649daca34ee99b7cc",
+      "source": "models/cd_gbb/v1/kit_adobe_wall.glb"
+    },
+    "beam": {
+      "asset": "MOD-0004",
+      "original_m": [
+        3.0,
+        0.25,
+        0.180000007152557
+      ],
+      "sha256": "ea6d78124c3b1f5e2aa451838b266f930d7d6b4a615f8d6dfa215dfac74849f4",
+      "source": "models/cd_gbb/v1/kit_beam.glb"
+    },
+    "brace": {
+      "asset": "MOD-0005",
+      "original_m": [
+        1.20000004768372,
+        0.150000005960464,
+        0.100000001490116
+      ],
+      "sha256": "2d622045ac733fa5a8bad39afc5b6b4bf976bf351bc2842792ab58c1cc645ede",
+      "source": "models/cd_gbb/v1/kit_brace.glb"
+    },
+    "folded_sheet": {
+      "asset": "MOD-0007",
+      "original_m": [
+        1.0,
+        0.0180000364780426,
+        1.61970591545105
+      ],
+      "sha256": "d3cee8749b2d41f5a66273c81ebb1561c976e38d1b85a9a86f4b431e1fe8d925",
+      "source": "models/cd_gbb/envelope_r005/kit_r002/mod_0007_folded_sheet.glb"
+    },
+    "glass_pane": {
+      "asset": "MOD-0011",
+      "original_m": [
+        0.449999988079071,
+        0.449999988079071,
+        0.00800000037997961
+      ],
+      "sha256": "8d59fa92468b025dd301a25fb404a41e288872bbb0fae2cdfdb24ddd6b3e3bad",
+      "source": "models/cd_gbb/v1/kit_glass_pane.glb"
+    },
+    "narrow_strip": {
+      "asset": "MOD-0006",
+      "original_m": [
+        1.0,
+        0.0350000001490116,
+        0.0549999997019768
+      ],
+      "sha256": "abd860443a192174eac1b5e800f9b0895ba2519b5e546acc0ff96ef836eaf248",
+      "source": "models/cd_gbb/v1/kit_narrow_strip.glb"
+    },
+    "plank": {
+      "asset": "MOD-0006",
+      "original_m": [
+        2.0,
+        0.0350000001490116,
+        0.219999998807907
+      ],
+      "sha256": "465f3cac6959b876a66ebf384e8ed63f8deb02f4640a5ef8e98aadca584a9941",
+      "source": "models/cd_gbb/v1/kit_plank.glb"
+    },
+    "post": {
+      "asset": "MOD-0003",
+      "original_m": [
+        0.200000002980232,
+        2.40000009536743,
+        0.200000002980232
+      ],
+      "sha256": "7be091fabf384277a61dfd1597baacf245831a565e2395ea02e0793dd4e98046",
+      "source": "models/cd_gbb/v1/kit_post.glb"
+    },
+    "roof_sheet": {
+      "asset": "MOD-0007",
+      "original_m": [
+        0.600000023841858,
+        0.025000000372529,
+        1.79999995231628
+      ],
+      "sha256": "92d3cb5a56e16485bbbfa603e334057eacf25e9285fab7560a4ad58c25c9c1dc",
+      "source": "models/cd_gbb/v1/kit_roof_sheet.glb"
+    },
+    "stone_foot": {
+      "asset": "MOD-0002",
+      "original_m": [
+        1.0,
+        0.400000005960464,
+        0.5
+      ],
+      "sha256": "76f98334704e9dce3c8642ca2b12c3e0f5f188d4502b8c4e5015ad466de15e14",
+      "source": "models/cd_gbb/v1/kit_stone_foot.glb"
+    }
+  },
+  "package_files": {
+    "farm_masonry": {
+      "levels/farm_masonry/install.gd": "f748d3b96397865b24943b9fad0421af9b2a02348426a2eaa9948346c84d1d4f",
+      "levels/farm_masonry/parts.glb": "aac5a09765cad742f005a669e5d7acc5d82859e6aca2306be2a005137e4c787f"
+    },
+    "farm_grain_drive": {
+      "levels/farm_grain_drive/Edits.json": "9b60f09ade531f8c8eb0370103f711bb1807fdee9462f35bbb50fa3336c81cff",
+      "levels/farm_grain_drive/North.json": "9969392fd0bb6faabbed1fdeb411b2a1d0eb680a95def0ce4e559de6b2920469",
+      "levels/farm_grain_drive/South.json": "f914a9a519fa014945f32af8e926823c50257ab6ae8562a9d8cb869987212b55",
+      "levels/farm_grain_drive/baked/Edits.scn": "3fdd22cb684d17ac52fd209b6714f1dcc9bf0d10f4de874b623ccbead19adc6b",
+      "levels/farm_grain_drive/baked/North.scn": "91943e753a81c847ab2ce468bd3a4f3d084195a00f4c942bbc6a84848f58d7b9",
+      "levels/farm_grain_drive/baked/South.scn": "b481a5664f2f0daf645004fab864d2eec41d4efc33ca1694dda66ba9e1544900",
+      "levels/farm_grain_drive/install.gd": "54124e4d44c920f0ec459fff9e31c3f72b8356302137aecdceba86a6a45897f4",
+      "levels/farm_grain_drive/stock/axle_iron.tscn": "4bd35763088a91cc54e9f20c52f1f8a04696125789bc8cd30dbb5c7f5e9db901",
+      "levels/farm_grain_drive/stock/drive_belt.tscn": "e5f57ab5c6fbceb456c106e8dd03165b1b121f2311953539cafff226789d8987",
+      "levels/farm_grain_drive/stock/hemp_line.tscn": "5635087bffc3b162901b8bfcf0fcdec08d68953416f9e2ac161dd746bacb30bd"
+    },
+    "farm_wagon_parts": {
+      "levels/farm_wagon_parts/fallen.gd": "386d328e590c983273796f39d9d6ba3a96d501bb748eef27acc4190db39d99aa",
+      "levels/farm_wagon_parts/farm.scn": "f6c3e3226996c20a8ea48a56ca4a1a17a3f2f5beda927c74a780731c5fa399c2",
+      "levels/farm_wagon_parts/install.gd": "9b5f8f4e0151e9be8aa88878a6a47acdaeea5d0ef8073435d7acffc5774a0da5",
+      "levels/farm_wagon_parts/wharf.scn": "0eb667319ffe4d0a51689beec605bb682d0b95ff2468c9cb982a37d6bf65ede9"
+    },
+    "farm_yard_loads": {
+      "levels/farm_yard_loads/install.gd": "106ece47568d8dc037599cb397b90ccb3fcbbe6810d189b30e6bce5dc11464aa",
+      "levels/farm_yard_loads/parts.glb": "7201228a4cceb6c43b38c5585a97c817402cfe8a24c3d3642e6fb02766689889",
+      "levels/farm_yard_loads/recipes.json": "3a37ea98955986886e7064a2ae20e6af03bd6dc3f5e989feeb06642e06840ce7",
+      "levels/farm_yard_loads/site.gd": "e85918c3d07828f32be04a3e6a0fbe53c33fccc9cdd6c22233b24526860fe456"
+    },
+    "farm_loading_sections": {
+      "levels/farm_loading_sections/install.gd": "5c4435034f8059a3185760941b563f46345deb00ad8d1dbccf47bad4e29be00c",
+      "levels/farm_loading_sections/stock.json": "4b9a5f883f26088f4ef5ca05e7233e3c39c1e1e81be811586b77e400450f083d"
+    },
+    "farm_wharf_sections": {
+      "levels/farm_wharf_sections/install.gd": "bef2d2ad0dd108c87a746e83c864382ba085480b105dd6458028824a1606fbd0",
+      "levels/farm_wharf_sections/sections.glb": "81b8ef9aa86db59f0ecb3a5c0b5365f515bb778b38b419daecb04d0fbe003352"
+    },
+    "farm_bridge_bearings": {
+      "levels/farm_bridge_bearings/install.gd": "1b96256d22a60cfa7c463773dcc095115a96e1322f0cd4aea54750d926cff7db",
+      "levels/farm_bridge_bearings/sections.scn": "db8c568766e3cb416a5a07afd674504109c9a54f7c23bf7836866c3fd384953b"
+    },
+    "farm_style_buildings": {
+      "levels/farm_style_buildings/farm_parts.glb": "90462b0b424578028f300206207a12fd972a27f526900b755b1e8ba3f374f818",
+      "levels/farm_style_buildings/install.gd": "b11a69b1b47df1f7ac378e3b5776b7854c0a41d69554b0aed689230f26b203a0",
+      "levels/farm_style_buildings/placement.json": "e2a2559aab9cf75e705ec7fc09d79fe4dfeb70c29211e9008957d9b08e9f4ab8",
+      "levels/farm_style_buildings/vertex_paint.gdshader": "0294fdcf72761f2e9790db959ef1fb2a633be5a751dc9f955f026b3d490dab78"
+    },
+    "farm_stock_groups": {
+      "levels/farm_stock_groups/install.gd": "30a3e557ddacebb9d351f02c11172face7f76152fdf7ea4f73312b247f67f9f9",
+      "levels/farm_stock_groups/prototypes/029c9f6e003f42c4eb6a.res": "fbb6844945901cdda9090179348f4b461e5712fb2b13a95f6a374e0cd7fb55ee",
+      "levels/farm_stock_groups/prototypes/02c112bfcc2c7fea6c45.res": "7b6386119fb36951c5bac96a727e807218404349df9a9620bdd22768990c2031",
+      "levels/farm_stock_groups/prototypes/079e365b0bbb8158dcec.res": "319392c8e4fd70123c968d2a23505168eb79bb423ca07e53ba672ba331d8d8de",
+      "levels/farm_stock_groups/prototypes/138c48ac128abb0c0c42.res": "21657481750c877aa21fc4e6db429e6c55d9c3bc93389a9680d46c7e8ffb344b",
+      "levels/farm_stock_groups/prototypes/17b633369ed4db8c5282.res": "c4d72523a8253a77be0faed126311d65d6d828b8bc595bcfa01d30d8bdeacec4",
+      "levels/farm_stock_groups/prototypes/293367e144d10ea5ebab.res": "33ec469721c2349df5933a9e84c216aa7efd1d3c1fcfac4002b0fc3030bb22df",
+      "levels/farm_stock_groups/prototypes/2b26c45f9d9da129baef.res": "23fc7ad13e502b50a08b888ebd46a899caa853d0b3218408457fa4eae6f90c3e",
+      "levels/farm_stock_groups/prototypes/414c424aa68fd64da73b.res": "d1b821cc44d5ee7fd2821960bf17bbb57758c47a46f7882c677e0b09a05ecb98",
+      "levels/farm_stock_groups/prototypes/4a9d9bb87b744c0d5ebe.res": "59dd12d9bbafa3cb38ca2e516d77e88037888d05b604430798bc13db1d5eeb3c",
+      "levels/farm_stock_groups/prototypes/553a7bbcd3414d7b67e7.res": "4413c162e851a467ad879f75a9cbdc582590e842d6c234c5d9a65db9941fc5d2",
+      "levels/farm_stock_groups/prototypes/5ff6e50dbed6ad1dbb5b.res": "8527eb0d04718c24307fb7abd6b6a7114aac51063334edbc480369bea33d7202",
+      "levels/farm_stock_groups/prototypes/7a4c27a7ddcbd499fb3b.res": "413894adf42f42f710c66f96b5876d975d0520798a0026192effe48917a1aa33",
+      "levels/farm_stock_groups/prototypes/a7a830ea4910b9c3c5f2.res": "0e2317ad282cefedbcbc282fe5124b844b9d2069d112ec9925d74dff6de8a419",
+      "levels/farm_stock_groups/prototypes/bf164deac9430c179df7.res": "025ae73c1eb03d1bda4b8b1b154c5ba6c264567562a7fba1f7f2c858fb817946",
+      "levels/farm_stock_groups/prototypes/c01c10b0449d967a134b.res": "be7376a5e3a2576def7121f34ccd401f6891c1e27a1841c3c9931bddaea8f18a",
+      "levels/farm_stock_groups/prototypes/c7587d97e86b6ea5fef3.res": "18159876561b653db498a1429db8c87256c38cfa8b7950fab43b565f63a05162",
+      "levels/farm_stock_groups/prototypes/cdd9f2ee14f4fac011b7.res": "9eb9dbf5a0d2c383cb64ba3f99574be1692902b7080ffd9c5e15e44fd560efc3",
+      "levels/farm_stock_groups/prototypes/e7df71ae752306af78f8.res": "ccd365a081f702d17a2f6918c8bef84537679f3c2d3feb963019811d3cbdf24d",
+      "levels/farm_stock_groups/sites/Boundaries.scn": "e809f35634c54066aaad38ea4997bd6f7376e2d1bd3406832e161870cb9ea694",
+      "levels/farm_stock_groups/sites/CenterBridge.scn": "298a8c06dbb74192dcc3094f0579286dbfe79622ef1c14e4a66474d99682b921",
+      "levels/farm_stock_groups/sites/EastGageHouse.scn": "3eafc0b960293af12c6f49f9f201479354c774dee2c7e69d53f21b78f9bd3064",
+      "levels/farm_stock_groups/sites/GateStore.scn": "37b889e334c6e266fd6329df7bc0ac6fd45c1d42504cfd0aeac0a52daa219bb8",
+      "levels/farm_stock_groups/sites/House1.scn": "df1939acfa732f415f055eba6f48cc21adc47b7bce300e4d33a3cdc325a11bfd",
+      "levels/farm_stock_groups/sites/House2.scn": "06a02cc0b3c536e8fadfbccc21b26d64e10a2c0024ea5d745b75ce3c981470c2",
+      "levels/farm_stock_groups/sites/House5.scn": "d8081dff1e90486a91d6d7d48a67940376ca5c35713aa11f06a21b083f0e6a09",
+      "levels/farm_stock_groups/sites/House6.scn": "01ae879ccd20ae85fc1d51bc390657c41c3f99da4714b1fc6ac416b25ccf4a45",
+      "levels/farm_stock_groups/sites/House7.scn": "95e6505673ea1a6dcde41314d2f66040b5df5304edab31fe5467326a86962bac",
+      "levels/farm_stock_groups/sites/House8.scn": "08203d36c166f921c32b95a2921fd35ab2169eb4e9cc7e6ed7a2193673a5b427",
+      "levels/farm_stock_groups/sites/MilkStation.scn": "645268b97656252184ec96666773854fea2c0968c63d27713e50076f70482817",
+      "levels/farm_stock_groups/sites/NortheastFarmhouse.scn": "114d1a5a89d9587f12cf5e7c256c6f60930d4818c472ae069396e0dbef7799e9",
+      "levels/farm_stock_groups/sites/NorthwestWagonShed.scn": "061bdb69d1737f4ba2e065d8c1704a868d98c7487aebb4cacc294f736ee25d74",
+      "levels/farm_stock_groups/sites/PayOffice.scn": "35397caf028d5e7da97d81e8f230b75c0f8b7f66031f1b3f6d39f53189f1da9e",
+      "levels/farm_stock_groups/sites/RegistrationRoom.scn": "649a4e152495b1f962ed97e5b73b9ff22afc5bc4c5bc150c53b9437047380321",
+      "levels/farm_stock_groups/sites/ToolStore.scn": "a596dade7a327e87c0b8d9127993b24e77985227d3bfc83d879ad3a22830994a",
+      "levels/farm_stock_groups/sites/WestToolHouse.scn": "872e196a9a378167e4090e3126e749c39c30918bceb5c2e98d701c53d3384e0e",
+      "levels/farm_stock_groups/sites/YardHouse.scn": "85864376e62541acf856d84b48ca1b62f8f2d897e36fee0f0e837d4c0d92f31f",
+      "levels/farm_stock_groups/sites/YardStore.scn": "82c8cdc322022cfbce5dae4645f4d7a55df4cce349c27001a6ca575b4887f45f"
+    },
+    "farm_roof_sections": {
+      "levels/farm_roof_sections/install.gd": "1962450ceaa140877b550bc2025cec8a343b7ff33815875e71b071f3b59507db",
+      "levels/farm_roof_sections/stock.json": "3ab6ce5d14519c8208b9ca48a274da64b8011804a183d199751781e36a79c36f"
+    },
+    "farm_large_sections": {
+      "levels/farm_large_sections/install.gd": "a4912277c82cb8bd2696260c65edcb69c5d752ed0c39cf00db4586be0fa819ff",
+      "levels/farm_large_sections/stock.json": "6d99daf1955bf20bf4a2793b6e4adcdaf0aba072f8d2db52be3a726c5cf97183"
+    },
+    "farm_house1_furniture": {
+      "levels/farm_house1_furniture/install.gd": "47f6d3c7a0082157c1832d1ee241c3868d78198def3ab7d6d64f734444ee5c86",
+      "levels/farm_house1_furniture/parts.scn": "aa897bfa413fa8bb6d4029bdae3538421c20693e55c1c24f9c81403af2e427aa"
+    },
+    "farm_house1_sections": {
+      "levels/farm_house1_sections/install.gd": "17fd11c5956ed8da15291ccabcdf430984e8810e1bce9d827911b584a044932d",
+      "levels/farm_house1_sections/sections.scn": "2158f1261211b0f1c0b777e0bf610b2e131d8cd73b6947b5c209401b539f3259"
+    },
+    "farm_loft_sections": {
+      "levels/farm_loft_sections/install.gd": "458013877fc6813976cfdd18608422e336b03e8a5c8250a2eab2e9d519b8638c",
+      "levels/farm_loft_sections/stock.json": "2e987882cf2567ba9552ba6724e7a40d12b873af1f79a506ab4eb7d0aa436165"
+    },
+    "farm_shed_stock": {
+      "levels/farm_shed_stock/install.gd": "de9d57de85a62d4946a8f1d53d7cc10d1ea088ee78c17967777581bc73f190c0",
+      "levels/farm_shed_stock/stock.scn": "c158ffc70adf2b2e36a8506cbab97bee474a9ccd81e3f16ad823d60883cd075f"
+    },
+    "farm_shed_envelope_r002": {
+      "levels/farm_shed_envelope_r002/envelope.scn": "118b036018d3743e2a5e08ef44628e6e8a4135081a30fed2574fbbb1b8656ec3",
+      "levels/farm_shed_envelope_r002/install.gd": "c0a7c8d8f24e40082a6d7fcb14d8e31473d1d65cf7d2b4a8975ce8b35c096cee"
+    },
+    "farm_interior_followup": {
+      "levels/farm_interior_followup/LoftPostSole.tscn": "d98996bd2f5046e0d15772ec3fd2f09cec04f43e12bbdf1e68b69c9a32a2f350",
+      "levels/farm_interior_followup/author/House2.tscn": "1a6ed70a52c1892d892553e69dd00be4fd4c5d703958e5c1cd052e00c2d6ed9f",
+      "levels/farm_interior_followup/author/House6.tscn": "896f8cdcceb327c0df7cc01c80ec10b8fbea4afea012b0cf653d2c3e6ab69d97",
+      "levels/farm_interior_followup/author/House7.tscn": "65ca24bd5ede29fc9f759b7c3e3ccce4c834ed3b039365c3cc94c70865c6f606",
+      "levels/farm_interior_followup/author/House8.tscn": "361661c20da7f9b978096841c5572dc2e8574e7cf9db343d5caa4e8c77c36af6",
+      "levels/farm_interior_followup/author/NortheastFarmhouse.tscn": "28c667b8567ac359500be7231889475c95f907794c0a4f6856328d9f940a446e",
+      "levels/farm_interior_followup/author/YardHouse.tscn": "3106ac58ddaebe7129130037370ddca72d1c99fcb7294ecf7d627f6f0317c480",
+      "levels/farm_interior_followup/baked/House2.scn": "01dde4d135ab6973e08c59664baf65db157f44273bff240ab3b16839c3e424d7",
+      "levels/farm_interior_followup/baked/House6.scn": "4baa9a9e2ef45a64bc63c62949a67b04b5b6bbe0febcb70b46f5ca39c4932fdf",
+      "levels/farm_interior_followup/baked/House7.scn": "d4b4a8e979bf65950c1b101e7d3f829676bd119e90c4d87a8b8271d9e72002f6",
+      "levels/farm_interior_followup/baked/House8.scn": "53fc2a788140a47e29d3e2ccd07e514e9c8c1f7d2c55889f9c13e14ff1d2c360",
+      "levels/farm_interior_followup/baked/NortheastFarmhouse.scn": "a11c38ca0a92a1bcef2f5edc470e260e48ae0104696388998bac260c70661892",
+      "levels/farm_interior_followup/baked/YardHouse.scn": "5344c82bda0a997b847ae4a9bd1d44bd5cb33745feb12cc2e39ee47fdff72531",
+      "levels/farm_interior_followup/cookpot.res": "a5a37aa487f90a1b1a5c7a079bdfd3f439c7ab9995908d872673b6452dcf28f6",
+      "levels/farm_interior_followup/hood.res": "e1d07924d9e1c20c7cbd67f3bc4fd0e650fe011da421f4afdc0cb9df4a31c114",
+      "levels/farm_interior_followup/install.gd": "47818bffde80682ce0f2c20741c9904bc48552bd64a1307c288e564f9beedb95",
+      "levels/farm_interior_followup/sites.json": "bacfba1fde911ec099bbe80ee4ee3773b5be1564c477b5182103840ecf13cfff",
+      "levels/farm_interior_followup/upper.gd": "b245c3e0285820b2714723d57081eff1b30c35b1059f2c00f47fc2477617942b"
+    },
+    "farm_ground_windows": {
+      "levels/farm_ground_windows/author/WorkWindows.tscn": "9cbcf4317ecc1b1e6db199f03081f2219f2dcae47833545172174febb04c279a",
+      "levels/farm_ground_windows/baked/WorkWindows.scn": "a3f71563e6cb781e4cb19f92b5138d8f2f234a6ffce965b3865b1bc18a039474",
+      "levels/farm_ground_windows/install.gd": "f2de93ab4dbec9dccb521f81a912e6235d0ed44a03a1f4722289d053c97c3f0a",
+      "levels/farm_ground_windows/parts.json": "a9a34b8af072ab0140c0c995abc9cbf9dec21446e0e626121243b859617ea834"
+    },
+    "farm_eave_seats": {
+      "levels/farm_eave_seats/Cut1.tscn": "4d8b2e27a9b387502b0325f05bb189503887f2e27208a96080987813e6322725",
+      "levels/farm_eave_seats/Cut2.tscn": "a6a6e319c99284b1f8f81100bd7d51426e6f0e821b2773a4b8db87abf010fda9",
+      "levels/farm_eave_seats/install.gd": "f447e0cb40274013cf9ee0a3bd7edefb0f88b781c8a025e6c6727f200a610f79",
+      "levels/farm_eave_seats/layout.json": "c4786748eba7015272a4ac6eaaba61c0e3b99a516a5e9819a3c43e18280a2e7d"
+    },
+    "farm_yard_sections": {
+      "levels/farm_yard_sections/FullSack.scn": "e0a4681f4a1569af5d1e004f8e14467f7a29b273e23bdc093865ce0c2206e6cf",
+      "levels/farm_yard_sections/HalfSack.scn": "9ad2b0e48c8c32cb2561e8e39fb32e4062ea5c478b139655cf32fb3ee04b7799",
+      "levels/farm_yard_sections/NorthWall.scn": "b327f9b5128cd7173e1529e6008faf3ef85c3c251baddb48d5c3b66e8ca81ca7",
+      "levels/farm_yard_sections/ShortWall.scn": "a1ea194e82dcb78a7d00bd85753be07f43bcb3e090105be27ba776f721c9ea23",
+      "levels/farm_yard_sections/WestWall.scn": "484bb9f71ed6346cf129519fac1082ebe27a016f6fc7f37f54d9a587f73c33de",
+      "levels/farm_yard_sections/batch.gd": "9fa79cf66f0321a23a876054d80442568730d28831bc458055262768988673ac",
+      "levels/farm_yard_sections/install.gd": "5f4dc284bf4632d8ef9d66335c28c635076715d27649ddd6db7de5dbf6e561e4"
+    },
+    "farm_world_lettering": {
+      "levels/farm_world_lettering/A_East_Canal.res": "54c94ae6c997beb256113e14e2a8bdef715fcdf3e54b4d9650f315867cc84ab8",
+      "levels/farm_world_lettering/A_Milk_Receiving.res": "ab90d7e6757bf309c3439b9d76cc3edf8ffb90208415eb2ea90ba6fbac71c2cc",
+      "levels/farm_world_lettering/A_Scale_Left.res": "ef912501e4fbd374a1a6bacd11a9aecf5870390b8203eb3e90bd5e2715fd80a8",
+      "levels/farm_world_lettering/B_Pay_Office.res": "4034bf71733328c5e90947c7bec348c74b120afc1cd5cc74fabf320423ee221c",
+      "levels/farm_world_lettering/Ditch_Time_Roll.res": "5cace3940fe548149d350c3978c75a69e49a391cf00c83c32a2c0a5158173294",
+      "levels/farm_world_lettering/Field_Time_Roll.res": "77cfc4009c8a4a088e1634181c5e88d2fd301571dfdc5dfc81e3fdc4006893b8",
+      "levels/farm_world_lettering/Orchard_Time_Roll.res": "9f26c47f4a8e7873611f697baab8af93a96343f0546f34f5073d3d9c16715854",
+      "levels/farm_world_lettering/install.gd": "d868595da39288da1c89fe4796e6c5a3633f6540cf333d995a1df666dfed2143"
+    }
+  },
+  "entry_sha256": "5e5bded63fa4122546f76f298680002fe1c403d4125a87d4408d7bee3badce34",
+  "masonry_counts": {
+    "Heap": 51,
+    "Seat": 58,
+    "ToolRope": 1,
+    "ToolWedge": 2
+  },
+  "yard_recipe_counts": {
+    "YardStack": 34,
+    "TeamStock": 45,
+    "ApproachStock": 34,
+    "NorthStock": 39,
+    "StoredFeed": 72,
+    "FarmCrates": 80,
+    "LogPile": 8,
+    "RailRack": 20,
+    "LooseStack": 5
+  },
+  "integration_points": {
+    "wagon_debris": "levels/farm_destruction/fragments.gd",
+    "masonry_original_geometry": [
+      "levels/farm_style_buildings/farm_parts.glb",
+      "levels/farm_style/bridge_details.glb"
+    ],
+    "site_placement": "levels/farm_sites/sites.gd"
+  },
+  "crate_sources": {
+    "yard": {
+      "instances_by_mesh": {
+        "Part048": 30,
+        "Part049": 50
+      },
+      "author_script": "outdoor_environment/tools/map_study/r009_yard_loads/bake_loads.py",
+      "author_lines": [
+        99,
+        116
+      ],
+      "source_mesh": "FarmCrates",
+      "source_cores": 62,
+      "attached_boards_per_core": 12,
+      "common_configuration_equivalence": "unverified",
+      "runtime_files": {
+        "levels/farm_style_buildings/farm_parts.glb": "90462b0b424578028f300206207a12fd972a27f526900b755b1e8ba3f374f818",
+        "levels/farm_yard_loads/recipes.json": "3a37ea98955986886e7064a2ae20e6af03bd6dc3f5e989feeb06642e06840ce7",
+        "levels/farm_yard_loads/parts.glb": "7201228a4cceb6c43b38c5585a97c817402cfe8a24c3d3642e6fb02766689889"
+      }
+    },
+    "loading_station": {
+      "author_script": "map_construction/blender/orchard_loading/build.py",
+      "runtime_files": {
+        "models/orchard_loading/loading_station.tscn": "34326b8e1323c80c155e5224fa01bb1af5d47a8cf0d4cf25300380f5c5685d6d",
+        "models/orchard_loading/open_crate.glb": "6a6099bfad7aba9b1d1344a13f0b8dc90e314e48929dbed8205a5e258262716f",
+        "models/orchard_loading/closed_crate.glb": "8c04c0d3518c4a3c39e2350109f235bc419b73b7de4ccdd6ef6f580cb0e9ce6a"
+      }
+    }
+  }
+}

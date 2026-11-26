@@ -1,0 +1,73 @@
+[gd_scene format=3]
+
+[ext_resource type="ArrayMesh" path="res://levels/farm_stock_assemblies/stock/beam.res" id="beam"]
+[ext_resource type="ArrayMesh" path="res://levels/farm_stock_assemblies/stock/post.res" id="post"]
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/dark.tres" id="paint_dark"]
+
+[node name="ExtraWestToolHouse" type="Node3D"]
+
+[node name="Seat001_Eave" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "Seat001_Eave"
+[node name="Post_000" type="MeshInstance3D" parent="Seat001_Eave"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0.145, 0, 0, 0, 2.208, 0, 0, 0, 0.145, -1.38, 1.121, -1.42)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+
+[node name="Seat002_Eave" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "Seat002_Eave"
+[node name="Post_000" type="MeshInstance3D" parent="Seat002_Eave"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0.145, 0, 0, 0, 2.208, 0, 0, 0, 0.145, 1.38, 1.121, -1.42)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+
+[node name="EavePlate0" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "EavePlate0"
+[node name="Beam_000" type="MeshInstance3D" parent="EavePlate0"]
+mesh = ExtResource("beam")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(2.76, 0, 0, 0, 0, -0.16, 0, 0.17, 0, 0, 2.3, -1.42)
+metadata/stock = "beam"
+metadata/asset = "MOD-0004"
+
+
+[node name="Seat003_Eave" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "Seat003_Eave"
+[node name="Post_000" type="MeshInstance3D" parent="Seat003_Eave"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0.145, 0, 0, 0, 2.208, 0, 0, 0, 0.145, -1.38, 1.121, 1.42)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+
+[node name="Seat004_Eave" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "Seat004_Eave"
+[node name="Post_000" type="MeshInstance3D" parent="Seat004_Eave"]
+mesh = ExtResource("post")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(0.145, 0, 0, 0, 2.208, 0, 0, 0, 0.145, 1.38, 1.121, 1.42)
+metadata/stock = "post"
+metadata/asset = "MOD-0003"
+
+
+[node name="EavePlate1" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+metadata/target = "EavePlate1"
+[node name="Beam_000" type="MeshInstance3D" parent="EavePlate1"]
+mesh = ExtResource("beam")
+material_override = ExtResource("paint_dark")
+transform = Transform3D(2.76, 0, 0, 0, 0, -0.16, 0, 0.17, 0, 0, 2.3, 1.42)
+metadata/stock = "beam"
+metadata/asset = "MOD-0004"
+

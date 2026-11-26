@@ -1,0 +1,9 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://models/farm_ne_yard/HarvestWagon_r001.glb" id="Wagon"]
+
+[node name="NortheastWorkyard" type="Node3D"]
+
+[node name="HarvestWagon" parent="." instance=ExtResource("Wagon")]
+position = Vector3(60, 0, -30)
+rotation = Vector3(0, -0.20943951, 0)

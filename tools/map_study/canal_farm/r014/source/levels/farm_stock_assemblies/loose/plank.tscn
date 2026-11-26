@@ -1,0 +1,13 @@
+[gd_scene format=3]
+
+[ext_resource type="ArrayMesh" path="res://levels/farm_stock_assemblies/stock/plank.res" id="model"]
+[ext_resource type="StandardMaterial3D" path="res://levels/farm_stock_assemblies/finishes/pine.tres" id="paint"]
+
+[node name="plank" type="Node3D"]
+metadata/asset = "MOD-0006"
+
+[node name="Stock" type="MeshInstance3D" parent="."]
+mesh = ExtResource("model")
+material_override = ExtResource("paint")
+scale = Vector3(2, 0.035, 0.22)
+position = Vector3(0, 0.0175000000745058, 0)

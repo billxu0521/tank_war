@@ -1,0 +1,359 @@
+[gd_scene load_steps=45 format=3]
+
+[ext_resource type="PackedScene" path="res://tools/map_study/canal_farm/farm_shell.glb" id="Shell"]
+
+[ext_resource type="PackedScene" path="res://tools/map_study/canal_farm/anchors.tscn" id="Points"]
+
+[sub_resource type="StandardMaterial3D" id="Earth"]
+albedo_color = Color(0.52, 0.37, 0.24, 1)
+
+[sub_resource type="StandardMaterial3D" id="Wood"]
+albedo_color = Color(0.34, 0.22, 0.12, 1)
+
+[sub_resource type="BoxShape3D" id="Wall0_1Shape"]
+size = Vector3(20.000000, 2.100000, 0.500000)
+
+[sub_resource type="BoxMesh" id="Wall0_1Mesh"]
+material = SubResource("Earth")
+size = Vector3(20.000000, 2.100000, 0.500000)
+
+[sub_resource type="BoxShape3D" id="Wall0_2Shape"]
+size = Vector3(7.700000, 2.100000, 0.500000)
+
+[sub_resource type="BoxMesh" id="Wall0_2Mesh"]
+material = SubResource("Earth")
+size = Vector3(7.700000, 2.100000, 0.500000)
+
+[sub_resource type="BoxShape3D" id="Wall0_3Shape"]
+size = Vector3(5.000000, 2.100000, 0.500000)
+
+[sub_resource type="BoxMesh" id="Wall0_3Mesh"]
+material = SubResource("Earth")
+size = Vector3(5.000000, 2.100000, 0.500000)
+
+[sub_resource type="BoxShape3D" id="Wall1_1Shape"]
+size = Vector3(12.000000, 3.800000, 0.500000)
+
+[sub_resource type="BoxMesh" id="Wall1_1Mesh"]
+material = SubResource("Earth")
+size = Vector3(12.000000, 3.800000, 0.500000)
+
+[sub_resource type="BoxShape3D" id="Wall1_2Shape"]
+size = Vector3(7.000000, 3.800000, 0.500000)
+
+[sub_resource type="BoxMesh" id="Wall1_2Mesh"]
+material = SubResource("Earth")
+size = Vector3(7.000000, 3.800000, 0.500000)
+
+[sub_resource type="BoxShape3D" id="Wall1_3Shape"]
+size = Vector3(3.360000, 3.800000, 0.500000)
+
+[sub_resource type="BoxMesh" id="Wall1_3Mesh"]
+material = SubResource("Earth")
+size = Vector3(3.360000, 3.800000, 0.500000)
+
+[sub_resource type="BoxShape3D" id="Wall1_4Shape"]
+size = Vector3(0.770000, 3.800000, 0.500000)
+
+[sub_resource type="BoxMesh" id="Wall1_4Mesh"]
+material = SubResource("Earth")
+size = Vector3(0.770000, 3.800000, 0.500000)
+
+[sub_resource type="BoxShape3D" id="Wall1_5Shape"]
+size = Vector3(3.480000, 3.800000, 0.500000)
+
+[sub_resource type="BoxMesh" id="Wall1_5Mesh"]
+material = SubResource("Earth")
+size = Vector3(3.480000, 3.800000, 0.500000)
+
+[sub_resource type="BoxShape3D" id="Wall1_6Shape"]
+size = Vector3(1.800000, 3.800000, 0.500000)
+
+[sub_resource type="BoxMesh" id="Wall1_6Mesh"]
+material = SubResource("Earth")
+size = Vector3(1.800000, 3.800000, 0.500000)
+
+[sub_resource type="BoxShape3D" id="Wall2_1Shape"]
+size = Vector3(7.500000, 2.100000, 0.500000)
+
+[sub_resource type="BoxMesh" id="Wall2_1Mesh"]
+material = SubResource("Earth")
+size = Vector3(7.500000, 2.100000, 0.500000)
+
+[sub_resource type="BoxShape3D" id="Wall2_2Shape"]
+size = Vector3(15.600000, 2.100000, 0.500000)
+
+[sub_resource type="BoxMesh" id="Wall2_2Mesh"]
+material = SubResource("Earth")
+size = Vector3(15.600000, 2.100000, 0.500000)
+
+[sub_resource type="BoxShape3D" id="Wall2_3Shape"]
+size = Vector3(3.000000, 2.100000, 0.500000)
+
+[sub_resource type="BoxMesh" id="Wall2_3Mesh"]
+material = SubResource("Earth")
+size = Vector3(3.000000, 2.100000, 0.500000)
+
+[sub_resource type="BoxShape3D" id="Wall3_1Shape"]
+size = Vector3(16.000000, 5.800000, 0.500000)
+
+[sub_resource type="BoxMesh" id="Wall3_1Mesh"]
+material = SubResource("Earth")
+size = Vector3(16.000000, 5.800000, 0.500000)
+
+[sub_resource type="BoxShape3D" id="Wall3_2Shape"]
+size = Vector3(14.000000, 5.800000, 0.500000)
+
+[sub_resource type="BoxMesh" id="Wall3_2Mesh"]
+material = SubResource("Earth")
+size = Vector3(14.000000, 5.800000, 0.500000)
+
+[sub_resource type="BoxShape3D" id="Wall3_3Shape"]
+size = Vector3(3.220000, 5.800000, 0.500000)
+
+[sub_resource type="BoxMesh" id="Wall3_3Mesh"]
+material = SubResource("Earth")
+size = Vector3(3.220000, 5.800000, 0.500000)
+
+[sub_resource type="BoxShape3D" id="Wall3_4Shape"]
+size = Vector3(5.460000, 5.800000, 0.500000)
+
+[sub_resource type="BoxMesh" id="Wall3_4Mesh"]
+material = SubResource("Earth")
+size = Vector3(5.460000, 5.800000, 0.500000)
+
+[sub_resource type="BoxShape3D" id="Wall3_5Shape"]
+size = Vector3(3.360000, 5.800000, 0.500000)
+
+[sub_resource type="BoxMesh" id="Wall3_5Mesh"]
+material = SubResource("Earth")
+size = Vector3(3.360000, 5.800000, 0.500000)
+
+[sub_resource type="BoxShape3D" id="Wall3_6Shape"]
+size = Vector3(3.360000, 5.800000, 0.500000)
+
+[sub_resource type="BoxMesh" id="Wall3_6Mesh"]
+material = SubResource("Earth")
+size = Vector3(3.360000, 5.800000, 0.500000)
+
+[sub_resource type="BoxShape3D" id="YardProp2_1Shape"]
+size = Vector3(1.600000, 1.900000, 4.200000)
+
+[sub_resource type="BoxMesh" id="YardProp2_1Mesh"]
+material = SubResource("Wood")
+size = Vector3(1.600000, 1.900000, 4.200000)
+
+[sub_resource type="BoxShape3D" id="YardProp3_1Shape"]
+size = Vector3(1.000000, 1.900000, 4.200000)
+
+[sub_resource type="BoxMesh" id="YardProp3_1Mesh"]
+material = SubResource("Wood")
+size = Vector3(1.000000, 1.900000, 4.200000)
+
+[node name="CanalFarm" type="Node3D"]
+
+[node name="FarmShell" parent="." instance=ExtResource("Shell")]
+
+[node name="Anchors" parent="." instance=ExtResource("Points")]
+
+[node name="LocalGeometry" type="Node3D" parent="."]
+
+[node name="Wall0_1" type="StaticBody3D" parent="LocalGeometry"]
+position = Vector3(31.544618, 1.050000, -21.847033)
+rotation = Vector3(0, 0.2094395, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="LocalGeometry/Wall0_1"]
+shape = SubResource("Wall0_1Shape")
+
+[node name="Mesh" type="MeshInstance3D" parent="LocalGeometry/Wall0_1"]
+mesh = SubResource("Wall0_1Mesh")
+
+[node name="Wall0_2" type="StaticBody3D" parent="LocalGeometry"]
+position = Vector3(22.563602, 1.050000, -16.002048)
+rotation = Vector3(0, -1.3613568, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="LocalGeometry/Wall0_2"]
+shape = SubResource("Wall0_2Shape")
+
+[node name="Mesh" type="MeshInstance3D" parent="LocalGeometry/Wall0_2"]
+mesh = SubResource("Wall0_2Mesh")
+
+[node name="Wall0_3" type="StaticBody3D" parent="LocalGeometry"]
+position = Vector3(40.226453, 1.050000, -9.379646)
+rotation = Vector3(0, 0.2094395, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="LocalGeometry/Wall0_3"]
+shape = SubResource("Wall0_3Shape")
+
+[node name="Mesh" type="MeshInstance3D" parent="LocalGeometry/Wall0_3"]
+mesh = SubResource("Wall0_3Mesh")
+
+[node name="Wall1_1" type="StaticBody3D" parent="LocalGeometry"]
+position = Vector3(25.174693, 1.900000, 23.197565)
+rotation = Vector3(0, 0.1396263, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="LocalGeometry/Wall1_1"]
+shape = SubResource("Wall1_1Shape")
+
+[node name="Mesh" type="MeshInstance3D" parent="LocalGeometry/Wall1_1"]
+mesh = SubResource("Wall1_1Mesh")
+
+[node name="Wall1_2" type="StaticBody3D" parent="LocalGeometry"]
+position = Vector3(31.603408, 1.900000, 25.828464)
+rotation = Vector3(0, -1.4311700, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="LocalGeometry/Wall1_2"]
+shape = SubResource("Wall1_2Shape")
+
+[node name="Mesh" type="MeshInstance3D" parent="LocalGeometry/Wall1_2"]
+mesh = SubResource("Wall1_2Mesh")
+
+[node name="Wall1_3" type="StaticBody3D" parent="LocalGeometry"]
+position = Vector3(19.466896, 1.900000, 25.696254)
+rotation = Vector3(0, -1.4311700, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="LocalGeometry/Wall1_3"]
+shape = SubResource("Wall1_3Shape")
+
+[node name="Mesh" type="MeshInstance3D" parent="LocalGeometry/Wall1_3"]
+mesh = SubResource("Wall1_3Mesh")
+
+[node name="Wall1_4" type="StaticBody3D" parent="LocalGeometry"]
+position = Vector3(20.153715, 1.900000, 30.583227)
+rotation = Vector3(0, -1.4311700, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="LocalGeometry/Wall1_4"]
+shape = SubResource("Wall1_4Shape")
+
+[node name="Mesh" type="MeshInstance3D" parent="LocalGeometry/Wall1_4"]
+mesh = SubResource("Wall1_4Mesh")
+
+[node name="Wall1_5" type="StaticBody3D" parent="LocalGeometry"]
+position = Vector3(21.930363, 1.900000, 30.722319)
+rotation = Vector3(0, 0.1396263, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="LocalGeometry/Wall1_5"]
+shape = SubResource("Wall1_5Shape")
+
+[node name="Mesh" type="MeshInstance3D" parent="LocalGeometry/Wall1_5"]
+mesh = SubResource("Wall1_5Mesh")
+
+[node name="Wall1_6" type="StaticBody3D" parent="LocalGeometry"]
+position = Vector3(31.199272, 1.900000, 29.419658)
+rotation = Vector3(0, 0.1396263, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="LocalGeometry/Wall1_6"]
+shape = SubResource("Wall1_6Shape")
+
+[node name="Mesh" type="MeshInstance3D" parent="LocalGeometry/Wall1_6"]
+mesh = SubResource("Wall1_6Mesh")
+
+[node name="Wall2_1" type="StaticBody3D" parent="LocalGeometry"]
+position = Vector3(-37.290254, 1.050000, 26.731824)
+rotation = Vector3(0, -1.7278760, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="LocalGeometry/Wall2_1"]
+shape = SubResource("Wall2_1Shape")
+
+[node name="Mesh" type="MeshInstance3D" parent="LocalGeometry/Wall2_1"]
+mesh = SubResource("Wall2_1Mesh")
+
+[node name="Wall2_2" type="StaticBody3D" parent="LocalGeometry"]
+position = Vector3(-24.653827, 1.050000, 24.936493)
+rotation = Vector3(0, -0.1570796, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="LocalGeometry/Wall2_2"]
+shape = SubResource("Wall2_2Shape")
+
+[node name="Mesh" type="MeshInstance3D" parent="LocalGeometry/Wall2_2"]
+mesh = SubResource("Wall2_2Mesh")
+
+[node name="Wall2_3" type="StaticBody3D" parent="LocalGeometry"]
+position = Vector3(-17.184510, 1.050000, 27.638215)
+rotation = Vector3(0, -1.7278760, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="LocalGeometry/Wall2_3"]
+shape = SubResource("Wall2_3Shape")
+
+[node name="Mesh" type="MeshInstance3D" parent="LocalGeometry/Wall2_3"]
+mesh = SubResource("Wall2_3Mesh")
+
+[node name="Wall3_1" type="StaticBody3D" parent="LocalGeometry"]
+position = Vector3(-36.000000, 2.900000, -38.000000)
+rotation = Vector3(0, -0.0000000, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="LocalGeometry/Wall3_1"]
+shape = SubResource("Wall3_1Shape")
+
+[node name="Mesh" type="MeshInstance3D" parent="LocalGeometry/Wall3_1"]
+mesh = SubResource("Wall3_1Mesh")
+
+[node name="Wall3_2" type="StaticBody3D" parent="LocalGeometry"]
+position = Vector3(-28.000000, 2.900000, -31.000000)
+rotation = Vector3(0, -1.5707963, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="LocalGeometry/Wall3_2"]
+shape = SubResource("Wall3_2Shape")
+
+[node name="Mesh" type="MeshInstance3D" parent="LocalGeometry/Wall3_2"]
+mesh = SubResource("Wall3_2Mesh")
+
+[node name="Wall3_3" type="StaticBody3D" parent="LocalGeometry"]
+position = Vector3(-44.000000, 2.900000, -36.390000)
+rotation = Vector3(0, -1.5707963, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="LocalGeometry/Wall3_3"]
+shape = SubResource("Wall3_3Shape")
+
+[node name="Mesh" type="MeshInstance3D" parent="LocalGeometry/Wall3_3"]
+mesh = SubResource("Wall3_3Mesh")
+
+[node name="Wall3_4" type="StaticBody3D" parent="LocalGeometry"]
+position = Vector3(-44.000000, 2.900000, -26.730000)
+rotation = Vector3(0, -1.5707963, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="LocalGeometry/Wall3_4"]
+shape = SubResource("Wall3_4Shape")
+
+[node name="Mesh" type="MeshInstance3D" parent="LocalGeometry/Wall3_4"]
+mesh = SubResource("Wall3_4Mesh")
+
+[node name="Wall3_5" type="StaticBody3D" parent="LocalGeometry"]
+position = Vector3(-42.320000, 2.900000, -24.000000)
+rotation = Vector3(0, -0.0000000, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="LocalGeometry/Wall3_5"]
+shape = SubResource("Wall3_5Shape")
+
+[node name="Mesh" type="MeshInstance3D" parent="LocalGeometry/Wall3_5"]
+mesh = SubResource("Wall3_5Mesh")
+
+[node name="Wall3_6" type="StaticBody3D" parent="LocalGeometry"]
+position = Vector3(-29.680000, 2.900000, -24.000000)
+rotation = Vector3(0, -0.0000000, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="LocalGeometry/Wall3_6"]
+shape = SubResource("Wall3_6Shape")
+
+[node name="Mesh" type="MeshInstance3D" parent="LocalGeometry/Wall3_6"]
+mesh = SubResource("Wall3_6Mesh")
+
+[node name="YardProp2_1" type="StaticBody3D" parent="LocalGeometry"]
+position = Vector3(-32.300000, 0.950000, 38.500000)
+rotation = Vector3(0, 0.1570796, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="LocalGeometry/YardProp2_1"]
+shape = SubResource("YardProp2_1Shape")
+
+[node name="Mesh" type="MeshInstance3D" parent="LocalGeometry/YardProp2_1"]
+mesh = SubResource("YardProp2_1Mesh")
+
+[node name="YardProp3_1" type="StaticBody3D" parent="LocalGeometry"]
+position = Vector3(-47.000000, 0.950000, -30.800000)
+rotation = Vector3(0, -0.0000000, 0)
+
+[node name="Shape" type="CollisionShape3D" parent="LocalGeometry/YardProp3_1"]
+shape = SubResource("YardProp3_1Shape")
+
+[node name="Mesh" type="MeshInstance3D" parent="LocalGeometry/YardProp3_1"]
+mesh = SubResource("YardProp3_1Mesh")

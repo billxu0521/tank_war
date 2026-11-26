@@ -1,0 +1,28 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://levels/farm_buildings_v31/unit.gd" id="1"]
+[ext_resource type="ArrayMesh" path="res://levels/farm_stock_assemblies/stock/beam.res" id="2"]
+[ext_resource type="Material" path="res://levels/farm_stock_assemblies/finishes/end.tres" id="3"]
+
+[sub_resource type="BoxShape3D" id="SoleContact"]
+size = Vector3(0.40, 0.093, 0.32)
+
+[node name="LoftPostSole" type="StaticBody3D"]
+script = ExtResource("1")
+metadata/structure_material = "wood"
+metadata/component = "support"
+metadata/storey = 1
+metadata/source_asset = "MOD-0004"
+metadata/stock_source = "res://levels/farm_interior_followup/LoftPostSole.tscn"
+metadata/stock_count = 1
+metadata/bay = "Work2Tie"
+metadata/support_seats = [["GroundBay1"]]
+metadata/depends_on = PackedStringArray("GroundBay1")
+
+[node name="StockAssembly" type="MeshInstance3D" parent="."]
+mesh = ExtResource("2")
+material_override = ExtResource("3")
+scale = Vector3(0.40, 0.093, 0.32)
+
+[node name="Solid" type="CollisionShape3D" parent="."]
+shape = SubResource("SoleContact")
