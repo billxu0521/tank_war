@@ -97,6 +97,60 @@ func _case_fx_and_ambience() -> void:
 	_end(m)
 
 ## 地形：有起伏、該平的地方平、碰撞跟畫面對得上
+## 農莊影子合併（levels/farm_destruction/farm_batch.gd）：合了的零件自己不投影子；藏起來（拆掉）當下影子跟著拿掉；換局立回來影子也回來
+func _case_farm_shadow_batch() -> void:
+	var farm := Node3D.new()
+	root.add_child(farm)
+	var house := Node3D.new()
+	farm.add_child(house)
+	var parts: Array[MeshInstance3D] = []
+	for i in 3:
+		var p := MeshInstance3D.new()
+		p.mesh = BoxMesh.new()
+		p.position = Vector3(i * 2.0, 0, 0)
+		house.add_child(p)
+		parts.append(p)
+	var glass := MeshInstance3D.new()   # 半透明：不合，照舊自己投影
+	glass.mesh = BoxMesh.new()
+	var see := StandardMaterial3D.new()
+	see.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	glass.material_override = see
+	house.add_child(glass)
+	var wavy := MeshInstance3D.new()   # 著色器會動頂點：不合
+	wavy.mesh = BoxMesh.new()
+	wavy.material_override = ShaderMaterial.new()
+	wavy.material_override.shader = Shader.new()
+	wavy.material_override.shader.code = "shader_type spatial;\nvoid vertex() { VERTEX.y += sin(TIME); }"
+	house.add_child(wavy)
+	var paint := MeshInstance3D.new()   # 著色器只讀頂點（像農莊的牆）：合
+	paint.mesh = BoxMesh.new()
+	paint.position = Vector3(1, 0, 1)
+	paint.material_override = ShaderMaterial.new()
+	paint.material_override.shader = Shader.new()
+	paint.material_override.shader.code = "shader_type spatial;\nrender_mode cull_back;\nvarying vec3 p;\nvoid vertex() { p = VERTEX; }\nvoid fragment() { ALBEDO = p; }"
+	house.add_child(paint)
+	var door := RigidBody3D.new()   # 會動的：不合
+	var leaf := MeshInstance3D.new()
+	leaf.mesh = BoxMesh.new()
+	door.add_child(leaf)
+	farm.add_child(door)
+	var batch: Node = preload("res://levels/farm_destruction/farm_batch.gd").install(farm, true)
+	_ck(batch != null and batch.get_child_count() == 1, "三塊靠在一起的零件要合成一塊影子")
+	var shadow: MeshInstance3D = batch.get_child(0)
+	_ck(shadow.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY, "合併的網格只投影子、自己不畫")
+	_ck(parts.all(func(p): return p.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF and p.visible and batch.casting(p)), "合了的零件自己不投影子，但還在場上、影子在合併網格裡")
+	_ck(wavy.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_ON and batch.casting(paint), "會動頂點的著色器不合，只讀頂點的合")
+	_ck(glass.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_ON and leaf.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_ON, "半透明、會動的零件不合，照舊自己投影子")
+	parts[1].visible = false   # 拆掉一塊
+	_ck(not batch.casting(parts[1]) and batch.casting(parts[0]), "拆掉的那塊影子當下拿掉，旁邊的不變")
+	house.visible = false   # 整棟退場（藏上層）
+	_ck(not batch.casting(parts[0]) and not batch.casting(parts[2]), "整棟藏起來影子全拿掉")
+	house.visible = true
+	parts[1].visible = true   # 換局立回來
+	_ck(parts.all(func(p): return batch.casting(p)), "換局立回來影子要全部回來")
+	_ck(parts.all(func(p): return p.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF), "立回來後還是由合併網格投影子（不會投兩次）")
+	farm.free()
+
 func _case_terrain() -> void:
 	var m := _new_game()
 	var t: Terrain = m._terrain

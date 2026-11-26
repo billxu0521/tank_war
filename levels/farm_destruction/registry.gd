@@ -41,6 +41,9 @@ func finish_environment(env: Node) -> void:
 		var pending := waiting_state.duplicate()
 		waiting_state.clear()
 		apply_patch_local(pending)
+	# 影子合併（P2）：環境裝完、石頭登記完才合。FARM_SHADOW_BATCH=0 關掉（量改前用）
+	if OS.get_environment("FARM_SHADOW_BATCH") != "0":
+		preload("res://levels/farm_destruction/farm_batch.gd").install(arena)
 
 func register(key: String, family: String, nodes: Array, colliders: Array, native: Node = null) -> Dictionary:
 	if entries.has(key):

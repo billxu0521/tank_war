@@ -32,6 +32,7 @@ func _process(_delta: float) -> bool:
 		_case_rural()
 		_case_fx_and_ambience()
 		_case_terrain()
+		_case_farm_shadow_batch()
 		_case_interact()
 		_case_vault()
 		_case_modes()
