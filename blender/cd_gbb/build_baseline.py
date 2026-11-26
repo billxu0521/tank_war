@@ -230,6 +230,10 @@ def make_parts(spec, optimized=False):
         bpy.context.collection.objects.link(o)
         o.location = portal["hinge"]
         o.rotation_euler.z = portal["yaw"]
+        if "interaction" in portal:
+            o["interaction"] = portal["interaction"]
+            o["swing_limit_rad"] = abs(portal["swing"])
+            o.lock_rotation = (True, True, portal["interaction"] == "fixed_breakable")
         parents[portal["name"]] = o
     for p0 in spec["parts"]:
         p = dict(p0)

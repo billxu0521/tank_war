@@ -1,14 +1,14 @@
 {
   "id": "CD-GBB-BLD-01",
   "revision": "envelope-r005",
-  "triangles": 9594,
+  "triangles": 9498,
   "units": {
     "shell": {
       "category": "大型建築",
       "limit": 8000,
       "recommended": 5000,
       "budget_reason": "本輪補足可見屋面／覆板／石基，按完整結構整組計，不拆單位掩蓋總量",
-      "triangles": 3906
+      "triangles": 3810
     },
     "stool_w": {
       "category": "小型道具",
@@ -211,7 +211,7 @@
   },
   "runtime_groups": {
     "shell": {
-      "triangles": 3906,
+      "triangles": 3810,
       "author_units": [
         "shell"
       ]
@@ -415,8 +415,8 @@
       ]
     }
   },
-  "mesh_count": 73,
-  "source_parts": 1032,
+  "mesh_count": 69,
+  "source_parts": 1024,
   "bag_count": null,
-  "glb_bytes": 949960
+  "glb_bytes": 938008
 }

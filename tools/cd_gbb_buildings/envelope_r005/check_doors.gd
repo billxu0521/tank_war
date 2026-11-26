@@ -22,7 +22,7 @@ func run() -> void:
 		root.add_child(actor)
 		await tick()
 		for leaf in house.leaves:
-			if not leaf.bidirectional: continue
+			if leaf.get_meta("kind") != "door": continue
 			var closed: Transform3D = house.global_transform * leaf.base_transform
 			var middle: Vector3 = closed * Vector3(leaf.shape_offset.x,0,0)
 			var normal: Vector3 = closed.basis.z

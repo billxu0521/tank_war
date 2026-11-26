@@ -1,5 +1,7 @@
 extends Node3D
 const LEAF = preload("res://tools/cd_gbb_buildings/leaf.gd")
+const FIXED_WINDOW = preload("res://tools/cd_gbb_buildings/envelope_r005/fixed_window.gd")
+var fixed_windows: Array[StaticBody3D] = []
 var spec: Dictionary
 var leaves: Array[Node3D] = []
 var model: Node3D
@@ -47,27 +49,43 @@ func build(number: int, map_pose := true) -> void:
 		cs.rotation = Vector3(c.rotation[0], c.rotation[2], -c.rotation[1])
 		cs.name = "shape_%03d" % body.get_child_count()
 		body.add_child(cs)
-	for p: Dictionary in spec.portals:
-		var leaf := LEAF.new()
-		leaf.name = p.name
-		leaf.swing = p.swing
-		leaf.bidirectional = p.kind == "door"
-		leaf.base_transform = Transform3D(Basis(Vector3.UP, p.yaw), xyz(p.hinge))
-		# 雙向門採距門邊50mm的偏置轉軸，避免厚門反向掃入深門框。
-		# 葉片與碰撞反向平移等量，關閉外形及開口尺寸保持原位。
-		var pivot_setback: float = .05 if leaf.bidirectional else 0.0
-		leaf.base_transform.origin += leaf.base_transform.basis.x * pivot_setback
-		leaf.transform = leaf.base_transform
-		leaf.shape = BoxShape3D.new()
-		leaf.shape.size = Vector3(p.width, p.height, p.depth)
-		leaf.shape_offset = Vector3(p.width / 2.0 - pivot_setback, p.height / 2.0, 0)
+	assemble_portals(self)
+
+static func assemble_portals(house: Node3D) -> void:
+	for p: Dictionary in house.spec.portals:
+		var closed := Transform3D(Basis(Vector3.UP, p.yaw), xyz(p.hinge))
+		var box := BoxShape3D.new()
+		box.size = Vector3(p.width, p.height, p.depth)
 		var cs := CollisionShape3D.new()
-		cs.shape = leaf.shape
-		cs.position = leaf.shape_offset
-		leaf.add_child(cs)
-		add_child(leaf)
-		var visual := model.find_child(p.name, true, false) as Node3D
-		assert(visual != null, "活動部件在GLB中遺失")
-		visual.reparent(leaf, false)
-		visual.transform = Transform3D(Basis.IDENTITY,Vector3(-pivot_setback,0,0))
-		leaves.append(leaf)
+		cs.shape = box
+		cs.position = Vector3(p.width / 2.0, p.height / 2.0, 0)
+		var visual := house.model.find_child(p.name, true, false) as Node3D
+		assert(visual != null, "GLB 缺少門窗組件 " + str(p.name))
+		var body_part: PhysicsBody3D
+		var visual_offset := 0.0
+		if p.get("interaction") == "fixed_breakable":
+			var window := FIXED_WINDOW.new()
+			body_part = window
+			house.fixed_windows.append(window)
+		else:
+			var leaf := LEAF.new()
+			body_part = leaf
+			leaf.swing = p.swing
+			leaf.bidirectional = p.get("interaction") == "swing_away" or p.kind == "door"
+			leaf.set_meta("kind", p.kind)
+			# 舊的門扇仍以板邊為原點；新版模型已將實際轉軸寫進 GLB。
+			var inset := float(p.get("pivot_inset", .05 if leaf.bidirectional else 0.0))
+			if not p.has("pivot_inset"):
+				closed.origin += closed.basis.x * inset
+				visual_offset = -inset
+			cs.position.x -= inset
+			leaf.shape = box
+			leaf.shape_offset = cs.position
+			leaf.base_transform = closed
+			house.leaves.append(leaf)
+		body_part.name = p.name
+		body_part.transform = closed
+		body_part.add_child(cs)
+		house.add_child(body_part)
+		visual.reparent(body_part, false)
+		visual.transform = Transform3D(Basis.IDENTITY, Vector3(visual_offset, 0, 0))

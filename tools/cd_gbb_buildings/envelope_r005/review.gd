@@ -1,5 +1,5 @@
 extends Node3D
-## 隔離建築驗收場；同牛仔膠囊／眼高，非完整戰鬥角色。
+## 隔離建築驗收場，沿用牛仔膠囊與翻越。
 const BUILDING = preload("res://tools/cd_gbb_buildings/envelope_r005/building.gd")
 var houses: Array[Node3D] = []
 var player: CharacterBody3D
@@ -47,20 +47,26 @@ func _ready() -> void:
 		house.add_child(pad)
 		pad.position = Vector3(house.spec.placement.w / 2.0, -0.3, -house.spec.placement.d / 2.0)
 	get_window().title="CD-GBB 四棟建築基礎版"
-	player = CharacterBody3D.new()
-	var capsule := CapsuleShape3D.new()
-	capsule.radius = 0.4
-	capsule.height = 1.8
-	var cs := CollisionShape3D.new()
-	cs.shape = capsule
-	cs.position.y = 0.9
-	player.add_child(cs)
+	setup_player()
+
+func setup_player() -> void:
+	# 使用專案牛仔原本的膠囊與翻越；地台保留自己的自由觀察操控。
+	player = load("res://cowboy/cowboy.tscn").instantiate()
+	player.name = "1"
+	add_child(player)
+	player.set_physics_process(false)
+	player.set_process(false)
+	player.set_process_unhandled_input(false)
+	for node in player.get_children():
+		node.process_mode = Node.PROCESS_MODE_DISABLED
+	player.get_node("HUD").hide()
+	player.hide()
 	camera = Camera3D.new()
 	camera.position.y = 1.6
 	camera.fov = 70.0
 	camera.near = 0.02
 	player.add_child(camera)
-	add_child(player)
+	camera.make_current()
 	var ui := CanvasLayer.new()
 	hint = Label.new()
 	hint.position = Vector2(18, 18)
@@ -71,6 +77,7 @@ func _ready() -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func teleport(index: int) -> void:
+	if player.vaulting: return
 	var house := houses[index]
 	var starts: Array[Vector3] = [Vector3(8,.1,-13.4),Vector3(10,.1,3),Vector3(11,.1,-13.4),Vector3(5,.1,2)]
 	var start: Vector3 = starts[index]
@@ -90,8 +97,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			KEY_ESCAPE: Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 			KEY_E:
 				var target := focus()
-				if target: target.interact(player)
+				if target and target.has_method("interact"): target.interact(player)
 	if event is InputEventMouseButton and event.pressed:
+		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and event.button_index == MOUSE_BUTTON_LEFT:
+			var pane := focus()
+			if pane and pane.has_method("on_shot"):
+				pane.on_shot(camera.global_position, player, -camera.global_basis.z)
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		player.rotate_y(-event.relative.x * 0.002)
@@ -101,18 +112,30 @@ func focus() -> Node:
 	var query := PhysicsRayQueryParameters3D.create(camera.global_position, camera.global_position - camera.global_basis.z * 2.5)
 	query.exclude = [player.get_rid()]
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
-	return hit.collider if not hit.is_empty() and hit.collider.has_method("interact") else null
+	return hit.collider if not hit.is_empty() else null
+
+func try_window_vault() -> bool:
+	var from := player.global_position + Vector3.UP * 1.45
+	var to: Vector3 = from - player.global_basis.z * (player.vault_reach + player.vault_landing_offset)
+	for house in houses:
+		for window in house.fixed_windows:
+			if window.blocks_crossing(from, to, player._capsule.radius):
+				return false
+	return player.try_vault(true)
 
 func _physics_process(delta: float) -> void:
+	if player.vaulting: return
 	var axis := Vector2(float(Input.is_physical_key_pressed(KEY_D)) - float(Input.is_physical_key_pressed(KEY_A)), float(Input.is_physical_key_pressed(KEY_S)) - float(Input.is_physical_key_pressed(KEY_W))).normalized()
 	var direction := player.basis * Vector3(axis.x, 0, axis.y)
 	player.velocity.x = direction.x * 4.0
 	player.velocity.z = direction.z * 4.0
 	player.velocity.y -= 18.0 * delta
-	if player.is_on_floor() and Input.is_physical_key_pressed(KEY_SPACE): player.velocity.y = 5.0
+	if player.is_on_floor() and Input.is_action_just_pressed("jump"):
+		if axis.y < 0 and try_window_vault(): return
+		player.velocity.y = player.jump_velocity
 	player.move_and_slide()
 	var target := focus()
-	hint.text = "四棟建築基礎版（無AO）｜F1 農宅 · F2 木棚 · F3 糧庫 · F4 宿舍 · F5 視角｜WASD 移動 · Space 跳躍 · E 門窗 · Esc 釋放滑鼠\n隔離地台／單人測試，非正式地圖與戰鬥驗收｜眼高 1.60m · 垂直視角 %.0f°" % camera.fov + ("\nE " + str(target.prompt) if target else "")
+	hint.text = "四棟建築基礎版（無AO）｜F1 農宅 · F2 木棚 · F3 糧庫 · F4 宿舍 · F5 視角｜WASD 移動 · Space 跳躍 · W＋Space 翻越 · E 門窗 · 左鍵擊破固定窗 · Esc 釋放滑鼠\n隔離地台／單人測試，非正式地圖與戰鬥驗收｜眼高 1.60m · 垂直視角 %.0f°" % camera.fov + ("\nE " + str(target.prompt) if target and target.has_method("interact") else ("\n左鍵 擊破固定窗" if target and target.has_method("on_shot") else ""))
 
 func facet(m: BaseMaterial3D) -> ShaderMaterial:
 	var f:=ShaderMaterial.new()
