@@ -2518,6 +2518,69 @@ func _case_nav_parse() -> void:
 		_free_map(m)
 	)
 
+## 導航網格照群解析（main.gd _parse_arena 的 _chunk_nav）：一棟（Arena 往下第二層）解析一次存著；農莊 registry 拆了這棟的零件，
+## 下一次烘只重解析這一棟，別棟沿用；拆完的幾何和整個場地一次解析一樣（路會跟著更新）
+func _case_nav_chunk() -> void:
+	var Main: GDScript = load("res://main.gd")
+	var m := _toy_map()
+	var group := Node3D.new()
+	group.name = "NavChunkGroup"
+	m.map.add_child(group)
+	var house := Node3D.new()
+	house.name = "House"
+	group.add_child(house)
+	house.position = m.map._on_ground(Vector3(-70, 0, -50))
+	var walls: Array[CollisionShape3D] = []
+	for i in 2:
+		var body := StaticBody3D.new()
+		var cs := CollisionShape3D.new()
+		var box := BoxShape3D.new()
+		box.size = Vector3(4, 3, 0.4)
+		cs.shape = box
+		body.add_child(cs)
+		house.add_child(body)
+		body.position = Vector3(0, 1.5, i * 4.0)
+		walls.append(cs)
+	var reg: Node = load("res://levels/farm_destruction/registry.gd").new()
+	reg.name = "FarmDestruction"
+	reg.arena = m.map
+	m.map.add_child(reg)
+	reg.register("test/wall0", "wood", [], [walls[0]])
+	var nm := NavigationMesh.new()
+	nm.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS
+	nm.geometry_source_geometry_mode = NavigationMesh.SOURCE_GEOMETRY_GROUPS_EXPLICIT
+	nm.geometry_source_group_name = Main.NAV_GROUP
+	var full_nm := NavigationMesh.new()
+	full_nm.geometry_parsed_geometry_type = NavigationMesh.PARSED_GEOMETRY_STATIC_COLLIDERS
+	var check := func(tag: String) -> int:
+		var full := NavigationMeshSourceGeometryData3D.new()
+		NavigationServer3D.parse_source_geometry_data(full_nm, full, m.map)
+		var mine: NavigationMeshSourceGeometryData3D = m._parse_arena(nm)
+		_ck(mine.get_vertices().size() == full.get_vertices().size() and mine.get_indices().size() == full.get_indices().size(),
+			"%s：照群解析和整個場地一次解析的頂點、索引數一樣（%d/%d 對 %d/%d）" % [tag, mine.get_vertices().size(), mine.get_indices().size(), full.get_vertices().size(), full.get_indices().size()])
+		return mine.get_vertices().size()
+	var before: int = check.call("沒拆過")
+	_ck(m._chunk_nav.has(house) and m._chunk_nav[house][0].size() == 2, "一棟的兩面牆存成同一群")
+	var mine_geo: Variant = m._chunk_nav[house][1]
+	var other: Node = null
+	for k: Node in m._chunk_nav:
+		if k != house:
+			other = k
+			break
+	var other_geo: Variant = m._chunk_nav[other][1] if other else null
+	check.call("沒變")
+	_ck(m._chunk_nav[house][1] == mine_geo, "沒拆東西：這一棟沿用存著的幾何")
+	reg.apply_patch_local({"test/wall0": 0})
+	_ck(not reg.nav_dirty.is_empty(), "拆了零件：registry 記下哪裡要重解析")
+	_defer(2, func() -> void:   # 形狀關掉是 set_deferred，過一幀才生效
+		var after: int = check.call("拆了一面牆")
+		_ck(after < before, "拆了一面牆，導航的幾何變少（%d → %d）：路會跟著更新" % [before, after])
+		_ck(m._chunk_nav[house][1] != mine_geo, "拆到的那一棟重解析")
+		_ck(other == null or m._chunk_nav[other][1] == other_geo, "沒拆到的別棟沿用存著的幾何")
+		_ck(reg.nav_dirty.is_empty() and m._nav_dirty.is_empty(), "重解析完就清掉要重解析的記號")
+		_free_map(m)
+	)
+
 ## 蛋被碎塊包住（房子拆倒、碎塊堆在蛋上）就往上抬到露出來；積木一塊都不動、不消失。旁邊沒包住的蛋不動
 func _case_egg_unbury() -> void:
 	var m := _toy_map()
