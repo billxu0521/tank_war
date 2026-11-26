@@ -40,6 +40,8 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color(0.16, 0.2, 0.14, 0.88))
 	draw_rect(Rect2(Vector2.ZERO, size), Color(0.9, 0.85, 0.7), false, 2.0)
 	var k := SIZE / arena
+	if main.map.has_method(&"draw_farm_roads"):
+		main.map.draw_farm_roads(self)
 	for r: Rect2 in main.map._blocked:   # 房子的佔地（XZ）
 		draw_rect(Rect2(to_map(Vector3(r.position.x, 0, r.position.y), arena, SIZE), r.size * k), Color(0.55, 0.5, 0.45, 0.9))
 	if main.party == null or main.party.knows_exits():

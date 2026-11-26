@@ -774,6 +774,9 @@ func _act_attack(delta: float) -> int:
 			_turn_to(_target, TURN * 0.5, delta)   # 預備時慢慢對準，側移還是躲得掉
 			_move(Vector3.ZERO, false, delta)
 			if _act_left <= 0.0:
+				var farm := get_tree().get_first_node_in_group(&"farm_destruction")
+				if farm:
+					farm.strike(self,true)
 				_next(ACT_BITE, STRIKE_SHOW)
 		ACT_BITE:
 			_hit_cone()   # 整段出手時間每幀判，_hit_once 保證每人每招只中一次
@@ -866,6 +869,9 @@ func _back_dir() -> Vector3:
 func _strike_sweep() -> void:
 	var foot := _sweep_root()
 	foot.y = global_position.y - HALF_H   # 查詢球心放腳底：貼地 12 公尺內的東西都掃得到（放身體中心會漏掉遠處的）
+	var farm := get_tree().get_first_node_in_group(&"farm_destruction")
+	if farm:
+		farm.strike(self,false)
 	_wreck_around(foot, _back_dir(), SWEEP_RADIUS, SWEEP_COS)
 	var g := _game()   # 保險箱在後方半圈裡（高度同 _sweep_hit）就掃飛：從尾根往外偏上
 	var s: Safe = g.safe if g else null
@@ -1238,6 +1244,9 @@ func _move(dir: Vector3, want_run: bool, delta: float) -> void:
 	move_and_slide()
 	if multiplayer.is_server():
 		_charge_hits(before, delta)
+		var farm := get_tree().get_first_node_in_group(&"farm_destruction")
+		if farm:
+			farm.charge(self,before)
 
 
 ## 尼諾拉撞東西（只在主機算，_move 的 move_and_slide 之後看這一幀的碰撞）：

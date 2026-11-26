@@ -99,7 +99,7 @@ func window(wall: String) -> void:
 
 func run() -> void:
 	seed(241125)
-	game=load("res://farm_match.tscn").instantiate()
+	game=load("res://main.tscn").instantiate()
 	root.add_child(game)
 	current_scene=game
 	await ticks(2)

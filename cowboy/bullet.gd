@@ -84,10 +84,14 @@ func advance(delta: float) -> void:
 		_traveled += from.distance_to(hit["position"])
 		if is_instance_valid(fx):
 			fx.impact(hit["position"], hit["normal"], surface_of(hit["collider"]), sound)
-		if hit["collider"].has_method(&"material_of"):
-			# 積木：一棟一個物體，不排除整棟（後面幾塊還要照材質算）。從打到的點往前 0.02 公尺再找
-			# （起點在形狀裡面，物理不會再報同一塊）
-			from = hit["position"] + (to - from).normalized() * 0.02
+		if hit.collider.has_method(&"on_shot"):
+			hit.collider.on_shot(hit.position, shooter, vel.normalized())
+		if hit.collider.has_method(&"material_of") or (hit.collider is CollisionObject3D and hit.collider.get_shape_owners().size() > 1):
+			# 從命中面內側續查。同一物體後方的另一片依舊消耗穿透力。
+			from = (hit.position as Vector3).move_toward(to, 0.002)
+			if from == to:
+				hit = {}
+				break
 		else:
 			exclude.append(hit["rid"])
 			from = hit["position"]
@@ -119,6 +123,12 @@ static func pierce_left(target: Object, power: int, shape := -1) -> int:
 		return HitRules.BLOCK
 	if target.has_method(&"material_of"):
 		return HitRules.pierce(power, target.material_of(shape))
+	if target is CollisionObject3D and target.is_inside_tree() and shape >= 0:
+		var farm := (target as Node).get_tree().get_first_node_in_group(&"farm_destruction")
+		if farm:
+			var mat: StringName = farm.bullet_material(target, shape)
+			if mat != &"":
+				return HitRules.pierce(power, mat)
 	for g: StringName in HitRules.MATS:
 		if (target as Node).is_in_group(g):
 			return HitRules.pierce(power, g)

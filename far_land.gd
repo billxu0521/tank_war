@@ -246,6 +246,8 @@ static func _scatter(mesh: Mesh, pts: Array[Transform3D], shadows: bool) -> Mult
 		mm.set_instance_transform(i, pts[i])
 	var mmi := MultiMeshInstance3D.new()
 	mmi.multimesh = mm
+	if mesh.resource_name in ["props_Bush","block","kits_HayBlock","kits_FenceRail","kits_FencePost","bush"]:
+		mmi.set_meta("farm_source_transforms",pts)
 	if not shadows:
 		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	return mmi

@@ -1620,26 +1620,30 @@ func _block(p: Vector3, size: Vector2, clearance: float) -> void:
 ## 兩個保留了選擇，但競爭比四個集中，撤離區更容易變成三方交會的爭奪點。每場換一組，出口就不能背。
 func _build_exits() -> void:
 	for e: Vector2 in exit_spots(greybox):
-		var c := _on_ground(Vector3(e.x, 0, e.y))
-		_exits.append(c)
-		# 地面標示用貼花（Decal）從上往下投在地上：撤離區沒整平（高低差可到 10 公尺），平板會一半埋進坡裡、一半浮在空中。
-		# 圓形：裡面淡淡一層暖金，邊上一圈比較亮，站在圈外也看得出邊界
-		var g := Gradient.new()
-		g.offsets = PackedFloat32Array([0.0, 0.88, 0.95, 1.0])
-		g.colors = PackedColorArray([Color(1, 1, 1, 0.25), Color(1, 1, 1, 0.3), Color(1, 1, 1, 0.9), Color(1, 1, 1, 0)])
-		var tex := GradientTexture2D.new()
-		tex.gradient = g
-		tex.fill = GradientTexture2D.FILL_RADIAL
-		tex.fill_from = Vector2(0.5, 0.5)
-		tex.fill_to = Vector2(1.0, 0.5)
-		var d := Decal.new()
-		d.texture_albedo = tex
-		d.modulate = Color(0.95, 0.78, 0.4)   # 暖金：看得出來，又不像貼上去的藍色佔位片
-		d.size = Vector3(EXIT_RADIUS * 2.0, Terrain.AMP * 3.0, EXIT_RADIUS * 2.0)   # 上下各投 15 公尺，坡再陡也蓋得到
-		d.position = c
-		add_child(d)
-		_exit_pads.append(d)
-		_exit_pipes.append(_exit_pipe(c))   # 旁邊的篷車和貨在擺設清單裡（_generate_level）
+		_add_exit_at(_on_ground(Vector3(e.x, 0, e.y)))
+
+## 西部與其他地圖共用同一個出口。需要指定接收地表的地圖可設定回傳貼花的顯示層。
+func _add_exit_at(c: Vector3) -> Decal:
+	_exits.append(c)
+	# 地面標示用貼花（Decal）從上往下投在地上：撤離區沒整平（高低差可到 10 公尺），平板會一半埋進坡裡、一半浮在空中。
+	# 圓形：裡面淡淡一層暖金，邊上一圈比較亮，站在圈外也看得出邊界
+	var g := Gradient.new()
+	g.offsets = PackedFloat32Array([0.0, 0.88, 0.95, 1.0])
+	g.colors = PackedColorArray([Color(1, 1, 1, 0.25), Color(1, 1, 1, 0.3), Color(1, 1, 1, 0.9), Color(1, 1, 1, 0)])
+	var tex := GradientTexture2D.new()
+	tex.gradient = g
+	tex.fill = GradientTexture2D.FILL_RADIAL
+	tex.fill_from = Vector2(0.5, 0.5)
+	tex.fill_to = Vector2(1.0, 0.5)
+	var d := Decal.new()
+	d.texture_albedo = tex
+	d.modulate = Color(0.95, 0.78, 0.4)   # 暖金：看得出來，又不像貼上去的藍色佔位片
+	d.size = Vector3(EXIT_RADIUS * 2.0, Terrain.AMP * 3.0, EXIT_RADIUS * 2.0)   # 上下各投 15 公尺，坡再陡也蓋得到
+	d.position = c
+	add_child(d)
+	_exit_pads.append(d)
+	_exit_pipes.append(_exit_pipe(c))   # 旁邊的篷車和貨在擺設清單裡（_generate_level）
+	return d
 
 ## 撤離點中間的綠色水管：遠遠就看得到撤離點在哪（0.8.1 回饋 U14）。
 ## ponytail: 佔位用的，之後換正式的撤離標的物模型。有碰撞，不然會變成看得到摸不到的東西

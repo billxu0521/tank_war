@@ -1424,7 +1424,7 @@ func update_stamina(wants_sprint: bool, delta: float) -> bool:
 ##
 ## pressing_forward 用傳的不用自己讀 Input：headless 測試沒辦法模擬按鍵。
 ##
-## ponytail: 翻越途中位置交給 Tween、不做碰撞。要做「翻到一半被打斷」再改成自己算位移。
+## 農莊另外檢查縮身後的完整路徑，讓可動窗扇與破壞後的窗洞直接由實際碰撞決定。
 func try_vault(pressing_forward: bool) -> bool:
 	if vaulting:
 		return false
@@ -1471,16 +1471,41 @@ func try_vault(pressing_forward: bool) -> bool:
 	# ponytail: 最多 30 次查詢，只在按跳的那一下。先照原本從頂面上方 0.2 往下打（窗戶：0.6 會打到窗框上緣）；
 	# 都站不下再從 0.6 打（碎塊堆往前是往上疊的，0.2 的起點在碎塊裡）
 	var landing := Vector3.INF
+	var passage: PackedVector3Array
+	var query: PhysicsShapeQueryParameters3D
+	if get_tree().get_first_node_in_group(&"farm_destruction"):
+		var tucked := CapsuleShape3D.new()
+		tucked.radius = _capsule.radius
+		tucked.height = crouch_height
+		query = PhysicsShapeQueryParameters3D.new()
+		query.shape = tucked
+		query.collision_mask = collision_mask
+		query.exclude = [get_rid()]
 	var side := forward.cross(Vector3.UP)
+	# 貼緊木窗臺時先稍退，抬膝才有空間越過向牆外突出的板口。
+	var approach := (Vector3(wall.position) - global_position).dot(forward)
+	var takeoff := global_position - forward * clampf(_capsule.radius + .16 - approach, 0.0, .16)
 	for lift: float in [0.2, 0.6]:
 		for off: float in [vault_landing_offset, 0.35, 0.6, 1.4, 1.9]:
 			for lat: float in [0.0, 0.4, -0.4]:
 				var ahead: Vector3 = top["position"] + forward * off + side * lat
 				var ground := _ray(ahead + Vector3.UP * lift, ahead + Vector3.DOWN * (vault_max_height + 1.2))
 				var spot: Vector3 = (ground["position"] if ground else ahead) + Vector3.UP * 0.1   # 抬一點：凹凸的碎塊頂面差幾公分就判定卡住
-				if spot.y - global_position.y <= vault_max_height + 0.3 and _fits_at(spot):
-					landing = spot
-					break
+				if spot.y - global_position.y > vault_max_height + 0.3 or not _fits_at(spot):
+					continue
+				if query:
+					if ground.is_empty() or ground.normal.y < cos(floor_max_angle):
+						continue
+					# 薄窗臺上的單一取樣點不能供整隻腳落地。
+					var toe: Vector3 = ground.position + forward * _capsule.radius * .8
+					var support := _ray(toe + Vector3.UP * .2, toe + Vector3.DOWN * .25)
+					if support.is_empty() or support.normal.y < cos(floor_max_angle):
+						continue
+					passage = _farm_vault_path(query, takeoff, top.position, spot)
+					if passage.is_empty():
+						continue
+				landing = spot
+				break
 			if landing != Vector3.INF:
 				break
 		if landing != Vector3.INF:
@@ -1494,16 +1519,32 @@ func try_vault(pressing_forward: bool) -> bool:
 	velocity = Vector3.ZERO
 	if _jump_sound:
 		_jump_sound.play()
-	# 一條「先往上撐、越過頂面、往前落下」的曲線。直線拉過去會像穿模而不是翻越
-	var start := global_position
-	var over := Vector3(top["position"].x, top["position"].y + 0.25, top["position"].z)
-	var c1 := Vector3(start.x, over.y + 0.15, start.z)
-	var c2 := over + forward * 0.3
 	var tween := create_tween()
 	tween.set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
-	tween.tween_method(func(t: float) -> void:
-		vault_t = t
-		global_position = start.bezier_interpolate(c1, c2, landing, t), 0.0, 1.0, mantle_time if high else vault_time)
+	var duration := mantle_time if high else vault_time
+	if query:
+		sync_crouching = true
+		if _capsule.height > crouch_height:
+			var tuck_time := minf(1.0 / maxf(crouch_lerp, .01), duration * .2)
+			tween.tween_method(_set_crouch_height, _capsule.height, crouch_height, tuck_time)
+			duration -= tuck_time
+		var length := 0.0
+		for i in range(1, passage.size()):
+			length += passage[i - 1].distance_to(passage[i])
+		var elapsed := 0.0
+		for i in range(1, passage.size()):
+			var part := passage[i - 1].distance_to(passage[i]) / length
+			if part > 0.0:
+				tween.tween_method(_follow_farm_vault.bind(passage[i - 1], passage[i], elapsed, part, tween), 0.0, 1.0, duration * part)
+			elapsed += part
+	else:
+		var start := global_position
+		var over := Vector3(top["position"].x, top["position"].y + 0.25, top["position"].z)
+		var c1 := Vector3(start.x, over.y + 0.15, start.z)
+		var c2 := over + forward * 0.3
+		tween.tween_method(func(t: float) -> void:
+			vault_t = t
+			global_position = start.bezier_interpolate(c1, c2, landing, t), 0.0, 1.0, duration)
 	tween.finished.connect(func():
 		vaulting = false
 		vault_t = 0.0
@@ -1511,6 +1552,37 @@ func try_vault(pressing_forward: bool) -> bool:
 		if _land_sound:
 			_land_sound.play())
 	return true
+
+
+## 抬身、越過窗臺、落下三段都用牛仔的蹲姿外形掃過。碰撞已解除的碎窗自然放行。
+func _farm_vault_path(query: PhysicsShapeQueryParameters3D, takeoff: Vector3, top: Vector3, landing: Vector3) -> PackedVector3Array:
+	var rim := maxf(top.y + .04, landing.y)
+	var path := PackedVector3Array([global_position, takeoff, Vector3(takeoff.x, rim, takeoff.z),
+			Vector3(landing.x, rim, landing.z), landing])
+	var center := Vector3.UP * (crouch_height * .5 + .002)
+	var space := get_world_3d().direct_space_state
+	for i in range(path.size()):
+		query.transform = Transform3D(Basis.IDENTITY, path[i] + center)
+		query.motion = Vector3.ZERO
+		if not space.intersect_shape(query, 1).is_empty():
+			return PackedVector3Array()
+		if i + 1 < path.size():
+			query.motion = path[i + 1] - path[i]
+			if query.motion.length_squared() > .000001 and space.cast_motion(query)[0] < 1.0:
+				return PackedVector3Array()
+	return path
+
+
+## 起跳後仍可能關窗，實際移動也要在第一個碰撞處停下。
+func _follow_farm_vault(t: float, start: Vector3, end: Vector3, elapsed: float, part: float, tween: Tween) -> void:
+	var motion := start.lerp(end, t) - global_position
+	if not vaulting or (motion.length_squared() > .0000001 and move_and_collide(motion) != null):
+		tween.kill()
+		vaulting = false
+		vault_t = 0.0
+		_fall_top = global_position.y
+		return
+	vault_t = elapsed + t * part
 
 
 ## 膠囊放到這裡會不會卡到東西。
@@ -1581,7 +1653,10 @@ func _blocked_above() -> bool:
 
 func _apply_crouch(crouching: bool, delta: float) -> void:
 	var target := crouch_height if crouching else stand_height
-	var h := lerpf(_capsule.height, target, minf(crouch_lerp * delta, 1.0))
+	_set_crouch_height(lerpf(_capsule.height, target, minf(crouch_lerp * delta, 1.0)))
+
+
+func _set_crouch_height(h: float) -> void:
 	_capsule.height = h
 	_collision.position.y = h * 0.5
 	head.position.y = _stand_head_y - (stand_height - h)

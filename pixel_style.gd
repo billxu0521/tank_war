@@ -69,7 +69,7 @@ func _ready() -> void:
 		_grade_default[k] = get(k)
 	var cfg := ConfigFile.new()
 	cfg.load(get_parent().settings_path)
-	on = cfg.get_value("display", "pixel_style", true) and not get_parent().greybox   # 灰盒地圖不開（設定裡還是能打開，下次開遊戲又關掉）
+	on = cfg.get_value("display", "pixel_style", false) and not get_parent().greybox   # 灰盒地圖不開（設定裡還是能打開，下次開遊戲又關掉）
 	get_viewport().size_changed.connect(_rescale)   # 拉視窗只改縮放，不重算查色表（GDScript 算一次要一點時間）
 	apply()
 
@@ -81,6 +81,7 @@ var _look_label: Label
 
 func _next_look() -> void:
 	_look = (_look + 1) % LOOKS.size()
+	get_parent().get_node(^"Arena/Outline").visible = on or _look != 0
 	var mat: ShaderMaterial = (get_parent().get_node(^"Arena/Outline") as MeshInstance3D).mesh.material
 	mat.set_shader_parameter(&"look", float(LOOKS[_look][1]))
 	mat.set_shader_parameter(&"paint_radius", LOOKS[_look][2])
@@ -133,6 +134,7 @@ func apply() -> void:
 			_env.set_glow_level(i, GLOW_LEVELS[i])
 	var outline: Node = get_parent().get_node_or_null(^"Arena/Outline")
 	if outline:
+		outline.visible = on or _look != 0
 		outline.mesh.material.set_shader_parameter(&"gun_ridge", gun_ridge if on else 1.0)
 	vp.scaling_3d_mode = Viewport.SCALING_3D_MODE_NEAREST if low else Viewport.SCALING_3D_MODE_BILINEAR
 	vp.scaling_3d_scale = 1.0

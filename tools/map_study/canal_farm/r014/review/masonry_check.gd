@@ -70,7 +70,7 @@ func loss(label:String,key:String,a:Vector3,b:Vector3,fall:Array,stay:Array):
 	verify(label+" 清理碎塊",not home.has_damage())
 func run():
 	var args:=OS.get_cmdline_user_args()
-	game=load("res://farm_match.tscn").instantiate()
+	game=load("res://main.tscn").instantiate()
 	root.add_child(game);current_scene=game
 	await wait_frames(3)
 	game._on_vs_bots_pressed();game.rules=&"normal";game.normal_rounds=150;game.room.dino_pick=-1

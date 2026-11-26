@@ -40,6 +40,33 @@ float fbm(vec2 p) {
 	return v;
 }
 
+uniform bool farm_noon = false;
+
+float farm_noise(vec3 p) {
+	vec3 cell = floor(p);
+	vec3 t = fract(p);
+	t = t*t*(3.0-2.0*t);
+	vec2 key = cell.xy + cell.z*vec2(37.0, 17.0);
+	float a = mix(mix(hash(key), hash(key+vec2(1,0)),t.x),
+		mix(hash(key+vec2(0,1)),hash(key+vec2(1,1)),t.x),t.y);
+	key += vec2(37.0,17.0);
+	float b = mix(mix(hash(key), hash(key+vec2(1,0)),t.x),
+		mix(hash(key+vec2(0,1)),hash(key+vec2(1,1)),t.x),t.y);
+	return mix(a,b,t.z);
+}
+
+vec3 farm_noon_sky(vec3 d, float sun_dot) {
+	float up = max(d.y,0.0);
+	vec3 sky_tint = mix(horizon_color,mid_color,smoothstep(0.0,.26,up));
+	sky_tint = mix(sky_tint,top_color,smoothstep(.25,.85,up));
+	vec3 p = d * vec3(12.6,23.1,12.6);
+	float noise_value = .57*farm_noise(p)+.29*farm_noise(p*2.13)+.14*farm_noise(p*4.11);
+	float cloud = .39*smoothstep(.58,.79,noise_value)*smoothstep(.02,.16,up);
+	sky_tint = mix(sky_tint,cloud_lit,cloud);
+	sky_tint += vec3(.65,.58,.43)*smoothstep(.9987,.9997,sun_dot);
+	return sky_tint;
+}
+
 void sky() {
 	vec3 d = EYEDIR;
 	float up = d.y;
@@ -98,5 +125,5 @@ void sky() {
 			col = mix(col, mix(shade, cloud_lit, lit), c);
 		}
 	}
-	COLOR = col;
+	COLOR = farm_noon ? farm_noon_sky(d, sa) : col;
 }

@@ -241,7 +241,9 @@ func _sole_points(i: int) -> PackedVector3Array:
 	return out
 
 
-## 挑鞋底點：靜止姿勢下離地 3 公分內的網格點，離哪隻腳踝近就歸哪隻
+## 挑鞋底點：靜止姿勢下離地 SOLE_H 內的網格點，離哪隻腳踝近就歸哪隻。
+## 5 公分：農莊版牛仔（削面）頂點少、鞋跟最低的點離地 3～5 公分，只挑 3 公分內會只剩腳尖，踩上台階一半陷進去
+const SOLE_H := 0.05
 func _find_soles() -> void:
 	var mi := skeleton.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D
 	skeleton.reset_bone_poses()
@@ -254,6 +256,7 @@ func _find_soles() -> void:
 		var bones: PackedInt32Array = arr[Mesh.ARRAY_BONES]
 		var weights: PackedFloat32Array = arr[Mesh.ARRAY_WEIGHTS]
 		var n := weights.size() / verts.size()
+		var recs := []   # 每個頂點：[蒙皮清單, 靜止姿勢的位置]；離地太高的是 null
 		for j in verts.size():
 			var v := []
 			var p := Vector3.ZERO
@@ -268,16 +271,41 @@ func _find_soles() -> void:
 				var local := mi.skin.get_bind_pose(bi) * verts[j]
 				v.append_array([b, local, w])
 				p += w * (skeleton.get_bone_global_pose(b) * local)
-			if (to_rig * p).y > 0.03:
+			recs.append([v, p] if (to_rig * p).y <= SOLE_H else null)
+			if recs[j] != null:
+				_add_sole(found, ankles, recs[j])
+		# 削過面的模型（農莊版）鞋底只剩幾個大三角形、頂點很少：三個角都貼地的三角形再補邊中點和重心。
+		# 蒙皮是線性的，點的蒙皮清單＝角上的清單照比例縮權重接起來
+		var idx: PackedInt32Array = arr[Mesh.ARRAY_INDEX]
+		if idx.is_empty():
+			idx = PackedInt32Array(range(verts.size()))
+		for t in range(0, idx.size() - 2, 3):
+			var c := [recs[idx[t]], recs[idx[t + 1]], recs[idx[t + 2]]]
+			if c.has(null):
 				continue
-			var side := 0 if p.distance_to(ankles[0]) < p.distance_to(ankles[1]) else 1
-			found[side][Vector3i((p * 100.0).round())] = v
+			for mix: Vector3 in [Vector3(0.5, 0.5, 0), Vector3(0, 0.5, 0.5), Vector3(0.5, 0, 0.5), Vector3.ONE / 3.0]:
+				var v := []
+				var p := Vector3.ZERO
+				for k in 3:
+					if mix[k] == 0.0:
+						continue
+					for q in range(0, c[k][0].size(), 3):
+						v.append_array([c[k][0][q], c[k][0][q + 1], c[k][0][q + 2] * mix[k]])
+					p += mix[k] * (c[k][1] as Vector3)
+				_add_sole(found, ankles, [v, p])
 	for side in 2:
 		var all: Array = found[side].values()
 		var keep := []
 		for j in range(0, all.size(), maxi(1, ceili(all.size() / 40.0))):
 			keep.append(all[j])
 		_soles.append(keep)
+
+
+## 鞋底點歸到離得近的那隻腳踝；同位置（取到公分）只留一個
+static func _add_sole(found: Array, ankles: Array, rec: Array) -> void:
+	var p: Vector3 = rec[1]
+	var side := 0 if p.distance_to(ankles[0]) < p.distance_to(ankles[1]) else 1
+	found[side][Vector3i((p * 100.0).round())] = rec[0]
 
 
 ## 臀部（連整個身體）沿角色的上方移 dy 公尺。Hips 上面還有一根轉過的 Root：要換到 Root 的座標

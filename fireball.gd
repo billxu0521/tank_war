@@ -57,13 +57,22 @@ func _physics_process(delta: float) -> void:
 	if max_range > 0.0 and _flown > max_range:
 		_end(false)
 		return
-	var hit := get_world_3d().direct_space_state.intersect_ray(
-		PhysicsRayQueryParameters3D.create(from, to))
+	var ray := PhysicsRayQueryParameters3D.create(from,to)
+	var hit := get_world_3d().direct_space_state.intersect_ray(ray)
+	var farm := get_tree().get_first_node_in_group(&"farm_destruction") if wreck else null
+	if farm:
+		var foliage := PhysicsRayQueryParameters3D.create(from,hit.position if not hit.is_empty() else to,farm.SENSOR)
+		foliage.collide_with_bodies = false
+		foliage.collide_with_areas = true
+		var cover := get_world_3d().direct_space_state.intersect_ray(foliage)
+		if not cover.is_empty(): hit = cover
 	if hit.is_empty() and radius > 0.0:
 		hit = _near(to)
 	if hit.is_empty():
 		global_position = to
 		return
+	if farm and multiplayer.is_server() and hit.has("shape"):
+		farm.projectile(hit.collider,hit.shape,hit.position,radius * 2.0)
 	if FireballFx.on:
 		var world := get_tree().get_first_node_in_group(&"arena") as Node3D
 		var normal: Vector3 = hit.get(&"normal", -vel.normalized())   # 擦到人（_near）沒有法線：朝來的方向爆

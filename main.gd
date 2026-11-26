@@ -81,7 +81,10 @@ var _exits: Array[Vector3]:
 				out.append(map._exits[i])
 		return out
 var spawn_points: Array[Vector3]:
-	get: return map.spawn_points
+	get:
+		if rules == &"normal" and party and party.phase == &"play" and map.has_method(&"farm_return_zones"):
+			return map.call(&"farm_return_zones")
+		return map.spawn_points
 var dino_spawn: Vector3:
 	get: return map.dino_spawn
 var safe_spots: Array[Vector3]:
@@ -102,14 +105,32 @@ func hidden_in_bush(who: Node3D) -> bool: return map.hidden_in_bush(who)
 ## 目前的地圖：&"" 是主地圖（連線、沙盒），&"range" 是靶場。靜態的：換地圖要重載整個場景，重載後還記得
 static var mode := &""
 const RANGE_LEVEL := "res://levels/range.tscn"
-## 主地圖是灰盒（素模，greybox.gd）：先專心調玩法。舊的牧場留著，測試和 level_file 指定時才用
+## 主地圖是灌渠農莊（r014，tools/map_study/farm_trial/）：整張圖是一個場景，開場時換掉 main.tscn 的 Arena（_enter_tree）。
+## 灰盒（素模，greybox.gd）和舊的牧場留著：測試、工具和 --greybox 指定時才用
+const FARM_LEVEL := "res://tools/map_study/farm_trial/match_map.tscn"
 const GREYBOX_LEVEL := "res://levels/greybox.tscn"
 const RANCH_LEVEL := "res://levels/ranch.tscn"
-static var level_file := ""   # 指定主地圖（測試切回牧場用）；空的就是灰盒
+## 指定主地圖：預設農莊；空的是灰盒（測試、--greybox）；RANCH_LEVEL 是牧場（舊測試）
+static var level_file := "" if "--greybox" in OS.get_cmdline_user_args() else FARM_LEVEL
 var level_path := RANGE_LEVEL if mode == &"range" else (level_file if level_file != "" else GREYBOX_LEVEL)
 ## 灰盒地圖：地面換格線、不長草不撒碎物、固定正午、不開像素風（pixel_style.gd）
 var greybox: bool:
 	get: return level_path == GREYBOX_LEVEL
+
+## 農莊：子節點 _ready 之前把 Arena 換成農莊場景（天空、太陽兩個子節點搬過去），蛋換成會落在樓板上的 farm_egg。
+## 農莊作者的 farm_match.tscn 只差這幾處，換在這裡就不用維護兩份 main 場景
+func _enter_tree() -> void:
+	var old := get_node_or_null(^"Arena")
+	if level_path != FARM_LEVEL or old == null or old.get_script() != ArenaMap:
+		return
+	var farm: Node3D = load(FARM_LEVEL).instantiate()
+	old.replace_by(farm, true)
+	old.free()
+	farm.name = &"Arena"
+	var we := farm.get_node(^"WorldEnvironment") as WorldEnvironment
+	we.environment = we.environment.duplicate()   # 場景的子資源每次重載共用：改複本，回靶場、灰盒不跟著變
+	we.environment.tonemap_mode = Environment.TONE_MAPPER_LINEAR
+	$Egg.set_script(preload("res://tools/map_study/farm_trial/farm_egg.gd"))
 
 ## 沙盒靶道要空著的範圍（擺設檢查 LevelCheck 用）：靶場地圖沒有（null）；灰盒只留靶子那一條（中央要放東西）
 const GREYBOX_LANE := Rect2(-7, -30, 14, 112)
@@ -125,6 +146,9 @@ var _time_left := 0.0
 var _clock := 0                     # 主機廣播的剩餘秒數
 var _respawn_queue: Array[Dictionary] = []
 var _claimer := 0   # 正在撿蛋的牛仔編號
+var _farm_restore_frame := -1
+var _waiting_to_restart := false
+var _waiting_to_start := false
 var _over := false
 ## 沙盒：沒有時間限制、沒有蛋，靶打死會在原地重生，子彈無限
 var _sandbox := false
@@ -221,6 +245,10 @@ func _ready() -> void:
 ##   godot --headless -- --server --autoplay    專用伺服器照舊開了就打、一局結束自動開下一局（連線測試工具用）
 func _autostart() -> void:
 	var args := OS.get_cmdline_user_args()
+	# 命令列可直接開局。等農莊當幀組好的地形和房舍進入物理世界。
+	if map.has_method(&"farm_nearest_spawn") and not args.is_empty():
+		await get_tree().physics_frame
+		await get_tree().physics_frame
 	var mi := args.find("--mode")   # --mode deathmatch / dino_duel / egg（開房和專用伺服器用）
 	if mi >= 0 and mi + 1 < args.size() and RULES.has(StringName(args[mi + 1])):
 		_on_mode_picked(RULES.keys().find(StringName(args[mi + 1])))
@@ -232,6 +260,8 @@ func _autostart() -> void:
 		_on_host_pressed()   # 照舊直接開打（房間的等人在選單按開房才有）
 		if room.active:
 			start_match()
+	elif args.has("--farm-walk"):
+		_on_farm_walk_pressed()
 	elif args.has("--sandbox"):
 		_on_sandbox_pressed()
 	elif args.has("--solo-dino"):
@@ -498,7 +528,8 @@ func _to_lobby(msg: String) -> void:
 	# 靶場是另一張地圖：回大廳就重載回牧場（測試自己組的場景不是 current_scene，不重載）。
 	# 甩尾拆過東西也重載：下一局（或加入別人的房間）場地要是完整的
 	var wrecked := _toys.any(func(t: ToyBuild) -> bool: return t.has_damage())
-	if mode == &"range" or wrecked:
+	var farm_damage := get_tree().get_first_node_in_group(&"farm_destruction")
+	if mode == &"range" or wrecked or (farm_damage and farm_damage.has_changed()):
 		mode = &""
 		if get_tree().current_scene == self:
 			get_tree().reload_current_scene.call_deferred()
@@ -590,8 +621,15 @@ func _on_host_pressed() -> void:
 
 ## 主機：開打。房間裡的人照進來的順序生（派對、一般模式由 party.gd 自己排）；模式、時段送給每個人
 func start_match() -> void:
-	if not multiplayer.is_server():
+	if not multiplayer.is_server() or _waiting_to_start:
 		return
+	if Engine.get_physics_frames() < _farm_restore_frame:
+		_waiting_to_start = true
+		var peer := multiplayer.multiplayer_peer
+		await wait_for_spawn_ground()
+		_waiting_to_start = false
+		if peer != multiplayer.multiplayer_peer or not room.active:
+			return
 	room.playing = true
 	_empty_for = 0.0
 	_enter_game("專用伺服器" if _dedicated else "%s模式開始" % RULES[rules].name)
@@ -718,7 +756,7 @@ var period := &"sunset"
 func _load_period() -> void:
 	var cfg := ConfigFile.new()
 	cfg.load(settings_path)
-	period = StringName(cfg.get_value("display", "period", "sunset"))
+	period = StringName(cfg.get_value("display", "period", "noon"))
 	if greybox:
 		period = &"noon"   # 灰盒固定白天，不分心（要換還是能在設定裡換，重開回正午）
 	var args := OS.get_cmdline_user_args()
@@ -985,7 +1023,7 @@ func _apply_rules() -> void:
 		party = null
 	safe.reset(false)   # 派對開回合時才擺（party._start_round）
 	if RULES[rules].party:
-		party = Party.new()
+		party = preload("res://tools/map_study/farm_trial/farm_party.gd").new() if rules == &"normal" and map.has_method(&"farm_return_zones") else Party.new()
 		party.name = &"Party"
 		add_child(party)
 
@@ -1064,6 +1102,24 @@ func _on_join_pressed() -> void:
 
 ## 沙盒：一個人在牧場的靶道練槍。前方 10／25／50／100 公尺各站一個牛仔靶，
 ## 旁邊一隻不會動的恐龍。靶不是 bot、也不是本機操控，所以站著不動、不會還擊。
+## 私人正午試走入口，從南橋口開始。四席對局繼續由大廳啟動。
+func _on_farm_walk_pressed() -> void:
+	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	_offline = true
+	_sandbox = true
+	egg.visible = false
+	_enter_game("灌渠農莊 A v3.0｜自由試走　WASD 移動　空白鍵跳躍　Esc 開啟選單")
+	var me := _add_player(COWBOY, 1)
+	me.global_position = cowboy_spawn_on_ground(Vector3(1.15, 0, 25.7), me, 0.08)
+	me.rotation.y = atan2(-6.25, 27.3)
+	me.viewmodel.set_infinite()
+	var creature := _add_player(BOSS, BOSS_ID)
+	creature.global_position = boss_on_ground(Vector3(7.4, 0, -1.6))
+	creature.look_at(Vector3(-5.8, creature.global_position.y, 27.5))
+	creature.set_physics_process(false)
+	me.reset_physics_interpolation()
+	creature.reset_physics_interpolation()
+
 func _on_sandbox_pressed() -> void:
 	var xs := SANDBOX_TARGETS.map(func(d: int) -> float: return -4.0 if SANDBOX_TARGETS.find(d) % 2 == 0 else 4.0)
 	_start_practice(SANDBOX_START, SANDBOX_TARGETS, xs, Vector3(12, 4.0, -45),
@@ -1090,7 +1146,7 @@ func _on_solo_dino_pressed() -> void:
 	egg.visible = false
 	_enter_game("單人打恐龍：接關無限、子彈無限，測恐龍行為用。Esc 回大廳")
 	var me := _add_player(COWBOY, 1)
-	me.global_position = _on_ground(SANDBOX_START)
+	me.global_position = cowboy_spawn_on_ground(SANDBOX_START, me, SANDBOX_START.y)
 	me.viewmodel.set_infinite()
 	spawn_boss()
 
@@ -1103,7 +1159,7 @@ func _on_dino_sandbox_pressed() -> void:
 	_dino_sandbox = true
 	egg.visible = false
 	var me := _add_player(COWBOY, 1)   # 先生一個編號 1：spawn_boss 才會生在它前方 40 公尺，make_pilot 再把它收掉
-	me.global_position = _on_ground(SANDBOX_START)
+	me.global_position = cowboy_spawn_on_ground(SANDBOX_START, me, SANDBOX_START.y)
 	spawn_boss()
 	make_pilot(1)
 	_enter_game("恐龍沙盒：H 叫一個獵人、J 清掉所有獵人。Esc 回大廳")
@@ -1175,11 +1231,11 @@ func _start_practice(start: Vector3, dists: Array, xs: Array, dino_at: Vector3, 
 	egg.visible = false
 	_enter_game(msg)
 	var me := _add_player(COWBOY, 1)   # 編號 1 才操控得動
-	me.global_position = _on_ground(start)
+	me.global_position = cowboy_spawn_on_ground(start, me, start.y)
 	me.viewmodel.set_infinite()
 	for i in dists.size():
 		var t := _add_player(COWBOY, 3 + i)
-		t.global_position = _on_ground(start + Vector3(xs[i], 0, -dists[i]))
+		t.global_position = cowboy_spawn_on_ground(start + Vector3(xs[i], 0, -dists[i]), t, start.y)
 		t.rotation.y = PI   # 面對玩家，打頭才對得到臉
 		_sign(t.global_position + Vector3(0, 2.6, 0), "%d m" % dists[i])
 	var dino := _add_player(DINO, 2)
@@ -1290,13 +1346,23 @@ func _far_from_cowboys() -> Vector3:
 		for c in players.get_children():
 			if not c.is_in_group(&"dino"):
 				d = minf(d, Vector2(c.global_position.x - p.x, c.global_position.z - p.z).length())
-		if d > best_d and _is_clear(Vector2(p.x, p.z), 3.0):
+		if d <= best_d:
+			continue
+		var clear: bool
+		if map.has_method(&"farm_spawn_candidate"):
+			var ground: Vector3 = map.call(&"farm_spawn_candidate", p, true, _boss())
+			clear = ground.is_finite()
+		else:
+			clear = _is_clear(Vector2(p.x, p.z), 3.0)
+		if clear:
 			best = p
 			best_d = d
 	return best
 
 ## 恐龍放在地上：身體中心＝身體底下（膠囊半徑內）最高的地面＋LIFT。中央這類地方地面有小坑、小丘，只看中心一點的話，第 1 幀會懸空或陷進去
 func boss_on_ground(at: Vector3) -> Vector3:
+	if map.has_method(&"farm_nearest_spawn"):
+		return map.call(&"farm_nearest_spawn", at, true, _boss())
 	var top: float = map._on_ground(Vector3(at.x, 0, at.z)).y
 	for i in 8:
 		var a := TAU * float(i) / 8.0
@@ -1472,7 +1538,7 @@ func add_walker() -> Node3D:
 	var side := fwd.cross(Vector3.UP) * Vector3(1, 0, 1)
 	var w := _add_player(COWBOY, _next_bot_id())
 	_make_walker(w, _on_ground(center - side * 6.0), _on_ground(center + side * 6.0))
-	w.global_position = _on_ground(center)
+	w.global_position = cowboy_spawn_on_ground(center, w, 0.0)
 	return w
 
 func _make_walker(w: Node3D, a: Vector3, b: Vector3) -> void:
@@ -1491,7 +1557,7 @@ func add_bot() -> Node3D:
 	var me := players.get_node_or_null(^"1") as Node3D
 	if _sandbox and me:
 		var fwd := -me.global_basis.z
-		b.global_position = _on_ground(Vector3(me.global_position.x + fwd.x * 40.0, 0.5, me.global_position.z + fwd.z * 40.0))
+		b.global_position = cowboy_spawn_on_ground(me.global_position + fwd * 40.0, b, 0.5)
 	return b
 
 ## 恐龍沙盒：在尼諾拉前方 30 公尺、左右隨機偏 6 公尺叫一個獵人（bot 牛仔，會自己找恐龍打）。最多 DINO_SANDBOX_MAX 個
@@ -1507,7 +1573,7 @@ func _summon_hunter() -> void:
 	fwd = fwd.normalized()
 	var at: Vector3 = b.global_position + fwd * 30.0 + fwd.cross(Vector3.UP) * randf_range(-6.0, 6.0)
 	var h := add_bot()
-	h.global_position = _on_ground(Vector3(at.x, 0.5, at.z))
+	h.global_position = cowboy_spawn_on_ground(at, h, 0.5)
 	h.rotation.y = atan2(fwd.x, fwd.z)   # 面向尼諾拉
 
 ## 場上的電腦（bot 牛仔、移動標靶），不含尼諾拉
@@ -1610,6 +1676,11 @@ func _spawn(id: int) -> void:
 	if id != 1:
 		_set_dino_collide.rpc_id(id, dino_collide)   # 晚來的人也要拿到碰撞開關的狀態
 		_broadcast_lives()
+		for pane in get_tree().get_nodes_in_group(&"farm_fixed_glazing"):
+			pane.set_broken.rpc_id(id,pane.broken)
+		var farm := get_tree().get_first_node_in_group(&"farm_destruction")
+		if farm:
+			farm.send_state_to(id)
 		barrels.send_to(id)   # 爆炸桶的位置、爆了沒
 		raptors.send_to(id)   # 小恐龍的位置、死了沒
 		for d in _doors:   # 門的開關不走同步器，晚來的人要補送一次
@@ -1619,11 +1690,19 @@ func _spawn(id: int) -> void:
 			if t.has_damage():
 				t.send_state_to(id)
 
+func cowboy_spawn_on_ground(at: Vector3, actor: Node3D, lift: float) -> Vector3:
+	if map.has_method(&"farm_nearest_spawn"):
+		return map.call(&"farm_nearest_spawn", at, false, actor)
+	return _on_ground(Vector3(at.x,lift,at.z))
+
 func _add_player(scene: PackedScene, id: int) -> Node3D:
 	var p: Node3D = scene.instantiate()
 	p.name = str(id)
 	players.add_child(p, true)
-	p.global_position = _spawn_point()
+	var at := _spawn_point()
+	if scene == COWBOY and map.has_method(&"farm_nearest_spawn"):
+		at = cowboy_spawn_on_ground(at, p, 0.08)
+	p.global_position = at
 	p.died.connect(_on_died.bind(p))
 	if not p.is_in_group(&"dino"):
 		_cowboys += 1
@@ -1852,9 +1931,13 @@ func _respawn_step() -> void:
 			_make_walker(p, r["patrol"][0], r["patrol"][1])
 		if _solo_dino and id == 1:
 			_continues += 1
-			p.global_position = _spawn_point()   # 接關：地圖上隨機一個地方
 		elif r["pos"] != Vector3.INF:
-			p.global_position = r["pos"] if id != 1 else _on_ground(SANDBOX_START)
+			if id == 1:
+				p.global_position = cowboy_spawn_on_ground(SANDBOX_START, p, SANDBOX_START.y)
+			elif map.has_method(&"farm_nearest_spawn") and not r["dino"]:
+				p.global_position = cowboy_spawn_on_ground(r["pos"], p, 0.08)
+			else:
+				p.global_position = r["pos"]
 			p.rotation.y = r["yaw"]
 		if _sandbox and id == 1:
 			p.viewmodel.set_infinite()
@@ -1993,19 +2076,42 @@ func _physics_process(delta: float) -> void:
 ## 拆過的積木（房子、掩體、樹）立回來（新的一局、派對的新的一場；主機呼叫）。回傳有沒有立回來的，有就烘導航
 func restore_terrain() -> bool:
 	var fixed := false
+	var farm := get_tree().get_first_node_in_group(&"farm_destruction")
+	if farm:
+		fixed = farm.restore_all()
+	for pane in get_tree().get_nodes_in_group(&"farm_fixed_glazing"):
+		if pane.broken:
+			pane.set_broken.rpc(false)
+			fixed = true
 	for t: ToyBuild in _toys:
 		if t.has_damage():
 			t.restore.rpc()
 			fixed = true
 	if fixed:
+		if map.has_method(&"farm_nearest_spawn"):
+			_farm_restore_frame = Engine.get_physics_frames() + 2
 		bake_nav(true)
 	return fixed
+
+func wait_for_spawn_ground() -> void:
+	# 恢復的木構件延後開啟碰撞。等物理世界同步，再檢查出生位置。
+	while Engine.get_physics_frames() < _farm_restore_frame:
+		await get_tree().physics_frame
 
 ## 開下一局（開房的人按「重開一局」、或專用伺服器自動）：時間和蛋歸位、重生次數補滿，
 ## 每個牛仔重生（刪掉重生，客戶端的位置才會跟著換），出局的人也回來；boss 回到離大家最遠的地方
 func _new_round() -> void:
+	if _waiting_to_restart:
+		return
+	restore_terrain()
+	if Engine.get_physics_frames() < _farm_restore_frame:
+		_waiting_to_restart = true
+		var peer := multiplayer.multiplayer_peer
+		await wait_for_spawn_ground()
+		_waiting_to_restart = false
+		if peer != multiplayer.multiplayer_peer or (lobby.visible and not _dedicated):
+			return
 	_over = false
-	restore_terrain()   # 拆過的樹和積木立回來（所有模式：拆東西不分模式）
 	var pending := _respawn_queue.duplicate()   # 一局結束時剛死、還在等重生的人（_enter_game 會清掉這張單）
 	_enter_game("專用伺服器" if _dedicated else "新的一局")
 	egg.extract = 0.0
@@ -2071,6 +2177,20 @@ func _set_clock(secs: int) -> void:
 	_clock = secs
 
 ## 蛋的規則：牛仔靠近就撿走，持有者死掉就留在原地，帶進撤離區就贏。
+func farm_dropped_egg_position(feet: Vector3) -> Vector3:
+	# 持蛋時模型舉過頭頂。從腳邊往下找，橋下、樓上都應留在失手的那一層。
+	var query := PhysicsRayQueryParameters3D.create(feet + Vector3.UP * 0.18, Vector3(feet.x,-8.0,feet.z), 1 | Fighter.SOLID_LAYER)
+	var excluded: Array[RID] = []
+	for player in players.get_children():
+		if player is CollisionObject3D:
+			excluded.append(player.get_rid())
+	if safe: excluded.append(safe.get_rid())
+	query.exclude = excluded
+	var support := map.get_world_3d().direct_space_state.intersect_ray(query)
+	if support:
+		return support.position + Vector3.UP * 0.5
+	return _on_ground(Vector3(feet.x,0.5,feet.z))
+
 func _egg_step(delta: float) -> void:
 	if egg.carrier == 0:
 		egg.extract = 0.0
@@ -2079,6 +2199,9 @@ func _egg_step(delta: float) -> void:
 
 	var holder := players.get_node_or_null(NodePath(str(egg.carrier)))
 	if holder == null:
+		if map.has_method(&"farm_nearest_spawn"):
+			egg.global_position = farm_dropped_egg_position(egg.global_position - Vector3.UP * EGG_HOLD_HEIGHT)
+			egg.reset_physics_interpolation()
 		egg.carrier = 0   # 持有者陣亡，蛋就掉在他最後的位置
 		egg.extract = 0.0
 		return
@@ -2101,7 +2224,7 @@ func _egg_step(delta: float) -> void:
 func _process(delta: float) -> void:
 	Fighter._frame_ms = Time.get_ticks_msec()   # 給 Fighter.after_hitch 判斷卡頓
 	# 主機停頓記錄：兩幀之間隔超過 50 毫秒就印出來（只在遊戲中印，大廳不算）；順便附上這段時間裡慢的工作
-	if multiplayer.is_server():
+	if multiplayer.has_multiplayer_peer() and multiplayer.is_server():
 		var now := Time.get_ticks_usec()
 		var gap := (now - _hitch_last_us) / 1000
 		if _hitch_last_us > 0 and gap > HITCH_MS and not lobby.visible:
@@ -2171,7 +2294,8 @@ func roll_exits() -> void:
 ## 顯示開著的撤離區（每台都跑）：沒有蛋的模式、沙盒全藏（灰盒南邊那個在沙盒靶道上）
 func _show_exits() -> void:
 	var on: int = egg.exits if RULES[rules].egg and not _sandbox else 0
-	map.show_exits(on, on if party == null or party.knows_exits() else 0)   # 派對：不知道撤離點的獵人看不到光圈和水管（碰撞照舊）
+	var known: bool = party == null or (multiplayer.has_multiplayer_peer() and party.knows_exits())
+	map.show_exits(on, on if known else 0)   # 派對：不知道撤離點的獵人看不到光圈和水管（碰撞照舊）
 
 func _dist_to_exit(p: Vector3) -> float:
 	var best := 9999.0

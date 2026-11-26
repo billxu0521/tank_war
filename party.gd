@@ -43,6 +43,7 @@ const STAR_EDGE := 6.0        # 掉出場外：搬回離場地邊緣這麼遠（
 
 var rounds := ROUNDS
 var round_index := 0
+var _waiting_for_ground := false
 var phase := &""              # &""：還沒開始；prep、play、result、final
 var time_left := 0.0
 var scores := {}              # 連線編號 -> 總分
@@ -203,6 +204,8 @@ func _process(delta: float) -> void:
 
 ## 主機每個物理幀（main._physics_process）
 func step(delta: float) -> void:
+	if _waiting_for_ground:
+		return
 	if phase == &"":
 		if not (fixed and _humans().is_empty()):   # 一般模式的專用伺服器：等第一個真人連進來才開
 			start()
@@ -265,7 +268,12 @@ func step(delta: float) -> void:
 
 ## 開新的一場：分數歸零、排參賽者、開第一回合
 func start() -> void:
-	main.restore_terrain()   # 上一場拆掉的樹、積木立回來
+	if _waiting_for_ground:
+		return
+	_waiting_for_ground = true
+	main.restore_terrain()
+	await main.wait_for_spawn_ground()
+	_waiting_for_ground = false
 	scores.clear()
 	names.clear()
 	round_index = 0
@@ -557,7 +565,7 @@ func _spawn_cowboy(id: int, bot: bool, index: int, at := Vector3.INF) -> void:
 	c.set(&"bot", bot)
 	if bot:   # 電腦：散彈或步槍隨機拿一把（主機決定，別人的畫面靠 gun 看見）
 		(c as Cowboy).viewmodel.switch_weapon([1, 2].pick_random())
-	c.global_position = main._on_ground(_flat(at if at.is_finite() else _spawn_spot(index), 0.5))
+	c.global_position = main.cowboy_spawn_on_ground(at if at.is_finite() else _spawn_spot(index), c, 0.5)
 	if not lives.has(id):
 		lives[id] = lives_each
 
@@ -577,7 +585,12 @@ func _drop_orphan_egg() -> void:
 	if egg.carrier != 0 and (holder == null or holder.hp <= 0):   # 團隊模式倒地也掉
 		egg.carrier = 0
 		egg.extract = 0.0
-		_drop_egg_at(egg.global_position)
+		if main.map.has_method(&"farm_nearest_spawn"):
+			var feet: Vector3 = holder.global_position if holder else egg.global_position - Vector3.UP * main.EGG_HOLD_HEIGHT
+			egg.global_position = main.farm_dropped_egg_position(feet)
+			egg.reset_physics_interpolation()
+		else:
+			_drop_egg_at(egg.global_position)
 
 
 ## 恐龍藏蛋（按 F、時間到、電腦開場）、保險箱模式回合開始放箱子（蛋鎖在箱子裡）。

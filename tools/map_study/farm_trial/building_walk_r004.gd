@@ -133,7 +133,7 @@ func trial(label: String, route: Array) -> void:
 
 func run() -> void:
 	seed(240031)
-	game=load("res://farm_match.tscn").instantiate()
+	game=load("res://main.tscn").instantiate()
 	root.add_child(game)
 	current_scene=game
 	await physics_frame
