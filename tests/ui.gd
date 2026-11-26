@@ -148,6 +148,32 @@ func _case_compass() -> void:
 	_ck(xs.all(func(x: float) -> bool: return x >= 0.0 and x + 60.0 <= Compass.WIDTH) and absf(xs[0] - xs[1]) >= 60.0 + Compass.PAD,
 		"擠在右邊的兩個往左推開、左邊的不超出（%s）" % [xs])
 	_ck(Compass.spread([10.0, 300.0], [40.0, 40.0]) == [10.0, 300.0], "沒疊的不動")
+	_case_markers_on_camera()
+
+## 標記點剛好在鏡頭上、在鏡頭那個平面上、或比近平面還近：不能叫 unproject_position（會報 p.d == 0、跳「遊戲記到一個錯誤」），改貼邊。
+## 開了物理插值，鏡頭這一幀剛移動時 unproject_position 用的是插值後（還沒跟上）的位置，跟 global_transform 不一樣：要照引擎那個判斷
+func _case_markers_on_camera() -> void:
+	var r := BugReport.install()
+	r.take_new_error()
+	var before := r.error_count()
+	var cam := Camera3D.new()
+	root.add_child(cam)
+	cam.global_transform = Transform3D(Basis.from_euler(Vector3(-0.37, 2.21, 0.13)), Vector3(123.457, 3.8121, -87.913))   # 剛移動：插值的位置還在原點
+	var mk := Markers.new()
+	root.add_child(mk)
+	mk.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	mk.size = root.get_visible_rect().size
+	mk.set_view(cam)
+	var t := cam.get_camera_transform()
+	var o := t.origin
+	var b := t.basis
+	for p: Vector3 in [o, o + b.x * 5.0, o + b.y * 3.0 - b.x * 2.0, o - b.z * cam.near * 0.5]:
+		var res: Array = mk.place(p)
+		_ck((res[0] as Vector2).is_finite() and not res[1], "鏡頭上／鏡頭平面上的標記貼邊、不在畫面裡（%s → %s）" % [p - o, res[0]])
+	_ck(mk.place(o - b.z * 10.0)[1], "鏡頭正前方的標記照樣在畫面裡")
+	_ck(r.error_count() == before and not r.take_new_error(), "投影不報錯")
+	mk.free()
+	cam.free()
 
 ## 0.8.1 回饋的介面：大廳順序和存 IP、勝負畫面、重開一局、倒數、boss 體力條、右上角
 ## 問題回報：錯誤會被記下來、警告不算，F8 存出來的檔有版本、遊戲狀況和錯誤內容

@@ -269,8 +269,9 @@ func _update_crosshair(me: Node) -> void:
 		main.crosshair.hide()
 		return
 	var p: Vector3 = me.aim_point()
-	main.crosshair.visible = not cam.is_position_behind(p)
-	main.crosshair.position = cam.unproject_position(p) - main.crosshair.size * 0.5
+	main.crosshair.visible = Markers.in_front(cam, p)
+	if main.crosshair.visible:
+		main.crosshair.position = cam.unproject_position(p) - main.crosshair.size * 0.5
 	# 尼諾拉：準心是圓心一點（火球朝這裡飛），另外在頭前方畫一個正圓表示咬得到的範圍：
 	# 扇形中段、頭的高度那一點投影到畫面上，半徑是扇形在那個距離的半寬（夾在 RING_MIN～RING_MAX 像素）。有牛仔咬得到就變紅
 	_ring = Vector3.ZERO
@@ -280,9 +281,9 @@ func _update_crosshair(me: Node) -> void:
 		fwd = fwd.normalized()
 		var d: float = me.BODY_RADIUS + me.LIGHT_REACH * 0.5
 		var c3: Vector3 = me._head() + fwd * d
-		if not cam.is_position_behind(c3):
+		var side: Vector3 = fwd.cross(Vector3.UP) * d * sqrt(1.0 - me.LIGHT_COS * me.LIGHT_COS)
+		if Markers.in_front(cam, c3) and Markers.in_front(cam, c3 + side):
 			var c: Vector2 = cam.unproject_position(c3)
-			var side: Vector3 = fwd.cross(Vector3.UP) * d * sqrt(1.0 - me.LIGHT_COS * me.LIGHT_COS)
 			_ring = Vector3(c.x - main.crosshair.position.x, c.y - main.crosshair.position.y,
 				clampf(c.distance_to(cam.unproject_position(c3 + side)), RING_MIN, RING_MAX))
 		if not main.crosshair.draw.is_connected(_draw_ring):
