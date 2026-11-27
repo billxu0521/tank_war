@@ -1,0 +1,422 @@
+{
+  "id": "CD-GBB-BLD-01",
+  "revision": "envelope-r005",
+  "triangles": 9498,
+  "units": {
+    "shell": {
+      "category": "大型建築",
+      "limit": 8000,
+      "recommended": 5000,
+      "budget_reason": "本輪補足可見屋面／覆板／石基，按完整結構整組計，不拆單位掩蓋總量",
+      "triangles": 3810
+    },
+    "stool_w": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 84
+    },
+    "stool_e": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 84
+    },
+    "bed_w": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 244
+    },
+    "bed_e": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 244
+    },
+    "wardrobe_w": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 216
+    },
+    "wardrobe_e": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 216
+    },
+    "debt_note": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 12
+    },
+    "living_table": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 192
+    },
+    "wash_table": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 192
+    },
+    "a1_prep": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 228
+    },
+    "a1_wall_shelf": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 108
+    },
+    "a1_storage_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 184
+    },
+    "a1_storage_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 184
+    },
+    "a1_cookpot": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 184
+    },
+    "a1_board": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 12
+    },
+    "a1_dry_cloth": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 24
+    },
+    "a2_fuel": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 108
+    },
+    "a2_tools": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 300
+    },
+    "a3_chest": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 336
+    },
+    "a4_hanging": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 108
+    },
+    "a5_cloth": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 24
+    },
+    "a6_dipper": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 108
+    },
+    "a7_east_fold": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 24
+    },
+    "a3_west_fold": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 24
+    },
+    "new_living_bench": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 216
+    },
+    "new_food_cupboard": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 672
+    },
+    "new_west_desk": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 236
+    },
+    "new_east_wash_table": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 236
+    },
+    "new_east_trunk": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 348
+    },
+    "wash_basin": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 192
+    },
+    "a5_bowl": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 96
+    },
+    "a5_cup": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 116
+    },
+    "a6_jar": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 136
+    }
+  },
+  "runtime_groups": {
+    "shell": {
+      "triangles": 3810,
+      "author_units": [
+        "shell"
+      ]
+    },
+    "stool_w": {
+      "triangles": 84,
+      "author_units": [
+        "stool_w"
+      ]
+    },
+    "stool_e": {
+      "triangles": 84,
+      "author_units": [
+        "stool_e"
+      ]
+    },
+    "bed_w": {
+      "triangles": 244,
+      "author_units": [
+        "bed_w"
+      ]
+    },
+    "bed_e": {
+      "triangles": 244,
+      "author_units": [
+        "bed_e"
+      ]
+    },
+    "wardrobe_w": {
+      "triangles": 216,
+      "author_units": [
+        "wardrobe_w"
+      ]
+    },
+    "wardrobe_e": {
+      "triangles": 216,
+      "author_units": [
+        "wardrobe_e"
+      ]
+    },
+    "debt_note": {
+      "triangles": 12,
+      "author_units": [
+        "debt_note"
+      ]
+    },
+    "living_table": {
+      "triangles": 192,
+      "author_units": [
+        "living_table"
+      ]
+    },
+    "wash_table": {
+      "triangles": 192,
+      "author_units": [
+        "wash_table"
+      ]
+    },
+    "a1_prep": {
+      "triangles": 228,
+      "author_units": [
+        "a1_prep"
+      ]
+    },
+    "a1_wall_shelf": {
+      "triangles": 108,
+      "author_units": [
+        "a1_wall_shelf"
+      ]
+    },
+    "a1_storage_0": {
+      "triangles": 184,
+      "author_units": [
+        "a1_storage_0"
+      ]
+    },
+    "a1_storage_1": {
+      "triangles": 184,
+      "author_units": [
+        "a1_storage_1"
+      ]
+    },
+    "a1_cookpot": {
+      "triangles": 184,
+      "author_units": [
+        "a1_cookpot"
+      ]
+    },
+    "a1_board": {
+      "triangles": 12,
+      "author_units": [
+        "a1_board"
+      ]
+    },
+    "a1_dry_cloth": {
+      "triangles": 24,
+      "author_units": [
+        "a1_dry_cloth"
+      ]
+    },
+    "a2_fuel": {
+      "triangles": 108,
+      "author_units": [
+        "a2_fuel"
+      ]
+    },
+    "a2_tools": {
+      "triangles": 300,
+      "author_units": [
+        "a2_tools"
+      ]
+    },
+    "a3_chest": {
+      "triangles": 336,
+      "author_units": [
+        "a3_chest"
+      ]
+    },
+    "a4_hanging": {
+      "triangles": 108,
+      "author_units": [
+        "a4_hanging"
+      ]
+    },
+    "a5_cloth": {
+      "triangles": 24,
+      "author_units": [
+        "a5_cloth"
+      ]
+    },
+    "a6_dipper": {
+      "triangles": 108,
+      "author_units": [
+        "a6_dipper"
+      ]
+    },
+    "a7_east_fold": {
+      "triangles": 24,
+      "author_units": [
+        "a7_east_fold"
+      ]
+    },
+    "a3_west_fold": {
+      "triangles": 24,
+      "author_units": [
+        "a3_west_fold"
+      ]
+    },
+    "new_living_bench": {
+      "triangles": 216,
+      "author_units": [
+        "new_living_bench"
+      ]
+    },
+    "new_food_cupboard": {
+      "triangles": 672,
+      "author_units": [
+        "new_food_cupboard"
+      ]
+    },
+    "new_west_desk": {
+      "triangles": 236,
+      "author_units": [
+        "new_west_desk"
+      ]
+    },
+    "new_east_wash_table": {
+      "triangles": 236,
+      "author_units": [
+        "new_east_wash_table"
+      ]
+    },
+    "new_east_trunk": {
+      "triangles": 348,
+      "author_units": [
+        "new_east_trunk"
+      ]
+    },
+    "wash_basin": {
+      "triangles": 192,
+      "author_units": [
+        "wash_basin"
+      ]
+    },
+    "a5_bowl": {
+      "triangles": 96,
+      "author_units": [
+        "a5_bowl"
+      ]
+    },
+    "a5_cup": {
+      "triangles": 116,
+      "author_units": [
+        "a5_cup"
+      ]
+    },
+    "a6_jar": {
+      "triangles": 136,
+      "author_units": [
+        "a6_jar"
+      ]
+    }
+  },
+  "mesh_count": 69,
+  "source_parts": 1024,
+  "bag_count": null,
+  "glb_bytes": 938008
+}

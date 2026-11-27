@@ -1,0 +1,53 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tools/cd_gbb_buildings/envelope_r005/review.gd" id="review"]
+[ext_resource type="Shader" path="res://sky.gdshader" id="sky_shader"]
+
+[sub_resource type="ShaderMaterial" id="sky_material"]
+shader = ExtResource("sky_shader")
+
+[sub_resource type="Sky" id="sky"]
+radiance_size = 0
+sky_material = SubResource("sky_material")
+
+[sub_resource type="Environment" id="env"]
+background_mode = 2
+background_energy_multiplier = 0.75
+sky = SubResource("sky")
+ambient_light_source = 3
+ambient_light_sky_contribution = 0.3
+ambient_light_energy = 1.1
+ambient_light_color = Color(0.55, 0.52, 0.68, 1)
+tonemap_mode = 2
+tonemap_exposure = 1.1
+fog_enabled = true
+fog_light_color = Color(0.72, 0.44, 0.29, 1)
+fog_sun_scatter = 0.3
+fog_density = 0.002
+fog_sky_affect = 0.0
+glow_enabled = true
+glow_intensity = 0.45
+glow_bloom = 0.05
+glow_hdr_threshold = 1.2
+glow_levels/1 = 0.0
+glow_levels/2 = 1.0
+glow_levels/3 = 1.0
+glow_levels/4 = 1.0
+glow_levels/5 = 0.0
+adjustment_enabled = true
+adjustment_contrast = 1.05
+adjustment_saturation = 1.0
+
+[node name="Buildings" type="Node3D"]
+script = ExtResource("review")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("env")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.439, -0.187, 0.88, 0, 0.98, 0.208, -0.899, 0.0913, -0.43, 0, 20, 0)
+light_color = Color(1, 0.78, 0.52, 1)
+light_energy = 1.15
+shadow_enabled = true
+shadow_opacity = 0.85
+directional_shadow_max_distance = 70.0

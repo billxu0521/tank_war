@@ -1,0 +1,1313 @@
+{
+  "id": "CD-GBB-BLD-02",
+  "revision": "envelope-r005",
+  "triangles": 23480,
+  "units": {
+    "shell": {
+      "category": "大型建築",
+      "limit": 8000,
+      "recommended": 5000,
+      "budget_reason": "本輪補足可見屋面／覆板／石基，按完整結構整組計，不拆單位掩蓋總量",
+      "triangles": 3116
+    },
+    "dunnage_0": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 384
+    },
+    "dunnage_1": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 384
+    },
+    "dunnage_2": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 384
+    },
+    "dunnage_3": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 384
+    },
+    "dunnage_4": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 384
+    },
+    "dunnage_5": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 384
+    },
+    "handcart": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 500
+    },
+    "new_receiving_table": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 236
+    },
+    "new_platform_scale": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 164
+    },
+    "new_empty_bag_rack": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 408
+    },
+    "grain_0_-1_-1_low_0_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_-1_-1_low_0_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_-1_-1_low_1_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_-1_-1_low_1_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_-1_-1_mid_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_-1_-1_mid_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_-1_-1_mid_2": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_-1_-1_top_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_-1_-1_top_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_-1_1_low_0_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_-1_1_low_0_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_-1_1_low_1_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_-1_1_low_1_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_-1_1_mid_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_-1_1_mid_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_-1_1_mid_2": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_-1_1_top_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_-1_1_top_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_1_-1_low_0_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_1_-1_low_0_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_1_-1_low_1_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_1_-1_low_1_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_1_-1_mid_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_1_-1_mid_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_1_-1_mid_2": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_1_-1_top_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_1_-1_top_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_1_1_low_0_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_1_1_low_0_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_1_1_low_1_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_1_1_low_1_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_1_1_mid_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_1_1_mid_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_1_1_mid_2": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_1_1_top_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_0_1_1_top_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_1_-1_-1_low_0_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_-1_-1_low_0_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_-1_-1_low_1_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_-1_-1_low_1_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_-1_-1_mid_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_-1_-1_mid_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_-1_-1_mid_2": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_-1_-1_top_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_-1_-1_top_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_-1_1_low_0_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_-1_1_low_0_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_-1_1_low_1_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_-1_1_low_1_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_-1_1_mid_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_-1_1_mid_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_-1_1_mid_2": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_-1_1_top_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_-1_1_top_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_1_-1_low_0_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_1_-1_low_0_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_1_-1_low_1_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_1_-1_low_1_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_1_-1_mid_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_1_-1_mid_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_1_-1_mid_2": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_1_-1_top_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_1_-1_top_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_1_1_low_0_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_1_1_low_0_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_1_1_low_1_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_1_1_low_1_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_1_1_mid_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_1_1_mid_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_1_1_mid_2": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_1_1_top_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_1_1_1_top_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_2_-1_-1_low_0_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_-1_-1_low_0_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_-1_-1_low_1_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_-1_-1_low_1_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_-1_-1_mid_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_-1_-1_mid_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_-1_-1_mid_2": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_-1_1_low_0_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_-1_1_low_0_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_-1_1_low_1_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_-1_1_low_1_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_-1_1_mid_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_-1_1_mid_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_-1_1_mid_2": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_1_-1_low_0_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_1_-1_low_0_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_1_-1_low_1_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_1_-1_low_1_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_1_-1_mid_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_1_-1_mid_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_1_-1_mid_2": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_1_1_low_0_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_1_1_low_0_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_1_1_low_1_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_1_1_low_1_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_1_1_mid_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_1_1_mid_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_2_1_1_mid_2": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_3_-1_-1_low_0_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_-1_-1_low_0_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_-1_-1_low_1_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_-1_-1_low_1_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_-1_-1_mid_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_-1_-1_mid_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_-1_-1_mid_2": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_-1_1_low_0_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_-1_1_low_0_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_-1_1_low_1_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_-1_1_low_1_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_-1_1_mid_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_-1_1_mid_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_-1_1_mid_2": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_1_-1_low_0_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_1_-1_low_0_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_1_-1_low_1_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_1_-1_low_1_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_1_-1_mid_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_1_-1_mid_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_1_-1_mid_2": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_1_1_low_0_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_1_1_low_0_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_1_1_low_1_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_1_1_low_1_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_1_1_mid_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_1_1_mid_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_3_1_1_mid_2": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_4_-1_-1_low_0_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_4_-1_-1_low_0_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_4_-1_-1_low_1_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_4_-1_-1_low_1_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_4_-1_-1_mid_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_4_-1_-1_mid_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_4_-1_-1_mid_2": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_4_-1_1_low_0_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_4_-1_1_low_0_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_4_-1_1_low_1_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_4_-1_1_low_1_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_4_-1_1_mid_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_4_-1_1_mid_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_4_-1_1_mid_2": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_4_1_-1_low_0_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_4_1_-1_low_0_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_4_1_-1_low_1_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_4_1_-1_low_1_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_4_1_-1_mid_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_4_1_-1_mid_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_4_1_1_low_0_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_4_1_1_low_0_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_4_1_1_low_1_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_4_1_1_low_1_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_4_1_1_mid_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_4_1_1_mid_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 100
+    },
+    "grain_5_-1_-1_seed_low_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_5_-1_-1_seed_low_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_5_-1_-1_seed_top": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_5_-1_1_seed_low_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_5_-1_1_seed_low_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_5_-1_1_seed_top": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_5_1_-1_seed_low_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_5_1_-1_seed_low_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_5_1_-1_seed_top": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_5_1_1_seed_low_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_5_1_1_seed_low_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    },
+    "grain_5_1_1_seed_top": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 102
+    }
+  },
+  "runtime_groups": {
+    "shell": {
+      "triangles": 3116,
+      "author_units": [
+        "shell"
+      ]
+    },
+    "dunnage_0": {
+      "triangles": 384,
+      "author_units": [
+        "dunnage_0"
+      ]
+    },
+    "dunnage_1": {
+      "triangles": 384,
+      "author_units": [
+        "dunnage_1"
+      ]
+    },
+    "dunnage_2": {
+      "triangles": 384,
+      "author_units": [
+        "dunnage_2"
+      ]
+    },
+    "dunnage_3": {
+      "triangles": 384,
+      "author_units": [
+        "dunnage_3"
+      ]
+    },
+    "dunnage_4": {
+      "triangles": 384,
+      "author_units": [
+        "dunnage_4"
+      ]
+    },
+    "dunnage_5": {
+      "triangles": 384,
+      "author_units": [
+        "dunnage_5"
+      ]
+    },
+    "handcart": {
+      "triangles": 500,
+      "author_units": [
+        "handcart"
+      ]
+    },
+    "new_receiving_table": {
+      "triangles": 236,
+      "author_units": [
+        "new_receiving_table"
+      ]
+    },
+    "new_platform_scale": {
+      "triangles": 164,
+      "author_units": [
+        "new_platform_scale"
+      ]
+    },
+    "new_empty_bag_rack": {
+      "triangles": 408,
+      "author_units": [
+        "new_empty_bag_rack"
+      ]
+    },
+    "grain_batch": {
+      "triangles": 16752,
+      "author_units": [
+        "grain_0_-1_-1_low_0_0",
+        "grain_0_-1_-1_low_0_1",
+        "grain_0_-1_-1_low_1_0",
+        "grain_0_-1_-1_low_1_1",
+        "grain_0_-1_-1_mid_0",
+        "grain_0_-1_-1_mid_1",
+        "grain_0_-1_-1_mid_2",
+        "grain_0_-1_-1_top_0",
+        "grain_0_-1_-1_top_1",
+        "grain_0_-1_1_low_0_0",
+        "grain_0_-1_1_low_0_1",
+        "grain_0_-1_1_low_1_0",
+        "grain_0_-1_1_low_1_1",
+        "grain_0_-1_1_mid_0",
+        "grain_0_-1_1_mid_1",
+        "grain_0_-1_1_mid_2",
+        "grain_0_-1_1_top_0",
+        "grain_0_-1_1_top_1",
+        "grain_0_1_-1_low_0_0",
+        "grain_0_1_-1_low_0_1",
+        "grain_0_1_-1_low_1_0",
+        "grain_0_1_-1_low_1_1",
+        "grain_0_1_-1_mid_0",
+        "grain_0_1_-1_mid_1",
+        "grain_0_1_-1_mid_2",
+        "grain_0_1_-1_top_0",
+        "grain_0_1_-1_top_1",
+        "grain_0_1_1_low_0_0",
+        "grain_0_1_1_low_0_1",
+        "grain_0_1_1_low_1_0",
+        "grain_0_1_1_low_1_1",
+        "grain_0_1_1_mid_0",
+        "grain_0_1_1_mid_1",
+        "grain_0_1_1_mid_2",
+        "grain_0_1_1_top_0",
+        "grain_0_1_1_top_1",
+        "grain_1_-1_-1_low_0_0",
+        "grain_1_-1_-1_low_0_1",
+        "grain_1_-1_-1_low_1_0",
+        "grain_1_-1_-1_low_1_1",
+        "grain_1_-1_-1_mid_0",
+        "grain_1_-1_-1_mid_1",
+        "grain_1_-1_-1_mid_2",
+        "grain_1_-1_-1_top_0",
+        "grain_1_-1_-1_top_1",
+        "grain_1_-1_1_low_0_0",
+        "grain_1_-1_1_low_0_1",
+        "grain_1_-1_1_low_1_0",
+        "grain_1_-1_1_low_1_1",
+        "grain_1_-1_1_mid_0",
+        "grain_1_-1_1_mid_1",
+        "grain_1_-1_1_mid_2",
+        "grain_1_-1_1_top_0",
+        "grain_1_-1_1_top_1",
+        "grain_1_1_-1_low_0_0",
+        "grain_1_1_-1_low_0_1",
+        "grain_1_1_-1_low_1_0",
+        "grain_1_1_-1_low_1_1",
+        "grain_1_1_-1_mid_0",
+        "grain_1_1_-1_mid_1",
+        "grain_1_1_-1_mid_2",
+        "grain_1_1_-1_top_0",
+        "grain_1_1_-1_top_1",
+        "grain_1_1_1_low_0_0",
+        "grain_1_1_1_low_0_1",
+        "grain_1_1_1_low_1_0",
+        "grain_1_1_1_low_1_1",
+        "grain_1_1_1_mid_0",
+        "grain_1_1_1_mid_1",
+        "grain_1_1_1_mid_2",
+        "grain_1_1_1_top_0",
+        "grain_1_1_1_top_1",
+        "grain_2_-1_-1_low_0_0",
+        "grain_2_-1_-1_low_0_1",
+        "grain_2_-1_-1_low_1_0",
+        "grain_2_-1_-1_low_1_1",
+        "grain_2_-1_-1_mid_0",
+        "grain_2_-1_-1_mid_1",
+        "grain_2_-1_-1_mid_2",
+        "grain_2_-1_1_low_0_0",
+        "grain_2_-1_1_low_0_1",
+        "grain_2_-1_1_low_1_0",
+        "grain_2_-1_1_low_1_1",
+        "grain_2_-1_1_mid_0",
+        "grain_2_-1_1_mid_1",
+        "grain_2_-1_1_mid_2",
+        "grain_2_1_-1_low_0_0",
+        "grain_2_1_-1_low_0_1",
+        "grain_2_1_-1_low_1_0",
+        "grain_2_1_-1_low_1_1",
+        "grain_2_1_-1_mid_0",
+        "grain_2_1_-1_mid_1",
+        "grain_2_1_-1_mid_2",
+        "grain_2_1_1_low_0_0",
+        "grain_2_1_1_low_0_1",
+        "grain_2_1_1_low_1_0",
+        "grain_2_1_1_low_1_1",
+        "grain_2_1_1_mid_0",
+        "grain_2_1_1_mid_1",
+        "grain_2_1_1_mid_2",
+        "grain_3_-1_-1_low_0_0",
+        "grain_3_-1_-1_low_0_1",
+        "grain_3_-1_-1_low_1_0",
+        "grain_3_-1_-1_low_1_1",
+        "grain_3_-1_-1_mid_0",
+        "grain_3_-1_-1_mid_1",
+        "grain_3_-1_-1_mid_2",
+        "grain_3_-1_1_low_0_0",
+        "grain_3_-1_1_low_0_1",
+        "grain_3_-1_1_low_1_0",
+        "grain_3_-1_1_low_1_1",
+        "grain_3_-1_1_mid_0",
+        "grain_3_-1_1_mid_1",
+        "grain_3_-1_1_mid_2",
+        "grain_3_1_-1_low_0_0",
+        "grain_3_1_-1_low_0_1",
+        "grain_3_1_-1_low_1_0",
+        "grain_3_1_-1_low_1_1",
+        "grain_3_1_-1_mid_0",
+        "grain_3_1_-1_mid_1",
+        "grain_3_1_-1_mid_2",
+        "grain_3_1_1_low_0_0",
+        "grain_3_1_1_low_0_1",
+        "grain_3_1_1_low_1_0",
+        "grain_3_1_1_low_1_1",
+        "grain_3_1_1_mid_0",
+        "grain_3_1_1_mid_1",
+        "grain_3_1_1_mid_2",
+        "grain_4_-1_-1_low_0_0",
+        "grain_4_-1_-1_low_0_1",
+        "grain_4_-1_-1_low_1_0",
+        "grain_4_-1_-1_low_1_1",
+        "grain_4_-1_-1_mid_0",
+        "grain_4_-1_-1_mid_1",
+        "grain_4_-1_-1_mid_2",
+        "grain_4_-1_1_low_0_0",
+        "grain_4_-1_1_low_0_1",
+        "grain_4_-1_1_low_1_0",
+        "grain_4_-1_1_low_1_1",
+        "grain_4_-1_1_mid_0",
+        "grain_4_-1_1_mid_1",
+        "grain_4_-1_1_mid_2",
+        "grain_4_1_-1_low_0_0",
+        "grain_4_1_-1_low_0_1",
+        "grain_4_1_-1_low_1_0",
+        "grain_4_1_-1_low_1_1",
+        "grain_4_1_-1_mid_0",
+        "grain_4_1_-1_mid_1",
+        "grain_4_1_1_low_0_0",
+        "grain_4_1_1_low_0_1",
+        "grain_4_1_1_low_1_0",
+        "grain_4_1_1_low_1_1",
+        "grain_4_1_1_mid_0",
+        "grain_4_1_1_mid_1",
+        "grain_5_-1_-1_seed_low_0",
+        "grain_5_-1_-1_seed_low_1",
+        "grain_5_-1_-1_seed_top",
+        "grain_5_-1_1_seed_low_0",
+        "grain_5_-1_1_seed_low_1",
+        "grain_5_-1_1_seed_top",
+        "grain_5_1_-1_seed_low_0",
+        "grain_5_1_-1_seed_low_1",
+        "grain_5_1_-1_seed_top",
+        "grain_5_1_1_seed_low_0",
+        "grain_5_1_1_seed_low_1",
+        "grain_5_1_1_seed_top"
+      ]
+    }
+  },
+  "mesh_count": 29,
+  "source_parts": 1576,
+  "bag_count": 166,
+  "glb_bytes": 1886988
+}

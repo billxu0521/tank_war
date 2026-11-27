@@ -1,0 +1,314 @@
+{
+  "id": "CD-GBB-BLD-15",
+  "revision": "envelope-r005",
+  "triangles": 14784,
+  "units": {
+    "shell": {
+      "category": "大型建築",
+      "limit": 8000,
+      "recommended": 5000,
+      "budget_reason": "本輪補足可見屋面／覆板／石基，按完整結構整組計，不拆單位掩蓋總量",
+      "triangles": 7996
+    },
+    "dining_w": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 248
+    },
+    "dining_e": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 248
+    },
+    "bed_00": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 284
+    },
+    "bed_01": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 284
+    },
+    "bed_02": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 284
+    },
+    "bed_03": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 284
+    },
+    "bed_04": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 284
+    },
+    "bed_05": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 284
+    },
+    "bed_06": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 284
+    },
+    "bed_07": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 284
+    },
+    "bed_08": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 284
+    },
+    "bed_09": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 284
+    },
+    "bed_10": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 284
+    },
+    "bed_11": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 284
+    },
+    "rest_bench": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 124
+    },
+    "wash_station": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 252
+    },
+    "clothing": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 204
+    },
+    "payroll": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 96
+    },
+    "oil_lamp_0": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 144
+    },
+    "oil_lamp_1": {
+      "category": "小型道具",
+      "limit": 500,
+      "recommended": 300,
+      "triangles": 144
+    },
+    "new_common_food_cupboard": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 672
+    },
+    "new_linen_cupboard": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 816
+    },
+    "new_south_boot_bench": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 216
+    },
+    "new_north_boot_bench": {
+      "category": "中型道具",
+      "limit": 1000,
+      "recommended": 700,
+      "triangles": 216
+    }
+  },
+  "runtime_groups": {
+    "shell": {
+      "triangles": 7996,
+      "author_units": [
+        "shell"
+      ]
+    },
+    "dining_w": {
+      "triangles": 248,
+      "author_units": [
+        "dining_w"
+      ]
+    },
+    "dining_e": {
+      "triangles": 248,
+      "author_units": [
+        "dining_e"
+      ]
+    },
+    "bed_00": {
+      "triangles": 284,
+      "author_units": [
+        "bed_00"
+      ]
+    },
+    "bed_01": {
+      "triangles": 284,
+      "author_units": [
+        "bed_01"
+      ]
+    },
+    "bed_02": {
+      "triangles": 284,
+      "author_units": [
+        "bed_02"
+      ]
+    },
+    "bed_03": {
+      "triangles": 284,
+      "author_units": [
+        "bed_03"
+      ]
+    },
+    "bed_04": {
+      "triangles": 284,
+      "author_units": [
+        "bed_04"
+      ]
+    },
+    "bed_05": {
+      "triangles": 284,
+      "author_units": [
+        "bed_05"
+      ]
+    },
+    "bed_06": {
+      "triangles": 284,
+      "author_units": [
+        "bed_06"
+      ]
+    },
+    "bed_07": {
+      "triangles": 284,
+      "author_units": [
+        "bed_07"
+      ]
+    },
+    "bed_08": {
+      "triangles": 284,
+      "author_units": [
+        "bed_08"
+      ]
+    },
+    "bed_09": {
+      "triangles": 284,
+      "author_units": [
+        "bed_09"
+      ]
+    },
+    "bed_10": {
+      "triangles": 284,
+      "author_units": [
+        "bed_10"
+      ]
+    },
+    "bed_11": {
+      "triangles": 284,
+      "author_units": [
+        "bed_11"
+      ]
+    },
+    "rest_bench": {
+      "triangles": 124,
+      "author_units": [
+        "rest_bench"
+      ]
+    },
+    "wash_station": {
+      "triangles": 252,
+      "author_units": [
+        "wash_station"
+      ]
+    },
+    "clothing": {
+      "triangles": 204,
+      "author_units": [
+        "clothing"
+      ]
+    },
+    "payroll": {
+      "triangles": 96,
+      "author_units": [
+        "payroll"
+      ]
+    },
+    "oil_lamp_0": {
+      "triangles": 144,
+      "author_units": [
+        "oil_lamp_0"
+      ]
+    },
+    "oil_lamp_1": {
+      "triangles": 144,
+      "author_units": [
+        "oil_lamp_1"
+      ]
+    },
+    "new_common_food_cupboard": {
+      "triangles": 672,
+      "author_units": [
+        "new_common_food_cupboard"
+      ]
+    },
+    "new_linen_cupboard": {
+      "triangles": 816,
+      "author_units": [
+        "new_linen_cupboard"
+      ]
+    },
+    "new_south_boot_bench": {
+      "triangles": 216,
+      "author_units": [
+        "new_south_boot_bench"
+      ]
+    },
+    "new_north_boot_bench": {
+      "triangles": 216,
+      "author_units": [
+        "new_north_boot_bench"
+      ]
+    }
+  },
+  "mesh_count": 79,
+  "source_parts": 1784,
+  "bag_count": null,
+  "glb_bytes": 1392132
+}
