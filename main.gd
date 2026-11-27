@@ -1385,6 +1385,8 @@ var _toy_nav := {}   # ToyBuild -> [碰撞層, 解析好的幾何]
 var _bake_serial := 0   # 第幾次烘（分幀解析到一半又開始新的一次時，舊的那次作廢）
 var nav_budget_ms := 3.0   # 重烘導航時，主線程一幀最多解析幾毫秒（0＝一次做完，量測和測試用）
 var _piece_nav := {}   # 拆過的積木和靜態碎塊 -> [碰撞層, 位置, 形狀版本, 解析好的幾何]（只留這次還在場上的，見 _parse_arena）
+var _chunk_nav := {}   # 其他靜態碰撞照「一群」存：Arena 往下第二層的節點（農莊一棟房子）-> [這群的碰撞體, 解析好的幾何]（見 _parse_arena）
+var _nav_dirty := {}   # 有零件被拆、要重解析的群（農莊 registry.nav_dirty 交過來的）
 const REBAKE_GAP_MS := 5000   # 兩次烘之間至少隔幾毫秒：專用伺服器（慢的 VPS）每次解析場景要幾十毫秒，拆積木一直烘會讓讀秒變慢、玩家卡住
 var _last_bake_ms := -REBAKE_GAP_MS   # 上一次開始解析場景的時刻（毫秒）
 var _slow_work := ""   # 這一幀有沒有慢的工作（停頓記錄用，見 _process）
@@ -1446,6 +1448,8 @@ func _bake_nav() -> void:
 	nm.geometry_source_group_name = NAV_GROUP
 	if not rebake:
 		_toy_nav.clear()   # 新的場地：舊場地的積木已經不在了
+		_chunk_nav.clear()
+		_nav_dirty.clear()
 	# 重烘分幀解析（每幀最多 nav_budget_ms 毫秒）；第一次烘（開場）一次做完
 	var src: NavigationMeshSourceGeometryData3D = await _parse_arena(nm, nav_budget_ms if rebake else 0.0)
 	if serial != _bake_serial or (rebake and not is_instance_valid(_nav_region)):   # 分幀的時候又開始了一次烘、或回大廳了：這次作廢
@@ -1474,13 +1478,23 @@ func _parse_group(nm: NavigationMesh, nodes: Array) -> NavigationMeshSourceGeome
 
 ## 沒拆過的積木（ToyBuild）解析一次就存著重用（_toy_nav）。拆過的積木（形狀會被藏）和停下來的靜態碎塊也存（_piece_nav），
 ## 只有位置、碰撞層、形狀版本（ToyBuild.geo_ver，_set_off 時加一）變了才重解析；飛的碎塊每次重解析。
-## 每次烘都重建 _piece_nav，所以已經不在場上的碎塊自然掉出快取
+## 其他靜態碰撞（農莊 4000 多個，一次解析 50 毫秒）照群存（_chunk_nav），群裡的碰撞體換了、或農莊 registry 說有零件被拆（nav_dirty）才重解析那一群。
+## 會自己動或自己變的（門、窗、果筐：有 set_open、on_shot、apply_mask）不存，每次重解析。
+## 每次烘都重建 _piece_nav、_chunk_nav，所以已經不在場上的自然掉出快取
 func _parse_arena(nm: NavigationMesh, budget_ms := 0.0) -> NavigationMeshSourceGeometryData3D:
 	var src := NavigationMeshSourceGeometryData3D.new()
 	var rest := []
 	var keep := {}
+	var chunk_of := {}
+	var groups := {}   # 群 -> 這次在場上的碰撞體
+	var reg := $Arena.get_node_or_null(^"FarmDestruction")
+	if reg:
+		for n in reg.nav_dirty:
+			if is_instance_valid(n) and $Arena.is_ancestor_of(n):
+				_nav_dirty[_nav_chunk(n)] = true
+		reg.nav_dirty.clear()
 	var t0 := Time.get_ticks_usec()
-	for b in _static_bodies($Arena, []):   # 不寫型別：等下一幀時清單裡的碎塊可能被刪了，寫 Node 會在指定時就出錯
+	for b in _static_bodies($Arena, [], chunk_of):   # 不寫型別：等下一幀時清單裡的碎塊可能被刪了，寫 Node 會在指定時就出錯
 		# 重烘（budget_ms > 0）：這一幀做超過 budget_ms 毫秒就留到下一幀接著做。全場存好的幾何併起來就要 5～12 毫秒，一幀做完會頓一下
 		if budget_ms > 0.0 and Time.get_ticks_usec() - t0 > budget_ms * 1000.0:
 			await get_tree().process_frame
@@ -1505,21 +1519,61 @@ func _parse_arena(nm: NavigationMesh, budget_ms := 0.0) -> NavigationMeshSourceG
 				p = [b.collision_layer, b.global_transform, v, _parse_group(nm, [b])]
 			keep[b] = p
 			src.merge(p[3])
-		else:
+		elif b.has_method(&"set_open") or b.has_method(&"on_shot") or b.has_method(&"apply_mask"):
 			rest.append(b)
+		else:
+			var k: Node = chunk_of[b]
+			if not groups.has(k):
+				groups[k] = []
+			groups[k].append(b)
 	_piece_nav = keep
-	src.merge(_parse_group(nm, rest.filter(func(b: Node) -> bool: return is_instance_valid(b) and b.is_inside_tree())))
+	var chunks := {}
+	for k: Node in groups:
+		if budget_ms > 0.0 and Time.get_ticks_usec() - t0 > budget_ms * 1000.0:
+			await get_tree().process_frame
+			t0 = Time.get_ticks_usec()
+		if not is_instance_valid(k):
+			continue
+		var bodies: Array = groups[k].filter(func(b) -> bool: return is_instance_valid(b) and b.is_inside_tree())
+		var c = _chunk_nav.get(k)
+		if c == null or c[0] != bodies or _nav_dirty.has(k):
+			# 一群最多 350 個碰撞體約 4 毫秒：這一幀已經做了一些就先讓出去（同上面拆過的房子）
+			if budget_ms > 0.0 and Time.get_ticks_usec() - t0 > 300:
+				await get_tree().process_frame
+				t0 = Time.get_ticks_usec()
+				if not is_instance_valid(k):
+					continue
+				bodies = bodies.filter(func(b) -> bool: return is_instance_valid(b) and b.is_inside_tree())
+			c = [bodies, _parse_group(nm, bodies)]
+			_chunk_nav[k] = c   # 當場存：分幀期間又開始的另一次烘也拿得到新的
+			_nav_dirty.erase(k)
+		chunks[k] = c
+		src.merge(c[1])
+	_chunk_nav = chunks
+	src.merge(_parse_group(nm, rest.filter(func(b) -> bool: return is_instance_valid(b) and b.is_inside_tree())))
 	return src
 
 ## 場地底下所有的 StaticBody3D（同 find_children("*", "StaticBody3D")，但不往積木和碎塊裡面找：
-## 它們底下是一萬多個碰撞形狀，find_children 每個都看，一次 3～9 毫秒）
-func _static_bodies(at: Node, out: Array) -> Array:
+## 它們底下是一萬多個碰撞形狀，find_children 每個都看，一次 3～9 毫秒）。
+## chunk_of 順便記每個碰撞體屬於哪一群（見 _nav_chunk）
+func _static_bodies(at: Node, out: Array, chunk_of := {}, chunk: Node = null, depth := 0) -> Array:
 	for c in at.get_children():
+		var k: Node = c if depth == 1 else (chunk if chunk else $Arena)
 		if c is StaticBody3D:
 			out.append(c)
+			chunk_of[c] = k
 		if not (c is ToyBuild or c.is_in_group(&"toy_piece")):
-			_static_bodies(c, out)
+			_static_bodies(c, out, chunk_of, k if depth >= 1 else null, depth + 1)
 	return out
+
+## 導航解析的「一群」：Arena 往下第二層的節點（農莊的 FarmBuildings31/House5 這一層，一棟一群）；更淺的都算 Arena 那一群
+func _nav_chunk(n: Node) -> Node:
+	var d := $Arena.get_path_to(n).get_name_count()
+	if d < 2:
+		return $Arena
+	for i in d - 2:
+		n = n.get_parent()
+	return n
 
 ## 移動標靶：在主機玩家前方 25 公尺，左右各 6 公尺來回走，不開槍
 func add_walker() -> Node3D:
