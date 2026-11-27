@@ -4,7 +4,7 @@ extends SceneTree
 ##   godot --path . --resolution 1920x1080 --script tools/map_perf.gd -- --greybox   舊灰盒對照
 ##   godot --headless --path . --script tools/map_perf.gd                            沒畫面：只有清點、載入、物理
 ## BLAST=1：量完再在場上 5×5 個點各炸一次（照 ToyBuild.blast 的範圍、力道 2，半徑 8 公尺），印最慢的一步和炸完的物理。
-## SHOTS=資料夾：每個角度量完存一張截圖。FARM_SHADOW_BATCH=0：不合併影子（量改前）。
+## SHOTS=資料夾：每個角度量完存一張截圖。FARM_SHADOW_BATCH=0：影子、畫面都不合併；FARM_DRAW_BATCH=0：只合影子（量 P3 改前）。
 ## 開的是離線、只有自己一個牛仔的場（不呼叫沙盒：沙盒的柵欄、乾草捲是舊牧場地圖的函式）。
 ## 最後印「MAP_PERF OK」（Godot 解析錯誤也回 0，要看這行）。
 
