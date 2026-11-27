@@ -24,17 +24,29 @@ func set_view(cam: Camera3D) -> void:
 	_cam = cam
 
 
+## 投得到畫面上嗎：要在近平面前面。剛好在鏡頭上、鏡頭那個平面上（含自己算是 -0.0000001、引擎算是 0 的）
+## 給 unproject_position 會除以 0 報 p.d == 0（跳「遊戲記到一個錯誤」），呼叫 unproject_position 前都先問這個
+## 要用 get_camera_transform()（unproject_position 用的那個）：開了物理插值時它是插值後的位置，跟 global_transform 差一點，
+## 用 global_transform 判斷「在前面」，引擎那邊可能剛好在鏡頭平面上。
+static func in_front(cam: Camera3D, p: Vector3) -> bool:
+	if not cam.is_inside_tree():
+		return false
+	var t := cam.get_camera_transform()
+	return -t.basis.z.normalized().dot(p - t.origin) >= cam.near
+
+
 ## 標記在畫面上的位置：[位置, 在不在畫面裡, 指向（貼邊時箭頭的方向）]
 func place(p: Vector3) -> Array:
 	var sz := size
 	var mid := sz * 0.5
-	var local: Vector3 = _cam.global_transform.affine_inverse() * p
+	var local: Vector3 = _cam.get_camera_transform().affine_inverse() * p
 	var at: Vector2
-	if local.z < 0.0:   # 鏡頭前面
+	var front := in_front(_cam, p)
+	if front:
 		at = _cam.unproject_position(p)
 		if Rect2(Vector2(EDGE, EDGE), sz - Vector2(EDGE, EDGE) * 2.0).has_point(at):
 			return [at, true, Vector2.ZERO]
-	var dir := (at - mid) if local.z < 0.0 else Vector2(local.x, -local.y)   # 身後：照左右上下的方向貼邊
+	var dir := (at - mid) if front else Vector2(local.x, -local.y)   # 身後：照左右上下的方向貼邊
 	if dir.length() < 0.001:
 		dir = Vector2.DOWN
 	dir = dir.normalized()
