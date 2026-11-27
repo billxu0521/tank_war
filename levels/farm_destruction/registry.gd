@@ -16,6 +16,7 @@ var contact_keys := {}
 var arena: Node3D
 var doors: Array[Door] = []
 var nav_pending := false
+var nav_dirty := {}   # 碰撞有變的節點（主機）：main.gd 的 _parse_arena 拿去只重解析那一群
 var waiting_state := {}
 
 static func install(farm: Node3D) -> Node:
@@ -41,6 +42,9 @@ func finish_environment(env: Node) -> void:
 		var pending := waiting_state.duplicate()
 		waiting_state.clear()
 		apply_patch_local(pending)
+	# 影子合併（P2）：環境裝完、石頭登記完才合。FARM_SHADOW_BATCH=0 關掉（量改前用）
+	if OS.get_environment("FARM_SHADOW_BATCH") != "0":
+		preload("res://levels/farm_destruction/farm_batch.gd").install(arena)
 
 func register(key: String, family: String, nodes: Array, colliders: Array, native: Node = null) -> Dictionary:
 	if entries.has(key):
@@ -276,6 +280,11 @@ func _rebake_after_physics() -> void:
 		game.bake_nav(true)
 
 func _set_present(p: Dictionary, value: bool) -> void:
+	if multiplayer.is_server():
+		if p.native:
+			nav_dirty[p.native] = true
+		for shape: Array in p.shapes:
+			nav_dirty[shape[0].get_parent()] = true
 	if p.native and p.native.has_method("set_present"):
 		p.native.set_present(value)
 	elif p.native and p.native.has_method("set_broken"):
